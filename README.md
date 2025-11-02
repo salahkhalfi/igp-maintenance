@@ -24,13 +24,28 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ### ✅ Fonctionnalités implémentées
 
-#### 🎯 **NOUVEAU v1.2.0** - Mouvement bidirectionnel des tickets
+#### 🎯 **NOUVEAU v1.3.0** - Support mobile complet avec gestes tactiles
+
+##### Interface Desktop
 - **Clic gauche** sur une carte pour avancer vers la colonne suivante
 - **Clic droit** pour ouvrir un menu contextuel et choisir n'importe quel statut
-- **Mouvement avant ET arrière** - Corriger facilement les erreurs de placement
 - **Menu contextuel intelligent** - Affiche tous les statuts avec le statut actuel grisé
+
+##### Interface Mobile/Tactile 📱
+- **Tap simple** sur une carte pour avancer vers la colonne suivante
+- **Appui long (500ms)** pour ouvrir le menu contextuel et choisir n'importe quel statut
+- **Vibration haptique** lors de l'activation du menu contextuel
+- **Layout vertical** - Colonnes Kanban empilées verticalement pour faciliter le scroll
+- **Boutons agrandis** - Taille minimale de 44px pour une meilleure accessibilité tactile
+- **Modal plein écran** - Formulaires adaptés aux petits écrans
+- **Menu contextuel intelligent** - Positionné automatiquement pour rester dans l'écran
+
+##### Responsive Design
+- **Mobile** (< 640px): Layout vertical, texte agrandi, boutons full-width
+- **Tablette** (640px - 1024px): Grille 2 colonnes
+- **Desktop** (> 1024px): Grille 6 colonnes complète
+- **Mouvement avant ET arrière** - Corriger facilement les erreurs de placement
 - **Mise à jour automatique** du statut avec historique complet dans la timeline
-- **Interface intuitive** - Tooltips explicatifs sur chaque carte
 
 #### 1. Authentification et Gestion des utilisateurs
 - Connexion/déconnexion avec JWT
@@ -61,10 +76,13 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - Affichage des médias dans les détails du ticket
 
 #### 5. Interface Utilisateur
-- Design moderne avec TailwindCSS
-- Responsive et intuitive
-- Icônes FontAwesome
-- Tableau Kanban interactif
+- **Design moderne** avec TailwindCSS
+- **100% Responsive** - Desktop, tablette et mobile
+- **Gestes tactiles** - Support complet du touch (tap, long-press)
+- **Icônes FontAwesome** pour une meilleure lisibilité
+- **Tableau Kanban interactif** avec animations fluides
+- **Haptic feedback** - Vibration sur mobile pour meilleure UX
+- **Auto-ajustement** - Menus et modals s'adaptent automatiquement à l'écran
 
 ### 📊 Modèles de données
 
@@ -334,6 +352,34 @@ curl -X POST http://localhost:3000/api/auth/login \
   -d '{"email":"admin@maintenance.com","password":"password123"}'
 ```
 
+### Tester sur mobile
+
+#### Méthode 1: Utiliser le mode responsive du navigateur
+```
+1. Ouvrir l'application dans Chrome/Firefox
+2. Appuyer sur F12 (DevTools)
+3. Cliquer sur l'icône "Toggle device toolbar" (Ctrl+Shift+M)
+4. Sélectionner un appareil mobile (iPhone 14, Galaxy S21, etc.)
+5. Tester les interactions tactiles
+```
+
+#### Méthode 2: Accès depuis un appareil mobile réel
+```
+1. S'assurer que l'ordinateur et le mobile sont sur le même réseau
+2. Trouver l'adresse IP locale: `ifconfig` (Mac/Linux) ou `ipconfig` (Windows)
+3. Sur mobile, ouvrir le navigateur et accéder à: http://[IP]:3000
+4. Tester le tap simple et l'appui long sur les cartes
+```
+
+#### Fonctionnalités mobiles à tester
+- ✅ **Tap simple** sur une carte → Déplace vers colonne suivante
+- ✅ **Appui long (500ms)** sur une carte → Ouvre menu contextuel
+- ✅ **Vibration** lors de l'ouverture du menu contextuel
+- ✅ **Menu contextuel** positionné dans les limites de l'écran
+- ✅ **Formulaire création** responsive en plein écran
+- ✅ **Header buttons** empilés verticalement sur mobile
+- ✅ **Layout Kanban** en colonnes verticales sur mobile
+
 ## 📄 Licence
 
 Ce projet est destiné à un usage professionnel interne.
@@ -351,6 +397,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.2.0  
+**Version**: 1.3.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready avec mouvement bidirectionnel des tickets
+**Statut**: ✅ Production Ready - Desktop & Mobile avec gestes tactiles complets
