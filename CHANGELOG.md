@@ -2,6 +2,34 @@
 
 Toutes les modifications importantes de ce projet seront documentées dans ce fichier.
 
+## [1.2.1] - 2024-11-02
+
+### 🐛 Corrigé
+- **Problème de connexion infinie** - Middleware d'authentification corrigé
+- **Routes /api/machines 404** - Configuration des routes machines réparée
+- **Route /api/auth/me non protégée** - Middleware appliqué correctement
+- **Ordre des middlewares** - Middleware doit être défini AVANT les routes
+
+### 🔧 Technique
+- Réorganisation de l'ordre des middlewares et routes
+- Middleware sur `/api/auth/me` appliqué avant `app.route()`
+- Utilisation correcte de `app.route()` pour les sous-applications
+
+## [1.2.0] - 2024-11-02
+
+### ✨ Ajouté
+- **Formulaire de création de tickets** avec modal élégant
+- **Bouton "Nouvelle Demande"** dans le header
+- **Sélection de machine** depuis liste déroulante
+- **Choix de priorité** avec 4 niveaux (Low, Medium, High, Critical)
+- **Compteur de tickets** dans le header
+- **Chargement des machines** au démarrage
+
+### 🔧 Corrigé
+- **Page blanche** - Drag & drop temporairement désactivé
+- **Interface opérationnelle** - Version simplifiée stable
+- **Workflow complet** pour les opérateurs
+
 ## [1.1.0] - 2024-11-02
 
 ### ✨ Ajouté
