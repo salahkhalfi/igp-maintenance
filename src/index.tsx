@@ -55,7 +55,6 @@ app.get('/', (c) => {
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@hello-pangea/dnd@16.5.0/dist/dnd.umd.js"></script>
     <style>
         .kanban-column {
             min-height: 400px;
@@ -69,12 +68,8 @@ app.get('/', (c) => {
             padding: 12px;
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: grab;
+            cursor: pointer;
             transition: all 0.2s;
-            user-select: none;
-        }
-        .ticket-card:active {
-            cursor: grabbing;
         }
         .ticket-card:hover {
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
@@ -92,20 +87,31 @@ app.get('/', (c) => {
         .priority-low {
             border-left: 4px solid #10b981;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <div id="root"></div>
     
     <script>
-        // Application React chargée depuis le fichier séparé
-        // Pour le développement initial, l'interface est directement dans le HTML
-        
         const API_URL = '/api';
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
         
-        // Configuration Axios
         if (authToken) {
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
@@ -114,21 +120,29 @@ app.get('/', (c) => {
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
             const [tickets, setTickets] = React.useState([]);
+            const [machines, setMachines] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
+            const [showCreateModal, setShowCreateModal] = React.useState(false);
             
             React.useEffect(() => {
                 if (isLoggedIn) {
-                    loadTickets();
+                    loadData();
                 }
             }, [isLoggedIn]);
             
-            const loadTickets = async () => {
+            const loadData = async () => {
                 try {
-                    const response = await axios.get(API_URL + '/tickets');
-                    setTickets(response.data.tickets);
+                    const [ticketsRes, machinesRes, userRes] = await Promise.all([
+                        axios.get(API_URL + '/tickets'),
+                        axios.get(API_URL + '/machines'),
+                        axios.get(API_URL + '/auth/me')
+                    ]);
+                    setTickets(ticketsRes.data.tickets);
+                    setMachines(machinesRes.data.machines);
+                    currentUser = userRes.data.user;
                     setLoading(false);
                 } catch (error) {
-                    console.error('Erreur chargement tickets:', error);
+                    console.error('Erreur chargement:', error);
                     if (error.response?.status === 401) {
                         logout();
                     }
@@ -171,8 +185,12 @@ app.get('/', (c) => {
             
             return React.createElement(MainApp, { 
                 tickets, 
+                machines,
                 onLogout: logout,
-                onRefresh: loadTickets
+                onRefresh: loadData,
+                showCreateModal,
+                setShowCreateModal,
+                onTicketCreated: loadData
             });
         };
         
@@ -220,22 +238,166 @@ app.get('/', (c) => {
                         }, 'Se connecter')
                     ),
                     React.createElement('div', { className: 'mt-4 text-sm text-gray-600 text-center' },
-                        React.createElement('p', {}, 'Compte de test:'),
-                        React.createElement('p', {}, 'admin@maintenance.com / password123')
+                        React.createElement('p', {}, 'Comptes de test:'),
+                        React.createElement('p', {}, 'admin@maintenance.com'),
+                        React.createElement('p', {}, 'operator@maintenance.com')
                     )
                 )
             );
         };
         
-        // Application principale avec tableau Kanban
-        const MainApp = ({ tickets, onLogout, onRefresh }) => {
-            const [localTickets, setLocalTickets] = React.useState(tickets);
-            const [isDragging, setIsDragging] = React.useState(false);
+        // Modal de création de ticket
+        const CreateTicketModal = ({ show, onClose, machines, onTicketCreated }) => {
+            const [title, setTitle] = React.useState('');
+            const [description, setDescription] = React.useState('');
+            const [machineId, setMachineId] = React.useState('');
+            const [priority, setPriority] = React.useState('medium');
+            const [submitting, setSubmitting] = React.useState(false);
             
-            React.useEffect(() => {
-                setLocalTickets(tickets);
-            }, [tickets]);
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setSubmitting(true);
+                
+                try {
+                    await axios.post(API_URL + '/tickets', {
+                        title,
+                        description,
+                        machine_id: parseInt(machineId),
+                        priority
+                    });
+                    
+                    alert('Ticket créé avec succès !');
+                    setTitle('');
+                    setDescription('');
+                    setMachineId('');
+                    setPriority('medium');
+                    onClose();
+                    onTicketCreated();
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                } finally {
+                    setSubmitting(false);
+                }
+            };
             
+            if (!show) return null;
+            
+            return React.createElement('div', { 
+                className: 'modal active',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg p-8 max-w-2xl w-full mx-4',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                        React.createElement('h2', { className: 'text-2xl font-bold text-gray-800' },
+                            React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-blue-500' }),
+                            'Nouvelle Demande de Maintenance'
+                        ),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-gray-500 hover:text-gray-700'
+                        },
+                            React.createElement('i', { className: 'fas fa-times fa-2x' })
+                        )
+                    ),
+                    React.createElement('form', { onSubmit: handleSubmit },
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
+                                React.createElement('i', { className: 'fas fa-heading mr-2' }),
+                                'Titre du problème *'
+                            ),
+                            React.createElement('input', {
+                                type: 'text',
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                value: title,
+                                onChange: (e) => setTitle(e.target.value),
+                                placeholder: 'Ex: Bruit anormal sur la machine',
+                                required: true
+                            })
+                        ),
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
+                                React.createElement('i', { className: 'fas fa-align-left mr-2' }),
+                                'Description détaillée *'
+                            ),
+                            React.createElement('textarea', {
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                value: description,
+                                onChange: (e) => setDescription(e.target.value),
+                                placeholder: 'Décrivez le problème en détail...',
+                                rows: 4,
+                                required: true
+                            })
+                        ),
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
+                                React.createElement('i', { className: 'fas fa-cog mr-2' }),
+                                'Machine concernée *'
+                            ),
+                            React.createElement('select', {
+                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                value: machineId,
+                                onChange: (e) => setMachineId(e.target.value),
+                                required: true
+                            },
+                                React.createElement('option', { value: '' }, '-- Sélectionnez une machine --'),
+                                machines.map(m => 
+                                    React.createElement('option', { key: m.id, value: m.id },
+                                        m.machine_type + ' ' + m.model + ' - ' + m.location
+                                    )
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'mb-6' },
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
+                                React.createElement('i', { className: 'fas fa-exclamation-triangle mr-2' }),
+                                'Priorité *'
+                            ),
+                            React.createElement('div', { className: 'grid grid-cols-4 gap-2' },
+                                ['low', 'medium', 'high', 'critical'].map(p =>
+                                    React.createElement('button', {
+                                        key: p,
+                                        type: 'button',
+                                        onClick: () => setPriority(p),
+                                        className: 'px-4 py-2 rounded-md text-sm font-semibold ' + 
+                                            (priority === p 
+                                                ? 'bg-blue-500 text-white' 
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300')
+                                    },
+                                        p === 'low' ? '🟢 Faible' :
+                                        p === 'medium' ? '🟡 Moyenne' :
+                                        p === 'high' ? '🟠 Haute' :
+                                        '🔴 Critique'
+                                    )
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex justify-end space-x-4' },
+                            React.createElement('button', {
+                                type: 'button',
+                                onClick: onClose,
+                                className: 'px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100'
+                            }, 'Annuler'),
+                            React.createElement('button', {
+                                type: 'submit',
+                                disabled: submitting,
+                                className: 'px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400'
+                            },
+                                submitting 
+                                    ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
+                                    : React.createElement('i', { className: 'fas fa-check mr-2' }),
+                                submitting ? 'Création...' : 'Créer le ticket'
+                            )
+                        )
+                    )
+                )
+            );
+        };
+        
+        // Application principale
+        const MainApp = ({ tickets, machines, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
             const statuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
                 { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
@@ -246,60 +408,36 @@ app.get('/', (c) => {
             ];
             
             const getTicketsByStatus = (status) => {
-                return localTickets.filter(t => t.status === status);
-            };
-            
-            const handleDragEnd = async (result) => {
-                setIsDragging(false);
-                
-                if (!result.destination) {
-                    return;
-                }
-                
-                const ticketId = parseInt(result.draggableId.replace('ticket-', ''));
-                const newStatus = result.destination.droppableId;
-                const oldStatus = result.source.droppableId;
-                
-                if (newStatus === oldStatus) {
-                    return;
-                }
-                
-                // Mise à jour optimiste de l'interface
-                setLocalTickets(prevTickets => 
-                    prevTickets.map(ticket => 
-                        ticket.id === ticketId 
-                            ? { ...ticket, status: newStatus }
-                            : ticket
-                    )
-                );
-                
-                // Mise à jour sur le serveur
-                try {
-                    await axios.patch(API_URL + '/tickets/' + ticketId, {
-                        status: newStatus,
-                        comment: 'Déplacement de ' + oldStatus + ' vers ' + newStatus
-                    });
-                } catch (error) {
-                    console.error('Erreur mise à jour ticket:', error);
-                    // Rollback en cas d'erreur
-                    setLocalTickets(tickets);
-                    alert('Erreur lors du déplacement du ticket');
-                }
-            };
-            
-            const handleDragStart = () => {
-                setIsDragging(true);
+                return tickets.filter(t => t.status === status);
             };
             
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+                // Modal de création
+                React.createElement(CreateTicketModal, {
+                    show: showCreateModal,
+                    onClose: () => setShowCreateModal(false),
+                    machines: machines,
+                    onTicketCreated: onTicketCreated
+                }),
+                
                 // Header
                 React.createElement('header', { className: 'bg-white shadow-md' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-4 flex justify-between items-center' },
                         React.createElement('div', { className: 'flex items-center' },
                             React.createElement('i', { className: 'fas fa-tools text-3xl text-blue-500 mr-3' }),
-                            React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Gestion de Maintenance')
+                            React.createElement('div', {},
+                                React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Gestion de Maintenance'),
+                                React.createElement('p', { className: 'text-sm text-gray-600' }, tickets.length + ' tickets actifs')
+                            )
                         ),
                         React.createElement('div', { className: 'flex items-center space-x-4' },
+                            React.createElement('button', {
+                                onClick: () => setShowCreateModal(true),
+                                className: 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-semibold'
+                            },
+                                React.createElement('i', { className: 'fas fa-plus mr-2' }),
+                                'Nouvelle Demande'
+                            ),
                             React.createElement('button', {
                                 onClick: onRefresh,
                                 className: 'px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600'
@@ -318,65 +456,42 @@ app.get('/', (c) => {
                     )
                 ),
                 
-                // Tableau Kanban avec Drag & Drop
+                // Tableau Kanban
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
-                    React.createElement(window.DragDropContext.DragDropContext, { onDragEnd: handleDragEnd, onDragStart: handleDragStart },
-                        React.createElement('div', { className: 'grid grid-cols-6 gap-4' },
-                            statuses.map(status =>
-                                React.createElement('div', { key: status.key, className: 'kanban-column' },
-                                    React.createElement('div', { className: 'mb-4 flex items-center justify-between' },
-                                        React.createElement('div', { className: 'flex items-center' },
-                                            React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
-                                            React.createElement('h3', { className: 'font-bold text-gray-700' }, status.label)
-                                        ),
-                                        React.createElement('span', { 
-                                            className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
-                                        }, getTicketsByStatus(status.key).length)
+                    React.createElement('div', { className: 'grid grid-cols-6 gap-4' },
+                        statuses.map(status =>
+                            React.createElement('div', { key: status.key, className: 'kanban-column' },
+                                React.createElement('div', { className: 'mb-4 flex items-center justify-between' },
+                                    React.createElement('div', { className: 'flex items-center' },
+                                        React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
+                                        React.createElement('h3', { className: 'font-bold text-gray-700' }, status.label)
                                     ),
-                                    React.createElement(window.DragDropContext.Droppable, { droppableId: status.key }, (provided, snapshot) =>
-                                        React.createElement('div', 
-                                            Object.assign({
-                                                ref: provided.innerRef,
-                                                className: 'space-y-3 min-h-[300px] ' + (snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg' : ''),
-                                                style: {
-                                                    minHeight: '300px',
-                                                    transition: 'background-color 0.2s ease'
-                                                }
-                                            }, provided.droppableProps),
-                                            getTicketsByStatus(status.key).map((ticket, index) =>
-                                                React.createElement(window.DragDropContext.Draggable, { 
-                                                    key: ticket.id, 
-                                                    draggableId: 'ticket-' + ticket.id, 
-                                                    index: index 
-                                                }, (provided, snapshot) =>
-                                                    React.createElement('div',
-                                                        Object.assign({
-                                                            ref: provided.innerRef,
-                                                            className: 'ticket-card priority-' + ticket.priority + (snapshot.isDragging ? ' shadow-2xl' : ''),
-                                                            style: Object.assign({}, provided.draggableProps.style, {
-                                                                cursor: isDragging ? 'grabbing' : 'grab'
-                                                            })
-                                                        }, provided.draggableProps, provided.dragHandleProps),
-                                                        React.createElement('div', { className: 'flex justify-between items-start mb-2' },
-                                                            React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
-                                                            React.createElement('span', { 
-                                                                className: 'text-xs px-2 py-1 rounded ' + 
-                                                                (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                                                                 ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                                 ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                                 'bg-green-100 text-green-800')
-                                                            }, ticket.priority.toUpperCase())
-                                                        ),
-                                                        React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
-                                                        React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
-                                                        React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
-                                                            React.createElement('i', { className: 'far fa-clock mr-1' }),
-                                                            new Date(ticket.created_at).toLocaleDateString('fr-FR')
-                                                        )
-                                                    )
-                                                )
+                                    React.createElement('span', { 
+                                        className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
+                                    }, getTicketsByStatus(status.key).length)
+                                ),
+                                React.createElement('div', { className: 'space-y-3' },
+                                    getTicketsByStatus(status.key).map(ticket =>
+                                        React.createElement('div', {
+                                            key: ticket.id,
+                                            className: 'ticket-card priority-' + ticket.priority
+                                        },
+                                            React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
+                                                React.createElement('span', { 
+                                                    className: 'text-xs px-2 py-1 rounded ' + 
+                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                     'bg-green-100 text-green-800')
+                                                }, ticket.priority.toUpperCase())
                                             ),
-                                            provided.placeholder
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
+                                            React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
+                                            React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
+                                                React.createElement('i', { className: 'far fa-clock mr-1' }),
+                                                new Date(ticket.created_at).toLocaleDateString('fr-FR')
+                                            )
                                         )
                                     )
                                 )
@@ -396,12 +511,12 @@ app.get('/', (c) => {
   `);
 });
 
-// Route de santé pour vérifier que l'API fonctionne
+// Route de santé
 app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.2.0'
   });
 });
 
