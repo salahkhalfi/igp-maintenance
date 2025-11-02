@@ -47,12 +47,26 @@ app.get('/', (c) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Système de Gestion de Maintenance Industrielle</title>
+    <title>IGP - Système de Gestion de Maintenance</title>
+    <link rel="icon" type="image/png" href="/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'igp-blue': '#1e40af',
+                        'igp-orange': '#ea580c',
+                        'igp-red': '#dc2626',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         .kanban-column {
             min-height: 400px;
@@ -308,38 +322,54 @@ app.get('/', (c) => {
                 onLogin(email, password);
             };
             
-            return React.createElement('div', { className: 'min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600' },
-                React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96' },
+            return React.createElement('div', { className: 'min-h-screen flex items-center justify-center bg-gradient-to-br from-igp-blue to-blue-900' },
+                React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96 max-w-md mx-4' },
                     React.createElement('div', { className: 'text-center mb-8' },
-                        React.createElement('i', { className: 'fas fa-tools fa-4x text-blue-500 mb-4' }),
-                        React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Gestion de Maintenance'),
-                        React.createElement('p', { className: 'text-gray-600' }, 'Connexion au système')
+                        React.createElement('img', { 
+                            src: '/logo-igp.png', 
+                            alt: 'IGP Logo',
+                            className: 'h-20 w-auto mx-auto mb-4'
+                        }),
+                        React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, 'Système de Maintenance'),
+                        React.createElement('p', { className: 'text-sm text-gray-600 mb-1' }, 'Les Produits Verriers International'),
+                        React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, '(IGP) Inc.')
                     ),
                     React.createElement('form', { onSubmit: handleSubmit },
                         React.createElement('div', { className: 'mb-4' },
-                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' }, 'Email'),
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' }, 
+                                React.createElement('i', { className: 'fas fa-envelope mr-2 text-igp-blue' }),
+                                'Email'
+                            ),
                             React.createElement('input', {
                                 type: 'email',
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: email,
                                 onChange: (e) => setEmail(e.target.value),
+                                placeholder: 'votre.email@igpglass.ca',
                                 required: true
                             })
                         ),
                         React.createElement('div', { className: 'mb-6' },
-                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' }, 'Mot de passe'),
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' }, 
+                                React.createElement('i', { className: 'fas fa-lock mr-2 text-igp-blue' }),
+                                'Mot de passe'
+                            ),
                             React.createElement('input', {
                                 type: 'password',
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: password,
                                 onChange: (e) => setPassword(e.target.value),
+                                placeholder: '••••••••',
                                 required: true
                             })
                         ),
                         React.createElement('button', {
                             type: 'submit',
-                            className: 'w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200'
-                        }, 'Se connecter')
+                            className: 'w-full bg-igp-orange text-white font-bold py-3 px-4 rounded-md hover:bg-orange-700 transition duration-200 shadow-lg'
+                        }, 
+                            React.createElement('i', { className: 'fas fa-sign-in-alt mr-2' }),
+                            'Se connecter'
+                        )
                     ),
                     React.createElement('div', { className: 'mt-4 text-sm text-gray-600 text-center' },
                         React.createElement('p', {}, 'Comptes de test:'),
@@ -394,9 +424,9 @@ app.get('/', (c) => {
                     className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-2xl w-full mx-4',
                     onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-gray-800' },
-                            React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-blue-500' }),
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b-2 border-igp-blue pb-4' },
+                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
+                            React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-igp-orange' }),
                             'Nouvelle Demande de Maintenance'
                         ),
                         React.createElement('button', {
@@ -414,7 +444,7 @@ app.get('/', (c) => {
                             ),
                             React.createElement('input', {
                                 type: 'text',
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: title,
                                 onChange: (e) => setTitle(e.target.value),
                                 placeholder: 'Ex: Bruit anormal sur la machine',
@@ -427,7 +457,7 @@ app.get('/', (c) => {
                                 'Description détaillée *'
                             ),
                             React.createElement('textarea', {
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: description,
                                 onChange: (e) => setDescription(e.target.value),
                                 placeholder: 'Décrivez le problème en détail...',
@@ -441,7 +471,7 @@ app.get('/', (c) => {
                                 'Machine concernée *'
                             ),
                             React.createElement('select', {
-                                className: 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: machineId,
                                 onChange: (e) => setMachineId(e.target.value),
                                 required: true
@@ -465,9 +495,9 @@ app.get('/', (c) => {
                                         key: p,
                                         type: 'button',
                                         onClick: () => setPriority(p),
-                                        className: 'px-4 py-2 rounded-md text-sm font-semibold ' + 
+                                        className: 'px-4 py-2 rounded-md text-sm font-semibold transition-all ' + 
                                             (priority === p 
-                                                ? 'bg-blue-500 text-white' 
+                                                ? 'bg-igp-orange text-white shadow-md' 
                                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300')
                                     },
                                         p === 'low' ? '🟢 Faible' :
@@ -478,16 +508,19 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex justify-end space-x-4' },
+                        React.createElement('div', { className: 'flex justify-end space-x-4 mt-6 pt-4 border-t-2 border-gray-200' },
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: onClose,
-                                className: 'px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100'
-                            }, 'Annuler'),
+                                className: 'px-6 py-2 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-all'
+                            }, 
+                                React.createElement('i', { className: 'fas fa-times mr-2' }),
+                                'Annuler'
+                            ),
                             React.createElement('button', {
                                 type: 'submit',
                                 disabled: submitting,
-                                className: 'px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400'
+                                className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 shadow-md transition-all'
                             },
                                 submitting 
                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
@@ -672,35 +705,44 @@ app.get('/', (c) => {
                 }),
                 
                 // Header
-                React.createElement('header', { className: 'bg-white shadow-md' },
-                    React.createElement('div', { className: 'container mx-auto px-4 py-4' },
+                React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
+                    React.createElement('div', { className: 'container mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
-                            React.createElement('div', { className: 'flex items-center' },
-                                React.createElement('i', { className: 'fas fa-tools text-2xl md:text-3xl text-blue-500 mr-3' }),
-                                React.createElement('div', {},
-                                    React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-gray-800' }, 'Gestion de Maintenance'),
-                                    React.createElement('p', { className: 'text-sm text-gray-600' }, tickets.length + ' tickets actifs')
+                            React.createElement('div', { className: 'flex items-center space-x-3' },
+                                React.createElement('img', { 
+                                    src: '/logo-igp.png', 
+                                    alt: 'IGP Logo',
+                                    className: 'h-12 md:h-16 w-auto object-contain'
+                                }),
+                                React.createElement('div', { className: 'border-l-2 border-gray-300 pl-3' },
+                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, 'Système de Maintenance'),
+                                    React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
+                                        'Les Produits Verriers International (IGP) Inc.'
+                                    ),
+                                    React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, 
+                                        tickets.length + ' tickets actifs'
+                                    )
                                 )
                             )
                         ),
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
-                                className: 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-semibold'
+                                className: 'px-4 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
                             ),
                             React.createElement('button', {
                                 onClick: onRefresh,
-                                className: 'px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600'
+                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
                                 'Actualiser'
                             ),
                             React.createElement('button', {
                                 onClick: onLogout,
-                                className: 'px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600'
+                                className: 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
                                 'Déconnexion'
