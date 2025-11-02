@@ -2,7 +2,7 @@
 
 ## ✅ **APPLICATION DÉPLOYÉE AVEC SUCCÈS**
 
-**Date**: 2 novembre 2024  
+**Date**: 2 novembre 2025  
 **Version**: v1.8.2 - Production avec domaine igpglass.ca  
 **Développeur**: Salah Khalfi
 
@@ -168,4 +168,4 @@ curl https://5e61f01a.webapp-7t8.pages.dev/api/tickets
 
 ---
 
-**© 2024 - Salah Khalfi**
+**© 2025 - Salah Khalfi**

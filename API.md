@@ -623,4 +623,4 @@ new_ticket = requests.post(f'{API_URL}/tickets', headers=headers, json={
 ---
 
 **Version**: 1.0.0  
-**Dernière mise à jour**: 2024-11-02
+**Dernière mise à jour**: 2025-11-02

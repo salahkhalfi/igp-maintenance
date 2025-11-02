@@ -2,7 +2,7 @@
 
 ## 🎯 Changement Principal : Domaine igpglass.ca
 
-**Date**: 2 novembre 2024  
+**Date**: 2 novembre 2025  
 **Version**: v1.8.2  
 **Développeur**: Salah Khalfi
 
@@ -221,9 +221,9 @@ curl https://5e61f01a.webapp-7t8.pages.dev/api/tickets \
 ## 📞 Support
 
 **Développeur**: Salah Khalfi  
-**Date de mise à jour**: 2 novembre 2024  
+**Date de mise à jour**: 2 novembre 2025  
 **Version**: v1.8.2
 
 ---
 
-**© 2024 - Salah Khalfi - IGP Système de Gestion de Maintenance**
+**© 2025 - Salah Khalfi - IGP Système de Gestion de Maintenance**
