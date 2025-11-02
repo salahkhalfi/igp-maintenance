@@ -24,13 +24,13 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ### ✅ Fonctionnalités implémentées
 
-#### 🎯 **NOUVEAU v1.1.0** - Drag & Drop Kanban
-- **Déplacement intuitif** des cartes entre colonnes
-- **Mise à jour automatique** du statut des tickets
-- **Animations fluides** lors du déplacement
-- **Feedback visuel** (highlight colonne, curseur grab/grabbing)
-- **Optimistic UI** - Mise à jour instantanée de l'interface
-- **Gestion d'erreur** avec rollback automatique
+#### 🎯 **NOUVEAU v1.2.0** - Mouvement bidirectionnel des tickets
+- **Clic gauche** sur une carte pour avancer vers la colonne suivante
+- **Clic droit** pour ouvrir un menu contextuel et choisir n'importe quel statut
+- **Mouvement avant ET arrière** - Corriger facilement les erreurs de placement
+- **Menu contextuel intelligent** - Affiche tous les statuts avec le statut actuel grisé
+- **Mise à jour automatique** du statut avec historique complet dans la timeline
+- **Interface intuitive** - Tooltips explicatifs sur chaque carte
 
 #### 1. Authentification et Gestion des utilisateurs
 - Connexion/déconnexion avec JWT
@@ -273,11 +273,11 @@ webapp/
 ## 🎯 Prochaines étapes recommandées
 
 ### Améliorations prioritaires
-1. **Drag & Drop Kanban** - Implémenter le déplacement des tickets entre colonnes
-2. **Page de détails ticket** - Vue détaillée avec timeline et médias
-3. **Notifications** - Alertes pour nouveaux tickets et changements de statut
-4. **Statistiques** - Dashboard avec métriques de maintenance
-5. **Export PDF** - Génération de rapports d'intervention
+1. **Page de détails ticket** - Vue détaillée avec timeline et médias complets
+2. **Notifications** - Alertes pour nouveaux tickets et changements de statut
+3. **Statistiques** - Dashboard avec métriques de maintenance
+4. **Export PDF** - Génération de rapports d'intervention
+5. **Recherche et filtres** - Recherche par ID, machine, priorité
 
 ### Fonctionnalités avancées
 - **Recherche avancée** avec filtres multiples
@@ -301,8 +301,8 @@ webapp/
 ### Limitations actuelles
 - Le mot de passe utilise SHA-256 (simple) - à remplacer par bcrypt pour la production
 - Les URLs R2 sont génériques - configurer un domaine personnalisé
-- Le drag & drop Kanban nécessite une implémentation complète
 - Les tests unitaires ne sont pas encore implémentés
+- La page de détails des tickets reste à implémenter
 
 ### Variables d'environnement
 Créer un fichier `.dev.vars` pour le développement local:
@@ -351,6 +351,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.1.0  
-**Dernière mise à jour**: 2024-11-02  
-**Statut**: ✅ Production Ready avec Drag & Drop
+**Version**: 1.2.0  
+**Dernière mise à jour**: 2025-11-02  
+**Statut**: ✅ Production Ready avec mouvement bidirectionnel des tickets
