@@ -1,7 +1,7 @@
 # Documentation de Déploiement - IGP Maintenance
 
 ## Version Actuelle
-**v1.9.0 - Sécurité Maximale** (2025-11-02)
+**v1.9.1 - Mise à jour du titre** (2025-11-02)
 
 ## 🌐 URLs de Production
 
@@ -9,8 +9,8 @@
 - **Production**: https://mecanique.igpglass.ca
 - **API**: https://mecanique.igpglass.ca/api/*
 
-### URL Cloudflare (Dernière Version Sécurisée)
-- **Déploiement e6493742**: https://e6493742.webapp-7t8.pages.dev
+### URL Cloudflare (Dernière Version)
+- **Déploiement 02fd9e0f**: https://02fd9e0f.webapp-7t8.pages.dev
 
 ## 🔒 Corrections de Sécurité Appliquées
 
@@ -34,7 +34,8 @@
 
 | Version | Hash | Date | Status | Notes |
 |---------|------|------|--------|-------|
-| v1.9.0 | e6493742 | 2025-11-02 | ✅ ACTIF | Identifiants hardcodés supprimés |
+| v1.9.1 | 02fd9e0f | 2025-11-02 | ✅ ACTIF | Titre mis à jour |
+| v1.9.0 | e6493742 | 2025-11-02 | ✅ SÉCURISÉ | Identifiants hardcodés supprimés |
 | v1.8.4 | 71e98938 | 2025-11-02 | ⚠️ OBSOLÈTE | Auto-complétion désactivée |
 | v1.8.3 | 38bbed9e | 2025-11-02 | ⚠️ OBSOLÈTE | Affichage test supprimé |
 | v1.8.2 | 2ced545d | 2025-11-02 | 🔴 INSECURE | Comptes visibles |
@@ -50,12 +51,13 @@ Les anciennes URLs sont toujours accessibles et contiennent les vulnérabilités
 1. Aller sur https://dash.cloudflare.com/
 2. Pages → **webapp** → **Deployments**
 3. **Supprimer ces déploiements** :
+   - ❌ e6493742 (ancienne version)
    - ❌ 71e98938 (champs pré-remplis)
    - ❌ 38bbed9e (champs pré-remplis)
    - ❌ 2ced545d (affichage + pré-remplissage)
    - ❌ 98a3ffaf (affichage + pré-remplissage)
    - ❌ 5e61f01a (affichage + pré-remplissage)
-4. **Garder uniquement** : ✅ e6493742 (version sécurisée)
+4. **Garder uniquement** : ✅ 02fd9e0f (version actuelle)
 
 ### 2. Vider le Cache Navigateur
 Pour les utilisateurs finaux :
@@ -114,7 +116,7 @@ Les variables d'environnement sont configurées via Cloudflare :
 
 Pour toute question sur ce déploiement :
 - **GitHub**: https://github.com/salahkhalfi/igp-maintenance
-- **Commit actuel**: 3f493df
+- **Commit actuel**: 7eca832
 
 ---
 *Dernière mise à jour : 2025-11-02*
