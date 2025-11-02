@@ -3,16 +3,23 @@
 ## ✅ **APPLICATION DÉPLOYÉE AVEC SUCCÈS**
 
 **Date**: 2 novembre 2025  
-**Version**: v1.8.3 - Sécurité renforcée  
-**Développeur**: Salah Khalfi
+**Version**: v1.8.3 - Domaine personnalisé igpglass.ca  
+**Développeur**: Salah Khalfi  
+**Domaine**: https://mecanique.igpglass.ca
 
 ---
 
 ## 🌐 **URLS DE PRODUCTION**
 
-### URL Principale (Production Actuelle)
+### URL Principale (Domaine Personnalisé)
+```
+https://mecanique.igpglass.ca
+```
+
+### URL Cloudflare Pages (Technique)
 ```
 https://2ced545d.webapp-7t8.pages.dev
+https://webapp-7t8.pages.dev
 ```
 
 ### URLs Précédentes

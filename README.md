@@ -1,11 +1,11 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
-[![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://5e61f01a.webapp-7t8.pages.dev)
-[![Version](https://img.shields.io/badge/version-1.8.2-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://5e61f01a.webapp-7t8.pages.dev)
+[![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
+[![Version](https://img.shields.io/badge/version-1.8.3-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
-> **🚀 [Accéder à l'application en direct](https://5e61f01a.webapp-7t8.pages.dev)** - Système de gestion de maintenance déployé sur Cloudflare Pages
+> **🚀 [Accéder à l'application en direct](https://mecanique.igpglass.ca)** - Système de gestion de maintenance déployé sur Cloudflare Pages
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
