@@ -347,7 +347,10 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'text-sm text-gray-600 mb-1' }, 'Les Produits Verriers International'),
                         React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, '(IGP) Inc.')
                     ),
-                    React.createElement('form', { onSubmit: handleSubmit },
+                    React.createElement('form', { 
+                        onSubmit: handleSubmit,
+                        autoComplete: 'off'
+                    },
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' }, 
                                 React.createElement('i', { className: 'fas fa-envelope mr-2 text-igp-blue' }),
@@ -355,6 +358,8 @@ app.get('/', (c) => {
                             ),
                             React.createElement('input', {
                                 type: 'email',
+                                name: 'email',
+                                autoComplete: 'off',
                                 className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: email,
                                 onChange: (e) => setEmail(e.target.value),
@@ -369,6 +374,8 @@ app.get('/', (c) => {
                             ),
                             React.createElement('input', {
                                 type: 'password',
+                                name: 'password',
+                                autoComplete: 'new-password',
                                 className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: password,
                                 onChange: (e) => setPassword(e.target.value),
