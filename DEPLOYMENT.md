@@ -3,7 +3,7 @@
 ## ✅ **APPLICATION DÉPLOYÉE AVEC SUCCÈS**
 
 **Date**: 2 novembre 2024  
-**Version**: v1.8.1 - Design 3D Professionnel  
+**Version**: v1.8.2 - Production avec domaine igpglass.ca  
 **Développeur**: Salah Khalfi
 
 ---
@@ -12,12 +12,12 @@
 
 ### URL Principale
 ```
-https://98a3ffaf.webapp-7t8.pages.dev
+https://5e61f01a.webapp-7t8.pages.dev
 ```
 
-### URL Alternative (si configurée)
+### URL Alternative (Précédente)
 ```
-https://webapp-7t8.pages.dev
+https://98a3ffaf.webapp-7t8.pages.dev
 ```
 
 ### Dashboard Cloudflare
@@ -43,10 +43,11 @@ https://dash.cloudflare.com/
 - **Branche production**: `main`
 - **URL**: https://webapp-7t8.pages.dev/
 
-### 3. Bucket R2 (⚠️ À CRÉER MANUELLEMENT)
-- **Nom prévu**: `maintenance-media`
-- **Status**: Non créé (permissions API insuffisantes)
-- **Action requise**: Créer manuellement via dashboard Cloudflare
+### 3. Bucket R2 (✅ Créé et Configuré)
+- **Nom**: `maintenance-media`
+- **Status**: Actif
+- **Binding**: `MEDIA_BUCKET`
+- **Fonctionnalité**: Upload de photos/vidéos opérationnel
 
 ---
 
@@ -76,6 +77,12 @@ https://dash.cloudflare.com/
       "database_name": "maintenance-db",
       "database_id": "6e4d996c-994b-4afc-81d2-d67faab07828"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "maintenance-media"
+    }
   ]
 }
 ```
@@ -102,29 +109,14 @@ npx wrangler pages deploy dist --project-name webapp
 
 ---
 
-## ⚠️ **ACTIONS MANUELLES REQUISES**
+## ⚠️ **ACTIONS MANUELLES OPTIONNELLES**
 
-### 1. Créer le bucket R2 (si upload de médias nécessaire)
-1. Aller sur https://dash.cloudflare.com/
-2. R2 > Create bucket
-3. Nom: `maintenance-media`
-4. Ajouter dans wrangler.jsonc :
-```jsonc
-"r2_buckets": [
-  {
-    "binding": "MEDIA_BUCKET",
-    "bucket_name": "maintenance-media"
-  }
-]
-```
-5. Redéployer l'application
-
-### 2. Configurer un domaine personnalisé (optionnel)
+### 1. Configurer un domaine personnalisé (optionnel)
 1. Cloudflare Pages > webapp > Custom domains
 2. Ajouter votre domaine
 3. Suivre les instructions DNS
 
-### 3. Pousser sur GitHub (optionnel)
+### 2. Pousser sur GitHub (optionnel)
 1. Configurer GitHub via l'interface du code sandbox
 2. Ou manuellement :
 ```bash
@@ -158,18 +150,21 @@ npx wrangler d1 execute maintenance-db --remote --command="SELECT * FROM users L
 
 ### Tester l'API
 ```bash
-curl https://98a3ffaf.webapp-7t8.pages.dev/api/health
+curl https://5e61f01a.webapp-7t8.pages.dev/api/tickets
 ```
 
 ---
 
 ## 📝 **NOTES**
 
-- ✅ L'application fonctionne SANS R2 (upload de médias désactivé)
-- ✅ Toutes les autres fonctionnalités sont opérationnelles
-- ⚠️ Pour activer l'upload de médias, créer le bucket R2 manuellement
-- ✅ Les migrations de base de données sont appliquées
+- ✅ **Application 100% fonctionnelle en production**
+- ✅ Toutes les fonctionnalités sont opérationnelles
+- ✅ Upload de médias (photos/vidéos) actif via R2
+- ✅ Base de données D1 avec seed data (4 utilisateurs de test)
+- ✅ Domaine des connexions: **@igpglass.ca**
 - ✅ Design 3D professionnel avec signature Salah Khalfi
+- ✅ Système de tickets Kanban complet
+- ✅ Authentification JWT avec permissions par rôle
 
 ---
 
