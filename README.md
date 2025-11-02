@@ -24,6 +24,14 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ### ✅ Fonctionnalités implémentées
 
+#### 🎯 **NOUVEAU v1.1.0** - Drag & Drop Kanban
+- **Déplacement intuitif** des cartes entre colonnes
+- **Mise à jour automatique** du statut des tickets
+- **Animations fluides** lors du déplacement
+- **Feedback visuel** (highlight colonne, curseur grab/grabbing)
+- **Optimistic UI** - Mise à jour instantanée de l'interface
+- **Gestion d'erreur** avec rollback automatique
+
 #### 1. Authentification et Gestion des utilisateurs
 - Connexion/déconnexion avec JWT
 - 3 rôles: Admin, Technicien, Opérateur
@@ -343,6 +351,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 1.1.0  
 **Dernière mise à jour**: 2024-11-02  
-**Statut**: ✅ Production Ready
+**Statut**: ✅ Production Ready avec Drag & Drop
