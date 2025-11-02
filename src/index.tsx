@@ -55,7 +55,7 @@ app.get('/', (c) => {
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@hello-pangea/dnd@17/dist/dnd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@hello-pangea/dnd@16.5.0/dist/dnd.umd.js"></script>
     <style>
         .kanban-column {
             min-height: 400px;
@@ -69,8 +69,12 @@ app.get('/', (c) => {
             padding: 12px;
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: pointer;
+            cursor: grab;
             transition: all 0.2s;
+            user-select: none;
+        }
+        .ticket-card:active {
+            cursor: grabbing;
         }
         .ticket-card:hover {
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
@@ -225,6 +229,13 @@ app.get('/', (c) => {
         
         // Application principale avec tableau Kanban
         const MainApp = ({ tickets, onLogout, onRefresh }) => {
+            const [localTickets, setLocalTickets] = React.useState(tickets);
+            const [isDragging, setIsDragging] = React.useState(false);
+            
+            React.useEffect(() => {
+                setLocalTickets(tickets);
+            }, [tickets]);
+            
             const statuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
                 { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
@@ -235,7 +246,49 @@ app.get('/', (c) => {
             ];
             
             const getTicketsByStatus = (status) => {
-                return tickets.filter(t => t.status === status);
+                return localTickets.filter(t => t.status === status);
+            };
+            
+            const handleDragEnd = async (result) => {
+                setIsDragging(false);
+                
+                if (!result.destination) {
+                    return;
+                }
+                
+                const ticketId = parseInt(result.draggableId.replace('ticket-', ''));
+                const newStatus = result.destination.droppableId;
+                const oldStatus = result.source.droppableId;
+                
+                if (newStatus === oldStatus) {
+                    return;
+                }
+                
+                // Mise à jour optimiste de l'interface
+                setLocalTickets(prevTickets => 
+                    prevTickets.map(ticket => 
+                        ticket.id === ticketId 
+                            ? { ...ticket, status: newStatus }
+                            : ticket
+                    )
+                );
+                
+                // Mise à jour sur le serveur
+                try {
+                    await axios.patch(API_URL + '/tickets/' + ticketId, {
+                        status: newStatus,
+                        comment: 'Déplacement de ' + oldStatus + ' vers ' + newStatus
+                    });
+                } catch (error) {
+                    console.error('Erreur mise à jour ticket:', error);
+                    // Rollback en cas d'erreur
+                    setLocalTickets(tickets);
+                    alert('Erreur lors du déplacement du ticket');
+                }
+            };
+            
+            const handleDragStart = () => {
+                setIsDragging(true);
             };
             
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
@@ -265,42 +318,65 @@ app.get('/', (c) => {
                     )
                 ),
                 
-                // Tableau Kanban
+                // Tableau Kanban avec Drag & Drop
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
-                    React.createElement('div', { className: 'grid grid-cols-6 gap-4' },
-                        statuses.map(status =>
-                            React.createElement('div', { key: status.key, className: 'kanban-column' },
-                                React.createElement('div', { className: 'mb-4 flex items-center justify-between' },
-                                    React.createElement('div', { className: 'flex items-center' },
-                                        React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
-                                        React.createElement('h3', { className: 'font-bold text-gray-700' }, status.label)
+                    React.createElement(window.DragDropContext.DragDropContext, { onDragEnd: handleDragEnd, onDragStart: handleDragStart },
+                        React.createElement('div', { className: 'grid grid-cols-6 gap-4' },
+                            statuses.map(status =>
+                                React.createElement('div', { key: status.key, className: 'kanban-column' },
+                                    React.createElement('div', { className: 'mb-4 flex items-center justify-between' },
+                                        React.createElement('div', { className: 'flex items-center' },
+                                            React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
+                                            React.createElement('h3', { className: 'font-bold text-gray-700' }, status.label)
+                                        ),
+                                        React.createElement('span', { 
+                                            className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
+                                        }, getTicketsByStatus(status.key).length)
                                     ),
-                                    React.createElement('span', { 
-                                        className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
-                                    }, getTicketsByStatus(status.key).length)
-                                ),
-                                React.createElement('div', { className: 'space-y-3' },
-                                    getTicketsByStatus(status.key).map(ticket =>
-                                        React.createElement('div', {
-                                            key: ticket.id,
-                                            className: 'ticket-card priority-' + ticket.priority
-                                        },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-2' },
-                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
-                                                React.createElement('span', { 
-                                                    className: 'text-xs px-2 py-1 rounded ' + 
-                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                     'bg-green-100 text-green-800')
-                                                }, ticket.priority.toUpperCase())
+                                    React.createElement(window.DragDropContext.Droppable, { droppableId: status.key }, (provided, snapshot) =>
+                                        React.createElement('div', 
+                                            Object.assign({
+                                                ref: provided.innerRef,
+                                                className: 'space-y-3 min-h-[300px] ' + (snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg' : ''),
+                                                style: {
+                                                    minHeight: '300px',
+                                                    transition: 'background-color 0.2s ease'
+                                                }
+                                            }, provided.droppableProps),
+                                            getTicketsByStatus(status.key).map((ticket, index) =>
+                                                React.createElement(window.DragDropContext.Draggable, { 
+                                                    key: ticket.id, 
+                                                    draggableId: 'ticket-' + ticket.id, 
+                                                    index: index 
+                                                }, (provided, snapshot) =>
+                                                    React.createElement('div',
+                                                        Object.assign({
+                                                            ref: provided.innerRef,
+                                                            className: 'ticket-card priority-' + ticket.priority + (snapshot.isDragging ? ' shadow-2xl' : ''),
+                                                            style: Object.assign({}, provided.draggableProps.style, {
+                                                                cursor: isDragging ? 'grabbing' : 'grab'
+                                                            })
+                                                        }, provided.draggableProps, provided.dragHandleProps),
+                                                        React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                                                            React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
+                                                            React.createElement('span', { 
+                                                                className: 'text-xs px-2 py-1 rounded ' + 
+                                                                (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                                                                 ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                                                                 ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                                 'bg-green-100 text-green-800')
+                                                            }, ticket.priority.toUpperCase())
+                                                        ),
+                                                        React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
+                                                        React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
+                                                        React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
+                                                            React.createElement('i', { className: 'far fa-clock mr-1' }),
+                                                            new Date(ticket.created_at).toLocaleDateString('fr-FR')
+                                                        )
+                                                    )
+                                                )
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
-                                            React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
-                                            React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
-                                                React.createElement('i', { className: 'far fa-clock mr-1' }),
-                                                new Date(ticket.created_at).toLocaleDateString('fr-FR')
-                                            )
+                                            provided.placeholder
                                         )
                                     )
                                 )
