@@ -17,7 +17,8 @@ tickets.get('/', async (c) => {
         t.*,
         m.machine_type, m.model, m.serial_number, m.location,
         u1.full_name as reporter_name, u1.email as reporter_email,
-        u2.full_name as assignee_name, u2.email as assignee_email
+        u2.full_name as assignee_name, u2.email as assignee_email,
+        (SELECT COUNT(*) FROM media WHERE media.ticket_id = t.id) as media_count
       FROM tickets t
       LEFT JOIN machines m ON t.machine_id = m.id
       LEFT JOIN users u1 ON t.reported_by = u1.id

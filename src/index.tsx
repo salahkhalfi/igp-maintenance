@@ -132,11 +132,20 @@ app.get('/', (c) => {
             height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 1000;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .modal.active {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            padding: 20px 0;
+        }
+        @media (max-width: 640px) {
+            .modal.active {
+                padding: 10px 0;
+                align-items: flex-start;
+            }
         }
         .context-menu {
             position: fixed;
@@ -480,8 +489,9 @@ app.get('/', (c) => {
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-2xl w-full mx-4',
-                    onClick: (e) => e.stopPropagation()
+                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-2xl w-full mx-4 my-auto',
+                    onClick: (e) => e.stopPropagation(),
+                    style: { marginTop: 'auto', marginBottom: 'auto' }
                 },
                     React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b-2 border-igp-blue pb-4' },
                         React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
@@ -647,9 +657,192 @@ app.get('/', (c) => {
             );
         };
         
+        // Modal de détails du ticket avec galerie de médias
+        const TicketDetailsModal = ({ show, onClose, ticketId }) => {
+            const [ticket, setTicket] = React.useState(null);
+            const [loading, setLoading] = React.useState(true);
+            const [selectedMedia, setSelectedMedia] = React.useState(null);
+            
+            React.useEffect(() => {
+                if (show && ticketId) {
+                    loadTicketDetails();
+                }
+            }, [show, ticketId]);
+            
+            const loadTicketDetails = async () => {
+                try {
+                    setLoading(true);
+                    const response = await axios.get(API_URL + '/tickets/' + ticketId);
+                    setTicket(response.data.ticket);
+                } catch (error) {
+                    console.error('Erreur chargement ticket:', error);
+                    alert('Erreur lors du chargement des détails du ticket');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            if (!show) return null;
+            
+            return React.createElement('div', { 
+                className: 'modal active',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-4xl w-full mx-4 my-auto',
+                    onClick: (e) => e.stopPropagation(),
+                    style: { marginTop: 'auto', marginBottom: 'auto', maxHeight: '90vh', overflowY: 'auto' }
+                },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b-2 border-igp-blue pb-4' },
+                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
+                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-igp-orange' }),
+                            'Détails du Ticket'
+                        ),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-gray-500 hover:text-gray-700'
+                        },
+                            React.createElement('i', { className: 'fas fa-times fa-2x' })
+                        )
+                    ),
+                    
+                    loading ? React.createElement('div', { className: 'text-center py-8' },
+                        React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-igp-blue' }),
+                        React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
+                    ) : ticket ? React.createElement('div', {},
+                        // Informations du ticket
+                        React.createElement('div', { className: 'mb-6' },
+                            React.createElement('div', { className: 'flex items-center justify-between mb-4' },
+                                React.createElement('span', { className: 'text-lg font-mono text-gray-700' }, ticket.ticket_id),
+                                React.createElement('span', { 
+                                    className: 'px-3 py-1 rounded font-semibold ' + 
+                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                     'bg-green-100 text-green-800')
+                                }, 
+                                    ticket.priority === 'critical' ? '🔴 CRITIQUE' :
+                                    ticket.priority === 'high' ? '🟠 HAUTE' :
+                                    ticket.priority === 'medium' ? '🟡 MOYENNE' :
+                                    '🟢 FAIBLE'
+                                )
+                            ),
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-2' }, ticket.title),
+                            React.createElement('p', { className: 'text-gray-600 mb-4' }, ticket.description),
+                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
+                                React.createElement('div', {},
+                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Machine: '),
+                                    React.createElement('span', { className: 'text-gray-600' }, ticket.machine_type + ' ' + ticket.model)
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Statut: '),
+                                    React.createElement('span', { className: 'text-gray-600' }, ticket.status)
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Créé le: '),
+                                    React.createElement('span', { className: 'text-gray-600' }, 
+                                        new Date(ticket.created_at).toLocaleString('fr-FR')
+                                    )
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Rapporté par: '),
+                                    React.createElement('span', { className: 'text-gray-600' }, ticket.reporter_name || 'N/A')
+                                )
+                            )
+                        ),
+                        
+                        // Galerie de médias
+                        ticket.media && ticket.media.length > 0 && React.createElement('div', { className: 'mb-6' },
+                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-3 flex items-center' },
+                                React.createElement('i', { className: 'fas fa-images mr-2 text-igp-orange' }),
+                                'Photos et Vidéos (' + ticket.media.length + ')'
+                            ),
+                            React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3' },
+                                ticket.media.map((media, index) =>
+                                    React.createElement('div', { 
+                                        key: media.id,
+                                        className: 'relative group cursor-pointer',
+                                        onClick: () => setSelectedMedia(media)
+                                    },
+                                        media.file_type.startsWith('image/') 
+                                            ? React.createElement('img', {
+                                                src: API_URL + '/media/' + media.id,
+                                                alt: media.file_name,
+                                                className: 'w-full h-32 object-cover rounded border-2 border-gray-300 hover:border-igp-blue transition-all'
+                                            })
+                                            : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center' },
+                                                React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
+                                            ),
+                                        React.createElement('div', { className: 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center' },
+                                            React.createElement('i', { className: 'fas fa-search-plus text-white text-2xl opacity-0 group-hover:opacity-100 transition-all' })
+                                        ),
+                                        React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded' },
+                                            media.file_type.startsWith('image/') ? '📷' : '🎥'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        
+                        // Message si pas de médias
+                        (!ticket.media || ticket.media.length === 0) && React.createElement('div', { className: 'mb-6 text-center py-8 bg-gray-50 rounded' },
+                            React.createElement('i', { className: 'fas fa-camera text-gray-400 text-4xl mb-2' }),
+                            React.createElement('p', { className: 'text-gray-500' }, 'Aucune photo ou vidéo attachée à ce ticket')
+                        ),
+                        
+                        // Bouton fermer
+                        React.createElement('div', { className: 'flex justify-end mt-6 pt-4 border-t-2 border-gray-200' },
+                            React.createElement('button', {
+                                onClick: onClose,
+                                className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 transition-all'
+                            },
+                                React.createElement('i', { className: 'fas fa-times mr-2' }),
+                                'Fermer'
+                            )
+                        )
+                    ) : React.createElement('div', { className: 'text-center py-8' },
+                        React.createElement('p', { className: 'text-red-600' }, 'Erreur lors du chargement du ticket')
+                    )
+                ),
+                
+                // Lightbox pour médias en plein écran
+                selectedMedia && React.createElement('div', {
+                    className: 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4',
+                    onClick: () => setSelectedMedia(null)
+                },
+                    React.createElement('div', { className: 'relative max-w-6xl max-h-full' },
+                        React.createElement('button', {
+                            onClick: () => setSelectedMedia(null),
+                            className: 'absolute top-2 right-2 bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-all z-10'
+                        },
+                            React.createElement('i', { className: 'fas fa-times fa-lg' })
+                        ),
+                        selectedMedia.file_type.startsWith('image/')
+                            ? React.createElement('img', {
+                                src: API_URL + '/media/' + selectedMedia.id,
+                                alt: selectedMedia.file_name,
+                                className: 'max-w-full max-h-screen object-contain',
+                                onClick: (e) => e.stopPropagation()
+                            })
+                            : React.createElement('video', {
+                                src: API_URL + '/media/' + selectedMedia.id,
+                                controls: true,
+                                className: 'max-w-full max-h-screen',
+                                onClick: (e) => e.stopPropagation()
+                            }),
+                        React.createElement('div', { className: 'absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-3 py-2 rounded text-sm' },
+                            selectedMedia.file_name + ' - ' + Math.round(selectedMedia.file_size / 1024) + ' KB'
+                        )
+                    )
+                )
+            );
+        };
+        
         // Application principale
         const MainApp = ({ tickets, machines, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
+            const [selectedTicketId, setSelectedTicketId] = React.useState(null);
+            const [showDetailsModal, setShowDetailsModal] = React.useState(false);
             
             const statuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
@@ -696,6 +889,14 @@ app.get('/', (c) => {
                 
                 const nextStatus = statusFlow[currentIndex + 1];
                 await moveTicketToStatus(ticket, nextStatus);
+            };
+            
+            const handleTicketClick = (e, ticket) => {
+                // Si c'est un clic normal (pas drag, pas contextmenu), ouvrir les détails
+                if (e.type === 'click' && !e.defaultPrevented) {
+                    setSelectedTicketId(ticket.id);
+                    setShowDetailsModal(true);
+                }
             };
             
             const handleContextMenu = (e, ticket) => {
@@ -818,6 +1019,16 @@ app.get('/', (c) => {
                     onTicketCreated: onTicketCreated
                 }),
                 
+                // Modal de détails avec galerie
+                React.createElement(TicketDetailsModal, {
+                    show: showDetailsModal,
+                    onClose: () => {
+                        setShowDetailsModal(false);
+                        setSelectedTicketId(null);
+                    },
+                    ticketId: selectedTicketId
+                }),
+                
                 // Header
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
@@ -895,13 +1106,14 @@ app.get('/', (c) => {
                                             key: ticket.id,
                                             className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
                                             draggable: true,
+                                            onClick: (e) => handleTicketClick(e, ticket),
                                             onDragStart: (e) => handleDragStart(e, ticket),
                                             onDragEnd: handleDragEnd,
                                             onTouchStart: (e) => handleTouchStart(e, ticket),
                                             onTouchMove: handleTouchMove,
                                             onTouchEnd: handleTouchEnd,
                                             onContextMenu: (e) => handleContextMenu(e, ticket),
-                                            title: 'Glisser-déposer pour déplacer | Clic droit: menu'
+                                            title: 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
@@ -920,6 +1132,11 @@ app.get('/', (c) => {
                                             ),
                                             React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
                                             React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
+                                            // Afficher les médias attachés
+                                            ticket.media_count > 0 && React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
+                                                React.createElement('i', { className: 'fas fa-camera mr-1' }),
+                                                ticket.media_count + ' photo(s)/vidéo(s)'
+                                            ),
                                             React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
                                                 React.createElement('i', { className: 'far fa-clock mr-1' }),
                                                 new Date(ticket.created_at).toLocaleDateString('fr-FR')
@@ -981,7 +1198,7 @@ app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.5.0'
+    version: '1.6.0'
   });
 });
 
