@@ -255,86 +255,6 @@ app.get('/', (c) => {
         };
         
         
-        const App = () => {
-            const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
-            const [tickets, setTickets] = React.useState([]);
-            const [machines, setMachines] = React.useState([]);
-            const [loading, setLoading] = React.useState(true);
-            const [showCreateModal, setShowCreateModal] = React.useState(false);
-            const [contextMenu, setContextMenu] = React.useState(null);
-            
-            React.useEffect(() => {
-                if (isLoggedIn) {
-                    loadData();
-                }
-            }, [isLoggedIn]);
-            
-            const loadData = async () => {
-                try {
-                    const [ticketsRes, machinesRes, userRes] = await Promise.all([
-                        axios.get(API_URL + '/tickets'),
-                        axios.get(API_URL + '/machines'),
-                        axios.get(API_URL + '/auth/me')
-                    ]);
-                    setTickets(ticketsRes.data.tickets);
-                    setMachines(machinesRes.data.machines);
-                    currentUser = userRes.data.user;
-                    setLoading(false);
-                } catch (error) {
-                    console.error('Erreur chargement:', error);
-                    if (error.response?.status === 401) {
-                        logout();
-                    }
-                }
-            };
-            
-            const login = async (email, password) => {
-                try {
-                    const response = await axios.post(API_URL + '/auth/login', { email, password });
-                    authToken = response.data.token;
-                    currentUser = response.data.user;
-                    localStorage.setItem('auth_token', authToken);
-                    axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
-                    setIsLoggedIn(true);
-                } catch (error) {
-                    alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
-                }
-            };
-            
-            const logout = () => {
-                localStorage.removeItem('auth_token');
-                delete axios.defaults.headers.common['Authorization'];
-                authToken = null;
-                currentUser = null;
-                setIsLoggedIn(false);
-            };
-            
-            if (!isLoggedIn) {
-                return React.createElement(LoginForm, { onLogin: login });
-            }
-            
-            if (loading) {
-                return React.createElement('div', { className: 'flex items-center justify-center h-screen' },
-                    React.createElement('div', { className: 'text-center' },
-                        React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-blue-500 mb-4' }),
-                        React.createElement('p', { className: 'text-gray-600' }, 'Chargement...')
-                    )
-                );
-            }
-            
-            return React.createElement(MainApp, { 
-                tickets, 
-                machines,
-                currentUser: currentUser,
-                onLogout: logout,
-                onRefresh: loadData,
-                showCreateModal,
-                setShowCreateModal,
-                onTicketCreated: loadData
-            });
-        };
-        
-        
         const LoginForm = ({ onLogin }) => {
             const [email, setEmail] = React.useState('admin@igpglass.ca');
             const [password, setPassword] = React.useState('password123');
@@ -686,7 +606,7 @@ app.get('/', (c) => {
                         )
                     )
                 )
-            );
+            ));
         };
         
         
@@ -767,7 +687,7 @@ app.get('/', (c) => {
                     setCommentAuthor('');
                     loadComments();
                 } catch (error) {
-                    alert('Erreur lors de l\'ajout du commentaire');
+                    alert('Erreur lors de l\\'ajout du commentaire');
                 } finally {
                     setSubmittingComment(false);
                 }
@@ -812,7 +732,7 @@ app.get('/', (c) => {
                     setNewMediaPreviews([]);
                     loadTicketDetails();
                 } catch (error) {
-                    alert('Erreur lors de l\'upload des médias');
+                    alert('Erreur lors de l\\'upload des médias');
                 } finally {
                     setUploadingMedia(false);
                 }
@@ -836,8 +756,8 @@ app.get('/', (c) => {
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
                             (ticket && currentUser && (
-                                currentUser.role === 'technician' || 
-                                currentUser.role === 'admin' ||
+                                (currentUser.role === 'technician') || 
+                                (currentUser.role === 'admin') ||
                                 (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
                             )) ? React.createElement('button', {
                                 onClick: handleDeleteTicket,
@@ -1552,7 +1472,87 @@ app.get('/', (c) => {
                         );
                     })
                 ) : null
-            ));
+            );
+        };
+        
+        
+        const App = () => {
+            const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
+            const [tickets, setTickets] = React.useState([]);
+            const [machines, setMachines] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+            const [showCreateModal, setShowCreateModal] = React.useState(false);
+            const [contextMenu, setContextMenu] = React.useState(null);
+            
+            React.useEffect(() => {
+                if (isLoggedIn) {
+                    loadData();
+                }
+            }, [isLoggedIn]);
+            
+            const loadData = async () => {
+                try {
+                    const [ticketsRes, machinesRes, userRes] = await Promise.all([
+                        axios.get(API_URL + '/tickets'),
+                        axios.get(API_URL + '/machines'),
+                        axios.get(API_URL + '/auth/me')
+                    ]);
+                    setTickets(ticketsRes.data.tickets);
+                    setMachines(machinesRes.data.machines);
+                    currentUser = userRes.data.user;
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Erreur chargement:', error);
+                    if (error.response?.status === 401) {
+                        logout();
+                    }
+                }
+            };
+            
+            const login = async (email, password) => {
+                try {
+                    const response = await axios.post(API_URL + '/auth/login', { email, password });
+                    authToken = response.data.token;
+                    currentUser = response.data.user;
+                    localStorage.setItem('auth_token', authToken);
+                    axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
+                    setIsLoggedIn(true);
+                } catch (error) {
+                    alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                }
+            };
+            
+            const logout = () => {
+                localStorage.removeItem('auth_token');
+                delete axios.defaults.headers.common['Authorization'];
+                authToken = null;
+                currentUser = null;
+                setIsLoggedIn(false);
+            };
+            
+            if (!isLoggedIn) {
+                return React.createElement(LoginForm, { onLogin: login });
+            }
+            
+            if (loading) {
+                return React.createElement('div', { className: 'flex items-center justify-center h-screen' },
+                    React.createElement('div', { className: 'text-center' },
+                        React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-blue-500 mb-4' }),
+                        React.createElement('p', { className: 'text-gray-600' }, 'Chargement...')
+                    )
+                );
+            }
+            
+            return React.createElement(MainApp, { 
+                tickets, 
+                machines,
+                currentUser: currentUser,
+                onLogout: logout,
+                onRefresh: loadData,
+                showCreateModal,
+                setShowCreateModal,
+                onTicketCreated: loadData
+            });
         };
         
         
@@ -1564,6 +1564,33 @@ app.get('/', (c) => {
   `);
 });
 
+
+// Route de test simple
+app.get('/test', (c) => {
+  return c.html(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Simple</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+        const App = () => {
+            return React.createElement('div', { style: { padding: '20px', fontSize: '24px', fontFamily: 'Arial' } },
+                'Hello World! React fonctionne! ✅'
+            );
+        };
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>
+  `);
+});
 
 app.get('/api/health', (c) => {
   return c.json({ 
