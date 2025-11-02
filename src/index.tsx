@@ -36,9 +36,6 @@ app.use('/api/media/*', authMiddleware);
 
 app.route('/api/media', media);
 
-// Servir les fichiers statiques depuis /static/*
-app.use('/static/*', serveStatic({ root: './public' }));
-
 // Page d'accueil avec interface React
 app.get('/', (c) => {
   return c.html(`
@@ -48,7 +45,7 @@ app.get('/', (c) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IGP - Système de Gestion de Maintenance</title>
-    <link rel="icon" type="image/png" href="/logo-igp.png">
+    <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -314,7 +311,7 @@ app.get('/', (c) => {
         
         // Formulaire de connexion
         const LoginForm = ({ onLogin }) => {
-            const [email, setEmail] = React.useState('admin@maintenance.com');
+            const [email, setEmail] = React.useState('admin@igpglass.ca');
             const [password, setPassword] = React.useState('password123');
             
             const handleSubmit = (e) => {
@@ -326,7 +323,7 @@ app.get('/', (c) => {
                 React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96 max-w-md mx-4' },
                     React.createElement('div', { className: 'text-center mb-8' },
                         React.createElement('img', { 
-                            src: '/logo-igp.png', 
+                            src: '/static/logo-igp.png', 
                             alt: 'IGP Logo',
                             className: 'h-20 w-auto mx-auto mb-4'
                         }),
@@ -372,9 +369,10 @@ app.get('/', (c) => {
                         )
                     ),
                     React.createElement('div', { className: 'mt-4 text-sm text-gray-600 text-center' },
-                        React.createElement('p', {}, 'Comptes de test:'),
-                        React.createElement('p', {}, 'admin@maintenance.com'),
-                        React.createElement('p', {}, 'operator@maintenance.com')
+                        React.createElement('p', { className: 'font-semibold' }, 'Comptes de test:'),
+                        React.createElement('p', { className: 'text-igp-blue' }, 'admin@igpglass.ca'),
+                        React.createElement('p', { className: 'text-igp-blue' }, 'technicien@igpglass.ca'),
+                        React.createElement('p', { className: 'text-igp-blue' }, 'operateur@igpglass.ca')
                     )
                 )
             );
@@ -710,7 +708,7 @@ app.get('/', (c) => {
                         React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
                             React.createElement('div', { className: 'flex items-center space-x-3' },
                                 React.createElement('img', { 
-                                    src: '/logo-igp.png', 
+                                    src: '/static/logo-igp.png', 
                                     alt: 'IGP Logo',
                                     className: 'h-12 md:h-16 w-auto object-contain'
                                 }),
@@ -792,12 +790,17 @@ app.get('/', (c) => {
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
                                                 React.createElement('span', { 
-                                                    className: 'text-xs px-2 py-1 rounded ' + 
+                                                    className: 'text-xs px-2 py-1 rounded font-semibold ' + 
                                                     (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
                                                      ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                                                      'bg-green-100 text-green-800')
-                                                }, ticket.priority.toUpperCase())
+                                                }, 
+                                                    ticket.priority === 'critical' ? 'CRITIQUE' :
+                                                    ticket.priority === 'high' ? 'HAUTE' :
+                                                    ticket.priority === 'medium' ? 'MOYENNE' :
+                                                    'FAIBLE'
+                                                )
                                             ),
                                             React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
                                             React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
@@ -862,7 +865,7 @@ app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.2.0'
+    version: '1.5.0'
   });
 });
 

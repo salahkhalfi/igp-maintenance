@@ -1,12 +1,12 @@
 -- Données de test pour l'application de maintenance
 
--- Utilisateurs de test (mot de passe: "password123" hashé avec SHA-256)
+-- Utilisateurs IGP de test (mot de passe: "password123" hashé avec SHA-256)
 -- Hash SHA-256 de "password123": ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f
 INSERT OR IGNORE INTO users (email, password_hash, full_name, role) VALUES 
-  ('admin@maintenance.com', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Admin Principal', 'admin'),
-  ('tech1@maintenance.com', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Technicien Martin', 'technician'),
-  ('tech2@maintenance.com', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Technicien Sophie', 'technician'),
-  ('operator@maintenance.com', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Opérateur Jean', 'operator');
+  ('admin@igpglass.ca', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Administrateur IGP', 'admin'),
+  ('technicien@igpglass.ca', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Technicien Martin Tremblay', 'technician'),
+  ('technicien2@igpglass.ca', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Technicienne Sophie Gagnon', 'technician'),
+  ('operateur@igpglass.ca', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Opérateur Jean Dubois', 'operator');
 
 -- Machines réelles
 INSERT OR IGNORE INTO machines (machine_type, model, serial_number, location, status) VALUES 
