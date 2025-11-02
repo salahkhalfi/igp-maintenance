@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { serveStatic } from 'hono/cloudflare-workers';
 import { authMiddleware, adminOnly, technicianOrAdmin } from './middlewares/auth';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
