@@ -384,25 +384,86 @@ app.get('/', (c) => {
             const [description, setDescription] = React.useState('');
             const [machineId, setMachineId] = React.useState('');
             const [priority, setPriority] = React.useState('medium');
+            const [mediaFiles, setMediaFiles] = React.useState([]);
+            const [mediaPreviews, setMediaPreviews] = React.useState([]);
             const [submitting, setSubmitting] = React.useState(false);
+            const [uploadProgress, setUploadProgress] = React.useState(0);
+            
+            const handleFileChange = (e) => {
+                const files = Array.from(e.target.files);
+                setMediaFiles(prevFiles => [...prevFiles, ...files]);
+                
+                // Créer des aperçus pour les images/vidéos
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setMediaPreviews(prev => [...prev, {
+                            url: reader.result,
+                            type: file.type,
+                            name: file.name,
+                            size: file.size
+                        }]);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+            
+            const removeMedia = (index) => {
+                setMediaFiles(prev => prev.filter((_, i) => i !== index));
+                setMediaPreviews(prev => prev.filter((_, i) => i !== index));
+            };
+            
+            const uploadMediaFiles = async (ticketId) => {
+                if (mediaFiles.length === 0) return;
+                
+                for (let i = 0; i < mediaFiles.length; i++) {
+                    const file = mediaFiles[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('ticket_id', ticketId);
+                    
+                    try {
+                        await axios.post(API_URL + '/media/upload', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                        setUploadProgress(Math.round(((i + 1) / mediaFiles.length) * 100));
+                    } catch (error) {
+                        console.error('Erreur upload média:', error);
+                    }
+                }
+            };
             
             const handleSubmit = async (e) => {
                 e.preventDefault();
                 setSubmitting(true);
+                setUploadProgress(0);
                 
                 try {
-                    await axios.post(API_URL + '/tickets', {
+                    // 1. Créer le ticket
+                    const response = await axios.post(API_URL + '/tickets', {
                         title,
                         description,
                         machine_id: parseInt(machineId),
                         priority
                     });
                     
-                    alert('Ticket créé avec succès !');
+                    const ticketId = response.data.ticket.id;
+                    
+                    // 2. Uploader les médias si présents
+                    if (mediaFiles.length > 0) {
+                        await uploadMediaFiles(ticketId);
+                    }
+                    
+                    alert('Ticket créé avec succès !' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s) uploadé(s))' : ''));
+                    
+                    // Reset form
                     setTitle('');
                     setDescription('');
                     setMachineId('');
                     setPriority('medium');
+                    setMediaFiles([]);
+                    setMediaPreviews([]);
+                    setUploadProgress(0);
                     onClose();
                     onTicketCreated();
                 } catch (error) {
@@ -482,6 +543,59 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
+                                React.createElement('i', { className: 'fas fa-camera mr-2 text-igp-orange' }),
+                                'Photos / Vidéos du problème'
+                            ),
+                            React.createElement('input', {
+                                type: 'file',
+                                accept: 'image/*,video/*',
+                                capture: 'environment',
+                                multiple: true,
+                                onChange: handleFileChange,
+                                className: 'hidden',
+                                id: 'media-upload'
+                            }),
+                            React.createElement('label', {
+                                htmlFor: 'media-upload',
+                                className: 'w-full px-4 py-3 border-2 border-dashed border-igp-blue rounded-md text-center cursor-pointer hover:bg-blue-50 transition-all flex items-center justify-center text-igp-blue font-semibold'
+                            },
+                                React.createElement('i', { className: 'fas fa-camera mr-2' }),
+                                'Prendre une photo ou vidéo'
+                            ),
+                            mediaPreviews.length > 0 && React.createElement('div', { className: 'mt-3 grid grid-cols-3 gap-2' },
+                                mediaPreviews.map((preview, index) =>
+                                    React.createElement('div', { 
+                                        key: index, 
+                                        className: 'relative group'
+                                    },
+                                        preview.type.startsWith('image/') 
+                                            ? React.createElement('img', {
+                                                src: preview.url,
+                                                alt: preview.name,
+                                                className: 'w-full h-24 object-cover rounded border-2 border-gray-300'
+                                            })
+                                            : React.createElement('video', {
+                                                src: preview.url,
+                                                className: 'w-full h-24 object-cover rounded border-2 border-gray-300',
+                                                controls: false
+                                            }),
+                                        React.createElement('button', {
+                                            type: 'button',
+                                            onClick: () => removeMedia(index),
+                                            className: 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-times text-xs' })
+                                        ),
+                                        React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded' },
+                                            preview.type.startsWith('image/') ? '📷' : '🎥',
+                                            ' ' + Math.round(preview.size / 1024) + ' KB'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
                         React.createElement('div', { className: 'mb-6' },
                             React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
                                 React.createElement('i', { className: 'fas fa-exclamation-triangle mr-2' }),
@@ -523,7 +637,9 @@ app.get('/', (c) => {
                                 submitting 
                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
                                     : React.createElement('i', { className: 'fas fa-check mr-2' }),
-                                submitting ? 'Création...' : 'Créer le ticket'
+                                submitting 
+                                    ? (uploadProgress > 0 ? 'Upload: ' + uploadProgress + '%' : 'Création...')
+                                    : 'Créer le ticket' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s))' : '')
                             )
                         )
                     )

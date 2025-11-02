@@ -12,13 +12,14 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.0.0 - Prêt pour le déploiement**
+✅ **Version 1.5.0 - Prêt pour le déploiement**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
+- **NOUVEAU**: Upload de photos/vidéos depuis mobile lors de la création de tickets
 
 ## 🚀 Fonctionnalités
 
@@ -53,6 +54,38 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Desktop** (> 1024px): Grille 6 colonnes, drag horizontal optimisé
 - **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
 - **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
+
+#### 🆕 **NOUVEAU v1.5.0** - Upload de photos/vidéos mobile
+
+##### 📸 Capture depuis mobile
+- **Accès direct à la caméra** - Bouton "Prendre une photo ou vidéo" avec `capture="environment"`
+- **Upload multiple** - Possibilité d'ajouter plusieurs médias à un ticket
+- **Preview en temps réel** - Aperçu des photos/vidéos avant envoi
+- **Barre de progression** - Indicateur visuel de l'upload en cours
+- **Grille de miniatures** - Affichage en grille 3 colonnes avec info de taille
+- **Suppression individuelle** - Bouton X au survol pour retirer un média
+- **Support formats** - Images (JPEG, PNG, WebP) et vidéos (MP4, WebM)
+- **Stockage R2** - Upload sécurisé vers Cloudflare R2 Storage
+- **Organisation** - Médias organisés par ticket: `tickets/{ticketId}/{timestamp}-{filename}`
+
+##### 🎯 Interface utilisateur
+- **Bouton caméra** - Style IGP avec icône FontAwesome `fa-camera`
+- **Bordure pointillée** - Zone de drop visuelle en bleu IGP
+- **Preview grid** - Miniatures 24px de hauteur avec object-cover
+- **Badges de fichier** - Type (📷/🎥) et taille (KB) affichés sur chaque média
+- **Compteur** - Nombre de médias dans le bouton de soumission: "Créer le ticket (2 média(s))"
+- **Progress upload** - "Upload: 50%" pendant l'envoi
+
+##### 💡 Utilisation
+1. Opérateur clique sur "Nouveau Ticket"
+2. Remplit les informations (titre, description, machine, priorité)
+3. Clique sur "Prendre une photo ou vidéo"
+4. Caméra s'ouvre automatiquement sur mobile
+5. Prend photo/vidéo du problème
+6. Aperçu s'affiche dans grille 3 colonnes
+7. Peut ajouter d'autres médias ou supprimer
+8. Soumet le ticket - upload vers R2 en arrière-plan
+9. Ticket créé avec médias attachés pour l'équipe maintenance
 
 #### 1. Authentification et Gestion des utilisateurs
 - Connexion/déconnexion avec JWT
@@ -261,10 +294,10 @@ Pour tester l'application localement:
 
 | Email | Mot de passe | Rôle |
 |-------|-------------|------|
-| admin@maintenance.com | password123 | Admin |
-| tech1@maintenance.com | password123 | Technicien |
-| tech2@maintenance.com | password123 | Technicien |
-| operator@maintenance.com | password123 | Opérateur |
+| admin@igpglass.ca | password123 | Admin |
+| technicien@igpglass.ca | password123 | Technicien Martin Tremblay |
+| technicien2@igpglass.ca | password123 | Technicienne Sophie Gagnon |
+| operateur@igpglass.ca | password123 | Opérateur Jean Dubois |
 
 ## 📁 Structure du projet
 
@@ -298,11 +331,12 @@ webapp/
 ## 🎯 Prochaines étapes recommandées
 
 ### Améliorations prioritaires
-1. **Page de détails ticket** - Vue détaillée avec timeline et médias complets
-2. **Notifications** - Alertes pour nouveaux tickets et changements de statut
-3. **Statistiques** - Dashboard avec métriques de maintenance
-4. **Export PDF** - Génération de rapports d'intervention
-5. **Recherche et filtres** - Recherche par ID, machine, priorité
+1. **Page de détails ticket avec galerie de médias** - Vue détaillée avec timeline et galerie photos/vidéos complète
+2. **Compression d'images client-side** - Réduire la taille avant upload pour économiser bande passante
+3. **Notifications** - Alertes pour nouveaux tickets et changements de statut
+4. **Statistiques** - Dashboard avec métriques de maintenance
+5. **Export PDF** - Génération de rapports d'intervention avec photos intégrées
+6. **Recherche et filtres** - Recherche par ID, machine, priorité
 
 ### Fonctionnalités avancées
 - **Recherche avancée** avec filtres multiples
@@ -327,7 +361,8 @@ webapp/
 - Le mot de passe utilise SHA-256 (simple) - à remplacer par bcrypt pour la production
 - Les URLs R2 sont génériques - configurer un domaine personnalisé
 - Les tests unitaires ne sont pas encore implémentés
-- La page de détails des tickets reste à implémenter
+- **La page de détails des tickets reste à implémenter** (affichage de la galerie de médias uploadés)
+- **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 
 ### Variables d'environnement
 Créer un fichier `.dev.vars` pour le développement local:
@@ -404,6 +439,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.4.0  
+**Version**: 1.5.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready - Drag-and-Drop natif Desktop & Mobile
+**Statut**: ✅ Production Ready - Upload de photos/vidéos depuis mobile + Drag-and-Drop natif
