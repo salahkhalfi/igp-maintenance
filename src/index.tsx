@@ -607,7 +607,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-camera mr-2' }),
                                 'Prendre une photo ou vidéo'
                             ),
-                            mediaPreviews.length > 0 && React.createElement('div', { className: 'mt-3 grid grid-cols-3 gap-2' },
+                            mediaPreviews.length > 0 ? React.createElement('div', { className: 'mt-3 grid grid-cols-3 gap-2' },
                                 mediaPreviews.map((preview, index) =>
                                     React.createElement('div', { 
                                         key: index, 
@@ -637,8 +637,7 @@ app.get('/', (c) => {
                                         )
                                     )
                                 )
-                            )
-                        ),
+                            ) : null,
                         React.createElement('div', { className: 'mb-6' },
                             React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
                                 React.createElement('i', { className: 'fas fa-exclamation-triangle mr-2' }),
@@ -837,17 +836,17 @@ app.get('/', (c) => {
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
                             // Bouton suppression: visible si technicien/admin OU si opérateur et c'est son ticket
-                            ticket && currentUser && (
+                            (ticket && currentUser && (
                                 currentUser.role === 'technician' || 
                                 currentUser.role === 'admin' ||
                                 (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
-                            ) && React.createElement('button', {
+                            )) ? React.createElement('button', {
                                 onClick: handleDeleteTicket,
                                 className: 'text-red-500 hover:text-red-700 transition-colors',
                                 title: 'Supprimer ce ticket'
                             },
                                 React.createElement('i', { className: 'fas fa-trash-alt fa-2x' })
-                            ),
+                            ) : null,
                             React.createElement('button', {
                                 onClick: onClose,
                                 className: 'text-gray-500 hover:text-gray-700'
@@ -903,7 +902,7 @@ app.get('/', (c) => {
                         ),
                         
                         // Galerie de médias
-                        ticket.media && ticket.media.length > 0 && React.createElement('div', { className: 'mb-6' },
+                        (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-6' },
                             React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-3 flex items-center' },
                                 React.createElement('i', { className: 'fas fa-images mr-2 text-igp-orange' }),
                                 'Photos et Vidéos (' + ticket.media.length + ')'
@@ -933,13 +932,13 @@ app.get('/', (c) => {
                                     )
                                 )
                             )
-                        ),
+                        ) : null,
                         
                         // Message si pas de médias
-                        (!ticket.media || ticket.media.length === 0) && React.createElement('div', { className: 'mb-6 text-center py-8 bg-gray-50 rounded' },
+                        (!ticket.media || ticket.media.length === 0) ? React.createElement('div', { className: 'mb-6 text-center py-8 bg-gray-50 rounded' },
                             React.createElement('i', { className: 'fas fa-camera text-gray-400 text-4xl mb-2' }),
                             React.createElement('p', { className: 'text-gray-500' }, 'Aucune photo ou vidéo attachée à ce ticket')
-                        ),
+                        ) : null,
                         
                         // Section des commentaires
                         React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
@@ -1063,7 +1062,7 @@ app.get('/', (c) => {
                             ),
                             
                             // Aperçu des nouveaux fichiers sélectionnés
-                            newMediaPreviews.length > 0 && React.createElement('div', { className: 'mb-4' },
+                            newMediaPreviews.length > 0 ? React.createElement('div', { className: 'mb-4' },
                                 React.createElement('p', { className: 'text-sm font-semibold text-gray-700 mb-2' },
                                     React.createElement('i', { className: 'fas fa-images mr-1' }),
                                     newMediaPreviews.length + ' fichier(s) sélectionné(s)'
@@ -1114,7 +1113,7 @@ app.get('/', (c) => {
                                             'Uploader ces fichiers'
                                         )
                                 )
-                            ),
+                            ) : null,
                             
                             // Bouton de sélection de fichiers
                             React.createElement('div', { className: 'text-center' },
@@ -1155,7 +1154,7 @@ app.get('/', (c) => {
                 ),
                 
                 // Lightbox pour médias en plein écran
-                selectedMedia && React.createElement('div', {
+                selectedMedia ? React.createElement('div', {
                     className: 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4',
                     onClick: () => setSelectedMedia(null)
                 },
@@ -1183,7 +1182,7 @@ app.get('/', (c) => {
                             selectedMedia.file_name + ' - ' + Math.round(selectedMedia.file_size / 1024) + ' KB'
                         )
                     )
-                )
+                ) : null
             );
         };
         
@@ -1506,10 +1505,10 @@ app.get('/', (c) => {
                                             React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
                                             React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
                                             // Afficher les médias attachés
-                                            ticket.media_count > 0 && React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
+                                            ticket.media_count > 0 ? React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
                                                 React.createElement('i', { className: 'fas fa-camera mr-1' }),
                                                 ticket.media_count + ' photo(s)/vidéo(s)'
-                                            ),
+                                            ) : null,
                                             React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
                                                 React.createElement('i', { className: 'far fa-clock mr-1' }),
                                                 new Date(ticket.created_at).toLocaleDateString('fr-FR')
@@ -1523,7 +1522,7 @@ app.get('/', (c) => {
                 ),
                 
                 // Menu contextuel
-                contextMenu && React.createElement('div', {
+                contextMenu ? React.createElement('div', {
                     className: 'context-menu',
                     style: {
                         top: contextMenu.y + 'px',
@@ -1550,10 +1549,10 @@ app.get('/', (c) => {
                                 className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' 
                             }),
                             status.label,
-                            isCurrentStatus && React.createElement('span', { className: 'ml-2 text-xs text-gray-400' }, '(actuel)')
+                            isCurrentStatus ? React.createElement('span', { className: 'ml-2 text-xs text-gray-400' }, '(actuel)') : null
                         );
                     })
-                )
+                ) : null
             );
         };
         
