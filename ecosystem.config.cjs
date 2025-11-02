@@ -3,10 +3,10 @@ module.exports = {
     {
       name: 'maintenance-app',
       script: 'npx',
-      args: 'wrangler pages dev dist --d1=maintenance-db --local --ip 0.0.0.0 --port 3000',
+      args: 'wrangler pages dev dist --d1=maintenance-db --local --ip 0.0.0.0 --port 8080',
       env: {
         NODE_ENV: 'development',
-        PORT: 3000
+        PORT: 8080
       },
       watch: false,
       instances: 1,
