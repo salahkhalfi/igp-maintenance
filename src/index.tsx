@@ -384,12 +384,6 @@ app.get('/', (c) => {
                             'Se connecter'
                         )
                     ),
-                    React.createElement('div', { className: 'mt-4 text-sm text-gray-600 text-center' },
-                        React.createElement('p', { className: 'font-semibold' }, 'Comptes de test:'),
-                        React.createElement('p', { className: 'text-igp-blue' }, 'admin@igpglass.ca'),
-                        React.createElement('p', { className: 'text-igp-blue' }, 'technicien@igpglass.ca'),
-                        React.createElement('p', { className: 'text-igp-blue' }, 'operateur@igpglass.ca')
-                    ),
                     React.createElement('div', { className: 'mt-8 pt-6 border-t border-gray-200 text-center' },
                         React.createElement('p', { className: 'text-xs text-gray-500' },
                             React.createElement('i', { className: 'fas fa-code mr-1' }),
