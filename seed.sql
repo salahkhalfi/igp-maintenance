@@ -8,21 +8,25 @@ INSERT OR IGNORE INTO users (email, password_hash, full_name, role) VALUES
   ('tech2@maintenance.com', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Technicien Sophie', 'technician'),
   ('operator@maintenance.com', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'Opérateur Jean', 'operator');
 
--- Machines de test
+-- Machines réelles
 INSERT OR IGNORE INTO machines (machine_type, model, serial_number, location, status) VALUES 
-  ('PDE', '7500', 'IGP-PDE-7500-2023', 'Atelier A - Zone 1', 'operational'),
-  ('PDE', '8000', 'IGP-PDE-8000-2023', 'Atelier A - Zone 2', 'operational'),
-  ('CNC', 'X-500', 'IGP-CNC-X500-2022', 'Atelier B - Zone 1', 'operational'),
-  ('Presse', 'HP-200', 'IGP-PRESSE-HP200-2021', 'Atelier C', 'maintenance'),
-  ('Robot', 'ABB-IRB', 'IGP-ROBOT-IRB-2024', 'Atelier B - Zone 2', 'operational');
+  ('Polisseuse', 'Double Edger', 'PDE-001', 'Atelier Polissage', 'operational'),
+  ('Polisseuse', 'Bavelloni', 'BAV-001', 'Atelier Polissage', 'operational'),
+  ('CNC', 'Machine CNC', 'CNC-001', 'Atelier Usinage', 'operational'),
+  ('WaterJet', 'Machine WaterJet', 'WJ-001', 'Atelier Découpe', 'operational'),
+  ('Four', 'Four de trempe', 'FOUR-001', 'Atelier Traitement', 'operational'),
+  ('Thermos', 'Thermos', 'THERM-001', 'Atelier Assemblage', 'operational'),
+  ('Découpe', 'Découpe', 'DEC-001', 'Atelier Découpe', 'operational'),
+  ('Laminé', 'Laminé', 'LAM-001', 'Atelier Laminage', 'operational'),
+  ('Autre', 'Autre', 'AUT-001', 'Divers', 'operational');
 
 -- Tickets de test
 INSERT OR IGNORE INTO tickets (ticket_id, title, description, machine_id, status, priority, reported_by, assigned_to) VALUES 
-  ('IGP-PDE-7500-20231025-001', 'Bruit anormal sur la machine PDE-7500', 'Un bruit métallique se produit lors du démarrage de la machine. Nécessite un diagnostic urgent.', 1, 'diagnostic', 'high', 4, 2),
-  ('IGP-CNC-X500-20231024-002', 'Fuite d''huile détectée', 'Fuite d''huile hydraulique au niveau du vérin principal. Intervention rapide nécessaire.', 3, 'in_progress', 'critical', 4, 2),
-  ('IGP-PRESSE-HP200-20231023-003', 'Panne électrique', 'La presse ne démarre plus. Vérification du système électrique en cours.', 4, 'waiting_parts', 'high', 1, 3),
-  ('IGP-PDE-8000-20231020-004', 'Maintenance préventive programmée', 'Contrôle trimestriel et remplacement des filtres selon planning.', 2, 'received', 'medium', 1, NULL),
-  ('IGP-ROBOT-IRB-20231015-005', 'Calibration terminée avec succès', 'Recalibration du bras robotique après maintenance. Tests validés.', 5, 'completed', 'medium', 2, 2);
+  ('IGP-POLISSEUSE-DOUBLEEDGER-20231025-001', 'Bruit anormal sur la Polisseuse Double Edger', 'Un bruit métallique se produit lors du démarrage de la machine. Nécessite un diagnostic urgent.', 1, 'diagnostic', 'high', 4, 2),
+  ('IGP-CNC-MACHINECNC-20231024-002', 'Fuite d''huile détectée sur CNC', 'Fuite d''huile hydraulique au niveau du vérin principal. Intervention rapide nécessaire.', 3, 'in_progress', 'critical', 4, 2),
+  ('IGP-WATERJET-MACHINEWATERJET-20231023-003', 'Problème de pression WaterJet', 'La machine WaterJet ne maintient pas la pression nécessaire. Vérification en cours.', 4, 'waiting_parts', 'high', 1, 3),
+  ('IGP-FOUR-FOURDETREMPE-20231020-004', 'Maintenance préventive programmée', 'Contrôle trimestriel du four de trempe selon planning.', 5, 'received', 'medium', 1, NULL),
+  ('IGP-POLISSEUSE-BAVELLONI-20231015-005', 'Calibration terminée avec succès', 'Recalibration de la Polisseuse Bavelloni après maintenance. Tests validés.', 2, 'completed', 'medium', 2, 2);
 
 -- Historique des tickets (timeline)
 INSERT OR IGNORE INTO ticket_timeline (ticket_id, user_id, action, old_status, new_status, comment) VALUES 

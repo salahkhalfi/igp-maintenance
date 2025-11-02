@@ -409,6 +409,27 @@ app.get('/', (c) => {
                 return tickets.filter(t => t.status === status);
             };
             
+            const moveTicketToNext = async (ticket) => {
+                const statusFlow = ['received', 'diagnostic', 'in_progress', 'waiting_parts', 'completed', 'archived'];
+                const currentIndex = statusFlow.indexOf(ticket.status);
+                
+                if (currentIndex === -1 || currentIndex === statusFlow.length - 1) {
+                    return; // Déjà au dernier statut
+                }
+                
+                const nextStatus = statusFlow[currentIndex + 1];
+                
+                try {
+                    await axios.patch(API_URL + '/tickets/' + ticket.id, {
+                        status: nextStatus,
+                        comment: 'Déplacement vers ' + nextStatus
+                    });
+                    onTicketCreated(); // Refresh
+                } catch (error) {
+                    alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                }
+            };
+            
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
                 // Modal de création
                 React.createElement(CreateTicketModal, {
@@ -472,7 +493,9 @@ app.get('/', (c) => {
                                     getTicketsByStatus(status.key).map(ticket =>
                                         React.createElement('div', {
                                             key: ticket.id,
-                                            className: 'ticket-card priority-' + ticket.priority
+                                            className: 'ticket-card priority-' + ticket.priority,
+                                            onClick: () => moveTicketToNext(ticket),
+                                            title: 'Cliquer pour déplacer vers la colonne suivante'
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
