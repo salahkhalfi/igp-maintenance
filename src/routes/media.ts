@@ -2,11 +2,12 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
+import { authMiddleware } from '../middlewares/auth';
 
 const media = new Hono<{ Bindings: Bindings }>();
 
-// POST /api/media/upload - Upload un fichier vers R2
-media.post('/upload', async (c) => {
+// POST /api/media/upload - Upload un fichier vers R2 (protégé)
+media.post('/upload', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     const formData = await c.req.formData();
@@ -69,7 +70,7 @@ media.post('/upload', async (c) => {
   }
 });
 
-// GET /api/media/:id - Récupérer un fichier depuis R2
+// GET /api/media/:id - Récupérer un fichier depuis R2 (PUBLIC pour charger les images)
 media.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
@@ -103,8 +104,8 @@ media.get('/:id', async (c) => {
   }
 });
 
-// DELETE /api/media/:id - Supprimer un fichier
-media.delete('/:id', async (c) => {
+// DELETE /api/media/:id - Supprimer un fichier (protégé)
+media.delete('/:id', authMiddleware, async (c) => {
   try {
     const id = c.req.param('id');
     
@@ -132,8 +133,8 @@ media.delete('/:id', async (c) => {
   }
 });
 
-// GET /api/media/ticket/:ticketId - Liste les médias d'un ticket
-media.get('/ticket/:ticketId', async (c) => {
+// GET /api/media/ticket/:ticketId - Liste les médias d'un ticket (protégé)
+media.get('/ticket/:ticketId', authMiddleware, async (c) => {
   try {
     const ticketId = c.req.param('ticketId');
     

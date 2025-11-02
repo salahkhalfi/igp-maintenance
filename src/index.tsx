@@ -31,9 +31,8 @@ app.route('/api/tickets', tickets);
 app.use('/api/machines/*', authMiddleware);
 app.route('/api/machines', machines);
 
-// Routes des médias (protégées)
-app.use('/api/media/*', authMiddleware);
-
+// Routes des médias (GET public pour images, POST/DELETE protégés)
+// On doit définir les routes PUIS ajouter les middlewares sur certaines routes
 app.route('/api/media', media);
 
 // Page d'accueil avec interface React
@@ -1198,7 +1197,7 @@ app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.6.0'
+    version: '1.6.1'
   });
 });
 
