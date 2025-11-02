@@ -100,6 +100,29 @@ app.get('/', (c) => {
             align-items: center;
             justify-content: center;
         }
+        .context-menu {
+            position: fixed;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            min-width: 200px;
+            padding: 8px 0;
+        }
+        .context-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .context-menu-item:hover {
+            background: #f3f4f6;
+        }
+        .context-menu-item i {
+            margin-right: 8px;
+            width: 20px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -121,6 +144,7 @@ app.get('/', (c) => {
             const [machines, setMachines] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
             const [showCreateModal, setShowCreateModal] = React.useState(false);
+            const [contextMenu, setContextMenu] = React.useState(null);
             
             React.useEffect(() => {
                 if (isLoggedIn) {
@@ -396,6 +420,8 @@ app.get('/', (c) => {
         
         // Application principale
         const MainApp = ({ tickets, machines, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
+            const [contextMenu, setContextMenu] = React.useState(null);
+            
             const statuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
                 { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
@@ -405,11 +431,33 @@ app.get('/', (c) => {
                 { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
             ];
             
+            // Fermer le menu contextuel au clic ailleurs
+            React.useEffect(() => {
+                const handleClick = () => setContextMenu(null);
+                document.addEventListener('click', handleClick);
+                return () => document.removeEventListener('click', handleClick);
+            }, []);
+            
             const getTicketsByStatus = (status) => {
                 return tickets.filter(t => t.status === status);
             };
             
-            const moveTicketToNext = async (ticket) => {
+            const moveTicketToStatus = async (ticket, newStatus) => {
+                if (ticket.status === newStatus) return;
+                
+                try {
+                    await axios.patch(API_URL + '/tickets/' + ticket.id, {
+                        status: newStatus,
+                        comment: 'Changement de statut: ' + ticket.status + ' → ' + newStatus
+                    });
+                    onTicketCreated(); // Refresh
+                } catch (error) {
+                    alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                }
+            };
+            
+            const moveTicketToNext = async (ticket, e) => {
+                e.stopPropagation();
                 const statusFlow = ['received', 'diagnostic', 'in_progress', 'waiting_parts', 'completed', 'archived'];
                 const currentIndex = statusFlow.indexOf(ticket.status);
                 
@@ -418,16 +466,17 @@ app.get('/', (c) => {
                 }
                 
                 const nextStatus = statusFlow[currentIndex + 1];
-                
-                try {
-                    await axios.patch(API_URL + '/tickets/' + ticket.id, {
-                        status: nextStatus,
-                        comment: 'Déplacement vers ' + nextStatus
-                    });
-                    onTicketCreated(); // Refresh
-                } catch (error) {
-                    alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
-                }
+                await moveTicketToStatus(ticket, nextStatus);
+            };
+            
+            const handleContextMenu = (e, ticket) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setContextMenu({
+                    x: e.pageX,
+                    y: e.pageY,
+                    ticket: ticket
+                });
             };
             
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
@@ -494,8 +543,9 @@ app.get('/', (c) => {
                                         React.createElement('div', {
                                             key: ticket.id,
                                             className: 'ticket-card priority-' + ticket.priority,
-                                            onClick: () => moveTicketToNext(ticket),
-                                            title: 'Cliquer pour déplacer vers la colonne suivante'
+                                            onClick: (e) => moveTicketToNext(ticket, e),
+                                            onContextMenu: (e) => handleContextMenu(e, ticket),
+                                            title: 'Clic gauche: colonne suivante | Clic droit: choisir le statut'
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
@@ -519,6 +569,39 @@ app.get('/', (c) => {
                             )
                         )
                     )
+                ),
+                
+                // Menu contextuel
+                contextMenu && React.createElement('div', {
+                    className: 'context-menu',
+                    style: {
+                        top: contextMenu.y + 'px',
+                        left: contextMenu.x + 'px'
+                    }
+                },
+                    React.createElement('div', { className: 'font-bold text-xs text-gray-500 px-3 py-2 border-b' },
+                        'Déplacer vers:'
+                    ),
+                    statuses.map(status => {
+                        const isCurrentStatus = status.key === contextMenu.ticket.status;
+                        return React.createElement('div', {
+                            key: status.key,
+                            className: 'context-menu-item' + (isCurrentStatus ? ' bg-gray-100 cursor-not-allowed' : ''),
+                            onClick: (e) => {
+                                e.stopPropagation();
+                                if (!isCurrentStatus) {
+                                    moveTicketToStatus(contextMenu.ticket, status.key);
+                                    setContextMenu(null);
+                                }
+                            }
+                        },
+                            React.createElement('i', { 
+                                className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' 
+                            }),
+                            status.label,
+                            isCurrentStatus && React.createElement('span', { className: 'ml-2 text-xs text-gray-400' }, '(actuel)')
+                        );
+                    })
                 )
             );
         };
