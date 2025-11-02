@@ -68,10 +68,20 @@ app.get('/', (c) => {
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             cursor: pointer;
             transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .ticket-card:hover {
             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
             transform: translateY(-2px);
+        }
+        .ticket-card:active {
+            transform: scale(0.98);
+        }
+        .ticket-card.long-press-active {
+            background: #eff6ff;
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
         }
         .priority-high {
             border-left: 4px solid #ef4444;
@@ -110,18 +120,73 @@ app.get('/', (c) => {
             padding: 8px 0;
         }
         .context-menu-item {
-            padding: 10px 16px;
+            padding: 12px 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             transition: background 0.2s;
+            font-size: 15px;
         }
         .context-menu-item:hover {
             background: #f3f4f6;
         }
+        .context-menu-item:active {
+            background: #e5e7eb;
+        }
         .context-menu-item i {
-            margin-right: 8px;
+            margin-right: 12px;
             width: 20px;
+        }
+        
+        /* MOBILE RESPONSIVE STYLES */
+        @media (max-width: 1024px) {
+            .kanban-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .kanban-column {
+                min-height: auto;
+                width: 100%;
+            }
+            .header-actions {
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+            }
+            .header-actions button {
+                width: 100%;
+                padding: 12px 16px;
+                font-size: 16px;
+            }
+            .ticket-card {
+                padding: 16px;
+                font-size: 15px;
+                min-height: 44px;
+            }
+            .context-menu-item {
+                padding: 16px 20px;
+                font-size: 16px;
+                min-height: 48px;
+            }
+            .modal-content {
+                width: 95vw !important;
+                max-width: 95vw !important;
+                margin: 10px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .header-title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-title h1 {
+                font-size: 20px;
+            }
+            .kanban-column-header h3 {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -309,7 +374,7 @@ app.get('/', (c) => {
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg p-8 max-w-2xl w-full mx-4',
+                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-2xl w-full mx-4',
                     onClick: (e) => e.stopPropagation()
                 },
                     React.createElement('div', { className: 'flex justify-between items-center mb-6' },
@@ -472,11 +537,73 @@ app.get('/', (c) => {
             const handleContextMenu = (e, ticket) => {
                 e.preventDefault();
                 e.stopPropagation();
+                
+                // Position du menu (ajuster pour éviter de sortir de l'écran)
+                const menuWidth = 200;
+                const menuHeight = 300;
+                let x = e.pageX || (e.touches && e.touches[0].pageX);
+                let y = e.pageY || (e.touches && e.touches[0].pageY);
+                
+                // Ajuster si trop proche du bord droit
+                if (x + menuWidth > window.innerWidth) {
+                    x = window.innerWidth - menuWidth - 10;
+                }
+                
+                // Ajuster si trop proche du bord bas
+                if (y + menuHeight > window.innerHeight + window.scrollY) {
+                    y = window.innerHeight + window.scrollY - menuHeight - 10;
+                }
+                
                 setContextMenu({
-                    x: e.pageX,
-                    y: e.pageY,
+                    x: x,
+                    y: y,
                     ticket: ticket
                 });
+            };
+            
+            // Gestion du long press pour mobile
+            const useLongPress = (ticket) => {
+                const [longPressTriggered, setLongPressTriggered] = React.useState(false);
+                const timeout = React.useRef();
+                const target = React.useRef();
+                
+                const start = React.useCallback((e) => {
+                    target.current = e.currentTarget;
+                    timeout.current = setTimeout(() => {
+                        // Vibrer si disponible
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+                        
+                        setLongPressTriggered(true);
+                        target.current.classList.add('long-press-active');
+                        
+                        // Ouvrir le menu contextuel
+                        handleContextMenu(e, ticket);
+                    }, 500); // 500ms pour déclencher le long press
+                }, [ticket]);
+                
+                const clear = React.useCallback((e, shouldTriggerClick = true) => {
+                    timeout.current && clearTimeout(timeout.current);
+                    if (target.current) {
+                        target.current.classList.remove('long-press-active');
+                    }
+                    
+                    if (shouldTriggerClick && !longPressTriggered) {
+                        // Si pas de long press, c'est un tap normal
+                        moveTicketToNext(ticket, e);
+                    }
+                    setLongPressTriggered(false);
+                }, [longPressTriggered, ticket]);
+                
+                return {
+                    onMouseDown: start,
+                    onMouseUp: clear,
+                    onMouseLeave: () => clear(null, false),
+                    onTouchStart: start,
+                    onTouchEnd: clear,
+                    onTouchCancel: () => clear(null, false)
+                };
             };
             
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
@@ -490,15 +617,17 @@ app.get('/', (c) => {
                 
                 // Header
                 React.createElement('header', { className: 'bg-white shadow-md' },
-                    React.createElement('div', { className: 'container mx-auto px-4 py-4 flex justify-between items-center' },
-                        React.createElement('div', { className: 'flex items-center' },
-                            React.createElement('i', { className: 'fas fa-tools text-3xl text-blue-500 mr-3' }),
-                            React.createElement('div', {},
-                                React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Gestion de Maintenance'),
-                                React.createElement('p', { className: 'text-sm text-gray-600' }, tickets.length + ' tickets actifs')
+                    React.createElement('div', { className: 'container mx-auto px-4 py-4' },
+                        React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
+                            React.createElement('div', { className: 'flex items-center' },
+                                React.createElement('i', { className: 'fas fa-tools text-2xl md:text-3xl text-blue-500 mr-3' }),
+                                React.createElement('div', {},
+                                    React.createElement('h1', { className: 'text-xl md:text-2xl font-bold text-gray-800' }, 'Gestion de Maintenance'),
+                                    React.createElement('p', { className: 'text-sm text-gray-600' }, tickets.length + ' tickets actifs')
+                                )
                             )
                         ),
-                        React.createElement('div', { className: 'flex items-center space-x-4' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
                                 className: 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-semibold'
@@ -526,26 +655,27 @@ app.get('/', (c) => {
                 
                 // Tableau Kanban
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
-                    React.createElement('div', { className: 'grid grid-cols-6 gap-4' },
+                    React.createElement('div', { className: 'kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4' },
                         statuses.map(status =>
                             React.createElement('div', { key: status.key, className: 'kanban-column' },
-                                React.createElement('div', { className: 'mb-4 flex items-center justify-between' },
+                                React.createElement('div', { className: 'mb-4 flex items-center justify-between kanban-column-header' },
                                     React.createElement('div', { className: 'flex items-center' },
                                         React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
-                                        React.createElement('h3', { className: 'font-bold text-gray-700' }, status.label)
+                                        React.createElement('h3', { className: 'font-bold text-gray-700 text-sm md:text-base' }, status.label)
                                     ),
                                     React.createElement('span', { 
                                         className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
                                     }, getTicketsByStatus(status.key).length)
                                 ),
                                 React.createElement('div', { className: 'space-y-3' },
-                                    getTicketsByStatus(status.key).map(ticket =>
-                                        React.createElement('div', {
+                                    getTicketsByStatus(status.key).map(ticket => {
+                                        const longPressHandlers = useLongPress(ticket);
+                                        return React.createElement('div', {
                                             key: ticket.id,
                                             className: 'ticket-card priority-' + ticket.priority,
-                                            onClick: (e) => moveTicketToNext(ticket, e),
                                             onContextMenu: (e) => handleContextMenu(e, ticket),
-                                            title: 'Clic gauche: colonne suivante | Clic droit: choisir le statut'
+                                            title: 'Tap: colonne suivante | Appui long: choisir le statut',
+                                            ...longPressHandlers
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
@@ -563,8 +693,8 @@ app.get('/', (c) => {
                                                 React.createElement('i', { className: 'far fa-clock mr-1' }),
                                                 new Date(ticket.created_at).toLocaleDateString('fr-FR')
                                             )
-                                        )
-                                    )
+                                        );
+                                    })
                                 )
                             )
                         )
