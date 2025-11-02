@@ -17,25 +17,23 @@ app.use('/api/*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Routes publiques d'authentification
+// Middleware sur /api/auth/me seulement (AVANT la route)
+app.use('/api/auth/me', authMiddleware);
+
+// Routes d'authentification (login, register sont publiques, me est protégée)
 app.route('/api/auth', auth);
 
-// Routes protégées - nécessitent une authentification
+// Routes des tickets (protégées)
 app.use('/api/tickets/*', authMiddleware);
-app.use('/api/machines/*', authMiddleware);
-app.use('/api/media/*', authMiddleware);
-
-// Routes des tickets
 app.route('/api/tickets', tickets);
 
-// Routes des machines (création/modification/suppression réservées aux admins)
-app.get('/api/machines', async (c) => machines.fetch(c.req.raw, c.env));
-app.get('/api/machines/:id', async (c) => machines.fetch(c.req.raw, c.env));
-app.post('/api/machines', adminOnly, async (c) => machines.fetch(c.req.raw, c.env));
-app.patch('/api/machines/:id', adminOnly, async (c) => machines.fetch(c.req.raw, c.env));
-app.delete('/api/machines/:id', adminOnly, async (c) => machines.fetch(c.req.raw, c.env));
+// Routes des machines (protégées)
+app.use('/api/machines/*', authMiddleware);
+app.route('/api/machines', machines);
 
-// Routes des médias
+// Routes des médias (protégées)
+app.use('/api/media/*', authMiddleware);
+
 app.route('/api/media', media);
 
 // Servir les fichiers statiques depuis /static/*
