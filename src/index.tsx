@@ -67,35 +67,73 @@ app.get('/', (c) => {
         }
     </script>
     <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
         .kanban-column {
             min-height: 400px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 16px;
+            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 
+                8px 8px 16px rgba(71, 85, 105, 0.15),
+                -4px -4px 12px rgba(255, 255, 255, 0.7),
+                inset 1px 1px 2px rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(148, 163, 184, 0.1);
         }
+        
         .ticket-card {
-            background: white;
-            border-radius: 6px;
-            padding: 12px;
+            background: linear-gradient(145deg, #ffffff, #f1f5f9);
+            border-radius: 10px;
+            padding: 14px;
             margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 
+                6px 6px 12px rgba(71, 85, 105, 0.12),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
             cursor: grab;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.08);
+            position: relative;
         }
+        
+        .ticket-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.1), transparent);
+            border-radius: 10px 10px 0 0;
+        }
+        
         .ticket-card:hover {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-            transform: translateY(-2px);
+            box-shadow: 
+                8px 8px 20px rgba(71, 85, 105, 0.18),
+                -4px -4px 12px rgba(255, 255, 255, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transform: translateY(-3px) translateZ(10px);
         }
         .ticket-card:active {
             cursor: grabbing;
+            box-shadow: 
+                4px 4px 8px rgba(71, 85, 105, 0.2),
+                -2px -2px 6px rgba(255, 255, 255, 0.7);
         }
+        
         .ticket-card.dragging {
-            opacity: 0.5;
+            opacity: 0.7;
             cursor: grabbing;
-            transform: rotate(2deg);
+            transform: rotate(3deg) scale(1.05);
+            box-shadow: 
+                12px 12px 24px rgba(71, 85, 105, 0.25),
+                -6px -6px 16px rgba(255, 255, 255, 0.5);
         }
         .ticket-card.long-press-active {
             background: #eff6ff;
@@ -114,16 +152,49 @@ app.get('/', (c) => {
             border: 2px dashed #ef4444;
         }
         .priority-high {
-            border-left: 4px solid #ef4444;
+            border-left: 5px solid #ef4444;
+            box-shadow: 
+                6px 6px 12px rgba(239, 68, 68, 0.15),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
+        
         .priority-critical {
-            border-left: 4px solid #dc2626;
+            border-left: 5px solid #dc2626;
+            box-shadow: 
+                6px 6px 12px rgba(220, 38, 38, 0.2),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            animation: pulse-subtle 3s ease-in-out infinite;
         }
+        
+        @keyframes pulse-subtle {
+            0%, 100% {
+                box-shadow: 
+                    6px 6px 12px rgba(220, 38, 38, 0.2),
+                    -3px -3px 8px rgba(255, 255, 255, 0.8);
+            }
+            50% {
+                box-shadow: 
+                    6px 6px 16px rgba(220, 38, 38, 0.3),
+                    -3px -3px 8px rgba(255, 255, 255, 0.8);
+            }
+        }
+        
         .priority-medium {
-            border-left: 4px solid #f59e0b;
+            border-left: 5px solid #f59e0b;
+            box-shadow: 
+                6px 6px 12px rgba(245, 158, 11, 0.12),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
+        
         .priority-low {
-            border-left: 4px solid #10b981;
+            border-left: 5px solid #10b981;
+            box-shadow: 
+                6px 6px 12px rgba(16, 185, 129, 0.1),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
         .modal {
             display: none;
@@ -318,6 +389,13 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'text-igp-blue' }, 'admin@igpglass.ca'),
                         React.createElement('p', { className: 'text-igp-blue' }, 'technicien@igpglass.ca'),
                         React.createElement('p', { className: 'text-igp-blue' }, 'operateur@igpglass.ca')
+                    ),
+                    React.createElement('div', { className: 'mt-8 pt-6 border-t border-gray-200 text-center' },
+                        React.createElement('p', { className: 'text-xs text-gray-500' },
+                            React.createElement('i', { className: 'fas fa-code mr-1' }),
+                            'Conçue par ',
+                            React.createElement('span', { className: 'font-bold text-igp-blue' }, 'Salah Khalfi')
+                        )
                     )
                 )
             );
@@ -1440,6 +1518,29 @@ app.get('/', (c) => {
                     )
                 ),
                 
+                React.createElement('footer', { 
+                    className: 'mt-12 py-6 text-center border-t border-gray-200',
+                    style: { 
+                        background: 'linear-gradient(145deg, #f8fafc, #e2e8f0)',
+                        boxShadow: '0 -4px 12px rgba(71, 85, 105, 0.08)'
+                    }
+                },
+                    React.createElement('div', { className: 'container mx-auto px-4' },
+                        React.createElement('p', { className: 'text-sm text-gray-600 font-medium mb-2' },
+                            React.createElement('i', { className: 'fas fa-code mr-2 text-igp-blue' }),
+                            'Application conçue et développée par ',
+                            React.createElement('span', { 
+                                className: 'font-bold text-igp-blue',
+                                style: { 
+                                    textShadow: '1px 1px 2px rgba(30, 64, 175, 0.1)'
+                                }
+                            }, 'Salah Khalfi')
+                        ),
+                        React.createElement('p', { className: 'text-xs text-gray-500' },
+                            '© ' + new Date().getFullYear() + ' - IGP Système de Gestion de Maintenance'
+                        )
+                    )
+                ),
                 
                 contextMenu ? React.createElement('div', {
                     className: 'context-menu',
