@@ -12,14 +12,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.7.0 - Prêt pour le déploiement**
+✅ **Version 1.8.0 - Prêt pour le déploiement**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v1.7.0**: Système de commentaires + Upload médias supplémentaires + Suppression de tickets
+- **NOUVEAU v1.8.0**: Système de permissions par rôle + Statuts francisés
+- Système de commentaires + Upload médias supplémentaires + Suppression de tickets
 - Galerie de médias dans les détails de ticket + Scroll mobile corrigé
 - Upload de photos/vidéos depuis mobile lors de la création de tickets
 
@@ -57,7 +58,36 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
 - **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
 
-#### 🆕 **NOUVEAU v1.7.0** - Commentaires, médias supplémentaires et suppression
+#### 🆕 **NOUVEAU v1.8.0** - Système de permissions par rôle
+
+##### 🔒 Permissions par Rôle
+**Opérateurs** :
+- ✅ Créer et voir tous les tickets
+- ✅ Modifier/supprimer uniquement LEURS tickets
+- ✅ Ajouter commentaires et médias sur tous les tickets
+- ❌ NE PEUVENT PAS déplacer les tickets (changer statut)
+- ❌ NE PEUVENT PAS modifier/supprimer les tickets d'autres opérateurs
+
+**Techniciens** :
+- ✅ Déplacer tous les tickets (drag-and-drop, menu contextuel)
+- ✅ Modifier et supprimer tous les tickets
+- ✅ Accès complet au workflow
+
+**Administrateurs** :
+- ✅ Tous les pouvoirs (accès complet)
+
+##### 🌍 Statuts Francisés
+- Affichage en français: "Requête Reçue", "Diagnostic", "En Cours", "En Attente Pièces", "Terminé", "Archivé"
+- Traduction automatique avec fonction `getStatusLabel()`
+- Labels cohérents dans toute l'interface
+
+##### 🔐 Sécurité Backend
+- Vérification des permissions pour modification/suppression
+- Opérateur ne peut changer le statut via API
+- Erreurs 403 si accès non autorisé
+- Protection côté serveur ET client
+
+#### **v1.7.0** - Commentaires, médias supplémentaires et suppression
 
 ##### 💬 Système de commentaires collaboratif
 - **Ajout de commentaires** - Opérateurs et techniciens peuvent ajouter des notes à tout moment
@@ -509,6 +539,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.7.0  
+**Version**: 1.8.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready - Commentaires collaboratifs + Upload médias supplémentaires + Suppression tickets + Noms personnalisés
+**Statut**: ✅ Production Ready - Permissions par rôle + Statuts francisés + Commentaires collaboratifs + Noms personnalisés

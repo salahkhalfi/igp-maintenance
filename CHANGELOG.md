@@ -2,6 +2,60 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [1.8.0] - 2025-11-02
+
+### 🔒 Système de Permissions par Rôle
+
+#### 👨‍💼 Permissions des Opérateurs
+- ✅ **Créer** des tickets avec leur nom
+- ✅ **Voir** tous les tickets
+- ✅ **Modifier** uniquement leurs propres tickets (titre, description)
+- ✅ **Supprimer** uniquement leurs propres tickets
+- ✅ **Ajouter commentaires** sur n'importe quel ticket
+- ✅ **Ajouter médias** sur n'importe quel ticket
+- ❌ **NE PEUT PAS déplacer** les tickets (changer statut)
+- ❌ **NE PEUT PAS modifier/supprimer** les tickets d'autres opérateurs
+- ❌ **Menu contextuel désactivé** (pas de changement de statut)
+- ❌ **Drag-and-drop désactivé** (curseur normal, pas draggable)
+
+#### 🔧 Permissions des Techniciens
+- ✅ **Déplacer** tous les tickets (drag-and-drop, menu contextuel)
+- ✅ **Modifier** tous les tickets
+- ✅ **Supprimer** tous les tickets
+- ✅ **Ajouter commentaires** sur tous les tickets
+- ✅ **Ajouter médias** sur tous les tickets
+- ✅ **Changer statut** de tous les tickets
+
+#### 👨‍💻 Permissions des Administrateurs
+- ✅ **Tous les pouvoirs** (accès complet)
+
+### 🌍 Internationalisation
+- Statuts affichés en français dans les détails des tickets
+- Fonction `getStatusLabel()` pour traduction automatique
+- Labels: "Requête Reçue", "Diagnostic", "En Cours", "En Attente Pièces", "Terminé", "Archivé"
+
+### 🔧 Backend - Vérifications de sécurité
+- **PATCH /api/tickets/:id** - Vérification que l'opérateur modifie son ticket
+- **PATCH /api/tickets/:id** - Blocage du changement de statut pour opérateurs
+- **DELETE /api/tickets/:id** - Vérification que l'opérateur supprime son ticket
+- Erreur 403 si tentative d'accès non autorisé
+
+### 🎨 Interface utilisateur
+- **Bouton suppression conditionnel** - Visible selon rôle et auteur du ticket
+- **Attribut draggable dynamique** - `false` pour opérateurs
+- **Tooltip adapté** - Message différent selon permissions
+- **Menu contextuel bloqué** - Ne s'ouvre pas pour opérateurs
+- **handleDragStart bloqué** - `preventDefault()` pour opérateurs
+- **handleTouchStart bloqué** - Pas de drag tactile pour opérateurs
+- **handleContextMenu bloqué** - Pas de menu pour opérateurs
+
+### 📚 Prop drilling
+- `currentUser` passé de `App` → `MainApp` → `TicketDetailsModal`
+- Permet vérification des permissions côté frontend
+- Cohérence avec vérifications backend
+
+---
+
 ## [1.7.0] - 2025-11-02
 
 ### ✨ Nouvelles fonctionnalités
