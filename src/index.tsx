@@ -10,35 +10,35 @@ import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Middleware CORS pour les API
+
 app.use('/api/*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Middleware sur /api/auth/me seulement (AVANT la route)
+
 app.use('/api/auth/me', authMiddleware);
 
-// Routes d'authentification (login, register sont publiques, me est protégée)
+
 app.route('/api/auth', auth);
 
-// Routes des tickets (protégées)
+
 app.use('/api/tickets/*', authMiddleware);
 app.route('/api/tickets', tickets);
 
-// Routes des machines (protégées)
+
 app.use('/api/machines/*', authMiddleware);
 app.route('/api/machines', machines);
 
-// Routes des médias (GET public pour images, POST/DELETE protégés)
-// On doit définir les routes PUIS ajouter les middlewares sur certaines routes
+
+
 app.route('/api/media', media);
 
-// Routes des commentaires (protégées)
+
 app.route('/api/comments', comments);
 
-// Page d'accueil avec interface React
+
 app.get('/', (c) => {
   return c.html(`
 <!DOCTYPE html>
@@ -241,7 +241,7 @@ app.get('/', (c) => {
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
         
-        // Fonction pour traduire les statuts en français
+        
         const getStatusLabel = (status) => {
             const statusLabels = {
                 'received': 'Requête Reçue',
@@ -254,7 +254,7 @@ app.get('/', (c) => {
             return statusLabels[status] || status;
         };
         
-        // Application principale
+        
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
             const [tickets, setTickets] = React.useState([]);
@@ -334,7 +334,7 @@ app.get('/', (c) => {
             });
         };
         
-        // Formulaire de connexion
+        
         const LoginForm = ({ onLogin }) => {
             const [email, setEmail] = React.useState('admin@igpglass.ca');
             const [password, setPassword] = React.useState('password123');
@@ -403,7 +403,7 @@ app.get('/', (c) => {
             );
         };
         
-        // Modal de création de ticket
+        
         const CreateTicketModal = ({ show, onClose, machines, onTicketCreated }) => {
             const [title, setTitle] = React.useState('');
             const [description, setDescription] = React.useState('');
@@ -419,7 +419,7 @@ app.get('/', (c) => {
                 const files = Array.from(e.target.files);
                 setMediaFiles(prevFiles => [...prevFiles, ...files]);
                 
-                // Créer des aperçus pour les images/vidéos
+                
                 files.forEach(file => {
                     const reader = new FileReader();
                     reader.onloadend = () => {
@@ -465,7 +465,7 @@ app.get('/', (c) => {
                 setUploadProgress(0);
                 
                 try {
-                    // 1. Créer le ticket
+                    
                     const response = await axios.post(API_URL + '/tickets', {
                         title,
                         description,
@@ -476,14 +476,14 @@ app.get('/', (c) => {
                     
                     const ticketId = response.data.ticket.id;
                     
-                    // 2. Uploader les médias si présents
+                    
                     if (mediaFiles.length > 0) {
                         await uploadMediaFiles(ticketId);
                     }
                     
                     alert('Ticket créé avec succès !' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s) uploadé(s))' : ''));
                     
-                    // Reset form
+                    
                     setTitle('');
                     setDescription('');
                     setReporterName('');
@@ -689,7 +689,7 @@ app.get('/', (c) => {
             );
         };
         
-        // Modal de détails du ticket avec galerie de médias
+        
         const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDeleted }) => {
             const [ticket, setTicket] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
@@ -835,7 +835,6 @@ app.get('/', (c) => {
                             'Détails du Ticket'
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
-                            // Bouton suppression: visible si technicien/admin OU si opérateur et c'est son ticket
                             (ticket && currentUser && (
                                 currentUser.role === 'technician' || 
                                 currentUser.role === 'admin' ||
@@ -860,7 +859,7 @@ app.get('/', (c) => {
                         React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-igp-blue' }),
                         React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                     ) : ticket ? React.createElement('div', {},
-                        // Informations du ticket
+                        
                         React.createElement('div', { className: 'mb-6' },
                             React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                                 React.createElement('span', { className: 'text-lg font-mono text-gray-700' }, ticket.ticket_id),
@@ -901,7 +900,7 @@ app.get('/', (c) => {
                             )
                         ),
                         
-                        // Galerie de médias
+                        
                         (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-6' },
                             React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-3 flex items-center' },
                                 React.createElement('i', { className: 'fas fa-images mr-2 text-igp-orange' }),
@@ -934,20 +933,20 @@ app.get('/', (c) => {
                             )
                         ) : null,
                         
-                        // Message si pas de médias
+                        
                         (!ticket.media || ticket.media.length === 0) ? React.createElement('div', { className: 'mb-6 text-center py-8 bg-gray-50 rounded' },
                             React.createElement('i', { className: 'fas fa-camera text-gray-400 text-4xl mb-2' }),
                             React.createElement('p', { className: 'text-gray-500' }, 'Aucune photo ou vidéo attachée à ce ticket')
                         ) : null,
                         
-                        // Section des commentaires
+                        
                         React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
                             React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
                                 React.createElement('i', { className: 'fas fa-comments mr-2 text-igp-blue' }),
                                 'Commentaires et Notes (' + comments.length + ')'
                             ),
                             
-                            // Liste des commentaires existants
+                            
                             comments.length > 0 ? React.createElement('div', { className: 'space-y-3 mb-4 max-h-64 overflow-y-auto' },
                                 comments.map(comment =>
                                     React.createElement('div', { 
@@ -977,7 +976,7 @@ app.get('/', (c) => {
                                 React.createElement('p', { className: 'text-gray-500 text-sm' }, 'Aucun commentaire pour le moment')
                             ),
                             
-                            // Formulaire d'ajout de commentaire
+                            
                             React.createElement('form', { 
                                 onSubmit: handleAddComment,
                                 className: 'bg-blue-50 rounded-lg p-4 border-2 border-igp-blue'
@@ -987,7 +986,7 @@ app.get('/', (c) => {
                                     'Ajouter un commentaire'
                                 ),
                                 
-                                // Ligne: Nom + Rôle
+                                
                                 React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-3 mb-3' },
                                     React.createElement('div', {},
                                         React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
@@ -1019,7 +1018,7 @@ app.get('/', (c) => {
                                     )
                                 ),
                                 
-                                // Zone de texte du commentaire
+                                
                                 React.createElement('div', { className: 'mb-3' },
                                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
                                         React.createElement('i', { className: 'fas fa-comment mr-1' }),
@@ -1035,7 +1034,7 @@ app.get('/', (c) => {
                                     })
                                 ),
                                 
-                                // Bouton soumettre
+                                
                                 React.createElement('button', {
                                     type: 'submit',
                                     disabled: submittingComment,
@@ -1054,14 +1053,14 @@ app.get('/', (c) => {
                             )
                         ),
                         
-                        // Section d'ajout de médias supplémentaires
+                        
                         React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
                             React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
                                 React.createElement('i', { className: 'fas fa-camera-retro mr-2 text-igp-orange' }),
                                 'Ajouter des photos/vidéos supplémentaires'
                             ),
                             
-                            // Aperçu des nouveaux fichiers sélectionnés
+                            
                             newMediaPreviews.length > 0 ? React.createElement('div', { className: 'mb-4' },
                                 React.createElement('p', { className: 'text-sm font-semibold text-gray-700 mb-2' },
                                     React.createElement('i', { className: 'fas fa-images mr-1' }),
@@ -1115,7 +1114,7 @@ app.get('/', (c) => {
                                 )
                             ) : null,
                             
-                            // Bouton de sélection de fichiers
+                            
                             React.createElement('div', { className: 'text-center' },
                                 React.createElement('label', { 
                                     className: 'inline-block px-6 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-igp-orange transition-all'
@@ -1138,7 +1137,7 @@ app.get('/', (c) => {
                             )
                         ),
                         
-                        // Bouton fermer
+                        
                         React.createElement('div', { className: 'flex justify-end mt-6 pt-4 border-t-2 border-gray-200' },
                             React.createElement('button', {
                                 onClick: onClose,
@@ -1153,7 +1152,7 @@ app.get('/', (c) => {
                     )
                 ),
                 
-                // Lightbox pour médias en plein écran
+                
                 selectedMedia ? React.createElement('div', {
                     className: 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4',
                     onClick: () => setSelectedMedia(null)
@@ -1186,7 +1185,7 @@ app.get('/', (c) => {
             );
         };
         
-        // Application principale
+        
         const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
@@ -1201,7 +1200,7 @@ app.get('/', (c) => {
                 { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
             ];
             
-            // Fermer le menu contextuel au clic ailleurs
+            
             React.useEffect(() => {
                 const handleClick = () => setContextMenu(null);
                 document.addEventListener('click', handleClick);
@@ -1240,7 +1239,7 @@ app.get('/', (c) => {
             };
             
             const handleTicketClick = (e, ticket) => {
-                // Si c'est un clic normal (pas drag, pas contextmenu), ouvrir les détails
+                
                 if (e.type === 'click' && !e.defaultPrevented) {
                     setSelectedTicketId(ticket.id);
                     setShowDetailsModal(true);
@@ -1251,23 +1250,23 @@ app.get('/', (c) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Bloquer le menu contextuel de déplacement pour les opérateurs
+                
                 if (currentUser && currentUser.role === 'operator') {
                     return;
                 }
                 
-                // Position du menu (ajuster pour éviter de sortir de l'écran)
+                
                 const menuWidth = 200;
                 const menuHeight = 300;
                 let x = e.pageX || (e.touches && e.touches[0].pageX);
                 let y = e.pageY || (e.touches && e.touches[0].pageY);
                 
-                // Ajuster si trop proche du bord droit
+                
                 if (x + menuWidth > window.innerWidth) {
                     x = window.innerWidth - menuWidth - 10;
                 }
                 
-                // Ajuster si trop proche du bord bas
+                
                 if (y + menuHeight > window.innerHeight + window.scrollY) {
                     y = window.innerHeight + window.scrollY - menuHeight - 10;
                 }
@@ -1279,13 +1278,13 @@ app.get('/', (c) => {
                 });
             };
             
-            // État pour le drag and drop
+            
             const [draggedTicket, setDraggedTicket] = React.useState(null);
             const [dragOverColumn, setDragOverColumn] = React.useState(null);
             
-            // Handlers pour le drag-and-drop (Desktop)
+            
             const handleDragStart = (e, ticket) => {
-                // Bloquer le drag-and-drop pour les opérateurs
+                
                 if (currentUser && currentUser.role === 'operator') {
                     e.preventDefault();
                     return;
@@ -1326,12 +1325,12 @@ app.get('/', (c) => {
                 setDraggedTicket(null);
             };
             
-            // Gestion du touch drag pour mobile
+            
             const touchDragStart = React.useRef(null);
             const touchDragTicket = React.useRef(null);
             
             const handleTouchStart = (e, ticket) => {
-                // Bloquer le drag-and-drop pour les opérateurs
+                
                 if (currentUser && currentUser.role === 'operator') {
                     return;
                 }
@@ -1348,12 +1347,12 @@ app.get('/', (c) => {
                 const deltaX = Math.abs(touch.clientX - touchDragStart.current.x);
                 const deltaY = Math.abs(touch.clientY - touchDragStart.current.y);
                 
-                // Si mouvement significatif, on considère que c'est un drag
+                
                 if (deltaX > 10 || deltaY > 10) {
                     e.preventDefault();
                     setDraggedTicket(touchDragTicket.current);
                     
-                    // Trouver la colonne sous le doigt
+                    
                     const element = document.elementFromPoint(touch.clientX, touch.clientY);
                     const column = element?.closest('.kanban-column');
                     if (column) {
@@ -1375,7 +1374,7 @@ app.get('/', (c) => {
             };
             
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
-                // Modal de création
+                
                 React.createElement(CreateTicketModal, {
                     show: showCreateModal,
                     onClose: () => setShowCreateModal(false),
@@ -1383,7 +1382,7 @@ app.get('/', (c) => {
                     onTicketCreated: onTicketCreated
                 }),
                 
-                // Modal de détails avec galerie
+                
                 React.createElement(TicketDetailsModal, {
                     show: showDetailsModal,
                     onClose: () => {
@@ -1399,7 +1398,7 @@ app.get('/', (c) => {
                     }
                 }),
                 
-                // Header
+                
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
@@ -1446,7 +1445,7 @@ app.get('/', (c) => {
                     )
                 ),
                 
-                // Tableau Kanban
+                
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
                     React.createElement('div', { className: 'kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4' },
                         statuses.map(status => {
@@ -1504,7 +1503,7 @@ app.get('/', (c) => {
                                             ),
                                             React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
                                             React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
-                                            // Afficher les médias attachés
+                                            
                                             ticket.media_count > 0 ? React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
                                                 React.createElement('i', { className: 'fas fa-camera mr-1' }),
                                                 ticket.media_count + ' photo(s)/vidéo(s)'
@@ -1521,7 +1520,7 @@ app.get('/', (c) => {
                     )
                 ),
                 
-                // Menu contextuel
+                
                 contextMenu ? React.createElement('div', {
                     className: 'context-menu',
                     style: {
@@ -1556,7 +1555,7 @@ app.get('/', (c) => {
             );
         };
         
-        // Démarrer l'application
+        
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(App));
     </script>
@@ -1565,7 +1564,7 @@ app.get('/', (c) => {
   `);
 });
 
-// Route de santé
+
 app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
