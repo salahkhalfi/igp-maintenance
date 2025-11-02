@@ -343,7 +343,7 @@ app.get('/', (c) => {
                             alt: 'IGP Logo',
                             className: 'h-20 w-auto mx-auto mb-4'
                         }),
-                        React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, 'Système de Maintenance'),
+                        React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, 'Gestion de la maintenance et des réparations'),
                         React.createElement('p', { className: 'text-sm text-gray-600 mb-1' }, 'Les Produits Verriers International'),
                         React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, '(IGP) Inc.')
                     ),
@@ -1408,7 +1408,7 @@ app.get('/', (c) => {
                                     className: 'h-12 md:h-16 w-auto object-contain'
                                 }),
                                 React.createElement('div', { className: 'border-l-2 border-gray-300 pl-3' },
-                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, 'Système de Maintenance'),
+                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, 'Gestion de la maintenance et des réparations'),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
                                         'Les Produits Verriers International (IGP) Inc.'
                                     ),
