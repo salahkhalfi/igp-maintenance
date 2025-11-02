@@ -173,6 +173,16 @@ tickets.patch('/:id', async (c) => {
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
     
+    // Vérifier les permissions: opérateur ne peut modifier que ses propres tickets
+    if (user.role === 'operator' && currentTicket.reported_by !== user.userId) {
+      return c.json({ error: 'Vous ne pouvez modifier que vos propres tickets' }, 403);
+    }
+    
+    // Opérateur ne peut pas changer le statut (déplacer les tickets)
+    if (user.role === 'operator' && body.status && body.status !== currentTicket.status) {
+      return c.json({ error: 'Les opérateurs ne peuvent pas changer le statut des tickets' }, 403);
+    }
+    
     // Construire la requête de mise à jour
     const updates: string[] = [];
     const params: any[] = [];
@@ -239,10 +249,25 @@ tickets.patch('/:id', async (c) => {
   }
 });
 
-// DELETE /api/tickets/:id - Supprimer un ticket (admin seulement)
+// DELETE /api/tickets/:id - Supprimer un ticket
 tickets.delete('/:id', async (c) => {
   try {
+    const user = c.get('user') as any;
     const id = c.req.param('id');
+    
+    // Récupérer le ticket pour vérifier les permissions
+    const ticket = await c.env.DB.prepare(
+      'SELECT * FROM tickets WHERE id = ?'
+    ).bind(id).first() as any;
+    
+    if (!ticket) {
+      return c.json({ error: 'Ticket non trouvé' }, 404);
+    }
+    
+    // Vérifier les permissions: opérateur ne peut supprimer que ses propres tickets
+    if (user.role === 'operator' && ticket.reported_by !== user.userId) {
+      return c.json({ error: 'Vous ne pouvez supprimer que vos propres tickets' }, 403);
+    }
     
     const result = await c.env.DB.prepare(
       'DELETE FROM tickets WHERE id = ?'

@@ -242,6 +242,19 @@ app.get('/', (c) => {
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
         
+        // Fonction pour traduire les statuts en français
+        const getStatusLabel = (status) => {
+            const statusLabels = {
+                'received': 'Requête Reçue',
+                'diagnostic': 'Diagnostic',
+                'in_progress': 'En Cours',
+                'waiting_parts': 'En Attente Pièces',
+                'completed': 'Terminé',
+                'archived': 'Archivé'
+            };
+            return statusLabels[status] || status;
+        };
+        
         // Application principale
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
@@ -313,6 +326,7 @@ app.get('/', (c) => {
             return React.createElement(MainApp, { 
                 tickets, 
                 machines,
+                currentUser: currentUser,
                 onLogout: logout,
                 onRefresh: loadData,
                 showCreateModal,
@@ -678,7 +692,7 @@ app.get('/', (c) => {
         };
         
         // Modal de détails du ticket avec galerie de médias
-        const TicketDetailsModal = ({ show, onClose, ticketId, onTicketDeleted }) => {
+        const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDeleted }) => {
             const [ticket, setTicket] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
             const [selectedMedia, setSelectedMedia] = React.useState(null);
@@ -823,7 +837,12 @@ app.get('/', (c) => {
                             'Détails du Ticket'
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
-                            React.createElement('button', {
+                            // Bouton suppression: visible si technicien/admin OU si opérateur et c'est son ticket
+                            ticket && currentUser && (
+                                currentUser.role === 'technician' || 
+                                currentUser.role === 'admin' ||
+                                (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
+                            ) && React.createElement('button', {
                                 onClick: handleDeleteTicket,
                                 className: 'text-red-500 hover:text-red-700 transition-colors',
                                 title: 'Supprimer ce ticket'
@@ -869,7 +888,7 @@ app.get('/', (c) => {
                                 ),
                                 React.createElement('div', {},
                                     React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Statut: '),
-                                    React.createElement('span', { className: 'text-gray-600' }, ticket.status)
+                                    React.createElement('span', { className: 'text-gray-600' }, getStatusLabel(ticket.status))
                                 ),
                                 React.createElement('div', {},
                                     React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Créé le: '),
@@ -1170,7 +1189,7 @@ app.get('/', (c) => {
         };
         
         // Application principale
-        const MainApp = ({ tickets, machines, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
+        const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -1234,6 +1253,11 @@ app.get('/', (c) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
+                // Bloquer le menu contextuel de déplacement pour les opérateurs
+                if (currentUser && currentUser.role === 'operator') {
+                    return;
+                }
+                
                 // Position du menu (ajuster pour éviter de sortir de l'écran)
                 const menuWidth = 200;
                 const menuHeight = 300;
@@ -1263,6 +1287,12 @@ app.get('/', (c) => {
             
             // Handlers pour le drag-and-drop (Desktop)
             const handleDragStart = (e, ticket) => {
+                // Bloquer le drag-and-drop pour les opérateurs
+                if (currentUser && currentUser.role === 'operator') {
+                    e.preventDefault();
+                    return;
+                }
+                
                 setDraggedTicket(ticket);
                 e.currentTarget.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
@@ -1303,6 +1333,11 @@ app.get('/', (c) => {
             const touchDragTicket = React.useRef(null);
             
             const handleTouchStart = (e, ticket) => {
+                // Bloquer le drag-and-drop pour les opérateurs
+                if (currentUser && currentUser.role === 'operator') {
+                    return;
+                }
+                
                 const touch = e.touches[0];
                 touchDragStart.current = { x: touch.clientX, y: touch.clientY };
                 touchDragTicket.current = ticket;
@@ -1358,6 +1393,7 @@ app.get('/', (c) => {
                         setSelectedTicketId(null);
                     },
                     ticketId: selectedTicketId,
+                    currentUser: currentUser,
                     onTicketDeleted: () => {
                         setShowDetailsModal(false);
                         setSelectedTicketId(null);
@@ -1441,7 +1477,7 @@ app.get('/', (c) => {
                                         return React.createElement('div', {
                                             key: ticket.id,
                                             className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
-                                            draggable: true,
+                                            draggable: currentUser && currentUser.role !== 'operator',
                                             onClick: (e) => handleTicketClick(e, ticket),
                                             onDragStart: (e) => handleDragStart(e, ticket),
                                             onDragEnd: handleDragEnd,
@@ -1449,7 +1485,9 @@ app.get('/', (c) => {
                                             onTouchMove: handleTouchMove,
                                             onTouchEnd: handleTouchEnd,
                                             onContextMenu: (e) => handleContextMenu(e, ticket),
-                                            title: 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
+                                            title: currentUser && currentUser.role === 'operator' 
+                                                ? 'Cliquer pour détails | Clic droit: menu' 
+                                                : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
@@ -1534,7 +1572,7 @@ app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.7.0'
+    version: '1.8.0'
   });
 });
 
