@@ -53,77 +53,160 @@ app.get('/', (c) => {
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'igp-blue': '#1e40af',
-                        'igp-orange': '#ea580c',
-                        'igp-red': '#dc2626',
+                        'igp-blue': '#0A2463',
+                        'igp-blue-light': '#1E3A8A',
+                        'igp-blue-lighter': '#3B82F6',
+                        'igp-orange': '#FB5607',
+                        'igp-orange-light': '#FF6B35',
+                        'igp-red': '#DC2626',
+                        'igp-green': '#059669',
+                        'igp-purple': '#7C3AED',
+                        'igp-yellow': '#F59E0B',
+                        'igp-gray': '#F8FAFC',
+                        'igp-dark': '#0F172A',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 40px rgba(0, 0, 0, 0.08)',
+                        'premium-lg': '0 20px 60px rgba(0, 0, 0, 0.12)',
+                        'card': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08)',
                     }
                 }
             }
         }
     </script>
     <style>
-        .kanban-column {
-            min-height: 400px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 16px;
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .kanban-column {
+            min-height: 500px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .kanban-column:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+        }
+        
         .ticket-card {
             background: white;
-            border-radius: 6px;
-            padding: 12px;
+            border-radius: 12px;
+            padding: 16px;
             margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
             cursor: grab;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .ticket-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .ticket-card:hover::before {
+            opacity: 1;
+        }
+        
         .ticket-card:hover {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+            transform: translateY(-4px) scale(1.01);
         }
+        
         .ticket-card:active {
             cursor: grabbing;
+            transform: scale(0.98);
         }
+        
         .ticket-card.dragging {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: grabbing;
-            transform: rotate(2deg);
+            transform: rotate(3deg) scale(1.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
         .ticket-card.long-press-active {
-            background: #eff6ff;
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+            transform: scale(1.02);
         }
+        
         .kanban-column.drag-over {
-            background: #dbeafe;
+            background: rgba(219, 234, 254, 0.6);
             border: 2px dashed #3b82f6;
+            transform: scale(1.02);
         }
+        
         .kanban-column.drag-valid {
-            background: #d1fae5;
+            background: rgba(209, 250, 229, 0.6);
             border: 2px dashed #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
         }
+        
         .kanban-column.drag-invalid {
-            background: #fee2e2;
+            background: rgba(254, 226, 226, 0.6);
             border: 2px dashed #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
         }
         .priority-high {
             border-left: 4px solid #ef4444;
+            background: linear-gradient(to right, rgba(239, 68, 68, 0.05) 0%, transparent 50%);
         }
+        
         .priority-critical {
             border-left: 4px solid #dc2626;
+            background: linear-gradient(to right, rgba(220, 38, 38, 0.08) 0%, transparent 50%);
+            animation: pulse-critical 2s infinite;
         }
+        
+        @keyframes pulse-critical {
+            0%, 100% { box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1); }
+            50% { box-shadow: 0 2px 16px rgba(220, 38, 38, 0.3); }
+        }
+        
         .priority-medium {
             border-left: 4px solid #f59e0b;
+            background: linear-gradient(to right, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
         }
+        
         .priority-low {
             border-left: 4px solid #10b981;
+            background: linear-gradient(to right, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
         }
         .modal {
             display: none;
@@ -132,16 +215,40 @@ app.get('/', (c) => {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
             z-index: 1000;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            animation: fadeIn 0.2s ease;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
         .modal.active {
             display: flex;
             align-items: flex-start;
             justify-content: center;
             padding: 20px 0;
+        }
+        
+        .modal-content {
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
         @media (max-width: 640px) {
             .modal.active {
@@ -152,25 +259,36 @@ app.get('/', (c) => {
         .context-menu {
             position: fixed;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
             z-index: 2000;
-            min-width: 200px;
-            padding: 8px 0;
+            min-width: 220px;
+            padding: 8px;
+            backdrop-filter: blur(20px);
+            animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
         .context-menu-item {
-            padding: 12px 20px;
+            padding: 12px 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            transition: background 0.2s;
-            font-size: 15px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            position: relative;
         }
+        
         .context-menu-item:hover {
-            background: #f3f4f6;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            transform: translateX(4px);
+            padding-left: 20px;
         }
+        
         .context-menu-item:active {
-            background: #e5e7eb;
+            background: linear-gradient(135deg, #667eea25 0%, #764ba225 100%);
+            transform: scale(0.98);
         }
         .context-menu-item i {
             margin-right: 12px;
@@ -428,44 +546,51 @@ app.get('/', (c) => {
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-2xl w-full mx-4 my-auto',
+                    className: 'modal-content bg-white/95 backdrop-blur-2xl rounded-3xl p-6 md:p-10 max-w-3xl w-full mx-4 my-auto border border-white/20',
                     onClick: (e) => e.stopPropagation(),
-                    style: { marginTop: 'auto', marginBottom: 'auto' }
+                    style: { marginTop: 'auto', marginBottom: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b-2 border-igp-blue pb-4' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
-                            React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-igp-orange' }),
-                            'Nouvelle Demande de Maintenance'
+                    React.createElement('div', { className: 'flex justify-between items-center mb-8 pb-6 border-b-2 border-gradient-to-r from-igp-blue to-igp-orange' },
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('div', { className: 'w-14 h-14 bg-gradient-to-br from-igp-orange to-igp-orange-light rounded-2xl flex items-center justify-center shadow-premium' },
+                                React.createElement('i', { className: 'fas fa-plus-circle text-white text-2xl' })
+                            ),
+                            React.createElement('h2', { 
+                                className: 'text-3xl font-bold bg-gradient-to-r from-igp-blue to-igp-orange bg-clip-text text-transparent',
+                                style: { WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+                            }, 'Nouvelle Demande')
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'text-gray-500 hover:text-gray-700'
+                            className: 'w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all duration-200'
                         },
-                            React.createElement('i', { className: 'fas fa-times fa-2x' })
+                            React.createElement('i', { className: 'fas fa-times text-xl' })
                         )
                     ),
                     React.createElement('form', { onSubmit: handleSubmit },
-                        React.createElement('div', { className: 'mb-4' },
-                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                                React.createElement('i', { className: 'fas fa-heading mr-2' }),
-                                'Titre du problème *'
+                        React.createElement('div', { className: 'mb-6' },
+                            React.createElement('label', { className: 'flex items-center gap-2 text-gray-700 text-sm font-bold mb-3' },
+                                React.createElement('i', { className: 'fas fa-heading text-igp-blue' }),
+                                React.createElement('span', null, 'Titre du problème'),
+                                React.createElement('span', { className: 'text-red-500' }, '*')
                             ),
                             React.createElement('input', {
                                 type: 'text',
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-igp-blue transition-all duration-200 font-medium',
                                 value: title,
                                 onChange: (e) => setTitle(e.target.value),
                                 placeholder: 'Ex: Bruit anormal sur la machine',
                                 required: true
                             })
                         ),
-                        React.createElement('div', { className: 'mb-4' },
-                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                                React.createElement('i', { className: 'fas fa-align-left mr-2' }),
-                                'Description détaillée *'
+                        React.createElement('div', { className: 'mb-6' },
+                            React.createElement('label', { className: 'flex items-center gap-2 text-gray-700 text-sm font-bold mb-3' },
+                                React.createElement('i', { className: 'fas fa-align-left text-igp-blue' }),
+                                React.createElement('span', null, 'Description détaillée'),
+                                React.createElement('span', { className: 'text-red-500' }, '*')
                             ),
                             React.createElement('textarea', {
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-igp-blue transition-all duration-200 font-medium resize-none',
                                 value: description,
                                 onChange: (e) => setDescription(e.target.value),
                                 placeholder: 'Décrivez le problème en détail...',
@@ -582,20 +707,23 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex justify-end space-x-4 mt-6 pt-4 border-t-2 border-gray-200' },
+                        React.createElement('div', { className: 'flex justify-end gap-4 mt-8 pt-6 border-t-2 border-gray-100' },
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: onClose,
-                                className: 'px-6 py-2 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-all'
+                                className: 'px-8 py-3 border-2 border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-gray-300 font-semibold transition-all duration-200 hover:scale-105'
                             }, 
                                 React.createElement('i', { className: 'fas fa-times mr-2' }),
-                                'Annuler'
+                                React.createElement('span', null, 'Annuler')
                             ),
                             React.createElement('button', {
                                 type: 'submit',
                                 disabled: submitting,
-                                className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 shadow-md transition-all'
+                                className: 'group relative px-8 py-3 bg-gradient-to-r from-igp-orange to-igp-orange-light text-white rounded-xl hover:shadow-premium font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 overflow-hidden'
                             },
+                                React.createElement('div', { 
+                                    className: 'absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity'
+                                }),
                                 submitting 
                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
                                     : React.createElement('i', { className: 'fas fa-check mr-2' }),
@@ -1293,7 +1421,7 @@ app.get('/', (c) => {
                 setDragOverColumn(null);
             };
             
-            return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+            return React.createElement('div', { className: 'min-h-screen' },
                 
                 React.createElement(CreateTicketModal, {
                     show: showCreateModal,
@@ -1319,55 +1447,79 @@ app.get('/', (c) => {
                 }),
                 
                 
-                React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
-                    React.createElement('div', { className: 'container mx-auto px-4 py-3' },
-                        React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
-                            React.createElement('div', { className: 'flex items-center space-x-3' },
-                                React.createElement('img', { 
-                                    src: '/static/logo-igp.png', 
-                                    alt: 'IGP Logo',
-                                    className: 'h-12 md:h-16 w-auto object-contain'
-                                }),
-                                React.createElement('div', { className: 'border-l-2 border-gray-300 pl-3' },
-                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, 'Système de Maintenance'),
-                                    React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
-                                        'Les Produits Verriers International (IGP) Inc.'
+                React.createElement('header', { 
+                    className: 'backdrop-blur-xl bg-white/90 shadow-premium border-b border-white/20',
+                    style: { backdropFilter: 'blur(20px)' }
+                },
+                    React.createElement('div', { className: 'container mx-auto px-6 py-4' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row justify-between items-start md:items-center gap-6' },
+                            React.createElement('div', { className: 'flex items-center gap-4 w-full md:w-auto' },
+                                React.createElement('div', { 
+                                    className: 'bg-gradient-to-br from-igp-blue to-igp-blue-light p-3 rounded-2xl shadow-card'
+                                },
+                                    React.createElement('img', { 
+                                        src: '/static/logo-igp.png', 
+                                        alt: 'IGP Logo',
+                                        className: 'h-12 md:h-14 w-auto object-contain brightness-0 invert'
+                                    })
+                                ),
+                                React.createElement('div', { className: 'flex-1' },
+                                    React.createElement('h1', { 
+                                        className: 'text-2xl md:text-3xl font-bold bg-gradient-to-r from-igp-blue via-igp-blue-light to-igp-orange bg-clip-text text-transparent',
+                                        style: { WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+                                    }, 'Système de Maintenance'),
+                                    React.createElement('p', { className: 'text-sm md:text-base text-gray-600 font-medium mt-1' }, 
+                                        'Les Produits Verriers International Inc.'
                                     ),
-                                    React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, 
-                                        tickets.length + ' tickets actifs'
+                                    React.createElement('div', { className: 'flex items-center gap-3 mt-2' },
+                                        React.createElement('div', { className: 'flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-orange-50 to-orange-100 rounded-full' },
+                                            React.createElement('div', { className: 'w-2 h-2 bg-igp-orange rounded-full animate-pulse' }),
+                                            React.createElement('span', { className: 'text-xs font-bold text-igp-orange' }, 
+                                                tickets.length + ' tickets actifs'
+                                            )
+                                        ),
+                                        React.createElement('div', { className: 'flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-green-50 to-emerald-100 rounded-full' },
+                                            React.createElement('i', { className: 'fas fa-check-circle text-igp-green text-xs' }),
+                                            React.createElement('span', { className: 'text-xs font-bold text-igp-green' }, 
+                                                tickets.filter(t => t.status === 'completed').length + ' complétés'
+                                            )
+                                        )
                                     )
                                 )
-                            )
-                        ),
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
-                            React.createElement('button', {
-                                onClick: () => setShowCreateModal(true),
-                                className: 'px-4 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold shadow-md transition-all'
-                            },
-                                React.createElement('i', { className: 'fas fa-plus mr-2' }),
-                                'Nouvelle Demande'
                             ),
-                            React.createElement('button', {
-                                onClick: onRefresh,
-                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
-                            },
-                                React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
-                                'Actualiser'
-                            ),
-                            React.createElement('button', {
-                                onClick: onLogout,
-                                className: 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 shadow-md transition-all'
-                            },
-                                React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
-                                'Déconnexion'
+                            React.createElement('div', { className: 'flex flex-wrap gap-3' },
+                                React.createElement('button', {
+                                    onClick: () => setShowCreateModal(true),
+                                    className: 'group relative px-6 py-3 bg-gradient-to-r from-igp-orange to-igp-orange-light text-white rounded-xl hover:shadow-premium font-bold transition-all duration-300 hover:scale-105 overflow-hidden'
+                                },
+                                    React.createElement('div', { 
+                                        className: 'absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity'
+                                    }),
+                                    React.createElement('i', { className: 'fas fa-plus mr-2' }),
+                                    React.createElement('span', null, 'Nouvelle Demande')
+                                ),
+                                React.createElement('button', {
+                                    onClick: onRefresh,
+                                    className: 'px-5 py-3 bg-white/80 backdrop-blur-sm text-igp-blue border-2 border-igp-blue/20 rounded-xl hover:bg-white hover:border-igp-blue hover:shadow-card font-semibold transition-all duration-300 hover:scale-105'
+                                },
+                                    React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
+                                    React.createElement('span', null, 'Actualiser')
+                                ),
+                                React.createElement('button', {
+                                    onClick: onLogout,
+                                    className: 'px-5 py-3 bg-white/60 backdrop-blur-sm text-gray-700 border-2 border-gray-200 rounded-xl hover:bg-white hover:border-gray-300 hover:shadow-card font-semibold transition-all duration-300'
+                                },
+                                    React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
+                                    React.createElement('span', null, 'Déconnexion')
+                                )
                             )
                         )
                     )
                 ),
                 
                 
-                React.createElement('div', { className: 'container mx-auto px-4 py-6' },
-                    React.createElement('div', { className: 'kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4' },
+                React.createElement('div', { className: 'container mx-auto px-6 py-8' },
+                    React.createElement('div', { className: 'kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6' },
                         statuses.map(status => {
                             const isDragOver = dragOverColumn === status.key;
                             const columnClass = 'kanban-column' + (isDragOver ? ' drag-over' : '');
@@ -1380,14 +1532,20 @@ app.get('/', (c) => {
                                 onDragLeave: handleDragLeave,
                                 onDrop: (e) => handleDrop(e, status.key)
                             },
-                                React.createElement('div', { className: 'mb-4 flex items-center justify-between kanban-column-header' },
-                                    React.createElement('div', { className: 'flex items-center' },
-                                        React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
-                                        React.createElement('h3', { className: 'font-bold text-gray-700 text-sm md:text-base' }, status.label)
-                                    ),
-                                    React.createElement('span', { 
-                                        className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
-                                    }, getTicketsByStatus(status.key).length)
+                                React.createElement('div', { className: 'mb-5 pb-4 border-b-2 border-gray-100' },
+                                    React.createElement('div', { className: 'flex items-center justify-between' },
+                                        React.createElement('div', { className: 'flex items-center gap-2' },
+                                            React.createElement('div', { 
+                                                className: 'w-10 h-10 rounded-xl bg-gradient-to-br from-' + status.color + '-400 to-' + status.color + '-600 flex items-center justify-center shadow-md'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-' + status.icon + ' text-white text-sm' })
+                                            ),
+                                            React.createElement('h3', { className: 'font-bold text-gray-800 text-base' }, status.label)
+                                        ),
+                                        React.createElement('div', { 
+                                            className: 'flex items-center justify-center w-8 h-8 bg-gradient-to-br from-' + status.color + '-50 to-' + status.color + '-100 text-' + status.color + '-700 text-sm font-bold rounded-lg shadow-sm'
+                                        }, getTicketsByStatus(status.key).length)
+                                    )
                                 ),
                                 React.createElement('div', { className: 'space-y-3' },
                                     getTicketsByStatus(status.key).map(ticket => {
@@ -1406,31 +1564,49 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-2' },
-                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
+                                            React.createElement('div', { className: 'flex justify-between items-start mb-3' },
                                                 React.createElement('span', { 
-                                                    className: 'text-xs px-2 py-1 rounded font-semibold ' + 
-                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                     'bg-green-100 text-green-800')
+                                                    className: 'text-xs text-gray-400 font-mono font-bold tracking-wider'
+                                                }, ticket.ticket_id),
+                                                React.createElement('div', { 
+                                                    className: 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-xs shadow-sm ' + 
+                                                    (ticket.priority === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' :
+                                                     ticket.priority === 'high' ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white' :
+                                                     ticket.priority === 'medium' ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white' :
+                                                     'bg-gradient-to-r from-green-400 to-emerald-500 text-white')
                                                 }, 
-                                                    ticket.priority === 'critical' ? 'CRITIQUE' :
-                                                    ticket.priority === 'high' ? 'HAUTE' :
-                                                    ticket.priority === 'medium' ? 'MOYENNE' :
-                                                    'FAIBLE'
+                                                    React.createElement('span', null,
+                                                        ticket.priority === 'critical' ? '🔴' :
+                                                        ticket.priority === 'high' ? '🟠' :
+                                                        ticket.priority === 'medium' ? '🟡' :
+                                                        '🟢'
+                                                    ),
+                                                    React.createElement('span', null,
+                                                        ticket.priority === 'critical' ? 'CRITIQUE' :
+                                                        ticket.priority === 'high' ? 'HAUTE' :
+                                                        ticket.priority === 'medium' ? 'MOYENNE' :
+                                                        'FAIBLE'
+                                                    )
                                                 )
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
-                                            React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
-                                            
-                                            ticket.media_count > 0 ? React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
-                                                React.createElement('i', { className: 'fas fa-camera mr-1' }),
-                                                ticket.media_count + ' photo(s)/vidéo(s)'
-                                            ) : null,
-                                            React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
-                                                React.createElement('i', { className: 'far fa-clock mr-1' }),
-                                                new Date(ticket.created_at).toLocaleDateString('fr-FR')
+                                            React.createElement('h4', { className: 'font-bold text-gray-900 mb-2 text-base leading-tight' }, ticket.title),
+                                            React.createElement('div', { className: 'flex items-center gap-2 mb-3 pb-3 border-b border-gray-100' },
+                                                React.createElement('div', { className: 'flex items-center gap-1.5 px-2 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg flex-1' },
+                                                    React.createElement('i', { className: 'fas fa-cog text-igp-blue text-xs' }),
+                                                    React.createElement('span', { className: 'text-xs font-semibold text-gray-700 truncate' }, 
+                                                        ticket.machine_type + ' ' + ticket.model
+                                                    )
+                                                )
+                                            ),
+                                            React.createElement('div', { className: 'flex items-center justify-between' },
+                                                ticket.media_count > 0 ? React.createElement('div', { className: 'flex items-center gap-1.5 px-2 py-1 bg-purple-50 rounded-lg' },
+                                                    React.createElement('i', { className: 'fas fa-images text-igp-purple text-xs' }),
+                                                    React.createElement('span', { className: 'text-xs font-bold text-igp-purple' }, ticket.media_count)
+                                                ) : React.createElement('div', null),
+                                                React.createElement('div', { className: 'flex items-center gap-1.5 text-xs text-gray-500 font-medium' },
+                                                    React.createElement('i', { className: 'far fa-clock' }),
+                                                    React.createElement('span', null, new Date(ticket.created_at).toLocaleDateString('fr-FR'))
+                                                )
                                             )
                                         );
                                     })
