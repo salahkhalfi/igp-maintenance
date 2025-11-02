@@ -1,179 +1,120 @@
-# 🚀 DÉPLOIEMENT EN PRODUCTION
+# Documentation de Déploiement - IGP Maintenance
 
-## ✅ **APPLICATION DÉPLOYÉE AVEC SUCCÈS**
+## Version Actuelle
+**v1.9.0 - Sécurité Maximale** (2025-11-02)
 
-**Date**: 2 novembre 2025  
-**Version**: v1.8.3 - Domaine personnalisé igpglass.ca  
-**Développeur**: Salah Khalfi  
-**Domaine**: https://mecanique.igpglass.ca
-
----
-
-## 🌐 **URLS DE PRODUCTION**
+## 🌐 URLs de Production
 
 ### URL Principale (Domaine Personnalisé)
+- **Production**: https://mecanique.igpglass.ca
+- **API**: https://mecanique.igpglass.ca/api/*
+
+### URL Cloudflare (Dernière Version Sécurisée)
+- **Déploiement e6493742**: https://e6493742.webapp-7t8.pages.dev
+
+## 🔒 Corrections de Sécurité Appliquées
+
+### v1.9.0 (2025-11-02) - CRITIQUE
+✅ **Suppression des identifiants hardcodés**
+- Les champs email et mot de passe sont maintenant complètement vides par défaut
+- Avant: `React.useState('admin@igpglass.ca')` et `React.useState('password123')`
+- Après: `React.useState('')` et `React.useState('')`
+- **Impact**: Les identifiants ne sont plus visibles ou pré-remplis
+
+### v1.8.4 (2025-11-02)
+✅ **Désactivation de l'auto-complétion navigateur**
+- Ajout de `autoComplete='off'` sur le formulaire
+- Ajout de `autoComplete='new-password'` sur le champ mot de passe
+
+### v1.8.3 (2025-11-02)
+✅ **Suppression de l'affichage des comptes de test**
+- Suppression de la section "Comptes de test:" visible publiquement
+
+## 📊 Historique des Déploiements
+
+| Version | Hash | Date | Status | Notes |
+|---------|------|------|--------|-------|
+| v1.9.0 | e6493742 | 2025-11-02 | ✅ ACTIF | Identifiants hardcodés supprimés |
+| v1.8.4 | 71e98938 | 2025-11-02 | ⚠️ OBSOLÈTE | Auto-complétion désactivée |
+| v1.8.3 | 38bbed9e | 2025-11-02 | ⚠️ OBSOLÈTE | Affichage test supprimé |
+| v1.8.2 | 2ced545d | 2025-11-02 | 🔴 INSECURE | Comptes visibles |
+| v1.8.1 | 98a3ffaf | 2025-11-02 | 🔴 INSECURE | Comptes visibles |
+| v1.8.0 | 5e61f01a | 2025-11-02 | 🔴 INSECURE | Comptes visibles |
+
+## ⚠️ Actions Requises pour Sécurité Complète
+
+### 1. Supprimer les Anciens Déploiements (CRITIQUE)
+Les anciennes URLs sont toujours accessibles et contiennent les vulnérabilités :
+
+**À faire manuellement sur Cloudflare Dashboard** :
+1. Aller sur https://dash.cloudflare.com/
+2. Pages → **webapp** → **Deployments**
+3. **Supprimer ces déploiements** :
+   - ❌ 71e98938 (champs pré-remplis)
+   - ❌ 38bbed9e (champs pré-remplis)
+   - ❌ 2ced545d (affichage + pré-remplissage)
+   - ❌ 98a3ffaf (affichage + pré-remplissage)
+   - ❌ 5e61f01a (affichage + pré-remplissage)
+4. **Garder uniquement** : ✅ e6493742 (version sécurisée)
+
+### 2. Vider le Cache Navigateur
+Pour les utilisateurs finaux :
 ```
-https://mecanique.igpglass.ca
-```
-
-### URL Cloudflare Pages (Technique)
-```
-https://2ced545d.webapp-7t8.pages.dev
-https://webapp-7t8.pages.dev
-```
-
-### URLs Précédentes
-```
-https://5e61f01a.webapp-7t8.pages.dev (avec R2)
-https://98a3ffaf.webapp-7t8.pages.dev (première version)
-```
-
-### Dashboard Cloudflare
-```
-https://dash.cloudflare.com/
-```
-
----
-
-## 📦 **RESSOURCES CLOUDFLARE CRÉÉES**
-
-### 1. Base de données D1 (✅ Créée et Migrée)
-- **Nom**: `maintenance-db`
-- **ID**: `6e4d996c-994b-4afc-81d2-d67faab07828`
-- **Région**: ENAM (Europe)
-- **Migrations appliquées**: 
-  - ✅ 0001_initial_schema.sql
-  - ✅ 0002_add_comments.sql
-  - ✅ 0003_add_reporter_name.sql
-
-### 2. Projet Cloudflare Pages (✅ Créé et Déployé)
-- **Nom**: `webapp`
-- **Branche production**: `main`
-- **URL**: https://webapp-7t8.pages.dev/
-
-### 3. Bucket R2 (✅ Créé et Configuré)
-- **Nom**: `maintenance-media`
-- **Status**: Actif
-- **Binding**: `MEDIA_BUCKET`
-- **Fonctionnalité**: Upload de photos/vidéos opérationnel
-
----
-
-## 📋 **COMPTES DE TEST**
-
-| Email | Mot de passe | Rôle |
-|-------|-------------|------|
-| admin@igpglass.ca | password123 | Administrateur |
-| technicien@igpglass.ca | password123 | Technicien |
-| operateur@igpglass.ca | password123 | Opérateur |
-
----
-
-## 🔧 **CONFIGURATION**
-
-### wrangler.jsonc
-```jsonc
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webapp",
-  "compatibility_date": "2025-11-02",
-  "pages_build_output_dir": "./dist",
-  "compatibility_flags": ["nodejs_compat"],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "maintenance-db",
-      "database_id": "6e4d996c-994b-4afc-81d2-d67faab07828"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "MEDIA_BUCKET",
-      "bucket_name": "maintenance-media"
-    }
-  ]
-}
+1. Ctrl+Shift+Delete (ou Cmd+Shift+Delete sur Mac)
+2. Cocher "Images et fichiers en cache"
+3. Vider
+4. OU utiliser mode incognito/privé
 ```
 
-### Variables d'environnement (À configurer si nécessaire)
+### 3. Vérifier la Sécurité
+Une fois les anciennes versions supprimées :
 ```bash
-# Via Cloudflare Dashboard > Pages > webapp > Settings > Environment variables
-JWT_SECRET=your-secret-key-here
+# Test: Les anciennes URLs doivent retourner 404
+curl -I https://71e98938.webapp-7t8.pages.dev
+curl -I https://5e61f01a.webapp-7t8.pages.dev
+
+# Test: Le domaine principal doit afficher la version sécurisée
+curl -s https://mecanique.igpglass.ca | grep "React.useState('')"
 ```
 
----
+## 🚀 Déploiement Futur
 
-## 🔄 **REDÉPLOIEMENT**
-
-Pour redéployer une nouvelle version :
-
+### Pour Déployer une Nouvelle Version
 ```bash
 # 1. Build
 npm run build
 
 # 2. Deploy
-npx wrangler pages deploy dist --project-name webapp
+npx wrangler pages deploy dist --project-name webapp --commit-dirty=true
+
+# 3. Commit et push
+git add .
+git commit -m "Description des changements"
+git push origin main
 ```
 
----
+## 📝 Configuration DNS
 
-## ⚠️ **ACTIONS MANUELLES OPTIONNELLES**
-
-### 1. Configurer un domaine personnalisé (optionnel)
-1. Cloudflare Pages > webapp > Custom domains
-2. Ajouter votre domaine
-3. Suivre les instructions DNS
-
-### 2. Pousser sur GitHub (optionnel)
-1. Configurer GitHub via l'interface du code sandbox
-2. Ou manuellement :
-```bash
-git remote add origin https://github.com/VOTRE-USERNAME/webapp.git
-git push -u origin main
+### Configuration CNAME (Cloudflare DNS)
+```
+Type: CNAME
+Nom: mecanique
+Cible: webapp-7t8.pages.dev
+Proxy: Activé (nuage orange)
 ```
 
----
+## 🔐 Variables d'Environnement
 
-## 📊 **STATISTIQUES DU DÉPLOIEMENT**
+Les variables d'environnement sont configurées via Cloudflare :
+- `CLOUDFLARE_API_TOKEN` : Configuré via `setup_cloudflare_api_key`
+- Bindings D1 : `DB` → base de données de maintenance
+- Bindings R2 : `BUCKET` → stockage média
 
-- **Taille du bundle**: 152.35 kB
-- **Fichiers uploadés**: 4
-- **Temps de build**: ~600ms
-- **Temps de déploiement**: ~13s
-- **Région**: Globale (Edge)
+## 📱 Contact & Support
 
----
-
-## 🐛 **DÉBOGAGE**
-
-### Vérifier les logs
-```bash
-npx wrangler pages deployment tail --project-name webapp
-```
-
-### Vérifier la base de données
-```bash
-npx wrangler d1 execute maintenance-db --remote --command="SELECT * FROM users LIMIT 5"
-```
-
-### Tester l'API
-```bash
-curl https://5e61f01a.webapp-7t8.pages.dev/api/tickets
-```
+Pour toute question sur ce déploiement :
+- **GitHub**: https://github.com/salahkhalfi/igp-maintenance
+- **Commit actuel**: 3f493df
 
 ---
-
-## 📝 **NOTES**
-
-- ✅ **Application 100% fonctionnelle en production**
-- ✅ Toutes les fonctionnalités sont opérationnelles
-- ✅ Upload de médias (photos/vidéos) actif via R2
-- ✅ Base de données D1 avec seed data (4 utilisateurs de test)
-- ✅ Domaine des connexions: **@igpglass.ca**
-- ✅ Design 3D professionnel avec signature Salah Khalfi
-- ✅ Système de tickets Kanban complet
-- ✅ Authentification JWT avec permissions par rôle
-
----
-
-**© 2025 - Salah Khalfi**
+*Dernière mise à jour : 2025-11-02*
