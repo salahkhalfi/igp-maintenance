@@ -110,10 +110,10 @@ tickets.post('/', async (c) => {
   try {
     const user = c.get('user') as any;
     const body: CreateTicketRequest = await c.req.json();
-    const { title, description, machine_id, priority } = body;
+    const { title, description, reporter_name, machine_id, priority } = body;
     
     // Validation
-    if (!title || !description || !machine_id || !priority) {
+    if (!title || !description || !reporter_name || !machine_id || !priority) {
       return c.json({ error: 'Tous les champs sont requis' }, 400);
     }
     
@@ -131,9 +131,9 @@ tickets.post('/', async (c) => {
     
     // Créer le ticket
     const result = await c.env.DB.prepare(`
-      INSERT INTO tickets (ticket_id, title, description, machine_id, priority, reported_by, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'received')
-    `).bind(ticket_id, title, description, machine_id, priority, user.userId).run();
+      INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'received')
+    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du ticket' }, 500);

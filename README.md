@@ -12,14 +12,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.6.0 - Prêt pour le déploiement**
+✅ **Version 1.7.0 - Prêt pour le déploiement**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v1.6.0**: Galerie de médias dans les détails de ticket + Scroll mobile corrigé
+- **NOUVEAU v1.7.0**: Système de commentaires + Upload médias supplémentaires + Suppression de tickets
+- Galerie de médias dans les détails de ticket + Scroll mobile corrigé
 - Upload de photos/vidéos depuis mobile lors de la création de tickets
 
 ## 🚀 Fonctionnalités
@@ -56,7 +57,39 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
 - **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
 
-#### 🆕 **NOUVEAU v1.6.0** - Galerie de médias et corrections mobiles
+#### 🆕 **NOUVEAU v1.7.0** - Commentaires, médias supplémentaires et suppression
+
+##### 💬 Système de commentaires collaboratif
+- **Ajout de commentaires** - Opérateurs et techniciens peuvent ajouter des notes à tout moment
+- **Nom libre** - Chaque personne entre son nom (pas de comptes fictifs)
+- **Identification par rôle** - Badge visuel pour différencier Opérateur 👨‍💼 et Technicien 🔧
+- **Timeline chronologique** - Liste de tous les commentaires avec horodatage
+- **Mise en forme** - Bordure colorée selon le rôle (bleu pour opérateur, orange pour technicien)
+- **Design responsive** - Zone de commentaires avec scroll indépendant (max 256px)
+
+##### 📸 Upload de médias supplémentaires
+- **Ajout ultérieur** - Possibilité d'ajouter photos/vidéos après création du ticket
+- **Preview en grille** - Aperçu des fichiers sélectionnés avant upload
+- **Suppression pré-upload** - Retirer un fichier de la sélection avant envoi
+- **Upload multiple** - Envoyer plusieurs fichiers en une fois
+- **Rechargement auto** - Galerie mise à jour automatiquement après upload
+- **Stockage unifié** - Médias ajoutés stockés avec les médias originaux du ticket
+
+##### 🗑️ Suppression de tickets
+- **Bouton accessible** - Icône poubelle rouge dans l'en-tête du modal de détails
+- **Confirmation obligatoire** - Dialog de confirmation pour éviter suppressions accidentelles
+- **Suppression en cascade** - Médias et commentaires supprimés automatiquement
+- **Rafraîchissement auto** - Liste de tickets mise à jour après suppression
+- **Accès contrôlé** - Protégé par authentification JWT
+
+##### 👤 Champ "Votre nom" personnalisé
+- **Nom libre** - Plus de noms fictifs pré-remplis, chacun entre son vrai nom
+- **Création de ticket** - Champ "Votre nom" obligatoire à la création
+- **Commentaires** - Champ "Votre nom" à chaque ajout de commentaire
+- **Traçabilité** - Chaque action identifiée par le nom réel de la personne
+- **Affichage dans détails** - "Rapporté par: [Nom]" visible dans les informations du ticket
+
+#### **v1.6.0** - Galerie de médias et corrections mobiles
 
 ##### 📸 Galerie de médias dans les détails
 - **Clic sur ticket** - Cliquer sur n'importe quel ticket pour voir ses détails complets
@@ -150,11 +183,13 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
   ticket_id: "IGP-PDE-7500-20231025-001",
   title: STRING,
   description: STRING,
+  reporter_name: STRING,        // NOUVEAU v1.7.0
   machine_id: INTEGER,
   status: ENUM('received', 'diagnostic', 'in_progress', 'waiting_parts', 'completed', 'archived'),
   priority: ENUM('low', 'medium', 'high', 'critical'),
   reported_by: INTEGER,
   assigned_to: INTEGER,
+  assignee_name: STRING,        // NOUVEAU v1.7.0
   created_at: DATETIME,
   updated_at: DATETIME,
   completed_at: DATETIME
@@ -187,6 +222,18 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 }
 ```
 
+#### Comment (NOUVEAU v1.7.0)
+```javascript
+{
+  id: INTEGER,
+  ticket_id: INTEGER,
+  user_name: STRING,
+  user_role: STRING,
+  comment: TEXT,
+  created_at: DATETIME
+}
+```
+
 ## 🔌 API REST Complète
 
 ### Authentification
@@ -210,9 +257,13 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ### Médias
 - `POST /api/media/upload` - Upload un fichier
-- `GET /api/media/:id` - Récupérer un fichier
+- `GET /api/media/:id` - Récupérer un fichier (PUBLIC)
 - `GET /api/media/ticket/:ticketId` - Liste les médias d'un ticket
 - `DELETE /api/media/:id` - Supprimer un fichier
+
+### Commentaires
+- `POST /api/comments` - Ajouter un commentaire à un ticket
+- `GET /api/comments/ticket/:ticketId` - Liste les commentaires d'un ticket
 
 ### Santé
 - `GET /api/health` - Vérifier le statut de l'API
@@ -336,7 +387,9 @@ webapp/
 │   └── types/
 │       └── index.ts          # Types TypeScript
 ├── migrations/
-│   └── 0001_initial_schema.sql  # Schéma de base de données
+│   ├── 0001_initial_schema.sql  # Schéma de base de données
+│   ├── 0002_add_comments.sql    # Table des commentaires (v1.7.0)
+│   └── 0003_add_reporter_name.sql  # Noms libres (v1.7.0)
 ├── public/                    # Fichiers statiques
 ├── seed.sql                   # Données de test
 ├── wrangler.jsonc             # Configuration Cloudflare
@@ -456,6 +509,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.6.0  
+**Version**: 1.7.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready - Galerie de médias + Scroll mobile corrigé + Upload photos/vidéos + Drag-and-Drop
+**Statut**: ✅ Production Ready - Commentaires collaboratifs + Upload médias supplémentaires + Suppression tickets + Noms personnalisés

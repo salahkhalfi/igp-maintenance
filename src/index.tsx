@@ -6,6 +6,7 @@ import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
 import media from './routes/media';
+import comments from './routes/comments';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -34,6 +35,9 @@ app.route('/api/machines', machines);
 // Routes des médias (GET public pour images, POST/DELETE protégés)
 // On doit définir les routes PUIS ajouter les middlewares sur certaines routes
 app.route('/api/media', media);
+
+// Routes des commentaires (protégées)
+app.route('/api/comments', comments);
 
 // Page d'accueil avec interface React
 app.get('/', (c) => {
@@ -390,6 +394,7 @@ app.get('/', (c) => {
         const CreateTicketModal = ({ show, onClose, machines, onTicketCreated }) => {
             const [title, setTitle] = React.useState('');
             const [description, setDescription] = React.useState('');
+            const [reporterName, setReporterName] = React.useState('');
             const [machineId, setMachineId] = React.useState('');
             const [priority, setPriority] = React.useState('medium');
             const [mediaFiles, setMediaFiles] = React.useState([]);
@@ -451,6 +456,7 @@ app.get('/', (c) => {
                     const response = await axios.post(API_URL + '/tickets', {
                         title,
                         description,
+                        reporter_name: reporterName,
                         machine_id: parseInt(machineId),
                         priority
                     });
@@ -467,6 +473,7 @@ app.get('/', (c) => {
                     // Reset form
                     setTitle('');
                     setDescription('');
+                    setReporterName('');
                     setMachineId('');
                     setPriority('medium');
                     setMediaFiles([]);
@@ -530,6 +537,20 @@ app.get('/', (c) => {
                                 onChange: (e) => setDescription(e.target.value),
                                 placeholder: 'Décrivez le problème en détail...',
                                 rows: 4,
+                                required: true
+                            })
+                        ),
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
+                                React.createElement('i', { className: 'fas fa-user mr-2' }),
+                                'Votre nom *'
+                            ),
+                            React.createElement('input', {
+                                type: 'text',
+                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                value: reporterName,
+                                onChange: (e) => setReporterName(e.target.value),
+                                placeholder: 'Ex: Jean Tremblay',
                                 required: true
                             })
                         ),
@@ -657,14 +678,23 @@ app.get('/', (c) => {
         };
         
         // Modal de détails du ticket avec galerie de médias
-        const TicketDetailsModal = ({ show, onClose, ticketId }) => {
+        const TicketDetailsModal = ({ show, onClose, ticketId, onTicketDeleted }) => {
             const [ticket, setTicket] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
             const [selectedMedia, setSelectedMedia] = React.useState(null);
+            const [comments, setComments] = React.useState([]);
+            const [newComment, setNewComment] = React.useState('');
+            const [commentAuthor, setCommentAuthor] = React.useState('');
+            const [commentRole, setCommentRole] = React.useState('Opérateur');
+            const [submittingComment, setSubmittingComment] = React.useState(false);
+            const [uploadingMedia, setUploadingMedia] = React.useState(false);
+            const [newMediaFiles, setNewMediaFiles] = React.useState([]);
+            const [newMediaPreviews, setNewMediaPreviews] = React.useState([]);
             
             React.useEffect(() => {
                 if (show && ticketId) {
                     loadTicketDetails();
+                    loadComments();
                 }
             }, [show, ticketId]);
             
@@ -678,6 +708,101 @@ app.get('/', (c) => {
                     alert('Erreur lors du chargement des détails du ticket');
                 } finally {
                     setLoading(false);
+                }
+            };
+            
+            const loadComments = async () => {
+                try {
+                    const response = await axios.get(API_URL + '/comments/ticket/' + ticketId);
+                    setComments(response.data.comments || []);
+                } catch (error) {
+                    console.error('Erreur chargement commentaires:', error);
+                }
+            };
+            
+            const handleDeleteTicket = async () => {
+                if (!confirm('Êtes-vous sûr de vouloir supprimer ce ticket ? Cette action est irréversible.')) {
+                    return;
+                }
+                
+                try {
+                    await axios.delete(API_URL + '/tickets/' + ticketId);
+                    alert('Ticket supprimé avec succès');
+                    onClose();
+                    if (onTicketDeleted) onTicketDeleted();
+                } catch (error) {
+                    alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                }
+            };
+            
+            const handleAddComment = async (e) => {
+                e.preventDefault();
+                if (!newComment.trim() || !commentAuthor.trim()) {
+                    alert('Veuillez remplir votre nom et le commentaire');
+                    return;
+                }
+                
+                setSubmittingComment(true);
+                try {
+                    await axios.post(API_URL + '/comments', {
+                        ticket_id: ticketId,
+                        user_name: commentAuthor,
+                        user_role: commentRole,
+                        comment: newComment
+                    });
+                    
+                    setNewComment('');
+                    setCommentAuthor('');
+                    loadComments();
+                } catch (error) {
+                    alert('Erreur lors de l\'ajout du commentaire');
+                } finally {
+                    setSubmittingComment(false);
+                }
+            };
+            
+            const handleNewMediaChange = (e) => {
+                const files = Array.from(e.target.files);
+                setNewMediaFiles(prevFiles => [...prevFiles, ...files]);
+                
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setNewMediaPreviews(prev => [...prev, {
+                            url: reader.result,
+                            type: file.type,
+                            name: file.name,
+                            size: file.size
+                        }]);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+            
+            const handleUploadNewMedia = async () => {
+                if (newMediaFiles.length === 0) return;
+                
+                setUploadingMedia(true);
+                try {
+                    for (let i = 0; i < newMediaFiles.length; i++) {
+                        const file = newMediaFiles[i];
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('ticket_id', ticketId);
+                        
+                        await axios.post(API_URL + '/media/upload', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                    }
+                    
+                    alert('Médias ajoutés avec succès !');
+                    setNewMediaFiles([]);
+                    setNewMediaPreviews([]);
+                    loadTicketDetails();
+                } catch (error) {
+                    alert('Erreur lors de l\'upload des médias');
+                } finally {
+                    setUploadingMedia(false);
                 }
             };
             
@@ -697,11 +822,20 @@ app.get('/', (c) => {
                             React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-igp-orange' }),
                             'Détails du Ticket'
                         ),
-                        React.createElement('button', {
-                            onClick: onClose,
-                            className: 'text-gray-500 hover:text-gray-700'
-                        },
-                            React.createElement('i', { className: 'fas fa-times fa-2x' })
+                        React.createElement('div', { className: 'flex gap-3' },
+                            React.createElement('button', {
+                                onClick: handleDeleteTicket,
+                                className: 'text-red-500 hover:text-red-700 transition-colors',
+                                title: 'Supprimer ce ticket'
+                            },
+                                React.createElement('i', { className: 'fas fa-trash-alt fa-2x' })
+                            ),
+                            React.createElement('button', {
+                                onClick: onClose,
+                                className: 'text-gray-500 hover:text-gray-700'
+                            },
+                                React.createElement('i', { className: 'fas fa-times fa-2x' })
+                            )
                         )
                     ),
                     
@@ -787,6 +921,204 @@ app.get('/', (c) => {
                         (!ticket.media || ticket.media.length === 0) && React.createElement('div', { className: 'mb-6 text-center py-8 bg-gray-50 rounded' },
                             React.createElement('i', { className: 'fas fa-camera text-gray-400 text-4xl mb-2' }),
                             React.createElement('p', { className: 'text-gray-500' }, 'Aucune photo ou vidéo attachée à ce ticket')
+                        ),
+                        
+                        // Section des commentaires
+                        React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
+                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
+                                React.createElement('i', { className: 'fas fa-comments mr-2 text-igp-blue' }),
+                                'Commentaires et Notes (' + comments.length + ')'
+                            ),
+                            
+                            // Liste des commentaires existants
+                            comments.length > 0 ? React.createElement('div', { className: 'space-y-3 mb-4 max-h-64 overflow-y-auto' },
+                                comments.map(comment =>
+                                    React.createElement('div', { 
+                                        key: comment.id,
+                                        className: 'bg-gray-50 rounded-lg p-3 border-l-4 ' + 
+                                                   (comment.user_role === 'Technicien' ? 'border-igp-orange' : 'border-igp-blue')
+                                    },
+                                        React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+                                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                                React.createElement('i', { 
+                                                    className: 'fas ' + (comment.user_role === 'Technicien' ? 'fa-wrench' : 'fa-user') + ' text-sm text-gray-600'
+                                                }),
+                                                React.createElement('span', { className: 'font-semibold text-gray-800' }, comment.user_name),
+                                                React.createElement('span', { className: 'text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded' }, 
+                                                    comment.user_role || 'Opérateur'
+                                                )
+                                            ),
+                                            React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                new Date(comment.created_at).toLocaleString('fr-FR')
+                                            )
+                                        ),
+                                        React.createElement('p', { className: 'text-gray-700 text-sm whitespace-pre-wrap' }, comment.comment)
+                                    )
+                                )
+                            ) : React.createElement('div', { className: 'text-center py-6 bg-gray-50 rounded mb-4' },
+                                React.createElement('i', { className: 'fas fa-comment-slash text-gray-400 text-3xl mb-2' }),
+                                React.createElement('p', { className: 'text-gray-500 text-sm' }, 'Aucun commentaire pour le moment')
+                            ),
+                            
+                            // Formulaire d'ajout de commentaire
+                            React.createElement('form', { 
+                                onSubmit: handleAddComment,
+                                className: 'bg-blue-50 rounded-lg p-4 border-2 border-igp-blue'
+                            },
+                                React.createElement('h5', { className: 'font-semibold text-gray-800 mb-3 flex items-center' },
+                                    React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-igp-blue' }),
+                                    'Ajouter un commentaire'
+                                ),
+                                
+                                // Ligne: Nom + Rôle
+                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-3 mb-3' },
+                                    React.createElement('div', {},
+                                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
+                                            React.createElement('i', { className: 'fas fa-user mr-1' }),
+                                            'Votre nom *'
+                                        ),
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            value: commentAuthor,
+                                            onChange: (e) => setCommentAuthor(e.target.value),
+                                            placeholder: 'Ex: Jean Tremblay',
+                                            required: true,
+                                            className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent'
+                                        })
+                                    ),
+                                    React.createElement('div', {},
+                                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
+                                            React.createElement('i', { className: 'fas fa-user-tag mr-1' }),
+                                            'Rôle'
+                                        ),
+                                        React.createElement('select', {
+                                            value: commentRole,
+                                            onChange: (e) => setCommentRole(e.target.value),
+                                            className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent'
+                                        },
+                                            React.createElement('option', { value: 'Opérateur' }, '👨‍💼 Opérateur'),
+                                            React.createElement('option', { value: 'Technicien' }, '🔧 Technicien')
+                                        )
+                                    )
+                                ),
+                                
+                                // Zone de texte du commentaire
+                                React.createElement('div', { className: 'mb-3' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
+                                        React.createElement('i', { className: 'fas fa-comment mr-1' }),
+                                        'Commentaire *'
+                                    ),
+                                    React.createElement('textarea', {
+                                        value: newComment,
+                                        onChange: (e) => setNewComment(e.target.value),
+                                        placeholder: 'Ex: Pièce commandée, livraison prévue jeudi...',
+                                        required: true,
+                                        rows: 3,
+                                        className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent resize-none'
+                                    })
+                                ),
+                                
+                                // Bouton soumettre
+                                React.createElement('button', {
+                                    type: 'submit',
+                                    disabled: submittingComment,
+                                    className: 'w-full px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
+                                },
+                                    submittingComment 
+                                        ? React.createElement('span', {},
+                                            React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' }),
+                                            'Envoi en cours...'
+                                        )
+                                        : React.createElement('span', {},
+                                            React.createElement('i', { className: 'fas fa-paper-plane mr-2' }),
+                                            'Publier le commentaire'
+                                        )
+                                )
+                            )
+                        ),
+                        
+                        // Section d'ajout de médias supplémentaires
+                        React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
+                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
+                                React.createElement('i', { className: 'fas fa-camera-retro mr-2 text-igp-orange' }),
+                                'Ajouter des photos/vidéos supplémentaires'
+                            ),
+                            
+                            // Aperçu des nouveaux fichiers sélectionnés
+                            newMediaPreviews.length > 0 && React.createElement('div', { className: 'mb-4' },
+                                React.createElement('p', { className: 'text-sm font-semibold text-gray-700 mb-2' },
+                                    React.createElement('i', { className: 'fas fa-images mr-1' }),
+                                    newMediaPreviews.length + ' fichier(s) sélectionné(s)'
+                                ),
+                                React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-3 mb-3' },
+                                    newMediaPreviews.map((preview, index) =>
+                                        React.createElement('div', { 
+                                            key: index,
+                                            className: 'relative group'
+                                        },
+                                            preview.type.startsWith('image/')
+                                                ? React.createElement('img', {
+                                                    src: preview.url,
+                                                    alt: preview.name,
+                                                    className: 'w-full h-24 object-cover rounded border-2 border-igp-orange'
+                                                })
+                                                : React.createElement('div', { className: 'w-full h-24 bg-gray-200 rounded border-2 border-igp-orange flex items-center justify-center' },
+                                                    React.createElement('i', { className: 'fas fa-video fa-2x text-gray-500' })
+                                                ),
+                                            React.createElement('button', {
+                                                type: 'button',
+                                                onClick: () => {
+                                                    setNewMediaFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+                                                    setNewMediaPreviews(prevPreviews => prevPreviews.filter((_, i) => i !== index));
+                                                },
+                                                className: 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition-all'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-times text-xs' })
+                                            ),
+                                            React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded max-w-full truncate' },
+                                                preview.name
+                                            )
+                                        )
+                                    )
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleUploadNewMedia,
+                                    disabled: uploadingMedia,
+                                    className: 'w-full px-4 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
+                                },
+                                    uploadingMedia
+                                        ? React.createElement('span', {},
+                                            React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' }),
+                                            'Upload en cours...'
+                                        )
+                                        : React.createElement('span', {},
+                                            React.createElement('i', { className: 'fas fa-cloud-upload-alt mr-2' }),
+                                            'Uploader ces fichiers'
+                                        )
+                                )
+                            ),
+                            
+                            // Bouton de sélection de fichiers
+                            React.createElement('div', { className: 'text-center' },
+                                React.createElement('label', { 
+                                    className: 'inline-block px-6 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-igp-orange transition-all'
+                                },
+                                    React.createElement('input', {
+                                        type: 'file',
+                                        multiple: true,
+                                        accept: 'image/*,video/*',
+                                        onChange: handleNewMediaChange,
+                                        className: 'hidden'
+                                    }),
+                                    React.createElement('i', { className: 'fas fa-plus-circle text-2xl text-igp-orange mb-2 block' }),
+                                    React.createElement('span', { className: 'text-sm font-semibold text-gray-700' },
+                                        'Cliquer pour sélectionner des fichiers'
+                                    ),
+                                    React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
+                                        'Photos (JPG, PNG) ou vidéos (MP4, MOV)'
+                                    )
+                                )
+                            )
                         ),
                         
                         // Bouton fermer
@@ -1025,7 +1357,12 @@ app.get('/', (c) => {
                         setShowDetailsModal(false);
                         setSelectedTicketId(null);
                     },
-                    ticketId: selectedTicketId
+                    ticketId: selectedTicketId,
+                    onTicketDeleted: () => {
+                        setShowDetailsModal(false);
+                        setSelectedTicketId(null);
+                        onTicketCreated(); // Refresh ticket list
+                    }
                 }),
                 
                 // Header
@@ -1197,7 +1534,7 @@ app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.6.1'
+    version: '1.7.0'
   });
 });
 

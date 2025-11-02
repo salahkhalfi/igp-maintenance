@@ -1,135 +1,166 @@
-# Changelog - Système de Gestion de Maintenance
+# Changelog - Système de Gestion de Maintenance IGP
 
-Toutes les modifications importantes de ce projet seront documentées dans ce fichier.
+Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
-## [1.2.1] - 2024-11-02
+## [1.7.0] - 2025-11-02
 
-### 🐛 Corrigé
-- **Problème de connexion infinie** - Middleware d'authentification corrigé
-- **Routes /api/machines 404** - Configuration des routes machines réparée
-- **Route /api/auth/me non protégée** - Middleware appliqué correctement
-- **Ordre des middlewares** - Middleware doit être défini AVANT les routes
+### ✨ Nouvelles fonctionnalités
 
-### 🔧 Technique
-- Réorganisation de l'ordre des middlewares et routes
-- Middleware sur `/api/auth/me` appliqué avant `app.route()`
-- Utilisation correcte de `app.route()` pour les sous-applications
+#### 💬 Système de commentaires collaboratif
+- Ajout de commentaires sur tickets existants par opérateurs et techniciens
+- Champ "Votre nom" libre (plus de noms fictifs pré-remplis)
+- Sélection du rôle (Opérateur/Technicien) pour chaque commentaire
+- Timeline chronologique avec horodatage
+- Design avec bordure colorée selon le rôle (bleu/orange)
+- Zone de commentaires scrollable (max 256px de hauteur)
 
-## [1.2.0] - 2024-11-02
+#### 📸 Upload de médias supplémentaires
+- Possibilité d'ajouter photos/vidéos après création du ticket
+- Grille de preview pour fichiers sélectionnés
+- Bouton de suppression individuelle avant upload
+- Upload multiple de fichiers en une seule opération
+- Rechargement automatique de la galerie après upload
 
-### ✨ Ajouté
-- **Formulaire de création de tickets** avec modal élégant
-- **Bouton "Nouvelle Demande"** dans le header
-- **Sélection de machine** depuis liste déroulante
-- **Choix de priorité** avec 4 niveaux (Low, Medium, High, Critical)
-- **Compteur de tickets** dans le header
-- **Chargement des machines** au démarrage
+#### 🗑️ Suppression de tickets
+- Bouton poubelle rouge dans l'en-tête du modal de détails
+- Dialog de confirmation pour éviter suppressions accidentelles
+- Suppression en cascade des médias et commentaires liés
+- Rafraîchissement automatique de la liste après suppression
 
-### 🔧 Corrigé
-- **Page blanche** - Drag & drop temporairement désactivé
-- **Interface opérationnelle** - Version simplifiée stable
-- **Workflow complet** pour les opérateurs
+#### 👤 Champs de nom personnalisés
+- Champ "Votre nom" obligatoire à la création de ticket
+- Plus de noms fictifs (Marie Tremblay, Jean Dubois, etc.)
+- Chaque utilisateur entre son vrai nom
+- Champ `reporter_name` ajouté à la table `tickets`
+- Affichage du nom dans "Rapporté par:" des détails
 
-## [1.1.0] - 2024-11-02
+### 🗄️ Base de données
+- **Migration 0002**: Table `ticket_comments` avec index sur `ticket_id` et `created_at`
+- **Migration 0003**: Colonnes `reporter_name` et `assignee_name` dans table `tickets`
 
-### ✨ Ajouté
-- **Drag & Drop fonctionnel** sur le tableau Kanban
-  - Déplacer les cartes entre colonnes avec la souris
-  - Mise à jour automatique du statut des tickets
-  - Animation visuelle lors du survol des colonnes
-  - Feedback visuel pendant le déplacement (shadow et curseur)
-  - Mise à jour optimiste de l'interface (pas d'attente du serveur)
-  - Rollback automatique en cas d'erreur serveur
+### 🔌 Nouvelles routes API
+- `POST /api/comments` - Ajouter un commentaire
+- `GET /api/comments/ticket/:ticketId` - Liste les commentaires d'un ticket
 
-### 🔧 Améliorations
-- Intégration de `@hello-pangea/dnd` v16.5.0
-- Curseur `grab`/`grabbing` sur les cartes
-- Highlight bleu des colonnes lors du survol avec une carte
-- Transitions fluides pour les animations
-- Gestion d'erreur robuste avec rollback
-
-### 📝 Technique
-- État local des tickets synchronisé avec le serveur
-- `handleDragEnd` pour gérer le drop
-- `handleDragStart` pour l'état de dragging
-- API PATCH `/tickets/:id` pour la mise à jour du statut
-- Ajout automatique d'un commentaire dans la timeline
-
-### 🎯 Utilisation
-Pour déplacer un ticket:
-1. Cliquez et maintenez sur une carte
-2. Glissez vers la colonne de destination
-3. Relâchez pour déposer
-4. Le statut est mis à jour automatiquement
-
-## [1.0.0] - 2024-11-02
-
-### 🎉 Release initiale
-
-#### Fonctionnalités principales
-- **Backend API REST complet** avec Hono
-- **Base de données D1** avec migrations SQL
-- **Authentification JWT** avec 3 rôles (Admin, Technicien, Opérateur)
-- **Interface React** avec tableau Kanban 6 colonnes
-- **Upload de médias** vers Cloudflare R2
-- **Historique des tickets** (timeline)
-- **Génération automatique d'ID** (Format: IGP-TYPE-MODEL-DATE-SEQ)
-
-#### API REST
-- Routes d'authentification (login, register, me)
-- CRUD complet des tickets avec filtres
-- CRUD des machines (admin only)
-- Upload/download de médias
-- Route de santé (/api/health)
-
-#### Interface utilisateur
-- Design TailwindCSS moderne et responsive
-- 6 colonnes Kanban: Reçue, Diagnostic, En Cours, En Attente Pièces, Terminé, Archivé
-- 4 niveaux de priorité: Critical, High, Medium, Low
-- Badges colorés et icônes FontAwesome
-- Login/logout fonctionnel
-- Bouton d'actualisation
-
-#### Base de données
-- 8 tables relationnelles complètes
-- Migrations versionnées
-- Données de test (5 tickets, 5 machines, 4 utilisateurs)
-- Index optimisés pour les performances
-
-#### Documentation
-- README.md complet (9.7 KB)
-- API.md - Documentation API REST (13.4 KB)
-- DEPLOYMENT.md - Guide de déploiement (10.5 KB)
-- GUIDE_UTILISATION.md - Guide utilisateur (9.3 KB)
-
-#### Stack technique
-- **Backend**: Hono + Cloudflare Workers
-- **Frontend**: React 18 + TailwindCSS
-- **Database**: Cloudflare D1 (SQLite)
-- **Storage**: Cloudflare R2
-- **Auth**: JWT (jose)
-- **Build**: Vite
-- **Process Manager**: PM2 (dev)
-
-## Prochaines versions prévues
-
-### [1.2.0] - À venir
-- [ ] Modal de détails des tickets
-- [ ] Formulaire de création de ticket dans l'UI
-- [ ] Interface d'upload de médias
-- [ ] Recherche et filtres avancés
-- [ ] Notifications en temps réel
-
-### [2.0.0] - Futur
-- [ ] Dashboard statistiques
-- [ ] Calendrier de maintenance préventive
-- [ ] Chat temps réel pour techniciens
-- [ ] Notifications email/push
-- [ ] Application mobile React Native
-- [ ] Export PDF des rapports
-- [ ] Scan QR Code des machines
+### 🔧 Corrections techniques
+- Routes de commentaires protégées par authMiddleware
+- DELETE endpoint tickets déjà existant et protégé
+- Cascade DELETE configuré sur commentaires via contrainte SQL
 
 ---
 
-**Format**: Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
-**Versioning**: Ce projet suit le [Semantic Versioning](https://semver.org/lang/fr/)
+## [1.6.1] - 2025-11-02
+
+### 🐛 Corrections de bugs
+
+#### 🖼️ Correction chargement des images
+- **Problème**: Images uploadées ne s'affichaient pas (erreur 401)
+- **Cause**: `<img>` tags ne peuvent pas envoyer headers Authorization
+- **Solution**: Endpoint GET `/api/media/:id` rendu public (sans authMiddleware)
+- Routes POST/DELETE/LIST restent protégées par authentification
+- Sécurité maintenue: IDs non devinables, upload/delete protégés
+
+---
+
+## [1.6.0] - 2025-11-02
+
+### ✨ Nouvelles fonctionnalités
+
+#### 📸 Modal de détails avec galerie de médias
+- Clic sur n'importe quel ticket pour voir détails complets
+- Grille responsive 2-4 colonnes pour photos/vidéos
+- Lightbox plein écran pour visualisation
+- Support vidéo avec contrôles de lecture
+- Badge indicateur du nombre de médias sur les tickets
+- Affichage nom et taille des fichiers
+
+#### 📱 Corrections mobile
+- **Scroll complet**: Bouton submit accessible même avec contenu long
+- **Modal adaptatif**: Ajustement automatique à toutes tailles d'écran
+- **Overflow corrigé**: Contenu long maintenant scrollable sans problème
+- **Padding optimisé**: 10px mobile, 20px desktop
+
+### 🔧 Améliorations techniques
+- Modal avec `align-items: flex-start` pour meilleur scroll
+- `-webkit-overflow-scrolling: touch` pour iOS
+- `max-height: 90vh` avec `overflow-y: auto`
+
+---
+
+## [1.5.0] - 2025-11-01
+
+### ✨ Nouvelles fonctionnalités
+
+#### 📸 Upload de photos/vidéos depuis mobile
+- Bouton "Prendre une photo ou vidéo" avec accès direct caméra
+- Attribut `capture="environment"` pour caméra arrière sur mobile
+- Upload multiple de médias par ticket
+- Preview en temps réel en grille 3 colonnes
+- Barre de progression d'upload
+- Suppression individuelle avant envoi
+- Support images (JPEG, PNG, WebP) et vidéos (MP4, WebM)
+
+#### 💾 Stockage R2
+- Upload sécurisé vers Cloudflare R2
+- Organisation par ticket: `tickets/{ticketId}/{timestamp}-{filename}`
+- Métadonnées enregistrées en base D1
+- URLs publiques pour accès aux médias
+
+---
+
+## [1.4.0] - 2025-10-31
+
+### ✨ Nouvelles fonctionnalités
+
+#### 🖱️ Drag-and-Drop natif (Desktop + Mobile)
+- Glisser-déposer avec souris (desktop)
+- Glisser-déposer tactile (mobile)
+- Curseur intelligent (pointer → grab → grabbing)
+- Feedback visuel pendant le drag
+- Zones de drop surlignées
+- Layout vertical sur mobile pour drag naturel
+
+#### 🎨 Animations et feedback
+- Carte semi-transparente en drag avec rotation
+- Transitions fluides 0.2s
+- Vibration haptique sur mobile
+- Menu contextuel (clic droit desktop, appui long mobile)
+
+#### 📐 Design responsive
+- Mobile (<640px): Layout vertical
+- Tablette (640-1024px): Grille 2 colonnes
+- Desktop (>1024px): Grille 6 colonnes
+
+---
+
+## [1.3.0] - 2025-10-30
+
+### ✨ Fonctionnalités de base
+- Système d'authentification JWT
+- Gestion des tickets avec tableau Kanban
+- Génération automatique d'ID tickets
+- 6 statuts de workflow
+- 4 niveaux de priorité
+- Gestion des machines
+- Historique des modifications (timeline)
+- Interface React avec TailwindCSS
+- API REST complète avec Hono
+- Base de données Cloudflare D1
+- Déploiement Cloudflare Pages
+
+---
+
+## Format
+
+Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
+
+### Types de changements
+- `✨ Nouvelles fonctionnalités` - Ajout de fonctionnalités
+- `🔧 Améliorations` - Améliorations de fonctionnalités existantes
+- `🐛 Corrections de bugs` - Corrections de bugs
+- `🗄️ Base de données` - Migrations et changements de schéma
+- `🔌 API` - Nouvelles routes ou modifications d'API
+- `📱 Mobile` - Améliorations spécifiques mobile
+- `🔒 Sécurité` - Correctifs de sécurité
+- `📚 Documentation` - Mises à jour de documentation
+- `⚡ Performance` - Améliorations de performance
