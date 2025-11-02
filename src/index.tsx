@@ -327,8 +327,8 @@ app.get('/', (c) => {
         
         
         const LoginForm = ({ onLogin }) => {
-            const [email, setEmail] = React.useState('admin@igpglass.ca');
-            const [password, setPassword] = React.useState('password123');
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
             
             const handleSubmit = (e) => {
                 e.preventDefault();
