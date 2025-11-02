@@ -66,7 +66,7 @@ app.get('/', (c) => {
             padding: 12px;
             margin-bottom: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: pointer;
+            cursor: grab;
             transition: all 0.2s;
             user-select: none;
             -webkit-user-select: none;
@@ -77,11 +77,28 @@ app.get('/', (c) => {
             transform: translateY(-2px);
         }
         .ticket-card:active {
-            transform: scale(0.98);
+            cursor: grabbing;
+        }
+        .ticket-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: rotate(2deg);
         }
         .ticket-card.long-press-active {
             background: #eff6ff;
             box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+        }
+        .kanban-column.drag-over {
+            background: #dbeafe;
+            border: 2px dashed #3b82f6;
+        }
+        .kanban-column.drag-valid {
+            background: #d1fae5;
+            border: 2px dashed #10b981;
+        }
+        .kanban-column.drag-invalid {
+            background: #fee2e2;
+            border: 2px dashed #ef4444;
         }
         .priority-high {
             border-left: 4px solid #ef4444;
@@ -561,49 +578,88 @@ app.get('/', (c) => {
                 });
             };
             
-            // Gestion du long press pour mobile
-            const useLongPress = (ticket) => {
-                const [longPressTriggered, setLongPressTriggered] = React.useState(false);
-                const timeout = React.useRef();
-                const target = React.useRef();
+            // État pour le drag and drop
+            const [draggedTicket, setDraggedTicket] = React.useState(null);
+            const [dragOverColumn, setDragOverColumn] = React.useState(null);
+            
+            // Handlers pour le drag-and-drop (Desktop)
+            const handleDragStart = (e, ticket) => {
+                setDraggedTicket(ticket);
+                e.currentTarget.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', ticket.id);
+            };
+            
+            const handleDragEnd = (e) => {
+                e.currentTarget.classList.remove('dragging');
+                setDraggedTicket(null);
+                setDragOverColumn(null);
+            };
+            
+            const handleDragOver = (e, status) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                setDragOverColumn(status);
+            };
+            
+            const handleDragLeave = (e) => {
+                setDragOverColumn(null);
+            };
+            
+            const handleDrop = async (e, targetStatus) => {
+                e.preventDefault();
+                setDragOverColumn(null);
                 
-                const start = React.useCallback((e) => {
-                    target.current = e.currentTarget;
-                    timeout.current = setTimeout(() => {
-                        // Vibrer si disponible
-                        if (navigator.vibrate) {
-                            navigator.vibrate(50);
-                        }
-                        
-                        setLongPressTriggered(true);
-                        target.current.classList.add('long-press-active');
-                        
-                        // Ouvrir le menu contextuel
-                        handleContextMenu(e, ticket);
-                    }, 500); // 500ms pour déclencher le long press
-                }, [ticket]);
+                if (!draggedTicket) return;
                 
-                const clear = React.useCallback((e, shouldTriggerClick = true) => {
-                    timeout.current && clearTimeout(timeout.current);
-                    if (target.current) {
-                        target.current.classList.remove('long-press-active');
-                    }
+                if (draggedTicket.status !== targetStatus) {
+                    await moveTicketToStatus(draggedTicket, targetStatus);
+                }
+                
+                setDraggedTicket(null);
+            };
+            
+            // Gestion du touch drag pour mobile
+            const touchDragStart = React.useRef(null);
+            const touchDragTicket = React.useRef(null);
+            
+            const handleTouchStart = (e, ticket) => {
+                const touch = e.touches[0];
+                touchDragStart.current = { x: touch.clientX, y: touch.clientY };
+                touchDragTicket.current = ticket;
+            };
+            
+            const handleTouchMove = (e) => {
+                if (!touchDragStart.current || !touchDragTicket.current) return;
+                
+                const touch = e.touches[0];
+                const deltaX = Math.abs(touch.clientX - touchDragStart.current.x);
+                const deltaY = Math.abs(touch.clientY - touchDragStart.current.y);
+                
+                // Si mouvement significatif, on considère que c'est un drag
+                if (deltaX > 10 || deltaY > 10) {
+                    e.preventDefault();
+                    setDraggedTicket(touchDragTicket.current);
                     
-                    if (shouldTriggerClick && !longPressTriggered) {
-                        // Si pas de long press, c'est un tap normal
-                        moveTicketToNext(ticket, e);
+                    // Trouver la colonne sous le doigt
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const column = element?.closest('.kanban-column');
+                    if (column) {
+                        const status = column.getAttribute('data-status');
+                        setDragOverColumn(status);
                     }
-                    setLongPressTriggered(false);
-                }, [longPressTriggered, ticket]);
+                }
+            };
+            
+            const handleTouchEnd = async (e) => {
+                if (draggedTicket && dragOverColumn && draggedTicket.status !== dragOverColumn) {
+                    await moveTicketToStatus(draggedTicket, dragOverColumn);
+                }
                 
-                return {
-                    onMouseDown: start,
-                    onMouseUp: clear,
-                    onMouseLeave: () => clear(null, false),
-                    onTouchStart: start,
-                    onTouchEnd: clear,
-                    onTouchCancel: () => clear(null, false)
-                };
+                touchDragStart.current = null;
+                touchDragTicket.current = null;
+                setDraggedTicket(null);
+                setDragOverColumn(null);
             };
             
             return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
@@ -656,8 +712,18 @@ app.get('/', (c) => {
                 // Tableau Kanban
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
                     React.createElement('div', { className: 'kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4' },
-                        statuses.map(status =>
-                            React.createElement('div', { key: status.key, className: 'kanban-column' },
+                        statuses.map(status => {
+                            const isDragOver = dragOverColumn === status.key;
+                            const columnClass = 'kanban-column' + (isDragOver ? ' drag-over' : '');
+                            
+                            return React.createElement('div', { 
+                                key: status.key, 
+                                className: columnClass,
+                                'data-status': status.key,
+                                onDragOver: (e) => handleDragOver(e, status.key),
+                                onDragLeave: handleDragLeave,
+                                onDrop: (e) => handleDrop(e, status.key)
+                            },
                                 React.createElement('div', { className: 'mb-4 flex items-center justify-between kanban-column-header' },
                                     React.createElement('div', { className: 'flex items-center' },
                                         React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
@@ -669,13 +735,17 @@ app.get('/', (c) => {
                                 ),
                                 React.createElement('div', { className: 'space-y-3' },
                                     getTicketsByStatus(status.key).map(ticket => {
-                                        const longPressHandlers = useLongPress(ticket);
                                         return React.createElement('div', {
                                             key: ticket.id,
-                                            className: 'ticket-card priority-' + ticket.priority,
+                                            className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
+                                            draggable: true,
+                                            onDragStart: (e) => handleDragStart(e, ticket),
+                                            onDragEnd: handleDragEnd,
+                                            onTouchStart: (e) => handleTouchStart(e, ticket),
+                                            onTouchMove: handleTouchMove,
+                                            onTouchEnd: handleTouchEnd,
                                             onContextMenu: (e) => handleContextMenu(e, ticket),
-                                            title: 'Tap: colonne suivante | Appui long: choisir le statut',
-                                            ...longPressHandlers
+                                            title: 'Glisser-déposer pour déplacer | Clic droit: menu'
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
@@ -696,8 +766,8 @@ app.get('/', (c) => {
                                         );
                                     })
                                 )
-                            )
-                        )
+                            );
+                        })
                     )
                 ),
                 
