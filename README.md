@@ -12,14 +12,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.5.0 - Prêt pour le déploiement**
+✅ **Version 1.6.0 - Prêt pour le déploiement**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU**: Upload de photos/vidéos depuis mobile lors de la création de tickets
+- **NOUVEAU v1.6.0**: Galerie de médias dans les détails de ticket + Scroll mobile corrigé
+- Upload de photos/vidéos depuis mobile lors de la création de tickets
 
 ## 🚀 Fonctionnalités
 
@@ -55,7 +56,23 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
 - **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
 
-#### 🆕 **NOUVEAU v1.5.0** - Upload de photos/vidéos mobile
+#### 🆕 **NOUVEAU v1.6.0** - Galerie de médias et corrections mobiles
+
+##### 📸 Galerie de médias dans les détails
+- **Clic sur ticket** - Cliquer sur n'importe quel ticket pour voir ses détails complets
+- **Grille responsive** - Photos/vidéos en grille 2-4 colonnes selon l'écran
+- **Lightbox plein écran** - Cliquer sur un média pour l'afficher en grand
+- **Support vidéo** - Lecture vidéo avec contrôles intégrés
+- **Indicateur de médias** - Badge "X photo(s)/vidéo(s)" sur les tickets avec médias
+- **Info fichier** - Nom et taille affichés en overlay
+
+##### 📱 Corrections mobile
+- **Scroll complet** - Bouton de soumission maintenant accessible en bas du formulaire
+- **Modal adaptatif** - Le modal s'ajuste correctement à toutes les tailles d'écran
+- **Overflow corrigé** - Contenu long maintenant scrollable sans problème
+- **Padding optimisé** - Espacement adapté pour mobile (10px) et desktop (20px)
+
+#### **v1.5.0** - Upload de photos/vidéos mobile
 
 ##### 📸 Capture depuis mobile
 - **Accès direct à la caméra** - Bouton "Prendre une photo ou vidéo" avec `capture="environment"`
@@ -331,8 +348,8 @@ webapp/
 ## 🎯 Prochaines étapes recommandées
 
 ### Améliorations prioritaires
-1. **Page de détails ticket avec galerie de médias** - Vue détaillée avec timeline et galerie photos/vidéos complète
-2. **Compression d'images client-side** - Réduire la taille avant upload pour économiser bande passante
+1. **Compression d'images client-side** - Réduire la taille avant upload pour économiser bande passante
+2. **Validation de taille de fichiers** - Limiter les uploads à 10MB par fichier
 3. **Notifications** - Alertes pour nouveaux tickets et changements de statut
 4. **Statistiques** - Dashboard avec métriques de maintenance
 5. **Export PDF** - Génération de rapports d'intervention avec photos intégrées
@@ -361,8 +378,8 @@ webapp/
 - Le mot de passe utilise SHA-256 (simple) - à remplacer par bcrypt pour la production
 - Les URLs R2 sont génériques - configurer un domaine personnalisé
 - Les tests unitaires ne sont pas encore implémentés
-- **La page de détails des tickets reste à implémenter** (affichage de la galerie de médias uploadés)
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
+- **Validation de taille** - Pas de limite sur la taille des fichiers uploadés
 
 ### Variables d'environnement
 Créer un fichier `.dev.vars` pour le développement local:
@@ -439,6 +456,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.5.0  
+**Version**: 1.6.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready - Upload de photos/vidéos depuis mobile + Drag-and-Drop natif
+**Statut**: ✅ Production Ready - Galerie de médias + Scroll mobile corrigé + Upload photos/vidéos + Drag-and-Drop
