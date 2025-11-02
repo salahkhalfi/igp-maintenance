@@ -3,21 +3,22 @@
 ## ✅ **APPLICATION DÉPLOYÉE AVEC SUCCÈS**
 
 **Date**: 2 novembre 2025  
-**Version**: v1.8.2 - Production avec domaine igpglass.ca  
+**Version**: v1.8.3 - Sécurité renforcée  
 **Développeur**: Salah Khalfi
 
 ---
 
 ## 🌐 **URLS DE PRODUCTION**
 
-### URL Principale
+### URL Principale (Production Actuelle)
 ```
-https://5e61f01a.webapp-7t8.pages.dev
+https://2ced545d.webapp-7t8.pages.dev
 ```
 
-### URL Alternative (Précédente)
+### URLs Précédentes
 ```
-https://98a3ffaf.webapp-7t8.pages.dev
+https://5e61f01a.webapp-7t8.pages.dev (avec R2)
+https://98a3ffaf.webapp-7t8.pages.dev (première version)
 ```
 
 ### Dashboard Cloudflare
