@@ -12,5 +12,11 @@
       "database_name": "maintenance-db",
       "database_id": "6e4d996c-994b-4afc-81d2-d67faab07828"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "maintenance-media"
+    }
   ]
 }
