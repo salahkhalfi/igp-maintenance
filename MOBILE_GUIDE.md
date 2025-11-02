@@ -30,19 +30,30 @@ L'application de gestion de maintenance est **100% responsive** et optimisée po
 
 ## 📲 Gestes tactiles
 
-### 1. **Navigation dans le Kanban**
+### 🎯 **PRINCIPAL** - Drag & Drop (Glisser-Déposer)
 
-#### Tap simple (clic court)
-- **Action**: Toucher brièvement une carte de ticket
-- **Effet**: Déplace le ticket vers la **colonne suivante**
-- **Usage**: Pour faire avancer rapidement un ticket dans le workflow
-
-#### Appui long (Long Press)
-- **Action**: Maintenir le doigt sur une carte pendant **500ms**
+#### Sur Mobile 👆
+- **Action**: Toucher et MAINTENIR (100-200ms) puis GLISSER
 - **Effet**: 
-  - Vibration haptique (si supportée)
-  - Ouverture du **menu contextuel**
-- **Usage**: Pour choisir n'importe quel statut (avancer OU reculer)
+  - La carte devient semi-transparente
+  - Les colonnes se surlignent en bleu au survol
+  - Drop sur la colonne désirée
+- **Usage**: Méthode **recommandée** pour déplacer les tickets
+
+#### Sur Desktop 🖱️
+- **Action**: Cliquer et MAINTENIR puis GLISSER avec la souris
+- **Effet**: 
+  - Curseur change: grab → grabbing
+  - Carte semi-transparente + rotation
+  - Colonnes surlignées au survol
+- **Usage**: Méthode **recommandée** pour déplacer les tickets
+
+### 🔄 **ALTERNATIF** - Menu contextuel (Clic droit)
+
+#### Desktop uniquement
+- **Action**: Clic droit sur une carte
+- **Effet**: Menu avec 6 options de statut
+- **Usage**: Pour sélection précise ou correction rapide
 
 ---
 
@@ -114,35 +125,67 @@ L'application de gestion de maintenance est **100% responsive** et optimisée po
 
 ---
 
-### 2. Déplacer un ticket (avancer)
+### 2. 🎯 **NOUVEAU** - Déplacer un ticket avec Drag & Drop
+
+#### Sur Mobile (Doigt) 👆
 
 ```
-1. Toucher brièvement une carte dans n'importe quelle colonne
-2. Le ticket se déplace automatiquement vers la colonne suivante
-3. Un enregistrement est ajouté dans l'historique du ticket
+1. Toucher et MAINTENIR le doigt sur une carte pendant 100-200ms
+2. La carte devient semi-transparente (vous pouvez la "soulever")
+3. GLISSER le doigt vers le haut ou le bas
+4. La colonne sous votre doigt se surligne en bleu
+5. RELÂCHER le doigt sur la colonne désirée
+6. Le ticket se déplace automatiquement
 ```
 
-**Flux de progression**:
+**Feedback visuel**:
+- 🟦 **Carte en drag**: Opacité 50%, légèrement tournée
+- 🟦 **Colonne de destination**: Fond bleu clair + bordure pointillée
+- ✅ **Drop réussi**: Animation douce, mise à jour immédiate
+
+**Astuces**:
+- Glisser **vers le haut** pour les colonnes précédentes
+- Glisser **vers le bas** pour les colonnes suivantes
+- Si vous ratez, recommencez simplement le geste
+
+#### Sur Desktop (Souris) 🖱️
+
 ```
-Requête Reçue → Diagnostic → En Cours → En Attente Pièces → Terminé → Archivé
+1. Cliquer et MAINTENIR le bouton de la souris sur une carte
+2. Le curseur change en icône "main qui attrape" (grab)
+3. DÉPLACER la souris vers la colonne désirée
+4. La colonne survole se surligne en bleu
+5. RELÂCHER le bouton de la souris
+6. Le ticket se déplace automatiquement
 ```
+
+**Curseurs**:
+- 👆 **Au repos**: Curseur pointer (main avec doigt)
+- ✊ **En train de saisir**: Curseur grab (main ouverte)
+- 👊 **En train de déplacer**: Curseur grabbing (main fermée)
+
+**Raccourcis clavier** (à venir):
+- `Ctrl + Drag`: Dupliquer le ticket
+- `Shift + Drag`: Archiver automatiquement
 
 ---
 
-### 3. Choisir un statut spécifique (avancer ou reculer)
+### 3. Menu contextuel (Option alternative)
 
+Si le drag-and-drop ne fonctionne pas ou pour une sélection précise :
+
+#### Desktop
 ```
-1. Maintenir le doigt sur une carte pendant 500ms
-2. Sentir la vibration (si supportée par l'appareil)
-3. La carte se surligne en bleu clair
-4. Un menu contextuel apparaît avec les 6 statuts
-5. Toucher le statut désiré
-6. Le ticket se déplace vers ce statut
+1. CLIC DROIT sur une carte
+2. Un menu contextuel apparaît avec les 6 statuts
+3. Cliquer sur le statut désiré
+4. Le ticket se déplace vers ce statut
 ```
 
-**Exemple d'utilisation**:
-- Un ticket est par erreur passé à "Terminé" → Long press → Sélectionner "En Cours"
-- Un ticket nécessite un diagnostic approfondi → Long press → Sélectionner "Diagnostic"
+#### Mobile
+```
+(Non disponible sur mobile - Utiliser le drag & drop)
+```
 
 **Menu contextuel**:
 ```
@@ -205,10 +248,12 @@ Pour garantir une **excellente expérience tactile**, tous les éléments intera
   - ✅ iOS 13+: Safari, Chrome
   - ❌ iOS < 13: Non supporté (pas d'erreur)
 
-### Feedback visuel
-- **Carte surbrillance**: Bleu clair pendant l'appui long
-- **Animation**: Légère réduction (scale 0.98) lors du tap
-- **Hover effect**: Ombre plus prononcée sur desktop
+### Feedback visuel - Drag & Drop
+- **Carte en drag**: Opacité 50%, rotation 2°, ombre légère
+- **Zone de drop**: Fond bleu clair + bordure pointillée bleue
+- **Curseur desktop**: pointer → grab → grabbing
+- **Animation drop**: Transition fluide 0.2s
+- **Hover effect**: Ombre plus prononcée sur survol
 
 ---
 
@@ -232,13 +277,26 @@ Pour garantir une **excellente expérience tactile**, tous les éléments intera
 
 ## 🐛 Résolution de problèmes
 
-### Le menu contextuel ne s'ouvre pas
-**Cause**: Appui long trop court ou mouvement du doigt
-**Solution**: Maintenir le doigt **immobile** pendant au moins 500ms
+### Le drag ne fonctionne pas (Mobile)
+**Cause**: Mouvement trop rapide ou navigateur incompatible
+**Solution**: 
+- Maintenir le doigt **100-200ms** avant de glisser
+- Glisser lentement et délibérément
+- Utiliser Chrome ou Safari pour meilleure compatibilité
 
-### La vibration ne fonctionne pas
-**Cause**: Navigateur ou système non compatible
-**Solution**: Fonctionnalité optionnelle - l'application fonctionne normalement sans vibration
+### La carte ne "colle" pas lors du drag (Desktop)
+**Cause**: Mouvement trop rapide de la souris
+**Solution**: 
+- Cliquer et MAINTENIR 100ms avant de bouger
+- Déplacer la souris plus lentement
+- Vérifier que le curseur change en "grab"
+
+### Le drop ne fonctionne pas
+**Cause**: Relâché en dehors d'une colonne valide
+**Solution**: 
+- Vérifier que la colonne est **surlignée en bleu**
+- Relâcher uniquement quand la zone est colorée
+- Si échec, recommencer le drag depuis le début
 
 ### Le formulaire zoom automatiquement (iOS)
 **Cause**: Champs < 16px déclenchent le zoom sur iOS
@@ -275,19 +333,22 @@ Pour garantir une **excellente expérience tactile**, tous les éléments intera
 ## 💡 Conseils d'utilisation
 
 ### Pour les techniciens
-1. **Utilisez l'appui long** pour corriger rapidement un ticket mal placé
-2. **Gardez l'app ouverte** pendant les interventions pour mise à jour en temps réel
-3. **Ajoutez l'app à l'écran d'accueil** pour un accès rapide (PWA à venir)
+1. **Utilisez le drag-and-drop** pour déplacer rapidement les tickets entre colonnes
+2. **Clic droit (desktop)** pour correction précise de statut
+3. **Gardez l'app ouverte** pendant les interventions pour mise à jour en temps réel
+4. **Ajoutez l'app à l'écran d'accueil** pour un accès rapide (PWA à venir)
 
 ### Pour les opérateurs
-1. **Utilisez le tap simple** pour créer et avancer les tickets rapidement
+1. **Glissez-déposez** les tickets pour les faire avancer dans le workflow
 2. **Vérifiez la priorité** avant de créer un ticket (rouge = critique)
-3. **Actualisez régulièrement** pour voir les mises à jour des techniciens
+3. **Utilisez le drag vertical** sur mobile pour navigation intuitive
+4. **Actualisez régulièrement** pour voir les mises à jour des techniciens
 
 ### Pour les administrateurs
-1. **Utilisez le menu contextuel** pour gérer le flux de tickets
-2. **Archivez les tickets terminés** en les déplaçant à "Archivé"
-3. **Surveillez les tickets "En Attente Pièces"** pour planifier les achats
+1. **Drag multi-colonnes** pour réorganiser massivement les tickets
+2. **Menu contextuel** pour sélection précise du statut
+3. **Archivez par drag** les tickets terminés vers "Archivé"
+4. **Surveillez visuellement** les colonnes "En Attente Pièces" et "Diagnostic"
 
 ---
 
@@ -324,7 +385,15 @@ Pour garantir une **excellente expérience tactile**, tous les éléments intera
 
 ## 🚀 Prochaines améliorations mobiles
 
+### ✅ Récemment ajouté (v1.4.0)
+- [x] **Drag & Drop natif** - Glisser-déposer desktop + mobile ✨
+- [x] **Touch drag** - Détection intelligente du doigt
+- [x] **Feedback visuel** - Animations fluides et colonnes surlignées
+- [x] **Curseurs dynamiques** - grab/grabbing sur desktop
+
 ### En cours de développement
+- [ ] **Raccourcis drag** - Ctrl+Drag dupliquer, Shift+Drag archiver
+- [ ] **Drag multi-sélection** - Déplacer plusieurs tickets à la fois
 - [ ] **Progressive Web App (PWA)** - Installation sur écran d'accueil
 - [ ] **Mode hors ligne** - Sync automatique quand connexion revient
 - [ ] **Upload photos** - Prendre photo directement depuis camera
@@ -333,6 +402,7 @@ Pour garantir une **excellente expérience tactile**, tous les éléments intera
 - [ ] **Dark mode** - Économie batterie et confort visuel
 
 ### Idées futures
+- [ ] Drag entre espaces de travail
 - [ ] Géolocalisation pour tickets terrain
 - [ ] Signature électronique pour clôture
 - [ ] Temps de travail chronométré
@@ -340,6 +410,6 @@ Pour garantir une **excellente expérience tactile**, tous les éléments intera
 
 ---
 
-**Version**: 1.3.0  
+**Version**: 1.4.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Pleinement fonctionnel sur mobile
+**Statut**: ✅ Drag-and-Drop natif Desktop & Mobile complet

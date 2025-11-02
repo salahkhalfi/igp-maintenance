@@ -24,28 +24,35 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ### ✅ Fonctionnalités implémentées
 
-#### 🎯 **NOUVEAU v1.3.0** - Support mobile complet avec gestes tactiles
+#### 🎯 **NOUVEAU v1.4.0** - Drag-and-Drop natif (Desktop + Mobile)
 
-##### Interface Desktop
-- **Clic gauche** sur une carte pour avancer vers la colonne suivante
-- **Clic droit** pour ouvrir un menu contextuel et choisir n'importe quel statut
-- **Menu contextuel intelligent** - Affiche tous les statuts avec le statut actuel grisé
+##### 🖱️ Interface Desktop (Souris)
+- **🎯 Drag & Drop natif** - Glisser-déposer les cartes entre colonnes avec la souris
+- **Curseur intelligent** - Change automatiquement: pointer → grab → grabbing
+- **Feedback visuel** - Carte semi-transparente pendant le drag, rotation légère
+- **Zones de drop** - Colonnes surlignées en bleu avec bordure pointillée
+- **Clic droit** - Menu contextuel en option pour sélection précise du statut
 
-##### Interface Mobile/Tactile 📱
-- **Tap simple** sur une carte pour avancer vers la colonne suivante
-- **Appui long (500ms)** pour ouvrir le menu contextuel et choisir n'importe quel statut
-- **Vibration haptique** lors de l'activation du menu contextuel
-- **Layout vertical** - Colonnes Kanban empilées verticalement pour faciliter le scroll
-- **Boutons agrandis** - Taille minimale de 44px pour une meilleure accessibilité tactile
-- **Modal plein écran** - Formulaires adaptés aux petits écrans
-- **Menu contextuel intelligent** - Positionné automatiquement pour rester dans l'écran
+##### 📱 Interface Mobile/Tactile
+- **👆 Touch Drag** - Glisser-déposer avec le doigt
+- **Détection intelligente** - Identifie automatiquement la colonne sous le doigt
+- **Feedback haptique** - Vibration lors du début du drag
+- **Layout vertical** - Colonnes Kanban empilées pour faciliter le drag vertical
+- **Boutons agrandis** - Taille minimale de 44px pour accessibilité tactile
+- **Modal responsive** - Formulaires adaptés aux petits écrans
 
-##### Responsive Design
-- **Mobile** (< 640px): Layout vertical, texte agrandi, boutons full-width
-- **Tablette** (640px - 1024px): Grille 2 colonnes
-- **Desktop** (> 1024px): Grille 6 colonnes complète
-- **Mouvement avant ET arrière** - Corriger facilement les erreurs de placement
-- **Mise à jour automatique** du statut avec historique complet dans la timeline
+##### 🎨 Animations & Feedback
+- **Carte en drag** - Opacité 50%, rotation 2°, curseur grabbing
+- **Zone survol** - Fond bleu clair + bordure pointillée bleue
+- **Transitions fluides** - 0.2s pour tous les changements d'état
+- **Ombre dynamique** - Plus prononcée au survol, subtile au repos
+
+##### 📐 Responsive Design
+- **Mobile** (< 640px): Layout vertical, drag vertical naturel
+- **Tablette** (640px - 1024px): Grille 2 colonnes, drag horizontal/vertical
+- **Desktop** (> 1024px): Grille 6 colonnes, drag horizontal optimisé
+- **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
+- **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
 
 #### 1. Authentification et Gestion des utilisateurs
 - Connexion/déconnexion avec JWT
@@ -397,6 +404,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.3.0  
+**Version**: 1.4.0  
 **Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready - Desktop & Mobile avec gestes tactiles complets
+**Statut**: ✅ Production Ready - Drag-and-Drop natif Desktop & Mobile
