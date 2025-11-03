@@ -342,6 +342,17 @@ app.get('/', (c) => {
                 font-size: 14px;
             }
         }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -442,6 +453,48 @@ app.get('/', (c) => {
                             className: 'px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold'
                         }, 'Confirmer')
                     )
+                )
+            );
+        };
+        
+        // Composant Toast pour notifications rapides
+        const Toast = ({ show, message, type, onClose }) => {
+            React.useEffect(() => {
+                if (show) {
+                    const timer = setTimeout(() => {
+                        onClose();
+                    }, 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [show]);
+            
+            if (!show) return null;
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            
+            return React.createElement('div', {
+                className: 'fixed bottom-4 right-4 z-50 animate-slide-up',
+                style: { animation: 'slideUp 0.3s ease-out' }
+            },
+                React.createElement('div', {
+                    className: colors[type] + ' text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-md'
+                },
+                    React.createElement('i', { className: 'fas ' + icons[type] + ' text-xl' }),
+                    React.createElement('p', { className: 'font-semibold flex-1' }, message),
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'text-white hover:text-gray-200 text-xl ml-2'
+                    }, '×')
                 )
             );
         };
@@ -1361,12 +1414,40 @@ app.get('/', (c) => {
             const [notification, setNotification] = React.useState({ show: false, message: '', type: 'info' });
             const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
             const [promptDialog, setPromptDialog] = React.useState({ show: false, message: '', onConfirm: null });
+            const [toast, setToast] = React.useState({ show: false, message: '', type: 'success' });
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [buttonLoading, setButtonLoading] = React.useState(null);
             
             React.useEffect(() => {
                 if (show) {
                     loadUsers();
                 }
             }, [show]);
+            
+            React.useEffect(() => {
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        if (promptDialog.show) {
+                            setPromptDialog({ show: false, message: '', onConfirm: null });
+                        } else if (confirmDialog.show) {
+                            setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        } else if (notification.show) {
+                            setNotification({ show: false, message: '', type: 'info' });
+                        } else if (editingUser) {
+                            setEditingUser(null);
+                        } else if (showCreateForm) {
+                            setShowCreateForm(false);
+                        } else if (show) {
+                            onClose();
+                        }
+                    }
+                };
+                
+                if (show) {
+                    document.addEventListener('keydown', handleEscape);
+                    return () => document.removeEventListener('keydown', handleEscape);
+                }
+            }, [show, promptDialog.show, confirmDialog.show, notification.show, editingUser, showCreateForm]);
             
             const loadUsers = async () => {
                 try {
@@ -1382,6 +1463,7 @@ app.get('/', (c) => {
             
             const handleCreateUser = async (e) => {
                 e.preventDefault();
+                setButtonLoading('create');
                 try {
                     await axios.post(API_URL + '/users', {
                         email: newEmail,
@@ -1389,7 +1471,7 @@ app.get('/', (c) => {
                         full_name: newFullName,
                         role: newRole
                     });
-                    setNotification({ show: true, message: 'Utilisateur cree avec succes!', type: 'success' });
+                    setToast({ show: true, message: 'Utilisateur cree avec succes!', type: 'success' });
                     setNewEmail('');
                     setNewPassword('');
                     setNewFullName('');
@@ -1398,6 +1480,8 @@ app.get('/', (c) => {
                     loadUsers();
                 } catch (error) {
                     setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                } finally {
+                    setButtonLoading(null);
                 }
             };
             
@@ -1419,12 +1503,15 @@ app.get('/', (c) => {
                     message: 'Etes-vous sur de vouloir supprimer ' + userName + ' ?',
                     onConfirm: async () => {
                         setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        setButtonLoading('delete-' + userId);
                         try {
                             await axios.delete(API_URL + '/users/' + userId);
-                            setNotification({ show: true, message: 'Utilisateur supprime avec succes!', type: 'success' });
+                            setToast({ show: true, message: 'Utilisateur supprime avec succes!', type: 'success' });
                             loadUsers();
                         } catch (error) {
                             setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                        } finally {
+                            setButtonLoading(null);
                         }
                     }
                 });
@@ -1439,17 +1526,20 @@ app.get('/', (c) => {
             
             const handleUpdateUser = async (e) => {
                 e.preventDefault();
+                setButtonLoading('update');
                 try {
                     await axios.put(API_URL + '/users/' + editingUser.id, {
                         email: editEmail,
                         full_name: editFullName,
                         role: editRole
                     });
-                    setNotification({ show: true, message: 'Utilisateur modifie avec succes!', type: 'success' });
+                    setToast({ show: true, message: 'Utilisateur modifie avec succes!', type: 'success' });
                     setEditingUser(null);
                     loadUsers();
                 } catch (error) {
                     setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                } finally {
+                    setButtonLoading(null);
                 }
             };
             
@@ -1467,7 +1557,7 @@ app.get('/', (c) => {
                             await axios.post(API_URL + '/users/' + userId + '/reset-password', {
                                 new_password: newPass
                             });
-                            setNotification({ show: true, message: 'Mot de passe reinitialise avec succes!', type: 'success' });
+                            setToast({ show: true, message: 'Mot de passe reinitialise avec succes!', type: 'success' });
                         } catch (error) {
                             setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
                         }
@@ -1496,11 +1586,32 @@ app.get('/', (c) => {
                         }, '×')
                     ),
                     
-                    React.createElement('div', { className: 'mb-4' },
+                    React.createElement('div', { className: 'mb-4 flex flex-col sm:flex-row gap-3' },
                         React.createElement('button', {
                             onClick: () => setShowCreateForm(true),
                             className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold'
-                        }, 'Creer un utilisateur')
+                        }, 'Creer un utilisateur'),
+                        React.createElement('div', { className: 'flex-1 relative' },
+                            React.createElement('input', {
+                                type: 'text',
+                                placeholder: 'Rechercher par nom ou email...',
+                                value: searchQuery,
+                                onChange: (e) => setSearchQuery(e.target.value),
+                                className: 'w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-md focus:border-igp-blue focus:outline-none',
+                                onKeyDown: (e) => {
+                                    if (e.key === 'Escape') {
+                                        setSearchQuery('');
+                                    }
+                                }
+                            }),
+                            React.createElement('i', {
+                                className: 'fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+                            }),
+                            searchQuery && React.createElement('button', {
+                                onClick: () => setSearchQuery(''),
+                                className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                            }, React.createElement('i', { className: 'fas fa-times' }))
+                        )
                     ),
                     
                     showCreateForm ? React.createElement('div', { 
@@ -1517,7 +1628,8 @@ app.get('/', (c) => {
                                         value: newEmail,
                                         onChange: (e) => setNewEmail(e.target.value),
                                         className: 'w-full px-3 py-2 border-2 rounded-md',
-                                        required: true
+                                        required: true,
+                                        autoFocus: true
                                     })
                                 ),
                                 React.createElement('div', {},
@@ -1564,8 +1676,12 @@ app.get('/', (c) => {
                                 }, 'Annuler'),
                                 React.createElement('button', {
                                     type: 'submit',
-                                    className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700'
-                                }, 'Creer')
+                                    disabled: buttonLoading === 'create',
+                                    className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center'
+                                }, 
+                                    buttonLoading === 'create' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                    'Creer'
+                                )
                             )
                         )
                     ) : null,
@@ -1584,7 +1700,8 @@ app.get('/', (c) => {
                                         value: editEmail,
                                         onChange: (e) => setEditEmail(e.target.value),
                                         className: 'w-full px-3 py-2 border-2 rounded-md',
-                                        required: true
+                                        required: true,
+                                        autoFocus: true
                                     })
                                 ),
                                 React.createElement('div', {},
@@ -1618,8 +1735,12 @@ app.get('/', (c) => {
                                 }, 'Annuler'),
                                 React.createElement('button', {
                                     type: 'submit',
-                                    className: 'px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700'
-                                }, 'Enregistrer')
+                                    disabled: buttonLoading === 'update',
+                                    className: 'px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center'
+                                }, 
+                                    buttonLoading === 'update' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                    'Enregistrer'
+                                )
                             )
                         )
                     ) : null,
@@ -1627,9 +1748,20 @@ app.get('/', (c) => {
                     loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
                     React.createElement('div', { className: 'space-y-4' },
                         React.createElement('p', { className: 'text-lg mb-4' }, 
-                            users.length + ' utilisateur(s)'
+                            (searchQuery ? 
+                                users.filter(u => 
+                                    u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+                                ).length + ' résultat(s) sur ' + users.length :
+                                users.length + ' utilisateur(s)'
+                            )
                         ),
-                        users.map(user =>
+                        users
+                            .filter(user => !searchQuery || 
+                                user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                            )
+                            .map(user =>
                             React.createElement('div', {
                                 key: user.id,
                                 className: 'bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-igp-blue transition-all'
@@ -1695,6 +1827,12 @@ app.get('/', (c) => {
                         message: promptDialog.message,
                         onConfirm: promptDialog.onConfirm,
                         onCancel: () => setPromptDialog({ show: false, message: '', onConfirm: null })
+                    }),
+                    React.createElement(Toast, {
+                        show: toast.show,
+                        message: toast.message,
+                        type: toast.type,
+                        onClose: () => setToast({ show: false, message: '', type: 'success' })
                     })
                 )
             );
