@@ -1238,6 +1238,10 @@ app.get('/', (c) => {
             const [newPassword, setNewPassword] = React.useState('');
             const [newFullName, setNewFullName] = React.useState('');
             const [newRole, setNewRole] = React.useState('operator');
+            const [editingUser, setEditingUser] = React.useState(null);
+            const [editEmail, setEditEmail] = React.useState('');
+            const [editFullName, setEditFullName] = React.useState('');
+            const [editRole, setEditRole] = React.useState('operator');
             
             React.useEffect(() => {
                 if (show) {
@@ -1298,6 +1302,45 @@ app.get('/', (c) => {
                     await axios.delete(API_URL + '/users/' + userId);
                     alert('Utilisateur supprime avec succes');
                     loadUsers();
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
+                }
+            };
+            
+            const handleEditUser = (user) => {
+                setEditingUser(user);
+                setEditEmail(user.email);
+                setEditFullName(user.full_name);
+                setEditRole(user.role);
+            };
+            
+            const handleUpdateUser = async (e) => {
+                e.preventDefault();
+                try {
+                    await axios.put(API_URL + '/users/' + editingUser.id, {
+                        email: editEmail,
+                        full_name: editFullName,
+                        role: editRole
+                    });
+                    alert('Utilisateur modifie avec succes');
+                    setEditingUser(null);
+                    loadUsers();
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
+                }
+            };
+            
+            const handleResetPassword = async (userId, userName) => {
+                const newPass = prompt('Nouveau mot de passe pour ' + userName + ' (min 6 caracteres):');
+                if (!newPass || newPass.length < 6) {
+                    alert('Mot de passe invalide (minimum 6 caracteres)');
+                    return;
+                }
+                try {
+                    await axios.post(API_URL + '/users/' + userId + '/reset-password', {
+                        new_password: newPass
+                    });
+                    alert('Mot de passe reinitialise avec succes');
                 } catch (error) {
                     alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
                 }
@@ -1395,6 +1438,57 @@ app.get('/', (c) => {
                         )
                     ) : null,
                     
+                    editingUser ? React.createElement('div', { className: 'mb-6 p-6 bg-green-50 rounded-lg border-2 border-green-600' },
+                        React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Modifier: ' + editingUser.full_name),
+                        React.createElement('form', { onSubmit: handleUpdateUser },
+                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Email'),
+                                    React.createElement('input', {
+                                        type: 'email',
+                                        value: editEmail,
+                                        onChange: (e) => setEditEmail(e.target.value),
+                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        required: true
+                                    })
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Nom complet'),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: editFullName,
+                                        onChange: (e) => setEditFullName(e.target.value),
+                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        required: true
+                                    })
+                                )
+                            ),
+                            React.createElement('div', { className: 'mb-4' },
+                                React.createElement('label', { className: 'block font-bold mb-2' }, 'Role'),
+                                React.createElement('select', {
+                                    value: editRole,
+                                    onChange: (e) => setEditRole(e.target.value),
+                                    className: 'w-full px-3 py-2 border-2 rounded-md'
+                                },
+                                    React.createElement('option', { value: 'operator' }, 'Operateur'),
+                                    React.createElement('option', { value: 'technician' }, 'Technicien'),
+                                    React.createElement('option', { value: 'admin' }, 'Administrateur')
+                                )
+                            ),
+                            React.createElement('div', { className: 'flex gap-4' },
+                                React.createElement('button', {
+                                    type: 'button',
+                                    onClick: () => setEditingUser(null),
+                                    className: 'px-6 py-2 border-2 rounded-md'
+                                }, 'Annuler'),
+                                React.createElement('button', {
+                                    type: 'submit',
+                                    className: 'px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700'
+                                }, 'Enregistrer')
+                            )
+                        )
+                    ) : null,
+                    
                     loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
                     React.createElement('div', { className: 'space-y-4' },
                         React.createElement('p', { className: 'text-lg mb-4' }, 
@@ -1422,12 +1516,28 @@ app.get('/', (c) => {
                                             'Créé le: ' + new Date(user.created_at).toLocaleDateString('fr-FR')
                                         )
                                     ),
-                                    user.id !== currentUser.id ? React.createElement('button', {
-                                        onClick: () => handleDeleteUser(user.id, user.full_name),
-                                        className: 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold'
-                                    },
-                                        React.createElement('i', { className: 'fas fa-trash mr-2' }),
-                                        'Supprimer'
+                                    user.id !== currentUser.id ? React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', {
+                                            onClick: () => handleEditUser(user),
+                                            className: 'px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-sm'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-edit mr-1' }),
+                                            'Modifier'
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: () => handleResetPassword(user.id, user.full_name),
+                                            className: 'px-3 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-semibold text-sm'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-key mr-1' }),
+                                            'MdP'
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: () => handleDeleteUser(user.id, user.full_name),
+                                            className: 'px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold text-sm'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-trash mr-1' }),
+                                            'Supprimer'
+                                        )
                                     ) : null
                                 )
                             )
