@@ -156,7 +156,26 @@
 
 ---
 
-### **📱 PARTIE 5: Responsive Mobile (1 minute)**
+### **💚 PARTIE 5: Guide Utilisateur Intégré (30 secondes)**
+
+**Démonstration rapide:**
+1. Cliquez sur le **bouton vert "Aide"** en haut à droite (à côté de Déconnexion)
+2. Le guide utilisateur s'ouvre
+3. Montrez le **menu de navigation** à gauche avec 15 sections
+4. Cliquez sur quelques sections (ex: "Créer un Ticket", "Mobile")
+5. Montrez la **fonction recherche** intégrée
+
+**Points forts à mentionner:**
+- ✅ "Guide complet accessible à tout moment dans l'application"
+- ✅ "15 sections couvrant toutes les fonctionnalités"
+- ✅ "Menu de navigation facile avec icônes"
+- ✅ "Escape pour fermer rapidement"
+- ✅ "Réduit le besoin de formation - les utilisateurs trouvent les réponses eux-mêmes"
+- ✅ "Toujours à jour avec l'application"
+
+---
+
+### **📱 PARTIE 6: Responsive Mobile (1 minute)**
 
 **Si vous avez un téléphone:**
 1. Ouvrez https://mecanique.igpglass.ca sur votre téléphone

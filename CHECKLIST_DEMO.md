@@ -62,6 +62,12 @@
 - [ ] Montré boutons empilés verticalement
 - [ ] Mentionné: "100% responsive"
 
+### **6. Guide Utilisateur (30 sec)**
+- [ ] Cliqué sur "Aide" (bouton vert)
+- [ ] Montré le guide interactif
+- [ ] Navigué dans quelques sections
+- [ ] Mentionné: "Guide complet intégré, accessible à tout moment"
+
 ---
 
 ## 💬 **POINTS CLÉS MENTIONNÉS**
