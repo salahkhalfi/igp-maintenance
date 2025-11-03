@@ -1252,6 +1252,18 @@ app.get('/', (c) => {
                 }
             };
             
+            const getRoleLabel = (role) => {
+                if (role === 'admin') return '👑 Administrateur';
+                if (role === 'technician') return '🔧 Technicien';
+                return '👷 Opérateur';
+            };
+            
+            const getRoleBadgeClass = (role) => {
+                if (role === 'admin') return 'bg-red-100 text-red-800';
+                if (role === 'technician') return 'bg-blue-100 text-blue-800';
+                return 'bg-green-100 text-green-800';
+            };
+            
             if (!show) return null;
             
             return React.createElement('div', {
@@ -1280,10 +1292,26 @@ app.get('/', (c) => {
                         users.map(user =>
                             React.createElement('div', {
                                 key: user.id,
-                                className: 'bg-gray-50 rounded p-4'
+                                className: 'bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-igp-blue transition-all'
                             },
-                                React.createElement('h4', { className: 'font-bold' }, user.full_name),
-                                React.createElement('p', { className: 'text-sm' }, user.email + ' - ' + user.role)
+                                React.createElement('div', { className: 'flex justify-between items-center' },
+                                    React.createElement('div', {},
+                                        React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
+                                            React.createElement('h4', { className: 'font-bold text-lg' }, user.full_name),
+                                            React.createElement('span', { 
+                                                className: 'px-3 py-1 rounded-full text-xs font-semibold ' + getRoleBadgeClass(user.role)
+                                            }, getRoleLabel(user.role))
+                                        ),
+                                        React.createElement('p', { className: 'text-sm text-gray-600' },
+                                            React.createElement('i', { className: 'fas fa-envelope mr-2' }),
+                                            user.email
+                                        ),
+                                        React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
+                                            React.createElement('i', { className: 'far fa-clock mr-2' }),
+                                            'Créé le: ' + new Date(user.created_at).toLocaleDateString('fr-FR')
+                                        )
+                                    )
+                                )
                             )
                         )
                     )
