@@ -2753,17 +2753,17 @@ app.get('/guide', (c) => {
 
             <!-- Content -->
             <div class="bg-white p-6 rounded-b-lg shadow-lg">
-                <p class="text-gray-600 mb-6 text-center text-sm md:text-base">
+                <p class="text-gray-600 mb-4 text-center text-sm md:text-base">
                     👋 Cliquez sur les boutons colorés pour ouvrir chaque section
                 </p>
-                <div class="space-y-3">
+                <div class="space-y-2">
                     <!-- Démarrage Rapide -->
-                    <button onclick="toggleAccordion('intro')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-rocket text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">🎯 Démarrage Rapide</span>
+                    <button onclick="toggleAccordion('intro')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-rocket text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">🎯 Démarrage Rapide</span>
                         </div>
-                        <i id="intro-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="intro-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="intro" class="accordion-content bg-gray-50 border-2 border-blue-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
@@ -2775,12 +2775,12 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Créer un Ticket -->
-                    <button onclick="toggleAccordion('creer')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-plus-circle text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">➕ Créer un Ticket</span>
+                    <button onclick="toggleAccordion('creer')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-plus-circle text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">➕ Créer un Ticket</span>
                         </div>
-                        <i id="creer-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="creer-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="creer" class="accordion-content bg-gray-50 border-2 border-orange-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
@@ -2798,12 +2798,12 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Modifier un Ticket -->
-                    <button onclick="toggleAccordion('modifier')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-edit text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">✏️ Modifier un Ticket</span>
+                    <button onclick="toggleAccordion('modifier')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-edit text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">✏️ Modifier un Ticket</span>
                         </div>
-                        <i id="modifier-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="modifier-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="modifier" class="accordion-content bg-gray-50 border-2 border-indigo-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
@@ -2825,12 +2825,12 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Les 3 Rôles -->
-                    <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-users text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">👥 Les 3 Rôles</span>
+                    <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-users text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">👥 Les 3 Rôles</span>
                         </div>
-                        <i id="roles-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="roles-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="roles" class="accordion-content bg-gray-50 border-2 border-purple-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
@@ -2844,12 +2844,12 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Tableau Kanban -->
-                    <button onclick="toggleAccordion('kanban')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-columns text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">📊 Le Tableau Kanban</span>
+                    <button onclick="toggleAccordion('kanban')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-columns text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">📊 Le Tableau Kanban</span>
                         </div>
-                        <i id="kanban-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="kanban-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="kanban" class="accordion-content bg-gray-50 border-2 border-cyan-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
@@ -2863,12 +2863,12 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Sur Mobile -->
-                    <button onclick="toggleAccordion('mobile')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-mobile-alt text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">📱 Sur Mobile</span>
+                    <button onclick="toggleAccordion('mobile')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-mobile-alt text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">📱 Sur Mobile</span>
                         </div>
-                        <i id="mobile-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="mobile-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="mobile" class="accordion-content bg-gray-50 border-2 border-pink-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
@@ -2881,12 +2881,12 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Contact -->
-                    <button onclick="toggleAccordion('contact')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-phone text-2xl"></i>
-                            <span class="text-lg md:text-xl font-bold">📞 Contact & Support</span>
+                    <button onclick="toggleAccordion('contact')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-phone text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">📞 Contact & Support</span>
                         </div>
-                        <i id="contact-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                        <i id="contact-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="contact" class="accordion-content bg-gray-50 border-2 border-teal-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
