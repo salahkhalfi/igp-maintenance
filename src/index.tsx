@@ -1225,10 +1225,74 @@ app.get('/', (c) => {
         };
         
         
+        // Composant de gestion des utilisateurs (VERSION SIMPLIFIÉE)
+        const UserManagementModal = ({ show, onClose, currentUser }) => {
+            const [users, setUsers] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+            
+            React.useEffect(() => {
+                if (show) {
+                    loadUsers();
+                }
+            }, [show]);
+            
+            const loadUsers = async () => {
+                try {
+                    setLoading(true);
+                    const response = await axios.get(API_URL + '/users');
+                    setUsers(response.data.users);
+                } catch (error) {
+                    alert('Erreur chargement: ' + (error.response?.data?.error || 'Erreur'));
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            if (!show) return null;
+            
+            return React.createElement('div', {
+                className: 'modal active',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg p-6 max-w-4xl w-full mx-4',
+                    onClick: (e) => e.stopPropagation(),
+                    style: { maxHeight: '90vh', overflowY: 'auto' }
+                },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
+                            'Gestion des Utilisateurs'
+                        ),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-gray-500 hover:text-gray-700 text-2xl'
+                        }, '×')
+                    ),
+                    loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('p', { className: 'text-lg mb-4' }, 
+                            users.length + ' utilisateur(s)'
+                        ),
+                        users.map(user =>
+                            React.createElement('div', {
+                                key: user.id,
+                                className: 'bg-gray-50 rounded p-4'
+                            },
+                                React.createElement('h4', { className: 'font-bold' }, user.full_name),
+                                React.createElement('p', { className: 'text-sm' }, user.email + ' - ' + user.role)
+                            )
+                        )
+                    )
+                )
+            );
+        };
+        
+        
         const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
+            const [showUserManagement, setShowUserManagement] = React.useState(false);
             
             const statuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
@@ -1438,6 +1502,13 @@ app.get('/', (c) => {
                 }),
                 
                 
+                React.createElement(UserManagementModal, {
+                    show: showUserManagement,
+                    onClose: () => setShowUserManagement(false),
+                    currentUser: currentUser
+                }),
+                
+                
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
@@ -1474,7 +1545,7 @@ app.get('/', (c) => {
                                 'Actualiser'
                             ),
                             React.createElement('button', {
-                                onClick: () => alert('Gestion des utilisateurs - En cours de développement'),
+                                onClick: () => setShowUserManagement(true),
                                 className: 'px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-users-cog mr-2' }),
