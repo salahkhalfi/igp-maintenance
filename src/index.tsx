@@ -2753,6 +2753,11 @@ app.get('/guide', (c) => {
 
             <!-- Content -->
             <div class="bg-white p-6 rounded-b-lg shadow-lg">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                    <p class="text-gray-700 text-sm md:text-base italic">
+                        💡 <strong>Ça prend vraiment pas la tête à Papineau</strong> pour être capable d'utiliser cette application. Mais au cas où vous auriez mal dormi la veille...
+                    </p>
+                </div>
                 <p class="text-gray-600 mb-4 text-center text-sm md:text-base">
                     👋 Cliquez sur les boutons colorés pour ouvrir chaque section
                 </p>
