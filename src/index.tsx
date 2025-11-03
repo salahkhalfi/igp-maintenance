@@ -6,6 +6,7 @@ import tickets from './routes/tickets';
 import machines from './routes/machines';
 import media from './routes/media';
 import comments from './routes/comments';
+import users from './routes/users';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -71,7 +72,9 @@ app.route('/api/tickets', tickets);
 app.use('/api/machines/*', authMiddleware);
 app.route('/api/machines', machines);
 
-
+// Routes de gestion des utilisateurs (Admin uniquement)
+app.use('/api/users/*', authMiddleware);
+app.route('/api/users', users);
 
 app.route('/api/media', media);
 
