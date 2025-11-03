@@ -2714,202 +2714,183 @@ app.get('/guide', (c) => {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        .section-content { display: none; }
-        .section-content.active { display: block; }
-        .menu-item.active { background-color: #1e40af; color: white; }
-        .menu-item { transition: all 0.2s; }
-        .menu-item:hover { background-color: #e5e7eb; }
-        .menu-item.active:hover { background-color: #1e3a8a; }
-        
-        /* Mobile menu styles */
-        #mobile-menu { display: none; }
-        #mobile-menu.active { display: block; }
-        
-        @media (max-width: 768px) {
-            #sidebar { 
-                position: fixed; 
-                left: -100%; 
-                top: 0; 
-                height: 100vh; 
-                z-index: 50; 
-                transition: left 0.3s ease;
-                width: 280px;
-            }
-            #sidebar.active { left: 0; }
-            #overlay { 
-                display: none; 
-                position: fixed; 
-                inset: 0; 
-                background: rgba(0,0,0,0.5); 
-                z-index: 40;
-            }
-            #overlay.active { display: block; }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-content.active {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+        .accordion-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
         }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="min-h-screen p-4">
-        <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-6">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <button id="menu-toggle" onclick="toggleMenu()" class="md:hidden text-white p-2 hover:bg-blue-800 rounded">
-                            <i class="fas fa-bars text-2xl"></i>
-                        </button>
                         <i class="fas fa-book text-3xl"></i>
                         <div>
                             <h1 class="text-2xl md:text-3xl font-bold">Guide Utilisateur</h1>
-                            <p class="text-blue-200 text-xs md:text-sm">Système de Gestion de Maintenance IGP</p>
+                            <p class="text-blue-200 text-sm">Système de Gestion de Maintenance IGP</p>
                         </div>
                     </div>
-                    <button onclick="window.history.back()" class="px-3 py-2 md:px-4 md:py-2 bg-white text-blue-900 rounded-md hover:bg-gray-100 font-semibold text-sm md:text-base">
-                        <i class="fas fa-arrow-left mr-1 md:mr-2"></i>Retour
+                    <button onclick="window.history.back()" class="px-4 py-2 bg-white text-blue-900 rounded-md hover:bg-gray-100 font-semibold">
+                        <i class="fas fa-arrow-left mr-2"></i>Retour
                     </button>
                 </div>
             </div>
-            <div id="overlay" onclick="toggleMenu()"></div>
-            <div class="flex flex-col md:flex-row">
-                <div id="sidebar" class="w-full md:w-64 bg-gray-50 p-3 md:p-4 border-r" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <div class="flex justify-between items-center mb-3 md:mb-4 md:hidden">
-                        <h3 class="font-bold text-base md:text-lg">Menu</h3>
-                        <button onclick="toggleMenu()" class="text-gray-600 p-2">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-                    <nav class="space-y-1">
-                        <button class="menu-item active w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('intro')">
-                            <i class="fas fa-home w-5"></i>
-                            <span class="text-sm font-medium">Démarrage</span>
-                        </button>
-                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('modifier')">
-                            <i class="fas fa-edit w-5"></i>
-                            <span class="text-sm font-medium">Modifier Ticket</span>
-                        </button>
-                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('roles')">
-                            <i class="fas fa-users w-5"></i>
-                            <span class="text-sm font-medium">Rôles</span>
-                        </button>
-                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('kanban')">
-                            <i class="fas fa-columns w-5"></i>
-                            <span class="text-sm font-medium">Tableau</span>
-                        </button>
-                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('creer')">
-                            <i class="fas fa-plus-circle w-5"></i>
-                            <span class="text-sm font-medium">Créer Ticket</span>
-                        </button>
-                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('mobile')">
-                            <i class="fas fa-mobile-alt w-5"></i>
-                            <span class="text-sm font-medium">Mobile</span>
-                        </button>
-                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('contact')">
-                            <i class="fas fa-phone w-5"></i>
-                            <span class="text-sm font-medium">Contact</span>
-                        </button>
-                    </nav>
-                </div>
-                <div class="flex-1 p-4 md:p-6" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    <div id="intro" class="section-content active">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">🎯 Démarrage Rapide</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+
+            <!-- Content -->
+            <div class="bg-white p-6 rounded-b-lg shadow-lg">
+                <p class="text-gray-600 mb-6 text-center text-sm md:text-base">
+                    👋 Cliquez sur les boutons colorés pour ouvrir chaque section
+                </p>
+                <div class="space-y-3">
+                    <!-- Démarrage Rapide -->
+                    <button onclick="toggleAccordion('intro')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-rocket text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">🎯 Démarrage Rapide</span>
+                        </div>
+                        <i id="intro-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="intro" class="accordion-content bg-gray-50 border-2 border-blue-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
                             <p>👋 Bienvenue! Ce guide est fait pour aller VITE.</p>
-                            <p>🔍 <strong>Sur mobile</strong>: Cliquez sur le menu ☰ en haut à gauche</p>
-                            <p>🔍 <strong>Sur PC</strong>: Utilisez le menu à gauche</p>
-                            <p>⚡ Scannez les étapes en 30 secondes par section</p>
-                            <p class="text-sm text-gray-600 italic mt-4">💡 Conseil: Gardez ce guide ouvert pendant que vous travaillez!</p>
+                            <p>📱 Cliquez sur les boutons colorés pour ouvrir chaque section</p>
+                            <p>⚡ Chaque section se lit en 30 secondes</p>
+                            <p class="text-gray-600 italic mt-3">💡 Conseil: Laissez ce guide ouvert pendant votre travail!</p>
                         </div>
                     </div>
-                    <div id="modifier" class="section-content">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">✏️ Modifier un Ticket</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
-                            <p class="font-semibold">👆 OUVRIR:</p>
+
+                    <!-- Créer un Ticket -->
+                    <button onclick="toggleAccordion('creer')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-plus-circle text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">➕ Créer un Ticket</span>
+                        </div>
+                        <i id="creer-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="creer" class="accordion-content bg-gray-50 border-2 border-orange-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-orange-700">📝 ÉTAPES:</p>
+                            <p><strong>1️⃣</strong> Bouton orange "Nouveau Ticket" en haut</p>
+                            <p><strong>2️⃣</strong> Remplir les champs:</p>
+                            <p class="ml-6">• <strong>Titre</strong>: Description courte du problème</p>
+                            <p class="ml-6">• <strong>Machine</strong>: Sélectionnez dans la liste</p>
+                            <p class="ml-6">• <strong>Priorité</strong>: Normale, Élevée, Critique</p>
+                            <p class="ml-6">• <strong>Description</strong>: Détails (optionnel)</p>
+                            <p><strong>3️⃣</strong> 📸 Photo optionnelle (mobile = caméra auto)</p>
+                            <p><strong>4️⃣</strong> Clic "Créer"</p>
+                            <p class="text-green-600 font-semibold mt-3">✅ ID automatique créé!</p>
+                        </div>
+                    </div>
+
+                    <!-- Modifier un Ticket -->
+                    <button onclick="toggleAccordion('modifier')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-edit text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">✏️ Modifier un Ticket</span>
+                        </div>
+                        <i id="modifier-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="modifier" class="accordion-content bg-gray-50 border-2 border-indigo-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-indigo-700">👆 OUVRIR:</p>
                             <p class="ml-4">• Clic sur la carte du ticket</p>
-                            <p class="ml-4">• Détails s'affichent</p>
-                            <p class="font-semibold mt-4">✏️ MODIFIER:</p>
+                            <p class="font-semibold text-indigo-700 mt-3">✏️ MODIFIER:</p>
                             <p class="ml-4">• Bouton bleu "Modifier"</p>
                             <p class="ml-4">• Changez titre, description, priorité, machine</p>
                             <p class="ml-4">• Clic "Enregistrer"</p>
-                            <p class="font-semibold mt-4">📸 AJOUTER PHOTOS:</p>
+                            <p class="font-semibold text-indigo-700 mt-3">📸 AJOUTER PHOTOS:</p>
                             <p class="ml-4">• Bouton "Ajouter médias"</p>
-                            <p class="ml-4">• Sélectionnez ou prenez photo</p>
-                            <p class="ml-4">• Photos s'ajoutent immédiatement</p>
-                            <p class="font-semibold mt-4">💬 AJOUTER COMMENTAIRES:</p>
-                            <p class="ml-4">• Scroll en bas du ticket</p>
-                            <p class="ml-4">• Tapez dans la zone commentaire</p>
-                            <p class="ml-4">• Clic "Ajouter commentaire"</p>
-                            <p class="font-semibold mt-4">🗑️ SUPPRIMER:</p>
-                            <p class="ml-4">• Bouton rouge "Supprimer"</p>
-                            <p class="ml-4">• Confirmez l'action</p>
-                            <p class="text-red-600 font-semibold mt-4">⚠️ Vous pouvez SEULEMENT modifier/supprimer VOS propres tickets!</p>
+                            <p class="ml-4">• Photos ajoutées immédiatement</p>
+                            <p class="font-semibold text-indigo-700 mt-3">💬 AJOUTER COMMENTAIRES:</p>
+                            <p class="ml-4">• Scroll en bas → Zone commentaire</p>
+                            <p class="font-semibold text-indigo-700 mt-3">🗑️ SUPPRIMER:</p>
+                            <p class="ml-4">• Bouton rouge "Supprimer" → Confirmer</p>
+                            <p class="text-red-600 font-semibold mt-3">⚠️ Vous pouvez SEULEMENT modifier VOS propres tickets!</p>
                         </div>
                     </div>
-                    <div id="roles" class="section-content">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">👥 Les 3 Rôles</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
-                            <p class="font-semibold">👑 ADMIN (Administrateur):</p>
-                            <p class="ml-4">• Tout faire dans le système</p>
-                            <p class="ml-4">• Gérer les utilisateurs (créer, modifier, supprimer)</p>
-                            <p class="ml-4">• Modifier/supprimer TOUS les tickets</p>
-                            <p class="ml-4">• Gérer les machines</p>
-                            <p class="font-semibold mt-4">🔧 TECHNICIEN:</p>
-                            <p class="ml-4">• Déplacer tickets entre colonnes (workflow)</p>
-                            <p class="ml-4">• Modifier TOUS les tickets</p>
-                            <p class="ml-4">• Ajouter commentaires et photos</p>
-                            <p class="ml-4">• Créer nouveaux tickets</p>
-                            <p class="font-semibold mt-4">👷 OPÉRATEUR:</p>
-                            <p class="ml-4">• Créer nouveaux tickets</p>
-                            <p class="ml-4">• Voir tous les tickets</p>
-                            <p class="ml-4">• Modifier/supprimer SEULEMENT ses propres tickets</p>
-                            <p class="ml-4">• Ajouter commentaires sur ses tickets</p>
+
+                    <!-- Les 3 Rôles -->
+                    <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-users text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">👥 Les 3 Rôles</span>
+                        </div>
+                        <i id="roles-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="roles" class="accordion-content bg-gray-50 border-2 border-purple-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-purple-700">👑 ADMIN:</p>
+                            <p class="ml-4">• Tout faire • Gérer users • Modifier TOUS tickets</p>
+                            <p class="font-semibold text-purple-700 mt-3">🔧 TECHNICIEN:</p>
+                            <p class="ml-4">• Déplacer tickets • Modifier TOUS tickets • Ajouter commentaires/photos</p>
+                            <p class="font-semibold text-purple-700 mt-3">👷 OPÉRATEUR:</p>
+                            <p class="ml-4">• Créer tickets • Voir tous • Modifier SEULEMENT ses propres tickets</p>
                         </div>
                     </div>
-                    <div id="kanban" class="section-content">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">📊 Le Tableau Kanban</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
-                            <p class="font-semibold">6 COLONNES = Workflow complet:</p>
-                            <p>🟦 <strong>Requête</strong>: Ticket juste créé, en attente</p>
-                            <p>🟨 <strong>Diagnostic</strong>: Technicien analyse le problème</p>
-                            <p>🟧 <strong>En Cours</strong>: Réparation en cours</p>
-                            <p>🟪 <strong>Attente Pièces</strong>: Besoin commander pièces</p>
-                            <p>🟩 <strong>Terminé</strong>: Réparation complétée</p>
-                            <p>⬜ <strong>Archivé</strong>: Ticket fermé et archivé</p>
-                            <p class="font-semibold mt-4">🖱️ DÉPLACER UN TICKET (Techniciens/Admins):</p>
-                            <p class="ml-4">• <strong>Sur PC</strong>: Glisser-déposer la carte vers la colonne voulue</p>
-                            <p class="ml-4">• <strong>Sur Mobile</strong>: Tap sur carte → Menu "Changer statut" → Sélectionner</p>
-                            <p class="text-blue-600 font-semibold mt-4">💡 Le tableau se met à jour en temps réel pour tous!</p>
+
+                    <!-- Tableau Kanban -->
+                    <button onclick="toggleAccordion('kanban')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-columns text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">📊 Le Tableau Kanban</span>
+                        </div>
+                        <i id="kanban-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="kanban" class="accordion-content bg-gray-50 border-2 border-cyan-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-cyan-700">6 COLONNES = Workflow:</p>
+                            <p>🟦 Requête → 🟨 Diagnostic → 🟧 En Cours → 🟪 Attente Pièces → 🟩 Terminé → ⬜ Archivé</p>
+                            <p class="font-semibold text-cyan-700 mt-3">🖱️ DÉPLACER (Techniciens/Admins):</p>
+                            <p class="ml-4">• <strong>PC</strong>: Glisser-déposer</p>
+                            <p class="ml-4">• <strong>Mobile</strong>: Tap → Menu statut</p>
+                            <p class="text-cyan-600 font-semibold mt-3">💡 Mise à jour temps réel!</p>
                         </div>
                     </div>
-                    <div id="creer" class="section-content">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">➕ Créer un Ticket</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
-                            <p class="font-semibold">ÉTAPES:</p>
-                            <p>1️⃣ Bouton orange "Nouveau Ticket" en haut</p>
-                            <p>2️⃣ Remplir les champs:</p>
-                            <p class="ml-4">• <strong>Titre</strong>: Description courte du problème</p>
-                            <p class="ml-4">• <strong>Machine</strong>: Sélectionnez dans la liste</p>
-                            <p class="ml-4">• <strong>Priorité</strong>: Normale, Élevée, Critique</p>
-                            <p class="ml-4">• <strong>Description</strong>: Détails du problème (optionnel)</p>
-                            <p>3️⃣ 📸 <strong>Photo optionnelle</strong>:</p>
-                            <p class="ml-4">• Clic "Prendre une photo ou vidéo"</p>
-                            <p class="ml-4">• Sur mobile: caméra s'ouvre automatiquement</p>
-                            <p class="ml-4">• Sur PC: sélectionnez fichier</p>
-                            <p>4️⃣ Clic <strong>"Créer"</strong></p>
-                            <p class="text-green-600 font-semibold mt-4">✅ Ticket créé! ID automatique: IGP-PDE-YYYYMMDD-XXX</p>
-                            <p class="text-orange-600 font-semibold">⚡ Temps moyen: 30 secondes!</p>
+
+                    <!-- Sur Mobile -->
+                    <button onclick="toggleAccordion('mobile')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-mobile-alt text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">📱 Sur Mobile</span>
                         </div>
-                    </div>
-                    <div id="mobile" class="section-content">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">📱 Sur Mobile</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
-                            <p>📲 100% responsive!</p>
+                        <i id="mobile-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="mobile" class="accordion-content bg-gray-50 border-2 border-pink-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-pink-700">📲 100% responsive!</p>
                             <p>👆 TAP carte → Voir détails</p>
                             <p>📸 PHOTO: Caméra auto!</p>
                             <p>🤏 Pinch = Zoom photos</p>
+                            <p>📜 Scroll fluide</p>
                         </div>
                     </div>
-                    <div id="contact" class="section-content">
-                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">📞 Contact</h2>
-                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
-                            <p class="font-semibold">🆘 SUPPORT: Votre admin système</p>
+
+                    <!-- Contact -->
+                    <button onclick="toggleAccordion('contact')" class="accordion-button w-full text-left px-6 py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-phone text-2xl"></i>
+                            <span class="text-lg md:text-xl font-bold">📞 Contact & Support</span>
+                        </div>
+                        <i id="contact-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+                    </button>
+                    <div id="contact" class="accordion-content bg-gray-50 border-2 border-teal-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-teal-700">🆘 SUPPORT: Votre admin système</p>
                             <p>🌐 mecanique.igpglass.ca</p>
                             <p>📖 Ce guide</p>
                             <p>🏷️ Version 1.9.2</p>
@@ -2919,23 +2900,25 @@ app.get('/guide', (c) => {
             </div>
         </div>
     </div>
+
     <script>
-        function toggleMenu() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-        
-        function showSection(id) {
-            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.target.closest('.menu-item').classList.add('active');
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            const isActive = content.classList.contains('active');
             
-            // Fermer le menu sur mobile après sélection
-            if (window.innerWidth < 768) {
-                toggleMenu();
+            // Fermer tous les accordéons
+            document.querySelectorAll('.accordion-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('[id$="-icon"]').forEach(el => {
+                el.classList.remove('rotate-180');
+            });
+            
+            // Ouvrir l'accordéon cliqué si il était fermé
+            if (!isActive) {
+                content.classList.add('active');
+                icon.classList.add('rotate-180');
             }
         }
     </script>
