@@ -370,6 +370,122 @@ app.get('/', (c) => {
         };
         
         
+        // Composant de notification personnalisé
+        const NotificationModal = ({ show, message, type, onClose }) => {
+            if (!show) return null;
+            
+            const colors = {
+                success: 'bg-green-50 border-green-500 text-green-800',
+                error: 'bg-red-50 border-red-500 text-red-800',
+                info: 'bg-blue-50 border-blue-500 text-blue-800'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle text-green-600',
+                error: 'fa-exclamation-circle text-red-600',
+                info: 'fa-info-circle text-blue-600'
+            };
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg shadow-2xl p-6 max-w-md mx-4 transform transition-all',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { className: 'flex items-start gap-4' },
+                        React.createElement('i', { 
+                            className: 'fas ' + icons[type] + ' text-3xl mt-1'
+                        }),
+                        React.createElement('div', { className: 'flex-1' },
+                            React.createElement('p', { className: 'text-lg font-semibold mb-4' }, message)
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex justify-end mt-4' },
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-700 font-semibold'
+                        }, 'OK')
+                    )
+                )
+            );
+        };
+        
+        // Composant de confirmation personnalisé
+        const ConfirmModal = ({ show, message, onConfirm, onCancel }) => {
+            if (!show) return null;
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
+                onClick: onCancel
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg shadow-2xl p-6 max-w-md mx-4 transform transition-all',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { className: 'flex items-start gap-4 mb-6' },
+                        React.createElement('i', { 
+                            className: 'fas fa-exclamation-triangle text-yellow-600 text-3xl mt-1'
+                        }),
+                        React.createElement('div', { className: 'flex-1' },
+                            React.createElement('p', { className: 'text-lg font-semibold' }, message)
+                        )
+                    ),
+                    React.createElement('div', { className: 'flex justify-end gap-3' },
+                        React.createElement('button', {
+                            onClick: onCancel,
+                            className: 'px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 font-semibold'
+                        }, 'Annuler'),
+                        React.createElement('button', {
+                            onClick: onConfirm,
+                            className: 'px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold'
+                        }, 'Confirmer')
+                    )
+                )
+            );
+        };
+        
+        // Composant de prompt personnalisé
+        const PromptModal = ({ show, message, onConfirm, onCancel }) => {
+            const [value, setValue] = React.useState('');
+            
+            if (!show) return null;
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
+                onClick: onCancel
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg shadow-2xl p-6 max-w-md mx-4 transform transition-all',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { className: 'mb-4' },
+                        React.createElement('p', { className: 'text-lg font-semibold mb-4' }, message),
+                        React.createElement('input', {
+                            type: 'password',
+                            value: value,
+                            onChange: (e) => setValue(e.target.value),
+                            className: 'w-full px-3 py-2 border-2 rounded-md',
+                            placeholder: 'Minimum 6 caracteres',
+                            autoFocus: true
+                        })
+                    ),
+                    React.createElement('div', { className: 'flex justify-end gap-3 mt-6' },
+                        React.createElement('button', {
+                            onClick: onCancel,
+                            className: 'px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 font-semibold'
+                        }, 'Annuler'),
+                        React.createElement('button', {
+                            onClick: () => onConfirm(value),
+                            className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-700 font-semibold'
+                        }, 'OK')
+                    )
+                )
+            );
+        };
+        
+        
         const LoginForm = ({ onLogin }) => {
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
@@ -1242,6 +1358,9 @@ app.get('/', (c) => {
             const [editEmail, setEditEmail] = React.useState('');
             const [editFullName, setEditFullName] = React.useState('');
             const [editRole, setEditRole] = React.useState('operator');
+            const [notification, setNotification] = React.useState({ show: false, message: '', type: 'info' });
+            const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
+            const [promptDialog, setPromptDialog] = React.useState({ show: false, message: '', onConfirm: null });
             
             React.useEffect(() => {
                 if (show) {
@@ -1255,7 +1374,7 @@ app.get('/', (c) => {
                     const response = await axios.get(API_URL + '/users');
                     setUsers(response.data.users);
                 } catch (error) {
-                    alert('Erreur chargement: ' + (error.response?.data?.error || 'Erreur'));
+                    setNotification({ show: true, message: 'Erreur chargement: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
                 } finally {
                     setLoading(false);
                 }
@@ -1270,7 +1389,7 @@ app.get('/', (c) => {
                         full_name: newFullName,
                         role: newRole
                     });
-                    alert('Utilisateur cree avec succes');
+                    setNotification({ show: true, message: 'Utilisateur cree avec succes!', type: 'success' });
                     setNewEmail('');
                     setNewPassword('');
                     setNewFullName('');
@@ -1278,7 +1397,7 @@ app.get('/', (c) => {
                     setShowCreateForm(false);
                     loadUsers();
                 } catch (error) {
-                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
+                    setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
                 }
             };
             
@@ -1294,17 +1413,21 @@ app.get('/', (c) => {
                 return 'bg-green-100 text-green-800';
             };
             
-            const handleDeleteUser = async (userId, userName) => {
-                if (!confirm('Etes-vous sur de vouloir supprimer ' + userName + ' ?')) {
-                    return;
-                }
-                try {
-                    await axios.delete(API_URL + '/users/' + userId);
-                    alert('Utilisateur supprime avec succes');
-                    loadUsers();
-                } catch (error) {
-                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
-                }
+            const handleDeleteUser = (userId, userName) => {
+                setConfirmDialog({
+                    show: true,
+                    message: 'Etes-vous sur de vouloir supprimer ' + userName + ' ?',
+                    onConfirm: async () => {
+                        setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        try {
+                            await axios.delete(API_URL + '/users/' + userId);
+                            setNotification({ show: true, message: 'Utilisateur supprime avec succes!', type: 'success' });
+                            loadUsers();
+                        } catch (error) {
+                            setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                        }
+                    }
+                });
             };
             
             const handleEditUser = (user) => {
@@ -1322,28 +1445,34 @@ app.get('/', (c) => {
                         full_name: editFullName,
                         role: editRole
                     });
-                    alert('Utilisateur modifie avec succes');
+                    setNotification({ show: true, message: 'Utilisateur modifie avec succes!', type: 'success' });
                     setEditingUser(null);
                     loadUsers();
                 } catch (error) {
-                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
+                    setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
                 }
             };
             
-            const handleResetPassword = async (userId, userName) => {
-                const newPass = prompt('Nouveau mot de passe pour ' + userName + ' (min 6 caracteres):');
-                if (!newPass || newPass.length < 6) {
-                    alert('Mot de passe invalide (minimum 6 caracteres)');
-                    return;
-                }
-                try {
-                    await axios.post(API_URL + '/users/' + userId + '/reset-password', {
-                        new_password: newPass
-                    });
-                    alert('Mot de passe reinitialise avec succes');
-                } catch (error) {
-                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
-                }
+            const handleResetPassword = (userId, userName) => {
+                setPromptDialog({
+                    show: true,
+                    message: 'Nouveau mot de passe pour ' + userName + ':',
+                    onConfirm: async (newPass) => {
+                        setPromptDialog({ show: false, message: '', onConfirm: null });
+                        if (!newPass || newPass.length < 6) {
+                            setNotification({ show: true, message: 'Mot de passe invalide (minimum 6 caracteres)', type: 'error' });
+                            return;
+                        }
+                        try {
+                            await axios.post(API_URL + '/users/' + userId + '/reset-password', {
+                                new_password: newPass
+                            });
+                            setNotification({ show: true, message: 'Mot de passe reinitialise avec succes!', type: 'success' });
+                        } catch (error) {
+                            setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                        }
+                    }
+                });
             };
             
             if (!show) return null;
@@ -1542,7 +1671,25 @@ app.get('/', (c) => {
                                 )
                             )
                         )
-                    )
+                    ),
+                    React.createElement(NotificationModal, {
+                        show: notification.show,
+                        message: notification.message,
+                        type: notification.type,
+                        onClose: () => setNotification({ show: false, message: '', type: 'info' })
+                    }),
+                    React.createElement(ConfirmModal, {
+                        show: confirmDialog.show,
+                        message: confirmDialog.message,
+                        onConfirm: confirmDialog.onConfirm,
+                        onCancel: () => setConfirmDialog({ show: false, message: '', onConfirm: null })
+                    }),
+                    React.createElement(PromptModal, {
+                        show: promptDialog.show,
+                        message: promptDialog.message,
+                        onConfirm: promptDialog.onConfirm,
+                        onCancel: () => setPromptDialog({ show: false, message: '', onConfirm: null })
+                    })
                 )
             );
         };
