@@ -1503,10 +1503,13 @@ app.get('/', (c) => {
                         }, 'Creer un utilisateur')
                     ),
                     
-                    showCreateForm ? React.createElement('div', { className: 'mb-6 p-6 bg-blue-50 rounded-lg border-2 border-igp-blue' },
+                    showCreateForm ? React.createElement('div', { 
+                        className: 'mb-6 p-6 bg-blue-50 rounded-lg border-2 border-igp-blue scroll-mt-4',
+                        ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                    },
                         React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Nouvel utilisateur'),
                         React.createElement('form', { onSubmit: handleCreateUser },
-                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4' },
                                 React.createElement('div', {},
                                     React.createElement('label', { className: 'block font-bold mb-2' }, 'Email'),
                                     React.createElement('input', {
@@ -1528,7 +1531,7 @@ app.get('/', (c) => {
                                     })
                                 )
                             ),
-                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4' },
                                 React.createElement('div', {},
                                     React.createElement('label', { className: 'block font-bold mb-2' }, 'Mot de passe'),
                                     React.createElement('input', {
@@ -1567,10 +1570,13 @@ app.get('/', (c) => {
                         )
                     ) : null,
                     
-                    editingUser ? React.createElement('div', { className: 'mb-6 p-6 bg-green-50 rounded-lg border-2 border-green-600' },
+                    editingUser ? React.createElement('div', { 
+                        className: 'mb-6 p-6 bg-green-50 rounded-lg border-2 border-green-600 scroll-mt-4',
+                        ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                    },
                         React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Modifier: ' + editingUser.full_name),
                         React.createElement('form', { onSubmit: handleUpdateUser },
-                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4' },
                                 React.createElement('div', {},
                                     React.createElement('label', { className: 'block font-bold mb-2' }, 'Email'),
                                     React.createElement('input', {
@@ -1628,8 +1634,8 @@ app.get('/', (c) => {
                                 key: user.id,
                                 className: 'bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-igp-blue transition-all'
                             },
-                                React.createElement('div', { className: 'flex justify-between items-center' },
-                                    React.createElement('div', {},
+                                React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
+                                    React.createElement('div', { className: 'flex-1' },
                                         React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
                                             React.createElement('h4', { className: 'font-bold text-lg' }, user.full_name),
                                             React.createElement('span', { 
@@ -1645,24 +1651,24 @@ app.get('/', (c) => {
                                             'Créé le: ' + new Date(user.created_at).toLocaleDateString('fr-FR')
                                         )
                                     ),
-                                    user.id !== currentUser.id ? React.createElement('div', { className: 'flex gap-2' },
+                                    user.id !== currentUser.id ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
                                         React.createElement('button', {
                                             onClick: () => handleEditUser(user),
-                                            className: 'px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-sm'
+                                            className: 'w-full sm:w-auto px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-sm'
                                         },
                                             React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                             'Modifier'
                                         ),
                                         React.createElement('button', {
                                             onClick: () => handleResetPassword(user.id, user.full_name),
-                                            className: 'px-3 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-semibold text-sm'
+                                            className: 'w-full sm:w-auto px-3 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-semibold text-sm'
                                         },
                                             React.createElement('i', { className: 'fas fa-key mr-1' }),
                                             'MdP'
                                         ),
                                         React.createElement('button', {
                                             onClick: () => handleDeleteUser(user.id, user.full_name),
-                                            className: 'px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold text-sm'
+                                            className: 'w-full sm:w-auto px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold text-sm'
                                         },
                                             React.createElement('i', { className: 'fas fa-trash mr-1' }),
                                             'Supprimer'
