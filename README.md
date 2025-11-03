@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-1.9.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-1.9.2-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -19,14 +19,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.9.0 - En Production**
+✅ **Version 1.9.2 - En Production**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v1.9.0**: Gestion complète des utilisateurs (CRUD) + Notifications élégantes
+- **NOUVEAU v1.9.2**: Guide utilisateur simplifié ultra-concis (emoji-based, scannable en 30 sec/section)
+- **v1.9.0**: Gestion complète des utilisateurs (CRUD) + Notifications élégantes
 - **v1.8.0**: Système de permissions par rôle + Statuts francisés
 - Système de commentaires + Upload médias supplémentaires + Suppression de tickets
 - Galerie de médias dans les détails de ticket + Scroll mobile corrigé
@@ -66,7 +67,38 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
 - **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
 
-#### 🆕 **NOUVEAU v1.9.0** - Gestion des Utilisateurs + Notifications Élégantes
+#### 🆕 **NOUVEAU v1.9.2** - Guide Utilisateur Simplifié
+
+##### 📖 Guide Interactif Ultra-Concis
+- **Bouton "Guide"** - Accessible depuis le header pour tous les utilisateurs
+- **15 sections complètes** - Démarrage, Connexion, Rôles, Kanban, Tickets, Commentaires, Photos, Recherche, Gestion users, Mobile, Raccourcis, Sécurité, Problèmes, Contact
+- **Format "Quick Start"** - Chaque section réduite à 6-8 lignes maximum
+- **Ultra-visuel** - Heavy emoji usage (🎯📊📸💬🔍👥📱⌨️🔒🆘📞) pour scan rapide
+- **Steps numérotés** - 1️⃣2️⃣3️⃣4️⃣ pour clarté immédiate
+- **Bullets contextuels** - ✅❌💡⚡🔴🟠🟢 pour information visuelle
+- **Scannable 30 sec** - Parfait pour utilisateurs pressés qui n'ont pas le temps
+- **Navigation sidebar** - Menu latéral avec icônes pour accès rapide
+- **Escape to close** - Raccourci clavier pour fermeture rapide
+- **Design professionnel** - Modal plein écran responsive, élégant, moderne
+
+##### 🎯 Sections du Guide (15)
+1. **🎯 Démarrage Rapide** - Vue d'ensemble en 30 secondes
+2. **🔐 Se Connecter** - Processus de connexion simplifié
+3. **👥 Les 3 Rôles** - Permissions Opérateur/Technicien/Admin
+4. **📊 Le Tableau** - Workflow Kanban 6 colonnes
+5. **➕ Créer un Ticket** - 4 étapes avec photos
+6. **🔍 Voir un Ticket** - Détails, timeline, médias
+7. **💬 Commenter** - Ajouter notes et infos
+8. **📸 Photos** - Upload et visualisation
+9. **🔍 Rechercher** - Filtres et recherche instantanée
+10. **👥 Gestion Users** - CRUD utilisateurs (admin)
+11. **📱 Sur Mobile** - Utilisation tactile optimisée
+12. **⌨️ Raccourcis** - Escape, Tab, Enter
+13. **🔒 Sécurité** - Bonnes pratiques
+14. **🆘 Problèmes?** - Troubleshooting rapide
+15. **📞 Contact** - Support et ressources
+
+#### 🆕 **v1.9.0** - Gestion des Utilisateurs + Notifications Élégantes
 
 ##### 👥 Interface de Gestion des Utilisateurs (Admin uniquement)
 - **Bouton "Utilisateurs"** - Accès violet dans le header (visible uniquement pour admins)
