@@ -1326,7 +1326,7 @@ app.get('/', (c) => {
             };
             
             const handleDeleteUser = async (user) => {
-                if (!confirm('Êtes-vous sûr de vouloir supprimer l\'utilisateur "' + user.full_name + '" (' + user.email + ') ?\n\nCette action est irréversible.')) {
+                if (!confirm("Êtes-vous sûr de vouloir supprimer l'utilisateur \"" + user.full_name + "\" (" + user.email + ") ?\n\nCette action est irréversible.")) {
                     return;
                 }
                 
@@ -1492,7 +1492,7 @@ app.get('/', (c) => {
                                     className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold'
                                 },
                                     React.createElement('i', { className: 'fas fa-check mr-2' }),
-                                    'Créer l\'utilisateur'
+                                    "Créer l'utilisateur"
                                 )
                             )
                         )
@@ -1502,7 +1502,7 @@ app.get('/', (c) => {
                     showEditForm && selectedUser ? React.createElement('div', { className: 'mb-6 bg-yellow-50 p-6 rounded-lg border-2 border-yellow-400' },
                         React.createElement('h3', { className: 'text-xl font-bold text-yellow-800 mb-4' },
                             React.createElement('i', { className: 'fas fa-user-edit mr-2' }),
-                            'Modifier l\'utilisateur: ' + selectedUser.email
+                            "Modifier l'utilisateur: " + selectedUser.email
                         ),
                         React.createElement('form', { onSubmit: handleEditUser },
                             React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-4' },
