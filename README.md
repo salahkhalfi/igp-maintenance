@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-1.8.3-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-1.9.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -19,14 +19,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.8.0 - Prêt pour le déploiement**
+✅ **Version 1.9.0 - En Production**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v1.8.0**: Système de permissions par rôle + Statuts francisés
+- **NOUVEAU v1.9.0**: Gestion complète des utilisateurs (CRUD) + Notifications élégantes
+- **v1.8.0**: Système de permissions par rôle + Statuts francisés
 - Système de commentaires + Upload médias supplémentaires + Suppression de tickets
 - Galerie de médias dans les détails de ticket + Scroll mobile corrigé
 - Upload de photos/vidéos depuis mobile lors de la création de tickets
@@ -65,7 +66,40 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Mouvement libre** - Déplacer vers n'importe quelle colonne en un geste
 - **Mise à jour automatique** - Historique (timeline) enregistré à chaque drop
 
-#### 🆕 **NOUVEAU v1.8.0** - Système de permissions par rôle
+#### 🆕 **NOUVEAU v1.9.0** - Gestion des Utilisateurs + Notifications Élégantes
+
+##### 👥 Interface de Gestion des Utilisateurs (Admin uniquement)
+- **Bouton "Utilisateurs"** - Accès violet dans le header (visible uniquement pour admins)
+- **Liste complète** - Affichage de tous les utilisateurs avec badges de rôle colorés
+- **Création d'utilisateurs** - Formulaire avec email, nom complet, mot de passe et rôle
+- **Modification** - Éditer email, nom et rôle de n'importe quel utilisateur
+- **Suppression sécurisée** - Impossible de supprimer son propre compte
+- **Réinitialisation mot de passe** - Changer le mot de passe de n'importe quel utilisateur
+- **Badges visuels** - 👑 Administrateur (rouge), 🔧 Technicien (bleu), 👷 Opérateur (vert)
+
+##### 🎨 Système de Notifications Modernes
+- **Modals élégants** - Remplace les `alert()` et `confirm()` par défaut
+- **Notifications de succès** - Modal vert avec icône ✓ (création, modification réussies)
+- **Notifications d'erreur** - Modal rouge avec icône ⚠️ (erreurs API)
+- **Confirmations** - Modal jaune avec icône △ pour actions sensibles (suppression)
+- **Prompt sécurisé** - Modal bleu avec champ mot de passe pour réinitialisation
+- **Design professionnel** - Fond semi-transparent, ombres, animations fluides
+- **UX améliorée** - Clic sur fond pour fermer, boutons bien visibles
+
+##### 🔒 Sécurité Renforcée
+- **Protection admin** - API `/api/users/*` protégée par middleware `adminOnly`
+- **Backend validation** - Vérification des permissions côté serveur
+- **Isolation UI** - Bouton "Utilisateurs" invisible pour non-admins
+- **Auto-protection** - Impossible de modifier/supprimer son propre compte
+
+##### 🛠️ API Utilisateurs Complète
+- `GET /api/users` - Liste tous les utilisateurs (admin)
+- `POST /api/users` - Créer un utilisateur (admin)
+- `PUT /api/users/:id` - Modifier un utilisateur (admin)
+- `DELETE /api/users/:id` - Supprimer un utilisateur (admin)
+- `POST /api/users/:id/reset-password` - Réinitialiser mot de passe (admin)
+
+#### 🆕 **v1.8.0** - Système de permissions par rôle
 
 ##### 🔒 Permissions par Rôle
 **Opérateurs** :
@@ -178,6 +212,8 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - Connexion/déconnexion avec JWT
 - 3 rôles: Admin, Technicien, Opérateur
 - Gestion des permissions par rôle
+- **NOUVEAU v1.9.0**: Interface admin complète pour gérer les utilisateurs (CRUD)
+- **NOUVEAU v1.9.0**: Notifications modernes et élégantes
 
 #### 2. Gestion des Tickets
 - **Création automatique** d'ID de ticket (Format: `IGP-[TYPE]-[MODEL]-[YYYYMMDD]-[SEQ]`)
@@ -301,6 +337,13 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 ### Commentaires
 - `POST /api/comments` - Ajouter un commentaire à un ticket
 - `GET /api/comments/ticket/:ticketId` - Liste les commentaires d'un ticket
+
+### Utilisateurs (NOUVEAU v1.9.0)
+- `GET /api/users` - Liste tous les utilisateurs (admin)
+- `POST /api/users` - Créer un utilisateur (admin)
+- `PUT /api/users/:id` - Modifier un utilisateur (admin)
+- `DELETE /api/users/:id` - Supprimer un utilisateur (admin)
+- `POST /api/users/:id/reset-password` - Réinitialiser mot de passe (admin)
 
 ### Santé
 - `GET /api/health` - Vérifier le statut de l'API
@@ -546,6 +589,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.8.0  
-**Dernière mise à jour**: 2025-11-02  
-**Statut**: ✅ Production Ready - Permissions par rôle + Statuts francisés + Commentaires collaboratifs + Noms personnalisés
+**Version**: 1.9.0  
+**Dernière mise à jour**: 2025-11-03  
+**Statut**: ✅ En Production - Gestion utilisateurs complète + Notifications élégantes + Permissions par rôle + UI améliorée
