@@ -499,6 +499,397 @@ app.get('/', (c) => {
             );
         };
         
+        // Composant Guide Utilisateur
+        const UserGuideModal = ({ show, onClose, currentUser }) => {
+            const [activeSection, setActiveSection] = React.useState('introduction');
+            
+            if (!show) return null;
+            
+            const sections = {
+                introduction: {
+                    title: '🎯 Bienvenue dans le Guide Utilisateur',
+                    content: [
+                        'Ce guide vous aidera à utiliser efficacement le système de gestion de maintenance IGP.',
+                        'Utilisez le menu à gauche pour naviguer entre les sections.',
+                        'Appuyez sur Escape ou cliquez sur X pour fermer ce guide à tout moment.'
+                    ]
+                },
+                connexion: {
+                    title: '🔐 Connexion & Compte',
+                    content: [
+                        '• Accédez à https://mecanique.igpglass.ca',
+                        '• Entrez votre email et mot de passe',
+                        '• Cliquez sur "Se connecter"',
+                        '• En cas de problème, contactez votre administrateur'
+                    ]
+                },
+                roles: {
+                    title: '👥 Rôles & Permissions',
+                    content: [
+                        '👑 ADMINISTRATEUR: Accès complet - Gestion utilisateurs + tickets',
+                        '🔧 TECHNICIEN: Déplacer et modifier tous les tickets',
+                        '👷 OPÉRATEUR: Créer des tickets, voir tous, modifier uniquement les siens',
+                        '',
+                        'Votre rôle actuel: ' + (currentUser ? (currentUser.role === 'admin' ? '👑 Administrateur' : currentUser.role === 'technician' ? '🔧 Technicien' : '👷 Opérateur') : 'Non connecté')
+                    ]
+                },
+                kanban: {
+                    title: '📊 Tableau Kanban',
+                    content: [
+                        'Le tableau Kanban affiche tous les tickets en 6 colonnes:',
+                        '• 🟦 Requête Reçue: Nouveau ticket créé',
+                        '• 🟨 Diagnostic: Analyse du problème en cours',
+                        '• 🟧 En Cours: Réparation en cours',
+                        '• 🟪 En Attente Pièces: Attente de pièces de rechange',
+                        '• 🟩 Terminé: Réparation terminée',
+                        '• ⬜ Archivé: Ticket fermé',
+                        '',
+                        'DÉPLACER UN TICKET (Techniciens/Admins):',
+                        '• Desktop: Glisser-déposer la carte vers une autre colonne',
+                        '• Mobile: Tap sur la carte, sélectionner le nouveau statut'
+                    ]
+                },
+                creer_ticket: {
+                    title: '➕ Créer un Ticket',
+                    content: [
+                        '1. Cliquez sur le bouton orange "Nouveau Ticket" en haut',
+                        '2. Remplissez le formulaire:',
+                        '   • Titre: Description courte du problème',
+                        '   • Description: Détails complets',
+                        '   • Machine: Sélectionnez la machine concernée',
+                        '   • Priorité: Low/Medium/High/Critical',
+                        '   • Votre nom: Indiquez qui rapporte le problème',
+                        '3. OPTIONNEL: Ajoutez des photos/vidéos',
+                        '   • Cliquez "Prendre une photo ou vidéo"',
+                        '   • Sur mobile: caméra s\'ouvre automatiquement',
+                        '4. Cliquez "Créer le ticket"',
+                        '',
+                        '✅ Un ID unique est généré automatiquement (ex: IGP-PDE-20250103-001)'
+                    ]
+                },
+                details_ticket: {
+                    title: '🔍 Voir les Détails d\'un Ticket',
+                    content: [
+                        '1. Cliquez sur n\'importe quelle carte de ticket',
+                        '2. Un modal s\'ouvre avec:',
+                        '   • Toutes les informations du ticket',
+                        '   • Timeline complète des événements',
+                        '   • Galerie de photos/vidéos',
+                        '   • Section commentaires',
+                        '',
+                        'ACTIONS DISPONIBLES:',
+                        '• Ajouter un commentaire (tous)',
+                        '• Ajouter des médias supplémentaires (tous)',
+                        '• Modifier le ticket (créateur ou techniciens/admins)',
+                        '• Supprimer le ticket (admins uniquement)'
+                    ]
+                },
+                commentaires: {
+                    title: '💬 Ajouter un Commentaire',
+                    content: [
+                        '1. Ouvrez les détails d\'un ticket',
+                        '2. Scrollez vers le bas jusqu\'à "Ajouter un commentaire"',
+                        '3. Entrez votre nom et votre rôle',
+                        '4. Tapez votre commentaire',
+                        '5. Cliquez "Ajouter le commentaire"',
+                        '',
+                        'UTILISATION:',
+                        '• Opérateur → Technicien: Donner plus d\'infos sur le problème',
+                        '• Technicien → Opérateur: Expliquer la réparation effectuée',
+                        '• Tous: Communiquer sur l\'avancement',
+                        '',
+                        '✅ Les commentaires sont horodatés et identifiés par rôle'
+                    ]
+                },
+                medias: {
+                    title: '📸 Photos & Vidéos',
+                    content: [
+                        'AJOUTER DES MÉDIAS LORS DE LA CRÉATION:',
+                        '• Cliquez "Prendre une photo ou vidéo"',
+                        '• Sur mobile: caméra s\'ouvre directement',
+                        '• Prenez plusieurs photos si nécessaire',
+                        '• Preview avant envoi',
+                        '',
+                        'AJOUTER DES MÉDIAS APRÈS CRÉATION:',
+                        '• Ouvrez les détails du ticket',
+                        '• Section "Ajouter des médias supplémentaires"',
+                        '• Sélectionnez vos fichiers',
+                        '• Cliquez "Uploader"',
+                        '',
+                        'VOIR LES MÉDIAS:',
+                        '• Galerie visible dans les détails du ticket',
+                        '• Cliquez sur une photo/vidéo pour voir en grand',
+                        '• Mode plein écran avec contrôles vidéo'
+                    ]
+                },
+                recherche: {
+                    title: '🔍 Recherche & Filtrage',
+                    content: [
+                        'FILTRER PAR STATUT:',
+                        '• Cliquez sur une colonne du Kanban',
+                        '• Seuls les tickets de ce statut sont visibles',
+                        '',
+                        'FILTRER PAR PRIORITÉ:',
+                        '• Utilisez les filtres en haut (si disponibles)',
+                        '• Rouge = Critique, Orange = Élevée',
+                        '',
+                        'RECHERCHER UN TICKET:',
+                        '• Utilisez la barre de recherche (si disponible)',
+                        '• Tapez l\'ID, le titre ou la machine',
+                        '• Résultats instantanés'
+                    ]
+                },
+                gestion_users: {
+                    title: '👥 Gestion des Utilisateurs (Admin)',
+                    content: [
+                        '⚠️ Cette section est réservée aux ADMINISTRATEURS uniquement.',
+                        '',
+                        'ACCÉDER:',
+                        '• Cliquez sur le bouton violet "Utilisateurs" en haut à droite',
+                        '',
+                        'RECHERCHER UN UTILISATEUR:',
+                        '• Utilisez la barre de recherche',
+                        '• Filtrage instantané par nom ou email',
+                        '• Appuyez Escape pour effacer',
+                        '',
+                        'CRÉER UN UTILISATEUR:',
+                        '1. Cliquez "Créer un utilisateur" (orange)',
+                        '2. Remplissez: Email, Nom, Mot de passe, Rôle',
+                        '3. Cliquez "Créer"',
+                        '4. Toast vert de confirmation',
+                        '',
+                        'MODIFIER UN UTILISATEUR:',
+                        '1. Cliquez "Modifier" (bleu)',
+                        '2. Changez les informations',
+                        '3. Cliquez "Enregistrer"',
+                        '',
+                        'RÉINITIALISER MOT DE PASSE:',
+                        '1. Cliquez "MdP" (jaune)',
+                        '2. Entrez le nouveau mot de passe (min 6 caractères)',
+                        '3. Confirmez',
+                        '',
+                        'SUPPRIMER UN UTILISATEUR:',
+                        '1. Cliquez "Supprimer" (rouge)',
+                        '2. Confirmez l\'action',
+                        '⚠️ Impossible de supprimer son propre compte'
+                    ]
+                },
+                mobile: {
+                    title: '📱 Utilisation sur Mobile',
+                    content: [
+                        'L\'application est 100% responsive:',
+                        '',
+                        'NAVIGATION:',
+                        '• Boutons empilés verticalement',
+                        '• Formulaires adaptés à l\'écran',
+                        '• Menus et modals en plein écran',
+                        '',
+                        'DÉPLACER UN TICKET:',
+                        '• Tap sur la carte',
+                        '• Sélectionnez le nouveau statut dans le menu',
+                        '• Confirmez',
+                        '',
+                        'PRENDRE DES PHOTOS:',
+                        '• Bouton "Prendre une photo ou vidéo"',
+                        '• Caméra s\'ouvre automatiquement',
+                        '• Capturez directement depuis l\'atelier',
+                        '',
+                        'ZOOM & SCROLL:',
+                        '• Pinch to zoom sur les images',
+                        '• Scroll fluide dans les listes',
+                        '• Gestes tactiles naturels'
+                    ]
+                },
+                raccourcis: {
+                    title: '⌨️ Raccourcis Clavier',
+                    content: [
+                        'RACCOURCIS GLOBAUX:',
+                        '• Escape: Fermer le modal/formulaire actif',
+                        '• Escape (recherche): Effacer la recherche',
+                        '',
+                        'DANS LES FORMULAIRES:',
+                        '• Auto-focus sur premier champ',
+                        '• Tab: Naviguer entre les champs',
+                        '• Enter: Soumettre le formulaire',
+                        '',
+                        'ASTUCES:',
+                        '• Utilisez Escape pour fermer rapidement les modals',
+                        '• Les spinners indiquent qu\'une action est en cours',
+                        '• Les toast (coin bas-droit) s\'auto-ferment après 3 secondes'
+                    ]
+                },
+                securite: {
+                    title: '🔒 Sécurité & Bonnes Pratiques',
+                    content: [
+                        'MOT DE PASSE:',
+                        '• Minimum 6 caractères',
+                        '• Ne partagez jamais votre mot de passe',
+                        '• Changez-le régulièrement',
+                        '',
+                        'SESSION:',
+                        '• Déconnectez-vous après utilisation',
+                        '• Session expire automatiquement après inactivité',
+                        '',
+                        'DONNÉES:',
+                        '• Toutes les actions sont tracées (historique)',
+                        '• Sauvegarde automatique en temps réel',
+                        '• Données cryptées en transit (HTTPS)',
+                        '',
+                        'PERMISSIONS:',
+                        '• Respectez les permissions de votre rôle',
+                        '• Ne tentez pas d\'accéder aux fonctions admin',
+                        '• Contactez un admin si vous avez besoin de droits supplémentaires'
+                    ]
+                },
+                problemes: {
+                    title: '🆘 Résolution de Problèmes',
+                    content: [
+                        'PAGE NE CHARGE PAS:',
+                        '• Vérifiez votre connexion internet',
+                        '• Rafraîchissez la page (Ctrl+R ou Cmd+R)',
+                        '• Videz le cache du navigateur',
+                        '• Essayez un autre navigateur (Chrome recommandé)',
+                        '',
+                        'NE PEUX PAS ME CONNECTER:',
+                        '• Vérifiez votre email et mot de passe',
+                        '• Contactez votre administrateur pour réinitialiser',
+                        '',
+                        'BOUTON NE FONCTIONNE PAS:',
+                        '• Attendez que le spinner disparaisse',
+                        '• Vérifiez que vous avez les permissions nécessaires',
+                        '• Rafraîchissez la page',
+                        '',
+                        'PHOTO NE S\'UPLOADE PAS:',
+                        '• Vérifiez la taille du fichier (max 10MB recommandé)',
+                        '• Vérifiez le format (JPG, PNG, MP4, WebM)',
+                        '• Vérifiez votre connexion internet',
+                        '',
+                        'AUTRE PROBLÈME:',
+                        '• Contactez votre administrateur système',
+                        '• Décrivez précisément le problème',
+                        '• Mentionnez le navigateur utilisé'
+                    ]
+                },
+                contact: {
+                    title: '📞 Contact & Support',
+                    content: [
+                        'SUPPORT TECHNIQUE:',
+                        '• Contactez votre administrateur système',
+                        '• Email: [À configurer]',
+                        '• Téléphone: [À configurer]',
+                        '',
+                        'SUGGESTIONS:',
+                        '• Partagez vos idées d\'amélioration',
+                        '• Signalez les bugs ou comportements étranges',
+                        '• Proposez de nouvelles fonctionnalités',
+                        '',
+                        'FORMATION:',
+                        '• Formations disponibles sur demande',
+                        '• Consultez ce guide régulièrement',
+                        '• Pratiquez sur des tickets de test',
+                        '',
+                        'RESSOURCES:',
+                        '• Guide complet: Ce document',
+                        '• URL: https://mecanique.igpglass.ca',
+                        '• Version: 1.9.2'
+                    ]
+                }
+            };
+            
+            const menuItems = [
+                { id: 'introduction', icon: 'fa-home', label: 'Introduction' },
+                { id: 'connexion', icon: 'fa-sign-in-alt', label: 'Connexion' },
+                { id: 'roles', icon: 'fa-users', label: 'Rôles & Permissions' },
+                { id: 'kanban', icon: 'fa-columns', label: 'Tableau Kanban' },
+                { id: 'creer_ticket', icon: 'fa-plus-circle', label: 'Créer un Ticket' },
+                { id: 'details_ticket', icon: 'fa-info-circle', label: 'Détails Ticket' },
+                { id: 'commentaires', icon: 'fa-comments', label: 'Commentaires' },
+                { id: 'medias', icon: 'fa-camera', label: 'Photos & Vidéos' },
+                { id: 'recherche', icon: 'fa-search', label: 'Recherche' },
+                { id: 'gestion_users', icon: 'fa-users-cog', label: 'Gestion Utilisateurs' },
+                { id: 'mobile', icon: 'fa-mobile-alt', label: 'Mobile' },
+                { id: 'raccourcis', icon: 'fa-keyboard', label: 'Raccourcis Clavier' },
+                { id: 'securite', icon: 'fa-lock', label: 'Sécurité' },
+                { id: 'problemes', icon: 'fa-exclamation-triangle', label: 'Problèmes' },
+                { id: 'contact', icon: 'fa-phone', label: 'Contact' }
+            ];
+            
+            React.useEffect(() => {
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape' && show) {
+                        onClose();
+                    }
+                };
+                document.addEventListener('keydown', handleEscape);
+                return () => document.removeEventListener('keydown', handleEscape);
+            }, [show]);
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { className: 'flex justify-between items-center p-6 border-b' },
+                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue flex items-center gap-2' },
+                            React.createElement('i', { className: 'fas fa-book' }),
+                            'Guide Utilisateur'
+                        ),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-gray-500 hover:text-gray-700 text-2xl'
+                        }, '×')
+                    ),
+                    
+                    React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
+                        React.createElement('div', { className: 'w-64 bg-gray-50 p-4 overflow-y-auto border-r' },
+                            React.createElement('nav', { className: 'space-y-1' },
+                                menuItems.map(item =>
+                                    React.createElement('button', {
+                                        key: item.id,
+                                        onClick: () => setActiveSection(item.id),
+                                        className: 'w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all ' + 
+                                            (activeSection === item.id ? 'bg-igp-blue text-white font-semibold' : 'hover:bg-gray-200 text-gray-700')
+                                    },
+                                        React.createElement('i', { className: 'fas ' + item.icon + ' w-5' }),
+                                        React.createElement('span', { className: 'text-sm' }, item.label)
+                                    )
+                                )
+                            )
+                        ),
+                        
+                        React.createElement('div', { className: 'flex-1 p-6 overflow-y-auto' },
+                            React.createElement('h3', { className: 'text-2xl font-bold mb-4 text-igp-blue' },
+                                sections[activeSection].title
+                            ),
+                            React.createElement('div', { className: 'prose max-w-none' },
+                                sections[activeSection].content.map((line, idx) =>
+                                    React.createElement('p', {
+                                        key: idx,
+                                        className: line.startsWith('•') || line.startsWith('  ') ? 'ml-4 my-2' : 
+                                                   line.startsWith('⚠️') || line.startsWith('✅') ? 'font-semibold my-3' :
+                                                   line === '' ? 'my-2' : 'my-3'
+                                    }, line)
+                                )
+                            )
+                        )
+                    ),
+                    
+                    React.createElement('div', { className: 'p-4 border-t bg-gray-50 flex justify-between items-center' },
+                        React.createElement('p', { className: 'text-sm text-gray-600' },
+                            'Appuyez sur Escape pour fermer • Version 1.9.2'
+                        ),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-700 font-semibold'
+                        }, 'Fermer')
+                    )
+                )
+            );
+        };
+        
         // Composant de prompt personnalisé
         const PromptModal = ({ show, message, onConfirm, onCancel }) => {
             const [value, setValue] = React.useState('');
@@ -1844,6 +2235,7 @@ app.get('/', (c) => {
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
             const [showUserManagement, setShowUserManagement] = React.useState(false);
+            const [showUserGuide, setShowUserGuide] = React.useState(false);
             
             const statuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
@@ -2059,6 +2451,12 @@ app.get('/', (c) => {
                     currentUser: currentUser
                 }),
                 
+                React.createElement(UserGuideModal, {
+                    show: showUserGuide,
+                    onClose: () => setShowUserGuide(false),
+                    currentUser: currentUser
+                }),
+                
                 
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
@@ -2101,6 +2499,14 @@ app.get('/', (c) => {
                             },
                                 React.createElement('i', { className: 'fas fa-users-cog mr-2' }),
                                 'Utilisateurs'
+                            ),
+                            React.createElement('button', {
+                                onClick: () => setShowUserGuide(true),
+                                className: 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow-md transition-all',
+                                title: 'Guide utilisateur - Aide'
+                            },
+                                React.createElement('i', { className: 'fas fa-question-circle mr-2' }),
+                                'Aide'
                             ),
                             React.createElement('button', {
                                 onClick: onLogout,
