@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Utilisateur - IGP Maintenance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .menu-item.active { background-color: #1e40af; color: white; }
+        .menu-item { transition: all 0.2s; }
+        .menu-item:hover { background-color: #e5e7eb; }
+        .menu-item.active:hover { background-color: #1e3a8a; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen p-4">
+        <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book text-3xl"></i>
+                        <div>
+                            <h1 class="text-3xl font-bold">Guide Utilisateur</h1>
+                            <p class="text-blue-200 text-sm">Système de Gestion de Maintenance IGP</p>
+                        </div>
+                    </div>
+                    <button onclick="window.close()" class="px-4 py-2 bg-white text-blue-900 rounded-md hover:bg-gray-100 font-semibold">
+                        <i class="fas fa-times mr-2"></i>Fermer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex flex-col md:flex-row">
+                <!-- Sidebar Menu -->
+                <div class="w-full md:w-64 bg-gray-50 p-4 border-r overflow-y-auto" style="max-height: calc(100vh - 200px);">
+                    <nav class="space-y-1">
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 active" onclick="showSection('introduction')">
+                            <i class="fas fa-home w-5"></i>
+                            <span class="text-sm font-medium">Introduction</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('connexion')">
+                            <i class="fas fa-sign-in-alt w-5"></i>
+                            <span class="text-sm font-medium">Connexion</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('roles')">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="text-sm font-medium">Rôles</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('kanban')">
+                            <i class="fas fa-columns w-5"></i>
+                            <span class="text-sm font-medium">Tableau Kanban</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('creer')">
+                            <i class="fas fa-plus-circle w-5"></i>
+                            <span class="text-sm font-medium">Créer Ticket</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('details')">
+                            <i class="fas fa-info-circle w-5"></i>
+                            <span class="text-sm font-medium">Détails Ticket</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('commentaires')">
+                            <i class="fas fa-comments w-5"></i>
+                            <span class="text-sm font-medium">Commentaires</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('photos')">
+                            <i class="fas fa-camera w-5"></i>
+                            <span class="text-sm font-medium">Photos</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('recherche')">
+                            <i class="fas fa-search w-5"></i>
+                            <span class="text-sm font-medium">Recherche</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('gestion')">
+                            <i class="fas fa-users-cog w-5"></i>
+                            <span class="text-sm font-medium">Gestion Users</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('mobile')">
+                            <i class="fas fa-mobile-alt w-5"></i>
+                            <span class="text-sm font-medium">Mobile</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('raccourcis')">
+                            <i class="fas fa-keyboard w-5"></i>
+                            <span class="text-sm font-medium">Raccourcis</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('securite')">
+                            <i class="fas fa-lock w-5"></i>
+                            <span class="text-sm font-medium">Sécurité</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('problemes')">
+                            <i class="fas fa-exclamation-triangle w-5"></i>
+                            <span class="text-sm font-medium">Problèmes</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('contact')">
+                            <i class="fas fa-phone w-5"></i>
+                            <span class="text-sm font-medium">Contact</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Main Content -->
+                <div class="flex-1 p-6 overflow-y-auto" style="max-height: calc(100vh - 200px);">
+                    <!-- Introduction -->
+                    <div id="introduction" class="section-content active">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">🎯 Démarrage Rapide</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>👋 Bienvenue! Ce guide est fait pour aller VITE.</p>
+                            <p>🔍 CLIQUEZ sur une section à gauche</p>
+                            <p>⚡ SCANNEZ les étapes en 30 secondes</p>
+                            <p>✅ FERMEZ avec le bouton Fermer</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Astuce: Gardez ce guide ouvert pendant que vous travaillez!</p>
+                        </div>
+                    </div>
+
+                    <!-- Connexion -->
+                    <div id="connexion" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">🔐 Se Connecter</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>🌐 mecanique.igpglass.ca</p>
+                            <p>📧 Votre email</p>
+                            <p>🔑 Votre mot de passe</p>
+                            <p>✅ Clic "Se connecter"</p>
+                            <p class="text-red-600 font-semibold mt-4">❌ Mot de passe oublié? → Contactez admin</p>
+                        </div>
+                    </div>
+
+                    <!-- Rôles -->
+                    <div id="roles" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">👥 Les 3 Rôles</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>👑 <strong>ADMIN</strong> → Tout faire</p>
+                            <p>🔧 <strong>TECHNICIEN</strong> → Déplacer + modifier tickets</p>
+                            <p>👷 <strong>OPÉRATEUR</strong> → Créer tickets uniquement</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Chaque rôle voit seulement ses permissions</p>
+                        </div>
+                    </div>
+
+                    <!-- Kanban -->
+                    <div id="kanban" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">📊 Le Tableau</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p class="font-semibold">6 colonnes = 6 étapes:</p>
+                            <p>🟦 Requête → 🟨 Diagnostic → 🟧 En Cours</p>
+                            <p>🟪 Attente Pièces → 🟩 Terminé → ⬜ Archivé</p>
+                            <p class="font-semibold mt-4">🖱️ DÉPLACER (Techniciens):</p>
+                            <p class="ml-4">• PC: Glisser-déposer</p>
+                            <p class="ml-4">• Mobile: Tap + Choisir statut</p>
+                        </div>
+                    </div>
+
+                    <!-- Créer Ticket -->
+                    <div id="creer" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">➕ Créer un Ticket</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>1️⃣ Bouton orange "Nouveau Ticket"</p>
+                            <p>2️⃣ Remplir: Titre + Machine + Priorité</p>
+                            <p>3️⃣ 📸 PHOTO? → "Prendre photo" (mobile = caméra auto)</p>
+                            <p>4️⃣ Clic "Créer"</p>
+                            <p class="text-green-600 font-semibold mt-4">✅ ID auto: IGP-PDE-20250103-001</p>
+                            <p class="text-orange-600 font-semibold">⚡ RAPIDE: 30 secondes max!</p>
+                        </div>
+                    </div>
+
+                    <!-- Détails Ticket -->
+                    <div id="details" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">🔍 Voir un Ticket</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>👆 CLIC sur une carte</p>
+                            <p class="font-semibold mt-4">👀 Vous voyez:</p>
+                            <p class="ml-4">• 📝 Toutes les infos</p>
+                            <p class="ml-4">• 🕒 Timeline (historique)</p>
+                            <p class="ml-4">• 📸 Photos/vidéos</p>
+                            <p class="ml-4">• 💬 Commentaires</p>
+                            <p class="text-sm text-gray-600 italic mt-4">⚡ Ajoutez: commentaire, photos, etc.</p>
+                        </div>
+                    </div>
+
+                    <!-- Commentaires -->
+                    <div id="commentaires" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">💬 Commenter</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>1️⃣ Ouvrir ticket</p>
+                            <p>2️⃣ Scroll en bas</p>
+                            <p>3️⃣ Taper commentaire</p>
+                            <p>4️⃣ Clic "Ajouter"</p>
+                            <p class="font-semibold mt-4">💡 UTILITÉ:</p>
+                            <p class="ml-4">• Donner + d'infos</p>
+                            <p class="ml-4">• Expliquer réparation</p>
+                            <p class="ml-4">• Communiquer avancement</p>
+                        </div>
+                    </div>
+
+                    <!-- Photos -->
+                    <div id="photos" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">📸 Photos</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p class="text-red-600 font-semibold">📱 MOBILE? Caméra auto!</p>
+                            <p class="font-semibold mt-4">➕ AJOUTER:</p>
+                            <p class="ml-4">• Création: "Prendre photo"</p>
+                            <p class="ml-4">• Après: Ouvrir ticket + "Ajouter médias"</p>
+                            <p class="font-semibold mt-4">👀 VOIR:</p>
+                            <p class="ml-4">• Clic photo = plein écran</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Plusieurs photos OK!</p>
+                        </div>
+                    </div>
+
+                    <!-- Recherche -->
+                    <div id="recherche" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">🔍 Rechercher</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>🔎 Barre recherche en haut</p>
+                            <p>⚡ Résultats instantanés</p>
+                            <p class="font-semibold mt-4">📝 CHERCHEZ: ID, titre, machine</p>
+                            <p>🎨 Filtre priorité: 🔴 Critique 🟠 Élevée</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Clic colonne = filtre statut</p>
+                        </div>
+                    </div>
+
+                    <!-- Gestion Users -->
+                    <div id="gestion" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">👥 Gestion Users (Admin)</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p class="text-red-600 font-bold">⚠️ ADMINS SEULEMENT</p>
+                            <p>🟣 Bouton "Utilisateurs" en haut</p>
+                            <p>🔎 Recherche: Nom ou email</p>
+                            <p class="mt-4">🟠 CRÉER: Bouton orange → Remplir → OK</p>
+                            <p>🔵 MODIFIER: Bouton bleu → Changer → Save</p>
+                            <p>🟡 MOT DE PASSE: "MdP" → Nouveau (6+ chars)</p>
+                            <p>🔴 SUPPRIMER: Rouge → Confirmer</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Escape = Effacer recherche</p>
+                        </div>
+                    </div>
+
+                    <!-- Mobile -->
+                    <div id="mobile" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">📱 Sur Mobile</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p class="font-semibold">📲 100% responsive!</p>
+                            <p>👆 TAP carte → Voir détails</p>
+                            <p>🎬 DÉPLACER: Tap → Menu statut → OK</p>
+                            <p>📸 PHOTO: Caméra auto-ouvre!</p>
+                            <p class="mt-4">🤏 Pinch = Zoom photos</p>
+                            <p>📜 Scroll fluide</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Boutons verticaux = facile pouce</p>
+                        </div>
+                    </div>
+
+                    <!-- Raccourcis -->
+                    <div id="raccourcis" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">⌨️ Raccourcis</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>⎋ Escape = Fermer modal/effacer</p>
+                            <p>↹ Tab = Champ suivant</p>
+                            <p>↵ Enter = Soumettre formulaire</p>
+                            <p class="font-semibold mt-4">💡 ASTUCES:</p>
+                            <p class="ml-4">• ⏳ Spinner = Action en cours</p>
+                            <p class="ml-4">• 🟢 Toast = Confirmation (3 sec)</p>
+                            <p class="ml-4">• 🎯 Auto-focus = Commence à taper direct</p>
+                        </div>
+                    </div>
+
+                    <!-- Sécurité -->
+                    <div id="securite" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">🔒 Sécurité</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>🔑 Mot de passe: 6+ chars, secret!</p>
+                            <p>🚪 Déconnexion après usage</p>
+                            <p class="font-semibold mt-4">✅ CE QUI EST SÛR:</p>
+                            <p class="ml-4">• 🔐 Cryptage HTTPS</p>
+                            <p class="ml-4">• 💾 Sauvegarde auto temps-réel</p>
+                            <p class="ml-4">• 📜 Tout est tracé (historique)</p>
+                            <p class="text-red-600 font-semibold mt-4">⚠️ Respectez votre rôle = sécurité max</p>
+                        </div>
+                    </div>
+
+                    <!-- Problèmes -->
+                    <div id="problemes" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">🆘 Problèmes?</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p>🔄 Page blanche? → F5 (rafraîchir)</p>
+                            <p>🚫 Connexion? → Vérif email/MdP</p>
+                            <p>⏳ Bouton bloqué? → Attendre spinner</p>
+                            <p>📸 Photo fail? → Max 10MB, JPG/PNG/MP4</p>
+                            <p class="font-semibold mt-4">💡 CHROME = Recommandé</p>
+                            <p class="text-red-600 font-semibold mt-4">❌ Autre souci? → Contactez admin</p>
+                            <p class="text-sm text-gray-600">📋 Décrivez: quoi + navigateur</p>
+                        </div>
+                    </div>
+
+                    <!-- Contact -->
+                    <div id="contact" class="section-content">
+                        <h2 class="text-3xl font-bold text-blue-900 mb-4">📞 Contact</h2>
+                        <div class="prose max-w-none text-lg space-y-3">
+                            <p class="font-semibold">🆘 SUPPORT: Votre admin système</p>
+                            <p>📧 Email: [À configurer]</p>
+                            <p>☎️ Tél: [À configurer]</p>
+                            <p class="mt-4">💡 Suggestions? Bugs? → Partagez!</p>
+                            <p class="font-semibold mt-4">🎓 RESSOURCES:</p>
+                            <p class="ml-4">• 🌐 mecanique.igpglass.ca</p>
+                            <p class="ml-4">• 📖 Ce guide</p>
+                            <p class="ml-4">• 🏷️ Version 1.9.2</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 px-6 py-4 border-t flex justify-between items-center">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-keyboard mr-2"></i>
+                    Navigation rapide avec les sections à gauche
+                </p>
+                <p class="text-xs text-gray-500">Version 1.9.2</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked menu item
+            event.target.closest('.menu-item').classList.add('active');
+            
+            // Scroll to top of content
+            document.querySelector('.flex-1').scrollTop = 0;
+        }
+    </script>
+</body>
+</html>

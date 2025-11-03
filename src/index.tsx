@@ -505,92 +505,102 @@ app.get('/', (c) => {
             
             if (!show) return null;
             
+            console.log('UserGuideModal render - activeSection:', activeSection, 'currentUser:', currentUser);
+            
+            // Fonction pour obtenir le badge du rôle actuel
+            const getUserRoleBadge = () => {
+                if (!currentUser) return '❓';
+                if (currentUser.role === 'admin') return '👑 Admin';
+                if (currentUser.role === 'technician') return '🔧 Technicien';
+                return '👷 Opérateur';
+            };
+            
             const sections = {
                 introduction: {
-                    title: '🎯 Démarrage Rapide',
-                    icon: 'fa-rocket',
-                    color: 'blue',
+                    title: "🎯 Démarrage Rapide",
+                    icon: "fa-rocket",
+                    color: "blue",
                     content: [
-                        '👋 Bienvenue! Ce guide est fait pour aller VITE.',
-                        '',
-                        '🔍 CLIQUEZ sur une section à gauche',
-                        '⚡ SCANNEZ les étapes en 30 secondes',
-                        '✅ FERMEZ avec Escape',
-                        '',
-                        '💡 Astuce: Gardez ce guide ouvert pendant que vous travaillez!'
+                        "👋 Bienvenue! Ce guide est fait pour aller VITE.",
+                        "",
+                        "🔍 CLIQUEZ sur une section à gauche",
+                        "⚡ SCANNEZ les étapes en 30 secondes",
+                        "✅ FERMEZ avec Escape",
+                        "",
+                        "💡 Astuce: Gardez ce guide ouvert pendant que vous travaillez!"
                     ]
                 },
                 connexion: {
-                    title: '🔐 Se Connecter',
-                    icon: 'fa-sign-in-alt',
-                    color: 'green',
+                    title: "🔐 Se Connecter",
+                    icon: "fa-sign-in-alt",
+                    color: "green",
                     content: [
-                        '🌐 mecanique.igpglass.ca',
-                        '📧 Votre email',
-                        '🔑 Votre mot de passe',
-                        '✅ Clic "Se connecter"',
-                        '',
-                        '❌ Mot de passe oublié? → Contactez admin'
+                        "🌐 mecanique.igpglass.ca",
+                        "📧 Votre email",
+                        "🔑 Votre mot de passe",
+                        "✅ Clic 'Se connecter'",
+                        "",
+                        "❌ Mot de passe oublié? → Contactez admin"
                     ]
                 },
                 roles: {
-                    title: '👥 Les 3 Rôles',
-                    icon: 'fa-users',
-                    color: 'purple',
+                    title: "👥 Les 3 Rôles",
+                    icon: "fa-users",
+                    color: "purple",
                     content: [
-                        '👑 ADMIN → Tout faire',
-                        '🔧 TECHNICIEN → Déplacer + modifier tickets',
-                        '👷 OPÉRATEUR → Créer tickets uniquement',
-                        '',
-                        '📌 VOUS ÊTES: ' + (currentUser ? (currentUser.role === 'admin' ? '👑 Admin' : currentUser.role === 'technician' ? '🔧 Technicien' : '👷 Opérateur') : '❓'),
-                        '',
-                        '💡 Chaque rôle voit seulement ses permissions'
+                        "👑 ADMIN → Tout faire",
+                        "🔧 TECHNICIEN → Déplacer + modifier tickets",
+                        "👷 OPÉRATEUR → Créer tickets uniquement",
+                        "",
+                        "📌 VOUS ÊTES: " + getUserRoleBadge(),
+                        "",
+                        "💡 Chaque rôle voit seulement ses permissions"
                     ]
                 },
                 kanban: {
-                    title: '📊 Le Tableau',
-                    icon: 'fa-columns',
-                    color: 'blue',
+                    title: "📊 Le Tableau",
+                    icon: "fa-columns",
+                    color: "blue",
                     content: [
-                        '6 colonnes = 6 étapes:',
-                        '',
-                        '🟦 Requête → 🟨 Diagnostic → 🟧 En Cours',
-                        '🟪 Attente Pièces → 🟩 Terminé → ⬜ Archivé',
-                        '',
-                        '🖱️ DÉPLACER (Techniciens):',
-                        '• PC: Glisser-déposer',
-                        '• Mobile: Tap + Choisir statut'
+                        "6 colonnes = 6 étapes:",
+                        "",
+                        "🟦 Requête → 🟨 Diagnostic → 🟧 En Cours",
+                        "🟪 Attente Pièces → 🟩 Terminé → ⬜ Archivé",
+                        "",
+                        "🖱️ DÉPLACER (Techniciens):",
+                        "• PC: Glisser-déposer",
+                        "• Mobile: Tap + Choisir statut"
                     ]
                 },
                 creer_ticket: {
-                    title: '➕ Créer un Ticket',
-                    icon: 'fa-plus-circle',
-                    color: 'orange',
+                    title: "➕ Créer un Ticket",
+                    icon: "fa-plus-circle",
+                    color: "orange",
                     content: [
-                        '1️⃣ Bouton orange "Nouveau Ticket"',
-                        '2️⃣ Remplir: Titre + Machine + Priorité',
-                        '3️⃣ 📸 PHOTO? → "Prendre photo" (mobile = caméra auto)',
-                        '4️⃣ Clic "Créer"',
-                        '',
-                        '✅ ID auto: IGP-PDE-20250103-001',
-                        '',
-                        '⚡ RAPIDE: 30 secondes max!'
+                        "1️⃣ Bouton orange 'Nouveau Ticket'",
+                        "2️⃣ Remplir: Titre + Machine + Priorité",
+                        "3️⃣ 📸 PHOTO? → 'Prendre photo' (mobile = caméra auto)",
+                        "4️⃣ Clic 'Créer'",
+                        "",
+                        "✅ ID auto: IGP-PDE-20250103-001",
+                        "",
+                        "⚡ RAPIDE: 30 secondes max!"
                     ]
                 },
                 details_ticket: {
-                    title: '🔍 Voir un Ticket',
-                    icon: 'fa-info-circle',
-                    color: 'blue',
+                    title: "🔍 Voir un Ticket",
+                    icon: "fa-info-circle",
+                    color: "blue",
                     content: [
-                        '👆 CLIC sur une carte',
-                        '',
-                        '👀 Vous voyez:',
-                        '• 📝 Toutes les infos',
-                        '• 🕒 Timeline (historique)',
-                        '• 📸 Photos/vidéos',
-                        '• 💬 Commentaires',
-                        '',
-                        '⚡ Ajoutez: commentaire, photos, etc.'
+                        "👆 CLIC sur une carte",
+                        "",
+                        "👀 Vous voyez:",
+                        "• 📝 Toutes les infos",
+                        "• 🕒 Timeline (historique)",
+                        "• 📸 Photos/vidéos",
+                        "• 💬 Commentaires",
+                        "",
+                        "⚡ Ajoutez: commentaire, photos, etc."
                     ]
                 },
                 commentaires: {
@@ -603,27 +613,27 @@ app.get('/', (c) => {
                         '3️⃣ Taper commentaire',
                         '4️⃣ Clic "Ajouter"',
                         '',
-                        '💡 UTILITÉ:',
-                        '• Donner + d\'infos',
-                        '• Expliquer réparation',
-                        '• Communiquer avancement'
+                        "💡 UTILITÉ:",
+                        "• Donner + d'infos",
+                        "• Expliquer réparation",
+                        "• Communiquer avancement"
                     ]
                 },
                 medias: {
-                    title: '📸 Photos',
-                    icon: 'fa-camera',
-                    color: 'red',
+                    title: "📸 Photos",
+                    icon: "fa-camera",
+                    color: "red",
                     content: [
-                        '📱 MOBILE? Caméra auto!',
-                        '',
-                        '➕ AJOUTER:',
-                        '• Création: "Prendre photo"',
-                        '• Après: Ouvrir ticket + "Ajouter médias"',
-                        '',
-                        '👀 VOIR:',
-                        '• Clic photo = plein écran',
-                        '',
-                        '💡 Plusieurs photos OK!'
+                        "📱 MOBILE? Caméra auto!",
+                        "",
+                        "➕ AJOUTER:",
+                        "• Création: 'Prendre photo'",
+                        "• Après: Ouvrir ticket + 'Ajouter médias'",
+                        "",
+                        "👀 VOIR:",
+                        "• Clic photo = plein écran",
+                        "",
+                        "💡 Plusieurs photos OK!"
                     ]
                 },
                 recherche: {
@@ -676,67 +686,67 @@ app.get('/', (c) => {
                     ]
                 },
                 raccourcis: {
-                    title: '⌨️ Raccourcis',
-                    icon: 'fa-keyboard',
-                    color: 'gray',
+                    title: "⌨️ Raccourcis",
+                    icon: "fa-keyboard",
+                    color: "gray",
                     content: [
-                        '⎋ Escape = Fermer modal/effacer',
-                        '↹ Tab = Champ suivant',
-                        '↵ Enter = Soumettre formulaire',
-                        '',
-                        '💡 ASTUCES:',
-                        '• ⏳ Spinner = Action en cours',
-                        '• 🟢 Toast = Confirmation (3 sec)',
-                        '• 🎯 Auto-focus = Commence à taper direct'
+                        "⎋ Escape = Fermer modal/effacer",
+                        "↹ Tab = Champ suivant",
+                        "↵ Enter = Soumettre formulaire",
+                        "",
+                        "💡 ASTUCES:",
+                        "• ⏳ Spinner = Action en cours",
+                        "• 🟢 Toast = Confirmation (3 sec)",
+                        "• 🎯 Auto-focus = Commence à taper direct"
                     ]
                 },
                 securite: {
-                    title: '🔒 Sécurité',
-                    icon: 'fa-lock',
-                    color: 'red',
+                    title: "🔒 Sécurité",
+                    icon: "fa-lock",
+                    color: "red",
                     content: [
-                        '🔑 Mot de passe: 6+ chars, secret!',
-                        '🚪 Déconnexion après usage',
-                        '',
-                        '✅ CE QUI EST SÛR:',
-                        '• 🔐 Cryptage HTTPS',
-                        '• 💾 Sauvegarde auto temps-réel',
-                        '• 📜 Tout est tracé (historique)',
-                        '',
-                        '⚠️ Respectez votre rôle = sécurité max'
+                        "🔑 Mot de passe: 6+ chars, secret!",
+                        "🚪 Déconnexion après usage",
+                        "",
+                        "✅ CE QUI EST SÛR:",
+                        "• 🔐 Cryptage HTTPS",
+                        "• 💾 Sauvegarde auto temps-réel",
+                        "• 📜 Tout est tracé (historique)",
+                        "",
+                        "⚠️ Respectez votre rôle = sécurité max"
                     ]
                 },
                 problemes: {
-                    title: '🆘 Problèmes?',
-                    icon: 'fa-exclamation-triangle',
-                    color: 'yellow',
+                    title: "🆘 Problèmes?",
+                    icon: "fa-exclamation-triangle",
+                    color: "yellow",
                     content: [
-                        '🔄 Page blanche? → F5 (rafraîchir)',
-                        '🚫 Connexion? → Vérif email/MdP',
-                        '⏳ Bouton bloqué? → Attendre spinner',
-                        '📸 Photo fail? → Max 10MB, JPG/PNG/MP4',
-                        '',
-                        '💡 CHROME = Recommandé',
-                        '',
-                        '❌ Autre souci? → Contactez admin',
-                        '📋 Décrivez: quoi + navigateur'
+                        "🔄 Page blanche? → F5 (rafraîchir)",
+                        "🚫 Connexion? → Vérif email/MdP",
+                        "⏳ Bouton bloqué? → Attendre spinner",
+                        "📸 Photo fail? → Max 10MB, JPG/PNG/MP4",
+                        "",
+                        "💡 CHROME = Recommandé",
+                        "",
+                        "❌ Autre souci? → Contactez admin",
+                        "📋 Décrivez: quoi + navigateur"
                     ]
                 },
                 contact: {
-                    title: '📞 Contact',
-                    icon: 'fa-phone',
-                    color: 'teal',
+                    title: "📞 Contact",
+                    icon: "fa-phone",
+                    color: "teal",
                     content: [
-                        '🆘 SUPPORT: Votre admin système',
-                        '📧 Email: [À configurer]',
-                        '☎️ Tél: [À configurer]',
-                        '',
-                        '💡 Suggestions? Bugs? → Partagez!',
-                        '',
-                        '🎓 RESSOURCES:',
-                        '• 🌐 mecanique.igpglass.ca',
-                        '• 📖 Ce guide',
-                        '• 🏷️ Version 1.9.2'
+                        "🆘 SUPPORT: Votre admin système",
+                        "📧 Email: [À configurer]",
+                        "☎️ Tél: [À configurer]",
+                        "",
+                        "💡 Suggestions? Bugs? → Partagez!",
+                        "",
+                        "🎓 RESSOURCES:",
+                        "• 🌐 mecanique.igpglass.ca",
+                        "• 📖 Ce guide",
+                        "• 🏷️ Version 1.9.2"
                     ]
                 }
             };
@@ -806,17 +816,22 @@ app.get('/', (c) => {
                         ),
                         
                         React.createElement('div', { className: 'flex-1 p-6 overflow-y-auto' },
-                            React.createElement('h3', { className: 'text-2xl font-bold mb-4 text-igp-blue' },
-                                sections[activeSection].title
-                            ),
-                            React.createElement('div', { className: 'prose max-w-none' },
-                                sections[activeSection].content.map((line, idx) =>
-                                    React.createElement('p', {
-                                        key: idx,
-                                        className: line.startsWith('•') || line.startsWith('  ') ? 'ml-4 my-2' : 
-                                                   line.startsWith('⚠️') || line.startsWith('✅') ? 'font-semibold my-3' :
-                                                   line === '' ? 'my-2' : 'my-3'
-                                    }, line)
+                            React.createElement('div', {},
+                                React.createElement('p', { style: { color: 'red', fontSize: '12px' } }, 
+                                    'DEBUG - activeSection: ' + activeSection + ', sections keys: ' + Object.keys(sections).join(', ')
+                                ),
+                                React.createElement('h3', { className: 'text-2xl font-bold mb-4 text-igp-blue' },
+                                    sections[activeSection] ? sections[activeSection].title : 'Section manquante: ' + activeSection
+                                ),
+                                React.createElement('div', { className: 'prose max-w-none' },
+                                    sections[activeSection] && sections[activeSection].content ? sections[activeSection].content.map((line, idx) =>
+                                        React.createElement('p', {
+                                            key: idx,
+                                            className: line.startsWith('•') || line.startsWith('  ') ? 'ml-4 my-2' : 
+                                                       line.startsWith('⚠️') || line.startsWith('✅') ? 'font-semibold my-3' :
+                                                       line === '' ? 'my-2' : 'my-3'
+                                        }, line)
+                                    ) : React.createElement('p', {}, 'Contenu manquant pour: ' + activeSection)
                                 )
                             )
                         )
@@ -2445,13 +2460,13 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-users-cog mr-2' }),
                                 'Utilisateurs'
                             ),
-                            React.createElement('button', {
-                                onClick: () => setShowUserGuide(true),
-                                className: 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow-md transition-all',
+                            React.createElement('a', {
+                                href: '/guide',
+                                className: 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow-md transition-all inline-flex items-center justify-center',
                                 title: 'Guide utilisateur - Aide'
                             },
-                                React.createElement('i', { className: 'fas fa-question-circle mr-2' }),
-                                'Aide'
+                                React.createElement('i', { className: 'fas fa-book mr-2' }),
+                                'Guide'
                             ),
                             React.createElement('button', {
                                 onClick: onLogout,
@@ -2686,6 +2701,248 @@ app.get('/', (c) => {
   `);
 });
 
+
+// Route du guide utilisateur
+app.get('/guide', (c) => {
+  return c.html(`
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Utilisateur - IGP Maintenance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .menu-item.active { background-color: #1e40af; color: white; }
+        .menu-item { transition: all 0.2s; }
+        .menu-item:hover { background-color: #e5e7eb; }
+        .menu-item.active:hover { background-color: #1e3a8a; }
+        
+        /* Mobile menu styles */
+        #mobile-menu { display: none; }
+        #mobile-menu.active { display: block; }
+        
+        @media (max-width: 768px) {
+            #sidebar { 
+                position: fixed; 
+                left: -100%; 
+                top: 0; 
+                height: 100vh; 
+                z-index: 50; 
+                transition: left 0.3s ease;
+                width: 280px;
+            }
+            #sidebar.active { left: 0; }
+            #overlay { 
+                display: none; 
+                position: fixed; 
+                inset: 0; 
+                background: rgba(0,0,0,0.5); 
+                z-index: 40;
+            }
+            #overlay.active { display: block; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen p-4">
+        <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button id="menu-toggle" onclick="toggleMenu()" class="md:hidden text-white p-2 hover:bg-blue-800 rounded">
+                            <i class="fas fa-bars text-2xl"></i>
+                        </button>
+                        <i class="fas fa-book text-3xl"></i>
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold">Guide Utilisateur</h1>
+                            <p class="text-blue-200 text-xs md:text-sm">Système de Gestion de Maintenance IGP</p>
+                        </div>
+                    </div>
+                    <button onclick="window.history.back()" class="px-3 py-2 md:px-4 md:py-2 bg-white text-blue-900 rounded-md hover:bg-gray-100 font-semibold text-sm md:text-base">
+                        <i class="fas fa-arrow-left mr-1 md:mr-2"></i>Retour
+                    </button>
+                </div>
+            </div>
+            <div id="overlay" onclick="toggleMenu()"></div>
+            <div class="flex flex-col md:flex-row">
+                <div id="sidebar" class="w-full md:w-64 bg-gray-50 p-3 md:p-4 border-r" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                    <div class="flex justify-between items-center mb-3 md:mb-4 md:hidden">
+                        <h3 class="font-bold text-base md:text-lg">Menu</h3>
+                        <button onclick="toggleMenu()" class="text-gray-600 p-2">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <nav class="space-y-1">
+                        <button class="menu-item active w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('intro')">
+                            <i class="fas fa-home w-5"></i>
+                            <span class="text-sm font-medium">Démarrage</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('modifier')">
+                            <i class="fas fa-edit w-5"></i>
+                            <span class="text-sm font-medium">Modifier Ticket</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('roles')">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="text-sm font-medium">Rôles</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('kanban')">
+                            <i class="fas fa-columns w-5"></i>
+                            <span class="text-sm font-medium">Tableau</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('creer')">
+                            <i class="fas fa-plus-circle w-5"></i>
+                            <span class="text-sm font-medium">Créer Ticket</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('mobile')">
+                            <i class="fas fa-mobile-alt w-5"></i>
+                            <span class="text-sm font-medium">Mobile</span>
+                        </button>
+                        <button class="menu-item w-full text-left px-4 py-3 rounded-lg flex items-center gap-3" onclick="showSection('contact')">
+                            <i class="fas fa-phone w-5"></i>
+                            <span class="text-sm font-medium">Contact</span>
+                        </button>
+                    </nav>
+                </div>
+                <div class="flex-1 p-4 md:p-6" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                    <div id="intro" class="section-content active">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">🎯 Démarrage Rapide</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p>👋 Bienvenue! Ce guide est fait pour aller VITE.</p>
+                            <p>🔍 <strong>Sur mobile</strong>: Cliquez sur le menu ☰ en haut à gauche</p>
+                            <p>🔍 <strong>Sur PC</strong>: Utilisez le menu à gauche</p>
+                            <p>⚡ Scannez les étapes en 30 secondes par section</p>
+                            <p class="text-sm text-gray-600 italic mt-4">💡 Conseil: Gardez ce guide ouvert pendant que vous travaillez!</p>
+                        </div>
+                    </div>
+                    <div id="modifier" class="section-content">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">✏️ Modifier un Ticket</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p class="font-semibold">👆 OUVRIR:</p>
+                            <p class="ml-4">• Clic sur la carte du ticket</p>
+                            <p class="ml-4">• Détails s'affichent</p>
+                            <p class="font-semibold mt-4">✏️ MODIFIER:</p>
+                            <p class="ml-4">• Bouton bleu "Modifier"</p>
+                            <p class="ml-4">• Changez titre, description, priorité, machine</p>
+                            <p class="ml-4">• Clic "Enregistrer"</p>
+                            <p class="font-semibold mt-4">📸 AJOUTER PHOTOS:</p>
+                            <p class="ml-4">• Bouton "Ajouter médias"</p>
+                            <p class="ml-4">• Sélectionnez ou prenez photo</p>
+                            <p class="ml-4">• Photos s'ajoutent immédiatement</p>
+                            <p class="font-semibold mt-4">💬 AJOUTER COMMENTAIRES:</p>
+                            <p class="ml-4">• Scroll en bas du ticket</p>
+                            <p class="ml-4">• Tapez dans la zone commentaire</p>
+                            <p class="ml-4">• Clic "Ajouter commentaire"</p>
+                            <p class="font-semibold mt-4">🗑️ SUPPRIMER:</p>
+                            <p class="ml-4">• Bouton rouge "Supprimer"</p>
+                            <p class="ml-4">• Confirmez l'action</p>
+                            <p class="text-red-600 font-semibold mt-4">⚠️ Vous pouvez SEULEMENT modifier/supprimer VOS propres tickets!</p>
+                        </div>
+                    </div>
+                    <div id="roles" class="section-content">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">👥 Les 3 Rôles</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p class="font-semibold">👑 ADMIN (Administrateur):</p>
+                            <p class="ml-4">• Tout faire dans le système</p>
+                            <p class="ml-4">• Gérer les utilisateurs (créer, modifier, supprimer)</p>
+                            <p class="ml-4">• Modifier/supprimer TOUS les tickets</p>
+                            <p class="ml-4">• Gérer les machines</p>
+                            <p class="font-semibold mt-4">🔧 TECHNICIEN:</p>
+                            <p class="ml-4">• Déplacer tickets entre colonnes (workflow)</p>
+                            <p class="ml-4">• Modifier TOUS les tickets</p>
+                            <p class="ml-4">• Ajouter commentaires et photos</p>
+                            <p class="ml-4">• Créer nouveaux tickets</p>
+                            <p class="font-semibold mt-4">👷 OPÉRATEUR:</p>
+                            <p class="ml-4">• Créer nouveaux tickets</p>
+                            <p class="ml-4">• Voir tous les tickets</p>
+                            <p class="ml-4">• Modifier/supprimer SEULEMENT ses propres tickets</p>
+                            <p class="ml-4">• Ajouter commentaires sur ses tickets</p>
+                        </div>
+                    </div>
+                    <div id="kanban" class="section-content">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">📊 Le Tableau Kanban</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p class="font-semibold">6 COLONNES = Workflow complet:</p>
+                            <p>🟦 <strong>Requête</strong>: Ticket juste créé, en attente</p>
+                            <p>🟨 <strong>Diagnostic</strong>: Technicien analyse le problème</p>
+                            <p>🟧 <strong>En Cours</strong>: Réparation en cours</p>
+                            <p>🟪 <strong>Attente Pièces</strong>: Besoin commander pièces</p>
+                            <p>🟩 <strong>Terminé</strong>: Réparation complétée</p>
+                            <p>⬜ <strong>Archivé</strong>: Ticket fermé et archivé</p>
+                            <p class="font-semibold mt-4">🖱️ DÉPLACER UN TICKET (Techniciens/Admins):</p>
+                            <p class="ml-4">• <strong>Sur PC</strong>: Glisser-déposer la carte vers la colonne voulue</p>
+                            <p class="ml-4">• <strong>Sur Mobile</strong>: Tap sur carte → Menu "Changer statut" → Sélectionner</p>
+                            <p class="text-blue-600 font-semibold mt-4">💡 Le tableau se met à jour en temps réel pour tous!</p>
+                        </div>
+                    </div>
+                    <div id="creer" class="section-content">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">➕ Créer un Ticket</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p class="font-semibold">ÉTAPES:</p>
+                            <p>1️⃣ Bouton orange "Nouveau Ticket" en haut</p>
+                            <p>2️⃣ Remplir les champs:</p>
+                            <p class="ml-4">• <strong>Titre</strong>: Description courte du problème</p>
+                            <p class="ml-4">• <strong>Machine</strong>: Sélectionnez dans la liste</p>
+                            <p class="ml-4">• <strong>Priorité</strong>: Normale, Élevée, Critique</p>
+                            <p class="ml-4">• <strong>Description</strong>: Détails du problème (optionnel)</p>
+                            <p>3️⃣ 📸 <strong>Photo optionnelle</strong>:</p>
+                            <p class="ml-4">• Clic "Prendre une photo ou vidéo"</p>
+                            <p class="ml-4">• Sur mobile: caméra s'ouvre automatiquement</p>
+                            <p class="ml-4">• Sur PC: sélectionnez fichier</p>
+                            <p>4️⃣ Clic <strong>"Créer"</strong></p>
+                            <p class="text-green-600 font-semibold mt-4">✅ Ticket créé! ID automatique: IGP-PDE-YYYYMMDD-XXX</p>
+                            <p class="text-orange-600 font-semibold">⚡ Temps moyen: 30 secondes!</p>
+                        </div>
+                    </div>
+                    <div id="mobile" class="section-content">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">📱 Sur Mobile</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p>📲 100% responsive!</p>
+                            <p>👆 TAP carte → Voir détails</p>
+                            <p>📸 PHOTO: Caméra auto!</p>
+                            <p>🤏 Pinch = Zoom photos</p>
+                        </div>
+                    </div>
+                    <div id="contact" class="section-content">
+                        <h2 class="text-2xl md:text-3xl font-bold text-blue-900 mb-3 md:mb-4">📞 Contact</h2>
+                        <div class="prose max-w-none text-base md:text-lg space-y-2 md:space-y-3">
+                            <p class="font-semibold">🆘 SUPPORT: Votre admin système</p>
+                            <p>🌐 mecanique.igpglass.ca</p>
+                            <p>📖 Ce guide</p>
+                            <p>🏷️ Version 1.9.2</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        function showSection(id) {
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.closest('.menu-item').classList.add('active');
+            
+            // Fermer le menu sur mobile après sélection
+            if (window.innerWidth < 768) {
+                toggleMenu();
+            }
+        }
+    </script>
+</body>
+</html>
+  `);
+});
 
 // Route de test simple
 app.get('/test', (c) => {
