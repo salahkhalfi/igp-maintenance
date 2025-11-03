@@ -10,11 +10,51 @@ import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+/**
+ * 🔒 CONFIGURATION CORS SÉCURISÉE
+ * 
+ * Liste blanche des origines autorisées pour accéder à l'API.
+ * En mode strict (recommandé pour production), seules ces origines peuvent faire des requêtes.
+ * 
+ * Pour activer le mode strict:
+ * - Configurer CORS_STRICT_MODE=true dans Cloudflare secrets
+ */
+const ALLOWED_ORIGINS = [
+  'https://mecanique.igpglass.ca',           // Domaine personnalisé de production
+  'https://webapp-7t8.pages.dev',            // Domaine Cloudflare Pages
+  'https://02fd9e0f.webapp-7t8.pages.dev',   // Dernière version déployée
+  'http://localhost:3000',                   // Développement local
+  'http://127.0.0.1:3000'                    // Développement local (IPv4)
+];
+
+// Mode strict CORS (désactivé par défaut pour ne pas casser l'app)
+const CORS_STRICT_MODE = process.env.CORS_STRICT_MODE === 'true';
 
 app.use('/api/*', cors({
-  origin: '*',
+  origin: (origin) => {
+    // Si mode strict activé, vérifier la liste blanche
+    if (CORS_STRICT_MODE) {
+      if (!origin || !ALLOWED_ORIGINS.includes(origin)) {
+        console.warn(`⚠️ CORS: Blocked origin ${origin}`);
+        return ALLOWED_ORIGINS[0]; // Fallback sur le domaine principal
+      }
+      return origin;
+    }
+    
+    // Mode permissif (temporaire pour compatibilité)
+    // TODO: Activer CORS_STRICT_MODE=true après migration complète
+    if (!CORS_STRICT_MODE && origin) {
+      // Logger les origines pour audit
+      if (!ALLOWED_ORIGINS.includes(origin)) {
+        console.log(`ℹ️ CORS: Non-whitelisted origin allowed (permissive mode): ${origin}`);
+      }
+    }
+    
+    return origin || '*';
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
+  credentials: true  // Permet l'envoi de cookies/credentials
 }));
 
 

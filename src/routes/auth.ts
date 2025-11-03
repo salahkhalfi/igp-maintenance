@@ -1,7 +1,7 @@
 // Routes d'authentification
 
 import { Hono } from 'hono';
-import { hashPassword, verifyPassword } from '../utils/password';
+import { hashPassword, verifyPassword, isLegacyHash, upgradeLegacyHash } from '../utils/password';
 import { signToken } from '../utils/jwt';
 import type { Bindings, LoginRequest, RegisterRequest, User } from '../types';
 
@@ -82,6 +82,22 @@ auth.post('/login', async (c) => {
     const isValid = await verifyPassword(password, user.password_hash);
     if (!isValid) {
       return c.json({ error: 'Email ou mot de passe incorrect' }, 401);
+    }
+
+    // 🔒 MIGRATION AUTOMATIQUE: Mettre à jour l'ancien hash vers PBKDF2
+    // Ceci se produit de manière transparente lors de la connexion
+    if (isLegacyHash(user.password_hash)) {
+      try {
+        const newHash = await upgradeLegacyHash(password);
+        await c.env.DB.prepare(
+          'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+        ).bind(newHash, user.id).run();
+        
+        console.log(`Password upgraded for user ${user.email} (SHA-256 → PBKDF2)`);
+      } catch (error) {
+        // En cas d'erreur, on continue quand même (l'utilisateur peut se connecter)
+        console.error('Failed to upgrade password hash:', error);
+      }
     }
 
     // Retirer le hash du mot de passe
