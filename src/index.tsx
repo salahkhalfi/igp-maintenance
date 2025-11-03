@@ -1233,6 +1233,11 @@ app.get('/', (c) => {
         const UserManagementModal = ({ show, onClose, currentUser }) => {
             const [users, setUsers] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
+            const [showCreateForm, setShowCreateForm] = React.useState(false);
+            const [newEmail, setNewEmail] = React.useState('');
+            const [newPassword, setNewPassword] = React.useState('');
+            const [newFullName, setNewFullName] = React.useState('');
+            const [newRole, setNewRole] = React.useState('operator');
             
             React.useEffect(() => {
                 if (show) {
@@ -1249,6 +1254,27 @@ app.get('/', (c) => {
                     alert('Erreur chargement: ' + (error.response?.data?.error || 'Erreur'));
                 } finally {
                     setLoading(false);
+                }
+            };
+            
+            const handleCreateUser = async (e) => {
+                e.preventDefault();
+                try {
+                    await axios.post(API_URL + '/users', {
+                        email: newEmail,
+                        password: newPassword,
+                        full_name: newFullName,
+                        role: newRole
+                    });
+                    alert('Utilisateur cree avec succes');
+                    setNewEmail('');
+                    setNewPassword('');
+                    setNewFullName('');
+                    setNewRole('operator');
+                    setShowCreateForm(false);
+                    loadUsers();
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
                 }
             };
             
@@ -1275,7 +1301,7 @@ app.get('/', (c) => {
                     onClick: (e) => e.stopPropagation(),
                     style: { maxHeight: '90vh', overflowY: 'auto' }
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6' },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b pb-4' },
                         React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
                             'Gestion des Utilisateurs'
                         ),
@@ -1284,6 +1310,18 @@ app.get('/', (c) => {
                             className: 'text-gray-500 hover:text-gray-700 text-2xl'
                         }, '×')
                     ),
+                    
+                    React.createElement('div', { className: 'mb-4' },
+                        React.createElement('button', {
+                            onClick: () => setShowCreateForm(true),
+                            className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold'
+                        }, 'Creer un utilisateur')
+                    ),
+                    
+                    showCreateForm ? React.createElement('div', { className: 'mb-4 p-4 bg-blue-50 rounded' },
+                        React.createElement('p', {}, 'Formulaire ici - Test')
+                    ) : null,
+                    
                     loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
                     React.createElement('div', { className: 'space-y-4' },
                         React.createElement('p', { className: 'text-lg mb-4' }, 
