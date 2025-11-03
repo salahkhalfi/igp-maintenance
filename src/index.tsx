@@ -1290,6 +1290,19 @@ app.get('/', (c) => {
                 return 'bg-green-100 text-green-800';
             };
             
+            const handleDeleteUser = async (userId, userName) => {
+                if (!confirm('Etes-vous sur de vouloir supprimer ' + userName + ' ?')) {
+                    return;
+                }
+                try {
+                    await axios.delete(API_URL + '/users/' + userId);
+                    alert('Utilisateur supprime avec succes');
+                    loadUsers();
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
+                }
+            };
+            
             if (!show) return null;
             
             return React.createElement('div', {
@@ -1318,8 +1331,68 @@ app.get('/', (c) => {
                         }, 'Creer un utilisateur')
                     ),
                     
-                    showCreateForm ? React.createElement('div', { className: 'mb-4 p-4 bg-blue-50 rounded' },
-                        React.createElement('p', {}, 'Formulaire ici - Test')
+                    showCreateForm ? React.createElement('div', { className: 'mb-6 p-6 bg-blue-50 rounded-lg border-2 border-igp-blue' },
+                        React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Nouvel utilisateur'),
+                        React.createElement('form', { onSubmit: handleCreateUser },
+                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Email'),
+                                    React.createElement('input', {
+                                        type: 'email',
+                                        value: newEmail,
+                                        onChange: (e) => setNewEmail(e.target.value),
+                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        required: true
+                                    })
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Nom complet'),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: newFullName,
+                                        onChange: (e) => setNewFullName(e.target.value),
+                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        required: true
+                                    })
+                                )
+                            ),
+                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Mot de passe'),
+                                    React.createElement('input', {
+                                        type: 'password',
+                                        value: newPassword,
+                                        onChange: (e) => setNewPassword(e.target.value),
+                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        required: true,
+                                        minLength: 6
+                                    })
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Role'),
+                                    React.createElement('select', {
+                                        value: newRole,
+                                        onChange: (e) => setNewRole(e.target.value),
+                                        className: 'w-full px-3 py-2 border-2 rounded-md'
+                                    },
+                                        React.createElement('option', { value: 'operator' }, 'Operateur'),
+                                        React.createElement('option', { value: 'technician' }, 'Technicien'),
+                                        React.createElement('option', { value: 'admin' }, 'Administrateur')
+                                    )
+                                )
+                            ),
+                            React.createElement('div', { className: 'flex gap-4' },
+                                React.createElement('button', {
+                                    type: 'button',
+                                    onClick: () => setShowCreateForm(false),
+                                    className: 'px-6 py-2 border-2 rounded-md'
+                                }, 'Annuler'),
+                                React.createElement('button', {
+                                    type: 'submit',
+                                    className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700'
+                                }, 'Creer')
+                            )
+                        )
                     ) : null,
                     
                     loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
@@ -1348,7 +1421,14 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'far fa-clock mr-2' }),
                                             'Créé le: ' + new Date(user.created_at).toLocaleDateString('fr-FR')
                                         )
-                                    )
+                                    ),
+                                    user.id !== currentUser.id ? React.createElement('button', {
+                                        onClick: () => handleDeleteUser(user.id, user.full_name),
+                                        className: 'px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-trash mr-2' }),
+                                        'Supprimer'
+                                    ) : null
                                 )
                             )
                         )
