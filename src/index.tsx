@@ -2357,8 +2357,9 @@ app.get('/', (c) => {
                 { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
             ];
             
-            // Filtrer pour masquer les archivés si nécessaire
-            const statuses = showArchived ? allStatuses : allStatuses.filter(s => s.key !== 'archived');
+            // Séparer les colonnes actives et la colonne archivée
+            const activeStatuses = allStatuses.filter(s => s.key !== 'archived');
+            const archivedStatus = allStatuses.find(s => s.key === 'archived');
             
             
             React.useEffect(() => {
@@ -2609,13 +2610,17 @@ app.get('/', (c) => {
                             ),
                             React.createElement('button', {
                                 onClick: () => setShowArchived(!showArchived),
-                                className: 'px-4 py-2 rounded-md font-semibold shadow-md transition-all ' + 
+                                className: 'px-4 py-2 rounded-md font-semibold shadow-md transition-all flex items-center gap-2 ' + 
                                     (showArchived 
                                         ? 'bg-gray-600 text-white hover:bg-gray-700' 
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300')
                             },
-                                React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') + ' mr-2' }),
-                                showArchived ? 'Masquer Archivés' : 'Voir Archivés'
+                                React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }),
+                                React.createElement('span', {}, showArchived ? 'Masquer Archivés' : 'Voir Archivés'),
+                                React.createElement('span', { 
+                                    className: 'px-2 py-0.5 rounded-full text-xs font-bold ' + 
+                                    (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
+                                }, getTicketsByStatus('archived').length)
                             ),
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
@@ -2645,9 +2650,10 @@ app.get('/', (c) => {
                 
                 
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
-                    React.createElement('div', { className: 'overflow-x-auto pb-4' },
-                        React.createElement('div', { className: 'kanban-grid flex gap-3' },
-                        statuses.map(status => {
+                    React.createElement('div', { className: 'space-y-4' },
+                        React.createElement('div', { className: 'overflow-x-auto pb-4' },
+                            React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                            activeStatuses.map(status => {
                             const isDragOver = dragOverColumn === status.key;
                             const ticketsInColumn = getTicketsByStatus(status.key);
                             const hasTickets = ticketsInColumn.length > 0;
@@ -2729,6 +2735,86 @@ app.get('/', (c) => {
                             );
                         })
                         )
+                    ),
+                    
+                    showArchived ? React.createElement('div', { className: 'overflow-x-auto pb-4' },
+                        React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                            React.createElement('div', { 
+                                key: archivedStatus.key, 
+                                className: 'kanban-column' + 
+                                    (dragOverColumn === archivedStatus.key ? ' drag-over' : '') + 
+                                    (getTicketsByStatus(archivedStatus.key).length > 0 ? ' has-tickets' : ' empty'),
+                                'data-status': archivedStatus.key,
+                                onDragOver: (e) => handleDragOver(e, archivedStatus.key),
+                                onDragLeave: handleDragLeave,
+                                onDrop: (e) => handleDrop(e, archivedStatus.key)
+                            },
+                                React.createElement('div', { className: 'mb-3 flex items-center justify-between kanban-column-header' },
+                                    React.createElement('div', { className: 'flex items-center min-w-0 flex-1' },
+                                        React.createElement('i', { className: 'fas fa-' + archivedStatus.icon + ' text-' + archivedStatus.color + '-500 mr-1.5 text-sm' }),
+                                        React.createElement('h3', { className: 'font-bold text-gray-700 text-sm truncate' }, archivedStatus.label)
+                                    ),
+                                    React.createElement('span', { 
+                                        className: 'bg-' + archivedStatus.color + '-100 text-' + archivedStatus.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
+                                    }, getTicketsByStatus(archivedStatus.key).length)
+                                ),
+                                React.createElement('div', { className: 'space-y-2' },
+                                    getTicketsByStatus(archivedStatus.key).map(ticket => {
+                                        return React.createElement('div', {
+                                            key: ticket.id,
+                                            className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
+                                            draggable: currentUser && currentUser.role !== 'operator',
+                                            onClick: (e) => handleTicketClick(e, ticket),
+                                            onDragStart: (e) => handleDragStart(e, ticket),
+                                            onDragEnd: handleDragEnd,
+                                            onTouchStart: (e) => handleTouchStart(e, ticket),
+                                            onTouchMove: handleTouchMove,
+                                            onTouchEnd: handleTouchEnd,
+                                            onContextMenu: (e) => handleContextMenu(e, ticket),
+                                            title: currentUser && currentUser.role === 'operator' 
+                                                ? "Cliquer pour détails | Clic droit: menu" 
+                                                : "Cliquer pour détails | Glisser pour déplacer | Clic droit: menu"
+                                        },
+                                            React.createElement('div', { className: 'mb-1' },
+                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
+                                            ),
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm line-clamp-2' }, ticket.title),
+                                            React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                                React.createElement('span', { 
+                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
+                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                     'bg-green-100 text-green-700')
+                                                }, 
+                                                    ticket.priority === 'critical' ? '🔴 CRIT' :
+                                                    ticket.priority === 'high' ? '🟠 HAUT' :
+                                                    ticket.priority === 'medium' ? '🟡 MOY' :
+                                                    '🟢 BAS'
+                                                ),
+                                                React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
+                                            ),
+                                            
+                                            React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
+                                                React.createElement('div', { className: 'flex items-center text-gray-500' },
+                                                    React.createElement('i', { className: 'far fa-clock mr-1' }),
+                                                    React.createElement('span', {}, formatDateEST(ticket.created_at, false))
+                                                ),
+                                                ticket.media_count > 0 ? React.createElement('div', { className: 'flex items-center text-igp-blue font-semibold' },
+                                                    React.createElement('i', { className: 'fas fa-camera mr-1' }),
+                                                    React.createElement('span', {}, ticket.media_count)
+                                                ) : null
+                                            ),
+                                            React.createElement(TicketTimer, { 
+                                                createdAt: ticket.created_at,
+                                                status: ticket.status
+                                            })
+                                        );
+                                    })
+                                )
+                            )
+                        )
+                    ) : null
                     )
                 ),
                 
@@ -2766,7 +2852,7 @@ app.get('/', (c) => {
                     React.createElement('div', { className: 'font-bold text-xs text-gray-500 px-3 py-2 border-b' },
                         'Déplacer vers:'
                     ),
-                    statuses.map(status => {
+                    allStatuses.map(status => {
                         const isCurrentStatus = status.key === contextMenu.ticket.status;
                         return React.createElement('div', {
                             key: status.key,
