@@ -381,22 +381,24 @@ app.get('/', (c) => {
         };
         
         // Fonction pour formater les dates en heure EST (America/Toronto)
+        // Format québécois: JJ-MM-AAAA HH:mm
         const formatDateEST = (dateString, includeTime = true) => {
             const date = new Date(dateString);
-            const options = {
-                timeZone: 'America/Toronto',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            };
+            
+            // Convertir en EST (America/Toronto)
+            const estDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
+            
+            const day = String(estDate.getDate()).padStart(2, '0');
+            const month = String(estDate.getMonth() + 1).padStart(2, '0');
+            const year = estDate.getFullYear();
             
             if (includeTime) {
-                options.hour = '2-digit';
-                options.minute = '2-digit';
-                options.hour12 = false; // Format 24h
+                const hours = String(estDate.getHours()).padStart(2, '0');
+                const minutes = String(estDate.getMinutes()).padStart(2, '0');
+                return day + '-' + month + '-' + year + ' ' + hours + ':' + minutes;
             }
             
-            return date.toLocaleString('fr-CA', options);
+            return day + '-' + month + '-' + year;
         };
         
         
