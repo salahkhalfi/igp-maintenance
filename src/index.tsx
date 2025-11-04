@@ -118,7 +118,7 @@ app.get('/', (c) => {
         
         .kanban-column {
             min-height: 400px;
-            min-width: 260px;
+            min-width: 240px;
             background: linear-gradient(145deg, #f8fafc, #e2e8f0);
             border-radius: 12px;
             padding: 12px;
@@ -127,6 +127,18 @@ app.get('/', (c) => {
                 -4px -4px 12px rgba(255, 255, 255, 0.7),
                 inset 1px 1px 2px rgba(255, 255, 255, 0.3);
             border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        /* Colonnes vides prennent moins de place */
+        .kanban-column.empty {
+            flex: 0 0 auto;
+            width: 200px;
+        }
+        
+        /* Colonnes avec tickets prennent plus de place */
+        .kanban-column.has-tickets {
+            flex: 1 1 280px;
+            max-width: 320px;
         }
         
         .ticket-card {
@@ -331,7 +343,13 @@ app.get('/', (c) => {
             }
             .kanban-column {
                 min-height: auto;
-                width: 100%;
+                width: 100% !important;
+                max-width: none !important;
+                flex: none !important;
+            }
+            .kanban-column.empty,
+            .kanban-column.has-tickets {
+                width: 100% !important;
             }
             .header-actions {
                 flex-direction: column;
@@ -2614,10 +2632,14 @@ app.get('/', (c) => {
                 
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
                     React.createElement('div', { className: 'overflow-x-auto pb-4' },
-                        React.createElement('div', { className: 'kanban-grid flex gap-3 min-w-max lg:grid lg:grid-cols-3 xl:grid-cols-6 xl:min-w-0' },
+                        React.createElement('div', { className: 'kanban-grid flex gap-3' },
                         statuses.map(status => {
                             const isDragOver = dragOverColumn === status.key;
-                            const columnClass = 'kanban-column' + (isDragOver ? ' drag-over' : '');
+                            const ticketsInColumn = getTicketsByStatus(status.key);
+                            const hasTickets = ticketsInColumn.length > 0;
+                            const columnClass = 'kanban-column' + 
+                                (isDragOver ? ' drag-over' : '') + 
+                                (hasTickets ? ' has-tickets' : ' empty');
                             
                             return React.createElement('div', { 
                                 key: status.key, 
