@@ -2346,8 +2346,9 @@ app.get('/', (c) => {
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
             const [showUserManagement, setShowUserManagement] = React.useState(false);
             const [showUserGuide, setShowUserGuide] = React.useState(false);
+            const [showArchived, setShowArchived] = React.useState(false);
             
-            const statuses = [
+            const allStatuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
                 { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
                 { key: 'in_progress', label: 'En Cours', icon: 'wrench', color: 'orange' },
@@ -2355,6 +2356,9 @@ app.get('/', (c) => {
                 { key: 'completed', label: 'Terminé', icon: 'check-circle', color: 'green' },
                 { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
             ];
+            
+            // Filtrer pour masquer les archivés si nécessaire
+            const statuses = showArchived ? allStatuses : allStatuses.filter(s => s.key !== 'archived');
             
             
             React.useEffect(() => {
@@ -2602,6 +2606,16 @@ app.get('/', (c) => {
                             },
                                 React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
                                 'Actualiser'
+                            ),
+                            React.createElement('button', {
+                                onClick: () => setShowArchived(!showArchived),
+                                className: 'px-4 py-2 rounded-md font-semibold shadow-md transition-all ' + 
+                                    (showArchived 
+                                        ? 'bg-gray-600 text-white hover:bg-gray-700' 
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300')
+                            },
+                                React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') + ' mr-2' }),
+                                showArchived ? 'Masquer Archivés' : 'Voir Archivés'
                             ),
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
