@@ -432,7 +432,7 @@ app.get('/', (c) => {
         };
         
         // Fonction pour calculer le temps écoulé depuis la création
-        // Retourne un objet {days, hours, minutes, color}
+        // Retourne un objet {days, hours, minutes, seconds, color, bgColor}
         const getElapsedTime = (createdAt) => {
             const now = new Date();
             const created = new Date(createdAt);
@@ -441,28 +441,40 @@ app.get('/', (c) => {
             const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
             
-            // Déterminer la couleur selon l'urgence
-            let color = 'text-green-600'; // Moins de 1 jour = vert
+            // Déterminer la couleur et le fond selon l'urgence
+            let color = 'text-green-700';
+            let bgColor = 'bg-green-50 border-green-200';
+            let icon = '🟢';
+            
             if (days >= 7) {
-                color = 'text-red-600 font-bold'; // 7 jours+ = rouge
+                color = 'text-red-700 font-bold';
+                bgColor = 'bg-red-50 border-red-300';
+                icon = '🔴';
             } else if (days >= 3) {
-                color = 'text-orange-600 font-semibold'; // 3-6 jours = orange
+                color = 'text-orange-700 font-semibold';
+                bgColor = 'bg-orange-50 border-orange-200';
+                icon = '🟠';
             } else if (days >= 1) {
-                color = 'text-yellow-600'; // 1-2 jours = jaune
+                color = 'text-yellow-700';
+                bgColor = 'bg-yellow-50 border-yellow-200';
+                icon = '🟡';
             }
             
-            return { days, hours, minutes, color };
+            return { days, hours, minutes, seconds, color, bgColor, icon };
         };
         
-        // Formater le texte du chronomètre
+        // Formater le texte du chronomètre avec secondes
         const formatElapsedTime = (elapsed) => {
             if (elapsed.days > 0) {
-                return elapsed.days + 'j ' + elapsed.hours + 'h';
+                return elapsed.days + 'j ' + String(elapsed.hours).padStart(2, '0') + ':' + String(elapsed.minutes).padStart(2, '0');
             } else if (elapsed.hours > 0) {
-                return elapsed.hours + 'h ' + elapsed.minutes + 'min';
+                return elapsed.hours + 'h ' + String(elapsed.minutes).padStart(2, '0') + ':' + String(elapsed.seconds).padStart(2, '0');
+            } else if (elapsed.minutes > 0) {
+                return elapsed.minutes + 'min ' + String(elapsed.seconds).padStart(2, '0') + 's';
             } else {
-                return elapsed.minutes + 'min';
+                return elapsed.seconds + 's';
             }
         };
         
@@ -585,7 +597,7 @@ app.get('/', (c) => {
             );
         };
         
-        // Composant Chronomètre dynamique (mise à jour toutes les minutes)
+        // Composant Chronomètre dynamique (mise à jour chaque seconde)
         const TicketTimer = ({ createdAt, status }) => {
             const [elapsed, setElapsed] = React.useState(() => getElapsedTime(createdAt));
             
@@ -595,10 +607,10 @@ app.get('/', (c) => {
                     return;
                 }
                 
-                // Mettre à jour toutes les minutes
+                // Mettre à jour chaque seconde pour afficher les secondes
                 const interval = setInterval(() => {
                     setElapsed(getElapsedTime(createdAt));
-                }, 60000); // 60000ms = 1 minute
+                }, 1000); // 1000ms = 1 seconde
                 
                 return () => clearInterval(interval);
             }, [createdAt, status]);
@@ -609,10 +621,15 @@ app.get('/', (c) => {
             }
             
             return React.createElement('div', { 
-                className: 'flex items-center text-xs font-semibold mt-2 ' + elapsed.color
+                className: 'mt-2 px-2 py-1.5 rounded border-2 ' + elapsed.bgColor + ' ' + elapsed.color
             },
-                React.createElement('i', { className: 'fas fa-hourglass-half mr-1' }),
-                React.createElement('span', {}, formatElapsedTime(elapsed))
+                React.createElement('div', { className: 'flex items-center justify-between gap-2' },
+                    React.createElement('div', { className: 'flex items-center gap-1' },
+                        React.createElement('span', { className: 'text-xs' }, elapsed.icon),
+                        React.createElement('i', { className: 'fas fa-clock text-xs' })
+                    ),
+                    React.createElement('span', { className: 'text-xs font-bold font-mono' }, formatElapsedTime(elapsed))
+                )
             );
         };
         
@@ -2638,22 +2655,24 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-1.5 gap-2' },
-                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono truncate flex-1' }, ticket.ticket_id),
+                                            React.createElement('div', { className: 'mb-1.5' },
+                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
+                                            ),
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1.5 text-sm line-clamp-2' }, ticket.title),
+                                            React.createElement('div', { className: 'mb-1.5' },
                                                 React.createElement('span', { 
-                                                    className: 'text-xs px-2 py-1 rounded font-semibold whitespace-nowrap ' + 
+                                                    className: 'inline-block text-xs px-2 py-1 rounded font-semibold whitespace-nowrap ' + 
                                                     (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
                                                      ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                                                      'bg-green-100 text-green-800')
                                                 }, 
-                                                    ticket.priority === 'critical' ? 'CRIT' :
-                                                    ticket.priority === 'high' ? 'HAUT' :
-                                                    ticket.priority === 'medium' ? 'MOY' :
-                                                    'BAS'
+                                                    ticket.priority === 'critical' ? '🔴 CRITIQUE' :
+                                                    ticket.priority === 'high' ? '🟠 HAUTE' :
+                                                    ticket.priority === 'medium' ? '🟡 MOYENNE' :
+                                                    '🟢 FAIBLE'
                                                 )
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm line-clamp-2' }, ticket.title),
                                             React.createElement('p', { className: 'text-xs text-gray-600 mb-1.5 truncate' }, ticket.machine_type + ' ' + ticket.model),
                                             
                                             ticket.media_count > 0 ? React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
