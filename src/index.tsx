@@ -1,3 +1,13 @@
+/**
+ * Système de Gestion de Maintenance - IGP Glass
+ * 
+ * @author Salah Khalfi
+ * @organization Produits Verriers International (IGP) Inc.
+ * @department Département des Technologies de l'Information
+ * @description Application de gestion de maintenance pour équipements industriels
+ * @version 1.0.0
+ */
+
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { authMiddleware, adminOnly, technicianOrAdmin } from './middlewares/auth';
@@ -1109,7 +1119,7 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'text-xs text-gray-500' },
                             React.createElement('i', { className: 'fas fa-code mr-1' }),
                             'Conçue par ',
-                            React.createElement('span', { className: 'font-bold text-igp-blue' }, 'Salah Khalfi')
+                            React.createElement('span', { className: 'font-bold text-igp-blue' }, 'Le département des Technologies de l\'Information des Produits Verriers International (IGP) Inc.')
                         )
                     )
                 )
@@ -2834,10 +2844,10 @@ app.get('/', (c) => {
                                 style: { 
                                     textShadow: '1px 1px 2px rgba(30, 64, 175, 0.1)'
                                 }
-                            }, 'Salah Khalfi')
+                            }, 'Le département des Technologies de l\'Information')
                         ),
                         React.createElement('p', { className: 'text-xs text-gray-500' },
-                            '© ' + new Date().getFullYear() + ' - IGP Système de Gestion de Maintenance'
+                            '© ' + new Date().getFullYear() + ' - Produits Verriers International (IGP) Inc.'
                         )
                     )
                 ),
