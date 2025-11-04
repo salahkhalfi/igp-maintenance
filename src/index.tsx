@@ -401,6 +401,41 @@ app.get('/', (c) => {
             return day + '-' + month + '-' + year;
         };
         
+        // Fonction pour calculer le temps écoulé depuis la création
+        // Retourne un objet {days, hours, minutes, color}
+        const getElapsedTime = (createdAt) => {
+            const now = new Date();
+            const created = new Date(createdAt);
+            const diffMs = now - created;
+            
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            // Déterminer la couleur selon l'urgence
+            let color = 'text-green-600'; // Moins de 1 jour = vert
+            if (days >= 7) {
+                color = 'text-red-600 font-bold'; // 7 jours+ = rouge
+            } else if (days >= 3) {
+                color = 'text-orange-600 font-semibold'; // 3-6 jours = orange
+            } else if (days >= 1) {
+                color = 'text-yellow-600'; // 1-2 jours = jaune
+            }
+            
+            return { days, hours, minutes, color };
+        };
+        
+        // Formater le texte du chronomètre
+        const formatElapsedTime = (elapsed) => {
+            if (elapsed.days > 0) {
+                return elapsed.days + 'j ' + elapsed.hours + 'h';
+            } else if (elapsed.hours > 0) {
+                return elapsed.hours + 'h ' + elapsed.minutes + 'min';
+            } else {
+                return elapsed.minutes + 'min';
+            }
+        };
+        
         
         // Composant de notification personnalisé
         const NotificationModal = ({ show, message, type, onClose }) => {
@@ -517,6 +552,37 @@ app.get('/', (c) => {
                         className: 'text-white hover:text-gray-200 text-xl ml-2'
                     }, '×')
                 )
+            );
+        };
+        
+        // Composant Chronomètre dynamique (mise à jour toutes les minutes)
+        const TicketTimer = ({ createdAt, status }) => {
+            const [elapsed, setElapsed] = React.useState(() => getElapsedTime(createdAt));
+            
+            React.useEffect(() => {
+                // Ne pas afficher le chronomètre si le ticket est terminé ou archivé
+                if (status === 'completed' || status === 'archived') {
+                    return;
+                }
+                
+                // Mettre à jour toutes les minutes
+                const interval = setInterval(() => {
+                    setElapsed(getElapsedTime(createdAt));
+                }, 60000); // 60000ms = 1 minute
+                
+                return () => clearInterval(interval);
+            }, [createdAt, status]);
+            
+            // Ne pas afficher si ticket terminé/archivé
+            if (status === 'completed' || status === 'archived') {
+                return null;
+            }
+            
+            return React.createElement('div', { 
+                className: 'flex items-center text-xs font-semibold mt-2 ' + elapsed.color
+            },
+                React.createElement('i', { className: 'fas fa-hourglass-half mr-1' }),
+                React.createElement('span', {}, formatElapsedTime(elapsed))
             );
         };
         
@@ -2566,7 +2632,11 @@ app.get('/', (c) => {
                                             React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
                                                 React.createElement('i', { className: 'far fa-clock mr-1' }),
                                                 formatDateEST(ticket.created_at, false)
-                                            )
+                                            ),
+                                            React.createElement(TicketTimer, { 
+                                                createdAt: ticket.created_at,
+                                                status: ticket.status
+                                            })
                                         );
                                     })
                                 )
