@@ -3174,6 +3174,12 @@ app.get('/guide', (c) => {
                             <p>📖 Ce guide</p>
                             <p>🏷️ Version 1.9.2</p>
                         </div>
+                        
+                        <div class="mt-6 pt-6 border-t border-teal-200">
+                            <h4 class="font-semibold text-teal-700 mb-4 text-base md:text-lg">📝 Formulaire de Contact</h4>
+                            <div class="plato-form-widget" data-pf-id="fr9ercvp1ay" data-pf-host="form.formcan.com/"></div>
+                            <script src="//static.formcan.com/assets/dist/formbuilder.js?v=20"></script>
+                        </div>
                     </div>
                 </div>
             </div>
