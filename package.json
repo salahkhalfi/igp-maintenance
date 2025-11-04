@@ -13,6 +13,9 @@
     "db:migrate:prod": "wrangler d1 migrations apply maintenance-db",
     "db:seed": "wrangler d1 execute maintenance-db --local --file=./seed.sql",
     "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local && npm run db:seed",
+    "db:backup": "bash scripts/backup-db.sh",
+    "db:restore": "bash scripts/restore-db.sh",
+    "db:list-backups": "ls -lht .wrangler/backups/ 2>/dev/null || echo 'Aucun backup trouvé'",
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true"
   },
   "dependencies": {
