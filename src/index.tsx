@@ -2846,8 +2846,18 @@ app.get('/', (c) => {
                                 }
                             }, "Le département des Technologies de l'Information")
                         ),
-                        React.createElement('p', { className: 'text-xs text-gray-500' },
-                            '© ' + new Date().getFullYear() + ' - Produits Verriers International (IGP) Inc.'
+                        React.createElement('div', { className: 'flex items-center justify-center gap-4 flex-wrap' },
+                            React.createElement('p', { className: 'text-xs text-gray-500' },
+                                '© ' + new Date().getFullYear() + ' - Produits Verriers International (IGP) Inc.'
+                            ),
+                            React.createElement('span', { className: 'text-gray-300' }, '|'),
+                            React.createElement('a', { 
+                                href: '/changelog',
+                                className: 'text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 transition-colors'
+                            },
+                                React.createElement('i', { className: 'fas fa-history' }),
+                                React.createElement('span', {}, 'v1.9.2 - Historique')
+                            )
                         )
                     )
                 ),
@@ -3205,6 +3215,496 @@ app.get('/guide', (c) => {
                 content.classList.add('active');
                 icon.classList.add('rotate-180');
             }
+        }
+    </script>
+</body>
+</html>
+  `);
+});
+
+// Route Changelog
+app.get('/changelog', (c) => {
+  return c.html(`
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique des Versions - IGP Maintenance</title>
+    <link rel="icon" type="image/png" href="/static/logo-igp.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 2rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 30px;
+            bottom: -30px;
+            width: 2px;
+            background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+        }
+        
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
+        }
+        
+        .version-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .version-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge-feature { background: #dbeafe; color: #1e40af; }
+        .badge-improvement { background: #d1fae5; color: #065f46; }
+        .badge-fix { background: #fee2e2; color: #991b1b; }
+        .badge-security { background: #fef3c7; color: #92400e; }
+        
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .filter-btn.active {
+            border-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 mb-8">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-history text-blue-600 mr-3"></i>
+                        Historique des Versions
+                    </h1>
+                    <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-blue-600">v1.9.2</div>
+                    <div class="text-sm text-gray-500">Version actuelle</div>
+                </div>
+            </div>
+            
+            <!-- Filtres -->
+            <div class="mt-6 flex flex-wrap gap-2">
+                <button onclick="filterVersions('all')" class="filter-btn active bg-gray-700 text-white" id="filter-all">
+                    <i class="fas fa-list mr-2"></i>Toutes
+                </button>
+                <button onclick="filterVersions('feature')" class="filter-btn bg-blue-100 text-blue-700" id="filter-feature">
+                    <i class="fas fa-star mr-2"></i>Fonctionnalités
+                </button>
+                <button onclick="filterVersions('improvement')" class="filter-btn bg-green-100 text-green-700" id="filter-improvement">
+                    <i class="fas fa-arrow-up mr-2"></i>Améliorations
+                </button>
+                <button onclick="filterVersions('fix')" class="filter-btn bg-red-100 text-red-700" id="filter-fix">
+                    <i class="fas fa-wrench mr-2"></i>Corrections
+                </button>
+            </div>
+            
+            <!-- Stats -->
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">144</div>
+                    <div class="text-xs text-gray-600">Jours de dev</div>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600">12</div>
+                    <div class="text-xs text-gray-600">Versions</div>
+                </div>
+                <div class="text-center p-3 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600">35+</div>
+                    <div class="text-xs text-gray-600">Fonctionnalités</div>
+                </div>
+                <div class="text-center p-3 bg-orange-50 rounded-lg">
+                    <div class="text-2xl font-bold text-orange-600">2800+</div>
+                    <div class="text-xs text-gray-600">Lignes de code</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline">
+            <!-- Version 1.9.2 -->
+            <div class="timeline-item" data-version="1.9.2" data-types="feature improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="version-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 1.9.2</h2>
+                            <p class="text-gray-500 text-sm">3 novembre 2025</p>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Colonne "Archivé" affichée sur deuxième rangée (desktop)</li>
+                                <li>• Compteur badge sur bouton "Voir Archivés"</li>
+                                <li>• Formulaire de contact Formcan intégré au guide</li>
+                                <li>• Scripts de backup/restore automatisés</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Crédits mis à jour (Département TI IGP Inc.)</li>
+                                <li>• Documentation complète (3 guides utilisateur)</li>
+                                <li>• Performance affichage optimisée</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Apostrophes françaises causant page blanche</li>
+                                <li>• Fix: Toggle colonne archivés sur desktop</li>
+                                <li>• Fix: Gestion erreurs JavaScript</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.9.0 -->
+            <div class="timeline-item" data-version="1.9.0" data-types="feature improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.9.0</h2>
+                        <p class="text-gray-500 text-sm">27 octobre 2025</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Timer dynamique sur chaque ticket (mise à jour chaque seconde)</li>
+                                <li>• Indicateur d'urgence coloré (vert/jaune/orange/rouge)</li>
+                                <li>• Colonnes adaptatives (vides=200px, pleines=280-320px)</li>
+                                <li>• Toggle pour afficher/masquer colonne archivée</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Design compact: badges réduits (CRIT/HAUT/MOY/BAS)</li>
+                                <li>• Badges priorité déplacés sous le titre</li>
+                                <li>• Layout desktop optimisé (6 colonnes → 5+1)</li>
+                                <li>• Espacement réduit pour plus de densité</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.8.5 -->
+            <div class="timeline-item" data-version="1.8.5" data-types="feature improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-green-500 to-teal-600 text-white">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.5</h2>
+                        <p class="text-gray-500 text-sm">15 octobre 2025</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Support complet mobile et tablette</li>
+                                <li>• Guide utilisateur accordéon (7 sections)</li>
+                                <li>• Touch events pour drag & drop mobile</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Design responsive optimisé</li>
+                                <li>• Navigation simplifiée sur mobile</li>
+                                <li>• Interface tactile intuitive</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.8.0 -->
+            <div class="timeline-item" data-version="1.8.0" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-yellow-500 to-orange-600 text-white">
+                    <i class="fas fa-globe-americas"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.0</h2>
+                        <p class="text-gray-500 text-sm">1 octobre 2025</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Format dates québécois (JJ-MM-AAAA)</li>
+                                <li>• Timezone EST (America/Toronto)</li>
+                                <li>• Affichage heure locale pour tous les timestamps</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.7.0 -->
+            <div class="timeline-item" data-version="1.7.0" data-types="feature improvement security">
+                <div class="timeline-dot bg-gradient-to-br from-red-500 to-pink-600 text-white">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.7.0</h2>
+                        <p class="text-gray-500 text-sm">20 septembre 2025</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Gestion utilisateurs multi-rôles (Admin/Technicien/Opérateur)</li>
+                                <li>• Permissions granulaires par rôle</li>
+                                <li>• Interface admin pour créer/modifier utilisateurs</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-lock text-yellow-500 mr-2"></i>
+                                Sécurité
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Sécurité renforcée (JWT + bcrypt PBKDF2)</li>
+                                <li>• Hash mots de passe avec 100,000 itérations</li>
+                                <li>• Tokens expiration 24h</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-security"><i class="fas fa-lock"></i> Sécurité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.6.0 -->
+            <div class="timeline-item" data-version="1.6.0" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.6.0</h2>
+                        <p class="text-gray-500 text-sm">5 septembre 2025</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Upload d'images sur tickets (Cloudflare R2)</li>
+                                <li>• Galerie photos par ticket</li>
+                                <li>• Indicateur compteur photos sur carte</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Versions précédentes (résumé) -->
+            <div class="timeline-item">
+                <div class="timeline-dot bg-gradient-to-br from-gray-500 to-gray-600 text-white">
+                    <i class="fas fa-ellipsis-h"></i>
+                </div>
+                <div class="version-card bg-gray-50">
+                    <h2 class="text-xl font-bold text-gray-800 mb-3">Versions Antérieures</h2>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex items-center justify-between py-2 border-b">
+                            <span class="font-semibold">v1.5.0 - 22 août 2025</span>
+                            <span class="text-xs">Système de commentaires</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b">
+                            <span class="font-semibold">v1.4.0 - 8 août 2025</span>
+                            <span class="text-xs">Menu contextuel</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b">
+                            <span class="font-semibold">v1.3.0 - 25 juillet 2025</span>
+                            <span class="text-xs">Gestion des machines</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b">
+                            <span class="font-semibold">v1.2.0 - 10 juillet 2025</span>
+                            <span class="text-xs">Interface Kanban drag & drop</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2 border-b">
+                            <span class="font-semibold">v1.1.0 - 26 juin 2025</span>
+                            <span class="text-xs">API REST complète</span>
+                        </div>
+                        <div class="flex items-center justify-between py-2">
+                            <span class="font-semibold">v1.0.0 - 12 juin 2025</span>
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">🎊 Lancement initial</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center">
+            <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-lg">
+                <i class="fas fa-arrow-left"></i>
+                Retour à l'application
+            </a>
+        </div>
+
+        <div class="mt-6 text-center text-white text-sm">
+            <p>© 2025 - Produits Verriers International (IGP) Inc.</p>
+            <p class="mt-1 opacity-75">Développé par le Département des Technologies de l'Information</p>
+        </div>
+    </div>
+
+    <script>
+        function filterVersions(type) {
+            const items = document.querySelectorAll('.timeline-item');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById('filter-' + type).classList.add('active');
+            
+            // Filter items
+            items.forEach(item => {
+                const types = item.dataset.types;
+                if (type === 'all' || !types) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = types.includes(type) ? 'block' : 'none';
+                }
+            });
         }
     </script>
 </body>
