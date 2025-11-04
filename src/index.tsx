@@ -3303,6 +3303,17 @@ app.get('/changelog', (c) => {
         .badge-improvement { background: #d1fae5; color: #065f46; }
         .badge-fix { background: #fee2e2; color: #991b1b; }
         .badge-security { background: #fef3c7; color: #92400e; }
+        .badge-upcoming { background: #f3e8ff; color: #6b21a8; }
+        
+        .version-upcoming {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #fbbf24;
+        }
+        
+        .version-upcoming:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(251, 191, 36, 0.3);
+        }
         
         .filter-btn {
             padding: 0.5rem 1rem;
@@ -3444,6 +3455,105 @@ app.get('/changelog', (c) => {
                         <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
                         <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
                         <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.0 - À VENIR -->
+            <div class="timeline-item" data-version="2.0.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-yellow-500 to-amber-600 text-white">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="version-card version-upcoming">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.0.0</h2>
+                            <p class="text-gray-600 text-sm font-semibold">En développement - Novembre 2025</p>
+                        </div>
+                        <span class="px-3 py-1 bg-amber-500 text-white rounded-full text-xs font-bold animate-pulse">
+                            <i class="fas fa-hourglass-half mr-1"></i>
+                            À VENIR
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-white bg-opacity-70 rounded-lg p-4 border-2 border-amber-300">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center text-lg">
+                                <i class="fas fa-language text-blue-600 mr-2"></i>
+                                Support Multilingue
+                            </h3>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-700 mb-2 flex items-center">
+                                        <i class="fas fa-flag text-amber-600 mr-2"></i>
+                                        Version Anglaise Complète
+                                    </h4>
+                                    <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                        <li>• Interface entièrement traduite en anglais</li>
+                                        <li>• Adaptation pour le département des Thermos</li>
+                                        <li>• Support des opérateurs anglophones</li>
+                                        <li>• Sélecteur de langue (FR/EN) dans le header</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+                                    <p class="text-sm text-gray-700">
+                                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                                        <strong>Objectif:</strong> Faciliter l'adoption de l'application par les équipes anglophones 
+                                        et améliorer la communication interdépartementale.
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="font-semibold text-gray-700 mb-2 flex items-center">
+                                        <i class="fas fa-users text-green-600 mr-2"></i>
+                                        Bénéfices Attendus
+                                    </h4>
+                                    <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                        <li>• Meilleure accessibilité pour tous les employés</li>
+                                        <li>• Réduction des barrières linguistiques</li>
+                                        <li>• Formation simplifiée des nouveaux utilisateurs</li>
+                                        <li>• Standardisation inter-départementale</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-plus-circle text-green-600 mr-2"></i>
+                                Autres Améliorations Prévues
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Préférences utilisateur (langue, timezone, format dates)</li>
+                                <li>• Guide utilisateur bilingue</li>
+                                <li>• Notifications email en langue préférée</li>
+                                <li>• Export rapports (FR/EN)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-amber-300 flex flex-wrap gap-2">
+                        <span class="badge badge-upcoming">
+                            <i class="fas fa-clock"></i> En développement
+                        </span>
+                        <span class="badge badge-feature">
+                            <i class="fas fa-language"></i> Multilingue
+                        </span>
+                        <span class="badge" style="background: #e0f2fe; color: #0369a1;">
+                            <i class="fas fa-building"></i> Département Thermos
+                        </span>
+                    </div>
+                    
+                    <div class="mt-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-3 border-l-4 border-amber-500">
+                        <p class="text-xs text-gray-600 flex items-start gap-2">
+                            <i class="fas fa-lightbulb text-amber-600 mt-0.5"></i>
+                            <span>
+                                <strong>Note:</strong> Cette fonctionnalité est actuellement en phase de planification. 
+                                Les dates et fonctionnalités peuvent être ajustées selon les besoins opérationnels.
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
