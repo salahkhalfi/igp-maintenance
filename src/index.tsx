@@ -380,6 +380,25 @@ app.get('/', (c) => {
             return statusLabels[status] || status;
         };
         
+        // Fonction pour formater les dates en heure EST (America/Toronto)
+        const formatDateEST = (dateString, includeTime = true) => {
+            const date = new Date(dateString);
+            const options = {
+                timeZone: 'America/Toronto',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            };
+            
+            if (includeTime) {
+                options.hour = '2-digit';
+                options.minute = '2-digit';
+                options.hour12 = false; // Format 24h
+            }
+            
+            return date.toLocaleString('fr-CA', options);
+        };
+        
         
         // Composant de notification personnalisé
         const NotificationModal = ({ show, message, type, onClose }) => {
@@ -1453,7 +1472,7 @@ app.get('/', (c) => {
                                 React.createElement('div', {},
                                     React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Créé le: '),
                                     React.createElement('span', { className: 'text-gray-600' }, 
-                                        new Date(ticket.created_at).toLocaleString('fr-FR')
+                                        formatDateEST(ticket.created_at)
                                     )
                                 ),
                                 React.createElement('div', {},
@@ -1528,7 +1547,7 @@ app.get('/', (c) => {
                                                 )
                                             ),
                                             React.createElement('span', { className: 'text-xs text-gray-500' },
-                                                new Date(comment.created_at).toLocaleString('fr-FR')
+                                                formatDateEST(comment.created_at)
                                             )
                                         ),
                                         React.createElement('p', { className: 'text-gray-700 text-sm whitespace-pre-wrap' }, comment.comment)
@@ -2131,7 +2150,7 @@ app.get('/', (c) => {
                                         ),
                                         React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
                                             React.createElement('i', { className: 'far fa-clock mr-2' }),
-                                            'Créé le: ' + new Date(user.created_at).toLocaleDateString('fr-FR')
+                                            'Créé le: ' + formatDateEST(user.created_at, false)
                                         )
                                     ),
                                     user.id !== currentUser.id ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
@@ -2544,7 +2563,7 @@ app.get('/', (c) => {
                                             ) : null,
                                             React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
                                                 React.createElement('i', { className: 'far fa-clock mr-1' }),
-                                                new Date(ticket.created_at).toLocaleDateString('fr-FR')
+                                                formatDateEST(ticket.created_at, false)
                                             )
                                         );
                                     })
