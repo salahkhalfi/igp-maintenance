@@ -3235,6 +3235,10 @@ app.get('/changelog', (c) => {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -3359,20 +3363,28 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
             
-            <!-- Filtres -->
-            <div class="mt-6 flex flex-wrap gap-2">
-                <button onclick="filterVersions('all')" class="filter-btn active bg-gray-700 text-white" id="filter-all">
-                    <i class="fas fa-list mr-2"></i>Toutes
-                </button>
-                <button onclick="filterVersions('feature')" class="filter-btn bg-blue-100 text-blue-700" id="filter-feature">
-                    <i class="fas fa-star mr-2"></i>Fonctionnalités
-                </button>
-                <button onclick="filterVersions('improvement')" class="filter-btn bg-green-100 text-green-700" id="filter-improvement">
-                    <i class="fas fa-arrow-up mr-2"></i>Améliorations
-                </button>
-                <button onclick="filterVersions('fix')" class="filter-btn bg-red-100 text-red-700" id="filter-fix">
-                    <i class="fas fa-wrench mr-2"></i>Corrections
-                </button>
+            <!-- Filtres et Roadmap -->
+            <div class="mt-6 flex flex-wrap gap-2 items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterVersions('all')" class="filter-btn active bg-gray-700 text-white" id="filter-all">
+                        <i class="fas fa-list mr-2"></i>Toutes
+                    </button>
+                    <button onclick="filterVersions('feature')" class="filter-btn bg-blue-100 text-blue-700" id="filter-feature">
+                        <i class="fas fa-star mr-2"></i>Fonctionnalités
+                    </button>
+                    <button onclick="filterVersions('improvement')" class="filter-btn bg-green-100 text-green-700" id="filter-improvement">
+                        <i class="fas fa-arrow-up mr-2"></i>Améliorations
+                    </button>
+                    <button onclick="filterVersions('fix')" class="filter-btn bg-red-100 text-red-700" id="filter-fix">
+                        <i class="fas fa-wrench mr-2"></i>Corrections
+                    </button>
+                </div>
+                
+                <a href="#roadmap" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-lg font-bold hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg hover:shadow-xl hover:scale-105 animate-pulse">
+                    <i class="fas fa-rocket"></i>
+                    <span>Voir la Roadmap</span>
+                    <i class="fas fa-arrow-down"></i>
+                </a>
             </div>
             
             <!-- Stats -->
@@ -3455,105 +3467,6 @@ app.get('/changelog', (c) => {
                         <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
                         <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
                         <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Version 2.0.0 - À VENIR -->
-            <div class="timeline-item" data-version="2.0.0" data-types="feature">
-                <div class="timeline-dot bg-gradient-to-br from-yellow-500 to-amber-600 text-white">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="version-card version-upcoming">
-                    <div class="flex items-start justify-between mb-4">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Version 2.0.0</h2>
-                            <p class="text-gray-600 text-sm font-semibold">En développement - Novembre 2025</p>
-                        </div>
-                        <span class="px-3 py-1 bg-amber-500 text-white rounded-full text-xs font-bold animate-pulse">
-                            <i class="fas fa-hourglass-half mr-1"></i>
-                            À VENIR
-                        </span>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="bg-white bg-opacity-70 rounded-lg p-4 border-2 border-amber-300">
-                            <h3 class="font-bold text-gray-800 mb-3 flex items-center text-lg">
-                                <i class="fas fa-language text-blue-600 mr-2"></i>
-                                Support Multilingue
-                            </h3>
-                            
-                            <div class="space-y-3">
-                                <div>
-                                    <h4 class="font-semibold text-gray-700 mb-2 flex items-center">
-                                        <i class="fas fa-flag text-amber-600 mr-2"></i>
-                                        Version Anglaise Complète
-                                    </h4>
-                                    <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                        <li>• Interface entièrement traduite en anglais</li>
-                                        <li>• Adaptation pour le département des Thermos</li>
-                                        <li>• Support des opérateurs anglophones</li>
-                                        <li>• Sélecteur de langue (FR/EN) dans le header</li>
-                                    </ul>
-                                </div>
-                                
-                                <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
-                                    <p class="text-sm text-gray-700">
-                                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-                                        <strong>Objectif:</strong> Faciliter l'adoption de l'application par les équipes anglophones 
-                                        et améliorer la communication interdépartementale.
-                                    </p>
-                                </div>
-                                
-                                <div>
-                                    <h4 class="font-semibold text-gray-700 mb-2 flex items-center">
-                                        <i class="fas fa-users text-green-600 mr-2"></i>
-                                        Bénéfices Attendus
-                                    </h4>
-                                    <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                        <li>• Meilleure accessibilité pour tous les employés</li>
-                                        <li>• Réduction des barrières linguistiques</li>
-                                        <li>• Formation simplifiée des nouveaux utilisateurs</li>
-                                        <li>• Standardisation inter-départementale</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-plus-circle text-green-600 mr-2"></i>
-                                Autres Améliorations Prévues
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Préférences utilisateur (langue, timezone, format dates)</li>
-                                <li>• Guide utilisateur bilingue</li>
-                                <li>• Notifications email en langue préférée</li>
-                                <li>• Export rapports (FR/EN)</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 pt-4 border-t border-amber-300 flex flex-wrap gap-2">
-                        <span class="badge badge-upcoming">
-                            <i class="fas fa-clock"></i> En développement
-                        </span>
-                        <span class="badge badge-feature">
-                            <i class="fas fa-language"></i> Multilingue
-                        </span>
-                        <span class="badge" style="background: #e0f2fe; color: #0369a1;">
-                            <i class="fas fa-building"></i> Département Thermos
-                        </span>
-                    </div>
-                    
-                    <div class="mt-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-3 border-l-4 border-amber-500">
-                        <p class="text-xs text-gray-600 flex items-start gap-2">
-                            <i class="fas fa-lightbulb text-amber-600 mt-0.5"></i>
-                            <span>
-                                <strong>Note:</strong> Cette fonctionnalité est actuellement en phase de planification. 
-                                Les dates et fonctionnalités peuvent être ajustées selon les besoins opérationnels.
-                            </span>
-                        </p>
                     </div>
                 </div>
             </div>
@@ -3791,8 +3704,163 @@ app.get('/changelog', (c) => {
             </div>
         </div>
 
+        <!-- Section Roadmap (À Venir) -->
+        <div id="roadmap" class="mt-12 scroll-mt-8">
+            <div class="bg-gradient-to-br from-amber-400 via-yellow-400 to-orange-400 rounded-2xl shadow-2xl p-1">
+                <div class="bg-white rounded-xl p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+                        <div>
+                            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 flex items-center gap-3">
+                                <i class="fas fa-rocket text-amber-500"></i>
+                                Roadmap & Prochaines Versions
+                            </h2>
+                            <p class="text-gray-600 mt-2">Fonctionnalités planifiées et en développement</p>
+                        </div>
+                        <div class="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-full font-bold text-sm animate-pulse shadow-lg">
+                            <i class="fas fa-hourglass-half mr-2"></i>
+                            EN DÉVELOPPEMENT
+                        </div>
+                    </div>
+                    
+                    <!-- Version 2.0.0 -->
+                    <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border-2 border-amber-300 shadow-lg">
+                        <div class="flex items-start justify-between mb-4 flex-wrap gap-3">
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                    <span class="text-amber-600">v2.0.0</span>
+                                    <span class="text-gray-400">-</span>
+                                    <span class="text-gray-700">Support Multilingue</span>
+                                </h3>
+                                <p class="text-gray-600 text-sm mt-1 font-semibold">
+                                    <i class="fas fa-calendar-alt text-amber-600 mr-2"></i>
+                                    Novembre 2025
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <!-- Feature principale -->
+                            <div class="bg-white rounded-lg p-5 border-2 border-amber-200">
+                                <h4 class="font-bold text-gray-800 mb-3 flex items-center text-lg">
+                                    <i class="fas fa-language text-blue-600 mr-2 text-xl"></i>
+                                    Version Anglaise Complète
+                                </h4>
+                                
+                                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                    <div class="bg-blue-50 rounded-lg p-4">
+                                        <h5 class="font-semibold text-gray-700 mb-2 flex items-center">
+                                            <i class="fas fa-check-circle text-blue-600 mr-2"></i>
+                                            Fonctionnalités
+                                        </h5>
+                                        <ul class="space-y-1 text-gray-600 text-sm">
+                                            <li>• Interface traduite en anglais</li>
+                                            <li>• Sélecteur de langue FR/EN</li>
+                                            <li>• Adaptation département Thermos</li>
+                                            <li>• Support opérateurs anglophones</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="bg-green-50 rounded-lg p-4">
+                                        <h5 class="font-semibold text-gray-700 mb-2 flex items-center">
+                                            <i class="fas fa-users text-green-600 mr-2"></i>
+                                            Bénéfices
+                                        </h5>
+                                        <ul class="space-y-1 text-gray-600 text-sm">
+                                            <li>• Accessibilité universelle</li>
+                                            <li>• Barrières linguistiques réduites</li>
+                                            <li>• Formation simplifiée</li>
+                                            <li>• Standardisation interdépartementale</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-lg p-4 border-l-4 border-blue-500">
+                                    <p class="text-sm text-gray-700 flex items-start gap-2">
+                                        <i class="fas fa-bullseye text-blue-600 mt-0.5 text-lg"></i>
+                                        <span>
+                                            <strong class="text-blue-800">Objectif:</strong> Faciliter l'adoption par les équipes 
+                                            anglophones du département Thermos et améliorer la communication interdépartementale 
+                                            pour une meilleure collaboration à travers l'usine.
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Autres améliorations -->
+                            <div class="bg-white rounded-lg p-5 border-2 border-amber-200">
+                                <h4 class="font-bold text-gray-700 mb-3 flex items-center">
+                                    <i class="fas fa-plus-circle text-green-600 mr-2"></i>
+                                    Améliorations Additionnelles
+                                </h4>
+                                <div class="grid md:grid-cols-2 gap-3">
+                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
+                                        <i class="fas fa-cog text-purple-600 mt-1"></i>
+                                        <span>Préférences utilisateur (langue, timezone, format dates)</span>
+                                    </div>
+                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
+                                        <i class="fas fa-book text-indigo-600 mt-1"></i>
+                                        <span>Guide utilisateur bilingue complet</span>
+                                    </div>
+                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
+                                        <i class="fas fa-envelope text-blue-600 mt-1"></i>
+                                        <span>Notifications email en langue préférée</span>
+                                    </div>
+                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
+                                        <i class="fas fa-file-export text-green-600 mt-1"></i>
+                                        <span>Export rapports multilingues (FR/EN)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Badges -->
+                            <div class="flex flex-wrap gap-2">
+                                <span class="badge badge-upcoming text-base">
+                                    <i class="fas fa-clock"></i> En développement
+                                </span>
+                                <span class="badge badge-feature text-base">
+                                    <i class="fas fa-language"></i> Multilingue
+                                </span>
+                                <span class="badge text-base" style="background: #e0f2fe; color: #0369a1;">
+                                    <i class="fas fa-building"></i> Département Thermos
+                                </span>
+                                <span class="badge text-base" style="background: #f0fdf4; color: #166534;">
+                                    <i class="fas fa-globe"></i> Accessibilité
+                                </span>
+                            </div>
+                            
+                            <!-- Note -->
+                            <div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-4 border-l-4 border-amber-500">
+                                <p class="text-sm text-gray-700 flex items-start gap-2">
+                                    <i class="fas fa-lightbulb text-amber-600 mt-0.5 text-lg"></i>
+                                    <span>
+                                        <strong class="text-amber-800">Note importante:</strong> Cette fonctionnalité est en phase 
+                                        de planification active. Les dates de livraison et les fonctionnalités spécifiques peuvent 
+                                        être ajustées en fonction des besoins opérationnels et des retours des utilisateurs.
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Call to action -->
+                    <div class="mt-8 text-center">
+                        <div class="inline-block bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 border-2 border-purple-300">
+                            <p class="text-gray-700 mb-3 flex items-center justify-center gap-2">
+                                <i class="fas fa-comments text-purple-600 text-xl"></i>
+                                <span class="font-semibold">Vous avez des suggestions ou des besoins spécifiques ?</span>
+                            </p>
+                            <a href="/guide#contact" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-bold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                                <i class="fas fa-paper-plane"></i>
+                                Contactez-nous
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Footer -->
-        <div class="mt-8 text-center">
+        <div class="mt-12 text-center">
             <a href="/" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-100 hover:scale-105 transition-all shadow-2xl text-lg border-2 border-gray-200">
                 <i class="fas fa-arrow-left text-blue-600"></i>
                 Retour à l'application
