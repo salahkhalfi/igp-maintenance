@@ -3786,32 +3786,6 @@ app.get('/changelog', (c) => {
                                 </div>
                             </div>
                             
-                            <!-- Autres améliorations -->
-                            <div class="bg-white rounded-lg p-5 border-2 border-amber-200">
-                                <h4 class="font-bold text-gray-700 mb-3 flex items-center">
-                                    <i class="fas fa-plus-circle text-green-600 mr-2"></i>
-                                    Améliorations Additionnelles
-                                </h4>
-                                <div class="grid md:grid-cols-2 gap-3">
-                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
-                                        <i class="fas fa-cog text-purple-600 mt-1"></i>
-                                        <span>Préférences utilisateur (langue, timezone, format dates)</span>
-                                    </div>
-                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
-                                        <i class="fas fa-book text-indigo-600 mt-1"></i>
-                                        <span>Guide utilisateur bilingue complet</span>
-                                    </div>
-                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
-                                        <i class="fas fa-envelope text-blue-600 mt-1"></i>
-                                        <span>Notifications email en langue préférée</span>
-                                    </div>
-                                    <div class="flex items-start gap-2 text-gray-600 text-sm">
-                                        <i class="fas fa-file-export text-green-600 mt-1"></i>
-                                        <span>Export rapports multilingues (FR/EN)</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- Badges -->
                             <div class="flex flex-wrap gap-2">
                                 <span class="badge badge-upcoming text-base">
