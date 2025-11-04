@@ -118,9 +118,10 @@ app.get('/', (c) => {
         
         .kanban-column {
             min-height: 400px;
+            min-width: 260px;
             background: linear-gradient(145deg, #f8fafc, #e2e8f0);
             border-radius: 12px;
-            padding: 18px;
+            padding: 12px;
             box-shadow: 
                 8px 8px 16px rgba(71, 85, 105, 0.15),
                 -4px -4px 12px rgba(255, 255, 255, 0.7),
@@ -131,8 +132,8 @@ app.get('/', (c) => {
         .ticket-card {
             background: linear-gradient(145deg, #ffffff, #f1f5f9);
             border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
             box-shadow: 
                 6px 6px 12px rgba(71, 85, 105, 0.12),
                 -3px -3px 8px rgba(255, 255, 255, 0.8),
@@ -290,6 +291,35 @@ app.get('/', (c) => {
         .context-menu-item i {
             margin-right: 12px;
             width: 20px;
+        }
+        
+        /* Line clamp pour limiter les lignes de texte */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Scroll horizontal personnalisé */
+        .overflow-x-auto {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+        }
+        .overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 4px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 4px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.7);
         }
         
         /* MOBILE RESPONSIVE STYLES */
@@ -2568,7 +2598,8 @@ app.get('/', (c) => {
                 
                 
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
-                    React.createElement('div', { className: 'kanban-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4' },
+                    React.createElement('div', { className: 'overflow-x-auto pb-4' },
+                        React.createElement('div', { className: 'kanban-grid flex gap-3 min-w-max lg:grid lg:grid-cols-3 xl:grid-cols-6 xl:min-w-0' },
                         statuses.map(status => {
                             const isDragOver = dragOverColumn === status.key;
                             const columnClass = 'kanban-column' + (isDragOver ? ' drag-over' : '');
@@ -2581,16 +2612,16 @@ app.get('/', (c) => {
                                 onDragLeave: handleDragLeave,
                                 onDrop: (e) => handleDrop(e, status.key)
                             },
-                                React.createElement('div', { className: 'mb-4 flex items-center justify-between kanban-column-header' },
-                                    React.createElement('div', { className: 'flex items-center' },
-                                        React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' }),
-                                        React.createElement('h3', { className: 'font-bold text-gray-700 text-sm md:text-base' }, status.label)
+                                React.createElement('div', { className: 'mb-3 flex items-center justify-between kanban-column-header' },
+                                    React.createElement('div', { className: 'flex items-center min-w-0 flex-1' },
+                                        React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-1.5 text-sm' }),
+                                        React.createElement('h3', { className: 'font-bold text-gray-700 text-sm truncate' }, status.label)
                                     ),
                                     React.createElement('span', { 
-                                        className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-2 py-1 rounded-full'
+                                        className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
                                     }, getTicketsByStatus(status.key).length)
                                 ),
-                                React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('div', { className: 'space-y-2' },
                                     getTicketsByStatus(status.key).map(ticket => {
                                         return React.createElement('div', {
                                             key: ticket.id,
@@ -2607,23 +2638,23 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-2' },
-                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id),
+                                            React.createElement('div', { className: 'flex justify-between items-start mb-1.5 gap-2' },
+                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono truncate flex-1' }, ticket.ticket_id),
                                                 React.createElement('span', { 
-                                                    className: 'text-xs px-2 py-1 rounded font-semibold ' + 
+                                                    className: 'text-xs px-2 py-1 rounded font-semibold whitespace-nowrap ' + 
                                                     (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
                                                      ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                                                      'bg-green-100 text-green-800')
                                                 }, 
-                                                    ticket.priority === 'critical' ? 'CRITIQUE' :
-                                                    ticket.priority === 'high' ? 'HAUTE' :
-                                                    ticket.priority === 'medium' ? 'MOYENNE' :
-                                                    'FAIBLE'
+                                                    ticket.priority === 'critical' ? 'CRIT' :
+                                                    ticket.priority === 'high' ? 'HAUT' :
+                                                    ticket.priority === 'medium' ? 'MOY' :
+                                                    'BAS'
                                                 )
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm' }, ticket.title),
-                                            React.createElement('p', { className: 'text-xs text-gray-600 mb-2' }, ticket.machine_type + ' ' + ticket.model),
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm line-clamp-2' }, ticket.title),
+                                            React.createElement('p', { className: 'text-xs text-gray-600 mb-1.5 truncate' }, ticket.machine_type + ' ' + ticket.model),
                                             
                                             ticket.media_count > 0 ? React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
                                                 React.createElement('i', { className: 'fas fa-camera mr-1' }),
@@ -2642,6 +2673,7 @@ app.get('/', (c) => {
                                 )
                             );
                         })
+                        )
                     )
                 ),
                 
