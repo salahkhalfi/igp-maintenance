@@ -621,15 +621,13 @@ app.get('/', (c) => {
             }
             
             return React.createElement('div', { 
-                className: 'mt-2 px-2 py-1.5 rounded border-2 ' + elapsed.bgColor + ' ' + elapsed.color
+                className: 'mt-1.5 pt-1.5 border-t border-gray-200 flex items-center justify-between text-xs ' + elapsed.color
             },
-                React.createElement('div', { className: 'flex items-center justify-between gap-2' },
-                    React.createElement('div', { className: 'flex items-center gap-1' },
-                        React.createElement('span', { className: 'text-xs' }, elapsed.icon),
-                        React.createElement('i', { className: 'fas fa-clock text-xs' })
-                    ),
-                    React.createElement('span', { className: 'text-xs font-bold font-mono' }, formatElapsedTime(elapsed))
-                )
+                React.createElement('div', { className: 'flex items-center gap-1' },
+                    React.createElement('span', {}, elapsed.icon),
+                    React.createElement('i', { className: 'fas fa-hourglass-half' })
+                ),
+                React.createElement('span', { className: 'font-bold font-mono' }, formatElapsedTime(elapsed))
             );
         };
         
@@ -2655,33 +2653,35 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            React.createElement('div', { className: 'mb-1.5' },
+                                            React.createElement('div', { className: 'mb-1' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1.5 text-sm line-clamp-2' }, ticket.title),
-                                            React.createElement('div', { className: 'mb-1.5' },
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm line-clamp-2' }, ticket.title),
+                                            React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('span', { 
-                                                    className: 'inline-block text-xs px-2 py-1 rounded font-semibold whitespace-nowrap ' + 
-                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                     'bg-green-100 text-green-800')
+                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
+                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
+                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                     'bg-green-100 text-green-700')
                                                 }, 
-                                                    ticket.priority === 'critical' ? '🔴 CRITIQUE' :
-                                                    ticket.priority === 'high' ? '🟠 HAUTE' :
-                                                    ticket.priority === 'medium' ? '🟡 MOYENNE' :
-                                                    '🟢 FAIBLE'
-                                                )
+                                                    ticket.priority === 'critical' ? '🔴 CRIT' :
+                                                    ticket.priority === 'high' ? '🟠 HAUT' :
+                                                    ticket.priority === 'medium' ? '🟡 MOY' :
+                                                    '🟢 BAS'
+                                                ),
+                                                React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
-                                            React.createElement('p', { className: 'text-xs text-gray-600 mb-1.5 truncate' }, ticket.machine_type + ' ' + ticket.model),
                                             
-                                            ticket.media_count > 0 ? React.createElement('div', { className: 'mb-2 flex items-center text-xs text-igp-blue font-semibold' },
-                                                React.createElement('i', { className: 'fas fa-camera mr-1' }),
-                                                ticket.media_count + ' photo(s)/vidéo(s)'
-                                            ) : null,
-                                            React.createElement('div', { className: 'flex items-center text-xs text-gray-500' },
-                                                React.createElement('i', { className: 'far fa-clock mr-1' }),
-                                                formatDateEST(ticket.created_at, false)
+                                            React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
+                                                React.createElement('div', { className: 'flex items-center text-gray-500' },
+                                                    React.createElement('i', { className: 'far fa-clock mr-1' }),
+                                                    React.createElement('span', {}, formatDateEST(ticket.created_at, false))
+                                                ),
+                                                ticket.media_count > 0 ? React.createElement('div', { className: 'flex items-center text-igp-blue font-semibold' },
+                                                    React.createElement('i', { className: 'fas fa-camera mr-1' }),
+                                                    React.createElement('span', {}, ticket.media_count)
+                                                ) : null
                                             ),
                                             React.createElement(TicketTimer, { 
                                                 createdAt: ticket.created_at,
