@@ -3323,6 +3323,14 @@ app.get('/changelog', (c) => {
     </style>
 </head>
 <body class="p-4 md:p-8">
+    <!-- Bouton Fermer Sticky -->
+    <div class="fixed top-4 right-4 z-50">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-xl border-2 border-gray-200">
+            <i class="fas fa-times"></i>
+            <span class="hidden md:inline">Fermer</span>
+        </a>
+    </div>
+
     <div class="max-w-5xl mx-auto">
         <!-- Header -->
         <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 mb-8">
@@ -3675,8 +3683,8 @@ app.get('/changelog', (c) => {
 
         <!-- Footer -->
         <div class="mt-8 text-center">
-            <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-lg">
-                <i class="fas fa-arrow-left"></i>
+            <a href="/" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-700 rounded-xl font-bold hover:bg-gray-100 hover:scale-105 transition-all shadow-2xl text-lg border-2 border-gray-200">
+                <i class="fas fa-arrow-left text-blue-600"></i>
                 Retour à l'application
             </a>
         </div>
