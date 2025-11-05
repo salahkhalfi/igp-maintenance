@@ -1188,13 +1188,23 @@ app.get('/', (c) => {
                 setUploadProgress(0);
                 
                 try {
+                    // Capturer l'heure locale de l'appareil de l'utilisateur
+                    const localTime = new Date();
+                    const year = localTime.getFullYear();
+                    const month = String(localTime.getMonth() + 1).padStart(2, '0');
+                    const day = String(localTime.getDate()).padStart(2, '0');
+                    const hours = String(localTime.getHours()).padStart(2, '0');
+                    const minutes = String(localTime.getMinutes()).padStart(2, '0');
+                    const seconds = String(localTime.getSeconds()).padStart(2, '0');
+                    const localTimestamp = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
                     
                     const response = await axios.post(API_URL + '/tickets', {
                         title,
                         description,
                         reporter_name: reporterName,
                         machine_id: parseInt(machineId),
-                        priority
+                        priority,
+                        created_at: localTimestamp
                     });
                     
                     const ticketId = response.data.ticket.id;

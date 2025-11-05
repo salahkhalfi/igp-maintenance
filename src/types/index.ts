@@ -67,8 +67,10 @@ export interface TimelineEntry {
 export interface CreateTicketRequest {
   title: string;
   description: string;
+  reporter_name: string;
   machine_id: number;
   priority: 'low' | 'medium' | 'high' | 'critical';
+  created_at?: string; // Timestamp optionnel de l'appareil de l'utilisateur
 }
 
 export interface UpdateTicketRequest {

@@ -110,7 +110,7 @@ tickets.post('/', async (c) => {
   try {
     const user = c.get('user') as any;
     const body: CreateTicketRequest = await c.req.json();
-    const { title, description, reporter_name, machine_id, priority } = body;
+    const { title, description, reporter_name, machine_id, priority, created_at } = body;
     
     // Validation
     if (!title || !description || !reporter_name || !machine_id || !priority) {
@@ -129,17 +129,15 @@ tickets.post('/', async (c) => {
     // Générer l'ID du ticket
     const ticket_id = generateTicketId(machine.machine_type, machine.model);
     
-    // Créer timestamp EST/EDT (America/Toronto)
-    // SQLite stocke en UTC, on enregistre l'heure actuelle
-    const now = new Date();
-    const estDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
-    const isoTimestamp = estDate.toISOString().replace('T', ' ').substring(0, 19);
+    // Utiliser le timestamp envoyé par le client (heure locale de son appareil)
+    // Si non fourni, utiliser l'heure actuelle du serveur
+    const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
     
-    // Créer le ticket avec created_at explicite en EST
+    // Créer le ticket avec le timestamp de l'appareil de l'utilisateur
     const result = await c.env.DB.prepare(`
       INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
-    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, isoTimestamp, isoTimestamp).run();
+    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, timestamp, timestamp).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
