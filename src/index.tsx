@@ -1959,7 +1959,8 @@ app.get('/', (c) => {
                                     React.createElement('select', {
                                         value: assignedTo,
                                         onChange: (e) => setAssignedTo(e.target.value),
-                                        className: 'w-full px-4 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none'
+                                        className: 'w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-2 border-purple-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10',
+                                        style: { boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
                                         React.createElement('option', { value: 'all' }, '👥 Toute equipe'),
@@ -2970,7 +2971,8 @@ app.get('/', (c) => {
                                     React.createElement('select', {
                                         value: newRole,
                                         onChange: (e) => setNewRole(e.target.value),
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all'
+                                        className: 'w-full px-4 py-3 bg-gradient-to-br from-white/90 to-blue-50/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%233b82f6\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10',
+                                        style: { boxShadow: '0 6px 20px rgba(59, 130, 246, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('option', { value: 'operator' }, 'Operateur'),
                                         React.createElement('option', { value: 'technician' }, 'Technicien'),
@@ -3031,7 +3033,8 @@ app.get('/', (c) => {
                                 React.createElement('select', {
                                     value: editRole,
                                     onChange: (e) => setEditRole(e.target.value),
-                                    className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
+                                    className: 'w-full px-4 py-3 bg-gradient-to-br from-white/90 to-green-50/80 backdrop-blur-sm border-2 border-green-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:shadow-xl cursor-pointer font-semibold disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%2322c55e\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10',
+                                    style: { boxShadow: '0 6px 20px rgba(34, 197, 94, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
                                     disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin'
                                 },
                                     React.createElement('option', { value: 'operator' }, "Opérateur"),
@@ -3487,7 +3490,8 @@ app.get('/', (c) => {
                                                 loadPrivateMessages(user.id);
                                             }
                                         },
-                                        className: 'w-full border-2 border-indigo-300 bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-400 transition-all shadow-sm',
+                                        className: 'w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-br from-white/95 to-indigo-50/80 backdrop-blur-sm border-2 border-indigo-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:shadow-xl cursor-pointer font-semibold text-xs sm:text-sm appearance-none bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236366f1\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E")] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10',
+                                        style: { boxShadow: '0 6px 20px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
                                         value: ''
                                     },
                                         React.createElement('option', { value: '', disabled: true }, '📝 Nouvelle conversation...'),
