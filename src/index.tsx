@@ -102,7 +102,7 @@ app.get('/api/technicians', authMiddleware, async (c) => {
 
 // Route pour que les techniciens voient la liste de tous les utilisateurs
 // IMPORTANT: Cette route doit etre AVANT app.route('/api/users') pour ne pas etre bloquee par supervisorOrAdmin
-app.get('/api/users/team', technicianSupervisorOrAdmin, async (c) => {
+app.get('/api/users/team', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT id, email, full_name, role, created_at, updated_at
@@ -130,8 +130,11 @@ app.route('/api/comments', comments);
 // ROUTES API - MESSAGERIE
 // ========================================
 
+// Middleware pour toutes les routes de messagerie
+app.use('/api/messages/*', authMiddleware);
+
 // Envoyer un message (public ou prive)
-app.post('/api/messages', technicianSupervisorOrAdmin, async (c) => {
+app.post('/api/messages', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
   try {
     const user = c.get('user');
     const { message_type, recipient_id, content } = await c.req.json();
@@ -153,7 +156,7 @@ app.post('/api/messages', technicianSupervisorOrAdmin, async (c) => {
     const result = await c.env.DB.prepare(`
       INSERT INTO messages (sender_id, recipient_id, message_type, content)
       VALUES (?, ?, ?, ?)
-    `).bind(user.id, recipient_id || null, message_type, content).run();
+    `).bind(user.userId, recipient_id || null, message_type, content).run();
     
     return c.json({ 
       message: 'Message envoye avec succes',
@@ -205,7 +208,7 @@ app.get('/api/messages/conversations', technicianSupervisorOrAdmin, async (c) =>
       FROM messages m
       WHERE m.message_type = 'private'
         AND (m.sender_id = ? OR m.recipient_id = ?)
-    `).bind(user.id, user.id, user.id).all();
+    `).bind(user.userId, user.userId, user.userId).all();
     
     // Pour chaque contact, recuperer les details
     const conversations = [];
@@ -224,14 +227,14 @@ app.get('/api/messages/conversations', technicianSupervisorOrAdmin, async (c) =>
         FROM messages
         WHERE ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?))
         ORDER BY created_at DESC LIMIT 1
-      `).bind(user.id, contactId, contactId, user.id).first();
+      `).bind(user.userId, contactId, contactId, user.userId).first();
       
       // Messages non lus
       const unreadResult = await c.env.DB.prepare(`
         SELECT COUNT(*) as count
         FROM messages
         WHERE sender_id = ? AND recipient_id = ? AND is_read = 0
-      `).bind(contactId, user.id).first();
+      `).bind(contactId, user.userId).first();
       
       conversations.push({
         contact_id: contactId,
@@ -279,7 +282,7 @@ app.get('/api/messages/private/:contactId', technicianSupervisorOrAdmin, async (
         AND ((m.sender_id = ? AND m.recipient_id = ?)
           OR (m.sender_id = ? AND m.recipient_id = ?))
       ORDER BY m.created_at ASC
-    `).bind(user.id, contactId, contactId, user.id).all();
+    `).bind(user.userId, contactId, contactId, user.userId).all();
     
     // Marquer les messages recus comme lus
     await c.env.DB.prepare(`
@@ -288,7 +291,7 @@ app.get('/api/messages/private/:contactId', technicianSupervisorOrAdmin, async (
       WHERE sender_id = ? 
         AND recipient_id = ? 
         AND is_read = 0
-    `).bind(contactId, user.id).run();
+    `).bind(contactId, user.userId).run();
     
     return c.json({ messages: results });
   } catch (error) {
@@ -306,7 +309,7 @@ app.get('/api/messages/unread-count', technicianSupervisorOrAdmin, async (c) => 
       SELECT COUNT(*) as count
       FROM messages
       WHERE recipient_id = ? AND is_read = 0
-    `).bind(user.id).first();
+    `).bind(user.userId).first();
     
     return c.json({ count: result?.count || 0 });
   } catch (error) {
@@ -326,7 +329,7 @@ app.get('/api/messages/available-users', technicianSupervisorOrAdmin, async (c) 
       WHERE role IN ('operator', 'technician', 'supervisor', 'admin')
         AND id != ?
       ORDER BY role DESC, full_name ASC
-    `).bind(user.id).all();
+    `).bind(user.userId).all();
     
     return c.json({ users: results });
   } catch (error) {
