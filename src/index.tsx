@@ -1372,7 +1372,7 @@ app.get('/', (c) => {
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow-md hover:shadow-lg font-semibold transition-all'
+                            className: 'px-6 py-3 bg-gradient-to-br from-indigo-400 via-indigo-500 to-purple-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(99,102,241,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(99,102,241,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(99,102,241,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-indigo-300/50'
                         }, 'Fermer')
                     )
                 )
@@ -2710,7 +2710,7 @@ app.get('/', (c) => {
                         // Bouton creer utilisateur (visible seulement pour admin/superviseur)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement('button', {
                             onClick: () => setShowCreateForm(true),
-                            className: 'px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md hover:shadow-lg font-semibold transition-all'
+                            className: 'px-6 py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-orange-300/50'
                         }, "Créer un utilisateur") : null,
                         React.createElement('div', { className: 'flex-1 relative' },
                             React.createElement('input', {
@@ -2794,12 +2794,12 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     type: 'button',
                                     onClick: () => setShowCreateForm(false),
-                                    className: 'px-6 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all'
+                                    className: 'px-6 py-3 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-xl font-bold transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
                                 }, 'Annuler'),
                                 React.createElement('button', {
                                     type: 'submit',
                                     disabled: buttonLoading === 'create',
-                                    className: 'px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center transition-all'
+                                    className: 'px-6 py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2 justify-center border-t border-orange-300/50'
                                 }, 
                                     buttonLoading === 'create' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                     "Créer"
@@ -2855,12 +2855,12 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     type: 'button',
                                     onClick: () => setEditingUser(null),
-                                    className: 'px-6 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all'
+                                    className: 'px-6 py-3 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-xl font-bold transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
                                 }, 'Annuler'),
                                 React.createElement('button', {
                                     type: 'submit',
                                     disabled: buttonLoading === 'update',
-                                    className: 'px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center transition-all'
+                                    className: 'px-6 py-3 bg-gradient-to-br from-green-400 via-green-500 to-green-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(34,197,94,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(34,197,94,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(34,197,94,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2 justify-center border-t border-green-300/50'
                                 }, 
                                     buttonLoading === 'update' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                     'Enregistrer'
@@ -2910,21 +2910,21 @@ app.get('/', (c) => {
                                     (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician') ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
                                         React.createElement('button', {
                                             onClick: () => handleEditUser(user),
-                                            className: 'w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-sm hover:shadow-md font-semibold text-sm transition-all'
+                                            className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(59,130,246,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(59,130,246,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(59,130,246,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50'
                                         },
                                             React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                             'Modifier'
                                         ),
                                         React.createElement('button', {
                                             onClick: () => handleResetPassword(user.id, user.full_name),
-                                            className: 'w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg shadow-sm hover:shadow-md font-semibold text-sm transition-all'
+                                            className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(234,179,8,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(234,179,8,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(234,179,8,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-yellow-300/50'
                                         },
                                             React.createElement('i', { className: 'fas fa-key mr-1' }),
                                             'MdP'
                                         ),
                                         React.createElement('button', {
                                             onClick: () => handleDeleteUser(user.id, user.full_name),
-                                            className: 'w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-sm hover:shadow-md font-semibold text-sm transition-all'
+                                            className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-red-400 via-red-500 to-red-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(239,68,68,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(239,68,68,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(239,68,68,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-red-300/50'
                                         },
                                             React.createElement('i', { className: 'fas fa-trash mr-1' }),
                                             'Supprimer'
