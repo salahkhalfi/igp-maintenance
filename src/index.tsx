@@ -338,6 +338,49 @@ app.get('/api/messages/available-users', technicianSupervisorOrAdmin, async (c) 
   }
 });
 
+// Supprimer un message avec controle de permissions
+app.delete('/api/messages/:messageId', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    const messageId = parseInt(c.req.param('messageId'));
+    
+    // Recuperer le message
+    const message = await c.env.DB.prepare(`
+      SELECT m.*, u.role as sender_role
+      FROM messages m
+      LEFT JOIN users u ON m.sender_id = u.id
+      WHERE m.id = ?
+    `).bind(messageId).first();
+    
+    if (!message) {
+      return c.json({ error: 'Message non trouve' }, 404);
+    }
+    
+    // Verification des permissions
+    const canDelete = 
+      // Utilisateur peut supprimer son propre message
+      message.sender_id === user.userId ||
+      // Admin peut supprimer tous les messages
+      user.role === 'admin' ||
+      // Superviseur peut supprimer tous sauf ceux de admin
+      (user.role === 'supervisor' && message.sender_role !== 'admin');
+    
+    if (!canDelete) {
+      return c.json({ error: 'Vous n avez pas la permission de supprimer ce message' }, 403);
+    }
+    
+    // Supprimer le message
+    await c.env.DB.prepare(`
+      DELETE FROM messages WHERE id = ?
+    `).bind(messageId).run();
+    
+    return c.json({ message: 'Message supprime avec succes' });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    return c.json({ error: 'Erreur lors de la suppression du message' }, 500);
+  }
+});
+
 
 app.get('/', (c) => {
   return c.html(`
@@ -1883,6 +1926,12 @@ app.get('/', (c) => {
             };
             
             const handleDeleteTicket = async () => {
+                // Verification: technicien ne peut pas supprimer un ticket planifie
+                if (currentUser.role === 'technician' && ticket?.scheduled_date) {
+                    alert('Les techniciens ne peuvent pas supprimer les tickets planifies');
+                    return;
+                }
+                
                 if (!confirm('Êtes-vous sûr de vouloir supprimer ce ticket ? Cette action est irréversible.')) {
                     return;
                 }
@@ -2034,14 +2083,16 @@ app.get('/', (c) => {
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
                             (ticket && currentUser && (
-                                (currentUser.role === 'technician') || 
+                                (currentUser.role === 'technician' && !ticket.scheduled_date) || 
                                 (currentUser.role === 'supervisor') ||
                                 (currentUser.role === 'admin') ||
                                 (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
                             )) ? React.createElement('button', {
                                 onClick: handleDeleteTicket,
-                                className: 'text-red-500 hover:text-red-700 transition-colors',
-                                title: 'Supprimer ce ticket'
+                                className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95',
+                                title: ticket.scheduled_date && currentUser.role === 'technician' 
+                                    ? 'Les techniciens ne peuvent pas supprimer les tickets planifies' 
+                                    : 'Supprimer ce ticket'
                             },
                                 React.createElement('i', { className: 'fas fa-trash-alt fa-2x' })
                             ) : null,
@@ -3032,6 +3083,33 @@ app.get('/', (c) => {
                 }
             };
             
+            const deleteMessage = async (messageId) => {
+                if (!confirm('Etes-vous sur de vouloir supprimer ce message ?')) return;
+                
+                try {
+                    await axios.delete(API_URL + '/messages/' + messageId);
+                    
+                    if (activeTab === 'public') {
+                        loadPublicMessages();
+                    } else if (selectedContact) {
+                        loadPrivateMessages(selectedContact.id);
+                        loadConversations();
+                    }
+                } catch (error) {
+                    alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
+                }
+            };
+            
+            const canDeleteMessage = (msg) => {
+                // Utilisateur peut supprimer son propre message
+                if (msg.sender_id === currentUser.id) return true;
+                // Admin peut supprimer tous les messages
+                if (currentUser.role === 'admin') return true;
+                // Superviseur peut supprimer tous sauf ceux de admin
+                if (currentUser.role === 'supervisor' && msg.sender_role !== 'admin') return true;
+                return false;
+            };
+            
             const handleKeyPress = (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -3162,7 +3240,17 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
                                             React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
-                                        )
+                                        ),
+                                        canDeleteMessage(msg) ? React.createElement('button', {
+                                            onClick: (e) => {
+                                                e.stopPropagation();
+                                                deleteMessage(msg.id);
+                                            },
+                                            className: 'flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2 transition-all transform hover:scale-110 active:scale-95',
+                                            title: 'Supprimer le message'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-trash text-sm' })
+                                        ) : null
                                     )
                                 )),
                                 React.createElement('div', { ref: messagesEndRef })
@@ -3302,8 +3390,18 @@ app.get('/', (c) => {
                                         const isMe = msg.sender_id === currentUser.userId;
                                         return React.createElement('div', {
                                             key: msg.id,
-                                            className: 'flex ' + (isMe ? 'justify-end' : 'justify-start') + ' animate-fadeIn'
+                                            className: 'flex items-start gap-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' animate-fadeIn group'
                                         },
+                                            !isMe && canDeleteMessage(msg) ? React.createElement('button', {
+                                                onClick: (e) => {
+                                                    e.stopPropagation();
+                                                    deleteMessage(msg.id);
+                                                },
+                                                className: 'opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transform hover:scale-110 active:scale-95',
+                                                title: 'Supprimer'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-trash text-xs' })
+                                            ) : null,
                                             React.createElement('div', {
                                                 className: 'max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-3 shadow-lg hover:shadow-2xl transition-all transform hover:scale-[1.02] ' +
                                                     (isMe 
@@ -3316,8 +3414,22 @@ app.get('/', (c) => {
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
                                                 React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
                                                 React.createElement('div', { 
-                                                    className: 'text-xs mt-1 ' + (isMe ? 'text-white text-opacity-90 text-right' : 'text-gray-400')
-                                                }, formatMessageTime(msg.created_at))
+                                                    className: 'text-xs mt-1 flex items-center justify-between gap-2'
+                                                },
+                                                    React.createElement('span', {
+                                                        className: isMe ? 'text-white text-opacity-90' : 'text-gray-400'
+                                                    }, formatMessageTime(msg.created_at)),
+                                                    isMe && canDeleteMessage(msg) ? React.createElement('button', {
+                                                        onClick: (e) => {
+                                                            e.stopPropagation();
+                                                            deleteMessage(msg.id);
+                                                        },
+                                                        className: 'opacity-50 hover:opacity-100 transition-opacity ' + (isMe ? 'text-white hover:text-red-200' : 'text-red-500 hover:text-red-700'),
+                                                        title: 'Supprimer'
+                                                    },
+                                                        React.createElement('i', { className: 'fas fa-trash text-xs' })
+                                                    ) : null
+                                                )
                                             )
                                         );
                                     }),
