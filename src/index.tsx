@@ -2794,15 +2794,15 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     type: 'button',
                                     onClick: () => setShowCreateForm(false),
-                                    className: 'px-6 py-2 border-2 rounded-md'
+                                    className: 'px-6 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all'
                                 }, 'Annuler'),
                                 React.createElement('button', {
                                     type: 'submit',
                                     disabled: buttonLoading === 'create',
-                                    className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center'
+                                    className: 'px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center transition-all'
                                 }, 
                                     buttonLoading === 'create' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
-                                    'Creer'
+                                    "Créer"
                                 )
                             )
                         )
