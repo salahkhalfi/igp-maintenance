@@ -83,9 +83,6 @@ app.use('/api/machines/*', authMiddleware);
 app.route('/api/machines', machines);
 
 
-app.use('/api/users/*', authMiddleware);
-app.route('/api/users', users);
-
 // Route pour récupérer la liste des techniciens (accessible par tous les utilisateurs authentifiés)
 app.get('/api/technicians', authMiddleware, async (c) => {
   try {
@@ -104,6 +101,7 @@ app.get('/api/technicians', authMiddleware, async (c) => {
 });
 
 // Route pour que les techniciens voient la liste de tous les utilisateurs
+// IMPORTANT: Cette route doit etre AVANT app.route('/api/users') pour ne pas etre bloquee par supervisorOrAdmin
 app.get('/api/users/team', technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
@@ -118,6 +116,9 @@ app.get('/api/users/team', technicianSupervisorOrAdmin, async (c) => {
     return c.json({ error: 'Erreur lors de la récupération de l equipe' }, 500);
   }
 });
+
+app.use('/api/users/*', authMiddleware);
+app.route('/api/users', users);
 
 app.route('/api/media', media);
 
