@@ -126,6 +126,188 @@ app.route('/api/media', media);
 app.route('/api/comments', comments);
 
 
+// ========================================
+// ROUTES API - MESSAGERIE
+// ========================================
+
+// Envoyer un message (public ou prive)
+app.post('/api/messages', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    const { message_type, recipient_id, content } = await c.req.json();
+    
+    // Validation
+    if (!message_type || !content || content.trim() === '') {
+      return c.json({ error: 'Type et contenu requis' }, 400);
+    }
+    
+    if (message_type !== 'public' && message_type !== 'private') {
+      return c.json({ error: 'Type invalide' }, 400);
+    }
+    
+    if (message_type === 'private' && !recipient_id) {
+      return c.json({ error: 'Destinataire requis pour message prive' }, 400);
+    }
+    
+    // Inserer le message
+    const result = await c.env.DB.prepare(`
+      INSERT INTO messages (sender_id, recipient_id, message_type, content)
+      VALUES (?, ?, ?, ?)
+    `).bind(user.id, recipient_id || null, message_type, content).run();
+    
+    return c.json({ 
+      message: 'Message envoye avec succes',
+      id: result.meta.last_row_id 
+    }, 201);
+  } catch (error) {
+    console.error('Send message error:', error);
+    return c.json({ error: 'Erreur lors de envoi du message' }, 500);
+  }
+});
+
+// Recuperer les messages publics
+app.get('/api/messages/public', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT 
+        m.id,
+        m.content,
+        m.created_at,
+        m.sender_id,
+        u.full_name as sender_name,
+        u.role as sender_role
+      FROM messages m
+      LEFT JOIN users u ON m.sender_id = u.id
+      WHERE m.message_type = 'public'
+      ORDER BY m.created_at DESC
+      LIMIT 100
+    `).all();
+    
+    return c.json({ messages: results });
+  } catch (error) {
+    console.error('Get public messages error:', error);
+    return c.json({ error: 'Erreur lors de la recuperation des messages' }, 500);
+  }
+});
+
+// Recuperer les conversations privees (liste des contacts)
+app.get('/api/messages/conversations', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    const { results } = await c.env.DB.prepare(`
+      SELECT DISTINCT
+        CASE 
+          WHEN m.sender_id = ? THEN m.recipient_id
+          ELSE m.sender_id
+        END as contact_id,
+        u.full_name as contact_name,
+        u.role as contact_role,
+        (SELECT COUNT(*) FROM messages 
+         WHERE sender_id = contact_id 
+         AND recipient_id = ? 
+         AND is_read = 0) as unread_count,
+        (SELECT content FROM messages 
+         WHERE (sender_id = ? AND recipient_id = contact_id)
+            OR (sender_id = contact_id AND recipient_id = ?)
+         ORDER BY created_at DESC LIMIT 1) as last_message,
+        (SELECT created_at FROM messages 
+         WHERE (sender_id = ? AND recipient_id = contact_id)
+            OR (sender_id = contact_id AND recipient_id = ?)
+         ORDER BY created_at DESC LIMIT 1) as last_message_time
+      FROM messages m
+      LEFT JOIN users u ON (CASE WHEN m.sender_id = ? THEN m.recipient_id ELSE m.sender_id END) = u.id
+      WHERE m.message_type = 'private'
+        AND (m.sender_id = ? OR m.recipient_id = ?)
+      ORDER BY last_message_time DESC
+    `).bind(user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id).all();
+    
+    return c.json({ conversations: results });
+  } catch (error) {
+    console.error('Get conversations error:', error);
+    return c.json({ error: 'Erreur lors de la recuperation des conversations' }, 500);
+  }
+});
+
+// Recuperer les messages prives avec un contact specifique
+app.get('/api/messages/private/:contactId', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    const contactId = parseInt(c.req.param('contactId'));
+    
+    // Recuperer les messages
+    const { results } = await c.env.DB.prepare(`
+      SELECT 
+        m.id,
+        m.content,
+        m.created_at,
+        m.sender_id,
+        m.recipient_id,
+        m.is_read,
+        u.full_name as sender_name
+      FROM messages m
+      LEFT JOIN users u ON m.sender_id = u.id
+      WHERE m.message_type = 'private'
+        AND ((m.sender_id = ? AND m.recipient_id = ?)
+          OR (m.sender_id = ? AND m.recipient_id = ?))
+      ORDER BY m.created_at ASC
+    `).bind(user.id, contactId, contactId, user.id).all();
+    
+    // Marquer les messages recus comme lus
+    await c.env.DB.prepare(`
+      UPDATE messages 
+      SET is_read = 1, read_at = CURRENT_TIMESTAMP
+      WHERE sender_id = ? 
+        AND recipient_id = ? 
+        AND is_read = 0
+    `).bind(contactId, user.id).run();
+    
+    return c.json({ messages: results });
+  } catch (error) {
+    console.error('Get private messages error:', error);
+    return c.json({ error: 'Erreur lors de la recuperation des messages' }, 500);
+  }
+});
+
+// Compter les messages non lus
+app.get('/api/messages/unread-count', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    const result = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM messages
+      WHERE recipient_id = ? AND is_read = 0
+    `).bind(user.id).first();
+    
+    return c.json({ count: result?.count || 0 });
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    return c.json({ error: 'Erreur lors du comptage' }, 500);
+  }
+});
+
+// Liste des utilisateurs disponibles pour messagerie
+app.get('/api/messages/available-users', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    const { results } = await c.env.DB.prepare(`
+      SELECT id, full_name, role, email
+      FROM users
+      WHERE role IN ('technician', 'supervisor', 'admin')
+        AND id != ?
+      ORDER BY role DESC, full_name ASC
+    `).bind(user.id).all();
+    
+    return c.json({ users: results });
+  } catch (error) {
+    console.error('Get available users error:', error);
+    return c.json({ error: 'Erreur lors de la recuperation des utilisateurs' }, 500);
+  }
+});
+
+
 app.get('/', (c) => {
   return c.html(`
 <!DOCTYPE html>
@@ -2686,6 +2868,416 @@ app.get('/', (c) => {
         };
         
         
+        // ========================================
+        // COMPOSANT MESSAGERIE
+        // ========================================
+        const MessagingModal = ({ show, onClose, currentUser }) => {
+            const [activeTab, setActiveTab] = React.useState('public');
+            const [publicMessages, setPublicMessages] = React.useState([]);
+            const [conversations, setConversations] = React.useState([]);
+            const [selectedContact, setSelectedContact] = React.useState(null);
+            const [privateMessages, setPrivateMessages] = React.useState([]);
+            const [availableUsers, setAvailableUsers] = React.useState([]);
+            const [messageContent, setMessageContent] = React.useState('');
+            const [unreadCount, setUnreadCount] = React.useState(0);
+            const [loading, setLoading] = React.useState(false);
+            const messagesEndRef = React.useRef(null);
+            
+            const scrollToBottom = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            };
+            
+            React.useEffect(() => {
+                if (show) {
+                    loadPublicMessages();
+                    loadConversations();
+                    loadAvailableUsers();
+                    loadUnreadCount();
+                    
+                    // Rafraichir toutes les 10 secondes
+                    const interval = setInterval(() => {
+                        if (activeTab === 'public') {
+                            loadPublicMessages();
+                        } else if (selectedContact) {
+                            loadPrivateMessages(selectedContact.id);
+                        }
+                        loadUnreadCount();
+                    }, 10000);
+                    
+                    return () => clearInterval(interval);
+                }
+            }, [show, activeTab, selectedContact]);
+            
+            React.useEffect(() => {
+                scrollToBottom();
+            }, [publicMessages, privateMessages]);
+            
+            const loadPublicMessages = async () => {
+                try {
+                    const response = await axios.get(API_URL + '/messages/public');
+                    setPublicMessages(response.data.messages);
+                } catch (error) {
+                    console.error('Erreur chargement messages publics:', error);
+                }
+            };
+            
+            const loadConversations = async () => {
+                try {
+                    const response = await axios.get(API_URL + '/messages/conversations');
+                    setConversations(response.data.conversations);
+                } catch (error) {
+                    console.error('Erreur chargement conversations:', error);
+                }
+            };
+            
+            const loadPrivateMessages = async (contactId) => {
+                try {
+                    setLoading(true);
+                    const response = await axios.get(API_URL + '/messages/private/' + contactId);
+                    setPrivateMessages(response.data.messages);
+                    loadConversations(); // Rafraichir pour mettre a jour unread_count
+                } catch (error) {
+                    console.error('Erreur chargement messages prives:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const loadAvailableUsers = async () => {
+                try {
+                    const response = await axios.get(API_URL + '/messages/available-users');
+                    setAvailableUsers(response.data.users);
+                } catch (error) {
+                    console.error('Erreur chargement utilisateurs:', error);
+                }
+            };
+            
+            const loadUnreadCount = async () => {
+                try {
+                    const response = await axios.get(API_URL + '/messages/unread-count');
+                    setUnreadCount(response.data.count);
+                } catch (error) {
+                    console.error('Erreur comptage non lus:', error);
+                }
+            };
+            
+            const sendMessage = async () => {
+                if (!messageContent.trim()) return;
+                
+                try {
+                    const payload = {
+                        message_type: activeTab,
+                        content: messageContent,
+                        recipient_id: activeTab === 'private' && selectedContact ? selectedContact.id : null
+                    };
+                    
+                    await axios.post(API_URL + '/messages', payload);
+                    setMessageContent('');
+                    
+                    if (activeTab === 'public') {
+                        loadPublicMessages();
+                    } else if (selectedContact) {
+                        loadPrivateMessages(selectedContact.id);
+                        loadConversations();
+                    }
+                } catch (error) {
+                    alert('Erreur envoi message: ' + (error.response?.data?.error || 'Erreur'));
+                }
+            };
+            
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            };
+            
+            const formatMessageTime = (timestamp) => {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins < 1) return 'A instant';
+                if (diffMins < 60) return 'Il y a ' + diffMins + 'min';
+                if (diffMins < 1440) return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            };
+            
+            const getRoleBadgeClass = (role) => {
+                if (role === 'admin') return 'bg-red-100 text-red-700';
+                if (role === 'supervisor') return 'bg-blue-100 text-blue-700';
+                if (role === 'technician') return 'bg-green-100 text-green-700';
+                return 'bg-gray-100 text-gray-700';
+            };
+            
+            const getRoleLabel = (role) => {
+                if (role === 'admin') return 'Admin';
+                if (role === 'supervisor') return 'Superviseur';
+                if (role === 'technician') return 'Technicien';
+                return 'Operateur';
+            };
+            
+            if (!show) return null;
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    // Header
+                    React.createElement('div', {
+                        className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-lg flex justify-between items-center'
+                    },
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('i', { className: 'fas fa-comments text-2xl' }),
+                            React.createElement('h2', { className: 'text-2xl font-bold' }, 'Messagerie Equipe'),
+                            unreadCount > 0 ? React.createElement('span', {
+                                className: 'bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full'
+                            }, unreadCount) : null
+                        ),
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all'
+                        },
+                            React.createElement('i', { className: 'fas fa-times text-xl' })
+                        )
+                    ),
+                    
+                    // Tabs
+                    React.createElement('div', {
+                        className: 'flex border-b border-gray-200 bg-gray-50'
+                    },
+                        React.createElement('button', {
+                            onClick: () => {
+                                setActiveTab('public');
+                                setSelectedContact(null);
+                            },
+                            className: 'flex-1 px-6 py-3 font-semibold transition-all ' + 
+                                (activeTab === 'public' 
+                                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' 
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')
+                        },
+                            React.createElement('i', { className: 'fas fa-globe mr-2' }),
+                            'Canal Public'
+                        ),
+                        React.createElement('button', {
+                            onClick: () => setActiveTab('private'),
+                            className: 'flex-1 px-6 py-3 font-semibold transition-all relative ' + 
+                                (activeTab === 'private' 
+                                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' 
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')
+                        },
+                            React.createElement('i', { className: 'fas fa-user-friends mr-2' }),
+                            'Messages Prives',
+                            unreadCount > 0 ? React.createElement('span', {
+                                className: 'absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full'
+                            }, unreadCount) : null
+                        )
+                    ),
+                    
+                    // Content
+                    React.createElement('div', { className: 'flex-1 flex overflow-hidden' },
+                        // PUBLIC TAB
+                        activeTab === 'public' ? React.createElement('div', { className: 'flex-1 flex flex-col' },
+                            // Messages publics
+                            React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50' },
+                                publicMessages.length === 0 ? React.createElement('div', {
+                                    className: 'text-center text-gray-400 py-12'
+                                },
+                                    React.createElement('i', { className: 'fas fa-comments text-6xl mb-4' }),
+                                    React.createElement('p', { className: 'text-lg' }, 'Aucun message public')
+                                ) : publicMessages.map(msg => React.createElement('div', {
+                                    key: msg.id,
+                                    className: 'bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow'
+                                },
+                                    React.createElement('div', { className: 'flex items-start gap-3' },
+                                        React.createElement('div', {
+                                            className: 'w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0'
+                                        }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
+                                        React.createElement('div', { className: 'flex-1 min-w-0' },
+                                            React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                                React.createElement('span', { className: 'font-semibold text-gray-800' }, msg.sender_name),
+                                                React.createElement('span', {
+                                                    className: 'text-xs px-2 py-0.5 rounded-full font-medium ' + getRoleBadgeClass(msg.sender_role)
+                                                }, getRoleLabel(msg.sender_role)),
+                                                React.createElement('span', { className: 'text-xs text-gray-400' }, formatMessageTime(msg.created_at))
+                                            ),
+                                            React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words' }, msg.content)
+                                        )
+                                    )
+                                )),
+                                React.createElement('div', { ref: messagesEndRef })
+                            ),
+                            
+                            // Input zone
+                            React.createElement('div', { className: 'border-t border-gray-200 p-4 bg-white' },
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('textarea', {
+                                        value: messageContent,
+                                        onChange: (e) => setMessageContent(e.target.value),
+                                        onKeyPress: handleKeyPress,
+                                        placeholder: 'Ecrire un message public...',
+                                        className: 'flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none',
+                                        rows: 2
+                                    }),
+                                    React.createElement('button', {
+                                        onClick: sendMessage,
+                                        disabled: !messageContent.trim(),
+                                        className: 'px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-paper-plane' })
+                                    )
+                                )
+                            )
+                        ) : null,
+                        
+                        // PRIVATE TAB
+                        activeTab === 'private' ? React.createElement('div', { className: 'flex-1 flex' },
+                            // Liste des conversations
+                            React.createElement('div', { className: 'w-1/3 border-r border-gray-200 flex flex-col bg-gray-50' },
+                                React.createElement('div', { className: 'p-4 border-b border-gray-200 bg-white' },
+                                    React.createElement('h3', { className: 'font-semibold text-gray-700 mb-2' }, 'Contacts'),
+                                    React.createElement('select', {
+                                        onChange: (e) => {
+                                            const userId = parseInt(e.target.value);
+                                            if (!userId) return;
+                                            const user = availableUsers.find(u => u.id === userId);
+                                            if (user) {
+                                                setSelectedContact(user);
+                                                loadPrivateMessages(user.id);
+                                            }
+                                        },
+                                        className: 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500',
+                                        value: ''
+                                    },
+                                        React.createElement('option', { value: '' }, 'Nouvelle conversation...'),
+                                        availableUsers.map(user => React.createElement('option', {
+                                            key: user.id,
+                                            value: user.id
+                                        }, user.full_name + ' (' + getRoleLabel(user.role) + ')'))
+                                    )
+                                ),
+                                React.createElement('div', { className: 'flex-1 overflow-y-auto' },
+                                    conversations.length === 0 ? React.createElement('div', {
+                                        className: 'text-center text-gray-400 py-8 px-4'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-user-friends text-4xl mb-2' }),
+                                        React.createElement('p', { className: 'text-sm' }, 'Aucune conversation')
+                                    ) : conversations.map(conv => React.createElement('div', {
+                                        key: conv.contact_id,
+                                        onClick: () => {
+                                            setSelectedContact({ id: conv.contact_id, full_name: conv.contact_name, role: conv.contact_role });
+                                            loadPrivateMessages(conv.contact_id);
+                                        },
+                                        className: 'p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors ' +
+                                            (selectedContact?.id === conv.contact_id ? 'bg-indigo-50' : 'bg-white')
+                                    },
+                                        React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                            React.createElement('div', {
+                                                className: 'w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0'
+                                            }, conv.contact_name ? conv.contact_name.charAt(0).toUpperCase() : '?'),
+                                            React.createElement('div', { className: 'flex-1 min-w-0' },
+                                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                                    React.createElement('span', { className: 'font-semibold text-sm text-gray-800 truncate' }, conv.contact_name),
+                                                    conv.unread_count > 0 ? React.createElement('span', {
+                                                        className: 'bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full'
+                                                    }, conv.unread_count) : null
+                                                ),
+                                                React.createElement('p', {
+                                                    className: 'text-xs text-gray-500 truncate'
+                                                }, conv.last_message || 'Commencer la conversation')
+                                            )
+                                        )
+                                    ))
+                                )
+                            ),
+                            
+                            // Zone de conversation
+                            selectedContact ? React.createElement('div', { className: 'flex-1 flex flex-col' },
+                                // Header contact
+                                React.createElement('div', { className: 'p-4 border-b border-gray-200 bg-white' },
+                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                        React.createElement('div', {
+                                            className: 'w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold'
+                                        }, selectedContact.full_name.charAt(0).toUpperCase()),
+                                        React.createElement('div', {},
+                                            React.createElement('h3', { className: 'font-semibold text-gray-800' }, selectedContact.full_name),
+                                            React.createElement('span', {
+                                                className: 'text-xs px-2 py-0.5 rounded-full font-medium ' + getRoleBadgeClass(selectedContact.role)
+                                            }, getRoleLabel(selectedContact.role))
+                                        )
+                                    )
+                                ),
+                                
+                                // Messages
+                                React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50' },
+                                    loading ? React.createElement('div', { className: 'text-center text-gray-400 py-12' },
+                                        React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl' })
+                                    ) : privateMessages.length === 0 ? React.createElement('div', {
+                                        className: 'text-center text-gray-400 py-12'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-comments text-6xl mb-4' }),
+                                        React.createElement('p', {}, 'Commencez la conversation avec ' + selectedContact.full_name)
+                                    ) : privateMessages.map(msg => {
+                                        const isMe = msg.sender_id === currentUser.id;
+                                        return React.createElement('div', {
+                                            key: msg.id,
+                                            className: 'flex ' + (isMe ? 'justify-end' : 'justify-start')
+                                        },
+                                            React.createElement('div', {
+                                                className: 'max-w-[70%] rounded-lg p-3 shadow-sm ' +
+                                                    (isMe 
+                                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
+                                                        : 'bg-white text-gray-800')
+                                            },
+                                                !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
+                                                React.createElement('p', { className: 'whitespace-pre-wrap break-words' }, msg.content),
+                                                React.createElement('div', { 
+                                                    className: 'text-xs mt-1 ' + (isMe ? 'text-white text-opacity-80' : 'text-gray-400')
+                                                }, formatMessageTime(msg.created_at))
+                                            )
+                                        );
+                                    }),
+                                    React.createElement('div', { ref: messagesEndRef })
+                                ),
+                                
+                                // Input
+                                React.createElement('div', { className: 'border-t border-gray-200 p-4 bg-white' },
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('textarea', {
+                                            value: messageContent,
+                                            onChange: (e) => setMessageContent(e.target.value),
+                                            onKeyPress: handleKeyPress,
+                                            placeholder: 'Ecrire un message prive...',
+                                            className: 'flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none',
+                                            rows: 2
+                                        }),
+                                        React.createElement('button', {
+                                            onClick: sendMessage,
+                                            disabled: !messageContent.trim(),
+                                            className: 'px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-paper-plane' })
+                                        )
+                                    )
+                                )
+                            ) : React.createElement('div', { className: 'flex-1 flex items-center justify-center bg-gray-50' },
+                                React.createElement('div', { className: 'text-center text-gray-400' },
+                                    React.createElement('i', { className: 'fas fa-arrow-left text-6xl mb-4' }),
+                                    React.createElement('p', { className: 'text-lg' }, 'Selectionnez un contact')
+                                )
+                            )
+                        ) : null
+                    )
+                )
+            );
+        };
+        
+        
         const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
@@ -2693,6 +3285,7 @@ app.get('/', (c) => {
             const [showUserManagement, setShowUserManagement] = React.useState(false);
             const [showUserGuide, setShowUserGuide] = React.useState(false);
             const [showArchived, setShowArchived] = React.useState(false);
+            const [showMessaging, setShowMessaging] = React.useState(false);
             
             const allStatuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
@@ -2920,6 +3513,12 @@ app.get('/', (c) => {
                     currentUser: currentUser
                 }),
                 
+                React.createElement(MessagingModal, {
+                    show: showMessaging,
+                    onClose: () => setShowMessaging(false),
+                    currentUser: currentUser
+                }),
+                
                 React.createElement(UserGuideModal, {
                     show: showUserGuide,
                     onClose: () => setShowUserGuide(false),
@@ -2983,6 +3582,14 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-users-cog mr-2' }),
                                 'Utilisateurs'
                             ),
+                            (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => setShowMessaging(true),
+                                className: 'px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-md transition-all'
+                            },
+                                React.createElement('i', { className: 'fas fa-comments mr-2' }),
+                                'Messagerie'
+                            ) : null,
                             React.createElement('a', {
                                 href: '/guide',
                                 className: 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow-md transition-all inline-flex items-center justify-center',
