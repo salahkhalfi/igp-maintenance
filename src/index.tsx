@@ -1589,26 +1589,28 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', { 
-                className: 'modal active',
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-2xl w-full mx-4 my-auto',
-                    onClick: (e) => e.stopPropagation(),
-                    style: { marginTop: 'auto', marginBottom: 'auto' }
+                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto',
+                    onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b-2 border-igp-blue pb-4' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
-                            React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-igp-orange' }),
-                            'Nouvelle Demande de Maintenance'
+                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-700 to-indigo-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg z-10' },
+                        React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
+                            React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-orange-400 flex-shrink-0' }),
+                            React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
+                                'Nouvelle Demande'
+                            )
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'text-gray-500 hover:text-gray-700'
+                            className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all flex-shrink-0'
                         },
-                            React.createElement('i', { className: 'fas fa-times fa-2x' })
+                            React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl' })
                         )
                     ),
+                    React.createElement('div', { className: 'p-4 sm:p-6' },
                     React.createElement('form', { onSubmit: handleSubmit },
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
@@ -1782,11 +1784,11 @@ app.get('/', (c) => {
                             )
                         : null,
                         
-                        React.createElement('div', { className: 'flex justify-end space-x-4 mt-6 pt-4 border-t-2 border-gray-200' },
+                        React.createElement('div', { className: 'flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-6 pt-4 border-t-2 border-gray-200 sticky bottom-0 bg-white' },
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: onClose,
-                                className: 'px-6 py-2 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition-all'
+                                className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-semibold'
                             }, 
                                 React.createElement('i', { className: 'fas fa-times mr-2' }),
                                 'Annuler'
@@ -1794,7 +1796,7 @@ app.get('/', (c) => {
                             React.createElement('button', {
                                 type: 'submit',
                                 disabled: submitting,
-                                className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 shadow-md transition-all'
+                                className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 shadow-lg transition-all font-semibold'
                             },
                                 submitting 
                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
@@ -1804,6 +1806,7 @@ app.get('/', (c) => {
                                     : 'Créer le ticket' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s))' : '')
                             )
                         )
+                    )
                     )
                 )
             ));
@@ -2624,23 +2627,28 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'modal active',
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg p-6 max-w-4xl w-full mx-4',
-                    onClick: (e) => e.stopPropagation(),
-                    style: { maxHeight: '90vh', overflowY: 'auto' }
+                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
+                    onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b pb-4' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
-                            currentUser.role === 'technician' ? 'Liste Equipe' : 'Gestion des Utilisateurs'
+                    React.createElement('div', { className: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg' },
+                        React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
+                            React.createElement('i', { className: 'fas fa-users-cog text-xl sm:text-2xl flex-shrink-0' }),
+                            React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
+                                currentUser.role === 'technician' ? 'Liste Equipe' : 'Gestion des Utilisateurs'
+                            )
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'text-gray-500 hover:text-gray-700 text-2xl'
-                        }, '×')
+                            className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all flex-shrink-0'
+                        },
+                            React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl' })
+                        )
                     ),
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto p-3 sm:p-6' },
                     
                     React.createElement('div', { className: 'mb-4 flex flex-col sm:flex-row gap-3' },
                         // Bouton creer utilisateur (visible seulement pour admin/superviseur)
@@ -2894,6 +2902,7 @@ app.get('/', (c) => {
                         type: toast.type,
                         onClose: () => setToast({ show: false, message: '', type: 'success' })
                     })
+                    )
                 )
             );
         };
