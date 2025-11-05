@@ -3044,14 +3044,16 @@ app.get('/', (c) => {
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
-                                                ticket.assigned_to ? React.createElement('div', { 
+                                                React.createElement('div', { 
                                                     className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200'
                                                 },
                                                     React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
                                                     React.createElement('span', { className: 'font-semibold' }, 
-                                                        'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                        ticket.assigned_to 
+                                                            ? 'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                            : 'Designe par ' + (ticket.reporter_name || 'N/A')
                                                     )
-                                                ) : null
+                                                )
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
@@ -3139,14 +3141,16 @@ app.get('/', (c) => {
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
-                                                ticket.assigned_to ? React.createElement('div', { 
+                                                React.createElement('div', { 
                                                     className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200'
                                                 },
                                                     React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
                                                     React.createElement('span', { className: 'font-semibold' }, 
-                                                        'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                        ticket.assigned_to 
+                                                            ? 'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                            : 'Designe par ' + (ticket.reporter_name || 'N/A')
                                                     )
-                                                ) : null
+                                                )
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
