@@ -2683,18 +2683,18 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
+                    className: 'bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
                     onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg' },
+                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10' },
                         React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                             React.createElement('i', { className: 'fas fa-users-cog text-xl sm:text-2xl flex-shrink-0' }),
                             React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
-                                currentUser.role === 'technician' ? 'Liste Equipe' : 'Gestion des Utilisateurs'
+                                currentUser.role === 'technician' ? "Liste Équipe" : "Gestion des Utilisateurs"
                             )
                         ),
                         React.createElement('button', {
@@ -2710,8 +2710,8 @@ app.get('/', (c) => {
                         // Bouton creer utilisateur (visible seulement pour admin/superviseur)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement('button', {
                             onClick: () => setShowCreateForm(true),
-                            className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold'
-                        }, 'Creer un utilisateur') : null,
+                            className: 'px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md hover:shadow-lg font-semibold transition-all'
+                        }, "Créer un utilisateur") : null,
                         React.createElement('div', { className: 'flex-1 relative' },
                             React.createElement('input', {
                                 type: 'text',
