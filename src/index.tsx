@@ -103,14 +103,13 @@ app.get('/api/technicians', authMiddleware, async (c) => {
   }
 });
 
-// Route pour que les techniciens voient la liste des operateurs et techniciens
+// Route pour que les techniciens voient la liste de tous les utilisateurs
 app.get('/api/users/team', technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT id, email, full_name, role, created_at, updated_at
       FROM users
-      WHERE role IN ('operator', 'technician')
-      ORDER BY role ASC, full_name ASC
+      ORDER BY role DESC, full_name ASC
     `).all();
     
     return c.json({ users: results });
@@ -2501,7 +2500,7 @@ app.get('/', (c) => {
             const loadUsers = async () => {
                 try {
                     setLoading(true);
-                    // Les techniciens utilisent la route /api/users/team pour voir seulement operateurs et techniciens
+                    // Les techniciens utilisent la route /api/users/team pour voir tous les utilisateurs
                     const endpoint = currentUser.role === 'technician' ? '/users/team' : '/users';
                     const response = await axios.get(API_URL + endpoint);
                     setUsers(response.data.users);
