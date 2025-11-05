@@ -3872,8 +3872,8 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            // Banniere pour tickets planifies/assignes
-                                            ticket.scheduled_date ? React.createElement('div', { 
+                                            // Banniere pour tickets planifies/assignes (seulement avant "En cours")
+                                            (ticket.scheduled_date && (ticket.status === 'pending' || ticket.status === 'diagnosed')) ? React.createElement('div', { 
                                                 className: 'mb-2 -mx-3 -mt-3 px-3 py-2.5 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-xs font-bold flex items-center justify-between rounded-t-lg shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] border-b border-amber-400/50'
                                             },
                                                 React.createElement('div', { className: 'flex items-center gap-1.5 bg-gradient-to-br from-amber-500/90 to-amber-600/90 backdrop-blur-sm px-2.5 py-1 rounded shadow-[0_2px_8px_rgba(251,191,36,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] border border-amber-300/30' },
