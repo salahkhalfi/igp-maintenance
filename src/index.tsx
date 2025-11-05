@@ -3874,18 +3874,18 @@ app.get('/', (c) => {
                                         },
                                             // Banniere pour tickets planifies/assignes
                                             ticket.scheduled_date ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-between rounded-t-lg'
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-2 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-between rounded-t-lg shadow-md border-b-2 border-purple-400/30'
                                             },
-                                                React.createElement('div', { className: 'flex items-center gap-1.5' },
-                                                    React.createElement('i', { className: 'fas fa-calendar-check' }),
-                                                    React.createElement('span', {}, "PLANIFIÉ")
+                                                React.createElement('div', { className: 'flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-2 py-1 rounded' },
+                                                    React.createElement('i', { className: 'fas fa-calendar-check text-yellow-300' }),
+                                                    React.createElement('span', { className: 'text-white' }, "PLANIFIÉ")
                                                 ),
-                                                React.createElement('span', { className: 'text-white/95 font-semibold text-center flex-1 px-2' },
+                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 px-3 bg-white/10 backdrop-blur-sm py-1 mx-2 rounded shadow-inner' },
                                                     ticket.assigned_to 
-                                                        ? (ticket.assigned_to === 'all' ? '👥 Équipe' : '👤 Tech #' + ticket.assigned_to)
+                                                        ? (ticket.assigned_to === 'all' ? '👥 Équipe complète' : '👤 Tech #' + ticket.assigned_to)
                                                         : '⚠️ Non assigné'
                                                 ),
-                                                React.createElement('span', { className: 'text-white/90 font-normal' },
+                                                React.createElement('span', { className: 'text-white font-semibold bg-white/15 backdrop-blur-sm px-2 py-1 rounded' },
                                                     new Date(ticket.scheduled_date).toLocaleDateString('fr-FR', { 
                                                         day: '2-digit', 
                                                         month: 'short'
