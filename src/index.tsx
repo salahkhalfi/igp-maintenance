@@ -2888,7 +2888,7 @@ app.get('/', (c) => {
                             .map(user =>
                             React.createElement('div', {
                                 key: user.id,
-                                className: 'bg-gray-50 rounded-lg p-4 border-2 border-gray-200 hover:border-igp-blue transition-all'
+                                className: 'bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-purple-400 hover:shadow-lg transition-all'
                             },
                                 React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
                                     React.createElement('div', { className: 'flex-1' },
@@ -2910,21 +2910,21 @@ app.get('/', (c) => {
                                     (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician') ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
                                         React.createElement('button', {
                                             onClick: () => handleEditUser(user),
-                                            className: 'w-full sm:w-auto px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-sm'
+                                            className: 'w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-sm hover:shadow-md font-semibold text-sm transition-all'
                                         },
                                             React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                             'Modifier'
                                         ),
                                         React.createElement('button', {
                                             onClick: () => handleResetPassword(user.id, user.full_name),
-                                            className: 'w-full sm:w-auto px-3 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-semibold text-sm'
+                                            className: 'w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg shadow-sm hover:shadow-md font-semibold text-sm transition-all'
                                         },
                                             React.createElement('i', { className: 'fas fa-key mr-1' }),
                                             'MdP'
                                         ),
                                         React.createElement('button', {
                                             onClick: () => handleDeleteUser(user.id, user.full_name),
-                                            className: 'w-full sm:w-auto px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold text-sm'
+                                            className: 'w-full sm:w-auto px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-sm hover:shadow-md font-semibold text-sm transition-all'
                                         },
                                             React.createElement('i', { className: 'fas fa-trash mr-1' }),
                                             'Supprimer'
