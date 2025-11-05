@@ -675,6 +675,74 @@ app.get('/', (c) => {
             );
         };
         
+        // Composant Compte a rebours pour date planifiee (avec changement de couleur)
+        const ScheduledCountdown = ({ scheduledDate }) => {
+            const [countdown, setCountdown] = React.useState(() => getCountdownInfo(scheduledDate));
+            
+            React.useEffect(() => {
+                const interval = setInterval(() => {
+                    setCountdown(getCountdownInfo(scheduledDate));
+                }, 60000); // Mise a jour chaque minute
+                
+                return () => clearInterval(interval);
+            }, [scheduledDate]);
+            
+            return React.createElement('div', { 
+                className: 'inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded font-semibold ' + countdown.className
+            },
+                React.createElement('i', { className: 'fas fa-clock' }),
+                React.createElement('span', {}, countdown.text)
+            );
+        };
+        
+        // Fonction pour calculer le compte a rebours et determiner la couleur
+        const getCountdownInfo = (scheduledDate) => {
+            if (!scheduledDate) return { text: '', className: '', isOverdue: false };
+            
+            const now = new Date();
+            const scheduled = new Date(scheduledDate.replace(' ', 'T'));
+            const diffMs = scheduled - now;
+            const diffHours = diffMs / (1000 * 60 * 60);
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            
+            let text = '';
+            let className = '';
+            let isOverdue = false;
+            
+            if (diffMs < 0) {
+                // En retard
+                const absHours = Math.abs(Math.floor(diffHours));
+                const absDays = Math.abs(Math.floor(diffDays));
+                
+                if (absDays > 0) {
+                    text = 'Retard: ' + absDays + 'j';
+                } else {
+                    text = 'Retard: ' + absHours + 'h';
+                }
+                className = 'bg-red-100 text-red-800 animate-pulse';
+                isOverdue = true;
+            } else if (diffHours < 2) {
+                // Moins de 2h - URGENT
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                text = Math.floor(diffHours) + 'h ' + minutes + 'min';
+                className = 'bg-red-100 text-red-800';
+            } else if (diffHours < 24) {
+                // Moins de 24h - Urgent
+                text = Math.floor(diffHours) + 'h';
+                className = 'bg-orange-100 text-orange-800';
+            } else if (diffDays < 3) {
+                // Moins de 3 jours - Attention
+                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h';
+                className = 'bg-yellow-100 text-yellow-800';
+            } else {
+                // Plus de 3 jours - OK
+                text = Math.floor(diffDays) + ' jours';
+                className = 'bg-green-100 text-green-800';
+            }
+            
+            return { text, className, isOverdue };
+        };
+        
         // Composant Guide Utilisateur
         const UserGuideModal = ({ show, onClose, currentUser }) => {
             const [activeSection, setActiveSection] = React.useState('introduction');
@@ -2972,18 +3040,17 @@ app.get('/', (c) => {
                                             ),
                                             
                                             // Badge de planification (si ticket planifié)
-                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex items-center gap-1 mb-1' },
-                                                React.createElement('span', { 
-                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-purple-100 text-purple-700 whitespace-nowrap' 
-                                                },
-                                                    React.createElement('i', { className: 'fas fa-calendar-alt mr-1' }),
-                                                    formatDateEST(ticket.scheduled_date, false)
+                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                                React.createElement('div', { className: 'flex items-center gap-1' },
+                                                    React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
-                                                ticket.assigned_to ? React.createElement('span', { 
-                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-yellow-100 text-yellow-700 whitespace-nowrap' 
+                                                ticket.assigned_to ? React.createElement('div', { 
+                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200'
                                                 },
-                                                    React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
-                                                    ticket.assignee_name || 'Assigné'
+                                                    React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
+                                                    React.createElement('span', { className: 'font-semibold' }, 
+                                                        'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                    )
                                                 ) : null
                                             ) : null,
                                             
@@ -3068,18 +3135,17 @@ app.get('/', (c) => {
                                             ),
                                             
                                             // Badge de planification (si ticket planifié)
-                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex items-center gap-1 mb-1' },
-                                                React.createElement('span', { 
-                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-purple-100 text-purple-700 whitespace-nowrap' 
-                                                },
-                                                    React.createElement('i', { className: 'fas fa-calendar-alt mr-1' }),
-                                                    formatDateEST(ticket.scheduled_date, false)
+                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                                React.createElement('div', { className: 'flex items-center gap-1' },
+                                                    React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
-                                                ticket.assigned_to ? React.createElement('span', { 
-                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-yellow-100 text-yellow-700 whitespace-nowrap' 
+                                                ticket.assigned_to ? React.createElement('div', { 
+                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200'
                                                 },
-                                                    React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
-                                                    ticket.assignee_name || 'Assigné'
+                                                    React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
+                                                    React.createElement('span', { className: 'font-semibold' }, 
+                                                        'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                    )
                                                 ) : null
                                             ) : null,
                                             
