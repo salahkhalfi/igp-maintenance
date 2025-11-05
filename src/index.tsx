@@ -1926,9 +1926,9 @@ app.get('/', (c) => {
             };
             
             const handleDeleteTicket = async () => {
-                // Verification: technicien ne peut pas supprimer un ticket planifie
-                if (currentUser.role === 'technician' && ticket?.scheduled_date) {
-                    alert('Les techniciens ne peuvent pas supprimer les tickets planifies');
+                // Verification: technicien ne peut pas supprimer un ticket planifie cree par quelqu un d autre
+                if (currentUser.role === 'technician' && ticket?.scheduled_date && ticket?.reported_by !== currentUser.id) {
+                    alert('Les techniciens ne peuvent pas supprimer les tickets planifies crees par d autres utilisateurs');
                     return;
                 }
                 
@@ -2083,16 +2083,14 @@ app.get('/', (c) => {
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
                             (ticket && currentUser && (
-                                (currentUser.role === 'technician' && !ticket.scheduled_date) || 
+                                (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) || 
                                 (currentUser.role === 'supervisor') ||
                                 (currentUser.role === 'admin') ||
                                 (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
                             )) ? React.createElement('button', {
                                 onClick: handleDeleteTicket,
                                 className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95',
-                                title: ticket.scheduled_date && currentUser.role === 'technician' 
-                                    ? 'Les techniciens ne peuvent pas supprimer les tickets planifies' 
-                                    : 'Supprimer ce ticket'
+                                title: 'Supprimer ce ticket'
                             },
                                 React.createElement('i', { className: 'fas fa-trash-alt fa-2x' })
                             ) : null,
