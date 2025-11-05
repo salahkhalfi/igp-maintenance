@@ -1446,7 +1446,7 @@ app.get('/', (c) => {
                                         className: 'w-full px-4 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none'
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                        React.createElement('option', { value: 'all' }, '👥 Toute l\'équipe'),
+                                        React.createElement('option', { value: 'all' }, '👥 Toute equipe'),
                                         technicians.map(tech => 
                                             React.createElement('option', { 
                                                 key: tech.id, 
@@ -1805,7 +1805,7 @@ app.get('/', (c) => {
                                             React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Assigné à: '),
                                             React.createElement('span', { className: 'text-gray-600' },
                                                 ticket.assigned_to 
-                                                    ? (ticket.assigned_to === 'all' ? '👥 Toute l\'équipe' : '👤 Technicien #' + ticket.assigned_to)
+                                                    ? (ticket.assigned_to === 'all' ? '👥 Toute equipe' : '👤 Technicien #' + ticket.assigned_to)
                                                     : '❌ Non assigné'
                                             )
                                         ),
@@ -1833,7 +1833,7 @@ app.get('/', (c) => {
                                                 className: 'w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none text-sm'
                                             },
                                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                                React.createElement('option', { value: 'all' }, '👥 Toute l\'équipe'),
+                                                React.createElement('option', { value: 'all' }, '👥 Toute equipe'),
                                                 technicians.map(tech => 
                                                     React.createElement('option', { 
                                                         key: tech.id, 
