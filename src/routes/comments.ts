@@ -10,7 +10,7 @@ const comments = new Hono<{ Bindings: Bindings }>();
 comments.post('/', authMiddleware, async (c) => {
   try {
     const body = await c.req.json();
-    const { ticket_id, user_name, user_role, comment } = body;
+    const { ticket_id, user_name, user_role, comment, created_at } = body;
     
     if (!ticket_id || !user_name || !comment) {
       return c.json({ error: 'Ticket ID, nom et commentaire requis' }, 400);
@@ -25,11 +25,14 @@ comments.post('/', authMiddleware, async (c) => {
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
     
-    // Insérer le commentaire
+    // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
+    const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
+    
+    // Insérer le commentaire avec timestamp de l'appareil
     const result = await c.env.DB.prepare(`
-      INSERT INTO ticket_comments (ticket_id, user_name, user_role, comment)
-      VALUES (?, ?, ?, ?)
-    `).bind(ticket_id, user_name, user_role, comment).run();
+      INSERT INTO ticket_comments (ticket_id, user_name, user_role, comment, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(ticket_id, user_name, user_role, comment, timestamp).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de l\'ajout du commentaire' }, 500);

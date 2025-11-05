@@ -1489,11 +1489,22 @@ app.get('/', (c) => {
                 
                 setSubmittingComment(true);
                 try {
+                    // Capturer l'heure locale de l'appareil
+                    const localTime = new Date();
+                    const year = localTime.getFullYear();
+                    const month = String(localTime.getMonth() + 1).padStart(2, '0');
+                    const day = String(localTime.getDate()).padStart(2, '0');
+                    const hours = String(localTime.getHours()).padStart(2, '0');
+                    const minutes = String(localTime.getMinutes()).padStart(2, '0');
+                    const seconds = String(localTime.getSeconds()).padStart(2, '0');
+                    const localTimestamp = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+                    
                     await axios.post(API_URL + '/comments', {
                         ticket_id: ticketId,
                         user_name: commentAuthor,
                         user_role: commentRole,
-                        comment: newComment
+                        comment: newComment,
+                        created_at: localTimestamp
                     });
                     
                     setNewComment('');
