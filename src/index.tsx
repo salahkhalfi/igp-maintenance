@@ -2736,7 +2736,7 @@ app.get('/', (c) => {
                     ),
                     
                     showCreateForm ? React.createElement('div', { 
-                        className: 'mb-6 p-6 bg-blue-50 rounded-lg border-2 border-igp-blue scroll-mt-4',
+                        className: 'mb-6 p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200/50 scroll-mt-4',
                         ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
                     },
                         React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Nouvel utilisateur'),
@@ -2748,7 +2748,7 @@ app.get('/', (c) => {
                                         type: 'email',
                                         value: newEmail,
                                         onChange: (e) => setNewEmail(e.target.value),
-                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true,
                                         autoFocus: true
                                     })
@@ -2759,7 +2759,7 @@ app.get('/', (c) => {
                                         type: 'text',
                                         value: newFullName,
                                         onChange: (e) => setNewFullName(e.target.value),
-                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true
                                     })
                                 )
@@ -2771,17 +2771,17 @@ app.get('/', (c) => {
                                         type: 'password',
                                         value: newPassword,
                                         onChange: (e) => setNewPassword(e.target.value),
-                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true,
                                         minLength: 6
                                     })
                                 ),
                                 React.createElement('div', {},
-                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Role'),
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, "Rôle"),
                                     React.createElement('select', {
                                         value: newRole,
                                         onChange: (e) => setNewRole(e.target.value),
-                                        className: 'w-full px-3 py-2 border-2 rounded-md'
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all'
                                     },
                                         React.createElement('option', { value: 'operator' }, 'Operateur'),
                                         React.createElement('option', { value: 'technician' }, 'Technicien'),
