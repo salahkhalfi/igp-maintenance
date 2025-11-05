@@ -3167,8 +3167,11 @@ app.get('/', (c) => {
                         activeTab === 'private' ? React.createElement('div', { className: 'flex-1 flex' },
                             // Liste des conversations
                             React.createElement('div', { className: 'w-1/3 border-r border-gray-200 flex flex-col bg-gray-50' },
-                                React.createElement('div', { className: 'p-4 border-b border-gray-200 bg-white' },
-                                    React.createElement('h3', { className: 'font-semibold text-gray-700 mb-2' }, 'Contacts'),
+                                React.createElement('div', { className: 'p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50' },
+                                    React.createElement('h3', { className: 'font-semibold text-gray-700 mb-2 flex items-center gap-2' }, 
+                                        React.createElement('i', { className: 'fas fa-address-book text-indigo-600' }),
+                                        'Contacts'
+                                    ),
                                     React.createElement('select', {
                                         onChange: (e) => {
                                             const userId = parseInt(e.target.value);
@@ -3179,10 +3182,10 @@ app.get('/', (c) => {
                                                 loadPrivateMessages(user.id);
                                             }
                                         },
-                                        className: 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500',
+                                        className: 'w-full border-2 border-indigo-300 bg-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-400 transition-colors',
                                         value: ''
                                     },
-                                        React.createElement('option', { value: '' }, 'Nouvelle conversation...'),
+                                        React.createElement('option', { value: '', disabled: true }, '📝 Nouvelle conversation...'),
                                         availableUsers.map(user => React.createElement('option', {
                                             key: user.id,
                                             value: user.id
@@ -3191,10 +3194,17 @@ app.get('/', (c) => {
                                 ),
                                 React.createElement('div', { className: 'flex-1 overflow-y-auto' },
                                     conversations.length === 0 ? React.createElement('div', {
-                                        className: 'text-center text-gray-400 py-8 px-4'
+                                        className: 'text-center text-gray-500 py-8 px-4'
                                     },
-                                        React.createElement('i', { className: 'fas fa-user-friends text-4xl mb-2' }),
-                                        React.createElement('p', { className: 'text-sm' }, 'Aucune conversation')
+                                        React.createElement('i', { className: 'fas fa-comments text-5xl mb-3 text-gray-300' }),
+                                        React.createElement('p', { className: 'text-sm font-semibold mb-2' }, 'Aucune conversation'),
+                                        React.createElement('p', { className: 'text-xs text-gray-400' }, 
+                                            'Utilisez le menu ci-dessus pour demarrer une nouvelle conversation'
+                                        ),
+                                        React.createElement('div', { className: 'mt-3 text-indigo-600' },
+                                            React.createElement('i', { className: 'fas fa-arrow-up mr-1' }),
+                                            React.createElement('span', { className: 'text-xs font-semibold' }, 'Nouvelle conversation...')
+                                        )
                                     ) : conversations.map(conv => React.createElement('div', {
                                         key: conv.contact_id,
                                         onClick: () => {
