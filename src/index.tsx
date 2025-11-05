@@ -1848,7 +1848,7 @@ app.get('/', (c) => {
                             React.createElement('input', {
                                 type: 'file',
                                 accept: 'image/*,video/*',
-                                capture: 'environment',
+                                capture: true,
                                 multiple: true,
                                 onChange: handleFileChange,
                                 className: 'hidden',
@@ -2603,6 +2603,7 @@ app.get('/', (c) => {
                                         type: 'file',
                                         multiple: true,
                                         accept: 'image/*,video/*',
+                                        capture: true,
                                         onChange: handleNewMediaChange,
                                         className: 'hidden'
                                     }),
