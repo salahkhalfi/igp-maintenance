@@ -195,34 +195,62 @@ app.get('/api/messages/conversations', technicianSupervisorOrAdmin, async (c) =>
   try {
     const user = c.get('user');
     
-    const { results } = await c.env.DB.prepare(`
+    // D'abord recuperer tous les contacts uniques
+    const { results: contacts } = await c.env.DB.prepare(`
       SELECT DISTINCT
         CASE 
           WHEN m.sender_id = ? THEN m.recipient_id
           ELSE m.sender_id
-        END as contact_id,
-        u.full_name as contact_name,
-        u.role as contact_role,
-        (SELECT COUNT(*) FROM messages 
-         WHERE sender_id = contact_id 
-         AND recipient_id = ? 
-         AND is_read = 0) as unread_count,
-        (SELECT content FROM messages 
-         WHERE (sender_id = ? AND recipient_id = contact_id)
-            OR (sender_id = contact_id AND recipient_id = ?)
-         ORDER BY created_at DESC LIMIT 1) as last_message,
-        (SELECT created_at FROM messages 
-         WHERE (sender_id = ? AND recipient_id = contact_id)
-            OR (sender_id = contact_id AND recipient_id = ?)
-         ORDER BY created_at DESC LIMIT 1) as last_message_time
+        END as contact_id
       FROM messages m
-      LEFT JOIN users u ON (CASE WHEN m.sender_id = ? THEN m.recipient_id ELSE m.sender_id END) = u.id
       WHERE m.message_type = 'private'
         AND (m.sender_id = ? OR m.recipient_id = ?)
-      ORDER BY last_message_time DESC
-    `).bind(user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id, user.id).all();
+    `).bind(user.id, user.id, user.id).all();
     
-    return c.json({ conversations: results });
+    // Pour chaque contact, recuperer les details
+    const conversations = [];
+    for (const contact of contacts) {
+      const contactId = contact.contact_id;
+      if (!contactId) continue;
+      
+      // Info utilisateur
+      const userInfo = await c.env.DB.prepare(`
+        SELECT full_name, role FROM users WHERE id = ?
+      `).bind(contactId).first();
+      
+      // Dernier message
+      const lastMsg = await c.env.DB.prepare(`
+        SELECT content, created_at
+        FROM messages
+        WHERE ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?))
+        ORDER BY created_at DESC LIMIT 1
+      `).bind(user.id, contactId, contactId, user.id).first();
+      
+      // Messages non lus
+      const unreadResult = await c.env.DB.prepare(`
+        SELECT COUNT(*) as count
+        FROM messages
+        WHERE sender_id = ? AND recipient_id = ? AND is_read = 0
+      `).bind(contactId, user.id).first();
+      
+      conversations.push({
+        contact_id: contactId,
+        contact_name: userInfo?.full_name || 'Inconnu',
+        contact_role: userInfo?.role || 'unknown',
+        last_message: lastMsg?.content || null,
+        last_message_time: lastMsg?.created_at || null,
+        unread_count: unreadResult?.count || 0
+      });
+    }
+    
+    // Trier par date du dernier message
+    conversations.sort((a, b) => {
+      if (!a.last_message_time) return 1;
+      if (!b.last_message_time) return -1;
+      return new Date(b.last_message_time) - new Date(a.last_message_time);
+    });
+    
+    return c.json({ conversations });
   } catch (error) {
     console.error('Get conversations error:', error);
     return c.json({ error: 'Erreur lors de la recuperation des conversations' }, 500);
@@ -295,7 +323,7 @@ app.get('/api/messages/available-users', technicianSupervisorOrAdmin, async (c) 
     const { results } = await c.env.DB.prepare(`
       SELECT id, full_name, role, email
       FROM users
-      WHERE role IN ('technician', 'supervisor', 'admin')
+      WHERE role IN ('operator', 'technician', 'supervisor', 'admin')
         AND id != ?
       ORDER BY role DESC, full_name ASC
     `).bind(user.id).all();
