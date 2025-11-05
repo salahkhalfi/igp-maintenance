@@ -110,7 +110,7 @@ tickets.post('/', async (c) => {
   try {
     const user = c.get('user') as any;
     const body: CreateTicketRequest = await c.req.json();
-    const { title, description, reporter_name, machine_id, priority, created_at } = body;
+    const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
     
     // Validation
     if (!title || !description || !reporter_name || !machine_id || !priority) {
@@ -135,9 +135,9 @@ tickets.post('/', async (c) => {
     
     // Créer le ticket avec le timestamp de l'appareil de l'utilisateur
     const result = await c.env.DB.prepare(`
-      INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
-    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, timestamp, timestamp).run();
+      INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, assigned_to, scheduled_date, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
+    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, assigned_to || null, scheduled_date || null, timestamp, timestamp).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
@@ -218,6 +218,11 @@ tickets.patch('/:id', async (c) => {
     if (body.assigned_to !== undefined) {
       updates.push('assigned_to = ?');
       params.push(body.assigned_to);
+    }
+    
+    if (body.scheduled_date !== undefined) {
+      updates.push('scheduled_date = ?');
+      params.push(body.scheduled_date);
     }
     
     updates.push('updated_at = CURRENT_TIMESTAMP');

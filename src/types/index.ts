@@ -33,6 +33,7 @@ export interface Ticket {
   reporter?: User;
   assigned_to: number | null;
   assignee?: User;
+  scheduled_date: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -70,6 +71,8 @@ export interface CreateTicketRequest {
   reporter_name: string;
   machine_id: number;
   priority: 'low' | 'medium' | 'high' | 'critical';
+  assigned_to?: number | null;
+  scheduled_date?: string | null;
   created_at?: string; // Timestamp optionnel de l'appareil de l'utilisateur
 }
 
@@ -79,6 +82,7 @@ export interface UpdateTicketRequest {
   status?: 'received' | 'diagnostic' | 'in_progress' | 'waiting_parts' | 'completed' | 'archived';
   priority?: 'low' | 'medium' | 'high' | 'critical';
   assigned_to?: number | null;
+  scheduled_date?: string | null;
   comment?: string;
 }
 

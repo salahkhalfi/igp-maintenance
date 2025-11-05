@@ -86,6 +86,22 @@ app.route('/api/machines', machines);
 app.use('/api/users/*', authMiddleware);
 app.route('/api/users', users);
 
+// Route pour récupérer la liste des techniciens (accessible par tous les utilisateurs authentifiés)
+app.get('/api/technicians', authMiddleware, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT id, full_name, email
+      FROM users
+      WHERE role = 'technician'
+      ORDER BY full_name ASC
+    `).all();
+    
+    return c.json({ technicians: results });
+  } catch (error) {
+    console.error('Get technicians error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des techniciens' }, 500);
+  }
+});
 
 app.route('/api/media', media);
 
@@ -1139,6 +1155,20 @@ app.get('/', (c) => {
             const [submitting, setSubmitting] = React.useState(false);
             const [uploadProgress, setUploadProgress] = React.useState(0);
             
+            // États pour la planification (superviseur/admin seulement)
+            const [assignedTo, setAssignedTo] = React.useState('');
+            const [scheduledDate, setScheduledDate] = React.useState('');
+            const [technicians, setTechnicians] = React.useState([]);
+            
+            // Charger la liste des techniciens si superviseur ou admin
+            React.useEffect(() => {
+                if (show && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) {
+                    axios.get(API_URL + '/technicians')
+                        .then(res => setTechnicians(res.data.technicians))
+                        .catch(err => console.error('Erreur chargement techniciens:', err));
+                }
+            }, [show, currentUser.role]);
+            
             const handleFileChange = (e) => {
                 const files = Array.from(e.target.files);
                 setMediaFiles(prevFiles => [...prevFiles, ...files]);
@@ -1199,14 +1229,26 @@ app.get('/', (c) => {
                     const seconds = String(localTime.getSeconds()).padStart(2, '0');
                     const localTimestamp = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
                     
-                    const response = await axios.post(API_URL + '/tickets', {
+                    const requestBody = {
                         title,
                         description,
                         reporter_name: currentUser.full_name,
                         machine_id: parseInt(machineId),
                         priority,
                         created_at: localTimestamp
-                    });
+                    };
+                    
+                    // Ajouter les champs de planification si superviseur/admin
+                    if (currentUser.role === 'admin' || currentUser.role === 'supervisor') {
+                        if (assignedTo) {
+                            requestBody.assigned_to = parseInt(assignedTo);
+                        }
+                        if (scheduledDate) {
+                            requestBody.scheduled_date = scheduledDate + ':00'; // Format: YYYY-MM-DDTHH:mm:ss
+                        }
+                    }
+                    
+                    const response = await axios.post(API_URL + '/tickets', requestBody);
                     
                     const ticketId = response.data.ticket.id;
                     
@@ -1222,6 +1264,8 @@ app.get('/', (c) => {
                     setDescription('');
                     setMachineId('');
                     setPriority('medium');
+                    setAssignedTo('');
+                    setScheduledDate('');
                     setMediaFiles([]);
                     setMediaPreviews([]);
                     setUploadProgress(0);
@@ -1381,6 +1425,55 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
+                        
+                        // Section planification (superviseur/admin seulement)
+                        (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 
+                            React.createElement('div', { className: 'mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg' },
+                                React.createElement('h3', { className: 'text-lg font-bold text-purple-800 mb-4 flex items-center' },
+                                    React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
+                                    'Planification (Superviseur/Admin)'
+                                ),
+                                
+                                // Assigner à un technicien
+                                React.createElement('div', { className: 'mb-4' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 
+                                        React.createElement('i', { className: 'fas fa-user-cog mr-2' }),
+                                        'Assigner à'
+                                    ),
+                                    React.createElement('select', {
+                                        value: assignedTo,
+                                        onChange: (e) => setAssignedTo(e.target.value),
+                                        className: 'w-full px-4 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none'
+                                    },
+                                        React.createElement('option', { value: '' }, '-- Non assigné --'),
+                                        React.createElement('option', { value: 'all' }, '👥 Toute l\'équipe'),
+                                        technicians.map(tech => 
+                                            React.createElement('option', { 
+                                                key: tech.id, 
+                                                value: tech.id 
+                                            }, 
+                                                '👤 ' + tech.full_name
+                                            )
+                                        )
+                                    )
+                                ),
+                                
+                                // Date et heure planifiée
+                                React.createElement('div', { className: 'mb-2' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 
+                                        React.createElement('i', { className: 'fas fa-clock mr-2' }),
+                                        'Date planifiée'
+                                    ),
+                                    React.createElement('input', {
+                                        type: 'datetime-local',
+                                        value: scheduledDate,
+                                        onChange: (e) => setScheduledDate(e.target.value),
+                                        className: 'w-full px-4 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none'
+                                    })
+                                )
+                            )
+                        : null,
+                        
                         React.createElement('div', { className: 'flex justify-end space-x-4 mt-6 pt-4 border-t-2 border-gray-200' },
                             React.createElement('button', {
                                 type: 'button',
@@ -1420,12 +1513,34 @@ app.get('/', (c) => {
             const [newMediaFiles, setNewMediaFiles] = React.useState([]);
             const [newMediaPreviews, setNewMediaPreviews] = React.useState([]);
             
+            // États pour la planification (superviseur/admin seulement)
+            const [editingSchedule, setEditingSchedule] = React.useState(false);
+            const [scheduledAssignedTo, setScheduledAssignedTo] = React.useState('');
+            const [scheduledDate, setScheduledDate] = React.useState('');
+            const [technicians, setTechnicians] = React.useState([]);
+            const [savingSchedule, setSavingSchedule] = React.useState(false);
+            
             React.useEffect(() => {
                 if (show && ticketId) {
                     loadTicketDetails();
                     loadComments();
                 }
             }, [show, ticketId]);
+            
+            // Charger les techniciens et pré-remplir le formulaire de planification
+            React.useEffect(() => {
+                if (show && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) {
+                    axios.get(API_URL + '/technicians')
+                        .then(res => setTechnicians(res.data.technicians))
+                        .catch(err => console.error('Erreur chargement techniciens:', err));
+                }
+                
+                // Pré-remplir les champs si le ticket est déjà planifié
+                if (ticket) {
+                    setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
+                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 16) : '');
+                }
+            }, [show, currentUser.role, ticket]);
             
             const loadTicketDetails = async () => {
                 try {
@@ -1551,6 +1666,38 @@ app.get('/', (c) => {
                 }
             };
             
+            const handleSaveSchedule = async () => {
+                try {
+                    setSavingSchedule(true);
+                    const updateData = {};
+                    
+                    // Assigner à un technicien ou toute l'équipe
+                    if (scheduledAssignedTo) {
+                        updateData.assigned_to = scheduledAssignedTo === 'all' ? null : parseInt(scheduledAssignedTo);
+                    } else {
+                        updateData.assigned_to = null;
+                    }
+                    
+                    // Date planifiée
+                    if (scheduledDate) {
+                        updateData.scheduled_date = scheduledDate + ':00';
+                    } else {
+                        updateData.scheduled_date = null;
+                    }
+                    
+                    await axios.patch(API_URL + '/tickets/' + ticketId, updateData);
+                    
+                    alert('Planification mise à jour avec succès !');
+                    setEditingSchedule(false);
+                    loadTicketDetails(); // Recharger les détails
+                } catch (error) {
+                    alert('Erreur lors de la mise à jour de la planification');
+                    console.error('Erreur:', error);
+                } finally {
+                    setSavingSchedule(false);
+                }
+            };
+            
             if (!show) return null;
             
             return React.createElement('div', { 
@@ -1633,6 +1780,113 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
+                        
+                        // Section planification (superviseur/admin seulement)
+                        (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 
+                            React.createElement('div', { className: 'mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg' },
+                                React.createElement('div', { className: 'flex justify-between items-center mb-3' },
+                                    React.createElement('h4', { className: 'text-lg font-bold text-purple-800 flex items-center' },
+                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
+                                        'Planification'
+                                    ),
+                                    !editingSchedule ? React.createElement('button', {
+                                        onClick: () => setEditingSchedule(true),
+                                        className: 'px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-semibold transition-all'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-edit mr-1' }),
+                                        'Modifier'
+                                    ) : null
+                                ),
+                                
+                                !editingSchedule ? (
+                                    // Affichage lecture seule
+                                    React.createElement('div', { className: 'text-sm space-y-2' },
+                                        React.createElement('div', {},
+                                            React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Assigné à: '),
+                                            React.createElement('span', { className: 'text-gray-600' },
+                                                ticket.assigned_to 
+                                                    ? (ticket.assigned_to === 'all' ? '👥 Toute l\'équipe' : '👤 Technicien #' + ticket.assigned_to)
+                                                    : '❌ Non assigné'
+                                            )
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Date planifiée: '),
+                                            React.createElement('span', { className: 'text-gray-600' },
+                                                ticket.scheduled_date 
+                                                    ? formatDateEST(ticket.scheduled_date)
+                                                    : '❌ Non planifié'
+                                            )
+                                        )
+                                    )
+                                ) : (
+                                    // Mode édition
+                                    React.createElement('div', { className: 'space-y-3' },
+                                        // Assigner à un technicien
+                                        React.createElement('div', {},
+                                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' }, 
+                                                React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
+                                                'Assigner à'
+                                            ),
+                                            React.createElement('select', {
+                                                value: scheduledAssignedTo,
+                                                onChange: (e) => setScheduledAssignedTo(e.target.value),
+                                                className: 'w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none text-sm'
+                                            },
+                                                React.createElement('option', { value: '' }, '-- Non assigné --'),
+                                                React.createElement('option', { value: 'all' }, '👥 Toute l\'équipe'),
+                                                technicians.map(tech => 
+                                                    React.createElement('option', { 
+                                                        key: tech.id, 
+                                                        value: tech.id 
+                                                    }, 
+                                                        '👤 ' + tech.full_name
+                                                    )
+                                                )
+                                            )
+                                        ),
+                                        
+                                        // Date et heure planifiée
+                                        React.createElement('div', {},
+                                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' }, 
+                                                React.createElement('i', { className: 'fas fa-clock mr-1' }),
+                                                'Date planifiée'
+                                            ),
+                                            React.createElement('input', {
+                                                type: 'datetime-local',
+                                                value: scheduledDate,
+                                                onChange: (e) => setScheduledDate(e.target.value),
+                                                className: 'w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none text-sm'
+                                            })
+                                        ),
+                                        
+                                        // Boutons d'action
+                                        React.createElement('div', { className: 'flex justify-end space-x-2 pt-2' },
+                                            React.createElement('button', {
+                                                onClick: () => {
+                                                    setEditingSchedule(false);
+                                                    setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
+                                                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 16) : '');
+                                                },
+                                                className: 'px-3 py-1 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 text-sm transition-all'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-times mr-1' }),
+                                                'Annuler'
+                                            ),
+                                            React.createElement('button', {
+                                                onClick: handleSaveSchedule,
+                                                disabled: savingSchedule,
+                                                className: 'px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 text-sm font-semibold transition-all'
+                                            },
+                                                savingSchedule 
+                                                    ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-1' })
+                                                    : React.createElement('i', { className: 'fas fa-save mr-1' }),
+                                                savingSchedule ? 'Enregistrement...' : 'Enregistrer'
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        : null,
                         
                         
                         (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-6' },
@@ -2363,7 +2617,14 @@ app.get('/', (c) => {
             }, []);
             
             const getTicketsByStatus = (status) => {
-                return tickets.filter(t => t.status === status);
+                let filteredTickets = tickets.filter(t => t.status === status);
+                
+                // Opérateurs voient uniquement leurs propres tickets
+                if (currentUser && currentUser.role === 'operator') {
+                    filteredTickets = filteredTickets.filter(t => t.reported_by === currentUser.id);
+                }
+                
+                return filteredTickets;
             };
             
             const moveTicketToStatus = async (ticket, newStatus) => {
@@ -2710,6 +2971,22 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
                                             
+                                            // Badge de planification (si ticket planifié)
+                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex items-center gap-1 mb-1' },
+                                                React.createElement('span', { 
+                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-purple-100 text-purple-700 whitespace-nowrap' 
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-calendar-alt mr-1' }),
+                                                    formatDateEST(ticket.scheduled_date, false)
+                                                ),
+                                                ticket.assigned_to ? React.createElement('span', { 
+                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-yellow-100 text-yellow-700 whitespace-nowrap' 
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
+                                                    'Assigné'
+                                                ) : null
+                                            ) : null,
+                                            
                                             React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
                                                 React.createElement('div', { className: 'flex items-center text-gray-500' },
                                                     React.createElement('i', { className: 'far fa-clock mr-1' }),
@@ -2789,6 +3066,22 @@ app.get('/', (c) => {
                                                 ),
                                                 React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
+                                            
+                                            // Badge de planification (si ticket planifié)
+                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex items-center gap-1 mb-1' },
+                                                React.createElement('span', { 
+                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-purple-100 text-purple-700 whitespace-nowrap' 
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-calendar-alt mr-1' }),
+                                                    formatDateEST(ticket.scheduled_date, false)
+                                                ),
+                                                ticket.assigned_to ? React.createElement('span', { 
+                                                    className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-yellow-100 text-yellow-700 whitespace-nowrap' 
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
+                                                    'Assigné'
+                                                ) : null
+                                            ) : null,
                                             
                                             React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
                                                 React.createElement('div', { className: 'flex items-center text-gray-500' },
