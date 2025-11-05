@@ -2718,7 +2718,7 @@ app.get('/', (c) => {
                                 placeholder: 'Rechercher par nom ou email...',
                                 value: searchQuery,
                                 onChange: (e) => setSearchQuery(e.target.value),
-                                className: 'w-full px-4 py-2 pl-10 border-2 border-gray-300 rounded-md focus:border-igp-blue focus:outline-none',
+                                className: 'w-full px-4 py-2 pl-10 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all',
                                 onKeyDown: (e) => {
                                     if (e.key === 'Escape') {
                                         setSearchQuery('');
