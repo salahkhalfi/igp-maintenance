@@ -1589,14 +1589,18 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', { 
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto',
-                    onClick: (e) => e.stopPropagation()
+                    className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden transform hover:scale-[1.01] transition-all duration-300',
+                    onClick: (e) => e.stopPropagation(),
+                    style: { 
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                        transform: 'translateZ(0)'
+                    }
                 },
-                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-700 to-indigo-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg z-10' },
+                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10 backdrop-blur-sm bg-opacity-95' },
                         React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                             React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-orange-400 flex-shrink-0' }),
                             React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
@@ -1610,8 +1614,8 @@ app.get('/', (c) => {
                             React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl' })
                         )
                     ),
-                    React.createElement('div', { className: 'p-4 sm:p-6' },
-                    React.createElement('form', { onSubmit: handleSubmit },
+                    React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-80px)] sm:max-h-[calc(90vh-80px)] bg-gradient-to-br from-white/50 to-blue-50/30' },
+                    React.createElement('form', { onSubmit: handleSubmit, className: 'space-y-4' },
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
                                 React.createElement('i', { className: 'fas fa-heading mr-2' }),
@@ -1619,7 +1623,8 @@ app.get('/', (c) => {
                             ),
                             React.createElement('input', {
                                 type: 'text',
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl hover:scale-[1.01]',
+                                style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: title,
                                 onChange: (e) => setTitle(e.target.value),
                                 placeholder: 'Ex: Bruit anormal sur la machine',
@@ -1632,7 +1637,8 @@ app.get('/', (c) => {
                                 'Description détaillée *'
                             ),
                             React.createElement('textarea', {
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
+                                style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: description,
                                 onChange: (e) => setDescription(e.target.value),
                                 placeholder: 'Décrivez le problème en détail...',
@@ -1646,7 +1652,8 @@ app.get('/', (c) => {
                                 'Machine concernée *'
                             ),
                             React.createElement('select', {
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer',
+                                style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: machineId,
                                 onChange: (e) => setMachineId(e.target.value),
                                 required: true
@@ -3061,12 +3068,16 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col overflow-hidden',
-                    onClick: (e) => e.stopPropagation()
+                    className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col overflow-hidden transform hover:scale-[1.005] transition-all duration-300',
+                    onClick: (e) => e.stopPropagation(),
+                    style: { 
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                        transform: 'translateZ(0)'
+                    }
                 },
                     // Header
                     React.createElement('div', {
@@ -3135,7 +3146,8 @@ app.get('/', (c) => {
                                     React.createElement('p', { className: 'text-xs sm:text-sm text-gray-400 mt-2' }, 'Soyez le premier a envoyer un message!')
                                 ) : publicMessages.map(msg => React.createElement('div', {
                                     key: msg.id,
-                                    className: 'bg-white rounded-lg shadow-sm p-3 sm:p-4 hover:shadow-md transition-all hover:scale-[1.01] border border-gray-100'
+                                    className: 'bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-all hover:scale-[1.02] border border-white/50 transform hover:-translate-y-1',
+                                    style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                 },
                                     React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
                                         React.createElement('div', {
@@ -3164,13 +3176,15 @@ app.get('/', (c) => {
                                         onChange: (e) => setMessageContent(e.target.value),
                                         onKeyPress: handleKeyPress,
                                         placeholder: 'Ecrire un message public... (Enter pour envoyer)',
-                                        className: 'flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all',
+                                        className: 'flex-1 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all shadow-lg hover:shadow-xl',
+                                        style: { boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                         rows: 2
                                     }),
                                     React.createElement('button', {
                                         onClick: sendMessage,
                                         disabled: !messageContent.trim(),
-                                        className: 'px-3 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
+                                        className: 'px-3 sm:px-6 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
+                                        style: { boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4), inset 0 -2px 8px rgba(0, 0, 0, 0.2)' }
                                     },
                                         React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
                                         React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
@@ -3291,10 +3305,13 @@ app.get('/', (c) => {
                                             className: 'flex ' + (isMe ? 'justify-end' : 'justify-start') + ' animate-fadeIn'
                                         },
                                             React.createElement('div', {
-                                                className: 'max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-3 shadow-md hover:shadow-lg transition-shadow ' +
+                                                className: 'max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-3 shadow-lg hover:shadow-2xl transition-all transform hover:scale-[1.02] ' +
                                                     (isMe 
-                                                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm' 
-                                                        : 'bg-white text-gray-800 border border-gray-200 rounded-tl-sm')
+                                                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm backdrop-blur-sm' 
+                                                        : 'bg-white/90 backdrop-blur-sm text-gray-800 border border-white/50 rounded-tl-sm'),
+                                                style: isMe 
+                                                    ? { boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2)' }
+                                                    : { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                             },
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
                                                 React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
