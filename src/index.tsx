@@ -2421,7 +2421,7 @@ app.get('/', (c) => {
                 },
                     React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b pb-4' },
                         React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
-                            currentUser.role === 'technician' ? 'Liste de l\'equipe' : 'Gestion des Utilisateurs'
+                            currentUser.role === 'technician' ? 'Liste Equipe' : 'Gestion des Utilisateurs'
                         ),
                         React.createElement('button', {
                             onClick: onClose,
