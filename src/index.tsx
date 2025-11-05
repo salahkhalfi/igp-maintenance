@@ -2116,11 +2116,11 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                     ) : ticket ? React.createElement('div', {},
                         
-                        React.createElement('div', { className: 'mb-6 p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-200/50' },
-                            React.createElement('div', { className: 'flex items-center justify-between mb-4' },
-                                React.createElement('span', { className: 'text-lg font-mono font-bold text-blue-700 bg-blue-100/70 px-4 py-2 rounded-lg' }, ticket.ticket_id),
+                        React.createElement('div', { className: 'mb-6 p-4 sm:p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-200/50' },
+                            React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
+                                React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
                                 React.createElement('span', { 
-                                    className: 'px-4 py-2 rounded-xl font-bold shadow-md ' + 
+                                    className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-md text-xs sm:text-sm ' + 
                                     (ticket.priority === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' :
                                      ticket.priority === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' :
                                      ticket.priority === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white' :
@@ -2132,38 +2132,38 @@ app.get('/', (c) => {
                                     '🟢 FAIBLE'
                                 )
                             ),
-                            React.createElement('h3', { className: 'text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
-                            React.createElement('p', { className: 'text-gray-700 mb-5 leading-relaxed bg-white/60 p-4 rounded-lg' }, ticket.description),
-                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-3' },
+                            React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
+                            React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 mb-4 sm:mb-5 leading-relaxed bg-white/60 p-3 sm:p-4 rounded-lg' }, ticket.description),
+                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3' },
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
-                                    React.createElement('div', { className: 'flex items-center gap-2' },
-                                        React.createElement('i', { className: 'fas fa-cog text-blue-600' }),
-                                        React.createElement('span', { className: 'font-bold text-gray-700' }, 'Machine:')
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                        React.createElement('i', { className: 'fas fa-cog text-blue-600 text-sm' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Machine:')
                                     ),
-                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, ticket.machine_type + ' ' + ticket.model)
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, ticket.machine_type + ' ' + ticket.model)
                                 ),
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
-                                    React.createElement('div', { className: 'flex items-center gap-2' },
-                                        React.createElement('i', { className: 'fas fa-tasks text-purple-600' }),
-                                        React.createElement('span', { className: 'font-bold text-gray-700' }, 'Statut:')
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                        React.createElement('i', { className: 'fas fa-tasks text-purple-600 text-sm' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Statut:')
                                     ),
-                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, getStatusLabel(ticket.status))
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, getStatusLabel(ticket.status))
                                 ),
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
-                                    React.createElement('div', { className: 'flex items-center gap-2' },
-                                        React.createElement('i', { className: 'far fa-calendar text-green-600' }),
-                                        React.createElement('span', { className: 'font-bold text-gray-700' }, "Créé le:")
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                        React.createElement('i', { className: 'far fa-calendar text-green-600 text-sm' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Créé le:")
                                     ),
-                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, 
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, 
                                         formatDateEST(ticket.created_at)
                                     )
                                 ),
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
-                                    React.createElement('div', { className: 'flex items-center gap-2' },
-                                        React.createElement('i', { className: 'fas fa-user text-orange-600' }),
-                                        React.createElement('span', { className: 'font-bold text-gray-700' }, "Rapporté par:")
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                        React.createElement('i', { className: 'fas fa-user text-orange-600 text-sm' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Rapporté par:")
                                     ),
-                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, ticket.reporter_name || 'N/A')
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, ticket.reporter_name || 'N/A')
                                 )
                             )
                         ),
