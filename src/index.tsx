@@ -671,6 +671,7 @@ app.get('/', (c) => {
             const getUserRoleBadge = () => {
                 if (!currentUser) return '❓';
                 if (currentUser.role === 'admin') return '👑 Admin';
+                if (currentUser.role === 'supervisor') return '⭐ Superviseur';
                 if (currentUser.role === 'technician') return '🔧 Technicien';
                 return '👷 Opérateur';
             };
@@ -704,11 +705,12 @@ app.get('/', (c) => {
                     ]
                 },
                 roles: {
-                    title: "👥 Les 3 Rôles",
+                    title: "👥 Les 4 Rôles",
                     icon: "fa-users",
                     color: "purple",
                     content: [
                         "👑 ADMIN → Tout faire",
+                        "⭐ SUPERVISEUR → Comme admin sauf gestion admins",
                         "🔧 TECHNICIEN → Déplacer + modifier tickets",
                         "👷 OPÉRATEUR → Créer tickets uniquement",
                         "",
@@ -1484,6 +1486,7 @@ app.get('/', (c) => {
                     // Convertir le rôle de l'utilisateur en français
                     let userRoleFr = 'Opérateur';
                     if (currentUser.role === 'technician') userRoleFr = 'Technicien';
+                    else if (currentUser.role === 'supervisor') userRoleFr = 'Superviseur';
                     else if (currentUser.role === 'admin') userRoleFr = 'Admin';
                     
                     await axios.post(API_URL + '/comments', {
@@ -1567,6 +1570,7 @@ app.get('/', (c) => {
                         React.createElement('div', { className: 'flex gap-3' },
                             (ticket && currentUser && (
                                 (currentUser.role === 'technician') || 
+                                (currentUser.role === 'supervisor') ||
                                 (currentUser.role === 'admin') ||
                                 (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
                             )) ? React.createElement('button', {
@@ -1973,12 +1977,14 @@ app.get('/', (c) => {
             
             const getRoleLabel = (role) => {
                 if (role === 'admin') return '👑 Administrateur';
+                if (role === 'supervisor') return '⭐ Superviseur';
                 if (role === 'technician') return '🔧 Technicien';
                 return '👷 Opérateur';
             };
             
             const getRoleBadgeClass = (role) => {
                 if (role === 'admin') return 'bg-red-100 text-red-800';
+                if (role === 'supervisor') return 'bg-yellow-100 text-yellow-800';
                 if (role === 'technician') return 'bg-blue-100 text-blue-800';
                 return 'bg-green-100 text-green-800';
             };
@@ -2150,7 +2156,8 @@ app.get('/', (c) => {
                                     },
                                         React.createElement('option', { value: 'operator' }, 'Operateur'),
                                         React.createElement('option', { value: 'technician' }, 'Technicien'),
-                                        React.createElement('option', { value: 'admin' }, 'Administrateur')
+                                        React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
+                                        currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
                                     )
                                 )
                             ),
@@ -2206,11 +2213,13 @@ app.get('/', (c) => {
                                 React.createElement('select', {
                                     value: editRole,
                                     onChange: (e) => setEditRole(e.target.value),
-                                    className: 'w-full px-3 py-2 border-2 rounded-md'
+                                    className: 'w-full px-3 py-2 border-2 rounded-md',
+                                    disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin'
                                 },
                                     React.createElement('option', { value: 'operator' }, 'Operateur'),
                                     React.createElement('option', { value: 'technician' }, 'Technicien'),
-                                    React.createElement('option', { value: 'admin' }, 'Administrateur')
+                                    React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
+                                    currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
                                 )
                             ),
                             React.createElement('div', { className: 'flex gap-4' },
@@ -2269,7 +2278,7 @@ app.get('/', (c) => {
                                             'Créé le: ' + formatDateEST(user.created_at, false)
                                         )
                                     ),
-                                    user.id !== currentUser.id ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
+                                    (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin')) ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
                                         React.createElement('button', {
                                             onClick: () => handleEditUser(user),
                                             className: 'w-full sm:w-auto px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-sm'

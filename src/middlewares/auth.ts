@@ -41,3 +41,25 @@ export async function technicianOrAdmin(c: Context<{ Bindings: Bindings }>, next
 
   await next();
 }
+
+// Middleware pour superviseur et admin (mêmes permissions sauf gestion des admins)
+export async function supervisorOrAdmin(c: Context<{ Bindings: Bindings }>, next: Next) {
+  const user = c.get('user') as any;
+  
+  if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
+    return c.json({ error: 'Accès réservé aux superviseurs et administrateurs' }, 403);
+  }
+
+  await next();
+}
+
+// Middleware pour technicien, superviseur et admin
+export async function technicianSupervisorOrAdmin(c: Context<{ Bindings: Bindings }>, next: Next) {
+  const user = c.get('user') as any;
+  
+  if (!user || (user.role !== 'admin' && user.role !== 'supervisor' && user.role !== 'technician')) {
+    return c.json({ error: 'Accès réservé aux techniciens, superviseurs et administrateurs' }, 403);
+  }
+
+  await next();
+}

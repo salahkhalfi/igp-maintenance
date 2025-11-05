@@ -1,14 +1,14 @@
-// Routes de gestion des utilisateurs (Admin uniquement)
+// Routes de gestion des utilisateurs (Admin et Superviseur)
 
 import { Hono } from 'hono';
 import { hashPassword, isLegacyHash } from '../utils/password';
-import { adminOnly } from '../middlewares/auth';
+import { supervisorOrAdmin } from '../middlewares/auth';
 import type { Bindings, User } from '../types';
 
 const users = new Hono<{ Bindings: Bindings }>();
 
-// Toutes les routes nécessitent les droits admin
-users.use('/*', adminOnly);
+// Toutes les routes nécessitent les droits admin ou superviseur
+users.use('/*', supervisorOrAdmin);
 
 /**
  * GET /api/users - Liste tous les utilisateurs
@@ -96,9 +96,14 @@ users.post('/', async (c) => {
     }
 
     // Validation du rôle
-    const validRoles = ['admin', 'technician', 'operator'];
+    const validRoles = ['admin', 'supervisor', 'technician', 'operator'];
     if (!validRoles.includes(role)) {
-      return c.json({ error: 'Rôle invalide. Rôles valides: admin, technician, operator' }, 400);
+      return c.json({ error: 'Rôle invalide. Rôles valides: admin, supervisor, technician, operator' }, 400);
+    }
+
+    // RESTRICTION: Superviseur ne peut pas créer d'admin
+    if (currentUser.role === 'supervisor' && role === 'admin') {
+      return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
     }
 
     // Validation du mot de passe
@@ -165,10 +170,27 @@ users.put('/:id', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
+    // RESTRICTION: Superviseur ne peut pas modifier un admin
+    if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
+      return c.json({ error: 'Les superviseurs ne peuvent pas modifier les administrateurs' }, 403);
+    }
+
+    // RESTRICTION: Superviseur ne peut pas promouvoir quelqu\'un en admin
+    if (currentUser.role === 'supervisor' && role === 'admin') {
+      return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
+    }
+
     // Empêcher un admin de se retirer ses propres droits admin
-    if (currentUser.userId === parseInt(id) && role && role !== 'admin') {
+    if (currentUser.userId === parseInt(id) && role && role !== 'admin' && currentUser.role === 'admin') {
       return c.json({ 
         error: 'Vous ne pouvez pas retirer vos propres droits administrateur' 
+      }, 403);
+    }
+
+    // Empêcher un superviseur de se retirer ses propres droits superviseur
+    if (currentUser.userId === parseInt(id) && role && role !== 'supervisor' && currentUser.role === 'supervisor') {
+      return c.json({ 
+        error: 'Vous ne pouvez pas retirer vos propres droits de superviseur' 
       }, 403);
     }
 
@@ -191,9 +213,9 @@ users.put('/:id', async (c) => {
 
     // Validation du rôle si fourni
     if (role) {
-      const validRoles = ['admin', 'technician', 'operator'];
+      const validRoles = ['admin', 'supervisor', 'technician', 'operator'];
       if (!validRoles.includes(role)) {
-        return c.json({ error: 'Rôle invalide. Rôles valides: admin, technician, operator' }, 400);
+        return c.json({ error: 'Rôle invalide. Rôles valides: admin, supervisor, technician, operator' }, 400);
       }
     }
 
@@ -282,7 +304,12 @@ users.delete('/:id', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
-    // Empêcher un admin de se supprimer lui-même
+    // RESTRICTION: Superviseur ne peut pas supprimer un admin
+    if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
+      return c.json({ error: 'Les superviseurs ne peuvent pas supprimer les administrateurs' }, 403);
+    }
+
+    // Empêcher un utilisateur de se supprimer lui-même
     if (currentUser.userId === parseInt(id)) {
       return c.json({ 
         error: 'Vous ne pouvez pas supprimer votre propre compte' 

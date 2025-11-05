@@ -4,7 +4,7 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
-  role: 'admin' | 'technician' | 'operator';
+  role: 'admin' | 'supervisor' | 'technician' | 'operator';
   created_at: string;
   updated_at: string;
 }
@@ -91,7 +91,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   full_name: string;
-  role: 'admin' | 'technician' | 'operator';
+  role: 'admin' | 'supervisor' | 'technician' | 'operator';
 }
 
 export interface AuthResponse {
