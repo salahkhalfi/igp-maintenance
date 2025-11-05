@@ -10,7 +10,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { authMiddleware, adminOnly, technicianOrAdmin } from './middlewares/auth';
+import { authMiddleware, adminOnly, technicianOrAdmin, technicianSupervisorOrAdmin } from './middlewares/auth';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
