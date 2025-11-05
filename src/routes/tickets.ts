@@ -129,11 +129,17 @@ tickets.post('/', async (c) => {
     // Générer l'ID du ticket
     const ticket_id = generateTicketId(machine.machine_type, machine.model);
     
-    // Créer le ticket
+    // Créer timestamp EST/EDT (America/Toronto)
+    // SQLite stocke en UTC, on enregistre l'heure actuelle
+    const now = new Date();
+    const estDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
+    const isoTimestamp = estDate.toISOString().replace('T', ' ').substring(0, 19);
+    
+    // Créer le ticket avec created_at explicite en EST
     const result = await c.env.DB.prepare(`
-      INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'received')
-    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId).run();
+      INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
+    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, isoTimestamp, isoTimestamp).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
