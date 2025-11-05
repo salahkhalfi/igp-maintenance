@@ -3052,60 +3052,62 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4',
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col',
+                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col overflow-hidden',
                     onClick: (e) => e.stopPropagation()
                 },
                     // Header
                     React.createElement('div', {
-                        className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-lg flex justify-between items-center'
+                        className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg'
                     },
-                        React.createElement('div', { className: 'flex items-center gap-3' },
-                            React.createElement('i', { className: 'fas fa-comments text-2xl' }),
-                            React.createElement('h2', { className: 'text-2xl font-bold' }, 'Messagerie Equipe'),
+                        React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
+                            React.createElement('i', { className: 'fas fa-comments text-xl sm:text-2xl flex-shrink-0' }),
+                            React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' }, 'Messagerie Equipe'),
                             unreadCount > 0 ? React.createElement('span', {
-                                className: 'bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full'
+                                className: 'bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 animate-pulse'
                             }, unreadCount) : null
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all'
+                            className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all flex-shrink-0'
                         },
-                            React.createElement('i', { className: 'fas fa-times text-xl' })
+                            React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl' })
                         )
                     ),
                     
                     // Tabs
                     React.createElement('div', {
-                        className: 'flex border-b border-gray-200 bg-gray-50'
+                        className: 'flex border-b border-gray-200 bg-gray-50 shadow-sm'
                     },
                         React.createElement('button', {
                             onClick: () => {
                                 setActiveTab('public');
                                 setSelectedContact(null);
                             },
-                            className: 'flex-1 px-6 py-3 font-semibold transition-all ' + 
+                            className: 'flex-1 px-3 sm:px-6 py-2 sm:py-3 font-semibold text-sm sm:text-base transition-all ' + 
                                 (activeTab === 'public' 
-                                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' 
+                                    ? 'text-indigo-600 border-b-3 border-indigo-600 bg-white shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')
                         },
-                            React.createElement('i', { className: 'fas fa-globe mr-2' }),
-                            'Canal Public'
+                            React.createElement('i', { className: 'fas fa-globe mr-1 sm:mr-2' }),
+                            React.createElement('span', { className: 'hidden xs:inline' }, 'Canal Public'),
+                            React.createElement('span', { className: 'inline xs:hidden' }, 'Public')
                         ),
                         React.createElement('button', {
                             onClick: () => setActiveTab('private'),
-                            className: 'flex-1 px-6 py-3 font-semibold transition-all relative ' + 
+                            className: 'flex-1 px-3 sm:px-6 py-2 sm:py-3 font-semibold text-sm sm:text-base transition-all relative ' + 
                                 (activeTab === 'private' 
-                                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white' 
+                                    ? 'text-indigo-600 border-b-3 border-indigo-600 bg-white shadow-sm' 
                                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')
                         },
-                            React.createElement('i', { className: 'fas fa-user-friends mr-2' }),
-                            'Messages Prives',
+                            React.createElement('i', { className: 'fas fa-user-friends mr-1 sm:mr-2' }),
+                            React.createElement('span', { className: 'hidden xs:inline' }, 'Messages Prives'),
+                            React.createElement('span', { className: 'inline xs:hidden' }, 'Prives'),
                             unreadCount > 0 ? React.createElement('span', {
-                                className: 'absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full'
+                                className: 'absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full animate-pulse'
                             }, unreadCount) : null
                         )
                     ),
@@ -3115,29 +3117,30 @@ app.get('/', (c) => {
                         // PUBLIC TAB
                         activeTab === 'public' ? React.createElement('div', { className: 'flex-1 flex flex-col' },
                             // Messages publics
-                            React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50' },
+                            React.createElement('div', { className: 'flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
                                 publicMessages.length === 0 ? React.createElement('div', {
                                     className: 'text-center text-gray-400 py-12'
                                 },
-                                    React.createElement('i', { className: 'fas fa-comments text-6xl mb-4' }),
-                                    React.createElement('p', { className: 'text-lg' }, 'Aucun message public')
+                                    React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-4 opacity-50' }),
+                                    React.createElement('p', { className: 'text-base sm:text-lg font-medium' }, 'Aucun message public'),
+                                    React.createElement('p', { className: 'text-xs sm:text-sm text-gray-400 mt-2' }, 'Soyez le premier a envoyer un message!')
                                 ) : publicMessages.map(msg => React.createElement('div', {
                                     key: msg.id,
-                                    className: 'bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow'
+                                    className: 'bg-white rounded-lg shadow-sm p-3 sm:p-4 hover:shadow-md transition-all hover:scale-[1.01] border border-gray-100'
                                 },
-                                    React.createElement('div', { className: 'flex items-start gap-3' },
+                                    React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
                                         React.createElement('div', {
-                                            className: 'w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0'
+                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
                                         }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
                                         React.createElement('div', { className: 'flex-1 min-w-0' },
-                                            React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                                                React.createElement('span', { className: 'font-semibold text-gray-800' }, msg.sender_name),
+                                            React.createElement('div', { className: 'flex flex-wrap items-center gap-1 sm:gap-2 mb-1' },
+                                                React.createElement('span', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, msg.sender_name),
                                                 React.createElement('span', {
-                                                    className: 'text-xs px-2 py-0.5 rounded-full font-medium ' + getRoleBadgeClass(msg.sender_role)
+                                                    className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 ' + getRoleBadgeClass(msg.sender_role)
                                                 }, getRoleLabel(msg.sender_role)),
-                                                React.createElement('span', { className: 'text-xs text-gray-400' }, formatMessageTime(msg.created_at))
+                                                React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
-                                            React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words' }, msg.content)
+                                            React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
                                         )
                                     )
                                 )),
@@ -3145,33 +3148,34 @@ app.get('/', (c) => {
                             ),
                             
                             // Input zone
-                            React.createElement('div', { className: 'border-t border-gray-200 p-4 bg-white' },
+                            React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
                                 React.createElement('div', { className: 'flex gap-2' },
                                     React.createElement('textarea', {
                                         value: messageContent,
                                         onChange: (e) => setMessageContent(e.target.value),
                                         onKeyPress: handleKeyPress,
-                                        placeholder: 'Ecrire un message public...',
-                                        className: 'flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none',
+                                        placeholder: 'Ecrire un message public... (Enter pour envoyer)',
+                                        className: 'flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all',
                                         rows: 2
                                     }),
                                     React.createElement('button', {
                                         onClick: sendMessage,
                                         disabled: !messageContent.trim(),
-                                        className: 'px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md'
+                                        className: 'px-3 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
                                     },
-                                        React.createElement('i', { className: 'fas fa-paper-plane' })
+                                        React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
+                                        React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
                                     )
                                 )
                             )
                         ) : null,
                         
                         // PRIVATE TAB
-                        activeTab === 'private' ? React.createElement('div', { className: 'flex-1 flex' },
-                            // Liste des conversations
-                            React.createElement('div', { className: 'w-1/3 border-r border-gray-200 flex flex-col bg-gray-50' },
-                                React.createElement('div', { className: 'p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50' },
-                                    React.createElement('h3', { className: 'font-semibold text-gray-700 mb-2 flex items-center gap-2' }, 
+                        activeTab === 'private' ? React.createElement('div', { className: 'flex-1 flex flex-col sm:flex-row' },
+                            // Liste des conversations - Mobile: collapsible, Desktop: sidebar
+                            React.createElement('div', { className: (selectedContact ? 'hidden sm:flex ' : 'flex ') + 'w-full sm:w-80 md:w-96 border-r border-gray-200 flex-col bg-gray-50' },
+                                React.createElement('div', { className: 'p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 shadow-sm' },
+                                    React.createElement('h3', { className: 'font-semibold text-gray-700 text-sm sm:text-base mb-2 flex items-center gap-2' }, 
                                         React.createElement('i', { className: 'fas fa-address-book text-indigo-600' }),
                                         'Contacts'
                                     ),
@@ -3185,7 +3189,7 @@ app.get('/', (c) => {
                                                 loadPrivateMessages(user.id);
                                             }
                                         },
-                                        className: 'w-full border-2 border-indigo-300 bg-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-400 transition-colors',
+                                        className: 'w-full border-2 border-indigo-300 bg-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer hover:border-indigo-400 transition-all shadow-sm',
                                         value: ''
                                     },
                                         React.createElement('option', { value: '', disabled: true }, '📝 Nouvelle conversation...'),
@@ -3214,18 +3218,18 @@ app.get('/', (c) => {
                                             setSelectedContact({ id: conv.contact_id, full_name: conv.contact_name, role: conv.contact_role });
                                             loadPrivateMessages(conv.contact_id);
                                         },
-                                        className: 'p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors ' +
-                                            (selectedContact?.id === conv.contact_id ? 'bg-indigo-50' : 'bg-white')
+                                        className: 'p-2 sm:p-3 border-b border-gray-200 cursor-pointer hover:bg-indigo-50 transition-all active:scale-95 ' +
+                                            (selectedContact?.id === conv.contact_id ? 'bg-indigo-100 border-l-4 border-l-indigo-600 shadow-sm' : 'bg-white hover:border-l-4 hover:border-l-indigo-300')
                                     },
                                         React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                             React.createElement('div', {
-                                                className: 'w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0'
+                                                className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0 shadow-md'
                                             }, conv.contact_name ? conv.contact_name.charAt(0).toUpperCase() : '?'),
                                             React.createElement('div', { className: 'flex-1 min-w-0' },
-                                                React.createElement('div', { className: 'flex items-center gap-2' },
-                                                    React.createElement('span', { className: 'font-semibold text-sm text-gray-800 truncate' }, conv.contact_name),
+                                                React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2' },
+                                                    React.createElement('span', { className: 'font-semibold text-xs sm:text-sm text-gray-800 truncate' }, conv.contact_name),
                                                     conv.unread_count > 0 ? React.createElement('span', {
-                                                        className: 'bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full'
+                                                        className: 'bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 animate-pulse'
                                                     }, conv.unread_count) : null
                                                 ),
                                                 React.createElement('p', {
@@ -3239,46 +3243,54 @@ app.get('/', (c) => {
                             
                             // Zone de conversation
                             selectedContact ? React.createElement('div', { className: 'flex-1 flex flex-col' },
-                                // Header contact
-                                React.createElement('div', { className: 'p-4 border-b border-gray-200 bg-white' },
-                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                // Header contact with back button on mobile
+                                React.createElement('div', { className: 'p-2 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 shadow-sm' },
+                                    React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3' },
+                                        // Back button for mobile only
+                                        React.createElement('button', {
+                                            onClick: () => setSelectedContact(null),
+                                            className: 'sm:hidden p-2 hover:bg-indigo-100 rounded-full transition-colors'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-arrow-left text-indigo-600' })
+                                        ),
                                         React.createElement('div', {
-                                            className: 'w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold'
+                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md flex-shrink-0'
                                         }, selectedContact.full_name.charAt(0).toUpperCase()),
-                                        React.createElement('div', {},
-                                            React.createElement('h3', { className: 'font-semibold text-gray-800' }, selectedContact.full_name),
+                                        React.createElement('div', { className: 'flex-1 min-w-0' },
+                                            React.createElement('h3', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, selectedContact.full_name),
                                             React.createElement('span', {
-                                                className: 'text-xs px-2 py-0.5 rounded-full font-medium ' + getRoleBadgeClass(selectedContact.role)
+                                                className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium inline-block ' + getRoleBadgeClass(selectedContact.role)
                                             }, getRoleLabel(selectedContact.role))
                                         )
                                     )
                                 ),
                                 
                                 // Messages
-                                React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50' },
+                                React.createElement('div', { className: 'flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
                                     loading ? React.createElement('div', { className: 'text-center text-gray-400 py-12' },
-                                        React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl' })
+                                        React.createElement('i', { className: 'fas fa-spinner fa-spin text-3xl sm:text-4xl text-indigo-500' })
                                     ) : privateMessages.length === 0 ? React.createElement('div', {
-                                        className: 'text-center text-gray-400 py-12'
+                                        className: 'text-center text-gray-400 py-8 sm:py-12 px-4'
                                     },
-                                        React.createElement('i', { className: 'fas fa-comments text-6xl mb-4' }),
-                                        React.createElement('p', {}, 'Commencez la conversation avec ' + selectedContact.full_name)
+                                        React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-3 sm:mb-4 opacity-50' }),
+                                        React.createElement('p', { className: 'text-sm sm:text-base' }, 'Commencez la conversation avec ' + selectedContact.full_name),
+                                        React.createElement('p', { className: 'text-xs text-gray-400 mt-2' }, 'Ecrivez votre premier message ci-dessous')
                                     ) : privateMessages.map(msg => {
-                                        const isMe = msg.sender_id === currentUser.id;
+                                        const isMe = msg.sender_id === currentUser.userId;
                                         return React.createElement('div', {
                                             key: msg.id,
-                                            className: 'flex ' + (isMe ? 'justify-end' : 'justify-start')
+                                            className: 'flex ' + (isMe ? 'justify-end' : 'justify-start') + ' animate-fadeIn'
                                         },
                                             React.createElement('div', {
-                                                className: 'max-w-[70%] rounded-lg p-3 shadow-sm ' +
+                                                className: 'max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-3 shadow-md hover:shadow-lg transition-shadow ' +
                                                     (isMe 
-                                                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white' 
-                                                        : 'bg-white text-gray-800')
+                                                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm' 
+                                                        : 'bg-white text-gray-800 border border-gray-200 rounded-tl-sm')
                                             },
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
-                                                React.createElement('p', { className: 'whitespace-pre-wrap break-words' }, msg.content),
+                                                React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
                                                 React.createElement('div', { 
-                                                    className: 'text-xs mt-1 ' + (isMe ? 'text-white text-opacity-80' : 'text-gray-400')
+                                                    className: 'text-xs mt-1 ' + (isMe ? 'text-white text-opacity-90 text-right' : 'text-gray-400')
                                                 }, formatMessageTime(msg.created_at))
                                             )
                                         );
@@ -3287,22 +3299,23 @@ app.get('/', (c) => {
                                 ),
                                 
                                 // Input
-                                React.createElement('div', { className: 'border-t border-gray-200 p-4 bg-white' },
+                                React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
                                     React.createElement('div', { className: 'flex gap-2' },
                                         React.createElement('textarea', {
                                             value: messageContent,
                                             onChange: (e) => setMessageContent(e.target.value),
                                             onKeyPress: handleKeyPress,
-                                            placeholder: 'Ecrire un message prive...',
-                                            className: 'flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none',
+                                            placeholder: 'Ecrire un message... (Enter pour envoyer)',
+                                            className: 'flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all',
                                             rows: 2
                                         }),
                                         React.createElement('button', {
                                             onClick: sendMessage,
                                             disabled: !messageContent.trim(),
-                                            className: 'px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md'
+                                            className: 'px-3 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
                                         },
-                                            React.createElement('i', { className: 'fas fa-paper-plane' })
+                                            React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
+                                            React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
                                         )
                                     )
                                 )
