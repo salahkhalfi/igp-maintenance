@@ -3051,10 +3051,20 @@ app.get('/', (c) => {
                                         },
                                             // Banniere pour tickets planifies/assignes
                                             ticket.scheduled_date ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg'
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-between rounded-t-lg'
                                             },
-                                                React.createElement('i', { className: 'fas fa-calendar-check' }),
-                                                React.createElement('span', {}, 'PLANIFIE')
+                                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                                    React.createElement('i', { className: 'fas fa-calendar-check' }),
+                                                    React.createElement('span', {}, 'PLANIFIE')
+                                                ),
+                                                React.createElement('span', { className: 'text-white/90 font-normal' },
+                                                    new Date(ticket.scheduled_date).toLocaleDateString('fr-FR', { 
+                                                        day: '2-digit', 
+                                                        month: 'short', 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })
+                                                )
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'mb-1' },
