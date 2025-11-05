@@ -1127,10 +1127,9 @@ app.get('/', (c) => {
         };
         
         
-        const CreateTicketModal = ({ show, onClose, machines, onTicketCreated }) => {
+        const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUser }) => {
             const [title, setTitle] = React.useState('');
             const [description, setDescription] = React.useState('');
-            const [reporterName, setReporterName] = React.useState('');
             const [machineId, setMachineId] = React.useState('');
             const [priority, setPriority] = React.useState('medium');
             const [mediaFiles, setMediaFiles] = React.useState([]);
@@ -1201,7 +1200,7 @@ app.get('/', (c) => {
                     const response = await axios.post(API_URL + '/tickets', {
                         title,
                         description,
-                        reporter_name: reporterName,
+                        reporter_name: currentUser.full_name,
                         machine_id: parseInt(machineId),
                         priority,
                         created_at: localTimestamp
@@ -1219,7 +1218,6 @@ app.get('/', (c) => {
                     
                     setTitle('');
                     setDescription('');
-                    setReporterName('');
                     setMachineId('');
                     setPriority('medium');
                     setMediaFiles([]);
@@ -1283,20 +1281,6 @@ app.get('/', (c) => {
                                 onChange: (e) => setDescription(e.target.value),
                                 placeholder: 'Décrivez le problème en détail...',
                                 rows: 4,
-                                required: true
-                            })
-                        ),
-                        React.createElement('div', { className: 'mb-4' },
-                            React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                                React.createElement('i', { className: 'fas fa-user mr-2' }),
-                                'Votre nom *'
-                            ),
-                            React.createElement('input', {
-                                type: 'text',
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
-                                value: reporterName,
-                                onChange: (e) => setReporterName(e.target.value),
-                                placeholder: 'Ex: Jean Tremblay',
                                 required: true
                             })
                         ),
@@ -1429,8 +1413,6 @@ app.get('/', (c) => {
             const [selectedMedia, setSelectedMedia] = React.useState(null);
             const [comments, setComments] = React.useState([]);
             const [newComment, setNewComment] = React.useState('');
-            const [commentAuthor, setCommentAuthor] = React.useState('');
-            const [commentRole, setCommentRole] = React.useState('Opérateur');
             const [submittingComment, setSubmittingComment] = React.useState(false);
             const [uploadingMedia, setUploadingMedia] = React.useState(false);
             const [newMediaFiles, setNewMediaFiles] = React.useState([]);
@@ -1482,8 +1464,8 @@ app.get('/', (c) => {
             
             const handleAddComment = async (e) => {
                 e.preventDefault();
-                if (!newComment.trim() || !commentAuthor.trim()) {
-                    alert('Veuillez remplir votre nom et le commentaire');
+                if (!newComment.trim()) {
+                    alert('Veuillez écrire un commentaire');
                     return;
                 }
                 
@@ -1499,16 +1481,20 @@ app.get('/', (c) => {
                     const seconds = String(localTime.getSeconds()).padStart(2, '0');
                     const localTimestamp = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
                     
+                    // Convertir le rôle de l'utilisateur en français
+                    let userRoleFr = 'Opérateur';
+                    if (currentUser.role === 'technician') userRoleFr = 'Technicien';
+                    else if (currentUser.role === 'admin') userRoleFr = 'Admin';
+                    
                     await axios.post(API_URL + '/comments', {
                         ticket_id: ticketId,
-                        user_name: commentAuthor,
-                        user_role: commentRole,
+                        user_name: currentUser.full_name,
+                        user_role: userRoleFr,
                         comment: newComment,
                         created_at: localTimestamp
                     });
                     
                     setNewComment('');
-                    setCommentAuthor('');
                     loadComments();
                 } catch (error) {
                     alert('Erreur lors de l\\'ajout du commentaire');
@@ -1728,38 +1714,6 @@ app.get('/', (c) => {
                                 React.createElement('h5', { className: 'font-semibold text-gray-800 mb-3 flex items-center' },
                                     React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-igp-blue' }),
                                     'Ajouter un commentaire'
-                                ),
-                                
-                                
-                                React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-3 mb-3' },
-                                    React.createElement('div', {},
-                                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
-                                            React.createElement('i', { className: 'fas fa-user mr-1' }),
-                                            'Votre nom *'
-                                        ),
-                                        React.createElement('input', {
-                                            type: 'text',
-                                            value: commentAuthor,
-                                            onChange: (e) => setCommentAuthor(e.target.value),
-                                            placeholder: 'Ex: Jean Tremblay',
-                                            required: true,
-                                            className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent'
-                                        })
-                                    ),
-                                    React.createElement('div', {},
-                                        React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
-                                            React.createElement('i', { className: 'fas fa-user-tag mr-1' }),
-                                            'Rôle'
-                                        ),
-                                        React.createElement('select', {
-                                            value: commentRole,
-                                            onChange: (e) => setCommentRole(e.target.value),
-                                            className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent'
-                                        },
-                                            React.createElement('option', { value: 'Opérateur' }, '👨‍💼 Opérateur'),
-                                            React.createElement('option', { value: 'Technicien' }, '🔧 Technicien')
-                                        )
-                                    )
                                 ),
                                 
                                 
@@ -2571,7 +2525,8 @@ app.get('/', (c) => {
                     show: showCreateModal,
                     onClose: () => setShowCreateModal(false),
                     machines: machines,
-                    onTicketCreated: onTicketCreated
+                    onTicketCreated: onTicketCreated,
+                    currentUser: currentUser
                 }),
                 
                 
