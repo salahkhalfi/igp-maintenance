@@ -682,7 +682,7 @@ app.get('/', (c) => {
             React.useEffect(() => {
                 const interval = setInterval(() => {
                     setCountdown(getCountdownInfo(scheduledDate));
-                }, 60000); // Mise a jour chaque minute
+                }, 1000); // Mise a jour chaque seconde
                 
                 return () => clearInterval(interval);
             }, [scheduledDate]);
@@ -704,6 +704,8 @@ app.get('/', (c) => {
             const diffMs = scheduled - now;
             const diffHours = diffMs / (1000 * 60 * 60);
             const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const diffSeconds = Math.floor((diffMs % (1000 * 60)) / 1000);
             
             let text = '';
             let className = '';
@@ -711,32 +713,39 @@ app.get('/', (c) => {
             
             if (diffMs < 0) {
                 // En retard
-                const absHours = Math.abs(Math.floor(diffHours));
-                const absDays = Math.abs(Math.floor(diffDays));
+                const absMs = Math.abs(diffMs);
+                const absHours = Math.floor(absMs / (1000 * 60 * 60));
+                const absMinutes = Math.floor((absMs % (1000 * 60 * 60)) / (1000 * 60));
+                const absDays = Math.floor(absMs / (1000 * 60 * 60 * 24));
                 
                 if (absDays > 0) {
-                    text = 'Retard: ' + absDays + 'j';
+                    text = 'Retard: ' + absDays + 'j ' + (absHours % 24) + 'h';
+                } else if (absHours > 0) {
+                    text = 'Retard: ' + absHours + 'h ' + absMinutes + 'min';
                 } else {
-                    text = 'Retard: ' + absHours + 'h';
+                    text = 'Retard: ' + absMinutes + 'min';
                 }
                 className = 'bg-red-100 text-red-800 animate-pulse';
                 isOverdue = true;
+            } else if (diffHours < 1) {
+                // Moins de 1h - TRES URGENT (avec secondes)
+                text = diffMinutes + 'min ' + diffSeconds + 's';
+                className = 'bg-red-100 text-red-800 animate-pulse';
             } else if (diffHours < 2) {
                 // Moins de 2h - URGENT
-                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                text = Math.floor(diffHours) + 'h ' + minutes + 'min';
+                text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min';
                 className = 'bg-red-100 text-red-800';
             } else if (diffHours < 24) {
-                // Moins de 24h - Urgent
-                text = Math.floor(diffHours) + 'h';
+                // Moins de 24h - Urgent (avec minutes)
+                text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min';
                 className = 'bg-orange-100 text-orange-800';
             } else if (diffDays < 3) {
                 // Moins de 3 jours - Attention
-                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h';
+                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h ' + diffMinutes + 'min';
                 className = 'bg-yellow-100 text-yellow-800';
             } else {
                 // Plus de 3 jours - OK
-                text = Math.floor(diffDays) + ' jours';
+                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h';
                 className = 'bg-green-100 text-green-800';
             }
             
@@ -3050,8 +3059,8 @@ app.get('/', (c) => {
                                                     React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
                                                     React.createElement('span', { className: 'font-semibold' }, 
                                                         ticket.assigned_to 
-                                                            ? 'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
-                                                            : 'Designe par ' + (ticket.reporter_name || 'N/A')
+                                                            ? 'Assigne par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                            : 'Assigne par ' + (ticket.reporter_name || 'N/A')
                                                     )
                                                 )
                                             ) : null,
@@ -3147,8 +3156,8 @@ app.get('/', (c) => {
                                                     React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
                                                     React.createElement('span', { className: 'font-semibold' }, 
                                                         ticket.assigned_to 
-                                                            ? 'Par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
-                                                            : 'Designe par ' + (ticket.reporter_name || 'N/A')
+                                                            ? 'Assigne par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
+                                                            : 'Assigne par ' + (ticket.reporter_name || 'N/A')
                                                     )
                                                 )
                                             ) : null,
