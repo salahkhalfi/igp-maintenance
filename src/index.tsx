@@ -103,6 +103,23 @@ app.get('/api/technicians', authMiddleware, async (c) => {
   }
 });
 
+// Route pour que les techniciens voient la liste des operateurs et techniciens
+app.get('/api/users/team', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT id, email, full_name, role, created_at, updated_at
+      FROM users
+      WHERE role IN ('operator', 'technician')
+      ORDER BY role ASC, full_name ASC
+    `).all();
+    
+    return c.json({ users: results });
+  } catch (error) {
+    console.error('Get team users error:', error);
+    return c.json({ error: 'Erreur lors de la récupération de l equipe' }, 500);
+  }
+});
+
 app.route('/api/media', media);
 
 
@@ -2273,7 +2290,9 @@ app.get('/', (c) => {
             const loadUsers = async () => {
                 try {
                     setLoading(true);
-                    const response = await axios.get(API_URL + '/users');
+                    // Les techniciens utilisent la route /api/users/team pour voir seulement operateurs et techniciens
+                    const endpoint = currentUser.role === 'technician' ? '/users/team' : '/users';
+                    const response = await axios.get(API_URL + endpoint);
                     setUsers(response.data.users);
                 } catch (error) {
                     setNotification({ show: true, message: 'Erreur chargement: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
@@ -2401,7 +2420,7 @@ app.get('/', (c) => {
                 },
                     React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b pb-4' },
                         React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
-                            'Gestion des Utilisateurs'
+                            currentUser.role === 'technician' ? 'Liste de l\'equipe' : 'Gestion des Utilisateurs'
                         ),
                         React.createElement('button', {
                             onClick: onClose,
@@ -2410,10 +2429,11 @@ app.get('/', (c) => {
                     ),
                     
                     React.createElement('div', { className: 'mb-4 flex flex-col sm:flex-row gap-3' },
-                        React.createElement('button', {
+                        // Bouton creer utilisateur (visible seulement pour admin/superviseur)
+                        (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement('button', {
                             onClick: () => setShowCreateForm(true),
                             className: 'px-6 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold'
-                        }, 'Creer un utilisateur'),
+                        }, 'Creer un utilisateur') : null,
                         React.createElement('div', { className: 'flex-1 relative' },
                             React.createElement('input', {
                                 type: 'text',
@@ -2609,7 +2629,7 @@ app.get('/', (c) => {
                                             'Créé le: ' + formatDateEST(user.created_at, false)
                                         )
                                     ),
-                                    (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin')) ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
+                                    (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician') ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
                                         React.createElement('button', {
                                             onClick: () => handleEditUser(user),
                                             className: 'w-full sm:w-auto px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold text-sm'
@@ -3028,6 +3048,14 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
+                                            // Banniere pour tickets planifies/assignes
+                                            ticket.scheduled_date ? React.createElement('div', { 
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-calendar-check' }),
+                                                React.createElement('span', {}, 'PLANIFIE')
+                                            ) : null,
+                                            
                                             React.createElement('div', { className: 'mb-1' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
                                             ),
@@ -3125,6 +3153,14 @@ app.get('/', (c) => {
                                                 ? "Cliquer pour détails | Clic droit: menu" 
                                                 : "Cliquer pour détails | Glisser pour déplacer | Clic droit: menu"
                                         },
+                                            // Banniere pour tickets planifies/assignes
+                                            ticket.scheduled_date ? React.createElement('div', { 
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-calendar-check' }),
+                                                React.createElement('span', {}, 'PLANIFIE')
+                                            ) : null,
+                                            
                                             React.createElement('div', { className: 'mb-1' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
                                             ),
