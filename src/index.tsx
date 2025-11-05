@@ -2068,18 +2068,18 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', { 
-                className: 'modal active',
+                className: 'modal active bg-gradient-to-br from-blue-900/40 via-indigo-900/40 to-purple-900/40 backdrop-blur-sm',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'modal-content bg-white rounded-lg p-4 md:p-8 max-w-4xl w-full mx-4 my-auto',
+                    className: 'modal-content bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-4 md:p-8 max-w-4xl w-full mx-4 my-auto',
                     onClick: (e) => e.stopPropagation(),
                     style: { marginTop: 'auto', marginBottom: 'auto', maxHeight: '90vh', overflowY: 'auto' }
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6 border-b-2 border-igp-blue pb-4' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue' },
-                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-igp-orange' }),
-                            'Détails du Ticket'
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6 pb-4 border-b-2 border-gradient-to-r from-blue-400 to-purple-400' },
+                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent' },
+                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-orange-500' }),
+                            "Détails du Ticket"
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
                             (ticket && currentUser && (
