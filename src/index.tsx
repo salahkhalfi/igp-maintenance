@@ -2116,15 +2116,15 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                     ) : ticket ? React.createElement('div', {},
                         
-                        React.createElement('div', { className: 'mb-6' },
+                        React.createElement('div', { className: 'mb-6 p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-200/50' },
                             React.createElement('div', { className: 'flex items-center justify-between mb-4' },
-                                React.createElement('span', { className: 'text-lg font-mono text-gray-700' }, ticket.ticket_id),
+                                React.createElement('span', { className: 'text-lg font-mono font-bold text-blue-700 bg-blue-100/70 px-4 py-2 rounded-lg' }, ticket.ticket_id),
                                 React.createElement('span', { 
-                                    className: 'px-3 py-1 rounded font-semibold ' + 
-                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                     ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                     'bg-green-100 text-green-800')
+                                    className: 'px-4 py-2 rounded-xl font-bold shadow-md ' + 
+                                    (ticket.priority === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' :
+                                     ticket.priority === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' :
+                                     ticket.priority === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white' :
+                                     'bg-gradient-to-r from-green-500 to-green-600 text-white')
                                 }, 
                                     ticket.priority === 'critical' ? '🔴 CRITIQUE' :
                                     ticket.priority === 'high' ? '🟠 HAUTE' :
@@ -2132,41 +2132,53 @@ app.get('/', (c) => {
                                     '🟢 FAIBLE'
                                 )
                             ),
-                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800 mb-2' }, ticket.title),
-                            React.createElement('p', { className: 'text-gray-600 mb-4' }, ticket.description),
-                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
-                                React.createElement('div', {},
-                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Machine: '),
-                                    React.createElement('span', { className: 'text-gray-600' }, ticket.machine_type + ' ' + ticket.model)
+                            React.createElement('h3', { className: 'text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
+                            React.createElement('p', { className: 'text-gray-700 mb-5 leading-relaxed bg-white/60 p-4 rounded-lg' }, ticket.description),
+                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-3' },
+                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('i', { className: 'fas fa-cog text-blue-600' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700' }, 'Machine:')
+                                    ),
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, ticket.machine_type + ' ' + ticket.model)
                                 ),
-                                React.createElement('div', {},
-                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Statut: '),
-                                    React.createElement('span', { className: 'text-gray-600' }, getStatusLabel(ticket.status))
+                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('i', { className: 'fas fa-tasks text-purple-600' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700' }, 'Statut:')
+                                    ),
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, getStatusLabel(ticket.status))
                                 ),
-                                React.createElement('div', {},
-                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Créé le: '),
-                                    React.createElement('span', { className: 'text-gray-600' }, 
+                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('i', { className: 'far fa-calendar text-green-600' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700' }, "Créé le:")
+                                    ),
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, 
                                         formatDateEST(ticket.created_at)
                                     )
                                 ),
-                                React.createElement('div', {},
-                                    React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Rapporté par: '),
-                                    React.createElement('span', { className: 'text-gray-600' }, ticket.reporter_name || 'N/A')
+                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('i', { className: 'fas fa-user text-orange-600' }),
+                                        React.createElement('span', { className: 'font-bold text-gray-700' }, "Rapporté par:")
+                                    ),
+                                    React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' }, ticket.reporter_name || 'N/A')
                                 )
                             )
                         ),
                         
                         // Section planification (superviseur/admin seulement)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 
-                            React.createElement('div', { className: 'mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg' },
-                                React.createElement('div', { className: 'flex justify-between items-center mb-3' },
-                                    React.createElement('h4', { className: 'text-lg font-bold text-purple-800 flex items-center' },
-                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
+                            React.createElement('div', { className: 'mb-6 p-6 bg-gradient-to-br from-purple-50/90 to-pink-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-purple-200/50' },
+                                React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                                    React.createElement('h4', { className: 'text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center' },
+                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-purple-500' }),
                                         'Planification'
                                     ),
                                     !editingSchedule ? React.createElement('button', {
                                         onClick: () => setEditingSchedule(true),
-                                        className: 'px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-semibold transition-all'
+                                        className: 'px-4 py-2.5 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(147,51,234,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-purple-300/50'
                                     },
                                         React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                         'Modifier'
@@ -2175,18 +2187,24 @@ app.get('/', (c) => {
                                 
                                 !editingSchedule ? (
                                     // Affichage lecture seule
-                                    React.createElement('div', { className: 'text-sm space-y-2' },
-                                        React.createElement('div', {},
-                                            React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Assigné à: '),
-                                            React.createElement('span', { className: 'text-gray-600' },
+                                    React.createElement('div', { className: 'space-y-3' },
+                                        React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm' },
+                                            React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                                React.createElement('i', { className: 'fas fa-user-cog text-purple-600' }),
+                                                React.createElement('span', { className: 'font-bold text-gray-700' }, "Assigné à:")
+                                            ),
+                                            React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' },
                                                 ticket.assigned_to 
-                                                    ? (ticket.assigned_to === 'all' ? '👥 Toute equipe' : '👤 Technicien #' + ticket.assigned_to)
+                                                    ? (ticket.assigned_to === 'all' ? '👥 Toute équipe' : '👤 Technicien #' + ticket.assigned_to)
                                                     : '❌ Non assigné'
                                             )
                                         ),
-                                        React.createElement('div', {},
-                                            React.createElement('span', { className: 'font-semibold text-gray-700' }, 'Date planifiée: '),
-                                            React.createElement('span', { className: 'text-gray-600' },
+                                        React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm' },
+                                            React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                                React.createElement('i', { className: 'far fa-clock text-purple-600' }),
+                                                React.createElement('span', { className: 'font-bold text-gray-700' }, "Date planifiée:")
+                                            ),
+                                            React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' },
                                                 ticket.scheduled_date 
                                                     ? formatDateEST(ticket.scheduled_date)
                                                     : '❌ Non planifié'
@@ -2195,20 +2213,20 @@ app.get('/', (c) => {
                                     )
                                 ) : (
                                     // Mode édition
-                                    React.createElement('div', { className: 'space-y-3' },
+                                    React.createElement('div', { className: 'space-y-4' },
                                         // Assigner à un technicien
                                         React.createElement('div', {},
-                                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' }, 
-                                                React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
-                                                'Assigner à'
+                                            React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
+                                                React.createElement('i', { className: 'fas fa-user-cog mr-2 text-purple-600' }),
+                                                "Assigner à"
                                             ),
                                             React.createElement('select', {
                                                 value: scheduledAssignedTo,
                                                 onChange: (e) => setScheduledAssignedTo(e.target.value),
-                                                className: 'w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none text-sm'
+                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-semibold'
                                             },
                                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                                React.createElement('option', { value: 'all' }, '👥 Toute equipe'),
+                                                React.createElement('option', { value: 'all' }, '👥 Toute équipe'),
                                                 technicians.map(tech => 
                                                     React.createElement('option', { 
                                                         key: tech.id, 
@@ -2222,27 +2240,27 @@ app.get('/', (c) => {
                                         
                                         // Date et heure planifiée
                                         React.createElement('div', {},
-                                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' }, 
-                                                React.createElement('i', { className: 'fas fa-clock mr-1' }),
-                                                'Date planifiée'
+                                            React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
+                                                React.createElement('i', { className: 'fas fa-clock mr-2 text-purple-600' }),
+                                                "Date planifiée"
                                             ),
                                             React.createElement('input', {
                                                 type: 'datetime-local',
                                                 value: scheduledDate,
                                                 onChange: (e) => setScheduledDate(e.target.value),
-                                                className: 'w-full px-3 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none text-sm'
+                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-semibold'
                                             })
                                         ),
                                         
                                         // Boutons d'action
-                                        React.createElement('div', { className: 'flex justify-end space-x-2 pt-2' },
+                                        React.createElement('div', { className: 'flex justify-end gap-3 pt-3' },
                                             React.createElement('button', {
                                                 onClick: () => {
                                                     setEditingSchedule(false);
                                                     setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
                                                     setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 16) : '');
                                                 },
-                                                className: 'px-3 py-1 border-2 border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 text-sm transition-all'
+                                                className: 'px-5 py-2.5 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-lg font-bold transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
                                             },
                                                 React.createElement('i', { className: 'fas fa-times mr-1' }),
                                                 'Annuler'
@@ -2250,7 +2268,7 @@ app.get('/', (c) => {
                                             React.createElement('button', {
                                                 onClick: handleSaveSchedule,
                                                 disabled: savingSchedule,
-                                                className: 'px-3 py-1 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-400 text-sm font-semibold transition-all'
+                                                className: 'px-5 py-2.5 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 text-white rounded-lg font-bold transition-all shadow-[0_8px_16px_rgba(147,51,234,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(147,51,234,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-t border-purple-300/50'
                                             },
                                                 savingSchedule 
                                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-1' })
