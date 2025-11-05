@@ -2983,7 +2983,7 @@ app.get('/', (c) => {
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-yellow-100 text-yellow-700 whitespace-nowrap' 
                                                 },
                                                     React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
-                                                    'Assigné'
+                                                    ticket.assignee_name || 'Assigné'
                                                 ) : null
                                             ) : null,
                                             
@@ -3079,7 +3079,7 @@ app.get('/', (c) => {
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold bg-yellow-100 text-yellow-700 whitespace-nowrap' 
                                                 },
                                                     React.createElement('i', { className: 'fas fa-user-cog mr-1' }),
-                                                    'Assigné'
+                                                    ticket.assignee_name || 'Assigné'
                                                 ) : null
                                             ) : null,
                                             
