@@ -1328,14 +1328,14 @@ app.get('/', (c) => {
                     ),
                     
                     React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
-                        React.createElement('div', { className: 'w-64 bg-gray-50 p-4 overflow-y-auto border-r' },
+                        React.createElement('div', { className: 'w-64 bg-gradient-to-b from-indigo-50/80 to-purple-50/80 backdrop-blur-sm p-4 overflow-y-auto border-r-2 border-purple-200/50' },
                             React.createElement('nav', { className: 'space-y-1' },
                                 menuItems.map(item =>
                                     React.createElement('button', {
                                         key: item.id,
                                         onClick: () => setActiveSection(item.id),
                                         className: 'w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all ' + 
-                                            (activeSection === item.id ? 'bg-igp-blue text-white font-semibold' : 'hover:bg-gray-200 text-gray-700')
+                                            (activeSection === item.id ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-md' : 'hover:bg-white/60 hover:shadow-sm text-gray-700')
                                     },
                                         React.createElement('i', { className: 'fas ' + item.icon + ' w-5' }),
                                         React.createElement('span', { className: 'text-sm' }, item.label)
@@ -1344,7 +1344,7 @@ app.get('/', (c) => {
                             )
                         ),
                         
-                        React.createElement('div', { className: 'flex-1 p-6 overflow-y-auto' },
+                        React.createElement('div', { className: 'flex-1 p-6 overflow-y-auto bg-gradient-to-br from-white/50 to-indigo-50/30 backdrop-blur-sm' },
                             React.createElement('div', {},
                                 React.createElement('p', { style: { color: 'red', fontSize: '12px' } }, 
                                     'DEBUG - activeSection: ' + activeSection + ', sections keys: ' + Object.keys(sections).join(', ')
@@ -1366,13 +1366,13 @@ app.get('/', (c) => {
                         )
                     ),
                     
-                    React.createElement('div', { className: 'p-4 border-t bg-gray-50 flex justify-between items-center' },
+                    React.createElement('div', { className: 'p-4 border-t-2 border-purple-200/50 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm rounded-b-2xl flex justify-between items-center' },
                         React.createElement('p', { className: 'text-sm text-gray-600' },
-                            'Appuyez sur Escape pour fermer • Version 1.9.2'
+                            "Appuyez sur Escape pour fermer • Version 1.9.2"
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-700 font-semibold'
+                            className: 'px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow-md hover:shadow-lg font-semibold transition-all'
                         }, 'Fermer')
                     )
                 )
