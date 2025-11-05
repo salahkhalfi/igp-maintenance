@@ -1309,17 +1309,17 @@ app.get('/', (c) => {
             }, [show]);
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col',
+                    className: 'bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-6xl max-h-[90vh] flex flex-col',
                     onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center p-6 border-b' },
-                        React.createElement('h2', { className: 'text-2xl font-bold text-igp-blue flex items-center gap-2' },
-                            React.createElement('i', { className: 'fas fa-book' }),
-                            'Guide Utilisateur'
+                    React.createElement('div', { className: 'flex justify-between items-center p-6 border-b-2 border-gradient-to-r from-indigo-400 to-purple-400 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm rounded-t-2xl' },
+                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2' },
+                            React.createElement('i', { className: 'fas fa-book text-purple-500' }),
+                            "Guide Utilisateur"
                         ),
                         React.createElement('button', {
                             onClick: onClose,
