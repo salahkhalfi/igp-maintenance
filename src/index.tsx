@@ -733,14 +733,15 @@ app.get('/', (c) => {
                 const absMs = Math.abs(diffMs);
                 const absHours = Math.floor(absMs / (1000 * 60 * 60));
                 const absMinutes = Math.floor((absMs % (1000 * 60 * 60)) / (1000 * 60));
+                const absSeconds = Math.floor((absMs % (1000 * 60)) / 1000);
                 const absDays = Math.floor(absMs / (1000 * 60 * 60 * 24));
                 
                 if (absDays > 0) {
-                    text = 'Retard: ' + absDays + 'j ' + (absHours % 24) + 'h';
+                    text = 'Retard: ' + absDays + 'j ' + (absHours % 24) + 'h ' + absMinutes + 'min ' + absSeconds + 's';
                 } else if (absHours > 0) {
-                    text = 'Retard: ' + absHours + 'h ' + absMinutes + 'min';
+                    text = 'Retard: ' + absHours + 'h ' + absMinutes + 'min ' + absSeconds + 's';
                 } else {
-                    text = 'Retard: ' + absMinutes + 'min';
+                    text = 'Retard: ' + absMinutes + 'min ' + absSeconds + 's';
                 }
                 className = 'bg-red-100 text-red-800 animate-pulse';
                 isOverdue = true;
@@ -749,20 +750,20 @@ app.get('/', (c) => {
                 text = diffMinutes + 'min ' + diffSeconds + 's';
                 className = 'bg-red-100 text-red-800 animate-pulse';
             } else if (diffHours < 2) {
-                // Moins de 2h - URGENT
-                text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min';
+                // Moins de 2h - URGENT (avec secondes)
+                text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min ' + diffSeconds + 's';
                 className = 'bg-red-100 text-red-800';
             } else if (diffHours < 24) {
-                // Moins de 24h - Urgent (avec minutes)
-                text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min';
+                // Moins de 24h - Urgent (avec minutes et secondes)
+                text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min ' + diffSeconds + 's';
                 className = 'bg-orange-100 text-orange-800';
             } else if (diffDays < 3) {
-                // Moins de 3 jours - Attention
-                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h ' + diffMinutes + 'min';
+                // Moins de 3 jours - Attention (avec secondes)
+                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h ' + diffMinutes + 'min ' + diffSeconds + 's';
                 className = 'bg-yellow-100 text-yellow-800';
             } else {
-                // Plus de 3 jours - OK
-                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h';
+                // Plus de 3 jours - OK (avec secondes)
+                text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h ' + diffMinutes + 'min ' + diffSeconds + 's';
                 className = 'bg-green-100 text-green-800';
             }
             
