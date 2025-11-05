@@ -1847,19 +1847,36 @@ app.get('/', (c) => {
                             ),
                             React.createElement('input', {
                                 type: 'file',
+                                accept: 'image/*',
+                                capture: 'environment',
+                                multiple: true,
+                                onChange: handleFileChange,
+                                className: 'hidden',
+                                id: 'photo-upload'
+                            }),
+                            React.createElement('input', {
+                                type: 'file',
                                 accept: 'image/*,video/*',
-                                capture: true,
                                 multiple: true,
                                 onChange: handleFileChange,
                                 className: 'hidden',
                                 id: 'media-upload'
                             }),
-                            React.createElement('label', {
-                                htmlFor: 'media-upload',
-                                className: 'w-full px-4 py-3 border-2 border-dashed border-igp-blue rounded-md text-center cursor-pointer hover:bg-blue-50 transition-all flex items-center justify-center text-igp-blue font-semibold'
-                            },
-                                React.createElement('i', { className: 'fas fa-camera mr-2' }),
-                                'Prendre une photo ou vidéo'
+                            React.createElement('div', { className: 'flex gap-2' },
+                                React.createElement('label', {
+                                    htmlFor: 'photo-upload',
+                                    className: 'flex-1 px-4 py-3 border-2 border-dashed border-igp-blue rounded-md text-center cursor-pointer hover:bg-blue-50 transition-all flex items-center justify-center text-igp-blue font-semibold'
+                                },
+                                    React.createElement('i', { className: 'fas fa-camera mr-2' }),
+                                    'Caméra'
+                                ),
+                                React.createElement('label', {
+                                    htmlFor: 'media-upload',
+                                    className: 'flex-1 px-4 py-3 border-2 border-dashed border-gray-400 rounded-md text-center cursor-pointer hover:bg-gray-50 transition-all flex items-center justify-center text-gray-700 font-semibold'
+                                },
+                                    React.createElement('i', { className: 'fas fa-images mr-2' }),
+                                    'Galerie'
+                                )
                             ),
                             mediaPreviews.length > 0 ? React.createElement('div', { className: 'mt-3 grid grid-cols-3 gap-2' },
                                 mediaPreviews.map((preview, index) =>
@@ -2595,24 +2612,38 @@ app.get('/', (c) => {
                             ) : null,
                             
                             
-                            React.createElement('div', { className: 'text-center' },
+                            React.createElement('div', { className: 'flex gap-3 justify-center' },
                                 React.createElement('label', { 
-                                    className: 'inline-block px-6 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-igp-orange transition-all'
+                                    className: 'inline-block px-6 py-3 bg-blue-100 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer hover:bg-blue-200 hover:border-blue-600 transition-all'
+                                },
+                                    React.createElement('input', {
+                                        type: 'file',
+                                        multiple: true,
+                                        accept: 'image/*',
+                                        capture: 'environment',
+                                        onChange: handleNewMediaChange,
+                                        className: 'hidden',
+                                        id: 'photo-upload-detail'
+                                    }),
+                                    React.createElement('i', { className: 'fas fa-camera text-2xl text-blue-600 mb-2 block' }),
+                                    React.createElement('span', { className: 'text-sm font-semibold text-blue-700 block' },
+                                        'Prendre une photo'
+                                    )
+                                ),
+                                React.createElement('label', { 
+                                    className: 'inline-block px-6 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-gray-600 transition-all'
                                 },
                                     React.createElement('input', {
                                         type: 'file',
                                         multiple: true,
                                         accept: 'image/*,video/*',
-                                        capture: true,
                                         onChange: handleNewMediaChange,
-                                        className: 'hidden'
+                                        className: 'hidden',
+                                        id: 'media-upload-detail'
                                     }),
-                                    React.createElement('i', { className: 'fas fa-plus-circle text-2xl text-igp-orange mb-2 block' }),
-                                    React.createElement('span', { className: 'text-sm font-semibold text-gray-700' },
-                                        'Cliquer pour sélectionner des fichiers'
-                                    ),
-                                    React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
-                                        'Photos (JPG, PNG) ou vidéos (MP4, MOV)'
+                                    React.createElement('i', { className: 'fas fa-images text-2xl text-gray-600 mb-2 block' }),
+                                    React.createElement('span', { className: 'text-sm font-semibold text-gray-700 block' },
+                                        'Choisir fichiers'
                                     )
                                 )
                             )
