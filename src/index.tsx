@@ -3913,8 +3913,8 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
                                             
-                                            // Badge de planification (si ticket planifié)
-                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                            // Badge de planification (si ticket planifié ET pas encore commencé)
+                                            (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
@@ -4018,8 +4018,8 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
                                             
-                                            // Badge de planification (si ticket planifié)
-                                            ticket.scheduled_date ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                            // Badge de planification (si ticket planifié ET pas encore commencé)
+                                            (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
