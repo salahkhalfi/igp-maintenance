@@ -3874,18 +3874,18 @@ app.get('/', (c) => {
                                         },
                                             // Banniere pour tickets planifies/assignes
                                             ticket.scheduled_date ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-2 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-between rounded-t-lg shadow-md border-b-2 border-purple-400/30'
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-2.5 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-xs font-bold flex items-center justify-between rounded-t-lg shadow-[0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] border-b border-amber-400/50'
                                             },
-                                                React.createElement('div', { className: 'flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-2 py-1 rounded' },
-                                                    React.createElement('i', { className: 'fas fa-calendar-check text-yellow-300' }),
-                                                    React.createElement('span', { className: 'text-white' }, "PLANIFIÉ")
+                                                React.createElement('div', { className: 'flex items-center gap-1.5 bg-gradient-to-br from-amber-500/90 to-amber-600/90 backdrop-blur-sm px-2.5 py-1 rounded shadow-[0_2px_8px_rgba(251,191,36,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] border border-amber-300/30' },
+                                                    React.createElement('i', { className: 'fas fa-calendar-check text-white drop-shadow-lg' }),
+                                                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
                                                 ),
-                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 px-3 bg-white/10 backdrop-blur-sm py-1 mx-2 rounded shadow-inner' },
+                                                React.createElement('span', { className: 'text-amber-100 font-bold text-center flex-1 px-3 bg-gradient-to-br from-slate-600/50 to-slate-700/50 backdrop-blur-sm py-1 mx-2 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border border-slate-500/40' },
                                                     ticket.assigned_to 
                                                         ? (ticket.assigned_to === 'all' ? '👥 Équipe complète' : '👤 Tech #' + ticket.assigned_to)
                                                         : '⚠️ Non assigné'
                                                 ),
-                                                React.createElement('span', { className: 'text-white font-semibold bg-white/15 backdrop-blur-sm px-2 py-1 rounded' },
+                                                React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-slate-600/80 to-slate-700/80 backdrop-blur-sm px-2.5 py-1 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] border border-slate-500/40' },
                                                     new Date(ticket.scheduled_date).toLocaleDateString('fr-FR', { 
                                                         day: '2-digit', 
                                                         month: 'short'
