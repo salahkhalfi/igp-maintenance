@@ -2809,7 +2809,7 @@ app.get('/', (c) => {
                     ) : null,
                     
                     editingUser ? React.createElement('div', { 
-                        className: 'mb-6 p-6 bg-green-50 rounded-lg border-2 border-green-600 scroll-mt-4',
+                        className: 'mb-6 p-6 bg-gradient-to-br from-green-50/90 to-emerald-50/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-green-200/50 scroll-mt-4',
                         ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
                     },
                         React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Modifier: ' + editingUser.full_name),
@@ -2821,7 +2821,7 @@ app.get('/', (c) => {
                                         type: 'email',
                                         value: editEmail,
                                         onChange: (e) => setEditEmail(e.target.value),
-                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         required: true,
                                         autoFocus: true
                                     })
@@ -2832,20 +2832,20 @@ app.get('/', (c) => {
                                         type: 'text',
                                         value: editFullName,
                                         onChange: (e) => setEditFullName(e.target.value),
-                                        className: 'w-full px-3 py-2 border-2 rounded-md',
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         required: true
                                     })
                                 )
                             ),
                             React.createElement('div', { className: 'mb-4' },
-                                React.createElement('label', { className: 'block font-bold mb-2' }, 'Role'),
+                                React.createElement('label', { className: 'block font-bold mb-2' }, "Rôle"),
                                 React.createElement('select', {
                                     value: editRole,
                                     onChange: (e) => setEditRole(e.target.value),
-                                    className: 'w-full px-3 py-2 border-2 rounded-md',
+                                    className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                     disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin'
                                 },
-                                    React.createElement('option', { value: 'operator' }, 'Operateur'),
+                                    React.createElement('option', { value: 'operator' }, "Opérateur"),
                                     React.createElement('option', { value: 'technician' }, 'Technicien'),
                                     React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
                                     currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
@@ -2855,12 +2855,12 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     type: 'button',
                                     onClick: () => setEditingUser(null),
-                                    className: 'px-6 py-2 border-2 rounded-md'
+                                    className: 'px-6 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 hover:border-gray-400 font-semibold transition-all'
                                 }, 'Annuler'),
                                 React.createElement('button', {
                                     type: 'submit',
                                     disabled: buttonLoading === 'update',
-                                    className: 'px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center'
+                                    className: 'px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md hover:shadow-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center transition-all'
                                 }, 
                                     buttonLoading === 'update' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                     'Enregistrer'
