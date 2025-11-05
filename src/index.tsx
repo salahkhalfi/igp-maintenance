@@ -1772,15 +1772,23 @@ app.get('/', (c) => {
                                         key: p,
                                         type: 'button',
                                         onClick: () => setPriority(p),
-                                        className: 'px-4 py-2 rounded-md text-sm font-semibold transition-all ' + 
+                                        className: 'flex-1 min-w-0 px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold transition-all text-center whitespace-nowrap overflow-hidden ' + 
                                             (priority === p 
                                                 ? 'bg-igp-orange text-white shadow-md' 
                                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300')
                                     },
-                                        p === 'low' ? '🟢 Faible' :
-                                        p === 'medium' ? '🟡 Moyenne' :
-                                        p === 'high' ? '🟠 Haute' :
-                                        '🔴 Critique'
+                                        React.createElement('span', { className: 'hidden sm:inline' },
+                                            p === 'low' ? '🟢 Faible' :
+                                            p === 'medium' ? '🟡 Moyenne' :
+                                            p === 'high' ? '🟠 Haute' :
+                                            '🔴 Critique'
+                                        ),
+                                        React.createElement('span', { className: 'inline sm:hidden' },
+                                            p === 'low' ? '🟢 Faible' :
+                                            p === 'medium' ? '🟡 Moy.' :
+                                            p === 'high' ? '🟠 Haute' :
+                                            '🔴 Crit.'
+                                        )
                                     )
                                 )
                             )
