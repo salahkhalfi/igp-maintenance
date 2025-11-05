@@ -4082,13 +4082,13 @@ app.get('/', (c) => {
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
                                                 React.createElement('div', { 
-                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200'
+                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 overflow-hidden'
                                                 },
                                                     React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
-                                                    React.createElement('span', { className: 'font-semibold' }, 
+                                                    React.createElement('span', { className: 'font-semibold truncate inline-block max-w-full' }, 
                                                         ticket.assigned_to 
-                                                            ? 'Assigne par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
-                                                            : 'Assigne par ' + (ticket.reporter_name || 'N/A')
+                                                            ? 'Par ' + (ticket.reporter_name || 'N/A')
+                                                            : (ticket.reporter_name || 'N/A')
                                                     )
                                                 )
                                             ) : null,
@@ -4187,13 +4187,13 @@ app.get('/', (c) => {
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
                                                 React.createElement('div', { 
-                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200'
+                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 overflow-hidden'
                                                 },
                                                     React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
-                                                    React.createElement('span', { className: 'font-semibold' }, 
+                                                    React.createElement('span', { className: 'font-semibold truncate inline-block max-w-full' }, 
                                                         ticket.assigned_to 
-                                                            ? 'Assigne par ' + (ticket.reporter_name || 'N/A') + ' a ' + (ticket.assignee_name || 'N/A')
-                                                            : 'Assigne par ' + (ticket.reporter_name || 'N/A')
+                                                            ? 'Par ' + (ticket.reporter_name || 'N/A')
+                                                            : (ticket.reporter_name || 'N/A')
                                                     )
                                                 )
                                             ) : null,
