@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-1.9.3-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -19,14 +19,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.9.3 - En Production**
+✅ **Version 2.0.0 - En Développement**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v1.9.2**: Guide utilisateur simplifié ultra-concis (emoji-based, scannable en 30 sec/section)
+- **NOUVEAU v2.0.0**: 🎤 Messages audio enregistrables (public + privé) avec interface élégante
+- **v1.9.2**: Guide utilisateur simplifié ultra-concis (emoji-based, scannable en 30 sec/section)
 - **v1.9.0**: Gestion complète des utilisateurs (CRUD) + Notifications élégantes
 - **v1.8.0**: Système de permissions par rôle + Statuts francisés
 - Système de commentaires + Upload médias supplémentaires + Suppression de tickets
@@ -36,6 +37,69 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 ## 🚀 Fonctionnalités
 
 ### ✅ Fonctionnalités implémentées
+
+#### 🆕 **NOUVEAU v2.0.0** - Messages Audio Enregistrables 🎤
+
+##### 🎙️ Enregistrement Audio Natif
+- **Bouton micro** - Accès direct à l'enregistrement audio dans messagerie (public + privé)
+- **MediaRecorder API** - Enregistrement natif via navigateur (aucune librairie externe)
+- **Multi-format** - Auto-détection: WebM (Chrome/Edge), MP4 (Safari), OGG (Firefox)
+- **Timer live** - Affichage du temps d'enregistrement en temps réel (format M:SS)
+- **Durée max** - Limite de 5 minutes (300 secondes) par message
+- **Optimisations audio** - Echo cancellation, noise suppression, auto gain control
+- **Prévisualisation** - Écouter l'audio avant envoi avec lecteur intégré
+- **Annulation** - Bouton pour annuler et recommencer l'enregistrement
+
+##### 🎧 Lecture Audio dans Messages
+- **Lecteur intégré** - Player HTML5 natif avec contrôles (play, pause, volume, timeline)
+- **Badge visuel** - Icône micro 🎤 pour identifier les messages vocaux
+- **Durée affichée** - Temps total du message vocal visible
+- **Style adaptatif** - Design différent pour messages publics vs privés
+- **Cache optimisé** - Headers Cache-Control pour performance (1 an)
+
+##### 📱 Interface Responsive
+- **Desktop** - Interface complète avec prévisualisation et contrôles
+- **Mobile** - Accès caméra/micro natif avec permissions système
+- **Tablette** - Layout adaptatif pour toutes les tailles d'écran
+- **Animations** - Point rouge pulsant pendant l'enregistrement
+- **Feedback visuel** - Zone d'enregistrement avec dégradé rose/rouge
+
+##### 🔒 Sécurité & Validation
+- **Taille maximale** - 10 MB par message audio
+- **Durée max** - 300 secondes (5 minutes)
+- **Types MIME** - Validation stricte (audio/webm, audio/mp4, audio/mpeg, audio/ogg, audio/wav)
+- **Permissions** - Vérification sender/recipient/admin pour accès
+- **Authentification** - JWT requis pour upload et lecture
+- **Upload sécurisé** - FormData avec validation backend
+
+##### 💾 Stockage R2
+- **Organisation** - `messages/audio/{userId}/{timestamp}-{randomId}.{extension}`
+- **Métadonnées DB** - Stockage du file_key, durée, taille dans table messages
+- **Content-Type** - Détection automatique et stockage du MIME type
+- **Streaming** - Lecture en streaming direct depuis R2 (pas de téléchargement)
+
+##### 🛠️ API Audio Messages
+- `POST /api/messages/audio` - Upload message vocal (FormData)
+  - Body: `audio` (File), `message_type` ('public'/'private'), `duration` (seconds), `recipient_id` (optional)
+  - Validation: 10MB max, 300s max, types MIME autorisés
+- `GET /api/messages/audio/:fileKey` - Stream audio file
+  - Headers: Content-Type, Cache-Control
+  - Permissions: Sender, recipient, admin ou message public
+
+##### 📊 Base de Données
+**Migration 0006** - Colonnes audio ajoutées à table `messages`:
+- `audio_file_key TEXT` - Clé R2 du fichier audio
+- `audio_duration INTEGER` - Durée en secondes
+- `audio_size INTEGER` - Taille en bytes
+- Index pour recherche rapide des messages audio
+
+##### ✅ Tests Effectués
+- ✅ Build réussi (459.10 kB)
+- ✅ Service démarré avec PM2
+- ✅ API backend opérationnelle (401 = auth required)
+- ✅ Interface d'enregistrement fonctionnelle
+- ✅ Lecteur audio intégré dans messages
+- ⏳ À tester: Enregistrement réel + upload + lecture (test utilisateur requis)
 
 #### 🎯 **NOUVEAU v1.4.0** - Drag-and-Drop natif (Desktop + Mobile)
 
@@ -348,6 +412,21 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 }
 ```
 
+#### Message (NOUVEAU v2.0.0)
+```javascript
+{
+  id: INTEGER,
+  sender_id: INTEGER,
+  recipient_id: INTEGER,       // NULL pour messages publics
+  message_type: ENUM('public', 'private'),
+  content: TEXT,
+  audio_file_key: TEXT,        // NOUVEAU: Clé R2 du fichier audio
+  audio_duration: INTEGER,     // NOUVEAU: Durée en secondes
+  audio_size: INTEGER,         // NOUVEAU: Taille en bytes
+  created_at: DATETIME
+}
+```
+
 ## 🔌 API REST Complète
 
 ### Authentification
@@ -378,6 +457,14 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 ### Commentaires
 - `POST /api/comments` - Ajouter un commentaire à un ticket
 - `GET /api/comments/ticket/:ticketId` - Liste les commentaires d'un ticket
+
+### Messages Audio (NOUVEAU v2.0.0)
+- `POST /api/messages/audio` - Upload message vocal (multipart/form-data)
+  - FormData: `audio` (File), `message_type`, `duration`, `recipient_id` (optional)
+  - Validation: 10MB max, 300s max, types MIME autorisés
+- `GET /api/messages/audio/:fileKey` - Stream fichier audio depuis R2
+  - Permissions: Sender, recipient, admin ou message public
+  - Headers: Content-Type, Cache-Control
 
 ### Utilisateurs (NOUVEAU v1.9.0)
 - `GET /api/users` - Liste tous les utilisateurs (admin)
@@ -510,7 +597,8 @@ webapp/
 ├── migrations/
 │   ├── 0001_initial_schema.sql  # Schéma de base de données
 │   ├── 0002_add_comments.sql    # Table des commentaires (v1.7.0)
-│   └── 0003_add_reporter_name.sql  # Noms libres (v1.7.0)
+│   ├── 0003_add_reporter_name.sql  # Noms libres (v1.7.0)
+│   └── 0006_add_audio_messages.sql # Colonnes audio (v2.0.0)
 ├── public/                    # Fichiers statiques
 ├── seed.sql                   # Données de test
 ├── wrangler.jsonc             # Configuration Cloudflare
@@ -693,6 +781,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.9.3  
+**Version**: 2.0.0  
 **Dernière mise à jour**: 2025-11-06  
-**Statut**: ✅ En Production - Nettoyage R2 automatique + Gestion utilisateurs + Permissions par rôle
+**Statut**: ✅ En Développement - Messages audio enregistrables + Gestion utilisateurs + Permissions par rôle
