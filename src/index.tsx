@@ -10,13 +10,15 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { authMiddleware, adminOnly, technicianOrAdmin, technicianSupervisorOrAdmin } from './middlewares/auth';
+import { authMiddleware, adminOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
+import { hasPermission, getRolePermissions } from './utils/permissions';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
 import media from './routes/media';
 import comments from './routes/comments';
 import users from './routes/users';
+import roles from './routes/roles';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -73,6 +75,85 @@ app.use('/api/auth/me', authMiddleware);
 
 
 app.route('/api/auth', auth);
+
+
+// ========================================
+// ROUTES RBAC - TEST ET GESTION
+// ========================================
+
+// Route de test RBAC (accessible à tous les utilisateurs authentifiés)
+app.get('/api/rbac/test', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Récupérer toutes les permissions du rôle de l'utilisateur
+    const userPermissions = await getRolePermissions(c.env.DB, user.role);
+    
+    // Tester quelques permissions spécifiques
+    const tests = {
+      canCreateTickets: await hasPermission(c.env.DB, user.role, 'tickets', 'create', 'all'),
+      canDeleteAllTickets: await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'all'),
+      canDeleteOwnTickets: await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'own'),
+      canCreateMachines: await hasPermission(c.env.DB, user.role, 'machines', 'create', 'all'),
+      canCreateUsers: await hasPermission(c.env.DB, user.role, 'users', 'create', 'all'),
+      canManageRoles: await hasPermission(c.env.DB, user.role, 'roles', 'create', 'all'),
+    };
+    
+    return c.json({
+      message: 'Test RBAC réussi',
+      user: {
+        id: user.userId,
+        email: user.email,
+        role: user.role
+      },
+      permissions: {
+        total: userPermissions.length,
+        list: userPermissions
+      },
+      specificTests: tests,
+      interpretation: {
+        role: user.role,
+        description: 
+          user.role === 'admin' ? 'Accès complet - Peut tout faire' :
+          user.role === 'supervisor' ? 'Gestion complète sauf rôles/permissions' :
+          user.role === 'technician' ? 'Gestion tickets + lecture' :
+          user.role === 'operator' ? 'Tickets propres uniquement' :
+          'Rôle personnalisé'
+      }
+    });
+  } catch (error) {
+    console.error('RBAC test error:', error);
+    return c.json({ error: 'Erreur lors du test RBAC' }, 500);
+  }
+});
+
+// Route de test avec middleware requirePermission
+app.get('/api/rbac/test-permission', 
+  authMiddleware,
+  requirePermission('tickets', 'read', 'all'),
+  async (c) => {
+    return c.json({ 
+      message: 'Permission accordée!',
+      requiredPermission: 'tickets.read.all'
+    });
+  }
+);
+
+// Route de test avec middleware requireAnyPermission
+app.get('/api/rbac/test-any-permission',
+  authMiddleware,
+  requireAnyPermission(['tickets.read.all', 'tickets.read.own']),
+  async (c) => {
+    return c.json({
+      message: 'Au moins une permission accordée!',
+      requiredPermissions: ['tickets.read.all', 'tickets.read.own']
+    });
+  }
+);
+
+// API de gestion des rôles (admin uniquement)
+app.use('/api/roles/*', authMiddleware, adminOnly);
+app.route('/api/roles', roles);
 
 
 app.use('/api/tickets/*', authMiddleware);
