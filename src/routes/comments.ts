@@ -3,6 +3,7 @@
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
 import { authMiddleware } from '../middlewares/auth';
+import { LIMITS } from '../utils/validation';
 
 const comments = new Hono<{ Bindings: Bindings }>();
 
@@ -12,8 +13,33 @@ comments.post('/', authMiddleware, async (c) => {
     const body = await c.req.json();
     const { ticket_id, user_name, user_role, comment, created_at } = body;
     
+    // Validation des champs requis
     if (!ticket_id || !user_name || !comment) {
       return c.json({ error: 'Ticket ID, nom et commentaire requis' }, 400);
+    }
+
+    // Validation de l'ID du ticket
+    const ticketIdNum = parseInt(ticket_id);
+    if (isNaN(ticketIdNum) || ticketIdNum <= 0) {
+      return c.json({ error: 'ID de ticket invalide' }, 400);
+    }
+
+    // Validation du nom d'utilisateur
+    const trimmedUserName = user_name.trim();
+    if (trimmedUserName.length < LIMITS.NAME_MIN) {
+      return c.json({ error: `Nom d'utilisateur trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    }
+    if (user_name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Nom d'utilisateur trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+    }
+
+    // Validation du commentaire
+    const trimmedComment = comment.trim();
+    if (trimmedComment.length < 1) {
+      return c.json({ error: 'Commentaire ne peut pas être vide' }, 400);
+    }
+    if (comment.length > LIMITS.COMMENT_MAX) {
+      return c.json({ error: `Commentaire trop long (max ${LIMITS.COMMENT_MAX} caractères)` }, 400);
     }
     
     // Vérifier que le ticket existe
@@ -28,11 +54,11 @@ comments.post('/', authMiddleware, async (c) => {
     // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
     const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
     
-    // Insérer le commentaire avec timestamp de l'appareil
+    // Insérer le commentaire avec timestamp de l'appareil et données nettoyées
     const result = await c.env.DB.prepare(`
       INSERT INTO ticket_comments (ticket_id, user_name, user_role, comment, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `).bind(ticket_id, user_name, user_role, comment, timestamp).run();
+    `).bind(ticketIdNum, trimmedUserName, user_role || null, trimmedComment, timestamp).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de l\'ajout du commentaire' }, 500);

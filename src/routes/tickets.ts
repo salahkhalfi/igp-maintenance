@@ -112,9 +112,31 @@ tickets.post('/', async (c) => {
     const body: CreateTicketRequest = await c.req.json();
     const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
     
-    // Validation
+    // Validation des champs requis
     if (!title || !description || !reporter_name || !machine_id || !priority) {
       return c.json({ error: 'Tous les champs sont requis' }, 400);
+    }
+    
+    // Validation du titre
+    if (title.trim().length < 3 || title.length > 200) {
+      return c.json({ error: 'Titre invalide (3-200 caractères)' }, 400);
+    }
+    
+    // Validation de la description
+    if (description.trim().length < 5 || description.length > 2000) {
+      return c.json({ error: 'Description invalide (5-2000 caractères)' }, 400);
+    }
+    
+    // Validation de la priorité
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+    if (!validPriorities.includes(priority)) {
+      return c.json({ error: 'Priorité invalide (low, medium, high, critical)' }, 400);
+    }
+    
+    // Validation de l'ID machine
+    const machineIdNum = parseInt(machine_id);
+    if (isNaN(machineIdNum) || machineIdNum <= 0) {
+      return c.json({ error: 'ID machine invalide' }, 400);
     }
     
     // Récupérer les infos de la machine

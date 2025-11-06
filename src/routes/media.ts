@@ -3,6 +3,7 @@
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
 import { authMiddleware } from '../middlewares/auth';
+import { LIMITS, validateFileUpload } from '../utils/validation';
 
 const media = new Hono<{ Bindings: Bindings }>();
 
@@ -34,37 +35,40 @@ media.post('/upload', authMiddleware, async (c) => {
       return c.json({ error: 'Aucun fichier fourni' }, 400);
     }
     
+    // Validation de l'ID du ticket
     if (!ticketId) {
       return c.json({ error: 'ID du ticket requis' }, 400);
     }
-    
-    // 🔒 VALIDATION DE SÉCURITÉ: Taille du fichier
-    if (file.size > MAX_FILE_SIZE) {
-      return c.json({ 
-        error: `Fichier trop volumineux. Taille: ${formatFileSize(file.size)}, Maximum autorisé: ${formatFileSize(MAX_FILE_SIZE)}` 
-      }, 400);
+    const ticketIdNum = parseInt(ticketId);
+    if (isNaN(ticketIdNum) || ticketIdNum <= 0) {
+      return c.json({ error: 'ID de ticket invalide' }, 400);
     }
     
-    // 🔒 VALIDATION DE SÉCURITÉ: Type MIME du fichier
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return c.json({ 
-        error: `Type de fichier non autorisé: ${file.type}. Types acceptés: images (JPEG, PNG, WebP, GIF) et vidéos (MP4, WebM, QuickTime)` 
-      }, 400);
+    // 🔒 VALIDATION DE SÉCURITÉ: Utiliser la fonction de validation centralisée
+    const fileValidation = validateFileUpload(file);
+    if (!fileValidation.valid) {
+      return c.json({ error: fileValidation.error }, 400);
+    }
+    
+    // Validation supplémentaire du nom de fichier
+    if (file.name.length > 255) {
+      return c.json({ error: 'Nom de fichier trop long (max 255 caractères)' }, 400);
     }
     
     // Vérifier que le ticket existe
     const ticket = await c.env.DB.prepare(
       'SELECT id FROM tickets WHERE id = ?'
-    ).bind(ticketId).first();
+    ).bind(ticketIdNum).first();
     
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
     
-    // Générer une clé unique pour le fichier
+    // Générer une clé unique pour le fichier (nettoyer le nom de fichier)
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(7);
-    const fileKey = `tickets/${ticketId}/${timestamp}-${randomStr}-${file.name}`;
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileKey = `tickets/${ticketIdNum}/${timestamp}-${randomStr}-${sanitizedFileName}`;
     
     // Upload vers R2
     const arrayBuffer = await file.arrayBuffer();
@@ -81,7 +85,7 @@ media.post('/upload', authMiddleware, async (c) => {
     const result = await c.env.DB.prepare(`
       INSERT INTO media (ticket_id, file_key, file_name, file_type, file_size, url, uploaded_by)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(ticketId, fileKey, file.name, file.type, file.size, url, user.userId).run();
+    `).bind(ticketIdNum, fileKey, sanitizedFileName, file.type, file.size, url, user.userId).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de l\'enregistrement du média' }, 500);

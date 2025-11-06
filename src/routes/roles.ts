@@ -3,6 +3,7 @@
 import { Hono } from 'hono';
 import { clearPermissionsCache } from '../utils/permissions';
 import type { Bindings } from '../types';
+import { LIMITS } from '../utils/validation';
 
 const roles = new Hono<{ Bindings: Bindings }>();
 
@@ -122,25 +123,60 @@ roles.post('/', async (c) => {
     const body = await c.req.json();
     const { name, display_name, description, permission_ids } = body;
 
-    // Validation
+    // Validation des champs requis
     if (!name || !display_name) {
       return c.json({ error: 'Nom et nom d affichage requis' }, 400);
+    }
+
+    // Validation du nom (identifiant technique)
+    const trimmedName = name.trim();
+    if (trimmedName.length < LIMITS.NAME_MIN) {
+      return c.json({ error: `Nom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    }
+    if (name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Nom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+    }
+    // Le nom doit être un identifiant valide (lettres, chiffres, underscore, tiret)
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
+      return c.json({ error: 'Nom invalide. Utilisez uniquement des lettres, chiffres, tirets et underscores' }, 400);
+    }
+
+    // Validation du nom d'affichage
+    const trimmedDisplayName = display_name.trim();
+    if (trimmedDisplayName.length < LIMITS.NAME_MIN) {
+      return c.json({ error: `Nom d'affichage trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    }
+    if (display_name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Nom d'affichage trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+    }
+
+    // Validation de la description si fournie
+    if (description && description.length > LIMITS.DESCRIPTION_MAX) {
+      return c.json({ error: `Description trop longue (max ${LIMITS.DESCRIPTION_MAX} caractères)` }, 400);
+    }
+
+    // Validation des IDs de permissions
+    if (permission_ids && !Array.isArray(permission_ids)) {
+      return c.json({ error: 'permission_ids doit être un tableau' }, 400);
+    }
+    if (permission_ids && permission_ids.some((id: any) => typeof id !== 'number' || id <= 0)) {
+      return c.json({ error: 'IDs de permissions invalides' }, 400);
     }
 
     // Vérifier que le nom n'existe pas déjà
     const existing = await c.env.DB.prepare(
       'SELECT id FROM roles WHERE name = ?'
-    ).bind(name).first();
+    ).bind(trimmedName).first();
 
     if (existing) {
       return c.json({ error: 'Ce nom de rôle existe déjà' }, 409);
     }
 
-    // Créer le rôle
+    // Créer le rôle avec données nettoyées
     const result = await c.env.DB.prepare(`
       INSERT INTO roles (name, display_name, description, is_system)
       VALUES (?, ?, ?, 0)
-    `).bind(name, display_name, description || null).run();
+    `).bind(trimmedName, trimmedDisplayName, description ? description.trim() : null).run();
 
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du rôle' }, 500);
@@ -185,6 +221,30 @@ roles.put('/:id', async (c) => {
     const body = await c.req.json();
     const { display_name, description, permission_ids } = body;
 
+    // Validation du nom d'affichage si fourni
+    if (display_name) {
+      const trimmedDisplayName = display_name.trim();
+      if (trimmedDisplayName.length < LIMITS.NAME_MIN) {
+        return c.json({ error: `Nom d'affichage trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+      }
+      if (display_name.length > LIMITS.NAME_MAX) {
+        return c.json({ error: `Nom d'affichage trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+      }
+    }
+
+    // Validation de la description si fournie
+    if (description && description.length > LIMITS.DESCRIPTION_MAX) {
+      return c.json({ error: `Description trop longue (max ${LIMITS.DESCRIPTION_MAX} caractères)` }, 400);
+    }
+
+    // Validation des IDs de permissions si fournis
+    if (permission_ids && !Array.isArray(permission_ids)) {
+      return c.json({ error: 'permission_ids doit être un tableau' }, 400);
+    }
+    if (permission_ids && permission_ids.some((id: any) => typeof id !== 'number' || id <= 0)) {
+      return c.json({ error: 'IDs de permissions invalides' }, 400);
+    }
+
     // Vérifier que le rôle existe
     const role = await c.env.DB.prepare(
       'SELECT * FROM roles WHERE id = ?'
@@ -195,20 +255,23 @@ roles.put('/:id', async (c) => {
     }
 
     // Empêcher la modification des rôles système (nom et description seulement)
+    const trimmedDisplayName = display_name ? display_name.trim() : role.display_name;
+    const trimmedDescription = description ? description.trim() : role.description;
+    
     if (role.is_system === 1) {
       // Seul display_name et description peuvent être modifiés pour les rôles système
       await c.env.DB.prepare(`
         UPDATE roles 
         SET display_name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).bind(display_name, description, id).run();
+      `).bind(trimmedDisplayName, trimmedDescription, id).run();
     } else {
       // Rôle personnalisé: tout peut être modifié
       await c.env.DB.prepare(`
         UPDATE roles 
         SET display_name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).bind(display_name, description, id).run();
+      `).bind(trimmedDisplayName, trimmedDescription, id).run();
     }
 
     // Mettre à jour les permissions

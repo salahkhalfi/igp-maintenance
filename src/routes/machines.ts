@@ -69,14 +69,37 @@ machines.post('/', async (c) => {
     const body = await c.req.json();
     const { machine_type, model, serial_number, location } = body;
     
+    // Validation basique
     if (!machine_type || !model || !serial_number) {
       return c.json({ error: 'Type, modèle et numéro de série requis' }, 400);
+    }
+    
+    // Validation de longueur et contenu
+    if (machine_type.trim().length < 2 || machine_type.length > 100) {
+      return c.json({ error: 'Type de machine invalide (2-100 caractères)' }, 400);
+    }
+    
+    if (model.trim().length < 1 || model.length > 100) {
+      return c.json({ error: 'Modèle invalide (1-100 caractères)' }, 400);
+    }
+    
+    if (serial_number.trim().length < 1 || serial_number.length > 50) {
+      return c.json({ error: 'Numéro de série invalide (1-50 caractères)' }, 400);
+    }
+    
+    if (location && location.length > 100) {
+      return c.json({ error: 'Localisation trop longue (max 100 caractères)' }, 400);
     }
     
     const result = await c.env.DB.prepare(`
       INSERT INTO machines (machine_type, model, serial_number, location, status)
       VALUES (?, ?, ?, ?, 'operational')
-    `).bind(machine_type, model, serial_number, location || null).run();
+    `).bind(
+      machine_type.trim(), 
+      model.trim(), 
+      serial_number.trim(), 
+      location ? location.trim() : null
+    ).run();
     
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création de la machine' }, 500);

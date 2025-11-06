@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { hashPassword, isLegacyHash } from '../utils/password';
 import { supervisorOrAdmin } from '../middlewares/auth';
 import type { Bindings, User } from '../types';
+import { LIMITS } from '../utils/validation';
 
 const users = new Hono<{ Bindings: Bindings }>();
 
@@ -86,15 +87,31 @@ users.post('/', async (c) => {
     const body = await c.req.json();
     const { email, password, full_name, role } = body;
 
-    // Validation
+    // Validation des champs requis
     if (!email || !password || !full_name || !role) {
       return c.json({ error: 'Tous les champs sont requis' }, 400);
     }
 
+    // Validation du nom complet
+    const trimmedFullName = full_name.trim();
+    if (trimmedFullName.length < LIMITS.NAME_MIN) {
+      return c.json({ error: `Nom complet trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    }
+    if (full_name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Nom complet trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+    }
+
     // Validation de l'email
+    const trimmedEmail = email.trim().toLowerCase();
+    if (trimmedEmail.length === 0) {
+      return c.json({ error: 'Email requis' }, 400);
+    }
+    if (email.length > LIMITS.EMAIL_MAX) {
+      return c.json({ error: `Email trop long (max ${LIMITS.EMAIL_MAX} caractères)` }, 400);
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return c.json({ error: 'Email invalide' }, 400);
+    if (!emailRegex.test(trimmedEmail)) {
+      return c.json({ error: 'Format email invalide' }, 400);
     }
 
     // Validation du rôle
@@ -109,14 +126,17 @@ users.post('/', async (c) => {
     }
 
     // Validation du mot de passe
-    if (password.length < 6) {
-      return c.json({ error: 'Le mot de passe doit contenir au moins 6 caractères' }, 400);
+    if (password.length < LIMITS.PASSWORD_MIN) {
+      return c.json({ error: `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères` }, 400);
+    }
+    if (password.length > LIMITS.PASSWORD_MAX) {
+      return c.json({ error: `Le mot de passe trop long (max ${LIMITS.PASSWORD_MAX} caractères)` }, 400);
     }
 
     // Vérifier si l'email existe déjà
     const existing = await c.env.DB.prepare(
       'SELECT id FROM users WHERE email = ?'
-    ).bind(email).first();
+    ).bind(trimmedEmail).first();
 
     if (existing) {
       return c.json({ error: 'Cet email est déjà utilisé' }, 409);
@@ -128,7 +148,7 @@ users.post('/', async (c) => {
     // Créer l'utilisateur
     const result = await c.env.DB.prepare(
       'INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)'
-    ).bind(email, password_hash, full_name, role).run();
+    ).bind(trimmedEmail, password_hash, trimmedFullName, role).run();
 
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création de l\'utilisateur' }, 500);
@@ -137,10 +157,10 @@ users.post('/', async (c) => {
     // Récupérer l'utilisateur créé
     const newUser = await c.env.DB.prepare(
       'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE email = ?'
-    ).bind(email).first() as User;
+    ).bind(trimmedEmail).first() as User;
 
     // Logger l'action
-    console.log(`Admin ${currentUser.email} created user ${email} with role ${role}`);
+    console.log(`Admin ${currentUser.email} created user ${trimmedEmail} with role ${role}`);
 
     return c.json({ 
       message: 'Utilisateur créé avec succès',
@@ -198,15 +218,22 @@ users.put('/:id', async (c) => {
 
     // Validation de l'email si fourni
     if (email) {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (trimmedEmail.length === 0) {
+        return c.json({ error: 'Email ne peut pas être vide' }, 400);
+      }
+      if (email.length > LIMITS.EMAIL_MAX) {
+        return c.json({ error: `Email trop long (max ${LIMITS.EMAIL_MAX} caractères)` }, 400);
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return c.json({ error: 'Email invalide' }, 400);
+      if (!emailRegex.test(trimmedEmail)) {
+        return c.json({ error: 'Format email invalide' }, 400);
       }
 
       // Vérifier si l'email est déjà utilisé par un autre utilisateur
       const emailExists = await c.env.DB.prepare(
         'SELECT id FROM users WHERE email = ? AND id != ?'
-      ).bind(email, id).first();
+      ).bind(trimmedEmail, id).first();
 
       if (emailExists) {
         return c.json({ error: 'Cet email est déjà utilisé par un autre utilisateur' }, 409);
@@ -221,9 +248,25 @@ users.put('/:id', async (c) => {
       }
     }
 
+    // Validation du nom complet si fourni
+    if (full_name) {
+      const trimmedFullName = full_name.trim();
+      if (trimmedFullName.length < LIMITS.NAME_MIN) {
+        return c.json({ error: `Nom complet trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+      }
+      if (full_name.length > LIMITS.NAME_MAX) {
+        return c.json({ error: `Nom complet trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+      }
+    }
+
     // Validation du mot de passe si fourni
-    if (password && password.length < 6) {
-      return c.json({ error: 'Le mot de passe doit contenir au moins 6 caractères' }, 400);
+    if (password) {
+      if (password.length < LIMITS.PASSWORD_MIN) {
+        return c.json({ error: `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères` }, 400);
+      }
+      if (password.length > LIMITS.PASSWORD_MAX) {
+        return c.json({ error: `Le mot de passe trop long (max ${LIMITS.PASSWORD_MAX} caractères)` }, 400);
+      }
     }
 
     // Construire la requête de mise à jour
@@ -232,11 +275,11 @@ users.put('/:id', async (c) => {
 
     if (email) {
       updates.push('email = ?');
-      params.push(email);
+      params.push(email.trim().toLowerCase());
     }
     if (full_name) {
       updates.push('full_name = ?');
-      params.push(full_name);
+      params.push(full_name.trim());
     }
     if (role) {
       updates.push('role = ?');
@@ -397,8 +440,11 @@ users.post('/:id/reset-password', async (c) => {
       return c.json({ error: 'Le nouveau mot de passe est requis' }, 400);
     }
 
-    if (new_password.length < 6) {
-      return c.json({ error: 'Le mot de passe doit contenir au moins 6 caractères' }, 400);
+    if (new_password.length < LIMITS.PASSWORD_MIN) {
+      return c.json({ error: `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères` }, 400);
+    }
+    if (new_password.length > LIMITS.PASSWORD_MAX) {
+      return c.json({ error: `Le mot de passe trop long (max ${LIMITS.PASSWORD_MAX} caractères)` }, 400);
     }
 
     // Vérifier que l'utilisateur existe
