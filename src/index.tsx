@@ -3975,6 +3975,11 @@ app.get('/', (c) => {
                     
                     console.log('📼 Format audio détecté:', mimeType);
                     
+                    // Avertir si format WebM (incompatible iPhone)
+                    if (mimeType.includes('webm') || mimeType.includes('ogg')) {
+                        console.warn('⚠️ Format WebM/OGG: Non compatible avec iPhone/Safari');
+                    }
+                    
                     const mediaRecorder = new MediaRecorder(stream, { mimeType });
                     mediaRecorderRef.current = mediaRecorder;
                     audioChunksRef.current = [];
