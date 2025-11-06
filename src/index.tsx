@@ -277,7 +277,8 @@ app.post('/api/messages/audio', authMiddleware, technicianSupervisorOrAdmin, asy
     
     // Validation type MIME (formats légers et universels)
     const allowedTypes = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/ogg', 'audio/wav'];
-    if (!allowedTypes.includes(audioFile.type)) {
+    const isAllowed = allowedTypes.some(type => audioFile.type.startsWith(type));
+    if (!isAllowed) {
       return c.json({ 
         error: `Type de fichier non autorisé: ${audioFile.type}. Types acceptés: MP3, MP4, WebM, OGG, WAV` 
       }, 400);
