@@ -3765,6 +3765,7 @@ app.get('/', (c) => {
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
             const [showUserManagement, setShowUserManagement] = React.useState(false);
+            const [showMachineManagement, setShowMachineManagement] = React.useState(false);
             const [showUserGuide, setShowUserGuide] = React.useState(false);
             const [showArchived, setShowArchived] = React.useState(false);
             const [showMessaging, setShowMessaging] = React.useState(false);
@@ -4092,6 +4093,14 @@ app.get('/', (c) => {
                             },
                                 React.createElement('i', { className: "fas fa-users-cog mr-2" }),
                                 "Utilisateurs"
+                            ) : null,
+                            (currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => setShowMachineManagement(true),
+                                className: "px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-semibold shadow-md transition-all"
+                            },
+                                React.createElement('i', { className: "fas fa-cogs mr-2" }),
+                                "Machines"
                             ) : null,
                             (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
                             React.createElement('button', {
