@@ -3080,10 +3080,10 @@ app.get('/', (c) => {
                     className: "bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col",
                     onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement("div", { className: "bg-gradient-to-r from-teal-600 to-cyan-600 text-white p-5 flex justify-between items-center" },
-                        React.createElement("div", { className: "flex items-center gap-3" },
-                            React.createElement("i", { className: "fas fa-cogs text-2xl" }),
-                            React.createElement("h2", { className: "text-2xl font-bold" }, "Gestion des Machines")
+                    React.createElement("div", { className: "bg-gradient-to-r from-teal-600 to-cyan-600 text-white p-3 sm:p-5 flex justify-between items-center" },
+                        React.createElement("div", { className: "flex items-center gap-2 sm:gap-3" },
+                            React.createElement("i", { className: "fas fa-cogs text-xl sm:text-2xl" }),
+                            React.createElement("h2", { className: "text-lg sm:text-2xl font-bold" }, "Gestion des Machines")
                         ),
                         React.createElement("button", {
                             onClick: onClose,
@@ -3092,18 +3092,18 @@ app.get('/', (c) => {
                             React.createElement("i", { className: "fas fa-times text-xl" })
                         )
                     ),
-                    React.createElement("div", { className: "flex-1 overflow-y-auto p-6", ref: scrollContainerRef },
-                        React.createElement("div", { className: "mb-4 flex gap-3" },
+                    React.createElement("div", { className: "flex-1 overflow-y-auto p-3 sm:p-6", ref: scrollContainerRef },
+                        React.createElement("div", { className: "mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3" },
                             currentUser.role === "admin" ? React.createElement("button", {
                                 onClick: () => setShowCreateForm(!showCreateForm),
-                                className: "px-6 py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                                className: "px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm sm:text-base"
                             }, showCreateForm ? "Annuler" : "Nouvelle Machine") : null,
                             React.createElement("input", {
                                 type: "text",
                                 placeholder: "Rechercher...",
                                 value: searchQuery,
                                 onChange: (e) => setSearchQuery(e.target.value),
-                                className: "flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
+                                className: "flex-1 px-3 sm:px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none text-sm sm:text-base"
                             })
                         ),
                         
@@ -3235,12 +3235,12 @@ app.get('/', (c) => {
                             filteredMachines.map(machine =>
                                 React.createElement("div", {
                                     key: machine.id,
-                                    className: "bg-white rounded-xl p-4 shadow-md border-2 border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all"
+                                    className: "bg-white rounded-xl p-3 sm:p-4 shadow-md border-2 border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all"
                                 },
-                                    React.createElement("div", { className: "flex justify-between items-center" },
+                                    React.createElement("div", { className: "flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3" },
                                         React.createElement("div", { className: "flex-1" },
-                                            React.createElement("div", { className: "flex items-center gap-3 mb-2" },
-                                                React.createElement("h4", { className: "font-bold text-lg" }, machine.machine_type + " - " + machine.model),
+                                            React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2" },
+                                                React.createElement("h4", { className: "font-bold text-base sm:text-lg" }, machine.machine_type + " - " + machine.model),
                                                 React.createElement("span", { 
                                                     className: "px-3 py-1 rounded-full text-xs font-semibold " + getStatusColor(machine.status)
                                                 }, getStatusLabel(machine.status))
@@ -3254,18 +3254,20 @@ app.get('/', (c) => {
                                                 machine.location
                                             ) : null
                                         ),
-                                        currentUser.role === "admin" || currentUser.role === "supervisor" ? React.createElement("div", { className: "flex gap-2" },
+                                        currentUser.role === "admin" || currentUser.role === "supervisor" ? React.createElement("div", { className: "flex gap-2 self-end sm:self-auto" },
                                             React.createElement("button", {
                                                 onClick: () => handleEdit(machine),
-                                                className: "px-4 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition-all"
+                                                className: "px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition-all text-sm sm:text-base"
                                             },
-                                                React.createElement("i", { className: "fas fa-edit" })
+                                                React.createElement("i", { className: "fas fa-edit" }),
+                                                React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Modifier")
                                             ),
                                             currentUser.role === "admin" ? React.createElement("button", {
                                                 onClick: () => handleDelete(machine),
-                                                className: "px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all"
+                                                className: "px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all text-sm sm:text-base"
                                             },
-                                                React.createElement("i", { className: "fas fa-trash" })
+                                                React.createElement("i", { className: "fas fa-trash" }),
+                                                React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Supprimer")
                                             ) : null
                                         ) : null
                                     )
