@@ -2718,6 +2718,9 @@ app.get('/', (c) => {
             const [editLocation, setEditLocation] = React.useState("");
             const [editStatus, setEditStatus] = React.useState("");
             
+            // Référence pour le scroll
+            const scrollContainerRef = React.useRef(null);
+            
             const handleCreate = async (e) => {
                 e.preventDefault();
                 if (!newType || !newModel || !newSerial) {
@@ -2750,6 +2753,13 @@ app.get('/', (c) => {
                 setEditSerial(machine.serial_number);
                 setEditLocation(machine.location || "");
                 setEditStatus(machine.status);
+                
+                // Scroller vers le haut pour voir le formulaire
+                setTimeout(() => {
+                    if (scrollContainerRef.current) {
+                        scrollContainerRef.current.scrollTop = 0;
+                    }
+                }, 100);
             };
             
             const handleUpdate = async (e) => {
@@ -2823,7 +2833,7 @@ app.get('/', (c) => {
                             React.createElement("i", { className: "fas fa-times text-xl" })
                         )
                     ),
-                    React.createElement("div", { className: "flex-1 overflow-y-auto p-6" },
+                    React.createElement("div", { className: "flex-1 overflow-y-auto p-6", ref: scrollContainerRef },
                         React.createElement("div", { className: "mb-4 flex gap-3" },
                             currentUser.role === "admin" ? React.createElement("button", {
                                 onClick: () => setShowCreateForm(!showCreateForm),
