@@ -4030,10 +4030,19 @@ app.get('/', (c) => {
             
             // Fonctions lecteur audio personnalisé
             const toggleAudio = (messageId) => {
+                console.log('toggleAudio appelé pour:', messageId);
                 const audio = audioRefs.current[messageId];
-                if (!audio) return;
+                console.log('Audio element:', audio);
+                console.log('Audio src:', audio?.src);
+                console.log('Tous les refs:', Object.keys(audioRefs.current));
+                
+                if (!audio) {
+                    console.error('Audio element non trouvé pour:', messageId);
+                    return;
+                }
                 
                 if (playingAudio[messageId]) {
+                    console.log('Pause audio:', messageId);
                     audio.pause();
                     setPlayingAudio(prev => ({ ...prev, [messageId]: false }));
                 } else {
@@ -4043,8 +4052,15 @@ app.get('/', (c) => {
                             audioRefs.current[id].pause();
                         }
                     });
-                    setPlayingAudio({ [messageId]: true });
-                    audio.play().catch(err => console.error('Erreur lecture:', err));
+                    console.log('Play audio:', messageId);
+                    setPlayingAudio(prev => ({ ...prev, [messageId]: true }));
+                    audio.play()
+                        .then(() => console.log('Audio démarré avec succès'))
+                        .catch(err => {
+                            console.error('Erreur lecture audio:', err);
+                            setPlayingAudio(prev => ({ ...prev, [messageId]: false }));
+                            alert('Erreur lecture audio: ' + err.message);
+                        });
                 }
             };
             
@@ -4258,8 +4274,23 @@ app.get('/', (c) => {
                                                         ref: (el) => { if (el) audioRefs.current[msg.id] = el; },
                                                         preload: 'metadata',
                                                         src: API_URL + '/messages/audio/' + msg.audio_file_key,
-                                                        onEnded: () => setPlayingAudio(prev => ({ ...prev, [msg.id]: false })),
-                                                        onError: (e) => console.error('Audio load error:', e),
+                                                        onPlay: () => {
+                                                            console.log('Audio onPlay event:', msg.id);
+                                                            setPlayingAudio(prev => ({ ...prev, [msg.id]: true }));
+                                                        },
+                                                        onPause: () => {
+                                                            console.log('Audio onPause event:', msg.id);
+                                                            setPlayingAudio(prev => ({ ...prev, [msg.id]: false }));
+                                                        },
+                                                        onEnded: () => {
+                                                            console.log('Audio onEnded event:', msg.id);
+                                                            setPlayingAudio(prev => ({ ...prev, [msg.id]: false }));
+                                                        },
+                                                        onError: (e) => {
+                                                            console.error('Audio load error:', e);
+                                                            console.error('Failed src:', API_URL + '/messages/audio/' + msg.audio_file_key);
+                                                        },
+                                                        onLoadedMetadata: () => console.log('Audio metadata loaded:', msg.id),
                                                         style: { display: 'none' }
                                                     }),
                                                     msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
@@ -4520,8 +4551,23 @@ app.get('/', (c) => {
                                                             ref: (el) => { if (el) audioRefs.current['priv-' + msg.id] = el; },
                                                             preload: 'metadata',
                                                             src: API_URL + '/messages/audio/' + msg.audio_file_key,
-                                                            onEnded: () => setPlayingAudio(prev => ({ ...prev, ['priv-' + msg.id]: false })),
-                                                            onError: (e) => console.error('Audio load error:', e),
+                                                            onPlay: () => {
+                                                                console.log('Audio onPlay event (private):', msg.id);
+                                                                setPlayingAudio(prev => ({ ...prev, ['priv-' + msg.id]: true }));
+                                                            },
+                                                            onPause: () => {
+                                                                console.log('Audio onPause event (private):', msg.id);
+                                                                setPlayingAudio(prev => ({ ...prev, ['priv-' + msg.id]: false }));
+                                                            },
+                                                            onEnded: () => {
+                                                                console.log('Audio onEnded event (private):', msg.id);
+                                                                setPlayingAudio(prev => ({ ...prev, ['priv-' + msg.id]: false }));
+                                                            },
+                                                            onError: (e) => {
+                                                                console.error('Audio load error (private):', e);
+                                                                console.error('Failed src:', API_URL + '/messages/audio/' + msg.audio_file_key);
+                                                            },
+                                                            onLoadedMetadata: () => console.log('Audio metadata loaded (private):', msg.id),
                                                             style: { display: 'none' }
                                                         }),
                                                         msg.audio_duration ? React.createElement('p', { 
