@@ -342,11 +342,11 @@ app.post('/api/messages/audio', authMiddleware, technicianSupervisorOrAdmin, asy
 });
 
 // Récupérer un fichier audio
-app.get('/api/messages/audio/:fileKey(*)', authMiddleware, async (c) => {
+app.get('/api/messages/audio/:fileKey(*)', async (c) => {
   try {
     const fileKey = c.req.param('fileKey');
     
-    // Vérifier que l'utilisateur a accès à ce message
+    // Vérifier que le message existe
     const message = await c.env.DB.prepare(`
       SELECT sender_id, recipient_id, message_type
       FROM messages
@@ -357,17 +357,10 @@ app.get('/api/messages/audio/:fileKey(*)', authMiddleware, async (c) => {
       return c.json({ error: 'Message audio non trouvé' }, 404);
     }
     
-    const user = c.get('user');
-    
-    // Vérifier permissions
-    const canAccess = 
-      message.message_type === 'public' ||
-      message.sender_id === user.userId ||
-      message.recipient_id === user.userId ||
-      user.role === 'admin';
-    
-    if (!canAccess) {
-      return c.json({ error: 'Accès non autorisé' }, 403);
+    // Autoriser accès public pour messages publics UNIQUEMENT
+    // Pour messages privés, il faudrait un système de tokens (à implémenter plus tard)
+    if (message.message_type !== 'public') {
+      return c.json({ error: 'Accès non autorisé - messages privés nécessitent authentification' }, 403);
     }
     
     // Récupérer depuis R2
@@ -387,7 +380,7 @@ app.get('/api/messages/audio/:fileKey(*)', authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error('Get audio error:', error);
-    return c.json({ error: 'Erreur lors de la récupération de l\'audio' }, 500);
+    return c.json({ error: 'Erreur lors de la recuperation audio' }, 500);
   }
 });
 
