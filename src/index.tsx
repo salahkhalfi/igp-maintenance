@@ -342,7 +342,7 @@ app.post('/api/messages/audio', authMiddleware, async (c) => {
 });
 
 // Récupérer un fichier audio
-app.get('/api/messages/audio/:fileKey(*)', async (c) => {
+app.get('/api/audio/:fileKey(*)', async (c) => {
   try {
     const fileKey = c.req.param('fileKey');
     
@@ -4304,14 +4304,14 @@ app.get('/', (c) => {
                                                     React.createElement('audio', {
                                                         ref: (el) => { if (el) audioRefs.current[msg.id] = el; },
                                                         preload: 'auto',
-                                                        src: API_URL + '/messages/audio/' + msg.audio_file_key,
+                                                        src: API_URL + '/audio/' + msg.audio_file_key,
                                                         onEnded: () => {
                                                             console.log('Audio terminé:', msg.id);
                                                             setPlayingAudio(prev => ({ ...prev, [msg.id]: false }));
                                                         },
                                                         onError: (e) => {
                                                             console.error('❌ Erreur chargement audio:', e);
-                                                            console.error('URL:', API_URL + '/messages/audio/' + msg.audio_file_key);
+                                                            console.error('URL:', API_URL + '/audio/' + msg.audio_file_key);
                                                             console.error('Error details:', e.target?.error);
                                                         },
                                                         onLoadedMetadata: () => console.log('✅ Métadonnées chargées:', msg.id),
@@ -4574,14 +4574,14 @@ app.get('/', (c) => {
                                                         React.createElement('audio', {
                                                             ref: (el) => { if (el) audioRefs.current['priv-' + msg.id] = el; },
                                                             preload: 'auto',
-                                                            src: API_URL + '/messages/audio/' + msg.audio_file_key,
+                                                            src: API_URL + '/audio/' + msg.audio_file_key,
                                                             onEnded: () => {
                                                                 console.log('Audio terminé (privé):', msg.id);
                                                                 setPlayingAudio(prev => ({ ...prev, ['priv-' + msg.id]: false }));
                                                             },
                                                             onError: (e) => {
                                                                 console.error('❌ Erreur chargement audio (privé):', e);
-                                                                console.error('URL:', API_URL + '/messages/audio/' + msg.audio_file_key);
+                                                                console.error('URL:', API_URL + '/audio/' + msg.audio_file_key);
                                                                 console.error('Error details:', e.target?.error);
                                                             },
                                                             onLoadedMetadata: () => console.log('✅ Métadonnées chargées (privé):', msg.id),
