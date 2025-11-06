@@ -4211,8 +4211,11 @@ app.get('/', (c) => {
                                                         React.createElement('audio', {
                                                             controls: true,
                                                             preload: 'metadata',
+                                                            controlsList: 'nodownload',
                                                             className: 'w-full h-8',
-                                                            src: API_URL + '/messages/audio/' + msg.audio_file_key
+                                                            style: { minHeight: '32px', display: 'block' },
+                                                            src: API_URL + '/messages/audio/' + msg.audio_file_key,
+                                                            onError: (e) => console.error('Audio load error:', e)
                                                         }),
                                                         msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
                                                             'Duree: ' + formatRecordingDuration(msg.audio_duration)
@@ -4449,9 +4452,11 @@ app.get('/', (c) => {
                                                             React.createElement('audio', {
                                                                 controls: true,
                                                                 preload: 'metadata',
+                                                                controlsList: 'nodownload',
                                                                 className: 'w-full h-7',
-                                                                style: { maxWidth: '250px' },
-                                                                src: API_URL + '/messages/audio/' + msg.audio_file_key
+                                                                style: { maxWidth: '250px', minHeight: '28px', display: 'block' },
+                                                                src: API_URL + '/messages/audio/' + msg.audio_file_key,
+                                                                onError: (e) => console.error('Audio load error:', e)
                                                             }),
                                                             msg.audio_duration ? React.createElement('p', { 
                                                                 className: 'text-xs mt-1 ' + (isMe ? 'text-white opacity-75' : 'text-gray-500')
