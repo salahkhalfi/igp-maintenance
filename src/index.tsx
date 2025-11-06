@@ -3661,7 +3661,7 @@ app.get('/', (c) => {
         };
         
         
-        const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated }) => {
+        const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -3898,7 +3898,10 @@ app.get('/', (c) => {
                 
                 React.createElement(MessagingModal, {
                     show: showMessaging,
-                    onClose: () => setShowMessaging(false),
+                    onClose: () => {
+                        setShowMessaging(false);
+                        if (onRefreshMessages) onRefreshMessages();
+                    },
                     currentUser: currentUser
                 }),
                 
@@ -3923,10 +3926,21 @@ app.get('/', (c) => {
                                     React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
                                         'Les Produits Verriers International (IGP) Inc.'
                                     ),
-                                    React.createElement('p', { className: "text-xs text-igp-orange font-semibold" }, 
-                                        (currentUser.role === "operator" 
-                                            ? tickets.filter(t => t.reported_by === currentUser.id).length 
-                                            : tickets.length) + " tickets actifs"
+                                    React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
+                                        React.createElement('p', { className: "text-xs text-igp-orange font-semibold" }, 
+                                            (currentUser.role === "operator" 
+                                                ? tickets.filter(t => t.reported_by === currentUser.id).length 
+                                                : tickets.length) + " tickets actifs"
+                                        ),
+                                        (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin") && unreadMessagesCount > 0 ?
+                                        React.createElement('div', { 
+                                            className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer",
+                                            onClick: () => setShowMessaging(true),
+                                            title: "Messages non lus"
+                                        },
+                                            React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
+                                            React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount)
+                                        ) : null
                                     )
                                 )
                             )
@@ -4304,10 +4318,19 @@ app.get('/', (c) => {
             const [loading, setLoading] = React.useState(true);
             const [showCreateModal, setShowCreateModal] = React.useState(false);
             const [contextMenu, setContextMenu] = React.useState(null);
+            const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
             
             React.useEffect(() => {
                 if (isLoggedIn) {
                     loadData();
+                    loadUnreadMessagesCount();
+                    
+                    // Rafraichir le compteur de messages non lus toutes les 30 secondes
+                    const interval = setInterval(() => {
+                        loadUnreadMessagesCount();
+                    }, 30000);
+                    
+                    return () => clearInterval(interval);
                 }
             }, [isLoggedIn]);
             
@@ -4327,6 +4350,18 @@ app.get('/', (c) => {
                     if (error.response?.status === 401) {
                         logout();
                     }
+                }
+            };
+            
+            const loadUnreadMessagesCount = async () => {
+                try {
+                    // Seulement pour techniciens, superviseurs et admins
+                    if (currentUser && (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin")) {
+                        const response = await axios.get(API_URL + "/messages/unread-count");
+                        setUnreadMessagesCount(response.data.count || 0);
+                    }
+                } catch (error) {
+                    console.error("Erreur comptage messages non lus:", error);
                 }
             };
             
@@ -4372,7 +4407,9 @@ app.get('/', (c) => {
                 onRefresh: loadData,
                 showCreateModal,
                 setShowCreateModal,
-                onTicketCreated: loadData
+                onTicketCreated: loadData,
+                unreadMessagesCount: unreadMessagesCount,
+                onRefreshMessages: loadUnreadMessagesCount
             });
         };
         
