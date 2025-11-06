@@ -391,6 +391,9 @@ app.get('/api/messages/public', authMiddleware, async (c) => {
         m.content,
         m.created_at,
         m.sender_id,
+        m.audio_file_key,
+        m.audio_duration,
+        m.audio_size,
         u.full_name as sender_name,
         u.role as sender_role
       FROM messages m
