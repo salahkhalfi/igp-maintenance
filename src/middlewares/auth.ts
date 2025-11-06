@@ -2,6 +2,7 @@
 
 import { Context, Next } from 'hono';
 import { extractToken, verifyToken } from '../utils/jwt';
+import { hasPermission, hasAnyPermission, type PermissionString } from '../utils/permissions';
 import type { Bindings } from '../types';
 
 export async function authMiddleware(c: Context<{ Bindings: Bindings }>, next: Next) {
@@ -62,4 +63,71 @@ export async function technicianSupervisorOrAdmin(c: Context<{ Bindings: Binding
   }
 
   await next();
+}
+
+/**
+ * 🆕 NOUVEAU MIDDLEWARE RBAC
+ * Vérifie qu'un utilisateur a UNE permission spécifique
+ * 
+ * @param resource - Ressource (tickets, machines, users, etc.)
+ * @param action - Action (create, read, update, delete, etc.)
+ * @param scope - Portée (all, own, team, etc.) - défaut: 'all'
+ * 
+ * @example
+ * app.post('/api/tickets', authMiddleware, requirePermission('tickets', 'create', 'all'), async (c) => {...})
+ */
+export function requirePermission(resource: string, action: string, scope: string = 'all') {
+  return async (c: Context<{ Bindings: Bindings }>, next: Next) => {
+    const user = c.get('user') as any;
+    
+    if (!user) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
+    
+    if (!allowed) {
+      return c.json({ 
+        error: `Permission refusée: ${resource}.${action}.${scope}`,
+        required_permission: `${resource}.${action}.${scope}`,
+        user_role: user.role
+      }, 403);
+    }
+
+    await next();
+  };
+}
+
+/**
+ * 🆕 NOUVEAU MIDDLEWARE RBAC
+ * Vérifie qu'un utilisateur a AU MOINS UNE des permissions listées
+ * 
+ * @param permissions - Liste de permissions au format "resource.action.scope"
+ * 
+ * @example
+ * app.get('/api/tickets', authMiddleware, requireAnyPermission([
+ *   'tickets.read.all',
+ *   'tickets.read.own'
+ * ]), async (c) => {...})
+ */
+export function requireAnyPermission(permissions: PermissionString[]) {
+  return async (c: Context<{ Bindings: Bindings }>, next: Next) => {
+    const user = c.get('user') as any;
+    
+    if (!user) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    const allowed = await hasAnyPermission(c.env.DB, user.role, permissions);
+    
+    if (!allowed) {
+      return c.json({ 
+        error: 'Permission refusée: aucune des permissions requises',
+        required_permissions: permissions,
+        user_role: user.role
+      }, 403);
+    }
+
+    await next();
+  };
 }
