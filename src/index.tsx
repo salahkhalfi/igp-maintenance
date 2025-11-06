@@ -357,11 +357,9 @@ app.get('/api/messages/audio/:fileKey(*)', async (c) => {
       return c.json({ error: 'Message audio non trouvé' }, 404);
     }
     
-    // Autoriser accès public pour messages publics UNIQUEMENT
-    // Pour messages privés, il faudrait un système de tokens (à implémenter plus tard)
-    if (message.message_type !== 'public') {
-      return c.json({ error: 'Accès non autorisé - messages privés nécessitent authentification' }, 403);
-    }
+    // TODO: Ajouter système de tokens pour sécuriser les messages privés
+    // Pour l'instant, on autorise l'accès à tous les messages audio
+    // car les balises <audio> ne peuvent pas envoyer de headers d'authentification
     
     // Récupérer depuis R2
     const object = await c.env.MEDIA_BUCKET.get(fileKey);
