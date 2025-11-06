@@ -217,7 +217,7 @@ app.route('/api/comments', comments);
 app.use('/api/messages/*', authMiddleware);
 
 // Envoyer un message (public ou prive)
-app.post('/api/messages', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
+app.post('/api/messages', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     const { message_type, recipient_id, content } = await c.req.json();
@@ -252,7 +252,7 @@ app.post('/api/messages', authMiddleware, technicianSupervisorOrAdmin, async (c)
 });
 
 // Envoyer un message audio
-app.post('/api/messages/audio', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
+app.post('/api/messages/audio', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     const formData = await c.req.formData();
@@ -383,7 +383,7 @@ app.get('/api/messages/audio/:fileKey(*)', async (c) => {
 });
 
 // Recuperer les messages publics
-app.get('/api/messages/public', technicianSupervisorOrAdmin, async (c) => {
+app.get('/api/messages/public', authMiddleware, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT 
@@ -408,7 +408,7 @@ app.get('/api/messages/public', technicianSupervisorOrAdmin, async (c) => {
 });
 
 // Recuperer les conversations privees (liste des contacts)
-app.get('/api/messages/conversations', technicianSupervisorOrAdmin, async (c) => {
+app.get('/api/messages/conversations', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     
@@ -475,7 +475,7 @@ app.get('/api/messages/conversations', technicianSupervisorOrAdmin, async (c) =>
 });
 
 // Recuperer les messages prives avec un contact specifique
-app.get('/api/messages/private/:contactId', technicianSupervisorOrAdmin, async (c) => {
+app.get('/api/messages/private/:contactId', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     const contactId = parseInt(c.req.param('contactId'));
@@ -518,7 +518,7 @@ app.get('/api/messages/private/:contactId', technicianSupervisorOrAdmin, async (
 });
 
 // Compter les messages non lus
-app.get('/api/messages/unread-count', technicianSupervisorOrAdmin, async (c) => {
+app.get('/api/messages/unread-count', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     
@@ -536,7 +536,7 @@ app.get('/api/messages/unread-count', technicianSupervisorOrAdmin, async (c) => 
 });
 
 // Liste des utilisateurs disponibles pour messagerie
-app.get('/api/messages/available-users', technicianSupervisorOrAdmin, async (c) => {
+app.get('/api/messages/available-users', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     
@@ -556,7 +556,7 @@ app.get('/api/messages/available-users', technicianSupervisorOrAdmin, async (c) 
 });
 
 // Supprimer un message avec controle de permissions
-app.delete('/api/messages/:messageId', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
+app.delete('/api/messages/:messageId', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
     const messageId = parseInt(c.req.param('messageId'));
