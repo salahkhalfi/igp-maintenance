@@ -274,6 +274,10 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **✅ NOUVEAU**: Suppression automatique des fichiers R2 lors de la suppression d'un ticket
 - **✅ NOUVEAU**: Prévention des fichiers orphelins dans le bucket R2
 - **✅ NOUVEAU**: Logging des opérations de suppression pour traçabilité
+- **✅ SÉCURITÉ**: Validation stricte des uploads
+  - Taille maximale: 10 MB par fichier
+  - Types autorisés: JPEG, PNG, WebP, GIF, MP4, WebM, QuickTime
+  - Vérification type MIME côté serveur
 
 #### 5. Interface Utilisateur
 - **Design moderne** avec TailwindCSS
@@ -598,7 +602,6 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 - Les URLs R2 sont génériques - configurer un domaine personnalisé
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
-- **Validation de taille** - Pas de limite sur la taille des fichiers uploadés
 
 ### ✅ Améliorations récentes (v1.9.3)
 - **Nettoyage R2 automatique** - Les fichiers media sont maintenant supprimés du bucket R2 lors de la suppression d'un ticket
@@ -610,6 +613,10 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
   - ❌ Impossible de supprimer un utilisateur qui a créé des tickets (RESTRICT)
   - ✅ Les tickets assignés à un utilisateur supprimé sont automatiquement désassignés (SET NULL)
   - ✅ L'historique et les médias conservent leur intégrité même après suppression d'utilisateurs
+- **Validation upload sécurisée** - Protection contre fichiers malveillants et surdimensionnés
+  - ✅ Taille maximale: 10 MB par fichier
+  - ✅ Types autorisés: Images (JPEG, PNG, WebP, GIF) et Vidéos (MP4, WebM, QuickTime)
+  - ✅ Messages d'erreur clairs avec détails (taille actuelle, maximum autorisé)
 
 ### Variables d'environnement
 Créer un fichier `.dev.vars` pour le développement local:

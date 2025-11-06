@@ -6,6 +6,21 @@ import { authMiddleware } from '../middlewares/auth';
 
 const media = new Hono<{ Bindings: Bindings }>();
 
+// Configuration de sécurité pour les uploads
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
+
+/**
+ * Formater la taille de fichier pour les messages d'erreur
+ */
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 // POST /api/media/upload - Upload un fichier vers R2 (protégé)
 media.post('/upload', authMiddleware, async (c) => {
   try {
@@ -21,6 +36,20 @@ media.post('/upload', authMiddleware, async (c) => {
     
     if (!ticketId) {
       return c.json({ error: 'ID du ticket requis' }, 400);
+    }
+    
+    // 🔒 VALIDATION DE SÉCURITÉ: Taille du fichier
+    if (file.size > MAX_FILE_SIZE) {
+      return c.json({ 
+        error: `Fichier trop volumineux. Taille: ${formatFileSize(file.size)}, Maximum autorisé: ${formatFileSize(MAX_FILE_SIZE)}` 
+      }, 400);
+    }
+    
+    // 🔒 VALIDATION DE SÉCURITÉ: Type MIME du fichier
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return c.json({ 
+        error: `Type de fichier non autorisé: ${file.type}. Types acceptés: images (JPEG, PNG, WebP, GIF) et vidéos (MP4, WebM, QuickTime)` 
+      }, 400);
     }
     
     // Vérifier que le ticket existe
