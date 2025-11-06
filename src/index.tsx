@@ -251,6 +251,145 @@ app.post('/api/messages', authMiddleware, technicianSupervisorOrAdmin, async (c)
   }
 });
 
+// Envoyer un message audio
+app.post('/api/messages/audio', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const user = c.get('user');
+    const formData = await c.req.formData();
+    
+    const audioFile = formData.get('audio') as File;
+    const messageType = formData.get('message_type') as string;
+    const recipientId = formData.get('recipient_id') as string;
+    const duration = parseInt(formData.get('duration') as string || '0');
+    
+    // Validation du fichier
+    if (!audioFile) {
+      return c.json({ error: 'Fichier audio requis' }, 400);
+    }
+    
+    // Validation taille (max 10 MB)
+    const MAX_AUDIO_SIZE = 10 * 1024 * 1024;
+    if (audioFile.size > MAX_AUDIO_SIZE) {
+      return c.json({ 
+        error: `Fichier trop volumineux (${(audioFile.size / 1024 / 1024).toFixed(1)} MB). Maximum: 10 MB` 
+      }, 400);
+    }
+    
+    // Validation type MIME (formats légers et universels)
+    const allowedTypes = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/ogg', 'audio/wav'];
+    if (!allowedTypes.includes(audioFile.type)) {
+      return c.json({ 
+        error: `Type de fichier non autorisé: ${audioFile.type}. Types acceptés: MP3, MP4, WebM, OGG, WAV` 
+      }, 400);
+    }
+    
+    // Validation durée (max 5 minutes = 300 secondes)
+    if (duration > 300) {
+      return c.json({ error: 'Durée maximale: 5 minutes' }, 400);
+    }
+    
+    // Validation type de message
+    if (messageType !== 'public' && messageType !== 'private') {
+      return c.json({ error: 'Type de message invalide' }, 400);
+    }
+    
+    if (messageType === 'private' && !recipientId) {
+      return c.json({ error: 'Destinataire requis pour message privé' }, 400);
+    }
+    
+    // Générer clé unique pour le fichier
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(7);
+    const extension = audioFile.name.split('.').pop() || 'webm';
+    const fileKey = `messages/audio/${user.userId}/${timestamp}-${randomId}.${extension}`;
+    
+    // Upload vers R2
+    const arrayBuffer = await audioFile.arrayBuffer();
+    await c.env.MEDIA_BUCKET.put(fileKey, arrayBuffer, {
+      httpMetadata: {
+        contentType: audioFile.type
+      }
+    });
+    
+    // Sauvegarder en DB
+    const result = await c.env.DB.prepare(`
+      INSERT INTO messages (
+        sender_id, recipient_id, message_type, content,
+        audio_file_key, audio_duration, audio_size
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      user.userId,
+      recipientId || null,
+      messageType,
+      '🎤 Message vocal',
+      fileKey,
+      duration,
+      audioFile.size
+    ).run();
+    
+    console.log(`✅ Audio message uploaded: ${fileKey} (${(audioFile.size / 1024).toFixed(1)} KB, ${duration}s)`);
+    
+    return c.json({ 
+      message: 'Message vocal envoyé avec succès',
+      messageId: result.meta.last_row_id,
+      audioKey: fileKey
+    }, 201);
+  } catch (error) {
+    console.error('Upload audio error:', error);
+    return c.json({ error: 'Erreur lors de l\'envoi du message vocal' }, 500);
+  }
+});
+
+// Récupérer un fichier audio
+app.get('/api/messages/audio/:fileKey(*)', authMiddleware, async (c) => {
+  try {
+    const fileKey = c.req.param('fileKey');
+    
+    // Vérifier que l'utilisateur a accès à ce message
+    const message = await c.env.DB.prepare(`
+      SELECT sender_id, recipient_id, message_type
+      FROM messages
+      WHERE audio_file_key = ?
+    `).bind(fileKey).first();
+    
+    if (!message) {
+      return c.json({ error: 'Message audio non trouvé' }, 404);
+    }
+    
+    const user = c.get('user');
+    
+    // Vérifier permissions
+    const canAccess = 
+      message.message_type === 'public' ||
+      message.sender_id === user.userId ||
+      message.recipient_id === user.userId ||
+      user.role === 'admin';
+    
+    if (!canAccess) {
+      return c.json({ error: 'Accès non autorisé' }, 403);
+    }
+    
+    // Récupérer depuis R2
+    const object = await c.env.MEDIA_BUCKET.get(fileKey);
+    
+    if (!object) {
+      return c.json({ error: 'Fichier audio non trouvé dans le stockage' }, 404);
+    }
+    
+    // Retourner le fichier audio
+    return new Response(object.body, {
+      headers: {
+        'Content-Type': object.httpMetadata?.contentType || 'audio/webm',
+        'Content-Disposition': 'inline',
+        'Cache-Control': 'public, max-age=31536000'
+      }
+    });
+  } catch (error) {
+    console.error('Get audio error:', error);
+    return c.json({ error: 'Erreur lors de la récupération de l\'audio' }, 500);
+  }
+});
+
 // Recuperer les messages publics
 app.get('/api/messages/public', technicianSupervisorOrAdmin, async (c) => {
   try {
@@ -358,6 +497,9 @@ app.get('/api/messages/private/:contactId', technicianSupervisorOrAdmin, async (
         m.sender_id,
         m.recipient_id,
         m.is_read,
+        m.audio_file_key,
+        m.audio_duration,
+        m.audio_size,
         u.full_name as sender_name
       FROM messages m
       LEFT JOIN users u ON m.sender_id = u.id
