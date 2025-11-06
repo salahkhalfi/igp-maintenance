@@ -213,8 +213,8 @@ app.route('/api/comments', comments);
 // ROUTES API - MESSAGERIE
 // ========================================
 
-// Middleware pour toutes les routes de messagerie
-app.use('/api/messages/*', authMiddleware);
+// Note: authMiddleware appliqué individuellement sur chaque route
+// SAUF /api/messages/audio/:fileKey qui doit être public
 
 // Envoyer un message (public ou prive)
 app.post('/api/messages', authMiddleware, async (c) => {
