@@ -342,9 +342,13 @@ app.post('/api/messages/audio', authMiddleware, async (c) => {
 });
 
 // Récupérer un fichier audio
-app.get('/api/audio/:fileKey(*)', async (c) => {
+app.get('/api/audio/*', async (c) => {
   try {
-    const fileKey = c.req.param('fileKey');
+    // Récupérer le chemin complet après /api/audio/
+    const fullPath = c.req.path;
+    const fileKey = fullPath.replace('/api/audio/', '');
+    console.log('DEBUG audio route - fullPath:', fullPath);
+    console.log('DEBUG audio route - fileKey:', fileKey);
     
     // Vérifier que le message existe
     const message = await c.env.DB.prepare(`
@@ -353,8 +357,10 @@ app.get('/api/audio/:fileKey(*)', async (c) => {
       WHERE audio_file_key = ?
     `).bind(fileKey).first();
     
+    console.log('DEBUG audio route - message found:', !!message);
+    
     if (!message) {
-      return c.json({ error: 'Message audio non trouvé' }, 404);
+      return c.json({ error: 'Message audio non trouvé', fileKey: fileKey }, 404);
     }
     
     // TODO: Ajouter système de tokens pour sécuriser les messages privés
