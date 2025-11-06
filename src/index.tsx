@@ -4073,7 +4073,7 @@ app.get('/', (c) => {
                         console.error('Error name:', err.name);
                         console.error('Error message:', err.message);
                         setPlayingAudio(prev => ({ ...prev, [messageId]: false }));
-                        alert('Impossible de lire l\'audio: ' + err.message);
+                        alert('Impossible de lire audio: ' + err.message);
                     }
                 }
             };
