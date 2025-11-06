@@ -4189,10 +4189,13 @@ app.get('/', (c) => {
                 const diffMs = now - date;
                 const diffMins = Math.floor(diffMs / 60000);
                 
+                // Options pour fuseau horaire Québec (America/Montreal)
+                const quebecOptions = { timeZone: 'America/Montreal' };
+                
                 if (diffMins < 1) return 'A instant';
                 if (diffMins < 60) return 'Il y a ' + diffMins + 'min';
-                if (diffMins < 1440) return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                if (diffMins < 1440) return date.toLocaleTimeString('fr-FR', { ...quebecOptions, hour: '2-digit', minute: '2-digit' });
+                return date.toLocaleDateString('fr-FR', { ...quebecOptions, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
             };
             
             const getRoleBadgeClass = (role) => {
