@@ -3947,16 +3947,33 @@ app.get('/', (c) => {
                         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
                     });
                     
-                    let mimeType = 'audio/webm;codecs=opus';
-                    if (!MediaRecorder.isTypeSupported(mimeType)) {
-                        if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                            mimeType = 'audio/mp4';
-                        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-                            mimeType = 'audio/webm';
-                        } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-                            mimeType = 'audio/ogg;codecs=opus';
-                        }
+                    // Priorité : MP4/AAC (universel) > WebM/Opus (meilleure compression)
+                    let mimeType = 'audio/mp4';
+                    let extension = 'mp4';
+                    
+                    if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        // Safari iOS, Chrome moderne
+                        mimeType = 'audio/mp4';
+                        extension = 'mp4';
+                    } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                        // Chrome Android, Firefox
+                        mimeType = 'audio/webm;codecs=opus';
+                        extension = 'webm';
+                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                        // Fallback WebM sans codec
+                        mimeType = 'audio/webm';
+                        extension = 'webm';
+                    } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+                        // Firefox ancien
+                        mimeType = 'audio/ogg;codecs=opus';
+                        extension = 'ogg';
+                    } else {
+                        // Dernier recours
+                        mimeType = '';
+                        extension = 'mp4';
                     }
+                    
+                    console.log('📼 Format audio détecté:', mimeType);
                     
                     const mediaRecorder = new MediaRecorder(stream, { mimeType });
                     mediaRecorderRef.current = mediaRecorder;
