@@ -2803,7 +2803,13 @@ app.get('/', (c) => {
             };
             
             const getLastLoginStatus = (lastLogin) => {
-                if (!lastLogin) return { color: "text-gray-400", icon: "fa-circle", label: "Jamais connecte", dot: "bg-gray-400" };
+                if (!lastLogin) return { 
+                    color: "text-gray-500", 
+                    icon: "fa-circle", 
+                    status: "Jamais connecte", 
+                    time: "", 
+                    dot: "bg-gray-400" 
+                };
                 
                 const now = new Date();
                 const loginDate = new Date(lastLogin);
@@ -2813,15 +2819,45 @@ app.get('/', (c) => {
                 const diffDays = Math.floor(diffMs / 86400000);
                 
                 if (diffMins < 5) {
-                    return { color: "text-green-600", icon: "fa-circle", label: "En ligne", dot: "bg-green-500" };
+                    return { 
+                        color: "text-green-600", 
+                        icon: "fa-circle", 
+                        status: "En ligne", 
+                        time: "Actif maintenant", 
+                        dot: "bg-green-500" 
+                    };
                 } else if (diffMins < 60) {
-                    return { color: "text-yellow-600", icon: "fa-circle", label: "Il y a " + diffMins + " min", dot: "bg-yellow-500" };
+                    return { 
+                        color: "text-yellow-600", 
+                        icon: "fa-circle", 
+                        status: "Actif recemment", 
+                        time: "Il y a " + diffMins + " min", 
+                        dot: "bg-yellow-500" 
+                    };
                 } else if (diffHours < 24) {
-                    return { color: "text-orange-600", icon: "fa-circle", label: "Il y a " + diffHours + "h", dot: "bg-orange-500" };
+                    return { 
+                        color: "text-orange-600", 
+                        icon: "fa-circle", 
+                        status: "Actif aujourd'hui", 
+                        time: "Il y a " + diffHours + "h", 
+                        dot: "bg-orange-500" 
+                    };
                 } else if (diffDays === 1) {
-                    return { color: "text-red-600", icon: "fa-circle", label: "Hier", dot: "bg-red-500" };
+                    return { 
+                        color: "text-red-600", 
+                        icon: "fa-circle", 
+                        status: "Inactif", 
+                        time: "Hier", 
+                        dot: "bg-red-500" 
+                    };
                 } else {
-                    return { color: "text-red-600", icon: "fa-circle", label: "Il y a " + diffDays + " jours", dot: "bg-red-500" };
+                    return { 
+                        color: "text-red-600", 
+                        icon: "fa-circle", 
+                        status: "Inactif", 
+                        time: "Il y a " + diffDays + " jours", 
+                        dot: "bg-red-500" 
+                    };
                 }
             };
             
@@ -3130,17 +3166,20 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'far fa-clock mr-2' }),
                                             'Créé le: ' + formatDateEST(user.created_at, false)
                                         ),
-                                        canSeeLastLogin(user) ? React.createElement('div', { className: "flex items-center gap-2 mt-2 pt-2 border-t border-gray-200" },
+                                        canSeeLastLogin(user) ? React.createElement('div', { className: "flex flex-col gap-1 mt-2 pt-2 border-t border-gray-200" },
                                             React.createElement('div', { className: "flex items-center gap-1.5" },
                                                 React.createElement('div', { 
                                                     className: "w-2 h-2 rounded-full animate-pulse " + getLastLoginStatus(user.last_login).dot
                                                 }),
                                                 React.createElement('span', { 
-                                                    className: "text-xs font-semibold " + getLastLoginStatus(user.last_login).color
-                                                }, getLastLoginStatus(user.last_login).label)
+                                                    className: "text-xs font-bold " + getLastLoginStatus(user.last_login).color
+                                                }, getLastLoginStatus(user.last_login).status),
+                                                getLastLoginStatus(user.last_login).time ? React.createElement('span', { 
+                                                    className: "text-xs " + getLastLoginStatus(user.last_login).color
+                                                }, " - " + getLastLoginStatus(user.last_login).time) : null
                                             ),
-                                            user.last_login ? React.createElement('span', { className: "text-xs text-gray-400" },
-                                                " • " + formatDateEST(user.last_login, true)
+                                            user.last_login ? React.createElement('span', { className: "text-xs text-gray-400 ml-3.5" },
+                                                "Derniere connexion: " + formatDateEST(user.last_login, true)
                                             ) : null
                                         ) : null
                                     ),
