@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-1.9.2-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-1.9.3-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -19,7 +19,7 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 1.9.2 - En Production**
+✅ **Version 1.9.3 - En Production**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
@@ -182,6 +182,8 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Bouton accessible** - Icône poubelle rouge dans l'en-tête du modal de détails
 - **Confirmation obligatoire** - Dialog de confirmation pour éviter suppressions accidentelles
 - **Suppression en cascade** - Médias et commentaires supprimés automatiquement
+- **✅ Nettoyage R2** - Fichiers images/vidéos supprimés du bucket R2 (prévention fichiers orphelins)
+- **✅ Gestion des coûts** - Économise l'espace de stockage et réduit les coûts R2
 - **Rafraîchissement auto** - Liste de tickets mise à jour après suppression
 - **Accès contrôlé** - Protégé par authentification JWT
 
@@ -269,6 +271,9 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - Upload de photos/vidéos via Cloudflare R2
 - Stockage sécurisé et organisé par ticket
 - Affichage des médias dans les détails du ticket
+- **✅ NOUVEAU**: Suppression automatique des fichiers R2 lors de la suppression d'un ticket
+- **✅ NOUVEAU**: Prévention des fichiers orphelins dans le bucket R2
+- **✅ NOUVEAU**: Logging des opérations de suppression pour traçabilité
 
 #### 5. Interface Utilisateur
 - **Design moderne** avec TailwindCSS
@@ -546,6 +551,12 @@ webapp/
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 - **Validation de taille** - Pas de limite sur la taille des fichiers uploadés
 
+### ✅ Améliorations récentes (v1.9.3)
+- **Nettoyage R2 automatique** - Les fichiers media sont maintenant supprimés du bucket R2 lors de la suppression d'un ticket
+- **Prévention fichiers orphelins** - Empêche l'accumulation de fichiers inutilisés dans le stockage
+- **Réduction des coûts** - Économise l'espace de stockage Cloudflare R2
+- **Logging amélioré** - Traçabilité des opérations de suppression de fichiers
+
 ### Variables d'environnement
 Créer un fichier `.dev.vars` pour le développement local:
 
@@ -621,6 +632,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 1.9.0  
-**Dernière mise à jour**: 2025-11-03  
-**Statut**: ✅ En Production - Gestion utilisateurs complète + Notifications élégantes + Permissions par rôle + UI améliorée
+**Version**: 1.9.3  
+**Dernière mise à jour**: 2025-11-06  
+**Statut**: ✅ En Production - Nettoyage R2 automatique + Gestion utilisateurs + Permissions par rôle
