@@ -4287,41 +4287,17 @@ app.get('/', (c) => {
                                                         React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-lg' }),
                                                         React.createElement('span', { className: 'text-sm font-medium text-indigo-700' }, 'Message vocal')
                                                     ),
-                                                    React.createElement('div', { className: 'flex items-center gap-3' },
-                                                        React.createElement('button', {
-                                                            onClick: () => toggleAudio(msg.id),
-                                                            className: 'w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-110 active:scale-95',
-                                                            style: { flexShrink: 0 }
-                                                        },
-                                                            React.createElement('i', { 
-                                                                className: 'fas fa-' + (playingAudio[msg.id] ? 'pause' : 'play') + ' text-xl',
-                                                                style: playingAudio[msg.id] ? {} : { marginLeft: '3px' }
-                                                            })
-                                                        ),
-                                                        React.createElement('div', { className: 'flex-1' },
-                                                            React.createElement('div', { className: 'h-2 bg-gray-200 rounded-full overflow-hidden' },
-                                                                React.createElement('div', { 
-                                                                    className: 'h-full bg-indigo-600 transition-all',
-                                                                    style: { width: '0%' }
-                                                                })
-                                                            )
-                                                        )
-                                                    ),
                                                     React.createElement('audio', {
-                                                        ref: (el) => { if (el) audioRefs.current[msg.id] = el; },
+                                                        controls: true,
                                                         preload: 'auto',
+                                                        controlsList: 'nodownload',
+                                                        className: 'w-full',
+                                                        style: { height: '54px', minHeight: '54px' },
                                                         src: API_URL + '/audio/' + msg.audio_file_key,
-                                                        onEnded: () => {
-                                                            console.log('Audio terminé:', msg.id);
-                                                            setPlayingAudio(prev => ({ ...prev, [msg.id]: false }));
-                                                        },
                                                         onError: (e) => {
                                                             console.error('❌ Erreur chargement audio:', e);
                                                             console.error('URL:', API_URL + '/audio/' + msg.audio_file_key);
-                                                            console.error('Error details:', e.target?.error);
-                                                        },
-                                                        onLoadedMetadata: () => console.log('✅ Métadonnées chargées:', msg.id),
-                                                        style: { display: 'none' }
+                                                        }
                                                     }),
                                                     msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
                                                         '⏱️ Durée: ' + formatRecordingDuration(msg.audio_duration)
@@ -4552,46 +4528,17 @@ app.get('/', (c) => {
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
                                                 msg.audio_file_key ? React.createElement('div', { className: 'my-1' },
                                                     React.createElement('div', { className: 'bg-white bg-opacity-10 rounded-lg p-2' },
-                                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                                            React.createElement('i', { className: (isMe ? 'text-white' : 'text-indigo-600') + ' fas fa-microphone text-sm' }),
-                                                            React.createElement('span', { className: 'text-xs font-medium ' + (isMe ? 'text-white' : 'text-indigo-700') }, 'Audio')
-                                                        ),
-                                                        React.createElement('div', { className: 'flex items-center gap-3' },
-                                                            React.createElement('button', {
-                                                                onClick: () => toggleAudio('priv-' + msg.id),
-                                                                className: 'w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 active:scale-95 ' +
-                                                                    (isMe ? 'bg-white/20 hover:bg-white/30' : 'bg-indigo-600 hover:bg-indigo-700'),
-                                                                style: { flexShrink: 0 }
-                                                            },
-                                                                React.createElement('i', { 
-                                                                    className: 'fas fa-' + (playingAudio['priv-' + msg.id] ? 'pause' : 'play') + ' text-lg ' + (isMe ? 'text-white' : 'text-white'),
-                                                                    style: playingAudio['priv-' + msg.id] ? {} : { marginLeft: '2px' }
-                                                                })
-                                                            ),
-                                                            React.createElement('div', { className: 'flex-1' },
-                                                                React.createElement('div', { className: 'h-2 rounded-full overflow-hidden ' + (isMe ? 'bg-white/20' : 'bg-gray-200') },
-                                                                    React.createElement('div', { 
-                                                                        className: 'h-full transition-all ' + (isMe ? 'bg-white' : 'bg-indigo-600'),
-                                                                        style: { width: '0%' }
-                                                                    })
-                                                                )
-                                                            )
-                                                        ),
                                                         React.createElement('audio', {
-                                                            ref: (el) => { if (el) audioRefs.current['priv-' + msg.id] = el; },
+                                                            controls: true,
                                                             preload: 'auto',
+                                                            controlsList: 'nodownload',
+                                                            className: 'w-full',
+                                                            style: { height: '48px', minHeight: '48px' },
                                                             src: API_URL + '/audio/' + msg.audio_file_key,
-                                                            onEnded: () => {
-                                                                console.log('Audio terminé (privé):', msg.id);
-                                                                setPlayingAudio(prev => ({ ...prev, ['priv-' + msg.id]: false }));
-                                                            },
                                                             onError: (e) => {
-                                                                console.error('❌ Erreur chargement audio (privé):', e);
+                                                                console.error('❌ Erreur audio (privé):', e);
                                                                 console.error('URL:', API_URL + '/audio/' + msg.audio_file_key);
-                                                                console.error('Error details:', e.target?.error);
-                                                            },
-                                                            onLoadedMetadata: () => console.log('✅ Métadonnées chargées (privé):', msg.id),
-                                                            style: { display: 'none' }
+                                                            }
                                                         }),
                                                         msg.audio_duration ? React.createElement('p', { 
                                                             className: 'text-xs mt-2 ' + (isMe ? 'text-white opacity-75' : 'text-gray-500')
