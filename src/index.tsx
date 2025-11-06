@@ -3947,37 +3947,39 @@ app.get('/', (c) => {
                         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
                     });
                     
-                    // Priorité : MP4/AAC (universel) > WebM/Opus (meilleure compression)
-                    let mimeType = 'audio/mp4';
-                    let extension = 'mp4';
+                    // SOLUTION SIMPLE: Essayer MP3 en premier (universel sur TOUS les appareils)
+                    let mimeType = '';
+                    let extension = 'mp3';
                     
-                    if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                        // Safari iOS, Chrome moderne
+                    // 1. Essayer audio/mpeg (MP3) - UNIVERSEL
+                    if (MediaRecorder.isTypeSupported('audio/mpeg')) {
+                        mimeType = 'audio/mpeg';
+                        extension = 'mp3';
+                        console.log('✅ Format MP3 (universel) - Compatible iPhone + Android');
+                    }
+                    // 2. Essayer MP4/AAC - iOS et Chrome moderne
+                    else if (MediaRecorder.isTypeSupported('audio/mp4')) {
                         mimeType = 'audio/mp4';
                         extension = 'mp4';
-                    } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                        // Chrome Android, Firefox
+                        console.log('✅ Format MP4/AAC - Compatible iPhone + Android');
+                    }
+                    // 3. Fallback WebM - Chrome Android uniquement
+                    else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                         mimeType = 'audio/webm;codecs=opus';
                         extension = 'webm';
-                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-                        // Fallback WebM sans codec
+                        console.warn('⚠️ Format WebM - Non compatible iPhone/Safari');
+                    }
+                    // 4. Fallback WebM basique
+                    else if (MediaRecorder.isTypeSupported('audio/webm')) {
                         mimeType = 'audio/webm';
                         extension = 'webm';
-                    } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-                        // Firefox ancien
-                        mimeType = 'audio/ogg;codecs=opus';
-                        extension = 'ogg';
-                    } else {
-                        // Dernier recours
-                        mimeType = '';
-                        extension = 'mp4';
+                        console.warn('⚠️ Format WebM - Non compatible iPhone/Safari');
                     }
-                    
-                    console.log('📼 Format audio détecté:', mimeType);
-                    
-                    // Avertir si format WebM (incompatible iPhone)
-                    if (mimeType.includes('webm') || mimeType.includes('ogg')) {
-                        console.warn('⚠️ Format WebM/OGG: Non compatible avec iPhone/Safari');
+                    // 5. Dernier recours
+                    else {
+                        mimeType = '';
+                        extension = 'mp3';
+                        console.log('⚠️ Aucun format détecté, utilisation par défaut');
                     }
                     
                     const mediaRecorder = new MediaRecorder(stream, { mimeType });
