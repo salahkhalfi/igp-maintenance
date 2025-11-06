@@ -2802,6 +2802,38 @@ app.get('/', (c) => {
                 return 'bg-green-100 text-green-800';
             };
             
+            const getLastLoginStatus = (lastLogin) => {
+                if (!lastLogin) return { color: "text-gray-400", icon: "fa-circle", label: "Jamais connecte", dot: "bg-gray-400" };
+                
+                const now = new Date();
+                const loginDate = new Date(lastLogin);
+                const diffMs = now - loginDate;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffMins < 5) {
+                    return { color: "text-green-600", icon: "fa-circle", label: "En ligne", dot: "bg-green-500" };
+                } else if (diffMins < 60) {
+                    return { color: "text-yellow-600", icon: "fa-circle", label: "Il y a " + diffMins + " min", dot: "bg-yellow-500" };
+                } else if (diffHours < 24) {
+                    return { color: "text-orange-600", icon: "fa-circle", label: "Il y a " + diffHours + "h", dot: "bg-orange-500" };
+                } else if (diffDays === 1) {
+                    return { color: "text-red-600", icon: "fa-circle", label: "Hier", dot: "bg-red-500" };
+                } else {
+                    return { color: "text-red-600", icon: "fa-circle", label: "Il y a " + diffDays + " jours", dot: "bg-red-500" };
+                }
+            };
+            
+            const canSeeLastLogin = (targetUser) => {
+                // Admin voit tout le monde
+                if (currentUser.role === "admin") return true;
+                // Superviseur voit seulement les techniciens
+                if (currentUser.role === "supervisor" && targetUser.role === "technician") return true;
+                // Autres cas: non visible
+                return false;
+            };
+            
             const handleDeleteUser = (userId, userName) => {
                 setConfirmDialog({
                     show: true,
@@ -3097,7 +3129,20 @@ app.get('/', (c) => {
                                         React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
                                             React.createElement('i', { className: 'far fa-clock mr-2' }),
                                             'Créé le: ' + formatDateEST(user.created_at, false)
-                                        )
+                                        ),
+                                        canSeeLastLogin(user) ? React.createElement('div', { className: "flex items-center gap-2 mt-2 pt-2 border-t border-gray-200" },
+                                            React.createElement('div', { className: "flex items-center gap-1.5" },
+                                                React.createElement('div', { 
+                                                    className: "w-2 h-2 rounded-full animate-pulse " + getLastLoginStatus(user.last_login).dot
+                                                }),
+                                                React.createElement('span', { 
+                                                    className: "text-xs font-semibold " + getLastLoginStatus(user.last_login).color
+                                                }, getLastLoginStatus(user.last_login).label)
+                                            ),
+                                            user.last_login ? React.createElement('span', { className: "text-xs text-gray-400" },
+                                                " • " + formatDateEST(user.last_login, true)
+                                            ) : null
+                                        ) : null
                                     ),
                                     (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician') ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0' },
                                         React.createElement('button', {
