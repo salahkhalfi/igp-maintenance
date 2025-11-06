@@ -100,6 +100,16 @@ auth.post('/login', async (c) => {
       }
     }
 
+    // 📅 MISE À JOUR LAST_LOGIN: Enregistrer la date/heure de connexion
+    try {
+      await c.env.DB.prepare(
+        "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?"
+      ).bind(user.id).run();
+    } catch (error) {
+      // En cas d'erreur, on continue (non critique)
+      console.error("Failed to update last_login:", error);
+    }
+
     // Retirer le hash du mot de passe
     const { password_hash, ...userWithoutPassword } = user;
 
@@ -127,7 +137,7 @@ auth.get('/me', async (c) => {
     }
 
     const user = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at FROM users WHERE id = ?'
+      'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
     ).bind(userPayload.userId).first() as User;
 
     if (!user) {

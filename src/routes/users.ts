@@ -24,6 +24,7 @@ users.get('/', async (c) => {
         role, 
         created_at, 
         updated_at,
+        last_login,
         CASE 
           WHEN password_hash LIKE 'v2:%' THEN 'PBKDF2'
           ELSE 'SHA-256 (Legacy)'
@@ -55,6 +56,7 @@ users.get('/:id', async (c) => {
         role, 
         created_at, 
         updated_at,
+        last_login,
         CASE 
           WHEN password_hash LIKE 'v2:%' THEN 'PBKDF2'
           ELSE 'SHA-256 (Legacy)'
@@ -134,7 +136,7 @@ users.post('/', async (c) => {
 
     // Récupérer l'utilisateur créé
     const newUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at FROM users WHERE email = ?'
+      'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE email = ?'
     ).bind(email).first() as User;
 
     // Logger l'action
@@ -264,7 +266,7 @@ users.put('/:id', async (c) => {
 
     // Récupérer l'utilisateur mis à jour
     const updatedUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at FROM users WHERE id = ?'
+      'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
     ).bind(id).first() as User;
 
     // Logger l'action

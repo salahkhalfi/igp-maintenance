@@ -105,7 +105,7 @@ app.get('/api/technicians', authMiddleware, async (c) => {
 app.get('/api/users/team', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT id, email, full_name, role, created_at, updated_at
+      SELECT id, email, full_name, role, created_at, updated_at, last_login
       FROM users
       ORDER BY role DESC, full_name ASC
     `).all();
