@@ -3818,7 +3818,7 @@ app.get('/', (c) => {
             const [loading, setLoading] = React.useState(false);
             const messagesEndRef = React.useRef(null);
             
-            // États pour l'enregistrement audio
+            // États pour enregistrement audio
             const [isRecording, setIsRecording] = React.useState(false);
             const [audioBlob, setAudioBlob] = React.useState(null);
             const [recordingDuration, setRecordingDuration] = React.useState(0);
@@ -3912,18 +3912,13 @@ app.get('/', (c) => {
                 }
             };
             
-            // Fonctions d'enregistrement audio
+            // Fonctions audio
             const startRecording = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        } 
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
                     });
                     
-                    // Détection du format supporté
                     let mimeType = 'audio/webm;codecs=opus';
                     if (!MediaRecorder.isTypeSupported(mimeType)) {
                         if (MediaRecorder.isTypeSupported('audio/mp4')) {
@@ -3949,8 +3944,6 @@ app.get('/', (c) => {
                         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
                         setAudioBlob(audioBlob);
                         setAudioURL(URL.createObjectURL(audioBlob));
-                        
-                        // Arrêter tous les tracks
                         stream.getTracks().forEach(track => track.stop());
                     };
                     
@@ -3958,10 +3951,9 @@ app.get('/', (c) => {
                     setIsRecording(true);
                     setRecordingDuration(0);
                     
-                    // Timer d'enregistrement (max 5 minutes)
                     recordingTimerRef.current = setInterval(() => {
                         setRecordingDuration(prev => {
-                            if (prev >= 300) { // 5 minutes max
+                            if (prev >= 300) {
                                 stopRecording();
                                 return 300;
                             }
@@ -3970,8 +3962,8 @@ app.get('/', (c) => {
                     }, 1000);
                     
                 } catch (error) {
-                    console.error('Erreur accès microphone:', error);
-                    alert('Impossible d\'accéder au microphone. Vérifiez les permissions.');
+                    console.error('Erreur microphone:', error);
+                    alert('Impossible acceder au microphone. Verifiez les permissions.');
                 }
             };
             
@@ -3990,13 +3982,10 @@ app.get('/', (c) => {
                 if (isRecording) {
                     stopRecording();
                 }
-                
-                // Nettoyage
                 setAudioBlob(null);
                 setAudioURL(null);
                 setRecordingDuration(0);
                 audioChunksRef.current = [];
-                
                 if (audioURL) {
                     URL.revokeObjectURL(audioURL);
                 }
@@ -4004,24 +3993,18 @@ app.get('/', (c) => {
             
             const sendAudioMessage = async () => {
                 if (!audioBlob) return;
-                
                 try {
                     const formData = new FormData();
                     formData.append('audio', audioBlob, 'audio-message.' + (audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm'));
                     formData.append('message_type', activeTab);
                     formData.append('duration', recordingDuration.toString());
-                    
                     if (activeTab === 'private' && selectedContact) {
                         formData.append('recipient_id', selectedContact.id.toString());
                     }
-                    
                     await axios.post(API_URL + '/messages/audio', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
-                    
-                    // Nettoyage et rechargement
                     cancelRecording();
-                    
                     if (activeTab === 'public') {
                         loadPublicMessages();
                     } else if (selectedContact) {
@@ -4220,23 +4203,7 @@ app.get('/', (c) => {
                                                 }, getRoleLabel(msg.sender_role)),
                                                 React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
-                                            // Affichage du contenu texte ou lecteur audio
-                                            msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                                React.createElement('div', { className: 'flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100' },
-                                                    React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-xl' }),
-                                                    React.createElement('div', { className: 'flex-1' },
-                                                        React.createElement('audio', {
-                                                            controls: true,
-                                                            preload: 'metadata',
-                                                            className: 'w-full h-8',
-                                                            src: API_URL + '/messages/audio/' + msg.audio_file_key
-                                                        }),
-                                                        msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
-                                                            'Durée: ' + formatRecordingDuration(msg.audio_duration)
-                                                        ) : null
-                                                    )
-                                                )
-                                            ) : React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
+                                            React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
                                         ),
                                         canDeleteMessage(msg) ? React.createElement('button', {
                                             onClick: (e) => {
@@ -4255,51 +4222,7 @@ app.get('/', (c) => {
                             
                             // Input zone
                             React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
-                                // Interface d'enregistrement audio (visible pendant l'enregistrement ou la prévisualisation)
-                                (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border-2 border-red-200 animate-pulse' },
-                                    React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                                        React.createElement('div', { className: 'flex items-center gap-3' },
-                                            React.createElement('div', { className: 'w-3 h-3 bg-red-500 rounded-full animate-pulse' }),
-                                            React.createElement('span', { className: 'font-semibold text-red-700' }, 
-                                                isRecording ? 'Enregistrement en cours...' : 'Prévisualisation audio'
-                                            ),
-                                            React.createElement('span', { className: 'text-sm text-gray-600 font-mono' }, 
-                                                formatRecordingDuration(recordingDuration)
-                                            )
-                                        ),
-                                        React.createElement('button', {
-                                            onClick: cancelRecording,
-                                            className: 'text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg p-2 transition-all',
-                                            title: 'Annuler'
-                                        }, React.createElement('i', { className: 'fas fa-times' }))
-                                    ),
-                                    audioBlob ? React.createElement('div', { className: 'flex items-center gap-3 mb-3' },
-                                        React.createElement('audio', {
-                                            controls: true,
-                                            src: audioURL,
-                                            className: 'flex-1 h-10'
-                                        })
-                                    ) : null,
-                                    React.createElement('div', { className: 'flex gap-2' },
-                                        isRecording ? React.createElement('button', {
-                                            onClick: stopRecording,
-                                            className: 'flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2'
-                                        },
-                                            React.createElement('i', { className: 'fas fa-stop' }),
-                                            'Arrêter'
-                                        ) : React.createElement('button', {
-                                            onClick: sendAudioMessage,
-                                            disabled: !audioBlob,
-                                            className: 'flex-1 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
-                                        },
-                                            React.createElement('i', { className: 'fas fa-paper-plane' }),
-                                            'Envoyer le message vocal'
-                                        )
-                                    )
-                                ) : null,
-                                
-                                // Zone de saisie texte normale (cachée pendant l'enregistrement)
-                                !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2' },
+                                React.createElement('div', { className: 'flex gap-2' },
                                     React.createElement('textarea', {
                                         value: messageContent,
                                         onChange: (e) => setMessageContent(e.target.value),
@@ -4310,14 +4233,6 @@ app.get('/', (c) => {
                                         rows: 2
                                     }),
                                     React.createElement('button', {
-                                        onClick: startRecording,
-                                        className: 'px-3 sm:px-4 bg-gradient-to-br from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
-                                        title: 'Enregistrer un message vocal'
-                                    },
-                                        React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
-                                        React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Audio')
-                                    ),
-                                    React.createElement('button', {
                                         onClick: sendMessage,
                                         disabled: !messageContent.trim(),
                                         className: 'px-3 sm:px-6 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
@@ -4326,7 +4241,7 @@ app.get('/', (c) => {
                                         React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
                                         React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
                                     )
-                                ) : null
+                                )
                             )
                         ) : null,
                         
@@ -4462,24 +4377,7 @@ app.get('/', (c) => {
                                                     : { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                             },
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
-                                                // Affichage du contenu texte ou lecteur audio
-                                                msg.audio_file_key ? React.createElement('div', { className: 'my-1' },
-                                                    React.createElement('div', { className: 'flex items-center gap-2 bg-white bg-opacity-10 rounded-lg p-2' },
-                                                        React.createElement('i', { className: (isMe ? 'text-white' : 'text-indigo-600') + ' fas fa-microphone' }),
-                                                        React.createElement('div', { className: 'flex-1' },
-                                                            React.createElement('audio', {
-                                                                controls: true,
-                                                                preload: 'metadata',
-                                                                className: 'w-full h-7',
-                                                                style: { maxWidth: '250px' },
-                                                                src: API_URL + '/messages/audio/' + msg.audio_file_key
-                                                            }),
-                                                            msg.audio_duration ? React.createElement('p', { 
-                                                                className: 'text-xs mt-1 ' + (isMe ? 'text-white text-opacity-75' : 'text-gray-500')
-                                                            }, 'Durée: ' + formatRecordingDuration(msg.audio_duration)) : null
-                                                        )
-                                                    )
-                                                ) : React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
+                                                React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
                                                 React.createElement('div', { 
                                                     className: 'text-xs mt-1 flex items-center justify-between gap-2'
                                                 },
@@ -4505,51 +4403,7 @@ app.get('/', (c) => {
                                 
                                 // Input
                                 React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
-                                    // Interface d'enregistrement audio (visible pendant l'enregistrement ou la prévisualisation)
-                                    (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border-2 border-red-200 animate-pulse' },
-                                        React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                                            React.createElement('div', { className: 'flex items-center gap-3' },
-                                                React.createElement('div', { className: 'w-3 h-3 bg-red-500 rounded-full animate-pulse' }),
-                                                React.createElement('span', { className: 'font-semibold text-red-700' }, 
-                                                    isRecording ? 'Enregistrement en cours...' : 'Prévisualisation audio'
-                                                ),
-                                                React.createElement('span', { className: 'text-sm text-gray-600 font-mono' }, 
-                                                    formatRecordingDuration(recordingDuration)
-                                                )
-                                            ),
-                                            React.createElement('button', {
-                                                onClick: cancelRecording,
-                                                className: 'text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg p-2 transition-all',
-                                                title: 'Annuler'
-                                            }, React.createElement('i', { className: 'fas fa-times' }))
-                                        ),
-                                        audioBlob ? React.createElement('div', { className: 'flex items-center gap-3 mb-3' },
-                                            React.createElement('audio', {
-                                                controls: true,
-                                                src: audioURL,
-                                                className: 'flex-1 h-10'
-                                            })
-                                        ) : null,
-                                        React.createElement('div', { className: 'flex gap-2' },
-                                            isRecording ? React.createElement('button', {
-                                                onClick: stopRecording,
-                                                className: 'flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2'
-                                            },
-                                                React.createElement('i', { className: 'fas fa-stop' }),
-                                                'Arrêter'
-                                            ) : React.createElement('button', {
-                                                onClick: sendAudioMessage,
-                                                disabled: !audioBlob,
-                                                className: 'flex-1 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
-                                            },
-                                                React.createElement('i', { className: 'fas fa-paper-plane' }),
-                                                'Envoyer le message vocal'
-                                            )
-                                        )
-                                    ) : null,
-                                    
-                                    // Zone de saisie texte normale (cachée pendant l'enregistrement)
-                                    !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('div', { className: 'flex gap-2' },
                                         React.createElement('textarea', {
                                             value: messageContent,
                                             onChange: (e) => setMessageContent(e.target.value),
@@ -4559,14 +4413,6 @@ app.get('/', (c) => {
                                             rows: 2
                                         }),
                                         React.createElement('button', {
-                                            onClick: startRecording,
-                                            className: 'px-3 sm:px-4 bg-gradient-to-br from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
-                                            title: 'Enregistrer un message vocal'
-                                        },
-                                            React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
-                                            React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Audio')
-                                        ),
-                                        React.createElement('button', {
                                             onClick: sendMessage,
                                             disabled: !messageContent.trim(),
                                             className: 'px-3 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
@@ -4574,7 +4420,7 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
                                             React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
                                         )
-                                    ) : null
+                                    )
                                 )
                             ) : React.createElement('div', { className: 'flex-1 flex items-center justify-center bg-gray-50' },
                                 React.createElement('div', { className: 'text-center text-gray-400' },
