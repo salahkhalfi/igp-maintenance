@@ -3958,13 +3958,14 @@ app.get('/', (c) => {
                                     (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
                                 }, getTicketsByStatus('archived').length)
                             ),
+                            (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
-                                className: 'px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all'
+                                className: "px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all"
                             },
-                                React.createElement('i', { className: 'fas fa-users-cog mr-2' }),
-                                'Utilisateurs'
-                            ),
+                                React.createElement('i', { className: "fas fa-users-cog mr-2" }),
+                                "Utilisateurs"
+                            ) : null,
                             (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
