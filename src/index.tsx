@@ -601,6 +601,29 @@ app.delete('/api/messages/:messageId', authMiddleware, async (c) => {
   }
 });
 
+// Route de test R2
+app.get('/api/test/r2', async (c) => {
+  try {
+    const list = await c.env.MEDIA_BUCKET.list({ limit: 10, prefix: 'messages/audio/' });
+    return c.json({ 
+      success: true,
+      bucket_name: 'maintenance-media',
+      files_count: list.objects.length,
+      files: list.objects.map(obj => ({
+        key: obj.key,
+        size: obj.size,
+        uploaded: obj.uploaded
+      }))
+    });
+  } catch (error) {
+    return c.json({ 
+      success: false,
+      error: error.message,
+      bucket_configured: !!c.env.MEDIA_BUCKET
+    }, 500);
+  }
+});
+
 // Endpoint pour envoyer des alertes automatiques pour tickets en retard (appelé périodiquement)
 app.post('/api/alerts/check-overdue', authMiddleware, async (c) => {
   try {
