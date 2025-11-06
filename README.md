@@ -363,7 +363,7 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - `GET /api/machines/:id` - Détails d'une machine
 - `POST /api/machines` - Créer une machine (admin)
 - `PATCH /api/machines/:id` - Mettre à jour une machine (admin)
-- `DELETE /api/machines/:id` - Supprimer une machine (admin)
+- `DELETE /api/machines/:id` - Supprimer une machine (admin) - **Protégé**: bloqué si des tickets y sont associés
 
 ### Médias
 - `POST /api/media/upload` - Upload un fichier
@@ -379,7 +379,7 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - `GET /api/users` - Liste tous les utilisateurs (admin)
 - `POST /api/users` - Créer un utilisateur (admin)
 - `PUT /api/users/:id` - Modifier un utilisateur (admin)
-- `DELETE /api/users/:id` - Supprimer un utilisateur (admin)
+- `DELETE /api/users/:id` - Supprimer un utilisateur (admin) - **Protégé**: bloqué si l'utilisateur a créé des tickets
 - `POST /api/users/:id/reset-password` - Réinitialiser mot de passe (admin)
 
 ### Santé
@@ -540,7 +540,56 @@ webapp/
 - ✅ Protection des routes API par middleware
 - ✅ Validation des entrées utilisateur
 - ✅ Gestion des permissions par rôle
+- ✅ **Intégrité des données** - Validation des suppressions pour éviter données orphelines
 - ⚠️ CORS configuré (à restreindre en production)
+
+## 🛡️ Intégrité des Données (v1.9.3)
+
+### Règles de Suppression
+
+#### 🎫 Suppression de Tickets
+✅ **Suppression complète**
+- Enregistrements media supprimés (CASCADE)
+- Fichiers R2 supprimés (nettoyage automatique)
+- Timeline supprimée (CASCADE)
+- Commentaires supprimés (CASCADE)
+- **Aucune donnée orpheline**
+
+#### 🏭 Suppression de Machines
+❌ **BLOQUÉ** si la machine a des tickets associés
+```
+Erreur: "Impossible de supprimer une machine avec des tickets associés"
+```
+**Raison**: Préserver l'historique de maintenance
+
+#### 👤 Suppression d'Utilisateurs
+❌ **BLOQUÉ** si l'utilisateur a créé des tickets (reported_by)
+```
+Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
+```
+
+✅ **Nettoyage automatique** avant suppression:
+- `tickets.assigned_to` → NULL (tickets désassignés)
+- `media.uploaded_by` → NULL (médias conservés)
+- `ticket_timeline.user_id` → NULL (historique conservé)
+- `messages` → Supprimés (CASCADE)
+
+**Raison**: Balance entre traçabilité et flexibilité RH
+
+### Stratégie de Contraintes
+
+| Table | Clé Étrangère | Comportement | Justification |
+|-------|---------------|--------------|---------------|
+| `tickets` | `machine_id` | **RESTRICT** | Historique de maintenance crucial |
+| `tickets` | `reported_by` | **RESTRICT** | Traçabilité de qui a créé le ticket |
+| `tickets` | `assigned_to` | **SET NULL** | Permet suppression techniciens |
+| `media` | `ticket_id` | **CASCADE** | Médias attachés au ticket |
+| `media` | `uploaded_by` | **SET NULL** | Garde les médias après départ |
+| `ticket_timeline` | `ticket_id` | **CASCADE** | Timeline du ticket |
+| `ticket_timeline` | `user_id` | **SET NULL** | Garde historique après départ |
+| `ticket_comments` | `ticket_id` | **CASCADE** | Commentaires du ticket |
+| `messages` | `sender_id` | **CASCADE** | Messages supprimés avec utilisateur |
+| `messages` | `recipient_id` | **CASCADE** | Messages supprimés avec utilisateur |
 
 ## 📝 Notes de développement
 
@@ -556,6 +605,11 @@ webapp/
 - **Prévention fichiers orphelins** - Empêche l'accumulation de fichiers inutilisés dans le stockage
 - **Réduction des coûts** - Économise l'espace de stockage Cloudflare R2
 - **Logging amélioré** - Traçabilité des opérations de suppression de fichiers
+- **Intégrité des données** - Protection contre les suppressions qui créeraient des données orphelines
+  - ❌ Impossible de supprimer une machine si des tickets y sont associés (RESTRICT)
+  - ❌ Impossible de supprimer un utilisateur qui a créé des tickets (RESTRICT)
+  - ✅ Les tickets assignés à un utilisateur supprimé sont automatiquement désassignés (SET NULL)
+  - ✅ L'historique et les médias conservent leur intégrité même après suppression d'utilisateurs
 
 ### Variables d'environnement
 Créer un fichier `.dev.vars` pour le développement local:
