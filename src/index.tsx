@@ -4459,6 +4459,9 @@ app.get('/', (c) => {
                                     React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
                                         'Les Produits Verriers International (IGP) Inc.'
                                     ),
+                                    React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
+                                        `👋 Bonjour ${currentUser.full_name || currentUser.email.split('@')[0]}`
+                                    ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', { className: "text-xs text-igp-orange font-semibold" }, 
                                             (currentUser.role === "operator" 
