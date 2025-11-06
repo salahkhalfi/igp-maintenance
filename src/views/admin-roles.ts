@@ -82,8 +82,110 @@ export const adminRolesHTML = `<!DOCTYPE html>
         </div>
     </main>
 
-    <div id="roleModal" class="modal"></div>
-    <div id="viewModal" class="modal"></div>
+    <!-- Modal de Création/Modification -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+            <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-2xl z-10">
+                <div class="flex items-center justify-between">
+                    <h2 id="modalTitle" class="text-2xl font-bold">Créer un Nouveau Rôle</h2>
+                    <button onclick="closeModal()" class="text-white hover:text-gray-200 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Formulaire -->
+                <div class="space-y-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-tag text-blue-500 mr-2"></i>Nom Technique *
+                        </label>
+                        <input type="text" id="roleName" 
+                               placeholder="ex: data_analyst" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               pattern="[a-z0-9_]+"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">Minuscules, chiffres et underscores uniquement</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-text-width text-green-500 mr-2"></i>Nom d'Affichage *
+                        </label>
+                        <input type="text" id="roleDisplayName" 
+                               placeholder="ex: Analyste de Données" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-align-left text-purple-500 mr-2"></i>Description *
+                        </label>
+                        <textarea id="roleDescription" 
+                                  rows="3" 
+                                  placeholder="Décrivez le rôle et ses responsabilités..." 
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  required></textarea>
+                    </div>
+                </div>
+                
+                <!-- Permissions -->
+                <div class="border-t pt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">
+                            <i class="fas fa-key text-purple-500 mr-2"></i>
+                            Permissions (<span id="selectedCount">0</span> sélectionnées)
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="selectAllPermissions()" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
+                                <i class="fas fa-check-double mr-1"></i>Tout sélectionner
+                            </button>
+                            <button onclick="selectReadOnly()" class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200">
+                                <i class="fas fa-eye mr-1"></i>Lecture seule
+                            </button>
+                            <button onclick="deselectAllPermissions()" class="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-200">
+                                <i class="fas fa-times mr-1"></i>Tout désélectionner
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="permissionsContainer" class="space-y-4 max-h-96 overflow-y-auto">
+                        <!-- Les permissions seront chargées ici -->
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
+                    <button onclick="closeModal()" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <i class="fas fa-times mr-2"></i>Annuler
+                    </button>
+                    <button onclick="saveRole()" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-md">
+                        <i class="fas fa-save mr-2"></i>Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Visualisation -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto mx-4">
+            <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 rounded-t-2xl z-10">
+                <div class="flex items-center justify-between">
+                    <h2 id="viewModalTitle" class="text-2xl font-bold">Détails du Rôle</h2>
+                    <button onclick="closeViewModal()" class="text-white hover:text-gray-200 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="viewModalContent" class="p-6">
+                <!-- Le contenu sera chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
 
     <script>
         // Vérifier l'authentification AVANT de charger le JS
