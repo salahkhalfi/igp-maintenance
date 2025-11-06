@@ -3932,14 +3932,14 @@ app.get('/', (c) => {
                                                 ? tickets.filter(t => t.reported_by === currentUser.id).length 
                                                 : tickets.length) + " tickets actifs"
                                         ),
-                                        (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin") && unreadMessagesCount > 0 ?
+                                        (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin") ?
                                         React.createElement('div', { 
-                                            className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer",
+                                            className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
                                             onClick: () => setShowMessaging(true),
-                                            title: "Messages non lus"
+                                            title: unreadMessagesCount > 0 ? (unreadMessagesCount + " messages non lus") : "Aucun message non lu"
                                         },
                                             React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
-                                            React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount)
+                                            unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
                                         ) : null
                                     )
                                 )
