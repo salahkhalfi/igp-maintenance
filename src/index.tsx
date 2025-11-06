@@ -3923,8 +3923,10 @@ app.get('/', (c) => {
                                     React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
                                         'Les Produits Verriers International (IGP) Inc.'
                                     ),
-                                    React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, 
-                                        tickets.length + ' tickets actifs'
+                                    React.createElement('p', { className: "text-xs text-igp-orange font-semibold" }, 
+                                        (currentUser.role === "operator" 
+                                            ? tickets.filter(t => t.reported_by === currentUser.id).length 
+                                            : tickets.length) + " tickets actifs"
                                     )
                                 )
                             )
