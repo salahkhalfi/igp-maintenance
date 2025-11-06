@@ -4205,7 +4205,7 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
                                             msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                                React.createElement('div', { className: 'flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100' },
+                                                React.createElement('div', { className: 'flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100', style: { minWidth: '320px' } },
                                                     React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-xl' }),
                                                     React.createElement('div', { className: 'flex-1' },
                                                         React.createElement('audio', {
@@ -4436,7 +4436,7 @@ app.get('/', (c) => {
                                                 React.createElement('i', { className: 'fas fa-trash text-xs' })
                                             ) : null,
                                             React.createElement('div', {
-                                                className: 'max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-3 shadow-lg hover:shadow-2xl transition-all transform hover:scale-[1.02] ' +
+                                                className: (msg.audio_file_key ? 'max-w-[95%] sm:max-w-[85%]' : 'max-w-[85%] sm:max-w-[70%]') + ' rounded-2xl p-2.5 sm:p-3 shadow-lg hover:shadow-2xl transition-all transform hover:scale-[1.02] ' +
                                                     (isMe 
                                                         ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm backdrop-blur-sm' 
                                                         : 'bg-white/90 backdrop-blur-sm text-gray-800 border border-white/50 rounded-tl-sm'),
@@ -4446,7 +4446,7 @@ app.get('/', (c) => {
                                             },
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
                                                 msg.audio_file_key ? React.createElement('div', { className: 'my-1' },
-                                                    React.createElement('div', { className: 'flex items-center gap-2 bg-white bg-opacity-10 rounded-lg p-2' },
+                                                    React.createElement('div', { className: 'flex items-center gap-2 bg-white bg-opacity-10 rounded-lg p-2', style: { minWidth: '280px' } },
                                                         React.createElement('i', { className: (isMe ? 'text-white' : 'text-indigo-600') + ' fas fa-microphone' }),
                                                         React.createElement('div', { className: 'flex-1' },
                                                             React.createElement('audio', {
