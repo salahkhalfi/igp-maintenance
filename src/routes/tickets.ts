@@ -278,6 +278,25 @@ tickets.delete('/:id', async (c) => {
       return c.json({ error: 'Vous ne pouvez supprimer que vos propres tickets' }, 403);
     }
     
+    // Récupérer tous les fichiers media associés au ticket AVANT la suppression
+    const { results: mediaFiles } = await c.env.DB.prepare(
+      'SELECT file_key FROM media WHERE ticket_id = ?'
+    ).bind(id).all() as any;
+    
+    // Supprimer les fichiers du bucket R2
+    if (mediaFiles && mediaFiles.length > 0) {
+      for (const media of mediaFiles) {
+        try {
+          await c.env.MEDIA_BUCKET.delete(media.file_key);
+          console.log(`Fichier supprimé du R2: ${media.file_key}`);
+        } catch (deleteError) {
+          console.error(`Erreur lors de la suppression du fichier R2 ${media.file_key}:`, deleteError);
+          // Continue même si la suppression d'un fichier échoue
+        }
+      }
+    }
+    
+    // Supprimer le ticket (CASCADE supprimera automatiquement les enregistrements media)
     const result = await c.env.DB.prepare(
       'DELETE FROM tickets WHERE id = ?'
     ).bind(id).run();
@@ -286,7 +305,10 @@ tickets.delete('/:id', async (c) => {
       return c.json({ error: 'Erreur lors de la suppression du ticket' }, 500);
     }
     
-    return c.json({ message: 'Ticket supprimé avec succès' });
+    return c.json({ 
+      message: 'Ticket supprimé avec succès',
+      deletedFiles: mediaFiles?.length || 0
+    });
   } catch (error) {
     console.error('Delete ticket error:', error);
     return c.json({ error: 'Erreur lors de la suppression du ticket' }, 500);
