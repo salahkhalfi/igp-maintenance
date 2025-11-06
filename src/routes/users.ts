@@ -329,6 +329,32 @@ users.delete('/:id', async (c) => {
       }, 403);
     }
 
+    // Vérifier si l'utilisateur a créé des tickets (reported_by)
+    const ticketCount = await c.env.DB.prepare(
+      'SELECT COUNT(*) as count FROM tickets WHERE reported_by = ?'
+    ).bind(id).first() as any;
+
+    if (ticketCount && ticketCount.count > 0) {
+      return c.json({ 
+        error: `Impossible de supprimer cet utilisateur car il a créé ${ticketCount.count} ticket(s). Supprimez d'abord ses tickets ou réassignez-les.` 
+      }, 400);
+    }
+
+    // Mettre à NULL les champs assigned_to pour les tickets assignés à cet utilisateur
+    await c.env.DB.prepare(
+      'UPDATE tickets SET assigned_to = NULL, updated_at = CURRENT_TIMESTAMP WHERE assigned_to = ?'
+    ).bind(id).run();
+
+    // Mettre à NULL les champs uploaded_by pour les médias uploadés par cet utilisateur
+    await c.env.DB.prepare(
+      'UPDATE media SET uploaded_by = NULL WHERE uploaded_by = ?'
+    ).bind(id).run();
+
+    // Mettre à NULL les champs user_id dans la timeline pour les actions de cet utilisateur
+    await c.env.DB.prepare(
+      'UPDATE ticket_timeline SET user_id = NULL WHERE user_id = ?'
+    ).bind(id).run();
+
     // Supprimer l'utilisateur
     const result = await c.env.DB.prepare(
       'DELETE FROM users WHERE id = ?'
