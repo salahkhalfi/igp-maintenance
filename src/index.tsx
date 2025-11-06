@@ -10,8 +10,10 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { serveStatic } from 'hono/cloudflare-workers';
 import { authMiddleware, adminOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
 import { hasPermission, getRolePermissions } from './utils/permissions';
+import { adminRolesHTML } from './views/admin-roles';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
@@ -593,6 +595,16 @@ Action requise immédiatement !
   }
 });
 
+
+// Page d'administration des rôles (accessible sans auth serveur, auth gérée par JS)
+app.get('/admin/roles', async (c) => {
+  // Servir la page telle quelle - l'authentification sera vérifiée par le JS client
+  // qui redirigera vers / si pas de token dans localStorage
+  return c.html(adminRolesHTML);
+});
+
+// Servir les fichiers statiques du dossier static/
+app.use('/static/*', serveStatic({ root: './' }));
 
 app.get('/', (c) => {
   return c.html(`
@@ -4510,6 +4522,25 @@ app.get('/', (c) => {
                             },
                                 React.createElement('i', { className: "fas fa-cogs mr-2" }),
                                 "Machines"
+                            ) : null,
+                            (currentUser.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => {
+                                    // S'assurer que le token est bien dans localStorage avant la redirection
+                                    const token = localStorage.getItem('auth_token');
+                                    if (token) {
+                                        localStorage.setItem('token', token); // Dupliquer pour compatibilité
+                                        window.location.href = '/admin/roles';
+                                    } else {
+                                        alert('Session expirée. Veuillez vous reconnecter.');
+                                        window.location.href = '/';
+                                    }
+                                },
+                                className: "px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-md transition-all",
+                                title: 'Gestion des rôles et permissions (Admin)'
+                            },
+                                React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
+                                'Rôles'
                             ) : null,
                             (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
                             React.createElement('button', {
