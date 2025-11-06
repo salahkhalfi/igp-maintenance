@@ -4212,8 +4212,8 @@ app.get('/', (c) => {
                                                             controls: true,
                                                             preload: 'metadata',
                                                             controlsList: 'nodownload',
-                                                            className: 'w-full h-8',
-                                                            style: { minHeight: '32px', display: 'block' },
+                                                            className: 'w-full',
+                                                            style: { height: '54px', minHeight: '54px', display: 'block' },
                                                             src: API_URL + '/messages/audio/' + msg.audio_file_key,
                                                             onError: (e) => console.error('Audio load error:', e)
                                                         }),
@@ -4453,8 +4453,8 @@ app.get('/', (c) => {
                                                                 controls: true,
                                                                 preload: 'metadata',
                                                                 controlsList: 'nodownload',
-                                                                className: 'w-full h-7',
-                                                                style: { maxWidth: '250px', minHeight: '28px', display: 'block' },
+                                                                className: 'w-full',
+                                                                style: { height: '48px', minHeight: '48px', maxWidth: '280px', display: 'block' },
                                                                 src: API_URL + '/messages/audio/' + msg.audio_file_key,
                                                                 onError: (e) => console.error('Audio load error:', e)
                                                             }),
