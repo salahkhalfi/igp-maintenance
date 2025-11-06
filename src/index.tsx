@@ -4205,22 +4205,23 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
                                             msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                                React.createElement('div', { className: 'flex items-center gap-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100', style: { minWidth: '320px' } },
-                                                    React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-xl' }),
-                                                    React.createElement('div', { className: 'flex-1' },
-                                                        React.createElement('audio', {
-                                                            controls: true,
-                                                            preload: 'metadata',
-                                                            controlsList: 'nodownload',
-                                                            className: 'w-full',
-                                                            style: { height: '54px', minHeight: '54px', display: 'block' },
-                                                            src: API_URL + '/messages/audio/' + msg.audio_file_key,
-                                                            onError: (e) => console.error('Audio load error:', e)
-                                                        }),
-                                                        msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
-                                                            'Duree: ' + formatRecordingDuration(msg.audio_duration)
-                                                        ) : null
-                                                    )
+                                                React.createElement('div', { className: 'bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100' },
+                                                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                                        React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-lg' }),
+                                                        React.createElement('span', { className: 'text-sm font-medium text-indigo-700' }, 'Message vocal')
+                                                    ),
+                                                    React.createElement('audio', {
+                                                        controls: true,
+                                                        preload: 'metadata',
+                                                        controlsList: 'nodownload',
+                                                        className: 'w-full',
+                                                        style: { height: '48px', minHeight: '48px', display: 'block', maxWidth: '100%' },
+                                                        src: API_URL + '/messages/audio/' + msg.audio_file_key,
+                                                        onError: (e) => console.error('Audio load error:', e)
+                                                    }),
+                                                    msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
+                                                        '⏱️ Durée: ' + formatRecordingDuration(msg.audio_duration)
+                                                    ) : null
                                                 )
                                             ) : React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
                                         ),
@@ -4446,22 +4447,23 @@ app.get('/', (c) => {
                                             },
                                                 !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
                                                 msg.audio_file_key ? React.createElement('div', { className: 'my-1' },
-                                                    React.createElement('div', { className: 'flex items-center gap-2 bg-white bg-opacity-10 rounded-lg p-2', style: { minWidth: '280px' } },
-                                                        React.createElement('i', { className: (isMe ? 'text-white' : 'text-indigo-600') + ' fas fa-microphone' }),
-                                                        React.createElement('div', { className: 'flex-1' },
-                                                            React.createElement('audio', {
-                                                                controls: true,
-                                                                preload: 'metadata',
-                                                                controlsList: 'nodownload',
-                                                                className: 'w-full',
-                                                                style: { height: '48px', minHeight: '48px', maxWidth: '280px', display: 'block' },
-                                                                src: API_URL + '/messages/audio/' + msg.audio_file_key,
-                                                                onError: (e) => console.error('Audio load error:', e)
-                                                            }),
-                                                            msg.audio_duration ? React.createElement('p', { 
-                                                                className: 'text-xs mt-1 ' + (isMe ? 'text-white opacity-75' : 'text-gray-500')
-                                                            }, 'Duree: ' + formatRecordingDuration(msg.audio_duration)) : null
-                                                        )
+                                                    React.createElement('div', { className: 'bg-white bg-opacity-10 rounded-lg p-2' },
+                                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                                            React.createElement('i', { className: (isMe ? 'text-white' : 'text-indigo-600') + ' fas fa-microphone text-sm' }),
+                                                            React.createElement('span', { className: 'text-xs font-medium ' + (isMe ? 'text-white' : 'text-indigo-700') }, 'Audio')
+                                                        ),
+                                                        React.createElement('audio', {
+                                                            controls: true,
+                                                            preload: 'metadata',
+                                                            controlsList: 'nodownload',
+                                                            className: 'w-full',
+                                                            style: { height: '40px', minHeight: '40px', display: 'block', maxWidth: '100%' },
+                                                            src: API_URL + '/messages/audio/' + msg.audio_file_key,
+                                                            onError: (e) => console.error('Audio load error:', e)
+                                                        }),
+                                                        msg.audio_duration ? React.createElement('p', { 
+                                                            className: 'text-xs mt-2 ' + (isMe ? 'text-white opacity-75' : 'text-gray-500')
+                                                        }, '⏱️ ' + formatRecordingDuration(msg.audio_duration)) : null
                                                     )
                                                 ) : React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
                                                 React.createElement('div', { 
