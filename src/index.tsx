@@ -1055,7 +1055,10 @@ app.get('/', (c) => {
         }
         .kanban-column.drag-over {
             background: #dbeafe;
-            border: 2px dashed #3b82f6;
+            border: 3px dashed #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.1);
+            transform: scale(1.02);
+            transition: all 0.2s ease;
         }
         .kanban-column.drag-valid {
             background: #d1fae5;
@@ -5322,21 +5325,45 @@ app.get('/', (c) => {
                 e.currentTarget.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/plain', ticket.id);
+                
+                // Désactiver temporairement le scroll horizontal pendant le drag
+                const scrollContainer = document.querySelector('.overflow-x-auto');
+                if (scrollContainer) {
+                    scrollContainer.style.overflowX = 'hidden';
+                }
             };
             
             const handleDragEnd = (e) => {
                 e.currentTarget.classList.remove('dragging');
                 setDraggedTicket(null);
                 setDragOverColumn(null);
+                
+                // Réactiver le scroll horizontal après le drag
+                const scrollContainer = document.querySelector('.overflow-x-auto');
+                if (scrollContainer) {
+                    scrollContainer.style.overflowX = 'auto';
+                }
             };
             
             const handleDragOver = (e, status) => {
                 e.preventDefault();
+                e.stopPropagation(); // Empêcher la propagation pour meilleure précision
                 e.dataTransfer.dropEffect = 'move';
                 setDragOverColumn(status);
             };
             
             const handleDragLeave = (e) => {
+                // Ne retirer l'indicateur que si on quitte vraiment la colonne
+                // (pas juste en passant sur un ticket enfant)
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX;
+                const y = e.clientY;
+                
+                // Si le curseur est encore dans les limites de la colonne, ne rien faire
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    return;
+                }
+                
                 setDragOverColumn(null);
             };
             
