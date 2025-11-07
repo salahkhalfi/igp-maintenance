@@ -3945,6 +3945,12 @@ app.get('/', (c) => {
             
             // Fonction pour ouvrir message prive avec un utilisateur
             const openPrivateMessage = (senderId, senderName) => {
+                // Verifier si ce n est pas soi-meme
+                if (senderId === currentUser.userId) {
+                    alert('Vous ne pouvez pas vous envoyer un message prive a vous-meme.');
+                    return;
+                }
+                
                 // Verifier si utilisateur est dans la liste des contacts disponibles
                 const user = availableUsers.find(u => u.id === senderId);
                 
