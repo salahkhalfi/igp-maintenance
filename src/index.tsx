@@ -3568,6 +3568,40 @@ app.get('/', (c) => {
                 setIsOpen(false);
             };
             
+            // Créer le dropdown content
+            const dropdownContent = isOpen && React.createElement('div', {
+                className: 'fixed z-[10000] bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto',
+                style: {
+                    top: dropdownPosition.top + 'px',
+                    left: dropdownPosition.left + 'px',
+                    width: dropdownPosition.width + 'px',
+                    pointerEvents: 'auto'
+                }
+            },
+                roleGroups.map((group, groupIndex) => 
+                    group.roles.length > 0 && React.createElement('div', { key: groupIndex },
+                        // En-tête de groupe
+                        React.createElement('div', {
+                            className: 'px-3 py-2 bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm sticky top-0 z-[1]'
+                        }, group.label),
+                        // Options du groupe
+                        group.roles.map(role => 
+                            React.createElement('button', {
+                                key: role.value,
+                                type: 'button',
+                                onClick: () => handleSelect(role.value),
+                                className: 'w-full px-4 py-3 text-left text-sm sm:text-base hover:bg-blue-50 transition-colors ' + (value === role.value ? 'bg-blue-100 font-semibold text-blue-700' : 'text-gray-800')
+                            },
+                                role.label,
+                                value === role.value && React.createElement('i', { 
+                                    className: 'fas fa-check ml-2 text-blue-600'
+                                })
+                            )
+                        )
+                    )
+                )
+            );
+            
             return React.createElement('div', {
                 ref: dropdownRef,
                 className: 'relative w-full'
@@ -3587,38 +3621,10 @@ app.get('/', (c) => {
                     })
                 ),
                 
-                // Liste déroulante (fixed pour sortir du stacking context)
-                isOpen && React.createElement('div', {
-                    className: 'fixed z-[9999] bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto',
-                    style: {
-                        top: dropdownPosition.top + 'px',
-                        left: dropdownPosition.left + 'px',
-                        width: dropdownPosition.width + 'px'
-                    }
-                },
-                    roleGroups.map((group, groupIndex) => 
-                        group.roles.length > 0 && React.createElement('div', { key: groupIndex },
-                            // En-tête de groupe
-                            React.createElement('div', {
-                                className: 'px-3 py-2 bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm sticky top-0 z-[1]'
-                            }, group.label),
-                            // Options du groupe
-                            group.roles.map(role => 
-                                React.createElement('button', {
-                                    key: role.value,
-                                    type: 'button',
-                                    onClick: () => handleSelect(role.value),
-                                    className: 'w-full px-4 py-3 text-left text-sm sm:text-base hover:bg-blue-50 transition-colors ' + (value === role.value ? 'bg-blue-100 font-semibold text-blue-700' : 'text-gray-800')
-                                },
-                                    role.label,
-                                    value === role.value && React.createElement('i', { 
-                                        className: 'fas fa-check ml-2 text-blue-600'
-                                    })
-                                )
-                            )
-                        )
-                    )
-                )
+                // Rendre le dropdown via portal directement dans le body
+                isOpen && (typeof ReactDOM !== 'undefined' && ReactDOM.createPortal) 
+                    ? ReactDOM.createPortal(dropdownContent, document.body)
+                    : dropdownContent
             );
         };
         
@@ -3903,7 +3909,7 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
