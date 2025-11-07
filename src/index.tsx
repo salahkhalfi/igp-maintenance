@@ -4167,7 +4167,7 @@ app.get('/', (c) => {
                                 React.createElement(RoleDropdown, {
                                     value: editRole,
                                     onChange: (e) => setEditRole(e.target.value),
-                                    disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin',
+                                    disabled: editingUser?.id === currentUser.id || (currentUser.role === 'supervisor' && editingUser?.role === 'admin'),
                                     currentUserRole: currentUser.role,
                                     variant: 'green'
                                 })
@@ -4252,7 +4252,8 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: "fas fa-comment mr-1" }),
                                             "Message"
                                         ) : null,
-                                        (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician') ? React.createElement(React.Fragment, null,
+                                        // Permettre de modifier son propre profil OU les autres utilisateurs (avec restrictions)
+                                        ((user.id === currentUser.id) || (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician')) ? React.createElement(React.Fragment, null,
                                             React.createElement('button', {
                                                 onClick: () => handleEditUser(user),
                                             className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(59,130,246,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(59,130,246,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(59,130,246,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50'
@@ -4267,13 +4268,14 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'fas fa-key mr-1' }),
                                             'MdP'
                                         ),
-                                        React.createElement('button', {
+                                        // Ne pas permettre de supprimer son propre compte
+                                        user.id !== currentUser.id ? React.createElement('button', {
                                             onClick: () => handleDeleteUser(user.id, user.full_name),
                                             className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-red-400 via-red-500 to-red-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(239,68,68,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(239,68,68,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(239,68,68,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-red-300/50'
                                         },
                                             React.createElement('i', { className: 'fas fa-trash mr-1' }),
                                             'Supprimer'
-                                        )
+                                        ) : null
                                     ) : null)
                                 )
                             )
