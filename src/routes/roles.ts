@@ -131,24 +131,32 @@ roles.post('/', async (c) => {
     // Validation du nom (identifiant technique)
     const trimmedName = name.trim();
     
-    // 🚧 BLOCAGE TEMPORAIRE: Protection pendant migration RBAC frontend
-    // Le frontend contient 63 vérifications hardcodées sur les rôles existants.
-    // La création de nouveaux rôles causerait des dysfonctionnements (boutons invisibles, sections bloquées).
-    // Voir: ROLE_SYSTEM_SAFETY_ANALYSIS.md et ROLE_MIGRATION_GUIDE.md
+    // 🔒 BLOCAGE CRÉATION RÔLES: Seuls les rôles système prédéfinis sont autorisés
+    // L'application supporte 14 rôles système spécialement conçus pour l'industrie.
+    // Ces rôles ont des permissions prédéfinies et testées.
     // 
-    // Pour activer les nouveaux rôles:
-    // 1. Compléter la migration frontend (hooks usePermission)
-    // 2. Supprimer ce bloc de code
-    // 3. Tester avec un rôle test avant production
-    const ALLOWED_ROLES = ['admin', 'supervisor', 'technician', 'operator'];
-    if (!ALLOWED_ROLES.includes(trimmedName)) {
+    // Raison du blocage:
+    // - Le frontend contient 63 vérifications hardcodées sur les rôles
+    // - Créer des rôles personnalisés causerait des dysfonctionnements UI
+    // - Les 14 rôles système couvrent tous les besoins typiques industrie
+    // 
+    // Voir: ROLES_INDUSTRIE_RECOMMANDES.md pour la liste complète
+    const SYSTEM_ROLES = [
+      'admin', 'supervisor', 'technician', 'operator',           // Rôles originaux
+      'director', 'coordinator', 'planner', 'senior_technician',  // Management & Technique
+      'team_leader', 'furnace_operator',                          // Production
+      'safety_officer', 'quality_inspector', 'storekeeper',       // Support
+      'viewer'                                                     // Lecture seule
+    ];
+    
+    if (!SYSTEM_ROLES.includes(trimmedName)) {
       return c.json({ 
-        error: 'Création de nouveaux rôles temporairement désactivée',
-        reason: 'Migration du système de permissions en cours',
-        details: 'Le frontend vérifie actuellement des rôles hardcodés. La création de nouveaux rôles causerait des dysfonctionnements.',
-        documentation: 'Voir ROLE_SYSTEM_SAFETY_ANALYSIS.md pour plus de détails',
-        allowed_roles: ALLOWED_ROLES,
-        status: 'temporary_restriction'
+        error: 'Seuls les rôles système prédéfinis peuvent être créés',
+        reason: 'Application avec rôles système spécialisés pour l\'industrie',
+        details: 'Les 14 rôles système couvrent tous les besoins typiques. Les rôles personnalisés ne sont pas supportés pour éviter des dysfonctionnements UI.',
+        documentation: 'Voir ROLES_INDUSTRIE_RECOMMANDES.md pour détails des rôles',
+        system_roles: SYSTEM_ROLES,
+        status: 'system_roles_only'
       }, 403);
     }
     if (trimmedName.length < LIMITS.NAME_MIN) {
