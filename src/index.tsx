@@ -6115,22 +6115,45 @@ app.get('/guide', (c) => {
                         </div>
                     </div>
 
-                    <!-- Les 3 Rôles -->
+                    <!-- Les 14 Rôles Système -->
                     <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-users text-lg"></i>
-                            <span class="text-base md:text-lg font-bold">👥 Les 3 Rôles</span>
+                            <span class="text-base md:text-lg font-bold">👥 Les 14 Rôles Système</span>
                         </div>
                         <i id="roles-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
                     <div id="roles" class="accordion-content bg-gray-50 border-2 border-purple-200 rounded-lg p-4 md:p-6">
-                        <div class="space-y-2 text-sm md:text-base">
-                            <p class="font-semibold text-purple-700">👑 ADMIN:</p>
-                            <p class="ml-4">• Tout faire • Gérer users • Modifier TOUS tickets</p>
-                            <p class="font-semibold text-purple-700 mt-3">🔧 TECHNICIEN:</p>
-                            <p class="ml-4">• Déplacer tickets • Modifier TOUS tickets • Ajouter commentaires/photos</p>
-                            <p class="font-semibold text-purple-700 mt-3">👷 OPÉRATEUR:</p>
-                            <p class="ml-4">• Créer tickets • Voir tous • Modifier SEULEMENT ses propres tickets</p>
+                        <div class="space-y-3 text-sm md:text-base">
+                            <p class="font-bold text-purple-700 text-lg">📊 DIRECTION:</p>
+                            <p class="ml-4">• 👑 <strong>Admin</strong> → Tout faire + Gestion utilisateurs & rôles</p>
+                            <p class="ml-4">• 📊 <strong>Directeur</strong> → Vue complète + Rapports + Décisions</p>
+                            
+                            <p class="font-bold text-purple-700 text-lg mt-4">⚙️ MANAGEMENT MAINTENANCE:</p>
+                            <p class="ml-4">• ⭐ <strong>Superviseur</strong> → Coordination équipe technique</p>
+                            <p class="ml-4">• 🎯 <strong>Coordonnateur</strong> → Planification maintenance</p>
+                            <p class="ml-4">• 📅 <strong>Planificateur</strong> → Gestion planning interventions</p>
+                            
+                            <p class="font-bold text-purple-700 text-lg mt-4">🔧 TECHNIQUE:</p>
+                            <p class="ml-4">• 🔧 <strong>Technicien Senior</strong> → Expert + Formations + Support</p>
+                            <p class="ml-4">• 🔧 <strong>Technicien</strong> → Interventions techniques + Réparations</p>
+                            
+                            <p class="font-bold text-purple-700 text-lg mt-4">🏭 PRODUCTION:</p>
+                            <p class="ml-4">• 👔 <strong>Chef Équipe</strong> → Supervision opérations production</p>
+                            <p class="ml-4">• 🔥 <strong>Opérateur Four</strong> → Gestion fours + Maintenance niveau 1</p>
+                            <p class="ml-4">• 👷 <strong>Opérateur</strong> → Créer tickets + Signaler problèmes</p>
+                            
+                            <p class="font-bold text-purple-700 text-lg mt-4">🛡️ SUPPORT:</p>
+                            <p class="ml-4">• 🛡️ <strong>Agent SST</strong> → Santé & Sécurité au travail</p>
+                            <p class="ml-4">• ✓ <strong>Inspecteur Qualité</strong> → Contrôle qualité production</p>
+                            <p class="ml-4">• 📦 <strong>Magasinier</strong> → Gestion pièces + Inventaire</p>
+                            
+                            <p class="font-bold text-purple-700 text-lg mt-4">👁️ TRANSVERSAL:</p>
+                            <p class="ml-4">• 👁️ <strong>Lecture Seule</strong> → Consultation uniquement (aucune modification)</p>
+                            
+                            <p class="bg-blue-50 border-l-4 border-blue-500 p-3 mt-4 rounded">
+                                <strong class="text-blue-700">💡 Important:</strong> 14 rôles prédéfinis - Impossible d'en créer d'autres. Chaque rôle a des permissions spécifiques adaptées à l'industrie du verre.
+                            </p>
                         </div>
                     </div>
 
@@ -6171,6 +6194,38 @@ app.get('/guide', (c) => {
                         </div>
                     </div>
 
+                    <!-- Messagerie -->
+                    <button onclick="toggleAccordion('messaging')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">💬 Messagerie Équipe</span>
+                        </div>
+                        <i id="messaging-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="messaging" class="accordion-content bg-gray-50 border-2 border-green-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-3 text-sm md:text-base">
+                            <p class="font-semibold text-green-700">💬 CANAL PUBLIC:</p>
+                            <p class="ml-4">• Tous les membres voient les messages</p>
+                            <p class="ml-4">• Annonces importantes</p>
+                            <p class="ml-4">• Messages texte ou audio 🎤</p>
+                            
+                            <p class="font-semibold text-green-700 mt-3">🔒 MESSAGES PRIVÉS:</p>
+                            <p class="ml-4">• Conversations 1-à-1</p>
+                            <p class="ml-4">• Sélectionner contact dans liste</p>
+                            <p class="ml-4">• Messages texte ou audio 🎤</p>
+                            
+                            <p class="font-semibold text-green-700 mt-3">🎤 MESSAGES VOCAUX:</p>
+                            <p class="ml-4">• <strong>Enregistrer</strong>: Clic bouton micro 🎙️</p>
+                            <p class="ml-4">• <strong>Durée max</strong>: 5 minutes</p>
+                            <p class="ml-4">• <strong>Prévisualiser</strong>: Écouter avant envoi</p>
+                            <p class="ml-4">• <strong>Annuler</strong>: Bouton X rouge</p>
+                            
+                            <p class="bg-green-50 border-l-4 border-green-500 p-3 mt-4 rounded">
+                                <strong class="text-green-700">💡 Pratique:</strong> Les messages audio sont idéaux pour les techniciens sur le terrain qui ne peuvent pas taper!
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Contact -->
                     <button onclick="toggleAccordion('contact')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
                         <div class="flex items-center gap-2">
@@ -6184,7 +6239,7 @@ app.get('/guide', (c) => {
                             <p class="font-semibold text-teal-700">🆘 SUPPORT: Votre admin système</p>
                             <p>🌐 mecanique.igpglass.ca</p>
                             <p>📖 Ce guide</p>
-                            <p>🏷️ Version 1.9.2</p>
+                            <p>🏷️ <strong>Version 2.0.4 Optimisée</strong></p>
                         </div>
                         
                         <div class="mt-6 pt-6 border-t border-teal-200">
