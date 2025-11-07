@@ -1309,9 +1309,21 @@ app.get('/', (c) => {
         const getElapsedTime = (createdAt) => {
             const now = new Date();
             // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO "YYYY-MM-DDTHH:MM:SS"
-            const isoCreatedAt = createdAt.replace(' ', 'T');
+            // Si la date contient déjà un T, on ne touche pas
+            const isoCreatedAt = createdAt.includes('T') ? createdAt : createdAt.replace(' ', 'T');
             const created = new Date(isoCreatedAt);
+            
+            // Si la date est invalide, retourner 0
+            if (isNaN(created.getTime())) {
+                return { days: 0, hours: 0, minutes: 0, seconds: 0, color: 'text-gray-500', bgColor: 'bg-gray-50', icon: '⚪' };
+            }
+            
             const diffMs = now - created;
+            
+            // Si diffMs est négatif (date future), retourner 0
+            if (diffMs < 0) {
+                return { days: 0, hours: 0, minutes: 0, seconds: 0, color: 'text-gray-500', bgColor: 'bg-gray-50', icon: '⚪' };
+            }
             
             const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
