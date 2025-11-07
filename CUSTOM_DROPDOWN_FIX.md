@@ -183,7 +183,7 @@ React.createElement(RoleDropdown, {
 ✅ **Zones touch** : Minimum 44px de hauteur (iOS guidelines)  
 ✅ **Scroll fluide** : `max-h-[60vh]` avec `overflow-y-auto`  
 ✅ **Truncate** : Labels longs tronqués avec `...`  
-✅ **Z-index** : `z-50` pour passer au-dessus des autres éléments
+✅ **Z-index élevé** : `z-[9999]` pour passer au-dessus de tous les éléments (cartes, formulaires, etc.)
 
 ## 📊 Comparaison Avant/Après
 
@@ -341,6 +341,13 @@ cb5d4b9 - Fix: Remplacer select natif par dropdown custom responsive
 - Catégories sticky avec scroll indépendant (max 60vh)
 - 14 rôles organisés en 5 groupes avec emojis
 - Compatible mobile avec événements touch/click
+
+54d6c59 - Fix: Augmenter z-index du dropdown à z-[9999]
+
+- Changé z-50 vers z-[9999] pour passer au-dessus de toutes les cartes
+- Résout le problème du dropdown caché par les cartes utilisateurs
+- Header sticky ajusté à z-[1] (relatif au dropdown parent)
+- Assure que le dropdown est toujours visible au-dessus du contenu
 ```
 
 ## 🌐 URLs de test
@@ -351,9 +358,10 @@ cb5d4b9 - Fix: Remplacer select natif par dropdown custom responsive
 - **Status** : ✅ Active
 
 ### Production (Cloudflare Pages)
-- **URL** : https://606af4ce.webapp-7t8.pages.dev
+- **URL initiale** : https://606af4ce.webapp-7t8.pages.dev
+- **URL avec z-index fix** : https://d6297935.webapp-7t8.pages.dev
 - **Projet** : webapp
-- **Status** : ✅ Déployé
+- **Status** : ✅ Déployé avec z-index fix
 - **Date** : 2025-11-07
 
 ### Domaine personnalisé
