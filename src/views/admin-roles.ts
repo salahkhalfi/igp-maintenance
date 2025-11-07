@@ -37,13 +37,19 @@ export const adminRolesHTML = `<!DOCTYPE html>
     <main class="container mx-auto px-6 py-8">
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-800 mb-1">Rôles Utilisateurs</h2>
-                    <p class="text-gray-600 text-sm">Gérez les rôles et permissions du système</p>
+                <div class="flex-1">
+                    <h2 class="text-xl font-bold text-gray-800 mb-1">Rôles Système Prédéfinis</h2>
+                    <p class="text-gray-600 text-sm">14 rôles spécialisés pour l'industrie du verre - Permissions configurées par le système</p>
                 </div>
-                <button onclick="openCreateModal()" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition shadow-md">
-                    <i class="fas fa-plus mr-2"></i>Créer un Nouveau Rôle
-                </button>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg max-w-md">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-500 text-lg mt-0.5 mr-3"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-blue-800 mb-1">Rôles système uniquement</p>
+                            <p class="text-xs text-blue-700">Les 14 rôles prédéfinis couvrent tous les besoins de l'industrie. La création de rôles personnalisés n'est plus nécessaire.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -62,8 +68,8 @@ export const adminRolesHTML = `<!DOCTYPE html>
             </div>
             <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-md p-6">
                 <div class="flex items-center justify-between">
-                    <div><p class="text-green-100 text-sm">Rôles Personnalisés</p><p class="text-3xl font-bold" id="statsCustom">-</p></div>
-                    <i class="fas fa-user-cog text-4xl text-green-200"></i>
+                    <div><p class="text-green-100 text-sm">Rôles Actifs</p><p class="text-3xl font-bold" id="statsCustom">-</p></div>
+                    <i class="fas fa-check-circle text-4xl text-green-200"></i>
                 </div>
             </div>
             <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-md p-6">
@@ -82,12 +88,12 @@ export const adminRolesHTML = `<!DOCTYPE html>
         </div>
     </main>
 
-    <!-- Modal de Création/Modification -->
+    <!-- Modal de Modification -->
     <div id="roleModal" class="modal">
         <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
             <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-2xl z-10">
                 <div class="flex items-center justify-between">
-                    <h2 id="modalTitle" class="text-2xl font-bold">Créer un Nouveau Rôle</h2>
+                    <h2 id="modalTitle" class="text-2xl font-bold">Modifier le Rôle</h2>
                     <button onclick="closeModal()" class="text-white hover:text-gray-200 text-2xl">
                         <i class="fas fa-times"></i>
                     </button>

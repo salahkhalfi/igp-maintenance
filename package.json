@@ -19,8 +19,6 @@
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true"
   },
   "dependencies": {
-    "@hello-pangea/dnd": "^18.0.1",
-    "@hono/node-server": "^1.19.6",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "hono": "^4.10.4",

@@ -3456,9 +3456,10 @@ app.get('/', (c) => {
             const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
             const dropdownRef = React.useRef(null);
             const buttonRef = React.useRef(null);
+            const portalRef = React.useRef(null);
             
-            // Styles selon le variant (blue pour création, green pour édition)
-            const styles = {
+            // Styles selon le variant (blue pour création, green pour édition) - mémorisés
+            const styles = React.useMemo(() => ({
                 blue: {
                     button: 'from-white/90 to-blue-50/80 border-blue-300 focus:ring-blue-500 focus:border-blue-500',
                     chevron: 'text-blue-500',
@@ -3471,24 +3472,12 @@ app.get('/', (c) => {
                     shadow: '0 6px 20px rgba(34, 197, 94, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)',
                     border: 'border-green-300'
                 }
-            };
+            }), []);
             
             const currentStyle = styles[variant];
             
-            // Calculer la position du dropdown quand il s'ouvre
-            React.useEffect(() => {
-                if (isOpen && buttonRef.current) {
-                    const rect = buttonRef.current.getBoundingClientRect();
-                    setDropdownPosition({
-                        top: rect.bottom + window.scrollY + 8,
-                        left: rect.left + window.scrollX,
-                        width: rect.width
-                    });
-                }
-            }, [isOpen]);
-            
-            // Définition des rôles organisés par catégorie
-            const roleGroups = [
+            // Définition des rôles organisés par catégorie - mémorisés
+            const roleGroups = React.useMemo(() => [
                 {
                     label: '📊 Direction',
                     roles: [
@@ -3533,43 +3522,77 @@ app.get('/', (c) => {
                         { value: 'viewer', label: 'Lecture Seule' }
                     ]
                 }
-            ];
+            ], [currentUserRole]);
             
-            // Trouver le label du rôle sélectionné
-            const getSelectedLabel = () => {
+            // Trouver le label du rôle sélectionné - mémorisé
+            const getSelectedLabel = React.useCallback(() => {
                 for (const group of roleGroups) {
                     const role = group.roles.find(r => r.value === value);
                     if (role) return role.label;
                 }
                 return 'Sélectionner un rôle';
-            };
+            }, [roleGroups, value]);
             
-            // Fermer le dropdown si on clique à l'extérieur
-            React.useEffect(() => {
-                const handleClickOutside = (event) => {
-                    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                        setIsOpen(false);
-                    }
-                };
-                
-                if (isOpen) {
-                    document.addEventListener('mousedown', handleClickOutside);
-                    document.addEventListener('touchstart', handleClickOutside);
+            // Calculer la position du dropdown quand il s'ouvre ou lors du resize/scroll
+            const updatePosition = React.useCallback(() => {
+                if (buttonRef.current) {
+                    const rect = buttonRef.current.getBoundingClientRect();
+                    setDropdownPosition({
+                        top: rect.bottom + window.scrollY + 8,
+                        left: rect.left + window.scrollX,
+                        width: rect.width
+                    });
                 }
-                
-                return () => {
-                    document.removeEventListener('mousedown', handleClickOutside);
-                    document.removeEventListener('touchstart', handleClickOutside);
-                };
-            }, [isOpen]);
+            }, []);
             
-            const handleSelect = (roleValue) => {
+            React.useEffect(() => {
+                if (isOpen) {
+                    updatePosition();
+                    window.addEventListener('resize', updatePosition);
+                    window.addEventListener('scroll', updatePosition, true);
+                    
+                    return () => {
+                        window.removeEventListener('resize', updatePosition);
+                        window.removeEventListener('scroll', updatePosition, true);
+                    };
+                }
+            }, [isOpen, updatePosition]);
+            
+            // Fermer le dropdown si on clique à l'extérieur - optimisé avec useCallback
+            const handleClickOutside = React.useCallback((event) => {
+                // Vérifier si le clic est sur le bouton, le dropdown conteneur ou le portal
+                if (
+                    buttonRef.current && buttonRef.current.contains(event.target) ||
+                    dropdownRef.current && dropdownRef.current.contains(event.target) ||
+                    portalRef.current && portalRef.current.contains(event.target)
+                ) {
+                    return;
+                }
+                setIsOpen(false);
+            }, []);
+            
+            React.useEffect(() => {
+                if (isOpen) {
+                    // Utiliser capture phase pour attraper les événements avant les autres handlers
+                    document.addEventListener('mousedown', handleClickOutside, true);
+                    document.addEventListener('touchstart', handleClickOutside, true);
+                    
+                    return () => {
+                        document.removeEventListener('mousedown', handleClickOutside, true);
+                        document.removeEventListener('touchstart', handleClickOutside, true);
+                    };
+                }
+            }, [isOpen, handleClickOutside]);
+            
+            // Gestion de la sélection - optimisée avec useCallback
+            const handleSelect = React.useCallback((roleValue) => {
                 onChange({ target: { value: roleValue } });
                 setIsOpen(false);
-            };
+            }, [onChange]);
             
-            // Créer le dropdown content
+            // Créer le dropdown content avec ref pour le portal
             const dropdownContent = isOpen && React.createElement('div', {
+                ref: portalRef,
                 className: 'fixed z-[10000] bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto',
                 style: {
                     top: dropdownPosition.top + 'px',
@@ -3694,7 +3717,7 @@ app.get('/', (c) => {
                 }
             };
             
-            const handleCreateUser = async (e) => {
+            const handleCreateUser = React.useCallback(async (e) => {
                 e.preventDefault();
                 setButtonLoading('create');
                 try {
@@ -3716,61 +3739,64 @@ app.get('/', (c) => {
                 } finally {
                     setButtonLoading(null);
                 }
-            };
+            }, [newEmail, newPassword, newFullName, newRole, loadUsers]);
             
-            const getRoleLabel = (role) => {
-                const roles = {
-                    // Direction
-                    'admin': '👑 Administrateur',
-                    'director': '📊 Directeur Général',
-                    // Management Maintenance
-                    'supervisor': '⭐ Superviseur',
-                    'coordinator': '🎯 Coordonnateur Maintenance',
-                    'planner': '📅 Planificateur Maintenance',
-                    // Technique
-                    'senior_technician': '🔧 Technicien Senior',
-                    'technician': '🔧 Technicien',
-                    // Production
-                    'team_leader': '👔 Chef Équipe Production',
-                    'furnace_operator': '🔥 Opérateur Four',
-                    'operator': '👷 Opérateur',
-                    // Support
-                    'safety_officer': '🛡️ Agent Santé & Sécurité',
-                    'quality_inspector': '✓ Inspecteur Qualité',
-                    'storekeeper': '📦 Magasinier',
-                    // Transversal
-                    'viewer': '👁️ Lecture Seule'
-                };
-                return roles[role] || '👤 ' + role;
-            };
+            // Fonctions utilitaires mémorisées
+            const ROLE_LABELS = React.useMemo(() => ({
+                // Direction
+                'admin': '👑 Administrateur',
+                'director': '📊 Directeur Général',
+                // Management Maintenance
+                'supervisor': '⭐ Superviseur',
+                'coordinator': '🎯 Coordonnateur Maintenance',
+                'planner': '📅 Planificateur Maintenance',
+                // Technique
+                'senior_technician': '🔧 Technicien Senior',
+                'technician': '🔧 Technicien',
+                // Production
+                'team_leader': '👔 Chef Équipe Production',
+                'furnace_operator': '🔥 Opérateur Four',
+                'operator': '👷 Opérateur',
+                // Support
+                'safety_officer': '🛡️ Agent Santé & Sécurité',
+                'quality_inspector': '✓ Inspecteur Qualité',
+                'storekeeper': '📦 Magasinier',
+                // Transversal
+                'viewer': '👁️ Lecture Seule'
+            }), []);
             
-            const getRoleBadgeClass = (role) => {
-                const colors = {
-                    // Direction - Rouge
-                    'admin': 'bg-red-100 text-red-800',
-                    'director': 'bg-red-50 text-red-700',
-                    // Management - Jaune/Orange
-                    'supervisor': 'bg-yellow-100 text-yellow-800',
-                    'coordinator': 'bg-orange-100 text-orange-800',
-                    'planner': 'bg-amber-100 text-amber-800',
-                    // Technique - Bleu
-                    'senior_technician': 'bg-blue-100 text-blue-800',
-                    'technician': 'bg-blue-50 text-blue-700',
-                    // Production - Vert
-                    'team_leader': 'bg-emerald-100 text-emerald-800',
-                    'furnace_operator': 'bg-green-100 text-green-800',
-                    'operator': 'bg-green-50 text-green-700',
-                    // Support - Indigo/Violet
-                    'safety_officer': 'bg-indigo-100 text-indigo-800',
-                    'quality_inspector': 'bg-purple-100 text-purple-800',
-                    'storekeeper': 'bg-violet-100 text-violet-800',
-                    // Transversal - Gris
-                    'viewer': 'bg-gray-100 text-gray-800'
-                };
-                return colors[role] || 'bg-gray-100 text-gray-800';
-            };
+            const ROLE_BADGE_COLORS = React.useMemo(() => ({
+                // Direction - Rouge
+                'admin': 'bg-red-100 text-red-800',
+                'director': 'bg-red-50 text-red-700',
+                // Management - Jaune/Orange
+                'supervisor': 'bg-yellow-100 text-yellow-800',
+                'coordinator': 'bg-orange-100 text-orange-800',
+                'planner': 'bg-amber-100 text-amber-800',
+                // Technique - Bleu
+                'senior_technician': 'bg-blue-100 text-blue-800',
+                'technician': 'bg-blue-50 text-blue-700',
+                // Production - Vert
+                'team_leader': 'bg-emerald-100 text-emerald-800',
+                'furnace_operator': 'bg-green-100 text-green-800',
+                'operator': 'bg-green-50 text-green-700',
+                // Support - Indigo/Violet
+                'safety_officer': 'bg-indigo-100 text-indigo-800',
+                'quality_inspector': 'bg-purple-100 text-purple-800',
+                'storekeeper': 'bg-violet-100 text-violet-800',
+                // Transversal - Gris
+                'viewer': 'bg-gray-100 text-gray-800'
+            }), []);
             
-            const getLastLoginStatus = (lastLogin) => {
+            const getRoleLabel = React.useCallback((role) => {
+                return ROLE_LABELS[role] || '👤 ' + role;
+            }, [ROLE_LABELS]);
+            
+            const getRoleBadgeClass = React.useCallback((role) => {
+                return ROLE_BADGE_COLORS[role] || 'bg-gray-100 text-gray-800';
+            }, [ROLE_BADGE_COLORS]);
+            
+            const getLastLoginStatus = React.useCallback((lastLogin) => {
                 if (!lastLogin) return { 
                     color: "text-gray-500", 
                     icon: "fa-circle", 
@@ -3827,18 +3853,18 @@ app.get('/', (c) => {
                         dot: "bg-red-500" 
                     };
                 }
-            };
+            }, []);
             
-            const canSeeLastLogin = (targetUser) => {
+            const canSeeLastLogin = React.useCallback((targetUser) => {
                 // Admin voit tout le monde
                 if (currentUser.role === "admin") return true;
                 // Superviseur voit seulement les techniciens
                 if (currentUser.role === "supervisor" && targetUser.role === "technician") return true;
                 // Autres cas: non visible
                 return false;
-            };
+            }, [currentUser.role]);
             
-            const handleDeleteUser = (userId, userName) => {
+            const handleDeleteUser = React.useCallback((userId, userName) => {
                 setConfirmDialog({
                     show: true,
                     message: 'Etes-vous sur de vouloir supprimer ' + userName + ' ?',
@@ -3856,16 +3882,16 @@ app.get('/', (c) => {
                         }
                     }
                 });
-            };
+            }, [loadUsers]);
             
-            const handleEditUser = (user) => {
+            const handleEditUser = React.useCallback((user) => {
                 setEditingUser(user);
                 setEditEmail(user.email);
                 setEditFullName(user.full_name);
                 setEditRole(user.role);
-            };
+            }, []);
             
-            const handleUpdateUser = async (e) => {
+            const handleUpdateUser = React.useCallback(async (e) => {
                 e.preventDefault();
                 setButtonLoading('update');
                 try {
@@ -3882,9 +3908,9 @@ app.get('/', (c) => {
                 } finally {
                     setButtonLoading(null);
                 }
-            };
+            }, [editingUser, editEmail, editFullName, editRole, loadUsers]);
             
-            const handleResetPassword = (userId, userName) => {
+            const handleResetPassword = React.useCallback((userId, userName) => {
                 setPromptDialog({
                     show: true,
                     message: 'Nouveau mot de passe pour ' + userName + ':',
@@ -3904,7 +3930,7 @@ app.get('/', (c) => {
                         }
                     }
                 });
-            };
+            }, []);
             
             if (!show) return null;
             
