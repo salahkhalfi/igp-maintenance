@@ -357,14 +357,25 @@ app.get('/api/audio/*', async (c) => {
     `).bind(fileKey).first();
     
     if (!message) {
+      console.error('Audio non trouvé:', fileKey);
       return c.json({ error: 'Message audio non trouvé', fileKey: fileKey }, 404);
     }
     
     // Sécurité: Vérifier les permissions pour messages privés
     if (message.message_type === 'private') {
-      // Token requis pour messages privés
-      const token = c.req.query('token');
+      // Pour messages privés, accepter token dans query OU dans header Authorization
+      let token = c.req.query('token');
+      
+      // Si pas de token query, essayer header Authorization
       if (!token) {
+        const authHeader = c.req.header('Authorization');
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.substring(7);
+        }
+      }
+      
+      if (!token) {
+        console.error('Token manquant pour audio privé:', fileKey);
         return c.json({ error: 'Token requis pour message privé' }, 401);
       }
       
@@ -374,6 +385,7 @@ app.get('/api/audio/*', async (c) => {
         const decoded = await verifyJWT(token);
         
         if (!decoded) {
+          console.error('Token invalide pour audio privé:', fileKey);
           return c.json({ error: 'Token invalide ou expiré' }, 401);
         }
         
@@ -382,9 +394,13 @@ app.get('/api/audio/*', async (c) => {
         const canAccess = userId === message.sender_id || userId === message.recipient_id;
         
         if (!canAccess) {
+          console.error('Accès refusé pour userId', userId, 'sur audio:', fileKey);
           return c.json({ error: 'Accès refusé à ce message privé' }, 403);
         }
+        
+        console.log('✅ Accès autorisé audio privé:', fileKey, 'pour userId:', userId);
       } catch (jwtError) {
+        console.error('Erreur JWT pour audio privé:', jwtError);
         return c.json({ error: 'Erreur de vérification token' }, 401);
       }
     }
@@ -4645,14 +4661,24 @@ app.get('/', (c) => {
                                                         ),
                                                         React.createElement('audio', {
                                                             controls: true,
-                                                            preload: 'auto',
+                                                            preload: 'metadata',
                                                             controlsList: 'nodownload',
                                                             className: 'w-full',
                                                             style: { height: '48px', minHeight: '48px' },
                                                             src: API_URL + '/audio/' + msg.audio_file_key + '?token=' + authToken,
+                                                            onLoadedMetadata: (e) => {
+                                                                console.log('✅ Audio privé chargé:', msg.audio_file_key);
+                                                            },
                                                             onError: (e) => {
-                                                                console.error('❌ Erreur audio (privé):', e);
-                                                                console.error('URL:', API_URL + '/audio/' + msg.audio_file_key + '?token=[HIDDEN]');
+                                                                console.error('❌ Erreur audio privé:', e.target.error);
+                                                                console.error('Code erreur:', e.target.error?.code);
+                                                                console.error('Message:', e.target.error?.message);
+                                                                console.error('Network state:', e.target.networkState);
+                                                                console.error('Ready state:', e.target.readyState);
+                                                                alert('Erreur chargement audio privé. Vérifiez la console.');
+                                                            },
+                                                            onCanPlay: (e) => {
+                                                                console.log('✅ Audio privé prêt à jouer:', msg.audio_file_key);
                                                             }
                                                         }),
                                                         msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
