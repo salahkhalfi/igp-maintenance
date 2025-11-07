@@ -4305,6 +4305,9 @@ app.get('/', (c) => {
                                                 React.createElement('span', {
                                                     className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 ' + getRoleBadgeClass(msg.sender_role)
                                                 }, getRoleLabel(msg.sender_role)),
+                                                React.createElement('span', {
+                                                    className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-indigo-100 text-indigo-700'
+                                                }, '🌐 Message public'),
                                                 React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
                                             msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
