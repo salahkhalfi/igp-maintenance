@@ -4526,34 +4526,29 @@ app.get('/', (c) => {
                                         React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-3 sm:mb-4 opacity-50' }),
                                         React.createElement('p', { className: 'text-sm sm:text-base' }, 'Commencez la conversation avec ' + selectedContact.full_name),
                                         React.createElement('p', { className: 'text-xs text-gray-400 mt-2' }, 'Ecrivez votre premier message ci-dessous')
-                                    ) : privateMessages.map(msg => {
-                                        const isMe = msg.sender_id === currentUser.userId;
-                                        return React.createElement('div', {
-                                            key: msg.id,
-                                            className: 'flex items-start gap-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' animate-fadeIn group'
-                                        },
-                                            !isMe && canDeleteMessage(msg) ? React.createElement('button', {
-                                                onClick: (e) => {
-                                                    e.stopPropagation();
-                                                    deleteMessage(msg.id);
-                                                },
-                                                className: 'opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-1.5 transform hover:scale-110 active:scale-95',
-                                                title: 'Supprimer'
-                                            },
-                                                React.createElement('i', { className: 'fas fa-trash text-xs' })
-                                            ) : null,
+                                    ) : privateMessages.map(msg => React.createElement('div', {
+                                        key: msg.id,
+                                        className: 'bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-all hover:scale-[1.02] border border-white/50 transform hover:-translate-y-1',
+                                        style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
+                                    },
+                                        React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
                                             React.createElement('div', {
-                                                className: (msg.audio_file_key ? 'max-w-[95%] sm:max-w-[85%]' : 'max-w-[85%] sm:max-w-[70%]') + ' rounded-2xl p-2.5 sm:p-3 shadow-lg hover:shadow-2xl transition-all transform hover:scale-[1.02] ' +
-                                                    (isMe 
-                                                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm backdrop-blur-sm' 
-                                                        : 'bg-white/90 backdrop-blur-sm text-gray-800 border border-white/50 rounded-tl-sm'),
-                                                style: isMe 
-                                                    ? { boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2)' }
-                                                    : { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
-                                            },
-                                                !isMe ? React.createElement('div', { className: 'text-xs font-semibold mb-1 text-gray-600' }, msg.sender_name) : null,
-                                                msg.audio_file_key ? React.createElement('div', { className: 'my-1' },
-                                                    React.createElement('div', { className: 'bg-white bg-opacity-10 rounded-lg p-2' },
+                                                className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
+                                            }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
+                                            React.createElement('div', { className: 'flex-1 min-w-0' },
+                                                React.createElement('div', { className: 'flex flex-wrap items-center gap-1 sm:gap-2 mb-1' },
+                                                    React.createElement('span', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, msg.sender_name),
+                                                    React.createElement('span', {
+                                                        className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-purple-100 text-purple-700'
+                                                    }, '🔒 Message privé'),
+                                                    React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
+                                                ),
+                                                msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
+                                                    React.createElement('div', { className: 'bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-100' },
+                                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                                            React.createElement('i', { className: 'fas fa-microphone text-purple-600 text-lg' }),
+                                                            React.createElement('span', { className: 'text-sm font-medium text-purple-700' }, 'Message vocal')
+                                                        ),
                                                         React.createElement('audio', {
                                                             controls: true,
                                                             preload: 'auto',
@@ -4566,31 +4561,24 @@ app.get('/', (c) => {
                                                                 console.error('URL:', API_URL + '/audio/' + msg.audio_file_key);
                                                             }
                                                         }),
-                                                        msg.audio_duration ? React.createElement('p', { 
-                                                            className: 'text-xs mt-2 ' + (isMe ? 'text-white opacity-75' : 'text-gray-500')
-                                                        }, '⏱️ ' + formatRecordingDuration(msg.audio_duration)) : null
+                                                        msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
+                                                            '⏱️ Durée: ' + formatRecordingDuration(msg.audio_duration)
+                                                        ) : null
                                                     )
-                                                ) : React.createElement('p', { className: 'whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content),
-                                                React.createElement('div', { 
-                                                    className: 'text-xs mt-1 flex items-center justify-between gap-2'
+                                                ) : React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
+                                            ),
+                                            canDeleteMessage(msg) ? React.createElement('button', {
+                                                onClick: (e) => {
+                                                    e.stopPropagation();
+                                                    deleteMessage(msg.id);
                                                 },
-                                                    React.createElement('span', {
-                                                        className: isMe ? 'text-white text-opacity-90' : 'text-gray-400'
-                                                    }, formatMessageTime(msg.created_at)),
-                                                    isMe && canDeleteMessage(msg) ? React.createElement('button', {
-                                                        onClick: (e) => {
-                                                            e.stopPropagation();
-                                                            deleteMessage(msg.id);
-                                                        },
-                                                        className: 'opacity-50 hover:opacity-100 transition-opacity ' + (isMe ? 'text-white hover:text-red-200' : 'text-red-500 hover:text-red-700'),
-                                                        title: 'Supprimer'
-                                                    },
-                                                        React.createElement('i', { className: 'fas fa-trash text-xs' })
-                                                    ) : null
-                                                )
-                                            )
-                                        );
-                                    }),
+                                                className: 'flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2 transition-all transform hover:scale-110 active:scale-95',
+                                                title: 'Supprimer le message'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-trash text-sm' })
+                                            ) : null
+                                        )
+                                    )),
                                     React.createElement('div', { ref: messagesEndRef })
                                 ),
                                 
