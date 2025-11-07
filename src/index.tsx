@@ -3453,7 +3453,9 @@ app.get('/', (c) => {
         // Composant de sélection de rôle custom (remplace <select> natif pour mobile)
         const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'blue' }) => {
             const [isOpen, setIsOpen] = React.useState(false);
+            const [dropdownPosition, setDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
             const dropdownRef = React.useRef(null);
+            const buttonRef = React.useRef(null);
             
             // Styles selon le variant (blue pour création, green pour édition)
             const styles = {
@@ -3472,6 +3474,18 @@ app.get('/', (c) => {
             };
             
             const currentStyle = styles[variant];
+            
+            // Calculer la position du dropdown quand il s'ouvre
+            React.useEffect(() => {
+                if (isOpen && buttonRef.current) {
+                    const rect = buttonRef.current.getBoundingClientRect();
+                    setDropdownPosition({
+                        top: rect.bottom + window.scrollY + 8,
+                        left: rect.left + window.scrollX,
+                        width: rect.width
+                    });
+                }
+            }, [isOpen]);
             
             // Définition des rôles organisés par catégorie
             const roleGroups = [
@@ -3560,6 +3574,7 @@ app.get('/', (c) => {
             },
                 // Bouton principal
                 React.createElement('button', {
+                    ref: buttonRef,
                     type: 'button',
                     onClick: () => !disabled && setIsOpen(!isOpen),
                     disabled: disabled,
@@ -3572,9 +3587,14 @@ app.get('/', (c) => {
                     })
                 ),
                 
-                // Liste déroulante
+                // Liste déroulante (fixed pour sortir du stacking context)
                 isOpen && React.createElement('div', {
-                    className: 'absolute z-[9999] w-full mt-2 bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto'
+                    className: 'fixed z-[9999] bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto',
+                    style: {
+                        top: dropdownPosition.top + 'px',
+                        left: dropdownPosition.left + 'px',
+                        width: dropdownPosition.width + 'px'
+                    }
                 },
                     roleGroups.map((group, groupIndex) => 
                         group.roles.length > 0 && React.createElement('div', { key: groupIndex },
