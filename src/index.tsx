@@ -3872,17 +3872,21 @@ app.get('/', (c) => {
                         loadPrivateMessages(initialContact.id);
                     }
                     
-                    // Rafraichir toutes les 10 secondes
-                    const interval = setInterval(() => {
-                        if (activeTab === "public") {
-                            loadPublicMessages();
-                        } else if (selectedContact) {
-                            loadPrivateMessages(selectedContact.id);
-                        }
-                        loadUnreadCount();
-                    }, 10000);
+                    // DÉSACTIVÉ: Rafraîchissement automatique toutes les 10 secondes
+                    // Raison: Économise les ressources serveur et évite le clignotement des messages
+                    // Solution: L'utilisateur peut cliquer sur "Actualiser" ou fermer/rouvrir la messagerie
+                    // Le compteur de messages non lus continue de se mettre à jour toutes les 30s (indépendant)
                     
-                    return () => clearInterval(interval);
+                    // const interval = setInterval(() => {
+                    //     if (activeTab === "public") {
+                    //         loadPublicMessages();
+                    //     } else if (selectedContact) {
+                    //         loadPrivateMessages(selectedContact.id);
+                    //     }
+                    //     loadUnreadCount();
+                    // }, 10000);
+                    
+                    // return () => clearInterval(interval);
                 }
             }, [show, activeTab, selectedContact]);
             
