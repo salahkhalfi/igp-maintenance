@@ -781,11 +781,23 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.1  
+**Version**: 2.0.2  
 **Dernière mise à jour**: 2025-11-07  
-**Statut**: ✅ En Développement - Messages audio + 14 rôles système prédéfinis + Dropdown responsive mobile
+**Statut**: ✅ En Développement - Messages audio + 14 rôles système + Dropdown custom mobile
 
-## 🆕 Nouveautés v2.0.1 (2025-11-07)
+## 🆕 Nouveautés v2.0.2 (2025-11-07)
+
+### 📱 Dropdown Custom pour Mobile
+- **Composant custom RoleDropdown** - Remplace le `<select>` natif HTML
+- **Résout fond noir système** - Plus de fond noir non-fermable sur iOS/Android
+- **Entièrement responsive** - HTML/CSS personnalisé avec contrôle total
+- **Fermeture intelligente** - Clic/tap extérieur ferme le dropdown (événements touch)
+- **Variants stylés** - Blue pour création, green pour édition
+- **Chevron animé** - Indicateur visuel up/down selon état
+- **Catégories sticky** - 5 groupes de rôles avec headers qui restent visibles
+- **Option sélectionnée** - Highlight + checkmark ✓
+- **Scroll fluide** - Max 60vh avec overflow-y-auto
+- **Touch-friendly** - Zones tactiles optimisées (44px minimum)
 
 ### 🎯 14 Rôles Système Prédéfinis
 - **Direction**: Directeur Général, Administrateur
@@ -794,13 +806,6 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - **Production**: Chef Équipe Production, Opérateur Four, Opérateur
 - **Support**: Agent Santé & Sécurité, Inspecteur Qualité, Magasinier
 - **Transversal**: Lecture Seule
-
-### 📱 Dropdown Responsive Mobile
-- **Fix responsive** - Liste déroulante des rôles adaptée aux petits écrans
-- **Padding réduit** - `px-2 py-2` sur mobile au lieu de `px-4 py-3`
-- **Taille de police** - `text-sm` sur mobile, `text-base` sur desktop
-- **Font-weight** - `font-medium` sur mobile, `font-semibold` sur desktop
-- **Meilleur affichage** - Longs labels français (24-26 caractères) s'affichent correctement
 
 ### 🔒 Sécurité Renforcée
 - **API bloquante** - Impossible de créer des rôles personnalisés (whitelist stricte)
