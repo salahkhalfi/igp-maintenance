@@ -7,7 +7,7 @@
     "dev:sandbox": "wrangler pages dev dist --d1=maintenance-db --local --ip 0.0.0.0 --port 3000",
     "build": "vite build",
     "preview": "wrangler pages dev dist",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name maintenance-app",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name webapp",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:migrate:local": "wrangler d1 migrations apply maintenance-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply maintenance-db",
