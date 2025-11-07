@@ -781,6 +781,28 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.0  
-**Dernière mise à jour**: 2025-11-06  
-**Statut**: ✅ En Développement - Messages audio enregistrables + Gestion utilisateurs + Permissions par rôle
+**Version**: 2.0.1  
+**Dernière mise à jour**: 2025-11-07  
+**Statut**: ✅ En Développement - Messages audio + 14 rôles système prédéfinis + Dropdown responsive mobile
+
+## 🆕 Nouveautés v2.0.1 (2025-11-07)
+
+### 🎯 14 Rôles Système Prédéfinis
+- **Direction**: Directeur Général, Administrateur
+- **Management Maintenance**: Superviseur, Coordonnateur Maintenance, Planificateur Maintenance
+- **Technique**: Technicien Senior, Technicien
+- **Production**: Chef Équipe Production, Opérateur Four, Opérateur
+- **Support**: Agent Santé & Sécurité, Inspecteur Qualité, Magasinier
+- **Transversal**: Lecture Seule
+
+### 📱 Dropdown Responsive Mobile
+- **Fix responsive** - Liste déroulante des rôles adaptée aux petits écrans
+- **Padding réduit** - `px-2 py-2` sur mobile au lieu de `px-4 py-3`
+- **Taille de police** - `text-sm` sur mobile, `text-base` sur desktop
+- **Font-weight** - `font-medium` sur mobile, `font-semibold` sur desktop
+- **Meilleur affichage** - Longs labels français (24-26 caractères) s'affichent correctement
+
+### 🔒 Sécurité Renforcée
+- **API bloquante** - Impossible de créer des rôles personnalisés (whitelist stricte)
+- **14 rôles système** - Seuls les rôles prédéfinis peuvent être créés
+- **Protection production** - Flag `is_system=1` empêche la suppression des rôles système
