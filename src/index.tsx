@@ -348,8 +348,6 @@ app.get('/api/audio/*', async (c) => {
     // Récupérer le chemin complet après /api/audio/
     const fullPath = c.req.path;
     const fileKey = fullPath.replace('/api/audio/', '');
-    // console.log('DEBUG audio route - fullPath:', fullPath);
-    // console.log('DEBUG audio route - fileKey:', fileKey);
     
     // Vérifier que le message existe
     const message = await c.env.DB.prepare(`
@@ -358,15 +356,40 @@ app.get('/api/audio/*', async (c) => {
       WHERE audio_file_key = ?
     `).bind(fileKey).first();
     
-    // console.log('DEBUG audio route - message found:', !!message);
-    
     if (!message) {
       return c.json({ error: 'Message audio non trouvé', fileKey: fileKey }, 404);
     }
     
-    // TODO: Ajouter système de tokens pour sécuriser les messages privés
-    // Pour l'instant, on autorise l'accès à tous les messages audio
-    // car les balises <audio> ne peuvent pas envoyer de headers d'authentification
+    // Sécurité: Vérifier les permissions pour messages privés
+    if (message.message_type === 'private') {
+      // Token requis pour messages privés
+      const token = c.req.query('token');
+      if (!token) {
+        return c.json({ error: 'Token requis pour message privé' }, 401);
+      }
+      
+      // Vérifier et décoder le token JWT
+      try {
+        const { verifyJWT } = await import('./utils/jwt');
+        const decoded = await verifyJWT(token);
+        
+        if (!decoded) {
+          return c.json({ error: 'Token invalide ou expiré' }, 401);
+        }
+        
+        // Vérifier que l'utilisateur a le droit d'accéder à ce message
+        const userId = decoded.userId;
+        const canAccess = userId === message.sender_id || userId === message.recipient_id;
+        
+        if (!canAccess) {
+          return c.json({ error: 'Accès refusé à ce message privé' }, 403);
+        }
+      } catch (jwtError) {
+        return c.json({ error: 'Erreur de vérification token' }, 401);
+      }
+    }
+    
+    // Messages publics: pas de vérification nécessaire
     
     // Récupérer depuis R2
     const object = await c.env.MEDIA_BUCKET.get(fileKey);
@@ -389,9 +412,20 @@ app.get('/api/audio/*', async (c) => {
   }
 });
 
-// Recuperer les messages publics
+// Recuperer les messages publics avec pagination
 app.get('/api/messages/public', authMiddleware, async (c) => {
   try {
+    // Paramètres de pagination
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '50');
+    const offset = (page - 1) * limit;
+    
+    // Valider les paramètres
+    if (page < 1 || limit < 1 || limit > 100) {
+      return c.json({ error: 'Paramètres de pagination invalides' }, 400);
+    }
+    
+    // Récupérer les messages avec pagination
     const { results } = await c.env.DB.prepare(`
       SELECT 
         m.id,
@@ -407,10 +441,26 @@ app.get('/api/messages/public', authMiddleware, async (c) => {
       LEFT JOIN users u ON m.sender_id = u.id
       WHERE m.message_type = 'public'
       ORDER BY m.created_at DESC
-      LIMIT 100
-    `).all();
+      LIMIT ? OFFSET ?
+    `).bind(limit, offset).all();
     
-    return c.json({ messages: results });
+    // Compter le total de messages publics
+    const { count } = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM messages
+      WHERE message_type = 'public'
+    `).first() as { count: number };
+    
+    return c.json({ 
+      messages: results,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+        hasMore: offset + results.length < count
+      }
+    });
   } catch (error) {
     console.error('Get public messages error:', error);
     return c.json({ error: 'Erreur lors de la recuperation des messages' }, 500);
