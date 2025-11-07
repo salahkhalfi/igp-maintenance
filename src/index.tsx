@@ -1593,10 +1593,12 @@ app.get('/', (c) => {
             // Fonction pour obtenir le badge du rôle actuel
             const getUserRoleBadge = () => {
                 if (!currentUser) return '❓';
-                if (currentUser.role === 'admin') return '👑 Admin';
-                if (currentUser.role === 'supervisor') return '⭐ Superviseur';
-                if (currentUser.role === 'technician') return '🔧 Technicien';
-                return '👷 Opérateur';
+                const badges = {
+                    'admin': '👑 Admin', 'director': '📊 Directeur', 'supervisor': '⭐ Superviseur', 'coordinator': '🎯 Coordonnateur', 'planner': '📅 Planificateur',
+                    'senior_technician': '🔧 Tech. Senior', 'technician': '🔧 Technicien', 'team_leader': '👔 Chef Équipe', 'furnace_operator': '🔥 Op. Four', 'operator': '👷 Opérateur',
+                    'safety_officer': '🛡️ Agent SST', 'quality_inspector': '✓ Insp. Qualité', 'storekeeper': '📦 Magasinier', 'viewer': '👁️ Lecture'
+                };
+                return badges[currentUser.role] || '👤 ' + currentUser.role;
             };
             
             const sections = {
@@ -3538,17 +3540,55 @@ app.get('/', (c) => {
             };
             
             const getRoleLabel = (role) => {
-                if (role === 'admin') return '👑 Administrateur';
-                if (role === 'supervisor') return '⭐ Superviseur';
-                if (role === 'technician') return '🔧 Technicien';
-                return '👷 Opérateur';
+                const roles = {
+                    // Direction
+                    'admin': '👑 Administrateur',
+                    'director': '📊 Directeur Général',
+                    // Management Maintenance
+                    'supervisor': '⭐ Superviseur',
+                    'coordinator': '🎯 Coordonnateur Maintenance',
+                    'planner': '📅 Planificateur Maintenance',
+                    // Technique
+                    'senior_technician': '🔧 Technicien Senior',
+                    'technician': '🔧 Technicien',
+                    // Production
+                    'team_leader': '👔 Chef Équipe Production',
+                    'furnace_operator': '🔥 Opérateur Four',
+                    'operator': '👷 Opérateur',
+                    // Support
+                    'safety_officer': '🛡️ Agent Santé & Sécurité',
+                    'quality_inspector': '✓ Inspecteur Qualité',
+                    'storekeeper': '📦 Magasinier',
+                    // Transversal
+                    'viewer': '👁️ Lecture Seule'
+                };
+                return roles[role] || '👤 ' + role;
             };
             
             const getRoleBadgeClass = (role) => {
-                if (role === 'admin') return 'bg-red-100 text-red-800';
-                if (role === 'supervisor') return 'bg-yellow-100 text-yellow-800';
-                if (role === 'technician') return 'bg-blue-100 text-blue-800';
-                return 'bg-green-100 text-green-800';
+                const colors = {
+                    // Direction - Rouge
+                    'admin': 'bg-red-100 text-red-800',
+                    'director': 'bg-red-50 text-red-700',
+                    // Management - Jaune/Orange
+                    'supervisor': 'bg-yellow-100 text-yellow-800',
+                    'coordinator': 'bg-orange-100 text-orange-800',
+                    'planner': 'bg-amber-100 text-amber-800',
+                    // Technique - Bleu
+                    'senior_technician': 'bg-blue-100 text-blue-800',
+                    'technician': 'bg-blue-50 text-blue-700',
+                    // Production - Vert
+                    'team_leader': 'bg-emerald-100 text-emerald-800',
+                    'furnace_operator': 'bg-green-100 text-green-800',
+                    'operator': 'bg-green-50 text-green-700',
+                    // Support - Indigo/Violet
+                    'safety_officer': 'bg-indigo-100 text-indigo-800',
+                    'quality_inspector': 'bg-purple-100 text-purple-800',
+                    'storekeeper': 'bg-violet-100 text-violet-800',
+                    // Transversal - Gris
+                    'viewer': 'bg-gray-100 text-gray-800'
+                };
+                return colors[role] || 'bg-gray-100 text-gray-800';
             };
             
             const getLastLoginStatus = (lastLogin) => {
@@ -3791,10 +3831,33 @@ app.get('/', (c) => {
                                         className: "w-full px-4 py-3 bg-gradient-to-br from-white/90 to-blue-50/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%233b82f6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
                                         style: { boxShadow: '0 6px 20px rgba(59, 130, 246, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
-                                        React.createElement('option', { value: 'operator' }, 'Operateur'),
-                                        React.createElement('option', { value: 'technician' }, 'Technicien'),
-                                        React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
-                                        currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
+                                        React.createElement('option', { value: '', disabled: true }, '-- Sélectionner un rôle --'),
+                                        React.createElement('optgroup', { label: '📊 Direction' },
+                                            React.createElement('option', { value: 'director' }, 'Directeur Général'),
+                                            currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
+                                        ),
+                                        React.createElement('optgroup', { label: '⚙️ Management Maintenance' },
+                                            React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
+                                            React.createElement('option', { value: 'coordinator' }, 'Coordonnateur Maintenance'),
+                                            React.createElement('option', { value: 'planner' }, 'Planificateur Maintenance')
+                                        ),
+                                        React.createElement('optgroup', { label: '🔧 Technique' },
+                                            React.createElement('option', { value: 'senior_technician' }, 'Technicien Senior'),
+                                            React.createElement('option', { value: 'technician' }, 'Technicien')
+                                        ),
+                                        React.createElement('optgroup', { label: '🏭 Production' },
+                                            React.createElement('option', { value: 'team_leader' }, 'Chef Équipe Production'),
+                                            React.createElement('option', { value: 'furnace_operator' }, 'Opérateur Four'),
+                                            React.createElement('option', { value: 'operator' }, 'Opérateur')
+                                        ),
+                                        React.createElement('optgroup', { label: '🛡️ Support' },
+                                            React.createElement('option', { value: 'safety_officer' }, 'Agent Santé & Sécurité'),
+                                            React.createElement('option', { value: 'quality_inspector' }, 'Inspecteur Qualité'),
+                                            React.createElement('option', { value: 'storekeeper' }, 'Magasinier')
+                                        ),
+                                        React.createElement('optgroup', { label: '👁️ Transversal' },
+                                            React.createElement('option', { value: 'viewer' }, 'Lecture Seule')
+                                        )
                                     )
                                 )
                             ),
@@ -3854,10 +3917,32 @@ app.get('/', (c) => {
                                     style: { boxShadow: '0 6px 20px rgba(34, 197, 94, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
                                     disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin'
                                 },
-                                    React.createElement('option', { value: 'operator' }, "Opérateur"),
-                                    React.createElement('option', { value: 'technician' }, 'Technicien'),
-                                    React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
-                                    currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
+                                    React.createElement('optgroup', { label: '📊 Direction' },
+                                        React.createElement('option', { value: 'director' }, 'Directeur Général'),
+                                        currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
+                                    ),
+                                    React.createElement('optgroup', { label: '⚙️ Management Maintenance' },
+                                        React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
+                                        React.createElement('option', { value: 'coordinator' }, 'Coordonnateur Maintenance'),
+                                        React.createElement('option', { value: 'planner' }, 'Planificateur Maintenance')
+                                    ),
+                                    React.createElement('optgroup', { label: '🔧 Technique' },
+                                        React.createElement('option', { value: 'senior_technician' }, 'Technicien Senior'),
+                                        React.createElement('option', { value: 'technician' }, 'Technicien')
+                                    ),
+                                    React.createElement('optgroup', { label: '🏭 Production' },
+                                        React.createElement('option', { value: 'team_leader' }, 'Chef Équipe Production'),
+                                        React.createElement('option', { value: 'furnace_operator' }, 'Opérateur Four'),
+                                        React.createElement('option', { value: 'operator' }, 'Opérateur')
+                                    ),
+                                    React.createElement('optgroup', { label: '🛡️ Support' },
+                                        React.createElement('option', { value: 'safety_officer' }, 'Agent Santé & Sécurité'),
+                                        React.createElement('option', { value: 'quality_inspector' }, 'Inspecteur Qualité'),
+                                        React.createElement('option', { value: 'storekeeper' }, 'Magasinier')
+                                    ),
+                                    React.createElement('optgroup', { label: '👁️ Transversal' },
+                                        React.createElement('option', { value: 'viewer' }, 'Lecture Seule')
+                                    )
                                 )
                             ),
                             React.createElement('div', { className: 'flex gap-4' },
@@ -4400,17 +4485,24 @@ app.get('/', (c) => {
             };
             
             const getRoleBadgeClass = (role) => {
-                if (role === 'admin') return 'bg-red-100 text-red-700';
-                if (role === 'supervisor') return 'bg-blue-100 text-blue-700';
-                if (role === 'technician') return 'bg-green-100 text-green-700';
-                return 'bg-gray-100 text-gray-700';
+                const colors = {
+                    'admin': 'bg-red-100 text-red-700', 'director': 'bg-red-50 text-red-600',
+                    'supervisor': 'bg-yellow-100 text-yellow-700', 'coordinator': 'bg-orange-100 text-orange-700', 'planner': 'bg-amber-100 text-amber-700',
+                    'senior_technician': 'bg-blue-100 text-blue-700', 'technician': 'bg-blue-50 text-blue-600',
+                    'team_leader': 'bg-emerald-100 text-emerald-700', 'furnace_operator': 'bg-green-100 text-green-700', 'operator': 'bg-green-50 text-green-600',
+                    'safety_officer': 'bg-indigo-100 text-indigo-700', 'quality_inspector': 'bg-purple-100 text-purple-700', 'storekeeper': 'bg-violet-100 text-violet-700',
+                    'viewer': 'bg-gray-100 text-gray-700'
+                };
+                return colors[role] || 'bg-gray-100 text-gray-700';
             };
             
             const getRoleLabel = (role) => {
-                if (role === 'admin') return 'Admin';
-                if (role === 'supervisor') return 'Superviseur';
-                if (role === 'technician') return 'Technicien';
-                return 'Operateur';
+                const labels = {
+                    'admin': 'Admin', 'director': 'Directeur', 'supervisor': 'Superviseur', 'coordinator': 'Coordonnateur', 'planner': 'Planificateur',
+                    'senior_technician': 'Tech. Senior', 'technician': 'Technicien', 'team_leader': 'Chef Équipe', 'furnace_operator': 'Op. Four', 'operator': 'Opérateur',
+                    'safety_officer': 'Agent SST', 'quality_inspector': 'Insp. Qualité', 'storekeeper': 'Magasinier', 'viewer': 'Lecture Seule'
+                };
+                return labels[role] || role;
             };
             
             if (!show) return null;
