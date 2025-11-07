@@ -4649,10 +4649,10 @@ app.get('/', (c) => {
                                                             controlsList: 'nodownload',
                                                             className: 'w-full',
                                                             style: { height: '48px', minHeight: '48px' },
-                                                            src: API_URL + '/audio/' + msg.audio_file_key,
+                                                            src: API_URL + '/audio/' + msg.audio_file_key + '?token=' + authToken,
                                                             onError: (e) => {
                                                                 console.error('❌ Erreur audio (privé):', e);
-                                                                console.error('URL:', API_URL + '/audio/' + msg.audio_file_key);
+                                                                console.error('URL:', API_URL + '/audio/' + msg.audio_file_key + '?token=[HIDDEN]');
                                                             }
                                                         }),
                                                         msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
