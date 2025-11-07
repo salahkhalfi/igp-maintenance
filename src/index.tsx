@@ -3574,13 +3574,13 @@ app.get('/', (c) => {
                 
                 // Liste déroulante
                 isOpen && React.createElement('div', {
-                    className: 'absolute z-50 w-full mt-2 bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto'
+                    className: 'absolute z-[9999] w-full mt-2 bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto'
                 },
                     roleGroups.map((group, groupIndex) => 
                         group.roles.length > 0 && React.createElement('div', { key: groupIndex },
                             // En-tête de groupe
                             React.createElement('div', {
-                                className: 'px-3 py-2 bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm sticky top-0 z-10'
+                                className: 'px-3 py-2 bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm sticky top-0 z-[1]'
                             }, group.label),
                             // Options du groupe
                             group.roles.map(role => 
