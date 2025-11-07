@@ -4689,10 +4689,10 @@ app.get('/', (c) => {
                 // Format français/québécois (jj mois aaaa) avec heure locale de l'appareil
                 const frenchOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
                 
-                if (diffMins < 1) return 'À l\'instant';
-                if (diffMins < 60) return 'Il y a ' + diffMins + ' min';
-                if (diffHours < 24) return 'Il y a ' + diffHours + ' h';
-                if (diffHours < 48) return 'Hier ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                if (diffMins < 1) return "À l'instant";
+                if (diffMins < 60) return "Il y a " + diffMins + " min";
+                if (diffHours < 24) return "Il y a " + diffHours + " h";
+                if (diffHours < 48) return "Hier " + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                 return date.toLocaleDateString('fr-FR', frenchOptions);
             };
             
