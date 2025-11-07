@@ -1288,7 +1288,9 @@ app.get('/', (c) => {
         // Fonction pour formater les dates en heure locale de l'appareil
         // Format québécois: JJ-MM-AAAA HH:mm
         const formatDateEST = (dateString, includeTime = true) => {
-            const date = new Date(dateString);
+            // Convertir le format SQL en ISO pour parsing correct
+            const isoDateString = dateString.includes('T') ? dateString : dateString.replace(' ', 'T');
+            const date = new Date(isoDateString);
             
             // Utiliser l'heure locale de l'appareil (pas de conversion de timezone)
             const day = String(date.getDate()).padStart(2, '0');
@@ -5653,7 +5655,7 @@ app.get('/', (c) => {
                                                         : '⚠️ Non assigné'
                                                 ),
                                                 React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-2.5 py-1 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600' },
-                                                    new Date(ticket.scheduled_date).toLocaleDateString('fr-FR', { 
+                                                    new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', { 
                                                         day: '2-digit', 
                                                         month: 'short'
                                                     })
