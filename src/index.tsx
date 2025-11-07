@@ -6415,7 +6415,7 @@ app.get('/changelog', (c) => {
                     <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold text-blue-600">v1.9.2</div>
+                    <div class="text-2xl font-bold text-blue-600">v2.0.4</div>
                     <div class="text-sm text-gray-500">Version actuelle</div>
                 </div>
             </div>
