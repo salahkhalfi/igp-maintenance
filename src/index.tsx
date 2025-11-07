@@ -4678,17 +4678,21 @@ app.get('/', (c) => {
             };
             
             const formatMessageTime = (timestamp) => {
-                const date = new Date(timestamp);
+                // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO avec T
+                const isoTimestamp = timestamp.replace(' ', 'T');
+                const date = new Date(isoTimestamp);
                 const now = new Date();
                 const diffMs = now - date;
                 const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
                 
                 // Format français/québécois (jj mois aaaa) avec heure locale de l'appareil
                 const frenchOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
                 
-                if (diffMins < 1) return 'A instant';
-                if (diffMins < 60) return 'Il y a ' + diffMins + 'min';
-                if (diffMins < 1440) return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                if (diffMins < 1) return 'À l\'instant';
+                if (diffMins < 60) return 'Il y a ' + diffMins + ' min';
+                if (diffHours < 24) return 'Il y a ' + diffHours + ' h';
+                if (diffHours < 48) return 'Hier ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                 return date.toLocaleDateString('fr-FR', frenchOptions);
             };
             
