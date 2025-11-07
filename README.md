@@ -781,23 +781,25 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.2  
+**Version**: 2.0.3  
 **Dernière mise à jour**: 2025-11-07  
-**Statut**: ✅ En Développement - Messages audio + 14 rôles système + Dropdown custom mobile
+**Statut**: ✅ En Développement - Messages audio + 14 rôles système + Dropdown portal (solution finale)
 
-## 🆕 Nouveautés v2.0.2 (2025-11-07)
+## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
-### 📱 Dropdown Custom pour Mobile
+### 📱 Dropdown avec ReactDOM.createPortal (SOLUTION FINALE)
+- **React Portal** - Dropdown rendu directement dans `document.body`
+- **Sort du stacking context** - Plus de problème avec `backdrop-filter` du modal
+- **ReactDOM.createPortal** - Utilise l'API React officielle (disponible via CDN)
+- **Z-index absolu** - `z-[10000]` relatif au document, pas au modal parent
+- **Résout tous les problèmes d'overlay** - Mobile et desktop
+- **Position dynamique** - Calcul basé sur `getBoundingClientRect()`
+- **Fallback robuste** - Rendu normal si ReactDOM indisponible
 - **Composant custom RoleDropdown** - Remplace le `<select>` natif HTML
-- **Résout fond noir système** - Plus de fond noir non-fermable sur iOS/Android
-- **Entièrement responsive** - HTML/CSS personnalisé avec contrôle total
-- **Fermeture intelligente** - Clic/tap extérieur ferme le dropdown (événements touch)
+- **Fermeture intelligente** - Clic/tap extérieur ferme le dropdown
 - **Variants stylés** - Blue pour création, green pour édition
-- **Chevron animé** - Indicateur visuel up/down selon état
-- **Catégories sticky** - 5 groupes de rôles avec headers qui restent visibles
-- **Option sélectionnée** - Highlight + checkmark ✓
-- **Scroll fluide** - Max 60vh avec overflow-y-auto
-- **Touch-friendly** - Zones tactiles optimisées (44px minimum)
+- **Catégories sticky** - 5 groupes de rôles avec headers
+- **14 rôles organisés** - Direction, Management, Technique, Production, Support, Transversal
 
 ### 🎯 14 Rôles Système Prédéfinis
 - **Direction**: Directeur Général, Administrateur
