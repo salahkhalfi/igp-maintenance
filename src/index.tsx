@@ -348,8 +348,8 @@ app.get('/api/audio/*', async (c) => {
     // Récupérer le chemin complet après /api/audio/
     const fullPath = c.req.path;
     const fileKey = fullPath.replace('/api/audio/', '');
-    console.log('DEBUG audio route - fullPath:', fullPath);
-    console.log('DEBUG audio route - fileKey:', fileKey);
+    // console.log('DEBUG audio route - fullPath:', fullPath);
+    // console.log('DEBUG audio route - fileKey:', fileKey);
     
     // Vérifier que le message existe
     const message = await c.env.DB.prepare(`
@@ -358,7 +358,7 @@ app.get('/api/audio/*', async (c) => {
       WHERE audio_file_key = ?
     `).bind(fileKey).first();
     
-    console.log('DEBUG audio route - message found:', !!message);
+    // console.log('DEBUG audio route - message found:', !!message);
     
     if (!message) {
       return c.json({ error: 'Message audio non trouvé', fileKey: fileKey }, 404);
@@ -1421,7 +1421,7 @@ app.get('/', (c) => {
             
             if (!show) return null;
             
-            console.log('UserGuideModal render - activeSection:', activeSection, 'currentUser:', currentUser);
+            // console.log('UserGuideModal render - activeSection:', activeSection, 'currentUser:', currentUser);
             
             // Fonction pour obtenir le badge du rôle actuel
             const getUserRoleBadge = () => {
@@ -5068,7 +5068,6 @@ app.get('/', (c) => {
                                     // S'assurer que le token est bien dans localStorage avant la redirection
                                     const token = localStorage.getItem('auth_token');
                                     if (token) {
-                                        localStorage.setItem('token', token); // Dupliquer pour compatibilité
                                         window.location.href = '/admin/roles';
                                     } else {
                                         alert('Session expirée. Veuillez vous reconnecter.');
