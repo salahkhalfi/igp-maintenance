@@ -1117,21 +1117,19 @@ app.get('/', (c) => {
             return statusLabels[status] || status;
         };
         
-        // Fonction pour formater les dates en heure EST (America/Toronto)
+        // Fonction pour formater les dates en heure locale de l'appareil
         // Format québécois: JJ-MM-AAAA HH:mm
         const formatDateEST = (dateString, includeTime = true) => {
             const date = new Date(dateString);
             
-            // Convertir en EST (America/Toronto)
-            const estDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Toronto' }));
-            
-            const day = String(estDate.getDate()).padStart(2, '0');
-            const month = String(estDate.getMonth() + 1).padStart(2, '0');
-            const year = estDate.getFullYear();
+            // Utiliser l'heure locale de l'appareil (pas de conversion de timezone)
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
             
             if (includeTime) {
-                const hours = String(estDate.getHours()).padStart(2, '0');
-                const minutes = String(estDate.getMinutes()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
                 return day + '-' + month + '-' + year + ' ' + hours + ':' + minutes;
             }
             
@@ -4190,13 +4188,13 @@ app.get('/', (c) => {
                 const diffMs = now - date;
                 const diffMins = Math.floor(diffMs / 60000);
                 
-                // Options pour fuseau horaire Québec (America/Montreal)
-                const quebecOptions = { timeZone: 'America/Montreal' };
+                // Format français/québécois (jj mois aaaa) avec heure locale de l'appareil
+                const frenchOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
                 
                 if (diffMins < 1) return 'A instant';
                 if (diffMins < 60) return 'Il y a ' + diffMins + 'min';
-                if (diffMins < 1440) return date.toLocaleTimeString('fr-FR', { ...quebecOptions, hour: '2-digit', minute: '2-digit' });
-                return date.toLocaleDateString('fr-FR', { ...quebecOptions, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                if (diffMins < 1440) return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                return date.toLocaleDateString('fr-FR', frenchOptions);
             };
             
             const getRoleBadgeClass = (role) => {
