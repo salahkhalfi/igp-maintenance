@@ -1326,8 +1326,8 @@ app.get('/', (c) => {
                 bgColor = 'bg-red-50 border-red-300';
                 icon = '🔴';
             } else if (days >= 3) {
-                color = 'text-orange-700 font-semibold';
-                bgColor = 'bg-orange-50 border-orange-200';
+                color = 'text-amber-700 font-semibold';
+                bgColor = 'bg-amber-50 border-amber-200';
                 icon = '🟠';
             } else if (days >= 1) {
                 color = 'text-yellow-700';
@@ -1568,7 +1568,7 @@ app.get('/', (c) => {
             } else if (diffHours < 24) {
                 // Moins de 24h - Urgent (avec minutes et secondes)
                 text = Math.floor(diffHours) + 'h ' + diffMinutes + 'min ' + diffSeconds + 's';
-                className = 'bg-orange-100 text-orange-800';
+                className = 'bg-amber-100 text-amber-800';
             } else if (diffDays < 3) {
                 // Moins de 3 jours - Attention (avec secondes)
                 text = Math.floor(diffDays) + 'j ' + Math.floor(diffHours % 24) + 'h ' + diffMinutes + 'min ' + diffSeconds + 's';
@@ -1913,16 +1913,16 @@ app.get('/', (c) => {
             }, [show]);
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-50 p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
                     className: 'bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-6xl max-h-[90vh] flex flex-col',
                     onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center p-6 border-b-2 border-gradient-to-r from-indigo-400 to-purple-400 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm rounded-t-2xl' },
-                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2' },
-                            React.createElement('i', { className: 'fas fa-book text-purple-500' }),
+                    React.createElement('div', { className: 'flex justify-between items-center p-6 border-b-2 border-gradient-to-r from-slate-400 to-gray-400 bg-gradient-to-r from-slate-50/50 to-gray-50/50 backdrop-blur-sm rounded-t-2xl' },
+                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent flex items-center gap-2' },
+                            React.createElement('i', { className: 'fas fa-book text-blue-600' }),
                             "Guide Utilisateur"
                         ),
                         React.createElement('button', {
@@ -1932,14 +1932,14 @@ app.get('/', (c) => {
                     ),
                     
                     React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
-                        React.createElement('div', { className: 'w-64 bg-gradient-to-b from-indigo-50/80 to-purple-50/80 backdrop-blur-sm p-4 overflow-y-auto border-r-2 border-purple-200/50' },
+                        React.createElement('div', { className: 'w-64 bg-gradient-to-b from-slate-50/80 to-gray-50/80 backdrop-blur-sm p-4 overflow-y-auto border-r-2 border-gray-200/50' },
                             React.createElement('nav', { className: 'space-y-1' },
                                 menuItems.map(item =>
                                     React.createElement('button', {
                                         key: item.id,
                                         onClick: () => setActiveSection(item.id),
                                         className: 'w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all ' + 
-                                            (activeSection === item.id ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow-md' : 'hover:bg-white/60 hover:shadow-sm text-gray-700')
+                                            (activeSection === item.id ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow-md' : 'hover:bg-white/60 hover:shadow-sm text-gray-700')
                                     },
                                         React.createElement('i', { className: 'fas ' + item.icon + ' w-5' }),
                                         React.createElement('span', { className: 'text-sm' }, item.label)
@@ -1948,14 +1948,14 @@ app.get('/', (c) => {
                             )
                         ),
                         
-                        React.createElement('div', { className: 'flex-1 p-8 overflow-y-auto bg-gradient-to-br from-white/50 to-indigo-50/30 backdrop-blur-sm' },
+                        React.createElement('div', { className: 'flex-1 p-8 overflow-y-auto bg-gradient-to-br from-white/50 to-gray-50/30 backdrop-blur-sm' },
                             React.createElement('div', { className: 'max-w-3xl mx-auto' },
                                 React.createElement('div', { className: 'bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/50' },
                                     React.createElement('h3', { 
-                                        className: 'text-3xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3'
+                                        className: 'text-3xl font-bold mb-6 bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent flex items-center gap-3'
                                     },
                                         React.createElement('i', { 
-                                            className: 'fas ' + (sections[activeSection] ? sections[activeSection].icon : 'fa-question') + ' text-purple-500'
+                                            className: 'fas ' + (sections[activeSection] ? sections[activeSection].icon : 'fa-question') + ' text-blue-600'
                                         }),
                                         sections[activeSection] ? sections[activeSection].title : 'Section manquante'
                                     ),
@@ -1964,7 +1964,7 @@ app.get('/', (c) => {
                                             React.createElement('p', {
                                                 key: idx,
                                                 className: line.startsWith('•') || line.startsWith('  ') ? 'ml-6 my-2 text-gray-700' : 
-                                                           line.startsWith('⚠️') || line.startsWith('✅') || line.startsWith('🚀') || line.startsWith('📊') || line.startsWith('⚙️') || line.startsWith('🔧') || line.startsWith('🏭') || line.startsWith('🛡️') || line.startsWith('👁️') ? 'font-bold my-4 text-lg text-indigo-700' :
+                                                           line.startsWith('⚠️') || line.startsWith('✅') || line.startsWith('🚀') || line.startsWith('📊') || line.startsWith('⚙️') || line.startsWith('🔧') || line.startsWith('🏭') || line.startsWith('🛡️') || line.startsWith('👁️') ? 'font-bold my-4 text-lg text-slate-700' :
                                                            line.startsWith('💡') ? 'font-semibold my-3 text-green-700 bg-green-50 p-3 rounded-lg border-l-4 border-green-500' :
                                                            line.startsWith('1️⃣') || line.startsWith('2️⃣') || line.startsWith('3️⃣') || line.startsWith('4️⃣') ? 'my-2 text-gray-800 font-medium' :
                                                            line === '' ? 'my-3' : 'my-3 text-gray-800',
@@ -1977,7 +1977,7 @@ app.get('/', (c) => {
                         )
                     ),
                     
-                    React.createElement('div', { className: 'p-4 border-t-2 border-purple-200/50 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 backdrop-blur-sm rounded-b-2xl flex justify-between items-center' },
+                    React.createElement('div', { className: 'p-4 border-t-2 border-gray-200/50 bg-gradient-to-r from-slate-50/50 to-gray-50/50 backdrop-blur-sm rounded-b-2xl flex justify-between items-center' },
                         React.createElement('div', { className: 'flex items-center gap-4' },
                             React.createElement('p', { className: 'text-sm text-gray-600' },
                                 "⎋ Escape pour fermer"
@@ -1988,7 +1988,7 @@ app.get('/', (c) => {
                         ),
                         React.createElement('button', {
                             onClick: onClose,
-                            className: 'px-6 py-3 bg-gradient-to-br from-indigo-400 via-indigo-500 to-purple-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(99,102,241,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(99,102,241,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(99,102,241,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-indigo-300/50'
+                            className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(37,99,235,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(37,99,235,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(37,99,235,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-blue-300/50'
                         }, 'Fermer')
                     )
                 )
@@ -2053,12 +2053,12 @@ app.get('/', (c) => {
                             className: 'h-20 w-auto mx-auto mb-4'
                         }),
                         React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, 'Gestion de la maintenance et des réparations'),
-                        React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
+                        React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
                             'EN DÉVELOPPEMENT'
                         ),
                         React.createElement('p', { className: 'text-sm text-gray-600 mb-1' }, 'Les Produits Verriers International'),
-                        React.createElement('p', { className: 'text-xs text-igp-orange font-semibold' }, '(IGP) Inc.')
+                        React.createElement('p', { className: 'text-xs text-blue-700 font-semibold' }, '(IGP) Inc.')
                     ),
                     React.createElement('form', { 
                         onSubmit: handleSubmit,
@@ -2098,7 +2098,7 @@ app.get('/', (c) => {
                         ),
                         React.createElement('button', {
                             type: 'submit',
-                            className: 'w-full bg-igp-orange text-white font-bold py-3 px-4 rounded-md hover:bg-orange-700 transition duration-200 shadow-lg'
+                            className: 'w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 shadow-lg'
                         }, 
                             React.createElement('i', { className: 'fas fa-sign-in-alt mr-2' }),
                             'Se connecter'
@@ -2252,7 +2252,7 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', { 
-                className: 'fixed inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
+                className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
                 onClick: onClose
             },
                 React.createElement('div', {
@@ -2263,9 +2263,9 @@ app.get('/', (c) => {
                         transform: 'translateZ(0)'
                     }
                 },
-                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10 backdrop-blur-sm bg-opacity-95' },
+                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-700 to-blue-800 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10 backdrop-blur-sm bg-opacity-95' },
                         React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
-                            React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-orange-400 flex-shrink-0' }),
+                            React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-blue-300 flex-shrink-0' }),
                             React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
                                 'Nouvelle Demande'
                             )
@@ -2331,7 +2331,7 @@ app.get('/', (c) => {
                         ),
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                                React.createElement('i', { className: 'fas fa-camera mr-2 text-igp-orange' }),
+                                React.createElement('i', { className: 'fas fa-camera mr-2 text-blue-700' }),
                                 'Photos / Vidéos du problème'
                             ),
                             React.createElement('input', {
@@ -2410,7 +2410,7 @@ app.get('/', (c) => {
                                         onClick: () => setPriority(p),
                                         className: 'flex-1 min-w-0 px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold transition-all text-center whitespace-nowrap overflow-hidden ' + 
                                             (priority === p 
-                                                ? 'bg-igp-orange text-white shadow-md' 
+                                                ? 'bg-blue-600 text-white shadow-md' 
                                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300')
                                     },
                                         React.createElement('span', { className: 'hidden sm:inline' },
@@ -2432,8 +2432,8 @@ app.get('/', (c) => {
                         
                         // Section planification (superviseur/admin seulement)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 
-                            React.createElement('div', { className: 'mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg' },
-                                React.createElement('h3', { className: 'text-lg font-bold text-purple-800 mb-4 flex items-center' },
+                            React.createElement('div', { className: 'mb-6 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg' },
+                                React.createElement('h3', { className: 'text-lg font-bold text-slate-700 mb-4 flex items-center' },
                                     React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
                                     'Planification (Superviseur/Admin)'
                                 ),
@@ -2447,7 +2447,7 @@ app.get('/', (c) => {
                                     React.createElement('select', {
                                         value: assignedTo,
                                         onChange: (e) => setAssignedTo(e.target.value),
-                                        className: "w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-2 border-purple-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
+                                        className: "w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-2 border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
                                         style: { boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
@@ -2473,7 +2473,7 @@ app.get('/', (c) => {
                                         type: 'datetime-local',
                                         value: scheduledDate,
                                         onChange: (e) => setScheduledDate(e.target.value),
-                                        className: 'w-full px-4 py-2 border-2 border-purple-300 rounded-md focus:border-purple-500 focus:outline-none'
+                                        className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
                                     })
                                 )
                             )
@@ -2491,7 +2491,7 @@ app.get('/', (c) => {
                             React.createElement('button', {
                                 type: 'submit',
                                 disabled: submitting,
-                                className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:from-orange-700 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 shadow-lg transition-all font-semibold'
+                                className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 shadow-lg transition-all font-semibold'
                             },
                                 submitting 
                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
@@ -2713,7 +2713,7 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', { 
-                className: 'modal active bg-gradient-to-br from-blue-900/40 via-indigo-900/40 to-purple-900/40 backdrop-blur-sm',
+                className: 'modal active bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm',
                 onClick: onClose
             },
                 React.createElement('div', {
@@ -2721,9 +2721,9 @@ app.get('/', (c) => {
                     onClick: (e) => e.stopPropagation(),
                     style: { marginTop: 'auto', marginBottom: 'auto', maxHeight: '90vh', overflowY: 'auto' }
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6 pb-4 border-b-2 border-gradient-to-r from-blue-400 to-purple-400' },
-                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent' },
-                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-orange-500' }),
+                    React.createElement('div', { className: 'flex justify-between items-center mb-6 pb-4 border-b-2 border-gradient-to-r from-blue-400 to-gray-400' },
+                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent' },
+                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-blue-600' }),
                             "Détails du Ticket"
                         ),
                         React.createElement('div', { className: 'flex gap-3' },
@@ -2753,13 +2753,13 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                     ) : ticket ? React.createElement('div', {},
                         
-                        React.createElement('div', { className: 'mb-6 p-4 sm:p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-200/50' },
+                        React.createElement('div', { className: 'mb-6 p-4 sm:p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-200/50' },
                             React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
                                 React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
                                 React.createElement('span', { 
                                     className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-md text-xs sm:text-sm ' + 
                                     (ticket.priority === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' :
-                                     ticket.priority === 'high' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' :
+                                     ticket.priority === 'high' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
                                      ticket.priority === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white' :
                                      'bg-gradient-to-r from-green-500 to-green-600 text-white')
                                 }, 
@@ -2781,7 +2781,7 @@ app.get('/', (c) => {
                                 ),
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                                        React.createElement('i', { className: 'fas fa-tasks text-purple-600 text-sm' }),
+                                        React.createElement('i', { className: 'fas fa-tasks text-slate-600 text-sm' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Statut:')
                                     ),
                                     React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, getStatusLabel(ticket.status))
@@ -2797,7 +2797,7 @@ app.get('/', (c) => {
                                 ),
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                                        React.createElement('i', { className: 'fas fa-user text-orange-600 text-sm' }),
+                                        React.createElement('i', { className: 'fas fa-user text-blue-700 text-sm' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Rapporté par:")
                                     ),
                                     React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, ticket.reporter_name || 'N/A')
@@ -2807,15 +2807,15 @@ app.get('/', (c) => {
                         
                         // Section planification (superviseur/admin seulement)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 
-                            React.createElement('div', { className: 'mb-6 p-6 bg-gradient-to-br from-purple-50/90 to-pink-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-purple-200/50' },
+                            React.createElement('div', { className: 'mb-6 p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-gray-200/50' },
                                 React.createElement('div', { className: 'flex justify-between items-center mb-4' },
-                                    React.createElement('h4', { className: 'text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center' },
-                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-purple-500' }),
+                                    React.createElement('h4', { className: 'text-xl font-bold bg-gradient-to-r from-slate-600 to-gray-600 bg-clip-text text-transparent flex items-center' },
+                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-600' }),
                                         'Planification'
                                     ),
                                     !editingSchedule ? React.createElement('button', {
                                         onClick: () => setEditingSchedule(true),
-                                        className: 'px-4 py-2.5 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(147,51,234,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-purple-300/50'
+                                        className: 'px-4 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(147,51,234,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50'
                                     },
                                         React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                         'Modifier'
@@ -2827,7 +2827,7 @@ app.get('/', (c) => {
                                     React.createElement('div', { className: 'space-y-3' },
                                         React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm' },
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                                                React.createElement('i', { className: 'fas fa-user-cog text-purple-600' }),
+                                                React.createElement('i', { className: 'fas fa-user-cog text-slate-600' }),
                                                 React.createElement('span', { className: 'font-bold text-gray-700' }, "Assigné à:")
                                             ),
                                             React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' },
@@ -2838,7 +2838,7 @@ app.get('/', (c) => {
                                         ),
                                         React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm' },
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                                                React.createElement('i', { className: 'far fa-clock text-purple-600' }),
+                                                React.createElement('i', { className: 'far fa-clock text-slate-600' }),
                                                 React.createElement('span', { className: 'font-bold text-gray-700' }, "Date planifiée:")
                                             ),
                                             React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' },
@@ -2854,13 +2854,13 @@ app.get('/', (c) => {
                                         // Assigner à un technicien
                                         React.createElement('div', {},
                                             React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
-                                                React.createElement('i', { className: 'fas fa-user-cog mr-2 text-purple-600' }),
+                                                React.createElement('i', { className: 'fas fa-user-cog mr-2 text-slate-600' }),
                                                 "Assigner à"
                                             ),
                                             React.createElement('select', {
                                                 value: scheduledAssignedTo,
                                                 onChange: (e) => setScheduledAssignedTo(e.target.value),
-                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-semibold'
+                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                             },
                                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
                                                 React.createElement('option', { value: 'all' }, '👥 Toute équipe'),
@@ -2878,14 +2878,14 @@ app.get('/', (c) => {
                                         // Date et heure planifiée
                                         React.createElement('div', {},
                                             React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
-                                                React.createElement('i', { className: 'fas fa-clock mr-2 text-purple-600' }),
+                                                React.createElement('i', { className: 'fas fa-clock mr-2 text-slate-600' }),
                                                 "Date planifiée"
                                             ),
                                             React.createElement('input', {
                                                 type: 'datetime-local',
                                                 value: scheduledDate,
                                                 onChange: (e) => setScheduledDate(e.target.value),
-                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-purple-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all font-semibold'
+                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                             })
                                         ),
                                         
@@ -2905,7 +2905,7 @@ app.get('/', (c) => {
                                             React.createElement('button', {
                                                 onClick: handleSaveSchedule,
                                                 disabled: savingSchedule,
-                                                className: 'px-5 py-2.5 bg-gradient-to-br from-purple-400 via-purple-500 to-purple-600 text-white rounded-lg font-bold transition-all shadow-[0_8px_16px_rgba(147,51,234,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(147,51,234,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-t border-purple-300/50'
+                                                className: 'px-5 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold transition-all shadow-[0_8px_16px_rgba(147,51,234,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(147,51,234,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-t border-blue-300/50'
                                             },
                                                 savingSchedule 
                                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-1' })
@@ -2921,7 +2921,7 @@ app.get('/', (c) => {
                         
                         (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-6' },
                             React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-3 flex items-center' },
-                                React.createElement('i', { className: 'fas fa-images mr-2 text-igp-orange' }),
+                                React.createElement('i', { className: 'fas fa-images mr-2 text-blue-700' }),
                                 'Photos et Vidéos (' + ticket.media.length + ')'
                             ),
                             React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3' },
@@ -2970,7 +2970,7 @@ app.get('/', (c) => {
                                     React.createElement('div', { 
                                         key: comment.id,
                                         className: 'bg-gray-50 rounded-lg p-3 border-l-4 ' + 
-                                                   (comment.user_role === 'Technicien' ? 'border-igp-orange' : 'border-igp-blue')
+                                                   (comment.user_role === 'Technicien' ? 'border-blue-600' : 'border-igp-blue')
                                     },
                                         React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                             React.createElement('div', { className: 'flex items-center gap-2' },
@@ -3042,7 +3042,7 @@ app.get('/', (c) => {
                         
                         React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
                             React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
-                                React.createElement('i', { className: 'fas fa-camera-retro mr-2 text-igp-orange' }),
+                                React.createElement('i', { className: 'fas fa-camera-retro mr-2 text-blue-700' }),
                                 'Ajouter des photos/vidéos supplémentaires'
                             ),
                             
@@ -3062,9 +3062,9 @@ app.get('/', (c) => {
                                                 ? React.createElement('img', {
                                                     src: preview.url,
                                                     alt: preview.name,
-                                                    className: 'w-full h-24 object-cover rounded border-2 border-igp-orange'
+                                                    className: 'w-full h-24 object-cover rounded border-2 border-blue-600'
                                                 })
-                                                : React.createElement('div', { className: 'w-full h-24 bg-gray-200 rounded border-2 border-igp-orange flex items-center justify-center' },
+                                                : React.createElement('div', { className: 'w-full h-24 bg-gray-200 rounded border-2 border-blue-600 flex items-center justify-center' },
                                                     React.createElement('i', { className: 'fas fa-video fa-2x text-gray-500' })
                                                 ),
                                             React.createElement('button', {
@@ -3086,7 +3086,7 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     onClick: handleUploadNewMedia,
                                     disabled: uploadingMedia,
-                                    className: 'w-full px-4 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
+                                    className: 'w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
                                 },
                                     uploadingMedia
                                         ? React.createElement('span', {},
@@ -3324,7 +3324,7 @@ app.get('/', (c) => {
                         React.createElement("div", { className: "mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3" },
                             currentUser.role === "admin" ? React.createElement("button", {
                                 onClick: () => setShowCreateForm(!showCreateForm),
-                                className: "px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm sm:text-base"
+                                className: "px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm sm:text-base"
                             }, showCreateForm ? "Annuler" : "Nouvelle Machine") : null,
                             React.createElement("input", {
                                 type: "text",
@@ -3337,9 +3337,9 @@ app.get('/', (c) => {
                         
                         showCreateForm ? React.createElement("form", {
                             onSubmit: handleCreate,
-                            className: "mb-6 p-6 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl border-2 border-orange-200 shadow-lg"
+                            className: "mb-6 p-6 bg-gradient-to-br from-blue-50 to-gray-50 rounded-xl border-2 border-blue-200 shadow-lg"
                         },
-                            React.createElement("h3", { className: "text-xl font-bold mb-4 text-orange-800" }, "Nouvelle Machine"),
+                            React.createElement("h3", { className: "text-xl font-bold mb-4 text-blue-800" }, "Nouvelle Machine"),
                             React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
                                 React.createElement("div", {},
                                     React.createElement("label", { className: "block font-semibold mb-2" }, "Type *"),
@@ -3347,7 +3347,7 @@ app.get('/', (c) => {
                                         type: "text",
                                         value: newType,
                                         onChange: (e) => setNewType(e.target.value),
-                                        className: "w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none",
+                                        className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                         placeholder: "Ex: Polisseuse, CNC, Four..."
                                     })
                                 ),
@@ -3357,7 +3357,7 @@ app.get('/', (c) => {
                                         type: "text",
                                         value: newModel,
                                         onChange: (e) => setNewModel(e.target.value),
-                                        className: "w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none",
+                                        className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                         placeholder: "Ex: Bavelloni, Double Edger..."
                                     })
                                 ),
@@ -3367,7 +3367,7 @@ app.get('/', (c) => {
                                         type: "text",
                                         value: newSerial,
                                         onChange: (e) => setNewSerial(e.target.value),
-                                        className: "w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none",
+                                        className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                         placeholder: "Ex: PDE-001"
                                     })
                                 ),
@@ -3377,7 +3377,7 @@ app.get('/', (c) => {
                                         type: "text",
                                         value: newLocation,
                                         onChange: (e) => setNewLocation(e.target.value),
-                                        className: "w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:border-orange-500 focus:outline-none",
+                                        className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                         placeholder: "Ex: Atelier Polissage"
                                     })
                                 )
@@ -3829,7 +3829,7 @@ app.get('/', (c) => {
                 'director': 'bg-red-50 text-red-700',
                 // Management - Jaune/Orange
                 'supervisor': 'bg-yellow-100 text-yellow-800',
-                'coordinator': 'bg-orange-100 text-orange-800',
+                'coordinator': 'bg-amber-100 text-amber-800',
                 'planner': 'bg-amber-100 text-amber-800',
                 // Technique - Bleu
                 'senior_technician': 'bg-blue-100 text-blue-800',
@@ -3840,7 +3840,7 @@ app.get('/', (c) => {
                 'operator': 'bg-green-50 text-green-700',
                 // Support - Indigo/Violet
                 'safety_officer': 'bg-indigo-100 text-indigo-800',
-                'quality_inspector': 'bg-purple-100 text-purple-800',
+                'quality_inspector': 'bg-slate-100 text-slate-700',
                 'storekeeper': 'bg-violet-100 text-violet-800',
                 // Transversal - Gris
                 'viewer': 'bg-gray-100 text-gray-800'
@@ -3888,11 +3888,11 @@ app.get('/', (c) => {
                     };
                 } else if (diffHours < 24) {
                     return { 
-                        color: "text-orange-600", 
+                        color: "text-blue-700", 
                         icon: "fa-circle", 
                         status: "Actif aujourd'hui", 
                         time: "Il y a " + diffHours + "h", 
-                        dot: "bg-orange-500" 
+                        dot: "bg-amber-600" 
                     };
                 } else if (diffDays === 1) {
                     return { 
@@ -3993,14 +3993,14 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4',
+                className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
                     className: 'bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
                     onClick: (e) => e.stopPropagation()
                 },
-                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10' },
+                    React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-slate-700 to-gray-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10' },
                         React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                             React.createElement('i', { className: 'fas fa-users-cog text-xl sm:text-2xl flex-shrink-0' }),
                             React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
@@ -4020,7 +4020,7 @@ app.get('/', (c) => {
                         // Bouton creer utilisateur (visible seulement pour admin/superviseur)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement('button', {
                             onClick: () => setShowCreateForm(true),
-                            className: 'px-6 py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-orange-300/50'
+                            className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-blue-300/50'
                         }, "Créer un utilisateur") : null,
                         React.createElement('div', { className: 'flex-1 relative' },
                             React.createElement('input', {
@@ -4028,7 +4028,7 @@ app.get('/', (c) => {
                                 placeholder: 'Rechercher par nom ou email...',
                                 value: searchQuery,
                                 onChange: (e) => setSearchQuery(e.target.value),
-                                className: 'w-full px-4 py-2 pl-10 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all',
+                                className: 'w-full px-4 py-2 pl-10 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all',
                                 onKeyDown: (e) => {
                                     if (e.key === 'Escape') {
                                         setSearchQuery('');
@@ -4046,7 +4046,7 @@ app.get('/', (c) => {
                     ),
                     
                     showCreateForm ? React.createElement('div', { 
-                        className: 'mb-6 p-6 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200/50 scroll-mt-4',
+                        className: 'mb-6 p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl shadow-lg border-2 border-blue-200/50 scroll-mt-4',
                         ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
                     },
                         React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Nouvel utilisateur'),
@@ -4105,7 +4105,7 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     type: 'submit',
                                     disabled: buttonLoading === 'create',
-                                    className: 'px-6 py-3 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2 justify-center border-t border-orange-300/50'
+                                    className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center gap-2 justify-center border-t border-blue-300/50'
                                 }, 
                                     buttonLoading === 'create' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                     "Créer"
@@ -4190,7 +4190,7 @@ app.get('/', (c) => {
                             .map(user =>
                             React.createElement('div', {
                                 key: user.id,
-                                className: 'bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-purple-400 hover:shadow-lg transition-all'
+                                className: 'bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-blue-400 hover:shadow-lg transition-all'
                             },
                                 React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
                                     React.createElement('div', { className: 'flex-1' },
@@ -4228,7 +4228,7 @@ app.get('/', (c) => {
                                     React.createElement('div', { className: "flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0" },
                                         user.id !== currentUser.id && onOpenMessage ? React.createElement('button', {
                                             onClick: () => onOpenMessage({ id: user.id, full_name: user.full_name, role: user.role }),
-                                            className: "w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-indigo-400 via-indigo-500 to-indigo-600 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(99,102,241,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(99,102,241,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(99,102,241,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-indigo-300/50"
+                                            className: "w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(99,102,241,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(99,102,241,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(99,102,241,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50"
                                         },
                                             React.createElement('i', { className: "fas fa-comment mr-1" }),
                                             "Message"
@@ -4695,10 +4695,10 @@ app.get('/', (c) => {
             const getRoleBadgeClass = (role) => {
                 const colors = {
                     'admin': 'bg-red-100 text-red-700', 'director': 'bg-red-50 text-red-600',
-                    'supervisor': 'bg-yellow-100 text-yellow-700', 'coordinator': 'bg-orange-100 text-orange-700', 'planner': 'bg-amber-100 text-amber-700',
+                    'supervisor': 'bg-yellow-100 text-yellow-700', 'coordinator': 'bg-amber-100 text-amber-700', 'planner': 'bg-amber-100 text-amber-700',
                     'senior_technician': 'bg-blue-100 text-blue-700', 'technician': 'bg-blue-50 text-blue-600',
                     'team_leader': 'bg-emerald-100 text-emerald-700', 'furnace_operator': 'bg-green-100 text-green-700', 'operator': 'bg-green-50 text-green-600',
-                    'safety_officer': 'bg-indigo-100 text-indigo-700', 'quality_inspector': 'bg-purple-100 text-purple-700', 'storekeeper': 'bg-violet-100 text-violet-700',
+                    'safety_officer': 'bg-blue-100 text-blue-700', 'quality_inspector': 'bg-slate-100 text-slate-700', 'storekeeper': 'bg-violet-100 text-violet-700',
                     'viewer': 'bg-gray-100 text-gray-700'
                 };
                 return colors[role] || 'bg-gray-100 text-gray-700';
@@ -4716,7 +4716,7 @@ app.get('/', (c) => {
             if (!show) return null;
             
             return React.createElement('div', {
-                className: 'fixed inset-0 bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
+                className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
                 onClick: onClose
             },
                 React.createElement('div', {
@@ -4729,7 +4729,7 @@ app.get('/', (c) => {
                 },
                     // Header
                     React.createElement('div', {
-                        className: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg'
+                        className: 'bg-gradient-to-r from-slate-700 to-gray-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg'
                     },
                         React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                             React.createElement('i', { className: 'fas fa-comments text-xl sm:text-2xl flex-shrink-0' }),
@@ -4799,7 +4799,7 @@ app.get('/', (c) => {
                                 },
                                     React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
                                         React.createElement('div', {
-                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md cursor-pointer hover:scale-110 transition-transform',
+                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md cursor-pointer hover:scale-110 transition-transform',
                                             onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
                                             title: 'Envoyer un message prive a ' + msg.sender_name
                                         }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
@@ -4814,12 +4814,12 @@ app.get('/', (c) => {
                                                     className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 ' + getRoleBadgeClass(msg.sender_role)
                                                 }, getRoleLabel(msg.sender_role)),
                                                 React.createElement('span', {
-                                                    className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-indigo-100 text-indigo-700'
+                                                    className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-blue-100 text-blue-700'
                                                 }, '🌐 Message public'),
                                                 React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                             ),
                                             msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                                React.createElement('div', { className: 'bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100' },
+                                                React.createElement('div', { className: 'bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-3 border border-gray-100' },
                                                     React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
                                                         React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-lg' }),
                                                         React.createElement('span', { className: 'text-sm font-medium text-indigo-700' }, 'Message vocal')
@@ -4859,7 +4859,7 @@ app.get('/', (c) => {
                             
                             // Input zone
                             React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
-                                (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border-2 border-red-200' },
+                                (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border-2 border-red-200' },
                                     React.createElement('div', { className: 'flex items-center justify-between mb-3' },
                                         React.createElement('div', { className: 'flex items-center gap-3' },
                                             React.createElement('div', { className: 'w-3 h-3 bg-red-500 rounded-full animate-pulse' }),
@@ -4893,7 +4893,7 @@ app.get('/', (c) => {
                                         ) : React.createElement('button', {
                                             onClick: sendAudioMessage,
                                             disabled: !audioBlob,
-                                            className: 'flex-1 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
+                                            className: 'flex-1 bg-gradient-to-br from-slate-700 to-gray-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
                                         },
                                             React.createElement('i', { className: 'fas fa-paper-plane' }),
                                             'Envoyer le message vocal'
@@ -4906,13 +4906,13 @@ app.get('/', (c) => {
                                         onChange: (e) => setMessageContent(e.target.value),
                                         onKeyPress: handleKeyPress,
                                         placeholder: 'Ecrire un message public... (Enter pour envoyer)',
-                                        className: 'flex-1 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all shadow-lg hover:shadow-xl',
+                                        className: 'flex-1 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all shadow-lg hover:shadow-xl',
                                         style: { boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                         rows: 2
                                     }),
                                     React.createElement('button', {
                                         onClick: startRecording,
-                                        className: 'px-3 sm:px-4 bg-gradient-to-br from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
+                                        className: 'px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
                                         title: 'Enregistrer un message vocal'
                                     },
                                         React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
@@ -4921,7 +4921,7 @@ app.get('/', (c) => {
                                     React.createElement('button', {
                                         onClick: sendMessage,
                                         disabled: !messageContent.trim(),
-                                        className: 'px-3 sm:px-6 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
+                                        className: 'px-3 sm:px-6 bg-gradient-to-br from-slate-700 to-gray-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
                                         style: { boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4), inset 0 -2px 8px rgba(0, 0, 0, 0.2)' }
                                     },
                                         React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
@@ -4935,7 +4935,7 @@ app.get('/', (c) => {
                         activeTab === 'private' ? React.createElement('div', { className: 'flex-1 flex flex-col sm:flex-row' },
                             // Liste des conversations - Mobile: collapsible, Desktop: sidebar
                             React.createElement('div', { className: (selectedContact ? 'hidden sm:flex ' : 'flex ') + 'w-full sm:w-80 md:w-96 border-r border-gray-200 flex-col bg-gray-50' },
-                                React.createElement('div', { className: 'p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 shadow-sm' },
+                                React.createElement('div', { className: 'p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
                                     React.createElement('h3', { className: 'font-semibold text-gray-700 text-sm sm:text-base mb-2 flex items-center gap-2' }, 
                                         React.createElement('i', { className: 'fas fa-address-book text-indigo-600' }),
                                         'Contacts'
@@ -4950,7 +4950,7 @@ app.get('/', (c) => {
                                                 loadPrivateMessages(user.id);
                                             }
                                         },
-                                        className: "w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-br from-white/95 to-indigo-50/80 backdrop-blur-sm border-2 border-indigo-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:shadow-xl cursor-pointer font-semibold text-xs sm:text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236366f1%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
+                                        className: "w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold text-xs sm:text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236366f1%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
                                         style: { boxShadow: '0 6px 20px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
                                         value: ''
                                     },
@@ -4985,7 +4985,7 @@ app.get('/', (c) => {
                                     },
                                         React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                             React.createElement('div', {
-                                                className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0 shadow-md'
+                                                className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0 shadow-md'
                                             }, conv.contact_name ? conv.contact_name.charAt(0).toUpperCase() : '?'),
                                             React.createElement('div', { className: 'flex-1 min-w-0' },
                                                 React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2' },
@@ -5006,7 +5006,7 @@ app.get('/', (c) => {
                             // Zone de conversation
                             selectedContact ? React.createElement('div', { className: 'flex-1 flex flex-col' },
                                 // Header contact with back button on mobile
-                                React.createElement('div', { className: 'p-2 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 shadow-sm' },
+                                React.createElement('div', { className: 'p-2 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3' },
                                         // Back button for mobile only
                                         React.createElement('button', {
@@ -5016,7 +5016,7 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'fas fa-arrow-left text-indigo-600' })
                                         ),
                                         React.createElement('div', {
-                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md flex-shrink-0'
+                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md flex-shrink-0'
                                         }, selectedContact.full_name.charAt(0).toUpperCase()),
                                         React.createElement('div', { className: 'flex-1 min-w-0' },
                                             React.createElement('h3', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, selectedContact.full_name),
@@ -5044,21 +5044,21 @@ app.get('/', (c) => {
                                     },
                                         React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
                                             React.createElement('div', {
-                                                className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
+                                                className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
                                             }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
                                             React.createElement('div', { className: 'flex-1 min-w-0' },
                                                 React.createElement('div', { className: 'flex flex-wrap items-center gap-1 sm:gap-2 mb-1' },
                                                     React.createElement('span', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, msg.sender_name),
                                                     React.createElement('span', {
-                                                        className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-purple-100 text-purple-700'
+                                                        className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-slate-100 text-slate-700'
                                                     }, '🔒 Message privé'),
                                                     React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
                                                 ),
                                                 msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                                    React.createElement('div', { className: 'bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-100' },
+                                                    React.createElement('div', { className: 'bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-3 border border-gray-100' },
                                                         React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                                            React.createElement('i', { className: 'fas fa-microphone text-purple-600 text-lg' }),
-                                                            React.createElement('span', { className: 'text-sm font-medium text-purple-700' }, 'Message vocal')
+                                                            React.createElement('i', { className: 'fas fa-microphone text-slate-600 text-lg' }),
+                                                            React.createElement('span', { className: 'text-sm font-medium text-slate-700' }, 'Message vocal')
                                                         ),
                                                         React.createElement('audio', {
                                                             controls: true,
@@ -5095,7 +5095,7 @@ app.get('/', (c) => {
                                 
                                 // Input
                                 React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
-                                    (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border-2 border-red-200' },
+                                    (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border-2 border-red-200' },
                                         React.createElement('div', { className: 'flex items-center justify-between mb-3' },
                                             React.createElement('div', { className: 'flex items-center gap-3' },
                                                 React.createElement('div', { className: 'w-3 h-3 bg-red-500 rounded-full animate-pulse' }),
@@ -5129,7 +5129,7 @@ app.get('/', (c) => {
                                             ) : React.createElement('button', {
                                                 onClick: sendAudioMessage,
                                                 disabled: !audioBlob,
-                                                className: 'flex-1 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
+                                                className: 'flex-1 bg-gradient-to-br from-slate-700 to-gray-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
                                             },
                                                 React.createElement('i', { className: 'fas fa-paper-plane' }),
                                                 'Envoyer le message vocal'
@@ -5142,12 +5142,12 @@ app.get('/', (c) => {
                                             onChange: (e) => setMessageContent(e.target.value),
                                             onKeyPress: handleKeyPress,
                                             placeholder: 'Ecrire un message... (Enter pour envoyer)',
-                                            className: 'flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all',
+                                            className: 'flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all',
                                             rows: 2
                                         }),
                                         React.createElement('button', {
                                             onClick: startRecording,
-                                            className: 'px-3 sm:px-4 bg-gradient-to-br from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
+                                            className: 'px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
                                             title: 'Enregistrer un message vocal'
                                         },
                                             React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
@@ -5156,7 +5156,7 @@ app.get('/', (c) => {
                                         React.createElement('button', {
                                             onClick: sendMessage,
                                             disabled: !messageContent.trim(),
-                                            className: 'px-3 sm:px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
+                                            className: 'px-3 sm:px-6 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
                                         },
                                             React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
                                             React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
@@ -5466,14 +5466,14 @@ app.get('/', (c) => {
                                         '👋 Bonjour ' + (currentUser.full_name || currentUser.email.split('@')[0])
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
-                                        React.createElement('p', { className: "text-xs text-igp-orange font-semibold" }, 
+                                        React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
                                             (currentUser.role === "operator" 
                                                 ? tickets.filter(t => t.reported_by === currentUser.id).length 
                                                 : tickets.length) + " tickets actifs"
                                         ),
                                         (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin") ?
                                         React.createElement('div', { 
-                                            className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
+                                            className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
                                             onClick: () => setShowMessaging(true),
                                             title: unreadMessagesCount > 0 ? (unreadMessagesCount + " messages non lus") : "Aucun message non lu"
                                         },
@@ -5487,7 +5487,7 @@ app.get('/', (c) => {
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
-                                className: 'px-4 py-2 bg-igp-orange text-white rounded-md hover:bg-orange-700 font-semibold shadow-md transition-all'
+                                className: 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
@@ -5516,7 +5516,7 @@ app.get('/', (c) => {
                             (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
-                                className: "px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all"
+                                className: "px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 font-semibold shadow-md transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-users-cog mr-2" }),
                                 "Utilisateurs"
@@ -5541,7 +5541,7 @@ app.get('/', (c) => {
                                         window.location.href = '/';
                                     }
                                 },
-                                className: "px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-md transition-all",
+                                className: "px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all",
                                 title: 'Gestion des rôles et permissions (Admin)'
                             },
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
@@ -5550,7 +5550,7 @@ app.get('/', (c) => {
                             (currentUser.role === 'technician' || currentUser.role === 'supervisor' || currentUser.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
-                                className: 'px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-md transition-all'
+                                className: 'px-4 py-2 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-comments mr-2' }),
                                 'Messagerie'
@@ -5650,7 +5650,7 @@ app.get('/', (c) => {
                                                 React.createElement('span', { 
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
                                                     (ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                     ticket.priority === 'high' ? 'bg-amber-100 text-amber-700' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                                                      'bg-green-100 text-green-700')
                                                 }, 
@@ -5741,7 +5741,7 @@ app.get('/', (c) => {
                                         },
                                             // Banniere pour tickets planifies/assignes
                                             ticket.scheduled_date ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg'
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-slate-600 to-blue-700 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg'
                                             },
                                                 React.createElement('i', { className: 'fas fa-calendar-check' }),
                                                 React.createElement('span', {}, 'PLANIFIE')
@@ -5755,7 +5755,7 @@ app.get('/', (c) => {
                                                 React.createElement('span', { 
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
                                                     (ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                                                     ticket.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                                                     ticket.priority === 'high' ? 'bg-amber-100 text-amber-700' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                                                      'bg-green-100 text-green-700')
                                                 }, 
@@ -6066,16 +6066,16 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Créer un Ticket -->
-                    <button onclick="toggleAccordion('creer')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                    <button onclick="toggleAccordion('creer')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-plus-circle text-lg"></i>
                             <span class="text-base md:text-lg font-bold">➕ Créer un Ticket</span>
                         </div>
                         <i id="creer-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
-                    <div id="creer" class="accordion-content bg-gray-50 border-2 border-orange-200 rounded-lg p-4 md:p-6">
+                    <div id="creer" class="accordion-content bg-gray-50 border-2 border-blue-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
-                            <p class="font-semibold text-orange-700">📝 ÉTAPES:</p>
+                            <p class="font-semibold text-amber-700">📝 ÉTAPES:</p>
                             <p><strong>1️⃣</strong> Bouton orange "Nouveau Ticket" en haut</p>
                             <p><strong>2️⃣</strong> Remplir les champs:</p>
                             <p class="ml-6">• <strong>Titre</strong>: Description courte du problème</p>
@@ -6089,7 +6089,7 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Modifier un Ticket -->
-                    <button onclick="toggleAccordion('modifier')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                    <button onclick="toggleAccordion('modifier')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-edit text-lg"></i>
                             <span class="text-base md:text-lg font-bold">✏️ Modifier un Ticket</span>
@@ -6116,39 +6116,39 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Les 14 Rôles Système -->
-                    <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                    <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-users text-lg"></i>
                             <span class="text-base md:text-lg font-bold">👥 Les 14 Rôles Système</span>
                         </div>
                         <i id="roles-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
-                    <div id="roles" class="accordion-content bg-gray-50 border-2 border-purple-200 rounded-lg p-4 md:p-6">
+                    <div id="roles" class="accordion-content bg-gray-50 border-2 border-gray-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-3 text-sm md:text-base">
-                            <p class="font-bold text-purple-700 text-lg">📊 DIRECTION:</p>
+                            <p class="font-bold text-slate-700 text-lg">📊 DIRECTION:</p>
                             <p class="ml-4">• 👑 <strong>Admin</strong> → Tout faire + Gestion utilisateurs & rôles</p>
                             <p class="ml-4">• 📊 <strong>Directeur</strong> → Vue complète + Rapports + Décisions</p>
                             
-                            <p class="font-bold text-purple-700 text-lg mt-4">⚙️ MANAGEMENT MAINTENANCE:</p>
+                            <p class="font-bold text-slate-700 text-lg mt-4">⚙️ MANAGEMENT MAINTENANCE:</p>
                             <p class="ml-4">• ⭐ <strong>Superviseur</strong> → Coordination équipe technique</p>
                             <p class="ml-4">• 🎯 <strong>Coordonnateur</strong> → Planification maintenance</p>
                             <p class="ml-4">• 📅 <strong>Planificateur</strong> → Gestion planning interventions</p>
                             
-                            <p class="font-bold text-purple-700 text-lg mt-4">🔧 TECHNIQUE:</p>
+                            <p class="font-bold text-slate-700 text-lg mt-4">🔧 TECHNIQUE:</p>
                             <p class="ml-4">• 🔧 <strong>Technicien Senior</strong> → Expert + Formations + Support</p>
                             <p class="ml-4">• 🔧 <strong>Technicien</strong> → Interventions techniques + Réparations</p>
                             
-                            <p class="font-bold text-purple-700 text-lg mt-4">🏭 PRODUCTION:</p>
+                            <p class="font-bold text-slate-700 text-lg mt-4">🏭 PRODUCTION:</p>
                             <p class="ml-4">• 👔 <strong>Chef Équipe</strong> → Supervision opérations production</p>
                             <p class="ml-4">• 🔥 <strong>Opérateur Four</strong> → Gestion fours + Maintenance niveau 1</p>
                             <p class="ml-4">• 👷 <strong>Opérateur</strong> → Créer tickets + Signaler problèmes</p>
                             
-                            <p class="font-bold text-purple-700 text-lg mt-4">🛡️ SUPPORT:</p>
+                            <p class="font-bold text-slate-700 text-lg mt-4">🛡️ SUPPORT:</p>
                             <p class="ml-4">• 🛡️ <strong>Agent SST</strong> → Santé & Sécurité au travail</p>
                             <p class="ml-4">• ✓ <strong>Inspecteur Qualité</strong> → Contrôle qualité production</p>
                             <p class="ml-4">• 📦 <strong>Magasinier</strong> → Gestion pièces + Inventaire</p>
                             
-                            <p class="font-bold text-purple-700 text-lg mt-4">👁️ TRANSVERSAL:</p>
+                            <p class="font-bold text-slate-700 text-lg mt-4">👁️ TRANSVERSAL:</p>
                             <p class="ml-4">• 👁️ <strong>Lecture Seule</strong> → Consultation uniquement (aucune modification)</p>
                             
                             <p class="bg-blue-50 border-l-4 border-blue-500 p-3 mt-4 rounded">
@@ -6177,16 +6177,16 @@ app.get('/guide', (c) => {
                     </div>
 
                     <!-- Sur Mobile -->
-                    <button onclick="toggleAccordion('mobile')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                    <button onclick="toggleAccordion('mobile')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-mobile-alt text-lg"></i>
                             <span class="text-base md:text-lg font-bold">📱 Sur Mobile</span>
                         </div>
                         <i id="mobile-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
                     </button>
-                    <div id="mobile" class="accordion-content bg-gray-50 border-2 border-pink-200 rounded-lg p-4 md:p-6">
+                    <div id="mobile" class="accordion-content bg-gray-50 border-2 border-gray-200 rounded-lg p-4 md:p-6">
                         <div class="space-y-2 text-sm md:text-base">
-                            <p class="font-semibold text-pink-700">📲 100% responsive!</p>
+                            <p class="font-semibold text-slate-700">📲 100% responsive!</p>
                             <p>👆 TAP carte → Voir détails</p>
                             <p>📸 PHOTO: Caméra auto!</p>
                             <p>🤏 Pinch = Zoom photos</p>
@@ -6454,12 +6454,12 @@ app.get('/changelog', (c) => {
                     <div class="text-2xl font-bold text-green-600">12</div>
                     <div class="text-xs text-gray-600">Versions</div>
                 </div>
-                <div class="text-center p-3 bg-purple-50 rounded-lg">
-                    <div class="text-2xl font-bold text-purple-600">35+</div>
+                <div class="text-center p-3 bg-slate-50 rounded-lg">
+                    <div class="text-2xl font-bold text-slate-600">35+</div>
                     <div class="text-xs text-gray-600">Fonctionnalités</div>
                 </div>
-                <div class="text-center p-3 bg-orange-50 rounded-lg">
-                    <div class="text-2xl font-bold text-orange-600">2800+</div>
+                <div class="text-center p-3 bg-amber-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-700">2800+</div>
                     <div class="text-xs text-gray-600">Lignes de code</div>
                 </div>
             </div>
@@ -6469,7 +6469,7 @@ app.get('/changelog', (c) => {
         <div class="timeline">
             <!-- Version 1.9.2 -->
             <div class="timeline-item" data-version="1.9.2" data-types="feature improvement fix">
-                <div class="timeline-dot bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-blue-700 text-white">
                     <i class="fas fa-rocket"></i>
                 </div>
                 <div class="version-card">
@@ -6530,7 +6530,7 @@ app.get('/changelog', (c) => {
 
             <!-- Version 1.9.0 -->
             <div class="timeline-item" data-version="1.9.0" data-types="feature improvement fix">
-                <div class="timeline-dot bg-gradient-to-br from-purple-500 to-pink-600 text-white">
+                <div class="timeline-dot bg-gradient-to-br from-slate-600 to-gray-600 text-white">
                     <i class="fas fa-bolt"></i>
                 </div>
                 <div class="version-card">
@@ -6620,7 +6620,7 @@ app.get('/changelog', (c) => {
 
             <!-- Version 1.8.0 -->
             <div class="timeline-item" data-version="1.8.0" data-types="feature improvement">
-                <div class="timeline-dot bg-gradient-to-br from-yellow-500 to-orange-600 text-white">
+                <div class="timeline-dot bg-gradient-to-br from-amber-500 to-amber-600 text-white">
                     <i class="fas fa-globe-americas"></i>
                 </div>
                 <div class="version-card">
@@ -6651,7 +6651,7 @@ app.get('/changelog', (c) => {
 
             <!-- Version 1.7.0 -->
             <div class="timeline-item" data-version="1.7.0" data-types="feature improvement security">
-                <div class="timeline-dot bg-gradient-to-br from-red-500 to-pink-600 text-white">
+                <div class="timeline-dot bg-gradient-to-br from-red-600 to-red-700 text-white">
                     <i class="fas fa-shield-alt"></i>
                 </div>
                 <div class="version-card">
@@ -6695,7 +6695,7 @@ app.get('/changelog', (c) => {
 
             <!-- Version 1.6.0 -->
             <div class="timeline-item" data-version="1.6.0" data-types="feature improvement">
-                <div class="timeline-dot bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-blue-700 text-white">
                     <i class="fas fa-camera"></i>
                 </div>
                 <div class="version-card">
@@ -6763,7 +6763,7 @@ app.get('/changelog', (c) => {
 
         <!-- Section Roadmap (À Venir) -->
         <div id="roadmap" class="mt-12 scroll-mt-8">
-            <div class="bg-gradient-to-br from-amber-400 via-yellow-400 to-orange-400 rounded-2xl shadow-2xl p-1">
+            <div class="bg-gradient-to-br from-amber-500 via-amber-500 to-amber-600 rounded-2xl shadow-2xl p-1">
                 <div class="bg-white rounded-xl p-6 md:p-8">
                     <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
                         <div>
@@ -6875,12 +6875,12 @@ app.get('/changelog', (c) => {
                     
                     <!-- Call to action -->
                     <div class="mt-8 text-center">
-                        <div class="inline-block bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6 border-2 border-purple-300">
+                        <div class="inline-block bg-gradient-to-r from-slate-100 to-blue-100 rounded-xl p-6 border-2 border-gray-300">
                             <p class="text-gray-700 mb-3 flex items-center justify-center gap-2">
-                                <i class="fas fa-comments text-purple-600 text-xl"></i>
+                                <i class="fas fa-comments text-slate-600 text-xl"></i>
                                 <span class="font-semibold">Vous avez des suggestions ou des besoins spécifiques ?</span>
                             </p>
-                            <a href="/guide#contact" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-bold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                            <a href="/guide#contact" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-700 to-blue-700 text-white rounded-lg font-bold hover:from-slate-800 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl hover:scale-105">
                                 <i class="fas fa-paper-plane"></i>
                                 Contactez-nous
                             </a>
