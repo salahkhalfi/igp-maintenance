@@ -1308,7 +1308,9 @@ app.get('/', (c) => {
         // Retourne un objet {days, hours, minutes, seconds, color, bgColor}
         const getElapsedTime = (createdAt) => {
             const now = new Date();
-            const created = new Date(createdAt);
+            // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO "YYYY-MM-DDTHH:MM:SS"
+            const isoCreatedAt = createdAt.replace(' ', 'T');
+            const created = new Date(isoCreatedAt);
             const diffMs = now - created;
             
             const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
