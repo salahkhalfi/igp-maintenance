@@ -37,7 +37,8 @@ const app = new Hono<{ Bindings: Bindings }>();
 const ALLOWED_ORIGINS = [
   'https://mecanique.igpglass.ca',           // Domaine personnalisé de production
   'https://webapp-7t8.pages.dev',            // Domaine Cloudflare Pages
-  'https://02fd9e0f.webapp-7t8.pages.dev',   // Dernière version déployée
+  'https://0d6a8681.webapp-7t8.pages.dev',   // Déploiement v1.8.0
+  'https://7644aa30.webapp-7t8.pages.dev',   // Déploiement camera fix
   'http://localhost:3000',                   // Développement local
   'http://127.0.0.1:3000'                    // Développement local (IPv4)
 ];
