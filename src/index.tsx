@@ -3943,6 +3943,27 @@ app.get('/', (c) => {
                 }
             };
             
+            // Fonction pour ouvrir message prive avec un utilisateur
+            const openPrivateMessage = (senderId, senderName) => {
+                // Verifier si utilisateur est dans la liste des contacts disponibles
+                const user = availableUsers.find(u => u.id === senderId);
+                
+                if (!user) {
+                    // Utilisateur n existe plus dans la liste
+                    alert(senderName + ' ne fait plus partie de la liste des utilisateurs.');
+                    return;
+                }
+                
+                // Switcher vers onglet Messages Prives
+                setActiveTab('private');
+                
+                // Selectionner automatiquement l utilisateur
+                setSelectedContact(user);
+                
+                // Charger les messages prives avec cette personne
+                loadPrivateMessages(senderId);
+            };
+            
             // Fonctions audio
             const startRecording = async () => {
                 try {
@@ -4301,11 +4322,17 @@ app.get('/', (c) => {
                                 },
                                     React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
                                         React.createElement('div', {
-                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
+                                            className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md cursor-pointer hover:scale-110 transition-transform',
+                                            onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
+                                            title: 'Envoyer un message prive a ' + msg.sender_name
                                         }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
                                         React.createElement('div', { className: 'flex-1 min-w-0' },
                                             React.createElement('div', { className: 'flex flex-wrap items-center gap-1 sm:gap-2 mb-1' },
-                                                React.createElement('span', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, msg.sender_name),
+                                                React.createElement('span', { 
+                                                    className: 'font-semibold text-gray-800 text-sm sm:text-base truncate cursor-pointer hover:text-indigo-600 transition-colors',
+                                                    onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
+                                                    title: 'Envoyer un message prive a ' + msg.sender_name
+                                                }, msg.sender_name),
                                                 React.createElement('span', {
                                                     className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 ' + getRoleBadgeClass(msg.sender_role)
                                                 }, getRoleLabel(msg.sender_role)),
