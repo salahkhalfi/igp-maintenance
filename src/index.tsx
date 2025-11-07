@@ -1982,8 +1982,8 @@ app.get('/', (c) => {
                             React.createElement('p', { className: 'text-sm text-gray-600' },
                                 "⎋ Escape pour fermer"
                             ),
-                            React.createElement('span', { className: 'text-sm font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full' },
-                                "⚡ v2.0.4 Optimisée"
+                            React.createElement('span', { className: 'text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full' },
+                                "✨ v2.0.4 - Mise à jour 2025-11-07"
                             )
                         ),
                         React.createElement('button', {
