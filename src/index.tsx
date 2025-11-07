@@ -3450,6 +3450,159 @@ app.get('/', (c) => {
         };
         
         
+        // Composant de sélection de rôle custom (remplace <select> natif pour mobile)
+        const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'blue' }) => {
+            const [isOpen, setIsOpen] = React.useState(false);
+            const dropdownRef = React.useRef(null);
+            
+            // Styles selon le variant (blue pour création, green pour édition)
+            const styles = {
+                blue: {
+                    button: 'from-white/90 to-blue-50/80 border-blue-300 focus:ring-blue-500 focus:border-blue-500',
+                    chevron: 'text-blue-500',
+                    shadow: '0 6px 20px rgba(59, 130, 246, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)',
+                    border: 'border-blue-300'
+                },
+                green: {
+                    button: 'from-white/90 to-green-50/80 border-green-300 focus:ring-green-500 focus:border-green-500',
+                    chevron: 'text-green-500',
+                    shadow: '0 6px 20px rgba(34, 197, 94, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)',
+                    border: 'border-green-300'
+                }
+            };
+            
+            const currentStyle = styles[variant];
+            
+            // Définition des rôles organisés par catégorie
+            const roleGroups = [
+                {
+                    label: '📊 Direction',
+                    roles: [
+                        { value: 'director', label: 'Directeur Général' },
+                        ...(currentUserRole === 'admin' ? [{ value: 'admin', label: 'Administrateur' }] : [])
+                    ]
+                },
+                {
+                    label: '⚙️ Management Maintenance',
+                    roles: [
+                        { value: 'supervisor', label: 'Superviseur' },
+                        { value: 'coordinator', label: 'Coordonnateur Maintenance' },
+                        { value: 'planner', label: 'Planificateur Maintenance' }
+                    ]
+                },
+                {
+                    label: '🔧 Technique',
+                    roles: [
+                        { value: 'senior_technician', label: 'Technicien Senior' },
+                        { value: 'technician', label: 'Technicien' }
+                    ]
+                },
+                {
+                    label: '🏭 Production',
+                    roles: [
+                        { value: 'team_leader', label: 'Chef Équipe Production' },
+                        { value: 'furnace_operator', label: 'Opérateur Four' },
+                        { value: 'operator', label: 'Opérateur' }
+                    ]
+                },
+                {
+                    label: '🛡️ Support',
+                    roles: [
+                        { value: 'safety_officer', label: 'Agent Santé & Sécurité' },
+                        { value: 'quality_inspector', label: 'Inspecteur Qualité' },
+                        { value: 'storekeeper', label: 'Magasinier' }
+                    ]
+                },
+                {
+                    label: '👁️ Transversal',
+                    roles: [
+                        { value: 'viewer', label: 'Lecture Seule' }
+                    ]
+                }
+            ];
+            
+            // Trouver le label du rôle sélectionné
+            const getSelectedLabel = () => {
+                for (const group of roleGroups) {
+                    const role = group.roles.find(r => r.value === value);
+                    if (role) return role.label;
+                }
+                return 'Sélectionner un rôle';
+            };
+            
+            // Fermer le dropdown si on clique à l'extérieur
+            React.useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                        setIsOpen(false);
+                    }
+                };
+                
+                if (isOpen) {
+                    document.addEventListener('mousedown', handleClickOutside);
+                    document.addEventListener('touchstart', handleClickOutside);
+                }
+                
+                return () => {
+                    document.removeEventListener('mousedown', handleClickOutside);
+                    document.removeEventListener('touchstart', handleClickOutside);
+                };
+            }, [isOpen]);
+            
+            const handleSelect = (roleValue) => {
+                onChange({ target: { value: roleValue } });
+                setIsOpen(false);
+            };
+            
+            return React.createElement('div', {
+                ref: dropdownRef,
+                className: 'relative w-full'
+            },
+                // Bouton principal
+                React.createElement('button', {
+                    type: 'button',
+                    onClick: () => !disabled && setIsOpen(!isOpen),
+                    disabled: disabled,
+                    className: 'w-full px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base text-left bg-gradient-to-br ' + currentStyle.button + ' backdrop-blur-sm border-2 rounded-xl shadow-lg focus:outline-none focus:ring-2 transition-all hover:shadow-xl cursor-pointer font-medium sm:font-semibold ' + (disabled ? 'opacity-50 cursor-not-allowed' : '') + ' flex justify-between items-center',
+                    style: { boxShadow: currentStyle.shadow }
+                },
+                    React.createElement('span', { className: 'truncate pr-2' }, getSelectedLabel()),
+                    React.createElement('i', { 
+                        className: 'fas fa-chevron-' + (isOpen ? 'up' : 'down') + ' ' + currentStyle.chevron + ' transition-transform text-xs sm:text-sm flex-shrink-0'
+                    })
+                ),
+                
+                // Liste déroulante
+                isOpen && React.createElement('div', {
+                    className: 'absolute z-50 w-full mt-2 bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto'
+                },
+                    roleGroups.map((group, groupIndex) => 
+                        group.roles.length > 0 && React.createElement('div', { key: groupIndex },
+                            // En-tête de groupe
+                            React.createElement('div', {
+                                className: 'px-3 py-2 bg-gray-100 text-gray-700 font-bold text-xs sm:text-sm sticky top-0 z-10'
+                            }, group.label),
+                            // Options du groupe
+                            group.roles.map(role => 
+                                React.createElement('button', {
+                                    key: role.value,
+                                    type: 'button',
+                                    onClick: () => handleSelect(role.value),
+                                    className: 'w-full px-4 py-3 text-left text-sm sm:text-base hover:bg-blue-50 transition-colors ' + (value === role.value ? 'bg-blue-100 font-semibold text-blue-700' : 'text-gray-800')
+                                },
+                                    role.label,
+                                    value === role.value && React.createElement('i', { 
+                                        className: 'fas fa-check ml-2 text-blue-600'
+                                    })
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+        };
+        
+        
         // Composant de gestion des utilisateurs (VERSION SIMPLIFIÉE)
         const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             const [users, setUsers] = React.useState([]);
@@ -3825,40 +3978,12 @@ app.get('/', (c) => {
                                 ),
                                 React.createElement('div', {},
                                     React.createElement('label', { className: 'block font-bold mb-2' }, "Rôle"),
-                                    React.createElement('select', {
+                                    React.createElement(RoleDropdown, {
                                         value: newRole,
                                         onChange: (e) => setNewRole(e.target.value),
-                                        className: "w-full px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-br from-white/90 to-blue-50/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer font-medium sm:font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%233b82f6%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-8 sm:pr-10",
-                                        style: { boxShadow: '0 6px 20px rgba(59, 130, 246, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
-                                    },
-                                        React.createElement('option', { value: '', disabled: true }, '-- Sélectionner un rôle --'),
-                                        React.createElement('optgroup', { label: '📊 Direction' },
-                                            React.createElement('option', { value: 'director' }, 'Directeur Général'),
-                                            currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
-                                        ),
-                                        React.createElement('optgroup', { label: '⚙️ Management Maintenance' },
-                                            React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
-                                            React.createElement('option', { value: 'coordinator' }, 'Coordonnateur Maintenance'),
-                                            React.createElement('option', { value: 'planner' }, 'Planificateur Maintenance')
-                                        ),
-                                        React.createElement('optgroup', { label: '🔧 Technique' },
-                                            React.createElement('option', { value: 'senior_technician' }, 'Technicien Senior'),
-                                            React.createElement('option', { value: 'technician' }, 'Technicien')
-                                        ),
-                                        React.createElement('optgroup', { label: '🏭 Production' },
-                                            React.createElement('option', { value: 'team_leader' }, 'Chef Équipe Production'),
-                                            React.createElement('option', { value: 'furnace_operator' }, 'Opérateur Four'),
-                                            React.createElement('option', { value: 'operator' }, 'Opérateur')
-                                        ),
-                                        React.createElement('optgroup', { label: '🛡️ Support' },
-                                            React.createElement('option', { value: 'safety_officer' }, 'Agent Santé & Sécurité'),
-                                            React.createElement('option', { value: 'quality_inspector' }, 'Inspecteur Qualité'),
-                                            React.createElement('option', { value: 'storekeeper' }, 'Magasinier')
-                                        ),
-                                        React.createElement('optgroup', { label: '👁️ Transversal' },
-                                            React.createElement('option', { value: 'viewer' }, 'Lecture Seule')
-                                        )
-                                    )
+                                        disabled: false,
+                                        currentUserRole: currentUser.role
+                                    })
                                 )
                             ),
                             React.createElement('div', { className: 'flex gap-4' },
@@ -3910,40 +4035,13 @@ app.get('/', (c) => {
                             ),
                             React.createElement('div', { className: 'mb-4' },
                                 React.createElement('label', { className: 'block font-bold mb-2' }, "Rôle"),
-                                React.createElement('select', {
+                                React.createElement(RoleDropdown, {
                                     value: editRole,
                                     onChange: (e) => setEditRole(e.target.value),
-                                    className: "w-full px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-gradient-to-br from-white/90 to-green-50/80 backdrop-blur-sm border-2 border-green-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:shadow-xl cursor-pointer font-medium sm:font-semibold disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%2322c55e%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-8 sm:pr-10",
-                                    style: { boxShadow: '0 6px 20px rgba(34, 197, 94, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
-                                    disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin'
-                                },
-                                    React.createElement('optgroup', { label: '📊 Direction' },
-                                        React.createElement('option', { value: 'director' }, 'Directeur Général'),
-                                        currentUser.role === 'admin' ? React.createElement('option', { value: 'admin' }, 'Administrateur') : null
-                                    ),
-                                    React.createElement('optgroup', { label: '⚙️ Management Maintenance' },
-                                        React.createElement('option', { value: 'supervisor' }, 'Superviseur'),
-                                        React.createElement('option', { value: 'coordinator' }, 'Coordonnateur Maintenance'),
-                                        React.createElement('option', { value: 'planner' }, 'Planificateur Maintenance')
-                                    ),
-                                    React.createElement('optgroup', { label: '🔧 Technique' },
-                                        React.createElement('option', { value: 'senior_technician' }, 'Technicien Senior'),
-                                        React.createElement('option', { value: 'technician' }, 'Technicien')
-                                    ),
-                                    React.createElement('optgroup', { label: '🏭 Production' },
-                                        React.createElement('option', { value: 'team_leader' }, 'Chef Équipe Production'),
-                                        React.createElement('option', { value: 'furnace_operator' }, 'Opérateur Four'),
-                                        React.createElement('option', { value: 'operator' }, 'Opérateur')
-                                    ),
-                                    React.createElement('optgroup', { label: '🛡️ Support' },
-                                        React.createElement('option', { value: 'safety_officer' }, 'Agent Santé & Sécurité'),
-                                        React.createElement('option', { value: 'quality_inspector' }, 'Inspecteur Qualité'),
-                                        React.createElement('option', { value: 'storekeeper' }, 'Magasinier')
-                                    ),
-                                    React.createElement('optgroup', { label: '👁️ Transversal' },
-                                        React.createElement('option', { value: 'viewer' }, 'Lecture Seule')
-                                    )
-                                )
+                                    disabled: currentUser.role === 'supervisor' && editingUser?.role === 'admin',
+                                    currentUserRole: currentUser.role,
+                                    variant: 'green'
+                                })
                             ),
                             React.createElement('div', { className: 'flex gap-4' },
                                 React.createElement('button', {
