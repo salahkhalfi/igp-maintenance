@@ -130,6 +130,27 @@ roles.post('/', async (c) => {
 
     // Validation du nom (identifiant technique)
     const trimmedName = name.trim();
+    
+    // 🚧 BLOCAGE TEMPORAIRE: Protection pendant migration RBAC frontend
+    // Le frontend contient 63 vérifications hardcodées sur les rôles existants.
+    // La création de nouveaux rôles causerait des dysfonctionnements (boutons invisibles, sections bloquées).
+    // Voir: ROLE_SYSTEM_SAFETY_ANALYSIS.md et ROLE_MIGRATION_GUIDE.md
+    // 
+    // Pour activer les nouveaux rôles:
+    // 1. Compléter la migration frontend (hooks usePermission)
+    // 2. Supprimer ce bloc de code
+    // 3. Tester avec un rôle test avant production
+    const ALLOWED_ROLES = ['admin', 'supervisor', 'technician', 'operator'];
+    if (!ALLOWED_ROLES.includes(trimmedName)) {
+      return c.json({ 
+        error: 'Création de nouveaux rôles temporairement désactivée',
+        reason: 'Migration du système de permissions en cours',
+        details: 'Le frontend vérifie actuellement des rôles hardcodés. La création de nouveaux rôles causerait des dysfonctionnements.',
+        documentation: 'Voir ROLE_SYSTEM_SAFETY_ANALYSIS.md pour plus de détails',
+        allowed_roles: ALLOWED_ROLES,
+        status: 'temporary_restriction'
+      }, 403);
+    }
     if (trimmedName.length < LIMITS.NAME_MIN) {
       return c.json({ error: `Nom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
     }

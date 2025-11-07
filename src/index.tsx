@@ -130,6 +130,140 @@ app.get('/api/rbac/test', authMiddleware, async (c) => {
   }
 });
 
+// ========================================
+// ENDPOINTS RBAC - VÉRIFICATION PERMISSIONS FRONTEND
+// ========================================
+
+/**
+ * GET /api/rbac/check - Vérifier une permission simple
+ * Query params: resource, action, scope (défaut: 'all')
+ * Retourne: { allowed: boolean }
+ */
+app.get('/api/rbac/check', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const resource = c.req.query('resource');
+    const action = c.req.query('action');
+    const scope = c.req.query('scope') || 'all';
+
+    if (!resource || !action) {
+      return c.json({ 
+        error: 'Paramètres manquants',
+        required: ['resource', 'action'],
+        optional: ['scope (défaut: all)']
+      }, 400);
+    }
+
+    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
+    
+    return c.json({ 
+      allowed,
+      permission: `${resource}.${action}.${scope}`,
+      user_role: user.role
+    });
+  } catch (error) {
+    console.error('RBAC check error:', error);
+    return c.json({ error: 'Erreur vérification permission' }, 500);
+  }
+});
+
+/**
+ * GET /api/rbac/check-any - Vérifier plusieurs permissions (AU MOINS UNE)
+ * Query param: permissions (CSV: "resource.action.scope,resource2.action2.scope2")
+ * Retourne: { allowed: boolean, matched?: string }
+ */
+app.get('/api/rbac/check-any', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const permsParam = c.req.query('permissions');
+    
+    if (!permsParam) {
+      return c.json({ 
+        error: 'Paramètre manquant',
+        required: 'permissions (CSV format: "resource.action.scope,...")'
+      }, 400);
+    }
+
+    const permissions = permsParam.split(',');
+    
+    // Vérifier chaque permission jusqu'à trouver une correspondance
+    for (const perm of permissions) {
+      const parts = perm.trim().split('.');
+      if (parts.length < 2) continue;
+      
+      const [resource, action, scope = 'all'] = parts;
+      const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
+      
+      if (allowed) {
+        return c.json({ 
+          allowed: true,
+          matched: perm.trim(),
+          user_role: user.role
+        });
+      }
+    }
+
+    return c.json({ 
+      allowed: false,
+      checked: permissions,
+      user_role: user.role
+    });
+  } catch (error) {
+    console.error('RBAC check-any error:', error);
+    return c.json({ error: 'Erreur vérification permissions' }, 500);
+  }
+});
+
+/**
+ * GET /api/rbac/check-all - Vérifier plusieurs permissions (TOUTES)
+ * Query param: permissions (CSV: "resource.action.scope,resource2.action2.scope2")
+ * Retourne: { allowed: boolean, failed?: string[] }
+ */
+app.get('/api/rbac/check-all', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const permsParam = c.req.query('permissions');
+    
+    if (!permsParam) {
+      return c.json({ 
+        error: 'Paramètre manquant',
+        required: 'permissions (CSV format: "resource.action.scope,...")'
+      }, 400);
+    }
+
+    const permissions = permsParam.split(',');
+    const failed: string[] = [];
+    
+    // Vérifier toutes les permissions
+    for (const perm of permissions) {
+      const parts = perm.trim().split('.');
+      if (parts.length < 2) {
+        failed.push(perm.trim() + ' (format invalide)');
+        continue;
+      }
+      
+      const [resource, action, scope = 'all'] = parts;
+      const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
+      
+      if (!allowed) {
+        failed.push(perm.trim());
+      }
+    }
+
+    const allAllowed = failed.length === 0;
+    
+    return c.json({ 
+      allowed: allAllowed,
+      checked: permissions,
+      ...(failed.length > 0 && { failed }),
+      user_role: user.role
+    });
+  } catch (error) {
+    console.error('RBAC check-all error:', error);
+    return c.json({ error: 'Erreur vérification permissions' }, 500);
+  }
+});
+
 // Route de test avec middleware requirePermission
 app.get('/api/rbac/test-permission', 
   authMiddleware,
