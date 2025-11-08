@@ -164,10 +164,14 @@ export function validateStatus(status: string): ValidationResult {
 }
 
 /**
- * Valider un rôle utilisateur
+ * Valider un rôle utilisateur (14 rôles industriels IGP)
  */
 export function validateRole(role: string): ValidationResult {
-  const validRoles = ['admin', 'supervisor', 'technician', 'operator'];
+  const validRoles = [
+    'admin', 'director', 'supervisor', 'coordinator', 'planner',
+    'senior_technician', 'technician', 'team_leader', 'furnace_operator',
+    'operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'
+  ];
   
   if (!validRoles.includes(role)) {
     // Si ce n'est pas un rôle système, on accepte (rôle personnalisé)

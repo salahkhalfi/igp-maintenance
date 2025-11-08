@@ -114,10 +114,14 @@ users.post('/', async (c) => {
       return c.json({ error: 'Format email invalide' }, 400);
     }
 
-    // Validation du rôle
-    const validRoles = ['admin', 'supervisor', 'technician', 'operator'];
+    // Validation du rôle (14 rôles industriels)
+    const validRoles = [
+      'admin', 'director', 'supervisor', 'coordinator', 'planner',
+      'senior_technician', 'technician', 'team_leader', 'furnace_operator',
+      'operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'
+    ];
     if (!validRoles.includes(role)) {
-      return c.json({ error: 'Rôle invalide. Rôles valides: admin, supervisor, technician, operator' }, 400);
+      return c.json({ error: 'Rôle invalide' }, 400);
     }
 
     // RESTRICTION: Superviseur ne peut pas créer d'admin
@@ -240,11 +244,15 @@ users.put('/:id', async (c) => {
       }
     }
 
-    // Validation du rôle si fourni
+    // Validation du rôle si fourni (14 rôles industriels)
     if (role) {
-      const validRoles = ['admin', 'supervisor', 'technician', 'operator'];
+      const validRoles = [
+        'admin', 'director', 'supervisor', 'coordinator', 'planner',
+        'senior_technician', 'technician', 'team_leader', 'furnace_operator',
+        'operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'
+      ];
       if (!validRoles.includes(role)) {
-        return c.json({ error: 'Rôle invalide. Rôles valides: admin, supervisor, technician, operator' }, 400);
+        return c.json({ error: 'Rôle invalide' }, 400);
       }
     }
 
