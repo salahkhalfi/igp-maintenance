@@ -2063,6 +2063,24 @@ app.get('/', (c) => {
                 onLogin(email, password);
             };
             
+            const handleInvalidEmail = (e) => {
+                e.target.setCustomValidity("Veuillez remplir ce champ.");
+            };
+            
+            const handleInvalidPassword = (e) => {
+                e.target.setCustomValidity("Veuillez remplir ce champ.");
+            };
+            
+            const handleInputEmail = (e) => {
+                e.target.setCustomValidity("");
+                setEmail(e.target.value);
+            };
+            
+            const handleInputPassword = (e) => {
+                e.target.setCustomValidity("");
+                setPassword(e.target.value);
+            };
+            
             return React.createElement('div', { className: 'min-h-screen flex items-center justify-center bg-gradient-to-br from-igp-blue to-blue-900' },
                 React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96 max-w-md mx-4' },
                     React.createElement('div', { className: 'text-center mb-8' },
@@ -2094,7 +2112,8 @@ app.get('/', (c) => {
                                 autoComplete: 'off',
                                 className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: email,
-                                onChange: (e) => setEmail(e.target.value),
+                                onChange: handleInputEmail,
+                                onInvalid: handleInvalidEmail,
                                 placeholder: 'votre.email@igpglass.ca',
                                 required: true
                             })
@@ -2110,7 +2129,8 @@ app.get('/', (c) => {
                                 autoComplete: 'new-password',
                                 className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
                                 value: password,
-                                onChange: (e) => setPassword(e.target.value),
+                                onChange: handleInputPassword,
+                                onInvalid: handleInvalidPassword,
                                 placeholder: '••••••••',
                                 required: true
                             })
@@ -2268,6 +2288,16 @@ app.get('/', (c) => {
                 }
             };
             
+            // Gestionnaires validation en francais
+            const handleInvalidField = (e) => {
+                e.target.setCustomValidity("Veuillez remplir ce champ.");
+            };
+            
+            const handleInputField = (e, setter) => {
+                e.target.setCustomValidity("");
+                setter(e.target.value);
+            };
+            
             if (!show) return null;
             
             return React.createElement('div', { 
@@ -2308,7 +2338,8 @@ app.get('/', (c) => {
                                 className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl hover:scale-[1.01]',
                                 style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: title,
-                                onChange: (e) => setTitle(e.target.value),
+                                onChange: (e) => handleInputField(e, setTitle),
+                                onInvalid: handleInvalidField,
                                 placeholder: 'Ex: Bruit anormal sur la machine',
                                 required: true
                             })
@@ -2322,7 +2353,8 @@ app.get('/', (c) => {
                                 className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
                                 style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: description,
-                                onChange: (e) => setDescription(e.target.value),
+                                onChange: (e) => handleInputField(e, setDescription),
+                                onInvalid: handleInvalidField,
                                 placeholder: 'Décrivez le problème en détail...',
                                 rows: 4,
                                 required: true
@@ -2337,7 +2369,8 @@ app.get('/', (c) => {
                                 className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer',
                                 style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: machineId,
-                                onChange: (e) => setMachineId(e.target.value),
+                                onChange: (e) => handleInputField(e, setMachineId),
+                                onInvalid: handleInvalidField,
                                 required: true
                             },
                                 React.createElement('option', { value: '' }, '-- Sélectionnez une machine --'),
@@ -2650,6 +2683,16 @@ app.get('/', (c) => {
                 } finally {
                     setSubmittingComment(false);
                 }
+            };
+            
+            // Gestionnaire validation commentaire
+            const handleInvalidComment = (e) => {
+                e.target.setCustomValidity("Veuillez remplir ce champ.");
+            };
+            
+            const handleInputComment = (e) => {
+                e.target.setCustomValidity("");
+                setNewComment(e.target.value);
             };
             
             const handleNewMediaChange = (e) => {
@@ -3031,7 +3074,8 @@ app.get('/', (c) => {
                                     ),
                                     React.createElement('textarea', {
                                         value: newComment,
-                                        onChange: (e) => setNewComment(e.target.value),
+                                        onChange: handleInputComment,
+                                        onInvalid: handleInvalidComment,
                                         placeholder: 'Ex: Pièce commandée, livraison prévue jeudi...',
                                         required: true,
                                         rows: 3,
@@ -3818,6 +3862,16 @@ app.get('/', (c) => {
                 }
             }, [newEmail, newPassword, newFullName, newRole, loadUsers]);
             
+            // Gestionnaires validation formulaires admin
+            const handleInvalidAdminField = (e) => {
+                e.target.setCustomValidity("Veuillez remplir ce champ.");
+            };
+            
+            const handleInputAdminEmail = (e, setter) => {
+                e.target.setCustomValidity("");
+                setter(e.target.value);
+            };
+            
             // Fonctions utilitaires mémorisées
             const ROLE_LABELS = React.useMemo(() => ({
                 // Direction
@@ -4076,7 +4130,8 @@ app.get('/', (c) => {
                                     React.createElement('input', {
                                         type: 'email',
                                         value: newEmail,
-                                        onChange: (e) => setNewEmail(e.target.value),
+                                        onChange: (e) => handleInputAdminEmail(e, setNewEmail),
+                                        onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true,
                                         autoFocus: true
@@ -4087,7 +4142,8 @@ app.get('/', (c) => {
                                     React.createElement('input', {
                                         type: 'text',
                                         value: newFullName,
-                                        onChange: (e) => setNewFullName(e.target.value),
+                                        onChange: (e) => handleInputAdminEmail(e, setNewFullName),
+                                        onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true
                                     })
@@ -4099,7 +4155,8 @@ app.get('/', (c) => {
                                     React.createElement('input', {
                                         type: 'password',
                                         value: newPassword,
-                                        onChange: (e) => setNewPassword(e.target.value),
+                                        onChange: (e) => handleInputAdminEmail(e, setNewPassword),
+                                        onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true,
                                         minLength: 6
@@ -4145,7 +4202,8 @@ app.get('/', (c) => {
                                     React.createElement('input', {
                                         type: 'email',
                                         value: editEmail,
-                                        onChange: (e) => setEditEmail(e.target.value),
+                                        onChange: (e) => handleInputAdminEmail(e, setEditEmail),
+                                        onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         required: true,
                                         autoFocus: true
@@ -4156,7 +4214,8 @@ app.get('/', (c) => {
                                     React.createElement('input', {
                                         type: 'text',
                                         value: editFullName,
-                                        onChange: (e) => setEditFullName(e.target.value),
+                                        onChange: (e) => handleInputAdminEmail(e, setEditFullName),
+                                        onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         required: true
                                     })
