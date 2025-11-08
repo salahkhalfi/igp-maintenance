@@ -5783,6 +5783,14 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
                                             
+                                            
+                                            // Badge "Rapporté par" pour TOUS les tickets
+                                            React.createElement('div', { 
+                                                className: 'text-xs text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 mb-1'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-user mr-1 text-gray-500' }),
+                                                React.createElement('span', { className: 'font-semibold' }, ticket.reporter_name || 'N/A')
+                                            ),
                                             // Badge de planification (si ticket planifié ET pas encore commencé)
                                             (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
@@ -5888,6 +5896,14 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
                                             ),
                                             
+                                            
+                                            // Badge "Rapporté par" pour TOUS les tickets
+                                            React.createElement('div', { 
+                                                className: 'text-xs text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 mb-1'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-user mr-1 text-gray-500' }),
+                                                React.createElement('span', { className: 'font-semibold' }, ticket.reporter_name || 'N/A')
+                                            ),
                                             // Badge de planification (si ticket planifié ET pas encore commencé)
                                             (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
