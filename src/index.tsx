@@ -5796,16 +5796,6 @@ app.get('/', (c) => {
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
-                                                React.createElement('div', { 
-                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 overflow-hidden'
-                                                },
-                                                    React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
-                                                    React.createElement('span', { className: 'font-semibold truncate inline-block max-w-full' }, 
-                                                        ticket.assigned_to 
-                                                            ? 'Par ' + (ticket.reporter_name || 'N/A')
-                                                            : (ticket.reporter_name || 'N/A')
-                                                    )
-                                                )
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
@@ -5909,16 +5899,6 @@ app.get('/', (c) => {
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
-                                                React.createElement('div', { 
-                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 overflow-hidden'
-                                                },
-                                                    React.createElement('i', { className: 'fas fa-user-check mr-1 text-blue-600' }),
-                                                    React.createElement('span', { className: 'font-semibold truncate inline-block max-w-full' }, 
-                                                        ticket.assigned_to 
-                                                            ? 'Par ' + (ticket.reporter_name || 'N/A')
-                                                            : (ticket.reporter_name || 'N/A')
-                                                    )
-                                                )
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
