@@ -1,11 +1,13 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.0.5-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
 > **🚀 [Accéder à l'application en direct](https://mecanique.igpglass.ca)** - Système de gestion de maintenance déployé sur Cloudflare Pages
+> 
+> **🧪 [Environnement de test](https://webapp-test-b59.pages.dev)** - Pour tester les modifications avant production
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
