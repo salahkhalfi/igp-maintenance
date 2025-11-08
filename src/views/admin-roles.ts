@@ -22,10 +22,6 @@ export const adminRolesHTML = `<!DOCTYPE html>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
-                    <div class="text-left sm:text-right flex-1 sm:flex-none">
-                        <p class="text-xs sm:text-sm text-blue-200">Connecté en tant que</p>
-                        <p class="font-semibold text-sm sm:text-base truncate" id="currentUserEmail">admin@igp.com</p>
-                    </div>
                     <button onclick="window.history.back()" class="bg-white text-blue-600 px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-50 transition text-sm sm:text-base whitespace-nowrap">
                         <i class="fas fa-arrow-left mr-1 sm:mr-2"></i>Retour
                     </button>
