@@ -5584,15 +5584,15 @@ app.get('/', (c) => {
                                         'Les Produits Verriers International (IGP) Inc.'
                                     ),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
-                                        '👋 Bonjour ' + (currentUserState?.full_name || currentUserState?.email?.split('@')[0] || 'Utilisateur')
+                                        '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
-                                            (currentUserState?.role === "operator" 
-                                                ? tickets.filter(t => t.reported_by === currentUserState.id).length 
+                                            (currentUser?.role === "operator" 
+                                                ? tickets.filter(t => t.reported_by === currentUser.id).length 
                                                 : tickets.length) + " tickets actifs"
                                         ),
-                                        (currentUserState?.role === "technician" || currentUserState?.role === "supervisor" || currentUserState?.role === "admin") ?
+                                        (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin") ?
                                         React.createElement('div', { 
                                             className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
                                             onClick: () => setShowMessaging(true),
@@ -5634,7 +5634,7 @@ app.get('/', (c) => {
                                     (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
                                 }, getTicketsByStatus('archived').length)
                             ),
-                            (currentUserState?.role === 'technician' || currentUserState?.role === 'supervisor' || currentUserState?.role === 'admin') ?
+                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
                                 className: "px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 font-semibold shadow-md transition-all"
@@ -5642,7 +5642,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: "fas fa-users-cog mr-2" }),
                                 "Utilisateurs"
                             ) : null,
-                            (currentUserState?.role === 'supervisor' || currentUserState?.role === 'admin') ?
+                            (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMachineManagement(true),
                                 className: "px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-semibold shadow-md transition-all"
@@ -5650,7 +5650,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: "fas fa-cogs mr-2" }),
                                 "Machines"
                             ) : null,
-                            (currentUserState?.role === 'admin') ?
+                            (currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => {
                                     // S'assurer que le token est bien dans localStorage avant la redirection
@@ -5668,7 +5668,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
                             ) : null,
-                            (currentUserState?.role === 'technician' || currentUserState?.role === 'supervisor' || currentUserState?.role === 'admin') ?
+                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
                                 className: 'px-4 py-2 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
@@ -5730,7 +5730,7 @@ app.get('/', (c) => {
                                         return React.createElement('div', {
                                             key: ticket.id,
                                             className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
-                                            draggable: currentUserState && currentUserState.role !== 'operator',
+                                            draggable: currentUser && currentUser.role !== 'operator',
                                             onClick: (e) => handleTicketClick(e, ticket),
                                             onDragStart: (e) => handleDragStart(e, ticket),
                                             onDragEnd: handleDragEnd,
@@ -5738,7 +5738,7 @@ app.get('/', (c) => {
                                             onTouchMove: handleTouchMove,
                                             onTouchEnd: handleTouchEnd,
                                             onContextMenu: (e) => handleContextMenu(e, ticket),
-                                            title: currentUserState && currentUserState.role === 'operator' 
+                                            title: currentUser && currentUser.role === 'operator' 
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
@@ -5848,7 +5848,7 @@ app.get('/', (c) => {
                                         return React.createElement('div', {
                                             key: ticket.id,
                                             className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
-                                            draggable: currentUserState && currentUserState.role !== 'operator',
+                                            draggable: currentUser && currentUser.role !== 'operator',
                                             onClick: (e) => handleTicketClick(e, ticket),
                                             onDragStart: (e) => handleDragStart(e, ticket),
                                             onDragEnd: handleDragEnd,
@@ -5856,7 +5856,7 @@ app.get('/', (c) => {
                                             onTouchMove: handleTouchMove,
                                             onTouchEnd: handleTouchEnd,
                                             onContextMenu: (e) => handleContextMenu(e, ticket),
-                                            title: currentUserState && currentUserState.role === 'operator' 
+                                            title: currentUser && currentUser.role === 'operator' 
                                                 ? "Cliquer pour détails | Clic droit: menu" 
                                                 : "Cliquer pour détails | Glisser pour déplacer | Clic droit: menu"
                                         },
@@ -6092,7 +6092,7 @@ app.get('/', (c) => {
             return React.createElement(MainApp, { 
                 tickets, 
                 machines,
-                currentUser: currentUser,
+                currentUser: currentUserState,
                 onLogout: logout,
                 onRefresh: loadData,
                 showCreateModal,
