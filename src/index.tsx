@@ -6059,6 +6059,8 @@ app.get('/', (c) => {
                     localStorage.setItem('auth_token', authToken);
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
                     setIsLoggedIn(true);
+                    // Force un refresh pour mettre à jour l'affichage de currentUser
+                    window.location.reload();
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
