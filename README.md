@@ -7,7 +7,7 @@
 
 > **🚀 [Accéder à l'application en direct](https://mecanique.igpglass.ca)** - Système de gestion de maintenance déployé sur Cloudflare Pages
 > 
-> **🧪 [Environnement de test](https://webapp-test-b59.pages.dev)** - Pour tester les modifications avant production
+> **🧪 [Environnement de test](https://ea1b8169.webapp-test-b59.pages.dev)** - Pour tester les modifications avant production
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
