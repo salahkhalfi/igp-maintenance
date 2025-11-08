@@ -720,7 +720,7 @@ app.get('/api/messages/available-users', authMiddleware, async (c) => {
     const { results } = await c.env.DB.prepare(`
       SELECT id, full_name, role, email
       FROM users
-      WHERE role IN ('operator', 'technician', 'supervisor', 'admin')
+      WHERE role IN ('operator', 'furnace_operator', 'technician', 'supervisor', 'admin')
         AND id != ?
       ORDER BY role DESC, full_name ASC
     `).bind(user.userId).all();
