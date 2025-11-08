@@ -5786,7 +5786,7 @@ app.get('/', (c) => {
                                             
                                             // Badge "Rapporté par" pour TOUS les tickets
                                             React.createElement('div', { 
-                                                className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mb-1 overflow-hidden'
+                                                className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mb-1 overflow-hidden pointer-events-none'
                                             },
                                                 React.createElement('i', { className: 'fas fa-user mr-1 text-blue-600' }),
                                                 React.createElement('span', { className: 'font-semibold' }, 'Rapporté par ' + (ticket.reporter_name || 'N/A'))
@@ -5889,7 +5889,7 @@ app.get('/', (c) => {
                                             
                                             // Badge "Rapporté par" pour TOUS les tickets
                                             React.createElement('div', { 
-                                                className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mb-1 overflow-hidden'
+                                                className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mb-1 overflow-hidden pointer-events-none'
                                             },
                                                 React.createElement('i', { className: 'fas fa-user mr-1 text-blue-600' }),
                                                 React.createElement('span', { className: 'font-semibold' }, 'Rapporté par ' + (ticket.reporter_name || 'N/A'))
