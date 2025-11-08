@@ -5621,7 +5621,18 @@ app.get('/', (c) => {
                                 'Actualiser'
                             ),
                             React.createElement('button', {
-                                onClick: () => setShowArchived(!showArchived),
+                                onClick: () => {
+                                    setShowArchived(!showArchived);
+                                    // Si on affiche les archives, scroller vers la section après un court délai
+                                    if (!showArchived) {
+                                        setTimeout(() => {
+                                            const archivedSection = document.getElementById('archived-section');
+                                            if (archivedSection) {
+                                                archivedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            }
+                                        }, 100);
+                                    }
+                                },
                                 className: 'px-4 py-2 rounded-md font-semibold shadow-md transition-all flex items-center gap-2 ' + 
                                     (showArchived 
                                         ? 'bg-gray-600 text-white hover:bg-gray-700' 
@@ -5820,7 +5831,7 @@ app.get('/', (c) => {
                         )
                     ),
                     
-                    showArchived ? React.createElement('div', { className: 'overflow-x-auto pb-4' },
+                    showArchived ? React.createElement('div', { id: 'archived-section', className: 'overflow-x-auto pb-4' },
                         React.createElement('div', { className: 'kanban-grid flex gap-3' },
                             React.createElement('div', { 
                                 key: archivedStatus.key, 
