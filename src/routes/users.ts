@@ -187,27 +187,54 @@ users.put('/:id', async (c) => {
     const body = await c.req.json();
     const { email, full_name, role, password } = body;
 
+    console.log('🔍 UPDATE USER - Start:', {
+      currentUserId: currentUser.userId,
+      currentUserRole: currentUser.role,
+      targetUserId: id,
+      requestedRole: role
+    });
+
     // Vérifier que l'utilisateur existe
     const existingUser = await c.env.DB.prepare(
       'SELECT * FROM users WHERE id = ?'
     ).bind(id).first() as any;
 
     if (!existingUser) {
+      console.log('❌ User not found:', id);
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
+    console.log('✅ Existing user:', {
+      id: existingUser.id,
+      email: existingUser.email,
+      role: existingUser.role
+    });
+
     // RESTRICTION: Superviseur ne peut pas modifier un admin
     if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
+      console.log('❌ Supervisor cannot modify admin');
       return c.json({ error: 'Les superviseurs ne peuvent pas modifier les administrateurs' }, 403);
     }
 
     // RESTRICTION: Superviseur ne peut pas promouvoir quelqu\'un en admin
     if (currentUser.role === 'supervisor' && role === 'admin') {
+      console.log('❌ Supervisor cannot promote to admin');
       return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
     }
 
     // Empêcher un admin de se retirer ses propres droits admin
-    if (currentUser.userId === parseInt(id) && role && role !== 'admin' && currentUser.role === 'admin') {
+    const isSelfDemotionCheck = currentUser.userId === parseInt(id) && role && role !== 'admin' && currentUser.role === 'admin';
+    console.log('🔍 Self-demotion check:', {
+      currentUserId: currentUser.userId,
+      targetUserId: parseInt(id),
+      areEqual: currentUser.userId === parseInt(id),
+      requestedRole: role,
+      currentRole: currentUser.role,
+      wouldTrigger: isSelfDemotionCheck
+    });
+    
+    if (isSelfDemotionCheck) {
+      console.log('❌ Admin cannot demote themselves');
       return c.json({ 
         error: 'Vous ne pouvez pas retirer vos propres droits administrateur' 
       }, 403);
@@ -215,10 +242,13 @@ users.put('/:id', async (c) => {
 
     // Empêcher un superviseur de se retirer ses propres droits superviseur
     if (currentUser.userId === parseInt(id) && role && role !== 'supervisor' && currentUser.role === 'supervisor') {
+      console.log('❌ Supervisor cannot demote themselves');
       return c.json({ 
         error: 'Vous ne pouvez pas retirer vos propres droits de superviseur' 
       }, 403);
     }
+    
+    console.log('✅ All permission checks passed');
 
     // Validation de l'email si fourni
     if (email) {
@@ -307,11 +337,19 @@ users.put('/:id', async (c) => {
     params.push(id);
 
     // Exécuter la mise à jour
+    console.log('🔍 SQL Update:', {
+      query: `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      params: params
+    });
+    
     const result = await c.env.DB.prepare(
       `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
     ).bind(...params).run();
 
+    console.log('🔍 Update result:', result);
+
     if (!result.success) {
+      console.log('❌ Update failed:', result);
       return c.json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' }, 500);
     }
 
@@ -334,7 +372,11 @@ users.put('/:id', async (c) => {
       user: updatedUser 
     });
   } catch (error) {
-    console.error('Update user error:', error);
+    console.error('❌ Update user exception:', error);
+    console.error('❌ Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return c.json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' }, 500);
   }
 });
