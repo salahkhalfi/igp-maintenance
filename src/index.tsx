@@ -2057,6 +2057,7 @@ app.get('/', (c) => {
         const LoginForm = ({ onLogin }) => {
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
+            const [showPassword, setShowPassword] = React.useState(false);
             
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -2123,17 +2124,29 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-lock mr-2 text-igp-blue' }),
                                 'Mot de passe'
                             ),
-                            React.createElement('input', {
-                                type: 'password',
-                                name: 'password',
-                                autoComplete: 'new-password',
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
-                                value: password,
-                                onChange: handleInputPassword,
-                                onInvalid: handleInvalidPassword,
-                                placeholder: '••••••••',
-                                required: true
-                            })
+                            React.createElement('div', { className: 'relative' },
+                                React.createElement('input', {
+                                    type: showPassword ? 'text' : 'password',
+                                    name: 'password',
+                                    autoComplete: 'new-password',
+                                    className: 'w-full px-3 py-2 pr-10 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                                    value: password,
+                                    onChange: handleInputPassword,
+                                    onInvalid: handleInvalidPassword,
+                                    placeholder: '••••••••',
+                                    required: true
+                                }),
+                                React.createElement('button', {
+                                    type: 'button',
+                                    onClick: () => setShowPassword(!showPassword),
+                                    className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-igp-blue transition-colors',
+                                    'aria-label': showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
+                                },
+                                    React.createElement('i', { 
+                                        className: showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'
+                                    })
+                                )
+                            )
                         ),
                         React.createElement('button', {
                             type: 'submit',
