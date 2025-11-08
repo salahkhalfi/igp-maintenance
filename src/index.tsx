@@ -5584,7 +5584,7 @@ app.get('/', (c) => {
                                         'Les Produits Verriers International (IGP) Inc.'
                                     ),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
-                                        '👋 Bonjour ' + (currentUser.full_name || currentUser.email.split('@')[0])
+                                        '👋 Bonjour ' + (currentUserState?.full_name || currentUserState?.email?.split('@')[0] || 'Utilisateur')
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
@@ -5999,6 +5999,7 @@ app.get('/', (c) => {
         
         const App = () => {
             const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
+            const [currentUserState, setCurrentUserState] = React.useState(currentUser);
             const [tickets, setTickets] = React.useState([]);
             const [machines, setMachines] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
@@ -6030,6 +6031,7 @@ app.get('/', (c) => {
                     setTickets(ticketsRes.data.tickets);
                     setMachines(machinesRes.data.machines);
                     currentUser = userRes.data.user;
+                    setCurrentUserState(userRes.data.user);
                     setLoading(false);
                 } catch (error) {
                     console.error('Erreur chargement:', error);
@@ -6056,11 +6058,10 @@ app.get('/', (c) => {
                     const response = await axios.post(API_URL + '/auth/login', { email, password });
                     authToken = response.data.token;
                     currentUser = response.data.user;
+                    setCurrentUserState(response.data.user);
                     localStorage.setItem('auth_token', authToken);
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
                     setIsLoggedIn(true);
-                    // Force un refresh pour mettre à jour l'affichage de currentUser
-                    window.location.reload();
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
@@ -6071,6 +6072,7 @@ app.get('/', (c) => {
                 delete axios.defaults.headers.common['Authorization'];
                 authToken = null;
                 currentUser = null;
+                setCurrentUserState(null);
                 setIsLoggedIn(false);
             };
             
