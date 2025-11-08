@@ -6039,8 +6039,8 @@ app.get('/', (c) => {
             
             const loadUnreadMessagesCount = async () => {
                 try {
-                    // Seulement pour techniciens, superviseurs et admins
-                    if (currentUser && (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin")) {
+                    // Pour tous les utilisateurs avec accès à la messagerie
+                    if (currentUser && (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin" || currentUser.role === "operator" || currentUser.role === "furnace_operator")) {
                         const response = await axios.get(API_URL + "/messages/unread-count");
                         setUnreadMessagesCount(response.data.count || 0);
                     }
