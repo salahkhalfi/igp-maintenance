@@ -5592,7 +5592,7 @@ app.get('/', (c) => {
                                                 ? tickets.filter(t => t.reported_by === currentUser.id).length 
                                                 : tickets.length) + " tickets actifs"
                                         ),
-                                        (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin") ?
+                                        (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', { 
                                             className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
                                             onClick: () => setShowMessaging(true),
@@ -5668,7 +5668,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
                             ) : null,
-                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
+                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
                                 className: 'px-4 py-2 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
