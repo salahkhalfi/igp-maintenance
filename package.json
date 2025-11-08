@@ -19,6 +19,9 @@
     "check:version": "git describe --tags --abbrev=0 2>/dev/null || echo 'No tags yet'",
     "check:deployments": "npx wrangler pages deployment list --project-name webapp | head -10",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "lint": "eslint src/**/*.{js,ts,tsx} --max-warnings 50",
+    "lint:fix": "eslint src/**/*.{js,ts,tsx} --fix",
+    "lint:check": "eslint src/**/*.{js,ts,tsx} --max-warnings 0",
     "db:migrate:local": "wrangler d1 migrations apply maintenance-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply maintenance-db",
     "db:seed": "wrangler d1 execute maintenance-db --local --file=./seed.sql",
@@ -40,6 +43,9 @@
     "@cloudflare/workers-types": "^4.20250705.0",
     "@hono/vite-build": "^1.2.0",
     "@hono/vite-dev-server": "^0.18.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^9.39.1",
     "vite": "^6.3.5",
     "wrangler": "^4.4.0"
   }
