@@ -2090,7 +2090,7 @@ app.get('/', (c) => {
                             className: 'h-20 w-auto mx-auto mb-4'
                         }),
                         React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, 'Gestion de la maintenance et des réparations'),
-                        React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
+                        React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
                             'EN DÉVELOPPEMENT'
                         ),
