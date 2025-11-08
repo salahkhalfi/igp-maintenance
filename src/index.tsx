@@ -6929,7 +6929,7 @@ app.get('/changelog', (c) => {
                                 <i class="fas fa-comments text-slate-600 text-xl"></i>
                                 <span class="font-semibold">Vous avez des suggestions ou des besoins spécifiques ?</span>
                             </p>
-                            <a href="/guide#contact" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-700 to-blue-700 text-white rounded-lg font-bold hover:from-slate-800 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                            <a href="https://contact.aide.support/fr9ercvp1ay" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-700 to-blue-700 text-white rounded-lg font-bold hover:from-slate-800 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl hover:scale-105">
                                 <i class="fas fa-paper-plane"></i>
                                 Contactez-nous
                             </a>
