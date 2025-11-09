@@ -2850,10 +2850,10 @@ app.get('/', (c) => {
                                 React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
                                 React.createElement('span', { 
                                     className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-md text-xs sm:text-sm ' + 
-                                    (ticket.priority === 'critical' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' :
-                                     ticket.priority === 'high' ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white' :
-                                     ticket.priority === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white' :
-                                     'bg-gradient-to-r from-green-500 to-green-600 text-white')
+                                    (ticket.priority === 'critical' ? 'bg-igp-red text-white' :
+                                     ticket.priority === 'high' ? 'bg-igp-yellow text-white' :
+                                     ticket.priority === 'medium' ? 'bg-yellow-500 text-white' :
+                                     'bg-igp-green text-white')
                                 }, 
                                     ticket.priority === 'critical' ? '🔴 CRITIQUE' :
                                     ticket.priority === 'high' ? '🟠 HAUTE' :
@@ -5798,10 +5798,10 @@ app.get('/', (c) => {
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('span', { 
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
-                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                                                     ticket.priority === 'high' ? 'bg-amber-100 text-amber-700' :
+                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-igp-red' :
+                                                     ticket.priority === 'high' ? 'bg-amber-100 text-igp-yellow' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                     'bg-green-100 text-green-700')
+                                                     'bg-green-100 text-igp-green')
                                                 }, 
                                                     ticket.priority === 'critical' ? '🔴 CRIT' :
                                                     ticket.priority === 'high' ? '🟠 HAUT' :
@@ -5901,10 +5901,10 @@ app.get('/', (c) => {
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('span', { 
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
-                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                                                     ticket.priority === 'high' ? 'bg-amber-100 text-amber-700' :
+                                                    (ticket.priority === 'critical' ? 'bg-red-100 text-igp-red' :
+                                                     ticket.priority === 'high' ? 'bg-amber-100 text-igp-yellow' :
                                                      ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                                     'bg-green-100 text-green-700')
+                                                     'bg-green-100 text-igp-green')
                                                 }, 
                                                     ticket.priority === 'critical' ? '🔴 CRIT' :
                                                     ticket.priority === 'high' ? '🟠 HAUT' :
