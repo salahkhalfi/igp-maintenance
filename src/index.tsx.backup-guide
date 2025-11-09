@@ -6403,911 +6403,282 @@ app.get('/guide', (c) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guide Utilisateur - IGP Maintenance</title>
-    <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            scroll-behavior: smooth;
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
         }
-        
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+        .accordion-content.active {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
         }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .accordion-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
         }
-        
-        .nav-link {
-            transition: all 0.3s ease;
-        }
-        
-        .nav-link:hover {
-            transform: translateX(5px);
-            color: #667eea;
-        }
-        
-        .nav-link.active {
-            color: #667eea;
-            font-weight: 600;
-            border-left: 3px solid #667eea;
-        }
-        
-        .section-card {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-        
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .icon-badge {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            font-size: 24px;
-        }
-        
-        .feature-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .step-number {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
+        .rotate-180 {
+            transform: rotate(180deg);
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <!-- Bouton Retour Sticky -->
-    <div class="fixed top-4 right-4 z-50">
-        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-xl border-2 border-gray-200">
-            <i class="fas fa-arrow-left"></i>
-            <span class="hidden md:inline">Retour</span>
-        </a>
-    </div>
-
-    <div class="max-w-7xl mx-auto">
-        <div class="flex gap-8">
-            <!-- Navigation Latérale (Desktop) -->
-            <aside class="hidden lg:block w-64 flex-shrink-0">
-                <div class="sticky top-8 glass-card rounded-xl p-6 shadow-2xl">
-                    <div class="mb-6">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i class="fas fa-book text-2xl text-purple-600"></i>
-                            <h2 class="text-xl font-bold text-gray-800">Navigation</h2>
-                        </div>
-                        <p class="text-xs text-gray-500">v2.0.10</p>
-                    </div>
-                    
-                    <nav class="space-y-2">
-                        <a href="#introduction" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-rocket mr-2"></i>Introduction
-                        </a>
-                        <a href="#nouveautes" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-sparkles mr-2"></i>Nouveautés 2.0
-                        </a>
-                        <a href="#creer" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-plus-circle mr-2"></i>Créer un Ticket
-                        </a>
-                        <a href="#modifier" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-edit mr-2"></i>Modifier & Médias
-                        </a>
-                        <a href="#messages" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-comments mr-2"></i>Messagerie
-                        </a>
-                        <a href="#kanban" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-columns mr-2"></i>Tableau Kanban
-                        </a>
-                        <a href="#roles" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-users mr-2"></i>Rôles & Permissions
-                        </a>
-                        <a href="#mobile" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-mobile-alt mr-2"></i>Mobile
-                        </a>
-                        <a href="#astuces" class="nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
-                            <i class="fas fa-lightbulb mr-2"></i>Astuces
-                        </a>
-                    </nav>
-                </div>
-            </aside>
-
-            <!-- Contenu Principal -->
-            <main class="flex-1 min-w-0">
-                <!-- Hero Section -->
-                <div class="glass-card rounded-2xl shadow-2xl p-8 mb-8 section-card">
-                    <div class="text-center">
-                        <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl mb-4">
-                            <i class="fas fa-book-open text-4xl text-white"></i>
-                        </div>
-                        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-3">
-                            Guide Utilisateur
-                        </h1>
-                        <p class="text-xl text-gray-600 mb-4">
-                            Système de Gestion de Maintenance IGP
-                        </p>
-                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
-                            <i class="fas fa-check-circle"></i>
-                            Version 2.0.10 - Mise à jour 2025-11-09
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Introduction -->
-                <section id="introduction" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                            <i class="fas fa-rocket"></i>
-                        </div>
+<body class="bg-gray-100">
+    <div class="min-h-screen p-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-6 rounded-t-lg shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-book text-3xl"></i>
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Démarrage Rapide</h2>
-                            <p class="text-gray-600">Tout ce que vous devez savoir pour commencer</p>
+                            <h1 class="text-2xl md:text-3xl font-bold">Guide Utilisateur</h1>
+                            <p class="text-blue-200 text-sm">Système de Gestion de Maintenance IGP</p>
                         </div>
                     </div>
-                    
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-l-4 border-blue-500 mb-6">
-                        <p class="text-gray-700 leading-relaxed">
-                            <strong class="text-blue-700">💡 Bienvenue !</strong> Ce guide est conçu pour vous rendre opérationnel rapidement. 
-                            Chaque section est claire, concise et illustrée. Vous pouvez naviguer librement entre les sections 
-                            selon vos besoins.
-                        </p>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-3 gap-4">
-                        <div class="bg-white rounded-lg p-4 border-2 border-gray-100 hover:border-blue-300 transition-all">
-                            <div class="text-3xl mb-2">⚡</div>
-                            <h3 class="font-semibold text-gray-800 mb-1">Rapide</h3>
-                            <p class="text-sm text-gray-600">Chaque section se lit en 1-2 minutes</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-4 border-2 border-gray-100 hover:border-purple-300 transition-all">
-                            <div class="text-3xl mb-2">📱</div>
-                            <h3 class="font-semibold text-gray-800 mb-1">Responsive</h3>
-                            <p class="text-sm text-gray-600">Fonctionne sur tous les appareils</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-4 border-2 border-gray-100 hover:border-green-300 transition-all">
-                            <div class="text-3xl mb-2">🎯</div>
-                            <h3 class="font-semibold text-gray-800 mb-1">Pratique</h3>
-                            <p class="text-sm text-gray-600">Des exemples concrets et clairs</p>
-                        </div>
-                    </div>
-                </section>
+                    <button onclick="window.history.back()" class="px-4 py-2 bg-white text-blue-900 rounded-md hover:bg-gray-100 font-semibold">
+                        <i class="fas fa-arrow-left mr-2"></i>Retour
+                    </button>
+                </div>
+            </div>
 
-                <!-- Nouveautés v2.0 -->
-                <section id="nouveautes" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-amber-500 to-orange-600 text-white">
-                            <i class="fas fa-sparkles"></i>
+            <!-- Content -->
+            <div class="bg-white p-6 rounded-b-lg shadow-lg">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+                    <p class="text-gray-700 text-sm md:text-base italic">
+                        💡 <strong>Ça prend vraiment pas la tête à Papineau</strong> pour être capable d'utiliser cette application. Mais au cas où vous auriez mal dormi la veille...
+                    </p>
+                </div>
+                <p class="text-gray-600 mb-4 text-center text-sm md:text-base">
+                    👋 Cliquez sur les boutons colorés pour ouvrir chaque section
+                </p>
+                <div class="space-y-2">
+                    <!-- Démarrage Rapide -->
+                    <button onclick="toggleAccordion('intro')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-rocket text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">🎯 Démarrage Rapide</span>
                         </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Nouveautés Version 2.0</h2>
-                            <p class="text-gray-600">Les dernières fonctionnalités ajoutées</p>
+                        <i id="intro-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="intro" class="accordion-content bg-gray-50 border-2 border-blue-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p>👋 Bienvenue! Ce guide est fait pour aller VITE.</p>
+                            <p>📱 Cliquez sur les boutons colorés pour ouvrir chaque section</p>
+                            <p>⚡ Chaque section se lit en 30 secondes</p>
+                            <p class="text-gray-600 italic mt-3">💡 Conseil: Laissez ce guide ouvert pendant votre travail!</p>
                         </div>
                     </div>
-                    
-                    <div class="space-y-4">
-                        <!-- v2.0.10 -->
-                        <div class="bg-purple-50 rounded-xl p-5 border-l-4 border-purple-500">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-purple-900">v2.0.10 - Sélection Rapide</h3>
-                                <span class="feature-tag bg-purple-100 text-purple-700">
-                                    <i class="fas fa-check-double"></i> Nouveau
-                                </span>
-                            </div>
-                            <p class="text-gray-700 mb-3">Gagnez du temps avec les boutons de sélection rapide :</p>
-                            <ul class="space-y-2 text-sm text-gray-600">
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check text-purple-500 mt-1"></i>
-                                    <span><strong>Bouton "Tout"</strong> : Sélectionne tous les messages supprimables en un clic</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check text-purple-500 mt-1"></i>
-                                    <span><strong>Bouton "Aucun"</strong> : Désélectionne tout instantanément</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check text-purple-500 mt-1"></i>
-                                    <span>Filtre intelligent respectant vos permissions</span>
-                                </li>
-                            </ul>
-                        </div>
 
-                        <!-- v2.0.9 -->
-                        <div class="bg-indigo-50 rounded-xl p-5 border-l-4 border-indigo-500">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-indigo-900">v2.0.9 - Suppression en Masse</h3>
-                                <span class="feature-tag bg-indigo-100 text-indigo-700">
-                                    <i class="fas fa-tasks"></i> Productivité
-                                </span>
-                            </div>
-                            <p class="text-gray-700 mb-3">Supprimez plusieurs messages d'un coup :</p>
-                            <ul class="space-y-2 text-sm text-gray-600">
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check text-indigo-500 mt-1"></i>
-                                    <span>Mode sélection avec checkboxes sur chaque message</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check text-indigo-500 mt-1"></i>
-                                    <span>Suppression par lots (jusqu'à 100 messages)</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check text-indigo-500 mt-1"></i>
-                                    <span>Barre d'outils avec compteur de sélection</span>
-                                </li>
-                            </ul>
+                    <!-- Créer un Ticket -->
+                    <button onclick="toggleAccordion('creer')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-plus-circle text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">➕ Créer un Ticket</span>
                         </div>
-
-                        <!-- v2.0.8 -->
-                        <div class="bg-teal-50 rounded-xl p-5 border-l-4 border-teal-500">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-teal-900">v2.0.8 - Clarté Temporelle</h3>
-                                <span class="feature-tag bg-teal-100 text-teal-700">
-                                    <i class="fas fa-clock"></i> UX
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-600">
-                                Label explicatif <strong>"Requête reçue depuis:"</strong> sur les chronomètres pour une meilleure compréhension.
-                            </p>
+                        <i id="creer-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="creer" class="accordion-content bg-gray-50 border-2 border-blue-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-amber-700">📝 ÉTAPES:</p>
+                            <p><strong>1️⃣</strong> Bouton orange "Nouveau Ticket" en haut</p>
+                            <p><strong>2️⃣</strong> Remplir les champs:</p>
+                            <p class="ml-6">• <strong>Titre</strong>: Description courte du problème</p>
+                            <p class="ml-6">• <strong>Machine</strong>: Sélectionnez dans la liste</p>
+                            <p class="ml-6">• <strong>Priorité</strong>: Normale, Élevée, Critique</p>
+                            <p class="ml-6">• <strong>Description</strong>: Détails (optionnel)</p>
+                            <p><strong>3️⃣</strong> 📸 Photo optionnelle (mobile = caméra auto)</p>
+                            <p><strong>4️⃣</strong> Clic "Créer"</p>
+                            <p class="text-green-600 font-semibold mt-3">✅ ID automatique créé!</p>
                         </div>
+                    </div>
 
-                        <!-- v2.0.7 -->
-                        <div class="bg-rose-50 rounded-xl p-5 border-l-4 border-rose-500">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-rose-900">v2.0.7 - Suppression Médias</h3>
-                                <span class="feature-tag bg-rose-100 text-rose-700">
-                                    <i class="fas fa-trash-alt"></i> Gestion
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-600">
-                                Supprimez des photos/vidéos individuelles avec bouton corbeille et nettoyage automatique.
-                            </p>
+                    <!-- Modifier un Ticket -->
+                    <button onclick="toggleAccordion('modifier')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-edit text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">✏️ Modifier un Ticket</span>
                         </div>
+                        <i id="modifier-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="modifier" class="accordion-content bg-gray-50 border-2 border-indigo-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-indigo-700">👆 OUVRIR:</p>
+                            <p class="ml-4">• Clic sur la carte du ticket</p>
+                            <p class="font-semibold text-indigo-700 mt-3">✏️ MODIFIER:</p>
+                            <p class="ml-4">• Bouton bleu "Modifier"</p>
+                            <p class="ml-4">• Changez titre, description, priorité, machine</p>
+                            <p class="ml-4">• Clic "Enregistrer"</p>
+                            <p class="font-semibold text-indigo-700 mt-3">📸 AJOUTER PHOTOS:</p>
+                            <p class="ml-4">• Bouton "Ajouter médias"</p>
+                            <p class="ml-4">• Photos ajoutées immédiatement</p>
+                            <p class="font-semibold text-indigo-700 mt-3">💬 AJOUTER COMMENTAIRES:</p>
+                            <p class="ml-4">• Scroll en bas → Zone commentaire</p>
+                            <p class="font-semibold text-indigo-700 mt-3">🗑️ SUPPRIMER:</p>
+                            <p class="ml-4">• Bouton rouge "Supprimer" → Confirmer</p>
+                            <p class="text-red-600 font-semibold mt-3">⚠️ Vous pouvez SEULEMENT modifier VOS propres tickets!</p>
+                        </div>
+                    </div>
 
-                        <!-- v2.0.6 -->
-                        <div class="bg-cyan-50 rounded-xl p-5 border-l-4 border-cyan-500">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-cyan-900">v2.0.6 - Nettoyage R2 Audio</h3>
-                                <span class="feature-tag bg-cyan-100 text-cyan-700">
-                                    <i class="fas fa-broom"></i> Performance
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-600">
-                                Suppression automatique des fichiers audio lors de la suppression de messages.
+                    <!-- Les 14 Rôles Système -->
+                    <button onclick="toggleAccordion('roles')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-users text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">👥 Les 14 Rôles Système</span>
+                        </div>
+                        <i id="roles-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="roles" class="accordion-content bg-gray-50 border-2 border-gray-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-3 text-sm md:text-base">
+                            <p class="font-bold text-slate-700 text-lg">📊 DIRECTION:</p>
+                            <p class="ml-4">• 👑 <strong>Admin</strong> → Tout faire + Gestion utilisateurs & rôles</p>
+                            <p class="ml-4">• 📊 <strong>Directeur</strong> → Vue complète + Rapports + Décisions</p>
+                            
+                            <p class="font-bold text-slate-700 text-lg mt-4">⚙️ MANAGEMENT MAINTENANCE:</p>
+                            <p class="ml-4">• ⭐ <strong>Superviseur</strong> → Coordination équipe technique</p>
+                            <p class="ml-4">• 🎯 <strong>Coordonnateur</strong> → Planification maintenance</p>
+                            <p class="ml-4">• 📅 <strong>Planificateur</strong> → Gestion planning interventions</p>
+                            
+                            <p class="font-bold text-slate-700 text-lg mt-4">🔧 TECHNIQUE:</p>
+                            <p class="ml-4">• 🔧 <strong>Technicien Senior</strong> → Expert + Formations + Support</p>
+                            <p class="ml-4">• 🔧 <strong>Technicien</strong> → Interventions techniques + Réparations</p>
+                            
+                            <p class="font-bold text-slate-700 text-lg mt-4">🏭 PRODUCTION:</p>
+                            <p class="ml-4">• 👔 <strong>Chef Équipe</strong> → Supervision opérations production</p>
+                            <p class="ml-4">• 🔥 <strong>Opérateur Four</strong> → Gestion fours + Maintenance niveau 1</p>
+                            <p class="ml-4">• 👷 <strong>Opérateur</strong> → Créer tickets + Signaler problèmes</p>
+                            
+                            <p class="font-bold text-slate-700 text-lg mt-4">🛡️ SUPPORT:</p>
+                            <p class="ml-4">• 🛡️ <strong>Agent SST</strong> → Santé & Sécurité au travail</p>
+                            <p class="ml-4">• ✓ <strong>Inspecteur Qualité</strong> → Contrôle qualité production</p>
+                            <p class="ml-4">• 📦 <strong>Magasinier</strong> → Gestion pièces + Inventaire</p>
+                            
+                            <p class="font-bold text-slate-700 text-lg mt-4">👁️ TRANSVERSAL:</p>
+                            <p class="ml-4">• 👁️ <strong>Lecture Seule</strong> → Consultation uniquement (aucune modification)</p>
+                            
+                            <p class="bg-blue-50 border-l-4 border-blue-500 p-3 mt-4 rounded">
+                                <strong class="text-blue-700">💡 Important:</strong> 14 rôles prédéfinis - Impossible d'en créer d'autres. Chaque rôle a des permissions spécifiques adaptées à l'industrie du verre.
                             </p>
                         </div>
                     </div>
-                </section>
 
-                <!-- Créer un Ticket -->
-                <section id="creer" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-green-500 to-emerald-600 text-white">
-                            <i class="fas fa-plus-circle"></i>
+                    <!-- Tableau Kanban -->
+                    <button onclick="toggleAccordion('kanban')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-columns text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">📊 Le Tableau Kanban</span>
                         </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Créer un Ticket</h2>
-                            <p class="text-gray-600">Signaler un problème en quelques clics</p>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="flex gap-4">
-                            <div class="step-number bg-green-100 text-green-700">1</div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-800 mb-2">Ouvrir le formulaire</h3>
-                                <p class="text-sm text-gray-600">Cliquez sur le bouton orange <strong>"Nouveau Ticket"</strong> en haut de la page</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-4">
-                            <div class="step-number bg-green-100 text-green-700">2</div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-800 mb-2">Remplir les informations</h3>
-                                <div class="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                                    <div><strong>Titre :</strong> Description courte et claire du problème</div>
-                                    <div><strong>Machine :</strong> Sélectionnez dans la liste déroulante</div>
-                                    <div><strong>Priorité :</strong> Normale / Élevée / Critique</div>
-                                    <div><strong>Description :</strong> Détails complémentaires (optionnel)</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-4">
-                            <div class="step-number bg-green-100 text-green-700">3</div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-800 mb-2">Ajouter des médias (optionnel)</h3>
-                                <p class="text-sm text-gray-600">
-                                    📸 Photos/vidéos - 📱 Sur mobile, la caméra s'ouvre automatiquement
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-4">
-                            <div class="step-number bg-green-100 text-green-700">4</div>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-800 mb-2">Créer le ticket</h3>
-                                <p class="text-sm text-gray-600">
-                                    Cliquez sur <strong>"Créer"</strong> - Un ID unique est automatiquement généré ✅
-                                </p>
-                            </div>
+                        <i id="kanban-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="kanban" class="accordion-content bg-gray-50 border-2 border-cyan-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-cyan-700">6 COLONNES = Workflow:</p>
+                            <p>🟦 Requête → 🟨 Diagnostic → 🟧 En Cours → 🟪 Attente Pièces → 🟩 Terminé → ⬜ Archivé</p>
+                            <p class="font-semibold text-cyan-700 mt-3">🖱️ DÉPLACER (Techniciens/Admins):</p>
+                            <p class="ml-4">• <strong>PC</strong>: Glisser-déposer</p>
+                            <p class="ml-4">• <strong>Mobile</strong>: Tap → Menu statut</p>
+                            <p class="text-cyan-600 font-semibold mt-3">💡 Mise à jour temps réel!</p>
                         </div>
                     </div>
-                </section>
 
-                <!-- Modifier & Médias -->
-                <section id="modifier" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-                            <i class="fas fa-edit"></i>
+                    <!-- Sur Mobile -->
+                    <button onclick="toggleAccordion('mobile')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-mobile-alt text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">📱 Sur Mobile</span>
                         </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Modifier un Ticket & Gérer les Médias</h2>
-                            <p class="text-gray-600">Mise à jour et gestion des photos/vidéos</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <!-- Modifier -->
-                        <div class="bg-blue-50 rounded-xl p-5">
-                            <h3 class="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                                <i class="fas fa-edit"></i> Modifier les Informations
-                            </h3>
-                            <ol class="space-y-2 text-sm text-gray-700">
-                                <li>1. Cliquez sur la carte du ticket</li>
-                                <li>2. Bouton bleu <strong>"Modifier"</strong></li>
-                                <li>3. Changez titre, description, priorité, machine</li>
-                                <li>4. Cliquez <strong>"Enregistrer"</strong></li>
-                            </ol>
-                            <div class="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-xs text-yellow-800">
-                                ⚠️ Vous pouvez seulement modifier vos propres tickets
-                            </div>
-                        </div>
-                        
-                        <!-- Médias -->
-                        <div class="bg-purple-50 rounded-xl p-5">
-                            <h3 class="font-semibold text-purple-900 mb-3 flex items-center gap-2">
-                                <i class="fas fa-images"></i> Gérer les Médias
-                            </h3>
-                            <div class="space-y-3 text-sm text-gray-700">
-                                <div>
-                                    <strong class="text-purple-800">Ajouter :</strong>
-                                    <p class="text-xs mt-1">Bouton "Ajouter médias" → Photos ajoutées instantanément</p>
-                                </div>
-                                <div>
-                                    <strong class="text-purple-800">Supprimer (v2.0.7) :</strong>
-                                    <p class="text-xs mt-1">Bouton 🗑️ corbeille sur chaque photo/vidéo</p>
-                                </div>
-                                <div>
-                                    <strong class="text-purple-800">Permissions :</strong>
-                                    <p class="text-xs mt-1">Créateur du ticket + Admin/Superviseur/Technicien</p>
-                                </div>
-                            </div>
+                        <i id="mobile-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="mobile" class="accordion-content bg-gray-50 border-2 border-gray-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-slate-700">📲 100% responsive!</p>
+                            <p>👆 TAP carte → Voir détails</p>
+                            <p>📸 PHOTO: Caméra auto!</p>
+                            <p>🤏 Pinch = Zoom photos</p>
+                            <p>📜 Scroll fluide</p>
                         </div>
                     </div>
-                    
-                    <div class="mt-4 bg-indigo-50 rounded-xl p-5">
-                        <h3 class="font-semibold text-indigo-900 mb-3 flex items-center gap-2">
-                            <i class="fas fa-comments"></i> Ajouter des Commentaires
-                        </h3>
-                        <p class="text-sm text-gray-700">
-                            Scrollez en bas du ticket → Zone de commentaire → Écrivez votre message → Envoyer
-                        </p>
-                    </div>
-                </section>
 
-                <!-- Messagerie -->
-                <section id="messages" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-pink-500 to-rose-600 text-white">
-                            <i class="fas fa-comments"></i>
+                    <!-- Messagerie -->
+                    <button onclick="toggleAccordion('messaging')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">💬 Messagerie Équipe</span>
                         </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Messagerie & Messages Vocaux</h2>
-                            <p class="text-gray-600">Communication interne avec audio</p>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <!-- Messages Texte -->
-                        <div>
-                            <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-comment text-blue-500"></i> Messages Texte
-                            </h3>
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div class="bg-blue-50 rounded-lg p-4">
-                                    <h4 class="font-semibold text-blue-900 mb-2">Public</h4>
-                                    <p class="text-sm text-gray-600">Visible par tous les utilisateurs</p>
-                                </div>
-                                <div class="bg-purple-50 rounded-lg p-4">
-                                    <h4 class="font-semibold text-purple-900 mb-2">Privé</h4>
-                                    <p class="text-sm text-gray-600">Sélectionnez un destinataire spécifique</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Messages Audio -->
-                        <div>
-                            <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-microphone text-red-500"></i> Messages Vocaux (v2.0.0)
-                            </h3>
-                            <div class="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-5 border-l-4 border-red-400">
-                                <div class="space-y-3 text-sm">
-                                    <div>
-                                        <strong>🎙️ Enregistrer :</strong>
-                                        <p class="text-gray-600 mt-1">Cliquez sur l'icône micro → Enregistrement jusqu'à 5 minutes → Prévisualiser → Envoyer</p>
-                                    </div>
-                                    <div>
-                                        <strong>🎧 Écouter :</strong>
-                                        <p class="text-gray-600 mt-1">Lecteur audio intégré avec contrôles (play, pause, timeline)</p>
-                                    </div>
-                                    <div>
-                                        <strong>📱 Compatible :</strong>
-                                        <p class="text-gray-600 mt-1">Tous navigateurs (WebM, MP4, OGG selon appareil)</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Suppression Messages -->
-                        <div>
-                            <h3 class="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-trash-alt text-rose-500"></i> Suppression Messages
-                            </h3>
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div class="bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-400">
-                                    <h4 class="font-semibold text-indigo-900 mb-2">En Masse (v2.0.9-10)</h4>
-                                    <ol class="text-xs text-gray-600 space-y-1">
-                                        <li>1. Cliquez "Sélectionner"</li>
-                                        <li>2. Cochez les messages OU cliquez "Tout"</li>
-                                        <li>3. Bouton "Supprimer X messages"</li>
-                                        <li>4. Confirmez</li>
-                                    </ol>
-                                </div>
-                                <div class="bg-rose-50 rounded-lg p-4 border-l-4 border-rose-400">
-                                    <h4 class="font-semibold text-rose-900 mb-2">Individuelle</h4>
-                                    <p class="text-xs text-gray-600">
-                                        Menu 3 points → Supprimer → Confirmer
-                                        <br><br>
-                                        <strong>Permissions :</strong> Expéditeur + Admin/Superviseur
-                                    </p>
-                                </div>
-                            </div>
+                        <i id="messaging-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="messaging" class="accordion-content bg-gray-50 border-2 border-green-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-3 text-sm md:text-base">
+                            <p class="font-semibold text-green-700">💬 CANAL PUBLIC:</p>
+                            <p class="ml-4">• Tous les membres voient les messages</p>
+                            <p class="ml-4">• Annonces importantes</p>
+                            <p class="ml-4">• Messages texte ou audio 🎤</p>
+                            
+                            <p class="font-semibold text-green-700 mt-3">🔒 MESSAGES PRIVÉS:</p>
+                            <p class="ml-4">• Conversations 1-à-1</p>
+                            <p class="ml-4">• Sélectionner contact dans liste</p>
+                            <p class="ml-4">• Messages texte ou audio 🎤</p>
+                            
+                            <p class="font-semibold text-green-700 mt-3">🎤 MESSAGES VOCAUX:</p>
+                            <p class="ml-4">• <strong>Enregistrer</strong>: Clic bouton micro 🎙️</p>
+                            <p class="ml-4">• <strong>Durée max</strong>: 5 minutes</p>
+                            <p class="ml-4">• <strong>Prévisualiser</strong>: Écouter avant envoi</p>
+                            <p class="ml-4">• <strong>Annuler</strong>: Bouton X rouge</p>
+                            
+                            <p class="bg-green-50 border-l-4 border-green-500 p-3 mt-4 rounded">
+                                <strong class="text-green-700">💡 Pratique:</strong> Les messages audio sont idéaux pour les techniciens sur le terrain qui ne peuvent pas taper!
+                            </p>
                         </div>
                     </div>
-                </section>
 
-                <!-- Kanban -->
-                <section id="kanban" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
-                            <i class="fas fa-columns"></i>
+                    <!-- Contact -->
+                    <button onclick="toggleAccordion('contact')" class="accordion-button w-full text-left px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg shadow-md flex items-center justify-between transition-all">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-phone text-lg"></i>
+                            <span class="text-base md:text-lg font-bold">📞 Contact & Support</span>
                         </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Tableau Kanban</h2>
-                            <p class="text-gray-600">Workflow visuel des tickets</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-                        <div class="bg-blue-100 rounded-lg p-3 text-center">
-                            <div class="text-2xl mb-1">🟦</div>
-                            <div class="text-xs font-semibold text-blue-900">Requête</div>
-                        </div>
-                        <div class="bg-yellow-100 rounded-lg p-3 text-center">
-                            <div class="text-2xl mb-1">🟨</div>
-                            <div class="text-xs font-semibold text-yellow-900">Diagnostic</div>
-                        </div>
-                        <div class="bg-orange-100 rounded-lg p-3 text-center">
-                            <div class="text-2xl mb-1">🟧</div>
-                            <div class="text-xs font-semibold text-orange-900">En Cours</div>
-                        </div>
-                        <div class="bg-purple-100 rounded-lg p-3 text-center">
-                            <div class="text-2xl mb-1">🟪</div>
-                            <div class="text-xs font-semibold text-purple-900">Attente Pièces</div>
-                        </div>
-                        <div class="bg-green-100 rounded-lg p-3 text-center">
-                            <div class="text-2xl mb-1">🟩</div>
-                            <div class="text-xs font-semibold text-green-900">Terminé</div>
-                        </div>
-                        <div class="bg-gray-100 rounded-lg p-3 text-center">
-                            <div class="text-2xl mb-1">⬜</div>
-                            <div class="text-xs font-semibold text-gray-900">Archivé</div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div class="bg-blue-50 rounded-lg p-4">
-                            <h3 class="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                                <i class="fas fa-desktop"></i> Sur PC
-                            </h3>
-                            <p class="text-sm text-gray-600">Glissez-déposez les tickets entre les colonnes</p>
-                        </div>
-                        <div class="bg-purple-50 rounded-lg p-4">
-                            <h3 class="font-semibold text-purple-900 mb-2 flex items-center gap-2">
-                                <i class="fas fa-mobile-alt"></i> Sur Mobile
-                            </h3>
-                            <p class="text-sm text-gray-600">Tapez sur le ticket → Menu statut → Sélectionnez</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
-                        <p class="text-sm text-green-800">
-                            <i class="fas fa-sync-alt mr-2"></i>
-                            <strong>Mise à jour temps réel :</strong> Les changements sont visibles instantanément par tous les utilisateurs
-                        </p>
-                    </div>
-                </section>
-
-                <!-- Rôles & Permissions -->
-                <section id="roles" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-slate-600 to-gray-700 text-white">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Les 14 Rôles Système</h2>
-                            <p class="text-gray-600">Permissions adaptées à l'industrie du verre</p>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4 mb-6">
-                        <p class="text-sm text-amber-800">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            <strong>14 rôles prédéfinis</strong> - Impossible d'en créer d'autres. Chaque rôle a des permissions spécifiques.
-                        </p>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <!-- Direction -->
-                        <div class="bg-slate-50 rounded-xl p-5 border-2 border-slate-200">
-                            <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-crown text-yellow-500"></i> Direction
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">👑</span>
-                                    <div>
-                                        <strong>Admin</strong>
-                                        <p class="text-xs text-gray-600">Accès complet + Gestion utilisateurs</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">📊</span>
-                                    <div>
-                                        <strong>Directeur</strong>
-                                        <p class="text-xs text-gray-600">Vue complète + Rapports</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <i id="contact-icon" class="fas fa-chevron-down transition-transform duration-300 text-sm"></i>
+                    </button>
+                    <div id="contact" class="accordion-content bg-gray-50 border-2 border-teal-200 rounded-lg p-4 md:p-6">
+                        <div class="space-y-2 text-sm md:text-base">
+                            <p class="font-semibold text-teal-700">🆘 SUPPORT: Votre admin système</p>
+                            <p>🌐 mecanique.igpglass.ca</p>
+                            <p>📖 Ce guide</p>
+                            <p>🏷️ <strong>Version 2.0.10 Optimisée</strong></p>
                         </div>
                         
-                        <!-- Management -->
-                        <div class="bg-blue-50 rounded-xl p-5 border-2 border-blue-200">
-                            <h3 class="font-bold text-blue-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-cog text-blue-500"></i> Management
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">⭐</span>
-                                    <div>
-                                        <strong>Superviseur</strong>
-                                        <p class="text-xs text-gray-600">Coordination équipe</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">🎯</span>
-                                    <div>
-                                        <strong>Coordonnateur</strong>
-                                        <p class="text-xs text-gray-600">Planification maintenance</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">📅</span>
-                                    <div>
-                                        <strong>Planificateur</strong>
-                                        <p class="text-xs text-gray-600">Gestion planning</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="mt-6 pt-6 border-t border-teal-200">
+                            <h4 class="font-semibold text-teal-700 mb-4 text-base md:text-lg">📝 Formulaire de Contact</h4>
+                            <div class="plato-form-widget" data-pf-id="fr9ercvp1ay" data-pf-host="form.formcan.com/"></div>
+                            <script src="//static.formcan.com/assets/dist/formbuilder.js?v=20"></script>
                         </div>
-                        
-                        <!-- Technique -->
-                        <div class="bg-orange-50 rounded-xl p-5 border-2 border-orange-200">
-                            <h3 class="font-bold text-orange-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-wrench text-orange-500"></i> Technique
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">🔧</span>
-                                    <div>
-                                        <strong>Technicien Senior</strong>
-                                        <p class="text-xs text-gray-600">Expert + Formations</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">🔧</span>
-                                    <div>
-                                        <strong>Technicien</strong>
-                                        <p class="text-xs text-gray-600">Interventions + Réparations</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Production -->
-                        <div class="bg-green-50 rounded-xl p-5 border-2 border-green-200">
-                            <h3 class="font-bold text-green-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-industry text-green-500"></i> Production
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">👔</span>
-                                    <div>
-                                        <strong>Chef Équipe</strong>
-                                        <p class="text-xs text-gray-600">Supervision production</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">🔥</span>
-                                    <div>
-                                        <strong>Opérateur Four</strong>
-                                        <p class="text-xs text-gray-600">Gestion fours</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">👷</span>
-                                    <div>
-                                        <strong>Opérateur</strong>
-                                        <p class="text-xs text-gray-600">Créer tickets</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Support -->
-                        <div class="bg-purple-50 rounded-xl p-5 border-2 border-purple-200">
-                            <h3 class="font-bold text-purple-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-life-ring text-purple-500"></i> Support
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">🛡️</span>
-                                    <div>
-                                        <strong>Agent SST</strong>
-                                        <p class="text-xs text-gray-600">Santé & Sécurité</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">✓</span>
-                                    <div>
-                                        <strong>Inspecteur Qualité</strong>
-                                        <p class="text-xs text-gray-600">Contrôle qualité</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">📦</span>
-                                    <div>
-                                        <strong>Magasinier</strong>
-                                        <p class="text-xs text-gray-600">Gestion pièces</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Transversal -->
-                        <div class="bg-gray-50 rounded-xl p-5 border-2 border-gray-200">
-                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-eye text-gray-500"></i> Transversal
-                            </h3>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-lg">👁️</span>
-                                    <div>
-                                        <strong>Lecture Seule</strong>
-                                        <p class="text-xs text-gray-600">Consultation uniquement</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Mobile -->
-                <section id="mobile" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
-                            <i class="fas fa-mobile-alt"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Utilisation Mobile</h2>
-                            <p class="text-gray-600">Interface optimisée pour smartphones et tablettes</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-3 gap-4">
-                        <div class="bg-teal-50 rounded-xl p-5 text-center">
-                            <div class="text-4xl mb-3">📱</div>
-                            <h3 class="font-semibold text-teal-900 mb-2">100% Responsive</h3>
-                            <p class="text-sm text-gray-600">Interface adaptée à tous les écrans</p>
-                        </div>
-                        <div class="bg-blue-50 rounded-xl p-5 text-center">
-                            <div class="text-4xl mb-3">📸</div>
-                            <h3 class="font-semibold text-blue-900 mb-2">Caméra Native</h3>
-                            <p class="text-sm text-gray-600">Accès direct à la caméra pour photos</p>
-                        </div>
-                        <div class="bg-purple-50 rounded-xl p-5 text-center">
-                            <div class="text-4xl mb-3">👆</div>
-                            <h3 class="font-semibold text-purple-900 mb-2">Touch Events</h3>
-                            <p class="text-sm text-gray-600">Drag & drop tactile fluide</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-5 border-l-4 border-teal-500">
-                        <h3 class="font-semibold text-teal-900 mb-3">💡 Conseils Mobile</h3>
-                        <ul class="space-y-2 text-sm text-gray-700">
-                            <li class="flex items-start gap-2">
-                                <i class="fas fa-check text-teal-500 mt-1"></i>
-                                <span>Ajoutez l'app à l'écran d'accueil pour un accès rapide</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <i class="fas fa-check text-teal-500 mt-1"></i>
-                                <span>Activez les notifications pour rester informé</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <i class="fas fa-check text-teal-500 mt-1"></i>
-                                <span>Utilisez le mode paysage pour le tableau Kanban</span>
-                            </li>
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- Astuces -->
-                <section id="astuces" class="glass-card rounded-2xl shadow-xl p-6 md:p-8 mb-8 section-card">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="icon-badge bg-gradient-to-br from-yellow-500 to-amber-600 text-white">
-                            <i class="fas fa-lightbulb"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Astuces & Raccourcis</h2>
-                            <p class="text-gray-600">Gagnez du temps avec ces tips</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div class="bg-yellow-50 rounded-xl p-5 border-l-4 border-yellow-400">
-                            <h3 class="font-semibold text-yellow-900 mb-3">⚡ Raccourcis Clavier</h3>
-                            <div class="space-y-2 text-sm text-gray-700">
-                                <div class="flex justify-between">
-                                    <span><kbd class="px-2 py-1 bg-white rounded border">Esc</kbd></span>
-                                    <span>Fermer modal</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span><kbd class="px-2 py-1 bg-white rounded border">Ctrl</kbd> + <kbd class="px-2 py-1 bg-white rounded border">N</kbd></span>
-                                    <span>Nouveau ticket</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-400">
-                            <h3 class="font-semibold text-blue-900 mb-3">💡 Productivité</h3>
-                            <ul class="space-y-2 text-sm text-gray-700">
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-star text-yellow-500 mt-1"></i>
-                                    <span>Utilisez "Tout" pour sélection rapide</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-star text-yellow-500 mt-1"></i>
-                                    <span>Messages vocaux pour gain de temps</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-star text-yellow-500 mt-1"></i>
-                                    <span>Glissez-déposez sur PC pour rapidité</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Footer -->
-                <div class="glass-card rounded-2xl shadow-xl p-6 text-center">
-                    <div class="mb-4">
-                        <i class="fas fa-question-circle text-4xl text-purple-600"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Besoin d'aide ?</h3>
-                    <p class="text-gray-600 mb-4">Notre équipe est là pour vous accompagner</p>
-                    <div class="flex flex-wrap gap-3 justify-center">
-                        <a href="https://contact.aide.support/fr9ercvp1ay" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg">
-                            <i class="fas fa-envelope"></i>
-                            Contactez-nous
-                        </a>
-                        <a href="/changelog" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 border-2 border-gray-200 rounded-lg font-semibold hover:bg-gray-50 transition-all">
-                            <i class="fas fa-history"></i>
-                            Voir le Changelog
-                        </a>
-                    </div>
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <p class="text-sm text-gray-500">
-                            © 2025 - Produits Verriers International (IGP) Inc.
-                        </p>
-                        <p class="text-xs text-gray-400 mt-1">
-                            Développé par le Département des Technologies de l'Information
-                        </p>
                     </div>
                 </div>
-            </main>
+            </div>
         </div>
     </div>
 
     <script>
-        // Smooth scroll & active nav
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                const targetSection = document.getElementById(targetId);
-                
-                if (targetSection) {
-                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    
-                    // Update active state
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-                }
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            const isActive = content.classList.contains('active');
+            
+            // Fermer tous les accordéons
+            document.querySelectorAll('.accordion-content').forEach(el => {
+                el.classList.remove('active');
             });
-        });
-        
-        // Intersection Observer for scroll spy
-        const observerOptions = {
-            root: null,
-            rootMargin: '-20% 0px -70% 0px',
-            threshold: 0
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const id = entry.target.getAttribute('id');
-                    document.querySelectorAll('.nav-link').forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === '#' + id) {
-                            link.classList.add('active');
-                        }
-                    });
-                }
+            document.querySelectorAll('[id$="-icon"]').forEach(el => {
+                el.classList.remove('rotate-180');
             });
-        }, observerOptions);
-        
-        // Observe all sections
-        document.querySelectorAll('section[id]').forEach(section => {
-            observer.observe(section);
-        });
-        
-        // Stagger animation for section cards
-        document.querySelectorAll('.section-card').forEach((card, index) => {
-            card.style.animationDelay = (index * 0.1) + 's';
-        });
+            
+            // Ouvrir l'accordéon cliqué si il était fermé
+            if (!isActive) {
+                content.classList.add('active');
+                icon.classList.add('rotate-180');
+            }
+        }
     </script>
 </body>
 </html>
