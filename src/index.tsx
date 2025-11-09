@@ -6064,10 +6064,10 @@ app.get('/', (c) => {
                                         },
                                             // Banniere pour tickets planifies/assignes (seulement avant "En cours")
                                             ((ticket.scheduled_date || ticket.assigned_to) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-amber-400 overflow-hidden',
+                                                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400 overflow-hidden',
                                                 style: { fontSize: '10px' }
                                             },
-                                                React.createElement('div', { className: 'flex items-center gap-1 bg-gradient-to-br from-amber-500 to-amber-600 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(251,191,36,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-amber-300 flex-shrink-0' },
+                                                React.createElement('div', { className: 'flex items-center gap-1 bg-gradient-to-br from-green-500 to-green-600 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300 flex-shrink-0' },
                                                     React.createElement('i', { className: 'fas fa-calendar-check text-white drop-shadow-lg text-[9px]' }),
                                                     React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
                                                 ),
@@ -6181,7 +6181,7 @@ app.get('/', (c) => {
                                         },
                                             // Banniere pour tickets planifies/assignes
                                             (ticket.scheduled_date || ticket.assigned_to) ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg shadow-[0_2px_8px_rgba(37,99,235,0.4)] border-b-2 border-amber-400'
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg shadow-[0_2px_8px_rgba(37,99,235,0.4)] border-b-2 border-green-400'
                                             },
                                                 React.createElement('i', { className: ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check' }),
                                                 React.createElement('span', {}, ticket.scheduled_date ? 'PLANIFIÉ' : 'ASSIGNÉ')
