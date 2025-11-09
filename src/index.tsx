@@ -6021,7 +6021,7 @@ app.get('/', (c) => {
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
                     React.createElement('div', { className: 'space-y-4' },
                         React.createElement('div', { className: 'overflow-x-auto pb-4' },
-                            React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                            React.createElement('div', { className: 'kanban-grid flex gap-2' },
                             activeStatuses.map(status => {
                             const isDragOver = dragOverColumn === status.key;
                             const ticketsInColumn = getTicketsByStatus(status.key);
@@ -6145,7 +6145,7 @@ app.get('/', (c) => {
                     ),
                     
                     showArchived ? React.createElement('div', { id: 'archived-section', className: 'overflow-x-auto pb-4' },
-                        React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                        React.createElement('div', { className: 'kanban-grid flex gap-2' },
                             React.createElement('div', { 
                                 key: archivedStatus.key, 
                                 className: 'kanban-column' + 
