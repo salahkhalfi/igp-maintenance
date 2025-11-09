@@ -781,9 +781,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.4-ui-polish  
+**Version**: 2.0.5-colors-harmonized  
 **Dernière mise à jour**: 2025-01-09  
-**Statut**: ✅ Prêt pour Présentation - UI/UX finalisée, performances optimales
+**Statut**: ✅ Production Ready - Palette IGP harmonisée, identité visuelle cohérente
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
@@ -877,11 +877,11 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - **Git history**: ✅ Commit d'optimisation créé
 
 ### 🚀 Déploiement
-- **URL Production**: https://8ce1bac9.webapp-7t8.pages.dev
+- **URL Production**: https://72950bf9.webapp-7t8.pages.dev
 - **URL Personnalisée**: https://mecanique.igpglass.ca
-- **Build**: ✅ Succès (498.67 kB)
-- **Tests**: ✅ HTTP 200, temps de réponse optimal
-- **Backup**: ✅ Tag v2.0.4-ui-polish créé
+- **Build**: ✅ Succès (498.89 kB)
+- **Tests**: ✅ HTTP 200, toutes fonctions préservées
+- **Backup**: ✅ Tag v2.0.5-colors-harmonized créé
 
 ### 📝 Recommandations Appliquées
 - ✅ **React Best Practices** - useCallback pour handlers, useMemo pour objets/arrays
@@ -889,6 +889,40 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - ✅ **Code Cleanup** - Suppression code mort, dépendances inutilisées
 - ✅ **Memory Management** - Cleanup event listeners, éviter memory leaks
 - ✅ **Bundle Optimization** - Tree-shaking amélioré, moins de dépendances
+
+## 🆕 Nouveautés v2.0.5-colors-harmonized (2025-01-09) - Harmonisation Palette IGP
+
+### 🎨 Refactoring Progressif des Couleurs (4 étapes)
+
+#### Étape 1: Palette IGP Étendue
+- **igp-blue-light** (#3b82f6) - Bleu clair pour hover et backgrounds
+- **igp-blue-dark** (#1e3a8a) - Bleu foncé pour texte et états actifs
+- **igp-green** (#10b981) - Vert validation et priorité basse
+- **igp-yellow** (#f59e0b) - Jaune warning et priorité haute
+
+#### Étape 2: Badge Messagerie Unifié
+- Messages non lus: `bg-igp-red` pulsant (rouge IGP cohérent)
+- Badge vide: `from-igp-blue to-igp-blue-dark` (gradient harmonieux)
+- Meilleure visibilité des notifications urgentes
+
+#### Étape 3: Boutons Principaux IGP
+- **Nouvelle Demande**: `bg-igp-blue` hover `bg-igp-blue-dark`
+- **Connexion**: Palette IGP au lieu de Tailwind générique
+- **Upload média**: Cohérence avec actions principales
+- **Modifier/Supprimer**: `igp-blue-light` et `igp-red`
+
+#### Étape 4: Badges Priorité Harmonisés
+- **CRITIQUE**: `text-igp-red` (rouge uniforme)
+- **HAUTE**: `text-igp-yellow` (jaune IGP)
+- **FAIBLE**: `text-igp-green` (vert IGP)
+- Gradients simplifiés en couleurs plates cohérentes
+
+### 🎯 Résultats Harmonisation
+- ✅ **Identité visuelle 100% IGP** - Toutes les couleurs respectent la charte
+- ✅ **Cohérence palette** - Bleu/Rouge/Vert/Jaune unifiés partout
+- ✅ **Gradients simplifiés** - Moins de variations, plus de clarté
+- ✅ **Branding renforcé** - IGP reconnaissable au premier coup d'œil
+- ✅ **Accessibilité préservée** - Contraste maintenu (WCAG AA)
 
 ## 🆕 Nouveautés v2.0.4-ui-polish (2025-01-09) - Finitions UI pour Présentation
 
