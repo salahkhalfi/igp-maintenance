@@ -7198,14 +7198,16 @@ app.get('/guide', (c) => {
                     <div class="grid md:grid-cols-2 gap-4">
                         <div class="bg-yellow-50 rounded-xl p-5 border-l-4 border-yellow-400">
                             <h3 class="font-semibold text-yellow-900 mb-3">⚡ Raccourcis Clavier</h3>
-                            <div class="space-y-2 text-sm text-gray-700">
-                                <div class="flex justify-between">
-                                    <span><kbd class="px-2 py-1 bg-white rounded border">Esc</kbd></span>
-                                    <span>Fermer modal</span>
+                            <div class="space-y-3 text-sm text-gray-700">
+                                <div class="flex justify-between items-center">
+                                    <span><kbd class="px-2 py-1 bg-white rounded border shadow-sm">Esc</kbd></span>
+                                    <span class="text-right">Fermer modals / Effacer recherche</span>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span><kbd class="px-2 py-1 bg-white rounded border">Ctrl</kbd> + <kbd class="px-2 py-1 bg-white rounded border">N</kbd></span>
-                                    <span>Nouveau ticket</span>
+                                <div class="bg-white bg-opacity-50 rounded-lg p-2 mt-2">
+                                    <p class="text-xs text-gray-600 flex items-center gap-2">
+                                        <i class="fas fa-check-circle text-green-600"></i>
+                                        <span><strong>Compatible:</strong> Windows, Mac et Linux</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
