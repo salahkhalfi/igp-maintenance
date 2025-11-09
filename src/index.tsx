@@ -2691,6 +2691,23 @@ app.get('/', (c) => {
                 });
             };
             
+            const handleDeleteMedia = async (mediaId) => {
+                setConfirmDialog({
+                    show: true,
+                    message: 'Supprimer ce media ?',
+                    onConfirm: async () => {
+                        setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        try {
+                            await axios.delete(API_URL + '/media/' + mediaId);
+                            alert('Media supprime avec succes');
+                            loadTicketDetails();
+                        } catch (error) {
+                            alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                        }
+                    }
+                });
+            };
+            
             const handleAddComment = async (e) => {
                 e.preventDefault();
                 if (!newComment.trim()) {
@@ -3038,24 +3055,43 @@ app.get('/', (c) => {
                                 ticket.media.map((media, index) =>
                                     React.createElement('div', { 
                                         key: media.id,
-                                        className: 'relative group cursor-pointer',
-                                        onClick: () => setSelectedMedia(media)
+                                        className: 'relative group'
                                     },
-                                        media.file_type.startsWith('image/') 
-                                            ? React.createElement('img', {
-                                                src: API_URL + '/media/' + media.id,
-                                                alt: media.file_name,
-                                                className: 'w-full h-32 object-cover rounded border-2 border-gray-300 hover:border-igp-blue transition-all'
-                                            })
-                                            : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center' },
-                                                React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
+                                        React.createElement('div', {
+                                            className: 'cursor-pointer',
+                                            onClick: () => setSelectedMedia(media)
+                                        },
+                                            media.file_type.startsWith('image/') 
+                                                ? React.createElement('img', {
+                                                    src: API_URL + '/media/' + media.id,
+                                                    alt: media.file_name,
+                                                    className: 'w-full h-32 object-cover rounded border-2 border-gray-300 hover:border-igp-blue transition-all'
+                                                })
+                                                : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center' },
+                                                    React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
+                                                ),
+                                            React.createElement('div', { className: 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center pointer-events-none' },
+                                                React.createElement('i', { className: 'fas fa-search-plus text-white text-2xl opacity-0 group-hover:opacity-100 transition-all' })
                                             ),
-                                        React.createElement('div', { className: 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center' },
-                                            React.createElement('i', { className: 'fas fa-search-plus text-white text-2xl opacity-0 group-hover:opacity-100 transition-all' })
+                                            React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded pointer-events-none' },
+                                                media.file_type.startsWith('image/') ? '📷' : '🎥'
+                                            )
                                         ),
-                                        React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded' },
-                                            media.file_type.startsWith('image/') ? '📷' : '🎥'
-                                        )
+                                        (currentUser && (
+                                            currentUser.role === 'admin' ||
+                                            currentUser.role === 'supervisor' ||
+                                            currentUser.role === 'technician' ||
+                                            (ticket.reported_by === currentUser.id)
+                                        )) ? React.createElement('button', {
+                                            onClick: (e) => {
+                                                e.stopPropagation();
+                                                handleDeleteMedia(media.id);
+                                            },
+                                            className: 'absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg z-10',
+                                            title: 'Supprimer ce media'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-trash text-xs' })
+                                        ) : null
                                     )
                                 )
                             )

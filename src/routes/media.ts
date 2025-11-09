@@ -140,29 +140,57 @@ media.get('/:id', async (c) => {
 // DELETE /api/media/:id - Supprimer un fichier (protégé)
 media.delete('/:id', authMiddleware, async (c) => {
   try {
+    const user = c.get('user') as any;
     const id = c.req.param('id');
     
-    // Récupérer les infos du média
-    const mediaInfo = await c.env.DB.prepare(
-      'SELECT * FROM media WHERE id = ?'
-    ).bind(id).first() as any;
+    // Récupérer les infos du média avec le créateur du ticket
+    const mediaInfo = await c.env.DB.prepare(`
+      SELECT m.*, t.reported_by as ticket_creator
+      FROM media m
+      LEFT JOIN tickets t ON m.ticket_id = t.id
+      WHERE m.id = ?
+    `).bind(id).first() as any;
     
     if (!mediaInfo) {
-      return c.json({ error: 'Média non trouvé' }, 404);
+      return c.json({ error: 'Media non trouve' }, 404);
+    }
+    
+    // Vérification des permissions:
+    // - Admin: peut tout supprimer
+    // - Supervisor: peut tout supprimer
+    // - Technician: peut tout supprimer
+    // - Operator: peut supprimer uniquement les médias de ses propres tickets
+    const canDelete = 
+      user.role === 'admin' ||
+      user.role === 'supervisor' ||
+      user.role === 'technician' ||
+      (user.role === 'operator' && mediaInfo.ticket_creator === user.userId);
+    
+    if (!canDelete) {
+      return c.json({ error: 'Vous n avez pas la permission de supprimer ce media' }, 403);
     }
     
     // Supprimer de R2
-    await c.env.MEDIA_BUCKET.delete(mediaInfo.file_key);
+    try {
+      await c.env.MEDIA_BUCKET.delete(mediaInfo.file_key);
+      console.log(`Media supprime du R2: ${mediaInfo.file_key}`);
+    } catch (deleteError) {
+      console.error(`Erreur suppression R2 ${mediaInfo.file_key}:`, deleteError);
+      // Continue pour supprimer de la base de donnees
+    }
     
     // Supprimer de la base de données
     await c.env.DB.prepare(
       'DELETE FROM media WHERE id = ?'
     ).bind(id).run();
     
-    return c.json({ message: 'Média supprimé avec succès' });
+    return c.json({ 
+      message: 'Media supprime avec succes',
+      fileDeleted: true
+    });
   } catch (error) {
     console.error('Delete media error:', error);
-    return c.json({ error: 'Erreur lors de la suppression du média' }, 500);
+    return c.json({ error: 'Erreur lors de la suppression du media' }, 500);
   }
 });
 
