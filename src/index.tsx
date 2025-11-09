@@ -5880,6 +5880,7 @@ app.get('/', (c) => {
                             )
                         ),
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
+                            // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
                                 className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all'
@@ -5887,13 +5888,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
                             ),
-                            React.createElement('button', {
-                                onClick: onRefresh,
-                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
-                            },
-                                React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
-                                'Actualiser'
-                            ),
+                            // 2. Messagerie (le plus utilisé quotidiennement)
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
@@ -5902,6 +5897,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-comments mr-2' }),
                                 'Messagerie'
                             ) : null,
+                            // 3. Archives (consultation fréquente)
                             React.createElement('button', {
                                 onClick: () => {
                                     setShowArchived(!showArchived);
@@ -5927,6 +5923,7 @@ app.get('/', (c) => {
                                     (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
                                 }, getTicketsByStatus('archived').length)
                             ),
+                            // 4. Utilisateurs (gestion admin - moins fréquent)
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
@@ -5935,6 +5932,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: "fas fa-users-cog mr-2" }),
                                 "Utilisateurs"
                             ) : null,
+                            // 5. Machines (gestion admin - moins fréquent)
                             (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMachineManagement(true),
@@ -5943,6 +5941,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: "fas fa-cogs mr-2" }),
                                 "Machines"
                             ) : null,
+                            // 6. Rôles (admin uniquement - rare)
                             (currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => {
@@ -5961,6 +5960,15 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
                             ) : null,
+                            // 7. Actualiser (utile mais auto-refresh disponible)
+                            React.createElement('button', {
+                                onClick: onRefresh,
+                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
+                            },
+                                React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
+                                'Actualiser'
+                            ),
+                            // 8. Déconnexion (action de sortie - toujours à la fin)
                             React.createElement('button', {
                                 onClick: onLogout,
                                 className: 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 shadow-md transition-all'
@@ -5968,6 +5976,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
                                 'Déconnexion'
                             ),
+                            // 9. Guide (aide contextuelle - toujours accessible)
                             React.createElement('a', {
                                 href: '/guide',
                                 target: '_blank',
