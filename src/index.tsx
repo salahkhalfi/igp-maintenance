@@ -984,6 +984,16 @@ app.get('/', (c) => {
                 -4px -4px 12px rgba(255, 255, 255, 0.7),
                 inset 1px 1px 2px rgba(255, 255, 255, 0.3);
             border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .kanban-column:hover {
+            background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+            box-shadow: 
+                10px 10px 20px rgba(71, 85, 105, 0.18),
+                -5px -5px 14px rgba(255, 255, 255, 0.8),
+                inset 1px 1px 3px rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
         }
         
         /* Colonnes vides prennent moins de place */
@@ -5594,7 +5604,7 @@ app.get('/', (c) => {
                                         ),
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', { 
-                                            className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
+                                            className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-gradient-to-r from-red-500 to-red-600 animate-pulse" : "bg-gradient-to-r from-blue-600 to-blue-700 opacity-50"),
                                             onClick: () => setShowMessaging(true),
                                             title: unreadMessagesCount > 0 ? (unreadMessagesCount + " messages non lus") : "Aucun message non lu"
                                         },
@@ -5777,7 +5787,7 @@ app.get('/', (c) => {
                                             React.createElement('div', { className: 'mb-1' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm line-clamp-2' }, ticket.title),
+                                            React.createElement('h4', { className: 'font-bold text-gray-900 mb-1 text-sm line-clamp-2' }, ticket.title),
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('span', { 
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
@@ -5880,7 +5890,7 @@ app.get('/', (c) => {
                                             React.createElement('div', { className: 'mb-1' },
                                                 React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
                                             ),
-                                            React.createElement('h4', { className: 'font-semibold text-gray-800 mb-1 text-sm line-clamp-2' }, ticket.title),
+                                            React.createElement('h4', { className: 'font-bold text-gray-900 mb-1 text-sm line-clamp-2' }, ticket.title),
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('span', { 
                                                     className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
