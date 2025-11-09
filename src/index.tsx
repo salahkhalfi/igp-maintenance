@@ -959,9 +959,16 @@ app.get('/', (c) => {
             theme: {
                 extend: {
                     colors: {
+                        // Couleurs primaires IGP (existantes)
                         'igp-blue': '#1e40af',
                         'igp-orange': '#ea580c',
                         'igp-red': '#dc2626',
+                        
+                        // Nouvelles couleurs harmonisées IGP
+                        'igp-blue-light': '#3b82f6',
+                        'igp-blue-dark': '#1e3a8a',
+                        'igp-green': '#10b981',
+                        'igp-yellow': '#f59e0b',
                     }
                 }
             }
