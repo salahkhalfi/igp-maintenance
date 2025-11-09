@@ -2662,7 +2662,7 @@ app.get('/', (c) => {
                 
                 setConfirmDialog({
                     show: true,
-                    message: 'Voulez-vous vraiment supprimer ce ticket ?',
+                    message: 'Supprimer ce ticket ?',
                     onConfirm: async () => {
                         setConfirmDialog({ show: false, message: '', onConfirm: null });
                         try {
