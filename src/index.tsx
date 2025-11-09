@@ -3052,8 +3052,8 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'font-bold text-gray-700' }, "Assigné à:")
                                             ),
                                             React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' },
-                                                ticket.assigned_to 
-                                                    ? (ticket.assigned_to === 'all' ? '👥 Toute équipe' : '👤 ' + (ticket.assignee_name || 'Technicien #' + ticket.assigned_to))
+                                                ticket.assigned_to && ticket.assigned_to !== '' && ticket.assigned_to !== '0' && ticket.assigned_to !== 0
+                                                    ? (ticket.assigned_to === 'all' ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Technicien #' + ticket.assigned_to))
                                                     : '❌ Non assigné'
                                             )
                                         ),
@@ -6072,8 +6072,8 @@ app.get('/', (c) => {
                                                     React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
                                                 ),
                                                 React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 bg-blue-800/60 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border border-blue-500/40 truncate' },
-                                                    ticket.assigned_to 
-                                                        ? (ticket.assigned_to === 'all' ? '👥 Équipe complète' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
+                                                    ticket.assigned_to && ticket.assigned_to !== '' && ticket.assigned_to !== '0' && ticket.assigned_to !== 0
+                                                        ? (ticket.assigned_to === 'all' ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
                                                         : '⚠️ Non assigné'
                                                 ),
                                                 React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
