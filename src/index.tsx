@@ -5588,11 +5588,11 @@ app.get('/', (c) => {
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
-                                            (currentUser.role === "operator" 
+                                            (currentUser?.role === "operator" 
                                                 ? tickets.filter(t => t.reported_by === currentUser.id).length 
                                                 : tickets.length) + " tickets actifs"
                                         ),
-                                        (currentUser.role === "technician" || currentUser.role === "supervisor" || currentUser.role === "admin") ?
+                                        (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', { 
                                             className: "flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer" + (unreadMessagesCount > 0 ? "" : " opacity-50"),
                                             onClick: () => setShowMessaging(true),
