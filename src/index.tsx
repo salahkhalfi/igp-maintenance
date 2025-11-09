@@ -2284,7 +2284,7 @@ app.get('/', (c) => {
                             requestBody.assigned_to = parseInt(assignedTo);
                         }
                         if (scheduledDate) {
-                            requestBody.scheduled_date = scheduledDate + ':00'; // Format: YYYY-MM-DDTHH:mm:ss
+                            requestBody.scheduled_date = scheduledDate + ' 00:00:00'; // Format: YYYY-MM-DD 00:00:00 (minuit)
                         }
                     }
                     
@@ -2545,14 +2545,14 @@ app.get('/', (c) => {
                                     )
                                 ),
                                 
-                                // Date et heure planifiée
+                                // Date de maintenance planifiée
                                 React.createElement('div', { className: 'mb-2' },
                                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 
-                                        React.createElement('i', { className: 'fas fa-clock mr-2' }),
-                                        'Date planifiée'
+                                        React.createElement('i', { className: 'fas fa-calendar-day mr-2' }),
+                                        'Date de maintenance'
                                     ),
                                     React.createElement('input', {
-                                        type: 'datetime-local',
+                                        type: 'date',
                                         value: scheduledDate,
                                         onChange: (e) => setScheduledDate(e.target.value),
                                         className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
@@ -2626,7 +2626,7 @@ app.get('/', (c) => {
                 // Pré-remplir les champs si le ticket est déjà planifié
                 if (ticket) {
                     setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
-                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 16) : '');
+                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 10) : '');
                 }
             }, [show, currentUser.role, ticket]);
             
@@ -2782,9 +2782,9 @@ app.get('/', (c) => {
                         updateData.assigned_to = null;
                     }
                     
-                    // Date planifiée
+                    // Date de maintenance planifiée
                     if (scheduledDate) {
-                        updateData.scheduled_date = scheduledDate + ':00';
+                        updateData.scheduled_date = scheduledDate + ' 00:00:00';
                     } else {
                         updateData.scheduled_date = null;
                     }
@@ -2967,14 +2967,14 @@ app.get('/', (c) => {
                                             )
                                         ),
                                         
-                                        // Date et heure planifiée
+                                        // Date de maintenance planifiée
                                         React.createElement('div', {},
                                             React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
-                                                React.createElement('i', { className: 'fas fa-clock mr-2 text-slate-600' }),
-                                                "Date planifiée"
+                                                React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600' }),
+                                                "Date de maintenance"
                                             ),
                                             React.createElement('input', {
-                                                type: 'datetime-local',
+                                                type: 'date',
                                                 value: scheduledDate,
                                                 onChange: (e) => setScheduledDate(e.target.value),
                                                 className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
@@ -2987,7 +2987,7 @@ app.get('/', (c) => {
                                                 onClick: () => {
                                                     setEditingSchedule(false);
                                                     setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
-                                                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 16) : '');
+                                                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 10) : '');
                                                 },
                                                 className: 'px-5 py-2.5 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-lg font-bold transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
                                             },
