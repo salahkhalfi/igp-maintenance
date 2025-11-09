@@ -2910,11 +2910,20 @@ app.get('/', (c) => {
                     if (scheduledAssignedTo) {
                         updateData.assigned_to = parseInt(scheduledAssignedTo);
                     } else {
+                        // Si "Non assigné" sélectionné, retirer aussi la date (dé-planifier complètement)
                         updateData.assigned_to = null;
+                        updateData.scheduled_date = null;
+                        // Effacer aussi le champ date dans le formulaire
+                        setScheduledDate('');
                     }
                     
-                    // Date de maintenance planifiée
-                    if (scheduledDate) {
+                    // Date de maintenance planifiée (seulement si assignation existe)
+                    if (scheduledAssignedTo && scheduledDate) {
+                        updateData.scheduled_date = scheduledDate + ' 00:00:00';
+                    } else if (!scheduledAssignedTo) {
+                        // Si pas d'assignation, forcer date à null
+                        updateData.scheduled_date = null;
+                    } else if (scheduledDate) {
                         updateData.scheduled_date = scheduledDate + ' 00:00:00';
                     } else {
                         updateData.scheduled_date = null;
@@ -6064,8 +6073,8 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            // Banniere pour tickets planifies/assignes (seulement avant "En cours")
-                                            ((ticket.scheduled_date || ticket.assigned_to) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
+                                            // Banniere pour tickets planifies (date ET assignation requis) (seulement avant "En cours")
+                                            ((ticket.scheduled_date && ticket.assigned_to) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
                                                 className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400 overflow-hidden',
                                                 style: { fontSize: '10px' }
                                             },
@@ -6181,8 +6190,8 @@ app.get('/', (c) => {
                                                 ? "Cliquer pour détails | Clic droit: menu" 
                                                 : "Cliquer pour détails | Glisser pour déplacer | Clic droit: menu"
                                         },
-                                            // Banniere pour tickets planifies/assignes
-                                            (ticket.scheduled_date || ticket.assigned_to) ? React.createElement('div', { 
+                                            // Banniere pour tickets planifies (date ET assignation requis)
+                                            (ticket.scheduled_date && ticket.assigned_to) ? React.createElement('div', { 
                                                 className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg shadow-[0_2px_8px_rgba(37,99,235,0.4)] border-b-2 border-green-400'
                                             },
                                                 React.createElement('i', { className: ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check' }),
