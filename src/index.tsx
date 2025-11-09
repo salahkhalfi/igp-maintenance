@@ -7317,7 +7317,7 @@ app.get('/guide', (c) => {
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Besoin d'aide ?</h3>
                     <p class="text-gray-600 mb-4">Notre équipe est là pour vous accompagner</p>
                     <div class="flex flex-wrap gap-3 justify-center">
-                        <a href="https://contact.aide.support/fr9ercvp1ay" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg">
+                        <a href="https://contact.aide.support/fr9ercvp1ay" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg">
                             <i class="fas fa-envelope"></i>
                             Contactez-nous
                         </a>
