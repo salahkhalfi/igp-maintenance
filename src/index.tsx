@@ -2909,24 +2909,14 @@ app.get('/', (c) => {
                     // CRITICAL FIX: Use 0 (integer) for team assignment (compatible with INTEGER column)
                     if (scheduledAssignedTo) {
                         updateData.assigned_to = parseInt(scheduledAssignedTo);
+                        // Si assignation définie, sauvegarder la date (ou null si vide)
+                        updateData.scheduled_date = scheduledDate ? scheduledDate + ' 00:00:00' : null;
                     } else {
                         // Si "Non assigné" sélectionné, retirer aussi la date (dé-planifier complètement)
                         updateData.assigned_to = null;
                         updateData.scheduled_date = null;
                         // Effacer aussi le champ date dans le formulaire
                         setScheduledDate('');
-                    }
-                    
-                    // Date de maintenance planifiée (seulement si assignation existe)
-                    if (scheduledAssignedTo && scheduledDate) {
-                        updateData.scheduled_date = scheduledDate + ' 00:00:00';
-                    } else if (!scheduledAssignedTo) {
-                        // Si pas d'assignation, forcer date à null
-                        updateData.scheduled_date = null;
-                    } else if (scheduledDate) {
-                        updateData.scheduled_date = scheduledDate + ' 00:00:00';
-                    } else {
-                        updateData.scheduled_date = null;
                     }
                     
                     await axios.patch(API_URL + '/tickets/' + ticketId, updateData);
