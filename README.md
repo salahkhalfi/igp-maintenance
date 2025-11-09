@@ -693,7 +693,14 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 
-### ✅ Améliorations récentes (v1.9.3)
+### ✅ Améliorations récentes (v2.0.6)
+- **✅ NOUVEAU v2.0.6** - Nettoyage audio R2 lors suppression message
+  - **Messages audio orphelins** - Les fichiers audio sont maintenant supprimés du bucket R2 lors de la suppression d'un message
+  - **Cohérence avec tickets** - Même système de nettoyage que pour les médias de tickets
+  - **Réduction des coûts** - Empêche l'accumulation de fichiers audio inutilisés dans R2
+  - **Logging console** - Traçabilité des suppressions audio pour debug et audit
+  - **Gestion erreurs robuste** - Try-catch pour continuer même si suppression R2 échoue
+  - **Retour API enrichi** - Flag `audioDeleted` dans la réponse JSON
 - **Nettoyage R2 automatique** - Les fichiers media sont maintenant supprimés du bucket R2 lors de la suppression d'un ticket
 - **Prévention fichiers orphelins** - Empêche l'accumulation de fichiers inutilisés dans le stockage
 - **Réduction des coûts** - Économise l'espace de stockage Cloudflare R2
@@ -783,9 +790,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.5-colors-harmonized  
-**Dernière mise à jour**: 2025-01-09  
-**Statut**: ✅ Production Ready - Palette IGP harmonisée, identité visuelle cohérente
+**Version**: 2.0.6-audio-cleanup  
+**Dernière mise à jour**: 2025-11-09  
+**Statut**: ✅ Production Ready - Nettoyage R2 complet (médias + audio)
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
