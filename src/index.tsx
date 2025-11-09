@@ -974,7 +974,7 @@ app.post('/api/alerts/check-overdue', authMiddleware, async (c) => {
         ticket.priority === 'medium' ? '🟡 MOYENNE' :
         '🟢 FAIBLE';
       
-      const assignedInfo = ticket.assigned_to === 'all' 
+      const assignedInfo = ticket.assigned_to === 0 
         ? '👥 Toute l\'équipe' 
         : ticket.assigned_name 
           ? `👤 ${ticket.assigned_name}` 
@@ -2389,8 +2389,8 @@ app.get('/', (c) => {
                     // Ajouter les champs de planification si superviseur/admin
                     if (currentUser.role === 'admin' || currentUser.role === 'supervisor') {
                         if (assignedTo) {
-                            // CRITICAL FIX: Keep 'all' as string for team assignment
-                            requestBody.assigned_to = assignedTo === 'all' ? 'all' : parseInt(assignedTo);
+                            // CRITICAL FIX: Use 0 (integer) for team assignment (compatible with INTEGER column)
+                            requestBody.assigned_to = parseInt(assignedTo);
                         }
                         if (scheduledDate) {
                             requestBody.scheduled_date = scheduledDate + ' 00:00:00'; // Format: YYYY-MM-DD 00:00:00 (minuit)
@@ -2642,7 +2642,7 @@ app.get('/', (c) => {
                                         style: { boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                        React.createElement('option', { value: 'all' }, '👥 Toute equipe'),
+                                        React.createElement('option', { value: '0' }, '👥 Toute equipe'),
                                         technicians.map(tech => 
                                             React.createElement('option', { 
                                                 key: tech.id, 
@@ -2906,9 +2906,9 @@ app.get('/', (c) => {
                     const updateData = {};
                     
                     // Assigner à un technicien ou toute l'équipe
-                    // CRITICAL FIX: Keep 'all' as string, don't convert to null
+                    // CRITICAL FIX: Use 0 (integer) for team assignment (compatible with INTEGER column)
                     if (scheduledAssignedTo) {
-                        updateData.assigned_to = scheduledAssignedTo === 'all' ? 'all' : parseInt(scheduledAssignedTo);
+                        updateData.assigned_to = parseInt(scheduledAssignedTo);
                     } else {
                         updateData.assigned_to = null;
                     }
@@ -3054,8 +3054,8 @@ app.get('/', (c) => {
                                                 React.createElement('span', { className: 'font-bold text-gray-700' }, "Assigné à:")
                                             ),
                                             React.createElement('span', { className: 'text-gray-800 font-semibold ml-6' },
-                                                ticket.assigned_to && ticket.assigned_to !== '' && ticket.assigned_to !== '0' && ticket.assigned_to !== 0
-                                                    ? (ticket.assigned_to === 'all' ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Technicien #' + ticket.assigned_to))
+                                                ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
+                                                    ? (ticket.assigned_to === 0 ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Technicien #' + ticket.assigned_to))
                                                     : '❌ Non assigné'
                                             )
                                         ),
@@ -3086,7 +3086,7 @@ app.get('/', (c) => {
                                                 className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                             },
                                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                                React.createElement('option', { value: 'all' }, '👥 Toute équipe'),
+                                                React.createElement('option', { value: '0' }, '👥 Toute équipe'),
                                                 technicians.map(tech => 
                                                     React.createElement('option', { 
                                                         key: tech.id, 
@@ -6074,8 +6074,8 @@ app.get('/', (c) => {
                                                     React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
                                                 ),
                                                 React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 bg-blue-800/60 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border border-blue-500/40 truncate' },
-                                                    ticket.assigned_to && ticket.assigned_to !== '' && ticket.assigned_to !== '0' && ticket.assigned_to !== 0
-                                                        ? (ticket.assigned_to === 'all' ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
+                                                    ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
+                                                        ? (ticket.assigned_to === 0 ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
                                                         : '⚠️ Non assigné'
                                                 ),
                                                 React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
