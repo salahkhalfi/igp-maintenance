@@ -2389,7 +2389,8 @@ app.get('/', (c) => {
                     // Ajouter les champs de planification si superviseur/admin
                     if (currentUser.role === 'admin' || currentUser.role === 'supervisor') {
                         if (assignedTo) {
-                            requestBody.assigned_to = parseInt(assignedTo);
+                            // CRITICAL FIX: Keep 'all' as string for team assignment
+                            requestBody.assigned_to = assignedTo === 'all' ? 'all' : parseInt(assignedTo);
                         }
                         if (scheduledDate) {
                             requestBody.scheduled_date = scheduledDate + ' 00:00:00'; // Format: YYYY-MM-DD 00:00:00 (minuit)
@@ -2905,8 +2906,9 @@ app.get('/', (c) => {
                     const updateData = {};
                     
                     // Assigner à un technicien ou toute l'équipe
+                    // CRITICAL FIX: Keep 'all' as string, don't convert to null
                     if (scheduledAssignedTo) {
-                        updateData.assigned_to = scheduledAssignedTo === 'all' ? null : parseInt(scheduledAssignedTo);
+                        updateData.assigned_to = scheduledAssignedTo === 'all' ? 'all' : parseInt(scheduledAssignedTo);
                     } else {
                         updateData.assigned_to = null;
                     }
