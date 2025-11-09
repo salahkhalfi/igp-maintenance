@@ -3278,6 +3278,7 @@ app.get('/', (c) => {
             const [searchQuery, setSearchQuery] = React.useState("");
             const [showCreateForm, setShowCreateForm] = React.useState(false);
             const [editingMachine, setEditingMachine] = React.useState(null);
+            const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
             
             // Formulaire création
             const [newType, setNewType] = React.useState("");
@@ -3355,13 +3356,20 @@ app.get('/', (c) => {
             };
             
             const handleDelete = async (machine) => {
-                if (!confirm("Supprimer " + machine.machine_type + " " + machine.model + " ?")) return;
-                try {
-                    await axios.delete(API_URL + "/machines/" + machine.id);
-                    alert("Machine supprimee!");
-                    onRefresh();
-                } catch (error) {
-                    alert("Erreur: " + (error.response?.data?.error || "Impossible de supprimer une machine avec des tickets"));
+                setConfirmDialog({
+                    show: true,
+                    message: "Voulez-vous vraiment supprimer " + machine.machine_type + " " + machine.model + " ?",
+                    onConfirm: async () => {
+                        setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        try {
+                            await axios.delete(API_URL + "/machines/" + machine.id);
+                            alert("Machine supprimee!");
+                            onRefresh();
+                        } catch (error) {
+                            alert("Erreur: " + (error.response?.data?.error || "Impossible de supprimer une machine avec des tickets"));
+                        }
+                    }
+                });
                 }
             };
             
@@ -3590,7 +3598,14 @@ app.get('/', (c) => {
                             )
                         )
                     )
-                )
+                ),
+                
+                React.createElement(ConfirmModal, {
+                    show: confirmDialog.show,
+                    message: confirmDialog.message,
+                    onConfirm: confirmDialog.onConfirm,
+                    onCancel: () => setConfirmDialog({ show: false, message: '', onConfirm: null })
+                })
             );
         };
         
