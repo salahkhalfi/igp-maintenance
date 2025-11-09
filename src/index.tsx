@@ -4942,6 +4942,18 @@ app.get('/', (c) => {
                 }
             };
             
+            const selectAllMessages = () => {
+                const currentMessages = activeTab === 'public' ? publicMessages : privateMessages;
+                const selectableIds = currentMessages
+                    .filter(msg => canDeleteMessage(msg))
+                    .map(msg => msg.id);
+                setSelectedMessages(selectableIds);
+            };
+            
+            const deselectAllMessages = () => {
+                setSelectedMessages([]);
+            };
+            
             const deleteSelectedMessages = async () => {
                 if (selectedMessages.length === 0) return;
                 
@@ -5086,16 +5098,32 @@ app.get('/', (c) => {
                     ),
                     
                     // Barre outils selection
-                    React.createElement('div', { className: 'bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between gap-2' },
-                        React.createElement('button', {
-                            onClick: toggleSelectionMode,
-                            className: 'px-3 py-1.5 text-sm font-medium rounded-lg transition-all ' + 
-                                (selectionMode 
-                                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-                        },
-                            React.createElement('i', { className: 'fas ' + (selectionMode ? 'fa-times' : 'fa-check-square') + ' mr-1.5' }),
-                            selectionMode ? 'Annuler' : 'Selectionner'
+                    React.createElement('div', { className: 'bg-white border-b border-gray-200 px-3 py-2 flex items-center flex-wrap gap-2' },
+                        React.createElement('div', { className: 'flex gap-2' },
+                            React.createElement('button', {
+                                onClick: toggleSelectionMode,
+                                className: 'px-3 py-1.5 text-sm font-medium rounded-lg transition-all ' + 
+                                    (selectionMode 
+                                        ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+                            },
+                                React.createElement('i', { className: 'fas ' + (selectionMode ? 'fa-times' : 'fa-check-square') + ' mr-1.5' }),
+                                selectionMode ? 'Annuler' : 'Selectionner'
+                            ),
+                            selectionMode ? React.createElement('button', {
+                                onClick: selectAllMessages,
+                                className: 'px-3 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all'
+                            },
+                                React.createElement('i', { className: 'fas fa-check-double mr-1.5' }),
+                                'Tout'
+                            ) : null,
+                            selectionMode && selectedMessages.length > 0 ? React.createElement('button', {
+                                onClick: deselectAllMessages,
+                                className: 'px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all'
+                            },
+                                React.createElement('i', { className: 'fas fa-times-circle mr-1.5' }),
+                                'Aucun'
+                            ) : null
                         ),
                         selectionMode && selectedMessages.length > 0 ? React.createElement('button', {
                             onClick: deleteSelectedMessages,
