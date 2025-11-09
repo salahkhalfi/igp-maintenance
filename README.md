@@ -781,9 +781,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.5-colors-harmonized  
+**Version**: 2.0.6-calendar-simplified  
 **Dernière mise à jour**: 2025-01-09  
-**Statut**: ✅ Production Ready - Palette IGP harmonisée, identité visuelle cohérente
+**Statut**: ✅ Production Ready - UX optimisée, calendrier simplifié
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
@@ -877,11 +877,11 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - **Git history**: ✅ Commit d'optimisation créé
 
 ### 🚀 Déploiement
-- **URL Production**: https://72950bf9.webapp-7t8.pages.dev
+- **URL Production**: https://389320b0.webapp-7t8.pages.dev
 - **URL Personnalisée**: https://mecanique.igpglass.ca
-- **Build**: ✅ Succès (498.89 kB)
+- **Build**: ✅ Succès (498.94 kB)
 - **Tests**: ✅ HTTP 200, toutes fonctions préservées
-- **Backup**: ✅ Tag v2.0.5-colors-harmonized créé
+- **Backup**: ✅ Tag v2.0.6-calendar-simplified créé
 
 ### 📝 Recommandations Appliquées
 - ✅ **React Best Practices** - useCallback pour handlers, useMemo pour objets/arrays
@@ -889,6 +889,37 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - ✅ **Code Cleanup** - Suppression code mort, dépendances inutilisées
 - ✅ **Memory Management** - Cleanup event listeners, éviter memory leaks
 - ✅ **Bundle Optimization** - Tree-shaking amélioré, moins de dépendances
+
+## 🆕 Nouveautés v2.0.6-calendar-simplified (2025-01-09) - Calendrier Simplifié
+
+### 🗓️ Simplification UX Calendrier de Planification
+
+#### Changements
+- **Type de champ**: `datetime-local` → `date` (HTML5 natif)
+- **Label amélioré**: "Date planifiée" → "Date de maintenance"
+- **Icône**: `fa-clock` → `fa-calendar-day` (plus approprié)
+- **Format valeur**: `YYYY-MM-DDTHH:mm` → `YYYY-MM-DD`
+- **Stockage backend**: Heure fixée à minuit (00:00:00) par défaut
+
+#### Avantages
+- ✅ **UX simplifiée**: Pas besoin de choisir une heure (friction réduite)
+- ✅ **Use case réel**: Maintenance planifiée = jour, pas heure précise
+- ✅ **Mobile-friendly**: Date picker natif plus simple sur téléphone
+- ✅ **Sécurisé**: Input HTML5 natif, aucune apostrophe à gérer
+- ✅ **Accessible**: Navigateur gère la locale automatiquement (FR/EN)
+
+#### Zones impactées
+- Modal création ticket (technicien/admin)
+- Modal édition planification
+- Affichage bandeau bleu "PLANIFIÉ"
+- Stockage base de données (format préservé)
+
+#### Francisation automatique
+- **Input date natif**: Utilise la locale du navigateur
+  - Français: "9 janvier 2025"
+  - Anglais: "January 9, 2025"
+- **Affichage dates**: `toLocaleDateString('fr-FR')` (méthode native sûre)
+- **Aucun texte custom**: Pas d'apostrophes à gérer
 
 ## 🆕 Nouveautés v2.0.5-colors-harmonized (2025-01-09) - Harmonisation Palette IGP
 
