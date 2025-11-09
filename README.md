@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.0.5-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.0.10-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -10,6 +10,36 @@
 > **🧪 [Environnement de test](https://ea1b8169.webapp-test-b59.pages.dev)** - Pour tester les modifications avant production
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
+
+## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.10)
+
+### Version 2.0.10 (9 novembre 2025)
+- **Sélection Rapide Multi-Messages** : Boutons "Tout" et "Aucun" pour sélection en un clic
+- Filtre intelligent respectant les permissions utilisateur
+- Optimisation UX pour bulk operations
+
+### Version 2.0.9 (7 novembre 2025)
+- **Suppression Masse de Messages** : Mode sélection avec checkboxes individuelles
+- API bulk-delete avec traitement par lots (max 100 items)
+- Barre outils contextuelle avec compteur sélection
+- Contrôles permissions granulaires par message
+
+### Version 2.0.8 (6 novembre 2025)
+- **Clarté Affichage Temporel** : Ajout label "Requete recue depuis:" sur chronomètres
+- Amélioration compréhension utilisateur du temps écoulé
+- Réduction confusion sur signification des indicateurs temps
+
+### Version 2.0.7 (5 novembre 2025)
+- **Suppression Individuelle Médias** : Bouton corbeille sur chaque photo/vidéo
+- Nettoyage automatique bucket R2 avant suppression BD
+- Popup confirmation avec preview média
+
+### Version 2.0.6 (4 novembre 2025)
+- **Nettoyage R2 Messages Audio** : Suppression automatique fichiers audio R2
+- Prévention accumulation fichiers orphelins dans storage
+- Logs détaillés opérations cleanup pour audit
+
+> 📖 **[Voir l'historique complet des versions](https://mecanique.igpglass.ca/changelog)** - Timeline professionnelle depuis 2023
 
 ## 📋 Vue d'ensemble du projet
 
@@ -21,14 +51,19 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.0.0 - En Développement**
+✅ **Version 2.0.10 - Production Ready**
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v2.0.0**: 🎤 Messages audio enregistrables (public + privé) avec interface élégante
+- **NOUVEAU v2.0.10**: ✅ Boutons "Tout/Aucun" pour sélection rapide masse
+- **v2.0.9**: 🔲 Suppression masse messages (mode sélection + checkboxes)
+- **v2.0.8**: ⏱️ Label "Requete recue depuis:" sur chronometer
+- **v2.0.7**: 🗑️ Suppression individuelle photos/vidéos avec nettoyage R2
+- **v2.0.6**: 🧹 Nettoyage automatique R2 lors suppression messages audio
+- **v2.0.0**: 🎤 Messages audio enregistrables (public + privé) avec interface élégante
 - **v1.9.2**: Guide utilisateur simplifié ultra-concis (emoji-based, scannable en 30 sec/section)
 - **v1.9.0**: Gestion complète des utilisateurs (CRUD) + Notifications élégantes
 - **v1.8.0**: Système de permissions par rôle + Statuts francisés
