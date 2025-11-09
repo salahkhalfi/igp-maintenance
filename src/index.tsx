@@ -472,7 +472,7 @@ app.post('/api/messages/audio', authMiddleware, async (c) => {
     }, 201);
   } catch (error) {
     console.error('Upload audio error:', error);
-    return c.json({ error: 'Erreur lors de l\'envoi du message vocal' }, 500);
+    return c.json({ error: 'Erreur lors de envoi du message vocal' }, 500);
   }
 });
 
@@ -881,7 +881,7 @@ app.post('/api/alerts/check-overdue', authMiddleware, async (c) => {
         '🟢 FAIBLE';
       
       const assignedInfo = ticket.assigned_to === 'all' 
-        ? '👥 Toute l\'équipe' 
+        ? '👥 Toute equipe' 
         : ticket.assigned_name 
           ? `👤 ${ticket.assigned_name}` 
           : '❌ Non assigné';
@@ -2696,7 +2696,7 @@ app.get('/', (c) => {
                     setNewComment('');
                     loadComments();
                 } catch (error) {
-                    alert('Erreur lors de l\\'ajout du commentaire');
+                    alert('Erreur lors de ajout du commentaire');
                 } finally {
                     setSubmittingComment(false);
                 }
@@ -2751,7 +2751,7 @@ app.get('/', (c) => {
                     setNewMediaPreviews([]);
                     loadTicketDetails();
                 } catch (error) {
-                    alert('Erreur lors de l\\'upload des médias');
+                    alert('Erreur lors de upload des medias');
                 } finally {
                     setUploadingMedia(false);
                 }
@@ -4037,7 +4037,7 @@ app.get('/', (c) => {
             const handleDeleteUser = React.useCallback((userId, userName) => {
                 setConfirmDialog({
                     show: true,
-                    message: 'Etes-vous sur de vouloir supprimer ' + userName + ' ?',
+                    message: 'Voulez-vous vraiment supprimer ' + userName + ' ?',
                     onConfirm: async () => {
                         setConfirmDialog({ show: false, message: '', onConfirm: null });
                         setButtonLoading('delete-' + userId);
