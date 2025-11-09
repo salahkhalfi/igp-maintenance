@@ -693,8 +693,16 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 
-### ✅ Améliorations récentes (v2.0.9)
-- **✅ NOUVEAU v2.0.9** - Suppression en masse de messages avec nettoyage R2
+### ✅ Améliorations récentes (v2.0.10)
+- **✅ NOUVEAU v2.0.10** - Boutons "Tout" et "Aucun" pour sélection rapide
+  - **Bouton "Tout"** - Sélectionne automatiquement tous les messages supprimables en un clic
+  - **Bouton "Aucun"** - Désélectionne tous les messages en un clic
+  - **Logique intelligente** - "Tout" filtre uniquement les messages que l'utilisateur peut supprimer (permissions)
+  - **UI améliorée** - 3 boutons alignés : [Sélectionner/Annuler] [Tout] [Aucun]
+  - **Style distinct** - Bleu pour "Tout", Gris pour "Aucun", Rouge pour "Annuler"
+  - **Icônes claires** - fa-check-double (Tout), fa-times-circle (Aucun)
+  - **Gain de temps** - Plus besoin de cocher manuellement 50+ messages un par un
+- **✅ v2.0.9** - Suppression en masse de messages avec nettoyage R2
   - **Mode sélection** - Bouton "Sélectionner" dans la barre d'outils pour activer/désactiver mode sélection
   - **Checkboxes intelligentes** - Apparaissent uniquement sur les messages que l'utilisateur peut supprimer (permissions)
   - **Sélection multiple** - Cocher/décocher plusieurs messages à la fois
@@ -820,9 +828,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.9-bulk-delete-messages  
+**Version**: 2.0.10-select-all-none  
 **Dernière mise à jour**: 2025-11-09  
-**Statut**: ✅ Production Ready - Suppression masse messages + Chronomètre + Nettoyage R2
+**Statut**: ✅ Production Ready - Selection Tout/Aucun + Suppression masse + Nettoyage R2
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
