@@ -2167,7 +2167,7 @@ app.get('/', (c) => {
                         ),
                         React.createElement('button', {
                             type: 'submit',
-                            className: 'w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 shadow-lg'
+                            className: 'w-full bg-igp-blue text-white font-bold py-3 px-4 rounded-md hover:bg-igp-blue-dark transition duration-200 shadow-lg'
                         }, 
                             React.createElement('i', { className: 'fas fa-sign-in-alt mr-2' }),
                             'Se connecter'
@@ -3179,7 +3179,7 @@ app.get('/', (c) => {
                                 React.createElement('button', {
                                     onClick: handleUploadNewMedia,
                                     disabled: uploadingMedia,
-                                    className: 'w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
+                                    className: 'w-full px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-igp-blue-dark transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
                                 },
                                     uploadingMedia
                                         ? React.createElement('span', {},
@@ -3578,14 +3578,14 @@ app.get('/', (c) => {
                                         currentUser.role === "admin" || currentUser.role === "supervisor" ? React.createElement("div", { className: "flex gap-2 self-end sm:self-auto" },
                                             React.createElement("button", {
                                                 onClick: () => handleEdit(machine),
-                                                className: "px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 transition-all text-sm sm:text-base"
+                                                className: "px-3 sm:px-4 py-2 bg-igp-blue-light text-white rounded-lg font-bold hover:bg-igp-blue transition-all text-sm sm:text-base"
                                             },
                                                 React.createElement("i", { className: "fas fa-edit" }),
                                                 React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Modifier")
                                             ),
                                             currentUser.role === "admin" ? React.createElement("button", {
                                                 onClick: () => handleDelete(machine),
-                                                className: "px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all text-sm sm:text-base"
+                                                className: "px-3 sm:px-4 py-2 bg-igp-red text-white rounded-lg font-bold hover:bg-red-700 transition-all text-sm sm:text-base"
                                             },
                                                 React.createElement("i", { className: "fas fa-trash" }),
                                                 React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Supprimer")
@@ -5625,7 +5625,7 @@ app.get('/', (c) => {
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
-                                className: 'px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold shadow-md transition-all'
+                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
