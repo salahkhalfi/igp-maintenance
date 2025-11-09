@@ -1544,13 +1544,16 @@ app.get('/', (c) => {
             }
             
             return React.createElement('div', { 
-                className: 'mt-1.5 pt-1.5 border-t border-gray-200 flex items-center justify-between text-xs ' + elapsed.color
+                className: 'mt-1.5 pt-1.5 border-t border-gray-200 text-xs ' + elapsed.color
             },
-                React.createElement('div', { className: 'flex items-center gap-1' },
-                    React.createElement('span', {}, elapsed.icon),
-                    React.createElement('i', { className: 'fas fa-hourglass-half' })
-                ),
-                React.createElement('span', { className: 'font-bold font-mono' }, formatElapsedTime(elapsed))
+                React.createElement('div', { className: 'flex items-center justify-between' },
+                    React.createElement('div', { className: 'flex items-center gap-1' },
+                        React.createElement('span', {}, elapsed.icon),
+                        React.createElement('i', { className: 'fas fa-hourglass-half' }),
+                        React.createElement('span', { className: 'ml-1 text-gray-600 font-normal' }, 'Requete recue depuis:')
+                    ),
+                    React.createElement('span', { className: 'font-bold font-mono' }, formatElapsedTime(elapsed))
+                )
             );
         };
         
