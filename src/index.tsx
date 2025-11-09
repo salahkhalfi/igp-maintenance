@@ -6237,7 +6237,7 @@ app.get('/', (c) => {
                                 className: 'text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 transition-colors'
                             },
                                 React.createElement('i', { className: 'fas fa-history' }),
-                                React.createElement('span', {}, 'v1.9.2 - Historique')
+                                React.createElement('span', {}, 'v2.0.10 - Historique')
                             )
                         )
                     )
