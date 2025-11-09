@@ -2735,7 +2735,8 @@ app.get('/', (c) => {
                 
                 // Pré-remplir les champs si le ticket est déjà planifié
                 if (ticket) {
-                    setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
+                    // CRITICAL: Check !== null (not just falsy) because 0 is valid (team assignment)
+                    setScheduledAssignedTo(ticket.assigned_to !== null && ticket.assigned_to !== undefined ? String(ticket.assigned_to) : '');
                     setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 10) : '');
                 }
             }, [show, currentUser.role, ticket]);
