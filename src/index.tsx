@@ -1209,6 +1209,17 @@ app.get('/', (c) => {
             }
         }
         
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         .priority-medium {
             border-left: 5px solid #f59e0b;
             box-shadow: 
@@ -5558,6 +5569,20 @@ app.get('/', (c) => {
             const [showMessaging, setShowMessaging] = React.useState(false);
             const [messagingContact, setMessagingContact] = React.useState(null);
             const [messagingTab, setMessagingTab] = React.useState("public");
+            const [showScrollTop, setShowScrollTop] = React.useState(false);
+            
+            // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
+            React.useEffect(() => {
+                const handleScroll = () => {
+                    // Afficher le bouton seulement si on a scrollé plus de 300px ET que les archives sont affichées
+                    setShowScrollTop(window.scrollY > 300 && showArchived);
+                };
+                
+                window.addEventListener('scroll', handleScroll);
+                handleScroll(); // Vérifier immédiatement
+                
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, [showArchived]);
             
             const allStatuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
@@ -6217,19 +6242,37 @@ app.get('/', (c) => {
                         )
                     ) : null,
                     
-                    // Bouton "Retour en haut" flottant (visible uniquement quand archives affichées)
-                    showArchived ? React.createElement('div', { 
-                        className: 'fixed bottom-8 right-8 z-50 animate-bounce'
-                    },
-                        React.createElement('button', {
-                            onClick: () => {
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            },
-                            className: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full p-4 shadow-2xl hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-110 flex items-center justify-center group',
-                            title: 'Retour en haut'
+                    // Bouton "Retour en haut" premium (visible uniquement après scroll de 300px dans archives)
+                    showScrollTop ? React.createElement('button', {
+                        onClick: () => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                         },
-                            React.createElement('i', { className: 'fas fa-arrow-up text-xl' }),
-                            React.createElement('span', { className: 'ml-2 hidden group-hover:inline-block text-sm font-semibold' }, 'Haut')
+                        className: 'fixed bottom-8 right-8 z-50 group',
+                        style: {
+                            animation: 'fadeInUp 0.3s ease-out'
+                        },
+                        title: 'Retour en haut'
+                    },
+                        React.createElement('div', {
+                            className: 'relative'
+                        },
+                            // Glow effect background
+                            React.createElement('div', {
+                                className: 'absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300',
+                                style: { transform: 'scale(1.1)' }
+                            }),
+                            // Main button
+                            React.createElement('div', {
+                                className: 'relative bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white rounded-full p-4 shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 group-hover:scale-110 flex items-center justify-center backdrop-blur-sm',
+                                style: {
+                                    boxShadow: '0 20px 40px -15px rgba(139, 92, 246, 0.5), 0 0 30px rgba(139, 92, 246, 0.3)',
+                                    border: '2px solid rgba(255, 255, 255, 0.2)'
+                                }
+                            },
+                                React.createElement('i', { 
+                                    className: 'fas fa-arrow-up text-xl group-hover:animate-bounce' 
+                                })
+                            )
                         )
                     ) : null
                     )
