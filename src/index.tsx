@@ -6215,6 +6215,22 @@ app.get('/', (c) => {
                                 )
                             )
                         )
+                    ) : null,
+                    
+                    // Bouton "Retour en haut" flottant (visible uniquement quand archives affichées)
+                    showArchived ? React.createElement('div', { 
+                        className: 'fixed bottom-8 right-8 z-50 animate-bounce'
+                    },
+                        React.createElement('button', {
+                            onClick: () => {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            },
+                            className: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full p-4 shadow-2xl hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-110 flex items-center justify-center group',
+                            title: 'Retour en haut'
+                        },
+                            React.createElement('i', { className: 'fas fa-arrow-up text-xl' }),
+                            React.createElement('span', { className: 'ml-2 hidden group-hover:inline-block text-sm font-semibold' }, 'Haut')
+                        )
                     ) : null
                     )
                 ),
