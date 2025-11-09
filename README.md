@@ -693,8 +693,23 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 
-### ✅ Améliorations récentes (v2.0.8)
-- **✅ NOUVEAU v2.0.8** - Texte explicatif chronomètre ticket
+### ✅ Améliorations récentes (v2.0.9)
+- **✅ NOUVEAU v2.0.9** - Suppression en masse de messages avec nettoyage R2
+  - **Mode sélection** - Bouton "Sélectionner" dans la barre d'outils pour activer/désactiver mode sélection
+  - **Checkboxes intelligentes** - Apparaissent uniquement sur les messages que l'utilisateur peut supprimer (permissions)
+  - **Sélection multiple** - Cocher/décocher plusieurs messages à la fois
+  - **Compteur dynamique** - Affiche "X sélectionné(s)" en temps réel
+  - **Bouton suppression** - "Supprimer (X)" apparaît automatiquement quand au moins 1 message sélectionné
+  - **API bulk-delete** - Nouveau endpoint POST /api/messages/bulk-delete avec array message_ids
+  - **Permissions strictes** - Chaque message vérifié individuellement (utilisateur/admin/supervisor)
+  - **Nettoyage R2 complet** - Tous les fichiers audio des messages sélectionnés supprimés du bucket
+  - **Limite sécurité** - Maximum 100 messages par requête pour éviter timeout
+  - **Confirmation obligatoire** - Dialog "Supprimer X message(s) ?" avant exécution
+  - **Recharge automatique** - Liste mise à jour instantanément après suppression
+  - **Gestion erreurs** - Rapport détaillé des erreurs par message si échec partiel
+  - **Sans apostrophes** - Tous les textes sans apostrophes pour éviter crash JavaScript
+  - **Public et privé** - Fonctionne dans les deux onglets (Canal Public + Messages Privés)
+- **✅ v2.0.8** - Texte explicatif chronomètre ticket
   - **Clarté améliorée** - Ajout du texte "Requete recue depuis:" devant le chronomètre
   - **UX optimisée** - Les utilisateurs comprennent immédiatement ce que représente le temps affiché
   - **Layout repensé** - Texte + icônes à gauche, temps formaté à droite
@@ -805,9 +820,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.8-timer-label  
+**Version**: 2.0.9-bulk-delete-messages  
 **Dernière mise à jour**: 2025-11-09  
-**Statut**: ✅ Production Ready - Chronomètre explicite + Suppression média + Nettoyage R2
+**Statut**: ✅ Production Ready - Suppression masse messages + Chronomètre + Nettoyage R2
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
