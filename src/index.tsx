@@ -5595,8 +5595,9 @@ app.get('/', (c) => {
                 { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
             ];
             
-            // Séparer les colonnes actives et la colonne archivée
-            const activeStatuses = allStatuses.filter(s => s.key !== 'archived');
+            // Séparer les colonnes actives, terminées et archivées
+            const workflowStatuses = allStatuses.filter(s => s.key !== 'archived' && s.key !== 'completed');
+            const completedStatus = allStatuses.find(s => s.key === 'completed');
             const archivedStatus = allStatuses.find(s => s.key === 'archived');
             
             
@@ -6020,9 +6021,10 @@ app.get('/', (c) => {
                 
                 React.createElement('div', { className: 'container mx-auto px-4 py-6' },
                     React.createElement('div', { className: 'space-y-4' },
+                        // Première ligne: colonnes de workflow (Reçue, Diagnostic, En cours, Attente pièces)
                         React.createElement('div', { className: 'overflow-x-auto pb-4' },
-                            React.createElement('div', { className: 'kanban-grid flex gap-2' },
-                            activeStatuses.map(status => {
+                            React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                            workflowStatuses.map(status => {
                             const isDragOver = dragOverColumn === status.key;
                             const ticketsInColumn = getTicketsByStatus(status.key);
                             const hasTickets = ticketsInColumn.length > 0;
@@ -6144,8 +6146,134 @@ app.get('/', (c) => {
                         )
                     ),
                     
+                    // Deuxième ligne: colonne Terminé
+                    completedStatus ? React.createElement('div', { className: 'overflow-x-auto pb-4' },
+                        React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                            (() => {
+                                const status = completedStatus;
+                                const isDragOver = dragOverColumn === status.key;
+                                const ticketsInColumn = getTicketsByStatus(status.key);
+                                const hasTickets = ticketsInColumn.length > 0;
+                                const columnClass = 'kanban-column' + 
+                                    (isDragOver ? ' drag-over' : '') + 
+                                    (hasTickets ? ' has-tickets' : ' empty');
+                                
+                                return React.createElement('div', { 
+                                    key: status.key, 
+                                    className: columnClass,
+                                    'data-status': status.key,
+                                    onDragOver: (e) => handleDragOver(e, status.key),
+                                    onDragLeave: handleDragLeave,
+                                    onDrop: (e) => handleDrop(e, status.key)
+                                },
+                                    React.createElement('div', { className: 'mb-3 flex items-center justify-between kanban-column-header' },
+                                        React.createElement('div', { className: 'flex items-center min-w-0 flex-1' },
+                                            React.createElement('i', { className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-1.5 text-sm' }),
+                                            React.createElement('h3', { className: 'font-bold text-gray-700 text-sm truncate' }, status.label)
+                                        ),
+                                        React.createElement('span', { 
+                                            className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
+                                        }, getTicketsByStatus(status.key).length)
+                                    ),
+                                    React.createElement('div', { className: 'space-y-2' },
+                                        getTicketsByStatus(status.key).map(ticket => {
+                                            return React.createElement('div', {
+                                                key: ticket.id,
+                                                className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
+                                                draggable: currentUser && currentUser.role !== 'operator',
+                                                onClick: (e) => handleTicketClick(e, ticket),
+                                                onDragStart: (e) => handleDragStart(e, ticket),
+                                                onDragEnd: handleDragEnd,
+                                                onTouchStart: (e) => handleTouchStart(e, ticket),
+                                                onTouchMove: handleTouchMove,
+                                                onTouchEnd: handleTouchEnd,
+                                                onContextMenu: (e) => handleContextMenu(e, ticket),
+                                                title: currentUser && currentUser.role === 'operator' 
+                                                    ? 'Cliquer pour détails | Clic droit: menu' 
+                                                    : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
+                                            },
+                                                // Banniere pour tickets planifies (date ET assignation requis) (seulement avant "En cours")
+                                                // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
+                                                ((ticket.scheduled_date && ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
+                                                    className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400 overflow-hidden',
+                                                    style: { fontSize: '11px' }
+                                                },
+                                                    React.createElement('div', { className: 'flex items-center gap-1 bg-gradient-to-br from-green-500 to-green-600 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300 flex-shrink-0' },
+                                                        React.createElement('i', { className: 'fas fa-calendar-check text-white drop-shadow-lg text-[9px]' }),
+                                                        React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
+                                                    ),
+                                                    React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 bg-blue-800/60 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border border-blue-500/40 truncate' },
+                                                        ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
+                                                            ? (ticket.assigned_to === 0 ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
+                                                            : '⚠️ Non assigné'
+                                                    ),
+                                                    React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
+                                                        new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', { 
+                                                            day: '2-digit', 
+                                                            month: 'short'
+                                                        })
+                                                    )
+                                                ) : null,
+                                                
+                                                React.createElement('div', { className: 'mb-1' },
+                                                    React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, ticket.ticket_id)
+                                                ),
+                                                React.createElement('h4', { className: 'font-bold text-gray-900 mb-1 text-sm line-clamp-2' }, ticket.title),
+                                                React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
+                                                    React.createElement('span', { 
+                                                        className: 'inline-block text-xs px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ' + 
+                                                        (ticket.priority === 'critical' ? 'bg-red-100 text-igp-red' :
+                                                         ticket.priority === 'high' ? 'bg-amber-100 text-igp-yellow' :
+                                                         ticket.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                         'bg-green-100 text-igp-green')
+                                                    }, 
+                                                        ticket.priority === 'critical' ? '🔴 CRIT' :
+                                                        ticket.priority === 'high' ? '🟠 HAUT' :
+                                                        ticket.priority === 'medium' ? '🟡 MOY' :
+                                                        '🟢 BAS'
+                                                    ),
+                                                    React.createElement('span', { className: 'text-xs text-gray-600 truncate flex-1' }, ticket.machine_type + ' ' + ticket.model)
+                                                ),
+                                                
+                                                
+                                                // Badge "Rapporté par" pour TOUS les tickets
+                                                React.createElement('div', { 
+                                                    className: 'text-xs text-gray-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mb-1 overflow-hidden pointer-events-none'
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-user mr-1 text-blue-600' }),
+                                                    React.createElement('span', { className: 'font-semibold' }, 'Rapporté par ' + (ticket.reporter_name || 'N/A'))
+                                                ),
+                                                // Badge de planification (si ticket planifié ET pas encore commencé)
+                                                (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                                    React.createElement('div', { className: 'flex items-center gap-1' },
+                                                        React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
+                                                    ),
+                                                ) : null,
+                                                
+                                                React.createElement('div', { className: 'flex items-center justify-between gap-2 text-xs' },
+                                                    React.createElement('div', { className: 'flex items-center text-gray-500' },
+                                                        React.createElement('i', { className: 'far fa-clock mr-1' }),
+                                                        React.createElement('span', {}, formatDateEST(ticket.created_at, false))
+                                                    ),
+                                                    ticket.media_count > 0 ? React.createElement('div', { className: 'flex items-center text-igp-blue font-semibold' },
+                                                        React.createElement('i', { className: 'fas fa-camera mr-1' }),
+                                                        React.createElement('span', {}, ticket.media_count)
+                                                    ) : null
+                                                ),
+                                                React.createElement(TicketTimer, { 
+                                                    createdAt: ticket.created_at,
+                                                    status: ticket.status
+                                                })
+                                            );
+                                        })
+                                    )
+                                );
+                            })()
+                        )
+                    ) : null,
+                    
                     showArchived ? React.createElement('div', { id: 'archived-section', className: 'overflow-x-auto pb-4' },
-                        React.createElement('div', { className: 'kanban-grid flex gap-2' },
+                        React.createElement('div', { className: 'kanban-grid flex gap-3' },
                             React.createElement('div', { 
                                 key: archivedStatus.key, 
                                 className: 'kanban-column' + 
