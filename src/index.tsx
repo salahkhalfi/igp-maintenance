@@ -5894,6 +5894,14 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
                                 'Actualiser'
                             ),
+                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
+                            React.createElement('button', {
+                                onClick: () => setShowMessaging(true),
+                                className: 'px-4 py-2 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
+                            },
+                                React.createElement('i', { className: 'fas fa-comments mr-2' }),
+                                'Messagerie'
+                            ) : null,
                             React.createElement('button', {
                                 onClick: () => {
                                     setShowArchived(!showArchived);
@@ -5952,14 +5960,6 @@ app.get('/', (c) => {
                             },
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
-                            ) : null,
-                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
-                            React.createElement('button', {
-                                onClick: () => setShowMessaging(true),
-                                className: 'px-4 py-2 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
-                            },
-                                React.createElement('i', { className: 'fas fa-comments mr-2' }),
-                                'Messagerie'
                             ) : null,
                             React.createElement('button', {
                                 onClick: onLogout,
