@@ -693,8 +693,16 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 
-### ✅ Améliorations récentes (v2.0.6)
-- **✅ NOUVEAU v2.0.6** - Nettoyage audio R2 lors suppression message
+### ✅ Améliorations récentes (v2.0.7)
+- **✅ NOUVEAU v2.0.7** - Bouton suppression média individuel avec nettoyage R2
+  - **Suppression granulaire** - Bouton poubelle rouge sur hover pour supprimer chaque photo/vidéo individuellement
+  - **Nettoyage R2 automatique** - Fichiers supprimés du bucket R2 avant suppression de la base de données
+  - **Permissions vérifiées** - Admin/Supervisor/Technician peuvent tout supprimer, Opérateurs uniquement leurs propres médias
+  - **Confirmation obligatoire** - Dialog de confirmation avant suppression pour éviter erreurs
+  - **Recharge automatique** - Galerie mise à jour instantanément après suppression
+  - **Logging traçabilité** - Console.log pour debug et audit des suppressions
+  - **Gestion erreurs robuste** - Try-catch pour continuer même si suppression R2 échoue
+- **✅ v2.0.6** - Nettoyage audio R2 lors suppression message
   - **Messages audio orphelins** - Les fichiers audio sont maintenant supprimés du bucket R2 lors de la suppression d'un message
   - **Cohérence avec tickets** - Même système de nettoyage que pour les médias de tickets
   - **Réduction des coûts** - Empêche l'accumulation de fichiers audio inutilisés dans R2
@@ -790,9 +798,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.6-audio-cleanup  
+**Version**: 2.0.7-media-delete-button  
 **Dernière mise à jour**: 2025-11-09  
-**Statut**: ✅ Production Ready - Nettoyage R2 complet (médias + audio)
+**Statut**: ✅ Production Ready - Suppression média individuelle + Nettoyage R2 complet
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
