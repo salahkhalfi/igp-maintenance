@@ -5611,7 +5611,7 @@ app.get('/', (c) => {
                                         ),
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', { 
-                                            className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-gradient-to-r from-red-500 to-red-600 animate-pulse" : "bg-gradient-to-r from-blue-600 to-blue-700 opacity-50"),
+                                            className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
                                             onClick: () => setShowMessaging(true),
                                             title: unreadMessagesCount > 0 ? (unreadMessagesCount + " messages non lus") : "Aucun message non lu"
                                         },
