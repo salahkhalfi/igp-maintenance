@@ -5887,16 +5887,6 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
                             ),
-                            React.createElement('a', {
-                                href: '/guide',
-                                target: '_blank',
-                                rel: 'noopener noreferrer',
-                                className: 'px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-md hover:from-purple-700 hover:to-blue-700 font-semibold shadow-md transition-all inline-flex items-center justify-center',
-                                title: 'Ouvrir le guide utilisateur'
-                            },
-                                React.createElement('i', { className: 'fas fa-book mr-2' }),
-                                React.createElement('span', { className: 'hidden sm:inline' }, 'Guide')
-                            ),
                             React.createElement('button', {
                                 onClick: onRefresh,
                                 className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
@@ -5971,20 +5961,21 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-comments mr-2' }),
                                 'Messagerie'
                             ) : null,
-                            React.createElement('a', {
-                                href: '/guide',
-                                className: 'px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow-md transition-all inline-flex items-center justify-center',
-                                title: 'Guide utilisateur - Aide'
-                            },
-                                React.createElement('i', { className: 'fas fa-book mr-2' }),
-                                'Guide'
-                            ),
                             React.createElement('button', {
                                 onClick: onLogout,
                                 className: 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
                                 'Déconnexion'
+                            ),
+                            React.createElement('a', {
+                                href: '/guide',
+                                target: '_blank',
+                                rel: 'noopener noreferrer',
+                                className: 'w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full hover:from-purple-700 hover:to-blue-700 font-bold shadow-lg transition-all inline-flex items-center justify-center text-lg',
+                                title: 'Guide utilisateur - Aide'
+                            },
+                                '?'
                             )
                         )
                     )
