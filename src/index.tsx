@@ -789,6 +789,86 @@ app.delete('/api/messages/:messageId', authMiddleware, async (c) => {
   }
 });
 
+// Suppression en masse de messages
+app.post('/api/messages/bulk-delete', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    const { message_ids } = await c.req.json();
+    
+    if (!message_ids || !Array.isArray(message_ids) || message_ids.length === 0) {
+      return c.json({ error: 'Liste de message_ids requise' }, 400);
+    }
+    
+    // Limiter a 100 messages max par requete
+    if (message_ids.length > 100) {
+      return c.json({ error: 'Maximum 100 messages par suppression' }, 400);
+    }
+    
+    let deletedCount = 0;
+    let audioDeletedCount = 0;
+    const errors = [];
+    
+    for (const messageId of message_ids) {
+      try {
+        // Recuperer le message avec audio_file_key et role
+        const message = await c.env.DB.prepare(`
+          SELECT m.*, u.role as sender_role
+          FROM messages m
+          LEFT JOIN users u ON m.sender_id = u.id
+          WHERE m.id = ?
+        `).bind(messageId).first();
+        
+        if (!message) {
+          errors.push({ messageId, error: 'Message non trouve' });
+          continue;
+        }
+        
+        // Verification des permissions pour chaque message
+        const canDelete = 
+          message.sender_id === user.userId ||
+          user.role === 'admin' ||
+          (user.role === 'supervisor' && message.sender_role !== 'admin');
+        
+        if (!canDelete) {
+          errors.push({ messageId, error: 'Permission refusee' });
+          continue;
+        }
+        
+        // Supprimer le fichier audio du bucket R2 si existe
+        if (message.audio_file_key) {
+          try {
+            await c.env.MEDIA_BUCKET.delete(message.audio_file_key);
+            console.log(`Audio supprime du R2: ${message.audio_file_key}`);
+            audioDeletedCount++;
+          } catch (deleteError) {
+            console.error(`Erreur suppression audio R2 ${message.audio_file_key}:`, deleteError);
+          }
+        }
+        
+        // Supprimer le message de la base de donnees
+        await c.env.DB.prepare(`
+          DELETE FROM messages WHERE id = ?
+        `).bind(messageId).run();
+        
+        deletedCount++;
+      } catch (error) {
+        console.error(`Erreur suppression message ${messageId}:`, error);
+        errors.push({ messageId, error: 'Erreur serveur' });
+      }
+    }
+    
+    return c.json({ 
+      message: deletedCount + ' message(s) supprime(s) avec succes',
+      deletedCount,
+      audioDeletedCount,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (error) {
+    console.error('Bulk delete messages error:', error);
+    return c.json({ error: 'Erreur lors de la suppression en masse' }, 500);
+  }
+});
+
 // Route de test R2
 app.get('/api/test/r2', async (c) => {
   try {
@@ -4492,6 +4572,10 @@ app.get('/', (c) => {
             const [playingAudio, setPlayingAudio] = React.useState({});
             const audioRefs = React.useRef({});
             
+            // États pour selection multiple et suppression en masse
+            const [selectionMode, setSelectionMode] = React.useState(false);
+            const [selectedMessages, setSelectedMessages] = React.useState([]);
+            
             const scrollToBottom = () => {
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             };
@@ -4844,6 +4928,49 @@ app.get('/', (c) => {
                 return false;
             };
             
+            // Fonctions pour selection multiple
+            const toggleSelectionMode = () => {
+                setSelectionMode(!selectionMode);
+                setSelectedMessages([]);
+            };
+            
+            const toggleMessageSelection = (messageId) => {
+                if (selectedMessages.includes(messageId)) {
+                    setSelectedMessages(selectedMessages.filter(id => id !== messageId));
+                } else {
+                    setSelectedMessages([...selectedMessages, messageId]);
+                }
+            };
+            
+            const deleteSelectedMessages = async () => {
+                if (selectedMessages.length === 0) return;
+                
+                const count = selectedMessages.length;
+                const confirmText = 'Supprimer ' + count + ' message' + (count > 1 ? 's' : '') + ' ?';
+                
+                if (!confirm(confirmText)) return;
+                
+                try {
+                    await axios.post(API_URL + '/messages/bulk-delete', {
+                        message_ids: selectedMessages
+                    });
+                    
+                    setSelectedMessages([]);
+                    setSelectionMode(false);
+                    
+                    if (activeTab === 'public') {
+                        loadPublicMessages();
+                    } else if (selectedContact) {
+                        loadPrivateMessages(selectedContact.id);
+                        loadConversations();
+                    }
+                    
+                    alert(count + ' message' + (count > 1 ? 's' : '') + ' supprime' + (count > 1 ? 's' : ''));
+                } catch (error) {
+                    alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
+                }
+            };
+            
             const handleKeyPress = (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -4958,6 +5085,30 @@ app.get('/', (c) => {
                         )
                     ),
                     
+                    // Barre outils selection
+                    React.createElement('div', { className: 'bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between gap-2' },
+                        React.createElement('button', {
+                            onClick: toggleSelectionMode,
+                            className: 'px-3 py-1.5 text-sm font-medium rounded-lg transition-all ' + 
+                                (selectionMode 
+                                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
+                        },
+                            React.createElement('i', { className: 'fas ' + (selectionMode ? 'fa-times' : 'fa-check-square') + ' mr-1.5' }),
+                            selectionMode ? 'Annuler' : 'Selectionner'
+                        ),
+                        selectionMode && selectedMessages.length > 0 ? React.createElement('button', {
+                            onClick: deleteSelectedMessages,
+                            className: 'px-3 py-1.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all'
+                        },
+                            React.createElement('i', { className: 'fas fa-trash mr-1.5' }),
+                            'Supprimer (' + selectedMessages.length + ')'
+                        ) : null,
+                        selectionMode ? React.createElement('span', { className: 'text-xs text-gray-500 ml-auto' },
+                            selectedMessages.length + ' selectionne' + (selectedMessages.length > 1 ? 's' : '')
+                        ) : null
+                    ),
+                    
                     // Content
                     React.createElement('div', { className: 'flex-1 flex overflow-hidden' },
                         // PUBLIC TAB
@@ -4976,6 +5127,13 @@ app.get('/', (c) => {
                                     style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                 },
                                     React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
+                                        selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
+                                            type: 'checkbox',
+                                            checked: selectedMessages.includes(msg.id),
+                                            onChange: () => toggleMessageSelection(msg.id),
+                                            className: 'w-5 h-5 mt-1 cursor-pointer flex-shrink-0',
+                                            onClick: (e) => e.stopPropagation()
+                                        }) : null,
                                         React.createElement('div', {
                                             className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md cursor-pointer hover:scale-110 transition-transform',
                                             onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
@@ -5221,6 +5379,13 @@ app.get('/', (c) => {
                                         style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
+                                            selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
+                                                type: 'checkbox',
+                                                checked: selectedMessages.includes(msg.id),
+                                                onChange: () => toggleMessageSelection(msg.id),
+                                                className: 'w-5 h-5 mt-1 cursor-pointer flex-shrink-0',
+                                                onClick: (e) => e.stopPropagation()
+                                            }) : null,
                                             React.createElement('div', {
                                                 className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
                                             }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
