@@ -738,7 +738,7 @@ app.delete('/api/messages/:messageId', authMiddleware, async (c) => {
     const user = c.get('user');
     const messageId = parseInt(c.req.param('messageId'));
     
-    // Recuperer le message
+    // Recuperer le message avec audio_file_key
     const message = await c.env.DB.prepare(`
       SELECT m.*, u.role as sender_role
       FROM messages m
@@ -763,12 +763,26 @@ app.delete('/api/messages/:messageId', authMiddleware, async (c) => {
       return c.json({ error: 'Vous n avez pas la permission de supprimer ce message' }, 403);
     }
     
-    // Supprimer le message
+    // Supprimer le fichier audio du bucket R2 si existe
+    if (message.audio_file_key) {
+      try {
+        await c.env.MEDIA_BUCKET.delete(message.audio_file_key);
+        console.log(`Audio supprime du R2: ${message.audio_file_key}`);
+      } catch (deleteError) {
+        console.error(`Erreur suppression audio R2 ${message.audio_file_key}:`, deleteError);
+        // Continue meme si la suppression du fichier echoue
+      }
+    }
+    
+    // Supprimer le message de la base de donnees
     await c.env.DB.prepare(`
       DELETE FROM messages WHERE id = ?
     `).bind(messageId).run();
     
-    return c.json({ message: 'Message supprime avec succes' });
+    return c.json({ 
+      message: 'Message supprime avec succes',
+      audioDeleted: message.audio_file_key ? true : false
+    });
   } catch (error) {
     console.error('Delete message error:', error);
     return c.json({ error: 'Erreur lors de la suppression du message' }, 500);
