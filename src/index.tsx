@@ -2642,8 +2642,8 @@ app.get('/', (c) => {
                                         style: { boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                        React.createElement('option', { value: '0' }, '👥 Toute equipe'),
-                                        technicians.map(tech => 
+                                        React.createElement('option', { value: '0' }, '👥 À Équipe'),
+                                        technicians.filter(tech => tech.id !== 0).map(tech => 
                                             React.createElement('option', { 
                                                 key: tech.id, 
                                                 value: tech.id 
@@ -3086,8 +3086,8 @@ app.get('/', (c) => {
                                                 className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                             },
                                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                                React.createElement('option', { value: '0' }, '👥 Toute équipe'),
-                                                technicians.map(tech => 
+                                                React.createElement('option', { value: '0' }, '👥 À Équipe'),
+                                                technicians.filter(tech => tech.id !== 0).map(tech => 
                                                     React.createElement('option', { 
                                                         key: tech.id, 
                                                         value: tech.id 
