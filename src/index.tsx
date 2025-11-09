@@ -4440,6 +4440,7 @@ app.get('/', (c) => {
             const [unreadCount, setUnreadCount] = React.useState(0);
             const [loading, setLoading] = React.useState(false);
             const messagesEndRef = React.useRef(null);
+            const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
             
             // États pour enregistrement audio
             const [isRecording, setIsRecording] = React.useState(false);
@@ -4780,20 +4781,25 @@ app.get('/', (c) => {
             };
             
             const deleteMessage = async (messageId) => {
-                if (!confirm('Etes-vous sur de vouloir supprimer ce message ?')) return;
-                
-                try {
-                    await axios.delete(API_URL + '/messages/' + messageId);
-                    
-                    if (activeTab === 'public') {
-                        loadPublicMessages();
-                    } else if (selectedContact) {
-                        loadPrivateMessages(selectedContact.id);
-                        loadConversations();
+                setConfirmDialog({
+                    show: true,
+                    message: 'Voulez-vous vraiment supprimer ce message ?',
+                    onConfirm: async () => {
+                        setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        try {
+                            await axios.delete(API_URL + '/messages/' + messageId);
+                            
+                            if (activeTab === 'public') {
+                                loadPublicMessages();
+                            } else if (selectedContact) {
+                                loadPrivateMessages(selectedContact.id);
+                                loadConversations();
+                            }
+                        } catch (error) {
+                            alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
+                        }
                     }
-                } catch (error) {
-                    alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
-                }
+                });
             };
             
             const canDeleteMessage = (msg) => {
@@ -5311,7 +5317,14 @@ app.get('/', (c) => {
                             )
                         ) : null
                     )
-                )
+                ),
+                
+                React.createElement(ConfirmModal, {
+                    show: confirmDialog.show,
+                    message: confirmDialog.message,
+                    onConfirm: confirmDialog.onConfirm,
+                    onCancel: () => setConfirmDialog({ show: false, message: '', onConfirm: null })
+                })
             );
         };
         
