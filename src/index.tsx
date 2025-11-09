@@ -1076,7 +1076,7 @@ app.get('/', (c) => {
         
         .kanban-column {
             min-height: 400px;
-            min-width: 240px;
+            min-width: 280px;
             background: linear-gradient(145deg, #f8fafc, #e2e8f0);
             border-radius: 12px;
             padding: 12px;
@@ -6068,7 +6068,7 @@ app.get('/', (c) => {
                                             // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
                                             ((ticket.scheduled_date && ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
                                                 className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400 overflow-hidden',
-                                                style: { fontSize: '10px' }
+                                                style: { fontSize: '11px' }
                                             },
                                                 React.createElement('div', { className: 'flex items-center gap-1 bg-gradient-to-br from-green-500 to-green-600 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300 flex-shrink-0' },
                                                     React.createElement('i', { className: 'fas fa-calendar-check text-white drop-shadow-lg text-[9px]' }),
