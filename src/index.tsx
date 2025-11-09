@@ -1985,7 +1985,7 @@ app.get('/', (c) => {
                     ]
                 },
                 optimisations: {
-                    title: "⚡ Nouveautés v2.0.10",
+                    title: "⚡ Nouveautés v2.0.11",
                     icon: "fa-rocket",
                     color: "green",
                     content: [
@@ -2022,7 +2022,7 @@ app.get('/', (c) => {
                         "🎓 RESSOURCES:",
                         "• 🌐 mecanique.igpglass.ca",
                         "• 📖 Ce guide",
-                        "• 🏷️ Version 2.0.10"
+                        "• 🏷️ Version 2.0.11"
                     ]
                 }
             };
@@ -2041,7 +2041,7 @@ app.get('/', (c) => {
                 { id: 'mobile', icon: 'fa-mobile-alt', label: 'Mobile' },
                 { id: 'raccourcis', icon: 'fa-keyboard', label: 'Raccourcis Clavier' },
                 { id: 'securite', icon: 'fa-lock', label: 'Sécurité' },
-                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.0.10' },
+                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.0.11' },
                 { id: 'problemes', icon: 'fa-exclamation-triangle', label: 'Problèmes' },
                 { id: 'contact', icon: 'fa-phone', label: 'Contact' }
             ];
@@ -2127,7 +2127,7 @@ app.get('/', (c) => {
                                 "⎋ Escape pour fermer"
                             ),
                             React.createElement('span', { className: 'text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full' },
-                                "✨ v2.0.10 - Mise à jour 2025-11-09"
+                                "✨ v2.0.11 - Mise à jour 2025-11-09"
                             )
                         ),
                         React.createElement('button', {
@@ -6309,7 +6309,7 @@ app.get('/', (c) => {
                                 className: 'text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 transition-colors'
                             },
                                 React.createElement('i', { className: 'fas fa-history' }),
-                                React.createElement('span', {}, 'v2.0.10 - Historique')
+                                React.createElement('span', {}, 'v2.0.11 - Historique')
                             )
                         )
                     )
@@ -6606,7 +6606,7 @@ app.get('/guide', (c) => {
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-            <p class="text-xs text-gray-500 mb-6">v2.0.10</p>
+            <p class="text-xs text-gray-500 mb-6">v2.0.11</p>
             
             <nav class="space-y-2">
                 <a href="#introduction" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
@@ -6650,7 +6650,7 @@ app.get('/guide', (c) => {
                             <i class="fas fa-book text-2xl text-purple-600"></i>
                             <h2 class="text-xl font-bold text-gray-800">Navigation</h2>
                         </div>
-                        <p class="text-xs text-gray-500">v2.0.10</p>
+                        <p class="text-xs text-gray-500">v2.0.11</p>
                     </div>
                     
                     <nav class="space-y-2">
@@ -6701,7 +6701,7 @@ app.get('/guide', (c) => {
                         </p>
                         <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
                             <i class="fas fa-check-circle"></i>
-                            Version 2.0.10 - Mise à jour 2025-11-09
+                            Version 2.0.11 - Mise à jour 2025-11-09
                         </div>
                     </div>
                 </div>
@@ -6758,10 +6758,10 @@ app.get('/guide', (c) => {
                     </div>
                     
                     <div class="space-y-4">
-                        <!-- v2.0.10 -->
+                        <!-- v2.0.11 -->
                         <div class="bg-purple-50 rounded-xl p-5 border-l-4 border-purple-500">
                             <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-purple-900">v2.0.10 - Sélection Rapide</h3>
+                                <h3 class="text-lg font-bold text-purple-900">v2.0.11 - Sélection Rapide</h3>
                                 <span class="feature-tag bg-purple-100 text-purple-700">
                                     <i class="fas fa-check-double"></i> Nouveau
                                 </span>
@@ -7631,7 +7631,7 @@ app.get('/changelog', (c) => {
                     <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold text-blue-600">v2.0.10</div>
+                    <div class="text-2xl font-bold text-blue-600">v2.0.11</div>
                     <div class="text-sm text-gray-500">Version actuelle</div>
                 </div>
             </div>
@@ -7683,7 +7683,7 @@ app.get('/changelog', (c) => {
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.0.10 - ACTUELLE -->
+            <!-- Version 2.0.11 - ACTUELLE -->
             <div class="timeline-item" data-version="2.0.10" data-types="feature improvement">
                 <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
                     <i class="fas fa-check-double"></i>
@@ -7691,7 +7691,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="flex items-start justify-between mb-4">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Version 2.0.10</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.0.11</h2>
                             <p class="text-gray-500 text-sm">9 novembre 2025</p>
                         </div>
                         <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>

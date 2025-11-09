@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.0.10-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.0.11-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -12,6 +12,13 @@
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
 ## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.10)
+
+### Version 2.0.11 (9 novembre 2025) - CORRECTION CRITIQUE
+- **🔴 FIX CRITIQUE** : Correction de l'assignation d'équipe (valeur 'all' préservée au lieu de null)
+- **Planification équipe** : Les tickets assignés à "Toute l'équipe" s'affichent correctement
+- **Bannière PLANIFIÉ** : S'affiche maintenant correctement quand l'équipe est assignée
+- **Date scheduling** : Fonctionne désormais pour les assignations d'équipe
+- Correction formulaire création + modal de planification
 
 ### Version 2.0.10 (9 novembre 2025)
 - **Sélection Rapide Multi-Messages** : Boutons "Tout" et "Aucun" pour sélection en un clic
@@ -51,7 +58,7 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.0.10 - Production Ready**
+✅ **Version 2.0.11 - Production Ready** (FIX CRITIQUE Assignation Équipe)
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
@@ -863,9 +870,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.10-select-all-none  
+**Version**: 2.0.11-team-assignment-fix  
 **Dernière mise à jour**: 2025-11-09  
-**Statut**: ✅ Production Ready - Selection Tout/Aucun + Suppression masse + Nettoyage R2
+**Statut**: ✅ Production Ready - FIX CRITIQUE assignation équipe + Selection Tout/Aucun + Suppression masse
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
