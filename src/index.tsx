@@ -2583,6 +2583,7 @@ app.get('/', (c) => {
             const [uploadingMedia, setUploadingMedia] = React.useState(false);
             const [newMediaFiles, setNewMediaFiles] = React.useState([]);
             const [newMediaPreviews, setNewMediaPreviews] = React.useState([]);
+            const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
             
             // États pour la planification (superviseur/admin seulement)
             const [editingSchedule, setEditingSchedule] = React.useState(false);
@@ -2642,18 +2643,21 @@ app.get('/', (c) => {
                     return;
                 }
                 
-                if (!confirm('Êtes-vous sûr de vouloir supprimer ce ticket ? Cette action est irréversible.')) {
-                    return;
-                }
-                
-                try {
-                    await axios.delete(API_URL + '/tickets/' + ticketId);
-                    alert('Ticket supprimé avec succès');
-                    onClose();
-                    if (onTicketDeleted) onTicketDeleted();
-                } catch (error) {
-                    alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
-                }
+                setConfirmDialog({
+                    show: true,
+                    message: 'Voulez-vous vraiment supprimer ce ticket ? Cette action est irréversible.',
+                    onConfirm: async () => {
+                        setConfirmDialog({ show: false, message: '', onConfirm: null });
+                        try {
+                            await axios.delete(API_URL + '/tickets/' + ticketId);
+                            alert('Ticket supprimé avec succès');
+                            onClose();
+                            if (onTicketDeleted) onTicketDeleted();
+                        } catch (error) {
+                            alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                        }
+                    }
+                });
             };
             
             const handleAddComment = async (e) => {
@@ -3257,7 +3261,14 @@ app.get('/', (c) => {
                             selectedMedia.file_name + ' - ' + Math.round(selectedMedia.file_size / 1024) + ' KB'
                         )
                     )
-                ) : null
+                ) : null,
+                
+                React.createElement(ConfirmModal, {
+                    show: confirmDialog.show,
+                    message: confirmDialog.message,
+                    onConfirm: confirmDialog.onConfirm,
+                    onCancel: () => setConfirmDialog({ show: false, message: '', onConfirm: null })
+                })
             );
         };
         
