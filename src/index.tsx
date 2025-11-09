@@ -7404,18 +7404,18 @@ app.get('/changelog', (c) => {
                         </div>
                     </div>
                     
-                    <!-- Version 2.0.0 -->
+                    <!-- Version 3.0.0 -->
                     <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border-2 border-amber-300 shadow-lg">
                         <div class="flex items-start justify-between mb-4 flex-wrap gap-3">
                             <div>
                                 <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                                    <span class="text-amber-600">v2.0.0</span>
+                                    <span class="text-amber-600">v3.0.0</span>
                                     <span class="text-gray-400">-</span>
                                     <span class="text-gray-700">Support Multilingue</span>
                                 </h3>
                                 <p class="text-gray-600 text-sm mt-1 font-semibold">
                                     <i class="fas fa-calendar-alt text-amber-600 mr-2"></i>
-                                    Novembre 2025
+                                    Décembre 2025 - Q1 2026
                                 </p>
                             </div>
                         </div>
