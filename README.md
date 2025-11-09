@@ -693,8 +693,15 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
 
-### ✅ Améliorations récentes (v2.0.7)
-- **✅ NOUVEAU v2.0.7** - Bouton suppression média individuel avec nettoyage R2
+### ✅ Améliorations récentes (v2.0.8)
+- **✅ NOUVEAU v2.0.8** - Texte explicatif chronomètre ticket
+  - **Clarté améliorée** - Ajout du texte "Requete recue depuis:" devant le chronomètre
+  - **UX optimisée** - Les utilisateurs comprennent immédiatement ce que représente le temps affiché
+  - **Layout repensé** - Texte + icônes à gauche, temps formaté à droite
+  - **Style discret** - Texte en gris normal (text-gray-600) pour ne pas surcharger visuellement
+  - **Sans apostrophes** - Évite tout problème de parsing JavaScript (leçon apprise)
+  - **Affichage conditionnel** - Uniquement sur tickets non terminés/archivés
+- **✅ v2.0.7** - Bouton suppression média individuel avec nettoyage R2
   - **Suppression granulaire** - Bouton poubelle rouge sur hover pour supprimer chaque photo/vidéo individuellement
   - **Nettoyage R2 automatique** - Fichiers supprimés du bucket R2 avant suppression de la base de données
   - **Permissions vérifiées** - Admin/Supervisor/Technician peuvent tout supprimer, Opérateurs uniquement leurs propres médias
@@ -798,9 +805,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.7-media-delete-button  
+**Version**: 2.0.8-timer-label  
 **Dernière mise à jour**: 2025-11-09  
-**Statut**: ✅ Production Ready - Suppression média individuelle + Nettoyage R2 complet
+**Statut**: ✅ Production Ready - Chronomètre explicite + Suppression média + Nettoyage R2
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
