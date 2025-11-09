@@ -1076,7 +1076,7 @@ app.get('/', (c) => {
         
         .kanban-column {
             min-height: 400px;
-            min-width: 280px;
+            min-width: 260px;
             background: linear-gradient(145deg, #f8fafc, #e2e8f0);
             border-radius: 12px;
             padding: 12px;
