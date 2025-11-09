@@ -6480,20 +6480,97 @@ app.get('/guide', (c) => {
             font-weight: bold;
             flex-shrink: 0;
         }
+        
+        /* Menu Mobile */
+        #mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        #mobile-menu.open {
+            transform: translateX(0);
+        }
+        
+        #mobile-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        #mobile-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- Bouton Retour Sticky -->
-    <div class="fixed top-4 right-4 z-50">
+    <!-- Boutons Sticky (Top Right) -->
+    <div class="fixed top-4 right-4 z-50 flex gap-2">
+        <!-- Bouton Menu Mobile (visible uniquement sur mobile/tablette) -->
+        <button id="menu-btn" class="lg:hidden inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all shadow-xl">
+            <i class="fas fa-bars"></i>
+            <span>Menu</span>
+        </button>
+        
+        <!-- Bouton Retour -->
         <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-xl border-2 border-gray-200">
             <i class="fas fa-arrow-left"></i>
             <span class="hidden md:inline">Retour</span>
         </a>
     </div>
 
+    <!-- Overlay pour menu mobile -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"></div>
+
+    <!-- Menu Mobile Sidebar -->
+    <aside id="mobile-menu" class="fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-50 lg:hidden overflow-y-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-book text-2xl text-purple-600"></i>
+                    <h2 class="text-xl font-bold text-gray-800">Navigation</h2>
+                </div>
+                <button id="close-menu-btn" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mb-6">v2.0.10</p>
+            
+            <nav class="space-y-2">
+                <a href="#introduction" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-rocket mr-2"></i>Introduction
+                </a>
+                <a href="#nouveautes" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-sparkles mr-2"></i>Nouveautés 2.0
+                </a>
+                <a href="#creer" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-plus-circle mr-2"></i>Créer un Ticket
+                </a>
+                <a href="#modifier" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-edit mr-2"></i>Modifier & Médias
+                </a>
+                <a href="#messages" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-comments mr-2"></i>Messagerie
+                </a>
+                <a href="#kanban" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-columns mr-2"></i>Tableau Kanban
+                </a>
+                <a href="#roles" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-users mr-2"></i>Rôles & Permissions
+                </a>
+                <a href="#mobile" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-mobile-alt mr-2"></i>Mobile
+                </a>
+                <a href="#astuces" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
+                    <i class="fas fa-lightbulb mr-2"></i>Astuces
+                </a>
+            </nav>
+        </div>
+    </aside>
+
     <div class="max-w-7xl mx-auto">
         <div class="flex gap-8">
-            <!-- Navigation Latérale (Desktop) -->
+            <!-- Navigation Latérale (Desktop uniquement) -->
             <aside class="hidden lg:block w-64 flex-shrink-0">
                 <div class="sticky top-8 glass-card rounded-xl p-6 shadow-2xl">
                     <div class="mb-6">
@@ -7309,6 +7386,36 @@ app.get('/guide', (c) => {
         // Stagger animation for section cards
         document.querySelectorAll('.section-card').forEach((card, index) => {
             card.style.animationDelay = (index * 0.1) + 's';
+        });
+        
+        // Menu Mobile Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        
+        function openMobileMenu() {
+            mobileMenu.classList.add('open');
+            mobileOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        
+        menuBtn.addEventListener('click', openMobileMenu);
+        closeMenuBtn.addEventListener('click', closeMobileMenu);
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+        
+        // Close mobile menu when clicking on a link
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                setTimeout(closeMobileMenu, 300);
+            });
         });
     </script>
 </body>
