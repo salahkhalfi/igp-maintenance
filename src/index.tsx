@@ -5887,6 +5887,16 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
                             ),
+                            React.createElement('a', {
+                                href: '/guide',
+                                target: '_blank',
+                                rel: 'noopener noreferrer',
+                                className: 'px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-md hover:from-purple-700 hover:to-blue-700 font-semibold shadow-md transition-all inline-flex items-center justify-center',
+                                title: 'Ouvrir le guide utilisateur'
+                            },
+                                React.createElement('i', { className: 'fas fa-book mr-2' }),
+                                React.createElement('span', { className: 'hidden sm:inline' }, 'Guide')
+                            ),
                             React.createElement('button', {
                                 onClick: onRefresh,
                                 className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
