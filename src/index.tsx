@@ -4626,8 +4626,12 @@ app.get('/', (c) => {
             }, [show, activeTab, selectedContact]);
             
             React.useEffect(() => {
-                scrollToBottom();
-            }, [publicMessages, privateMessages]);
+                // Scroller automatiquement seulement pour messages privés (ordre chronologique)
+                // Messages publics: pas de scroll auto car ordre anti-chronologique (nouveaux en haut)
+                if (activeTab === 'private' && selectedContact) {
+                    scrollToBottom();
+                }
+            }, [privateMessages, activeTab, selectedContact]);
             
             const loadPublicMessages = async () => {
                 try {
