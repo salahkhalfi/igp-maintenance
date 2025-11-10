@@ -5600,6 +5600,19 @@ app.get('/', (c) => {
             const completedStatus = allStatuses.find(s => s.key === 'completed');
             const archivedStatus = allStatuses.find(s => s.key === 'archived');
             
+            // Fonction pour calculer le nombre de tickets actifs (excluant terminés et archivés)
+            const getActiveTicketsCount = () => {
+                // Filtrer les tickets actifs: NOT completed AND NOT archived
+                let activeTickets = tickets.filter(t => t.status !== 'completed' && t.status !== 'archived');
+                
+                // Pour les opérateurs: seulement leurs propres tickets
+                if (currentUser && currentUser.role === 'operator') {
+                    activeTickets = activeTickets.filter(t => t.reported_by === currentUser.id);
+                }
+                
+                return activeTickets.length;
+            };
+            
             
             React.useEffect(() => {
                 const handleClick = () => setContextMenu(null);
@@ -5890,9 +5903,7 @@ app.get('/', (c) => {
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
-                                            (currentUser?.role === "operator" 
-                                                ? tickets.filter(t => t.reported_by === currentUser.id).length 
-                                                : tickets.length) + " tickets actifs"
+                                            getActiveTicketsCount() + " tickets actifs"
                                         ),
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', { 
