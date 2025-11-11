@@ -7054,16 +7054,20 @@ app.get('/', (c) => {
             
             React.useEffect(() => {
                 if (isLoggedIn) {
-                    // Charger le timezone_offset_hours depuis l'API et le stocker dans localStorage
-                    axios.get(API_URL + '/settings/timezone_offset_hours')
-                        .then(response => {
-                            localStorage.setItem('timezone_offset_hours', response.data.setting_value || '-5');
-                        })
-                        .catch(error => {
-                            console.error('Erreur chargement timezone_offset_hours:', error);
-                            // Valeur par defaut si erreur
-                            localStorage.setItem('timezone_offset_hours', '-5');
-                        });
+                    // Charger le timezone_offset_hours depuis l'API seulement si pas deja dans localStorage
+                    // Ceci evite d'ecraser la valeur quand l'utilisateur vient de la changer
+                    const existingOffset = localStorage.getItem('timezone_offset_hours');
+                    if (!existingOffset) {
+                        axios.get(API_URL + '/settings/timezone_offset_hours')
+                            .then(response => {
+                                localStorage.setItem('timezone_offset_hours', response.data.setting_value || '-5');
+                            })
+                            .catch(error => {
+                                console.error('Erreur chargement timezone_offset_hours:', error);
+                                // Valeur par defaut si erreur
+                                localStorage.setItem('timezone_offset_hours', '-5');
+                            });
+                    }
                     
                     loadData();
                     loadUnreadMessagesCount();
