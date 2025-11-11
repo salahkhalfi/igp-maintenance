@@ -5229,6 +5229,9 @@ app.get('/', (c) => {
                         loadPrivateMessages(selectedContact.id);
                         loadConversations();
                     }
+                    
+                    // Rafraichir compteur immediatement apres envoi audio
+                    loadUnreadCount();
                 } catch (error) {
                     console.error('Erreur envoi audio:', error);
                     alert('Erreur envoi audio: ' + (error.response?.data?.error || 'Erreur'));
@@ -5310,6 +5313,9 @@ app.get('/', (c) => {
                         loadPrivateMessages(selectedContact.id);
                         loadConversations();
                     }
+                    
+                    // Rafraichir compteur immediatement apres envoi
+                    loadUnreadCount();
                 } catch (error) {
                     alert('Erreur envoi message: ' + (error.response?.data?.error || 'Erreur'));
                 }
@@ -5327,6 +5333,9 @@ app.get('/', (c) => {
                         loadPrivateMessages(selectedContact.id);
                         loadConversations();
                     }
+                    
+                    // Rafraichir compteur immediatement apres suppression
+                    loadUnreadCount();
                 } catch (error) {
                     alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
                 }
@@ -5390,6 +5399,9 @@ app.get('/', (c) => {
                         loadPrivateMessages(selectedContact.id);
                         loadConversations();
                     }
+                    
+                    // Rafraichir compteur immediatement apres suppression masse
+                    loadUnreadCount();
                     
                     alert(count + ' message' + (count > 1 ? 's' : '') + ' supprime' + (count > 1 ? 's' : ''));
                 } catch (error) {
