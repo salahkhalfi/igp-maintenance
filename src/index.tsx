@@ -5010,10 +5010,18 @@ app.get('/', (c) => {
                         loadPrivateMessages(initialContact.id);
                     }
                     
-                    // Rafraichir les timestamps ET le compteur de messages non lus toutes les 30 secondes
+                    // Rafraichir les timestamps, le compteur ET les messages toutes les 30 secondes
                     const timestampInterval = setInterval(() => {
                         setTimestampTick(prev => prev + 1);
-                        loadUnreadCount(); // Recharger aussi le compteur
+                        loadUnreadCount();
+                        
+                        // Recharger les messages pour voir les nouveaux messages des autres utilisateurs
+                        if (activeTab === 'public') {
+                            loadPublicMessages();
+                        } else if (activeTab === 'private' && selectedContact) {
+                            loadPrivateMessages(selectedContact.id);
+                            loadConversations();
+                        }
                     }, 30000); // 30 secondes
                     
                     return () => clearInterval(timestampInterval);
