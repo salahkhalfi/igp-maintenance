@@ -1466,6 +1466,12 @@ app.get('/', (c) => {
             return new Date(nowUTC.getTime() + (offset * 60 * 60 * 1000));
         };
         
+        // FONCTION UTILITAIRE: Vérifier si scheduled_date est valide
+        // D1 retourne parfois "null" comme string au lieu de null
+        const hasScheduledDate = (scheduledDate) => {
+            return scheduledDate && scheduledDate !== 'null' && scheduledDate !== '';
+        };
+        
         // Fonction pour formater les dates en heure locale de l'appareil
         // Format québécois: JJ-MM-AAAA HH:mm
         const formatDateEST = (dateString, includeTime = true) => {
@@ -2962,7 +2968,7 @@ app.get('/', (c) => {
                 if (ticket) {
                     // CRITICAL: Check !== null (not just falsy) because 0 is valid (team assignment)
                     setScheduledAssignedTo(ticket.assigned_to !== null && ticket.assigned_to !== undefined ? String(ticket.assigned_to) : '');
-                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 10) : '');
+                    setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? ticket.scheduled_date.substring(0, 10) : '');
                 }
             }, [show, currentUser.role, ticket]);
             
@@ -3377,7 +3383,7 @@ app.get('/', (c) => {
                                                 onClick: () => {
                                                     setEditingSchedule(false);
                                                     setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
-                                                    setScheduledDate(ticket.scheduled_date ? ticket.scheduled_date.substring(0, 10) : '');
+                                                    setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? ticket.scheduled_date.substring(0, 10) : '');
                                                 },
                                                 className: 'px-5 py-2.5 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-lg font-bold transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
                                             },
@@ -6607,7 +6613,7 @@ app.get('/', (c) => {
                                             // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle) (seulement avant "En cours")
                                             // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
                                             ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (ticket.scheduled_date 
+                                                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (hasScheduledDate(ticket.scheduled_date) 
                                                     ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400'
                                                     : 'bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 shadow-[0_4px_12px_rgba(234,88,12,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-yellow-400'),
                                                 style: { fontSize: '11px' }
@@ -6616,15 +6622,15 @@ app.get('/', (c) => {
                                                     ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300'
                                                     : 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-[0_2px_8px_rgba(234,179,8,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-yellow-300') 
                                                 },
-                                                    React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
-                                                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, ticket.scheduled_date ? "PLANIFIÉ" : "ASSIGNÉ")
+                                                    React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (hasScheduledDate(ticket.scheduled_date) ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
+                                                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, hasScheduledDate(ticket.scheduled_date) ? "PLANIFIÉ" : "ASSIGNÉ")
                                                 ),
-                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + (ticket.scheduled_date ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
+                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + (hasScheduledDate(ticket.scheduled_date) ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
                                                     ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
                                                         ? (ticket.assigned_to === 0 ? "👥 Équipe" : "👤 " + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
                                                         : "⚠️ Non assigné"
                                                 ),
-                                                ticket.scheduled_date ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
+                                                (ticket.scheduled_date && ticket.scheduled_date !== 'null') ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
                                                     new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', { 
                                                         day: '2-digit', 
                                                         month: 'short'
@@ -6750,16 +6756,16 @@ app.get('/', (c) => {
                                                             ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300'
                                                             : 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-[0_2px_8px_rgba(234,179,8,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-yellow-300') 
                                                     },
-                                                        React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
-                                                        React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, ticket.scheduled_date ? "PLANIFIÉ" : "ASSIGNÉ")
+                                                        React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (hasScheduledDate(ticket.scheduled_date) ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
+                                                        React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, hasScheduledDate(ticket.scheduled_date) ? "PLANIFIÉ" : "ASSIGNÉ")
                                                     ),
                                                     React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + 
-                                                        (ticket.scheduled_date ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
+                                                        (hasScheduledDate(ticket.scheduled_date) ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
                                                         ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
                                                             ? (ticket.assigned_to === 0 ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
                                                             : '⚠️ Non assigné'
                                                     ),
-                                                    ticket.scheduled_date ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
+                                                    hasScheduledDate(ticket.scheduled_date) ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
                                                         new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', { 
                                                             day: '2-digit', 
                                                             month: 'short'
@@ -6871,8 +6877,8 @@ app.get('/', (c) => {
                                                     ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_2px_8px_rgba(37,99,235,0.4)] border-b-2 border-green-400'
                                                     : 'bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 shadow-[0_2px_8px_rgba(234,88,12,0.4)] border-b-2 border-yellow-400')
                                             },
-                                                React.createElement('i', { className: ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check' }),
-                                                React.createElement('span', {}, ticket.scheduled_date ? 'PLANIFIÉ' : 'ASSIGNÉ')
+                                                React.createElement('i', { className: hasScheduledDate(ticket.scheduled_date) ? 'fas fa-calendar-check' : 'fas fa-user-check' }),
+                                                React.createElement('span', {}, hasScheduledDate(ticket.scheduled_date) ? 'PLANIFIÉ' : 'ASSIGNÉ')
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'mb-1' },
