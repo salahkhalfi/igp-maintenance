@@ -2559,14 +2559,14 @@ app.get('/', (c) => {
                 setUploadProgress(0);
                 
                 try {
-                    // Capturer l'heure locale de l'appareil de l'utilisateur
-                    const localTime = new Date();
-                    const year = localTime.getFullYear();
-                    const month = String(localTime.getMonth() + 1).padStart(2, '0');
-                    const day = String(localTime.getDate()).padStart(2, '0');
-                    const hours = String(localTime.getHours()).padStart(2, '0');
-                    const minutes = String(localTime.getMinutes()).padStart(2, '0');
-                    const seconds = String(localTime.getSeconds()).padStart(2, '0');
+                    // Capturer l'heure UTC pour stockage dans la DB
+                    const utcTime = new Date();
+                    const year = utcTime.getUTCFullYear();
+                    const month = String(utcTime.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(utcTime.getUTCDate()).padStart(2, '0');
+                    const hours = String(utcTime.getUTCHours()).padStart(2, '0');
+                    const minutes = String(utcTime.getUTCMinutes()).padStart(2, '0');
+                    const seconds = String(utcTime.getUTCSeconds()).padStart(2, '0');
                     const localTimestamp = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
                     
                     const requestBody = {
@@ -3038,14 +3038,14 @@ app.get('/', (c) => {
                 
                 setSubmittingComment(true);
                 try {
-                    // Capturer l'heure locale de l'appareil
-                    const localTime = new Date();
-                    const year = localTime.getFullYear();
-                    const month = String(localTime.getMonth() + 1).padStart(2, '0');
-                    const day = String(localTime.getDate()).padStart(2, '0');
-                    const hours = String(localTime.getHours()).padStart(2, '0');
-                    const minutes = String(localTime.getMinutes()).padStart(2, '0');
-                    const seconds = String(localTime.getSeconds()).padStart(2, '0');
+                    // Capturer l'heure UTC pour stockage dans la DB
+                    const utcTime = new Date();
+                    const year = utcTime.getUTCFullYear();
+                    const month = String(utcTime.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(utcTime.getUTCDate()).padStart(2, '0');
+                    const hours = String(utcTime.getUTCHours()).padStart(2, '0');
+                    const minutes = String(utcTime.getUTCMinutes()).padStart(2, '0');
+                    const seconds = String(utcTime.getUTCSeconds()).padStart(2, '0');
                     const localTimestamp = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
                     
                     // Convertir le rôle de l'utilisateur en français
