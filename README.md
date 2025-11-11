@@ -1039,3 +1039,211 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - **Production**: https://8ce1bac9.webapp-7t8.pages.dev
 - **Sandbox Dev**: https://3000-i99eg52ghw8axx8tockng-5185f4aa.sandbox.novita.ai
 - **GitHub**: https://github.com/salahkhalfi/igp-maintenance (tag v2.0.4-ui-polish)
+
+## 💬 Système de Messagerie et Notifications (v2.0.0+)
+
+### 📊 Architecture du Système
+
+#### 🎯 Types de Messages
+**Messages Publics** (`message_type = 'public'`)
+- Visibles par tous les utilisateurs connectés
+- Canal de communication d'équipe broadcast
+- Pas de compteur "non lu" (visible par tous en temps réel)
+- Support texte + audio + suppression masse
+
+**Messages Privés** (`recipient_id` défini)
+- Conversations 1-to-1 entre utilisateurs
+- Compteur "non lu" individuel par utilisateur
+- Marquage automatique comme "lu" lors de l'ouverture
+- Support texte + audio + suppression masse
+
+#### 📡 Système de Notifications en Temps Réel
+
+##### 🔄 Polling Automatique (30 secondes)
+**Raison technique**: Cloudflare Workers ne supporte pas les WebSockets long-lived
+- **Alternative**: Polling HTTP avec interval de 30 secondes
+- **Navbar**: Rafraîchissement compteur global toutes les 30s
+- **Modal**: Rafraîchissement compteur modal toutes les 30s
+- **Timestamps**: Mise à jour relative ("il y a 2 min") toutes les 30s
+
+##### 🎯 Deux Systèmes de Comptage Indépendants
+
+**1. Compteur Navbar (Global)**
+- **État**: `unreadMessagesCount` (ligne 6986)
+- **Fonction**: `loadUnreadMessagesCount()` (ligne 7022-7032)
+- **Polling**: Actif quand utilisateur connecté (ligne 6993-6996)
+- **Affichage**: Badge rouge pulsant avec animation
+- **Visibilité**: Toujours visible dans le header
+- **But**: Notifier de nouveaux messages en arrière-plan
+
+**2. Compteur Modal (Local)**
+- **État**: `unreadCount` (ligne 4973)
+- **Fonction**: `loadUnreadCount()` (ligne 5072-5079)
+- **Polling**: Actif quand modal ouvert (ligne 5015-5020)
+- **Affichage**: Badge rouge dans header modal uniquement
+- **Visibilité**: Seulement quand modal messagerie ouvert
+- **But**: Afficher compteur à jour dans le contexte de la messagerie
+
+**Justification de la redondance**:
+- Cycles de vie différents (navbar toujours active vs modal temporaire)
+- Contextes distincts (notification globale vs interface messagerie)
+- Performance optimisée (polling indépendant par composant)
+
+##### ✅ Marquage "Lu" Automatique
+- **Trigger**: Ouverture d'une conversation privée (ligne 684-690)
+- **Action**: `UPDATE messages SET is_read = 1, read_at = CURRENT_TIMESTAMP`
+- **Filtres**: `sender_id = ? AND recipient_id = ? AND is_read = 0`
+- **Résultat**: Compteur se met à jour au prochain polling (max 30s)
+
+### 🔒 Sécurité et Permissions
+
+#### 🛡️ Authentification
+- **JWT obligatoire**: Toutes les routes messagerie protégées par `authMiddleware`
+- **Validation côté serveur**: Vérification user_id pour lecture/suppression
+- **Permissions granulaires**: Chaque message vérifié individuellement
+
+#### 🗑️ Suppression de Messages
+**Permissions**:
+- **Messages publics**: Admin/Supervisor seulement
+- **Messages privés**: Expéditeur + Admin/Supervisor
+- **Messages audio**: Suppression fichier R2 automatique (v2.0.6+)
+
+**Suppression en masse** (v2.0.9+):
+- Mode sélection avec checkboxes individuelles
+- Boutons "Tout"/"Aucun" pour sélection rapide (v2.0.10+)
+- Filtrage intelligent respectant permissions utilisateur
+- API bulk-delete: `POST /api/messages/bulk-delete` (max 100 items)
+- Nettoyage R2 automatique pour fichiers audio
+
+### ⏱️ Limitations Techniques (Cloudflare Workers)
+
+#### ❌ WebSockets Non Disponibles
+**Raison**: Cloudflare Workers ne supporte pas les connexions WebSocket persistantes
+- ❌ Pas de `Server-Sent Events` (SSE)
+- ❌ Pas de `WebSocket` long-lived
+- ❌ Pas de push notifications instantanées
+
+#### ✅ Solution Adoptée: HTTP Polling
+**Avantages**:
+- ✅ Compatible avec Cloudflare Workers/Pages
+- ✅ Faible latence (30s max)
+- ✅ Pas de gestion de reconnexion
+- ✅ Fonctionne derrière firewalls/proxies
+- ✅ Consommation minimale de requêtes API
+
+**Compromis**:
+- ⏱️ Latence maximale: 30 secondes avant notification
+- 📡 2 requêtes API par minute par utilisateur (navbar + modal)
+- 🔋 Polling actif uniquement quand application ouverte
+
+### 📊 Performance et Optimisations
+
+#### 🎯 Compteur API Route
+**Route**: `GET /api/messages/unread-count` (ligne 700-715)
+- **Requête SQL optimisée**: `SELECT COUNT(*) WHERE recipient_id = ? AND is_read = 0`
+- **Index BD**: Sur `recipient_id` et `is_read` pour performance
+- **Cache**: Pas de cache (données temps réel critiques)
+- **Temps réponse**: < 50ms
+
+#### 🔄 Polling Intelligent
+**Navbar** (ligne 6988-7000):
+```javascript
+React.useEffect(() => {
+    if (isLoggedIn) {
+        loadData();
+        loadUnreadMessagesCount();
+        
+        const interval = setInterval(() => {
+            loadUnreadMessagesCount();
+        }, 30000); // 30 secondes
+        
+        return () => clearInterval(interval);
+    }
+}, [isLoggedIn]);
+```
+
+**Modal** (ligne 5001-5022):
+```javascript
+React.useEffect(() => {
+    if (show) {
+        loadPublicMessages();
+        loadConversations();
+        loadAvailableUsers();
+        loadUnreadCount(); // Initial
+        
+        const timestampInterval = setInterval(() => {
+            setTimestampTick(prev => prev + 1);
+            loadUnreadCount(); // Toutes les 30s (v2.0.11+)
+        }, 30000);
+        
+        return () => clearInterval(timestampInterval);
+    }
+}, [show, activeTab, selectedContact]);
+```
+
+### 🎨 Interface Utilisateur
+
+#### 🔴 Badge Rouge Pulsant
+**Navbar**: Badge avec `animate-pulse` quand `unreadCount > 0`
+- Couleur: `bg-igp-red` (rouge IGP)
+- Animation: Pulsation continue pour attirer attention
+- Texte: Nombre de messages non lus
+
+**Modal**: Badge dans header (ligne 5467-5470)
+- **Corrigé v2.0.11**: Badge unique dans header seulement
+- **Supprimé**: Badge redondant sur onglet "Messages Privés"
+- **Justification**: Un seul badge évite confusion visuelle
+
+#### 📱 Design Responsive
+- **Desktop**: Badge navbar + header modal
+- **Mobile**: Badge navbar visible en permanence
+- **Tablette**: Layout adaptatif avec badge toujours accessible
+
+### 🐛 Bugs Corrigés (v2.0.11)
+
+#### ✅ Compteur Modal Non Rafraîchi (Ligne 5017)
+**Symptôme**: Après lecture de messages, badge modal affichait ancien nombre
+**Cause**: `loadUnreadCount()` appelé une seule fois à l'ouverture
+**Solution**: Ajouté `loadUnreadCount()` dans l'interval 30s
+**Impact**: Badge modal se met à jour automatiquement
+
+#### ✅ Badge Onglet Redondant (Ligne 5508-5510)
+**Symptôme**: Deux badges identiques (header + onglet "Messages Privés")
+**Cause**: Badge onglet n'apportait aucune information supplémentaire
+**Solution**: Supprimé badge onglet pour garder uniquement badge header
+**Impact**: Interface plus claire, moins de confusion visuelle
+
+### 🔮 Améliorations Futures Possibles
+
+#### 💡 Réduction de la Latence
+**Option 1**: Réduire interval à 15 secondes (coût API x2)
+**Option 2**: Polling adaptatif (15s si messages récents, 30s sinon)
+**Option 3**: WebPush API pour notifications navigateur (hors ligne)
+
+#### 🚀 Fonctionnalités Avancées
+- **Typing indicators**: "X est en train d'écrire..."
+- **Read receipts**: "Lu à 14:32"
+- **Message reactions**: Emojis réactions rapides
+- **Thread replies**: Réponses en fil de discussion
+- **Recherche messages**: Full-text search avec Cloudflare D1 FTS
+
+### 📚 Références Techniques
+
+#### 🔗 Cloudflare Documentation
+- [Workers Runtime Limitations](https://developers.cloudflare.com/workers/platform/limits/)
+- [D1 Database Best Practices](https://developers.cloudflare.com/d1/learning/using-indexes/)
+- [R2 Storage API](https://developers.cloudflare.com/r2/)
+
+#### 🎓 Leçons Apprises
+- ✅ Polling HTTP est suffisant pour la majorité des cas d'usage
+- ✅ 30 secondes est un bon compromis entre réactivité et consommation API
+- ✅ Compteurs séparés (navbar vs modal) évitent complexité state management
+- ✅ Badge unique dans interface évite redondance et confusion
+- ✅ Marquage "lu" automatique améliore UX sans action utilisateur
+
+---
+
+**Version système messagerie**: 2.0.11  
+**Dernière mise à jour**: 2025-11-11  
+**Statut polling**: ✅ Actif navbar + modal  
+**Badge redondant**: ✅ Supprimé (header uniquement)

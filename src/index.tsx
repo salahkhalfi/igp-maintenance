@@ -21,6 +21,7 @@ import media from './routes/media';
 import comments from './routes/comments';
 import users from './routes/users';
 import roles from './routes/roles';
+import settings from './routes/settings';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -340,8 +341,9 @@ app.route('/api/users', users);
 
 app.route('/api/media', media);
 
-
 app.route('/api/comments', comments);
+
+app.route('/api/settings', settings);
 
 
 // ========================================
@@ -902,7 +904,17 @@ app.post('/api/alerts/check-overdue', authMiddleware, async (c) => {
       return c.json({ error: 'Permission refusée' }, 403);
     }
     
-    const now = new Date().toISOString();
+    // Obtenir le decalage horaire depuis les parametres systeme
+    const { results: settingResults } = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'timezone_offset_hours'
+    `).all();
+    
+    const timezoneOffset = settingResults.length > 0 ? parseInt(settingResults[0].setting_value) : -5;
+    
+    // Appliquer le decalage horaire (ex: -5 pour EST, -4 pour EDT)
+    const nowUTC = new Date();
+    const nowLocal = new Date(nowUTC.getTime() + (timezoneOffset * 60 * 60 * 1000));
+    const now = nowLocal.toISOString().replace('T', ' ').substring(0, 19); // Format: YYYY-MM-DD HH:MM:SS
     
     // Trouver tous les tickets planifiés en retard (received ou diagnostic uniquement)
     const { results: overdueTickets } = await c.env.DB.prepare(`
@@ -1382,6 +1394,38 @@ app.get('/', (c) => {
                 transform: translateY(0);
                 opacity: 1;
             }
+        }
+        
+        /* ===== BOTTOM SHEET MOBILE ANIMATIONS ===== */
+        @keyframes fadeInBackdrop {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUpSheet {
+            from { 
+                transform: translateY(100%); 
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0); 
+                opacity: 1;
+            }
+        }
+        
+        .bottom-sheet-backdrop {
+            animation: fadeInBackdrop 0.2s ease-out;
+        }
+        
+        .bottom-sheet-content {
+            animation: slideUpSheet 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        
+        .no-tap-highlight {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
     </style>
 </head>
@@ -2293,6 +2337,128 @@ app.get('/', (c) => {
         };
         
         
+        // ===== BOTTOM SHEET MOBILE POUR DEPLACER TICKETS =====
+        const MoveTicketBottomSheet = ({ show, onClose, ticket, onMove, currentUser }) => {
+            const statuses = [
+                { key: 'received', label: 'Requete Recue', icon: '🟦', color: 'bg-blue-50 hover:bg-blue-100 active:bg-blue-200' },
+                { key: 'diagnostic', label: 'Diagnostic', icon: '🟨', color: 'bg-yellow-50 hover:bg-yellow-100 active:bg-yellow-200' },
+                { key: 'in_progress', label: 'En Cours', icon: '🟧', color: 'bg-orange-50 hover:bg-orange-100 active:bg-orange-200' },
+                { key: 'waiting_parts', label: 'En Attente Pieces', icon: '🟪', color: 'bg-purple-50 hover:bg-purple-100 active:bg-purple-200' },
+                { key: 'completed', label: 'Termine', icon: '🟩', color: 'bg-green-50 hover:bg-green-100 active:bg-green-200' },
+                { key: 'archived', label: 'Archive', icon: '⬜', color: 'bg-gray-50 hover:bg-gray-100 active:bg-gray-200' }
+            ];
+            
+            if (!show || !ticket) return null;
+            
+            // Verifier si ticket est assigné ou planifié (pour affichage info seulement, pas de blocage)
+            const isAssigned = ticket.assigned_to !== null && ticket.assigned_to !== undefined;
+            const isPlanned = isAssigned && ticket.scheduled_date;
+            
+            const handleStatusSelect = async (status) => {
+                if (status === ticket.status) {
+                    onClose();
+                    return;
+                }
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+                
+                await onMove(ticket, status);
+                onClose();
+            };
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 z-50 flex items-end bottom-sheet-backdrop no-tap-highlight',
+                style: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                },
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white w-full rounded-t-3xl shadow-2xl bottom-sheet-content',
+                    style: {
+                        maxHeight: '80vh'
+                    },
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { 
+                        className: 'p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100'
+                    },
+                        React.createElement('div', { className: 'flex items-center justify-between mb-2' },
+                            React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, 'Deplacer le ticket'),
+                            React.createElement('button', {
+                                onClick: onClose,
+                                className: 'text-gray-500 hover:text-gray-700 text-2xl leading-none p-2 no-tap-highlight',
+                                type: 'button'
+                            }, '×')
+                        ),
+                        React.createElement('div', { className: 'text-sm' },
+                            React.createElement('div', { className: 'font-mono text-xs text-gray-600' }, ticket.ticket_id),
+                            React.createElement('div', { className: 'font-semibold text-gray-800 mt-1 truncate' }, ticket.title)
+                        ),
+                        isAssigned ? React.createElement('div', {
+                            className: 'mt-2 text-xs px-2 py-1 rounded ' + (isPlanned 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : 'bg-orange-100 text-orange-700')
+                        }, isPlanned 
+                            ? 'ℹ️ Ticket planifié - Déplacement manuel possible' 
+                            : 'ℹ️ Ticket assigné - Déplacement manuel possible') : null
+                    ),
+                    
+                    React.createElement('div', { 
+                        className: 'p-4 space-y-2 overflow-y-auto',
+                        style: { maxHeight: '50vh' }
+                    },
+                        statuses.map(status => 
+                            React.createElement('button', {
+                                key: status.key,
+                                onClick: () => handleStatusSelect(status.key),
+                                disabled: status.key === ticket.status,
+                                className: 
+                                    'w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between no-tap-highlight ' +
+                                    (status.key === ticket.status 
+                                        ? 'bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed' 
+                                        : status.color + ' border-transparent'),
+                                style: {
+                                    minHeight: '60px'
+                                },
+                                type: 'button'
+                            },
+                                React.createElement('div', { className: 'flex items-center gap-3' },
+                                    React.createElement('span', { 
+                                        className: 'text-3xl',
+                                        style: { lineHeight: '1' }
+                                    }, status.icon),
+                                    React.createElement('span', { 
+                                        className: 'font-semibold text-gray-800 text-left',
+                                        style: { fontSize: '16px' }
+                                    }, status.label)
+                                ),
+                                status.key === ticket.status && 
+                                    React.createElement('i', { 
+                                        className: 'fas fa-check text-green-600',
+                                        style: { fontSize: '20px' }
+                                    })
+                            )
+                        )
+                    ),
+                    
+                    React.createElement('div', { className: 'p-4 border-t border-gray-200' },
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'w-full py-4 text-center font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-colors no-tap-highlight',
+                            style: { 
+                                fontSize: '16px'
+                            },
+                            type: 'button'
+                        }, 'Annuler')
+                    )
+                )
+            );
+        };
+        
+        
         const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUser }) => {
             const [title, setTitle] = React.useState('');
             const [description, setDescription] = React.useState('');
@@ -2393,7 +2559,7 @@ app.get('/', (c) => {
                             requestBody.assigned_to = parseInt(assignedTo);
                         }
                         if (scheduledDate) {
-                            requestBody.scheduled_date = scheduledDate + ' 00:00:00'; // Format: YYYY-MM-DD 00:00:00 (minuit)
+                            requestBody.scheduled_date = scheduledDate + ' 23:59:59'; // Format: YYYY-MM-DD 23:59:59 (fin de journee)
                         }
                     }
                     
@@ -2656,17 +2822,50 @@ app.get('/', (c) => {
                                 
                                 // Date de maintenance planifiée
                                 React.createElement('div', { className: 'mb-2' },
+                                    // Badge d'état
+                                    scheduledDate ? React.createElement('div', { className: 'mb-3 p-2 rounded-lg bg-blue-50 border-2 border-blue-300' },
+                                        React.createElement('div', { className: 'flex items-center gap-2' },
+                                            React.createElement('i', { className: 'fas fa-calendar-check text-blue-600' }),
+                                            React.createElement('span', { className: 'text-sm font-bold text-blue-800' },
+                                                "État : PLANIFIÉ"
+                                            )
+                                        ),
+                                        React.createElement('div', { className: 'mt-1 text-xs text-blue-700' },
+                                            "📅 " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+                                        )
+                                    ) : React.createElement('div', { className: 'mb-3 p-2 rounded-lg bg-orange-50 border-2 border-orange-300' },
+                                        React.createElement('div', { className: 'flex items-center gap-2' },
+                                            React.createElement('i', { className: 'fas fa-user-check text-orange-600' }),
+                                            React.createElement('span', { className: 'text-sm font-bold text-orange-800' },
+                                                "État : ASSIGNÉ"
+                                            )
+                                        ),
+                                        React.createElement('div', { className: 'mt-1 text-xs text-orange-700' },
+                                            "ℹ️ Ajoutez une date pour planifier"
+                                        )
+                                    ),
+                                    
                                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 
                                         React.createElement('i', { className: 'fas fa-calendar-day mr-2' }),
-                                        'Date de maintenance'
+                                        'Date de maintenance' + (scheduledDate ? ' (modifier)' : ' (optionnelle)')
                                     ),
-                                    React.createElement('input', {
-                                        type: 'date',
-                                        value: scheduledDate,
-                                        onChange: (e) => setScheduledDate(e.target.value),
-                                        className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
-                                    })
-                                )
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('input', {
+                                            type: 'date',
+                                            value: scheduledDate,
+                                            onChange: (e) => setScheduledDate(e.target.value),
+                                            className: 'flex-1 px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
+                                        }),
+                                        scheduledDate ? React.createElement('button', {
+                                            type: 'button',
+                                            onClick: () => setScheduledDate(''),
+                                            className: 'px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md font-bold transition-all text-sm'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-times mr-1' }),
+                                            'Retirer'
+                                        ) : null
+                                    ) // Ferme le div flex gap-2 (ligne 2852)
+                                ) // Ferme le div mb-2 (ligne 2824)
                             )
                         : null,
                         
@@ -2764,9 +2963,9 @@ app.get('/', (c) => {
             };
             
             const handleDeleteTicket = async () => {
-                // Verification: technicien ne peut pas supprimer un ticket planifie cree par quelqu un d autre
+                // Verification: technicien ne peut pas supprimer un ticket planifié (avec date) créé par quelqu'un d'autre
                 if (currentUser.role === 'technician' && ticket?.scheduled_date && ticket?.reported_by !== currentUser.id) {
-                    alert('Les techniciens ne peuvent pas supprimer les tickets planifies crees par d autres utilisateurs');
+                    alert("Les techniciens ne peuvent pas supprimer les tickets planifiés créés par d'autres utilisateurs");
                     return;
                 }
                 
@@ -2911,7 +3110,7 @@ app.get('/', (c) => {
                     if (scheduledAssignedTo) {
                         updateData.assigned_to = parseInt(scheduledAssignedTo);
                         // Si assignation définie, sauvegarder la date (ou null si vide)
-                        updateData.scheduled_date = scheduledDate ? scheduledDate + ' 00:00:00' : null;
+                        updateData.scheduled_date = scheduledDate ? scheduledDate + ' 23:59:59' : null;
                     } else {
                         // Si "Non assigné" sélectionné, retirer aussi la date (dé-planifier complètement)
                         updateData.assigned_to = null;
@@ -2922,7 +3121,11 @@ app.get('/', (c) => {
                     
                     await axios.patch(API_URL + '/tickets/' + ticketId, updateData);
                     
-                    alert('Planification mise à jour avec succès !');
+                    // Message dynamique selon si planifié (avec date) ou juste assigné (sans date)
+                    const successMessage = scheduledDate 
+                        ? 'Planification mise à jour avec succès !' 
+                        : 'Assignation mise à jour avec succès !';
+                    alert(successMessage);
                     setEditingSchedule(false);
                     loadTicketDetails(); // Recharger les détails
                 } catch (error) {
@@ -3100,17 +3303,47 @@ app.get('/', (c) => {
                                         
                                         // Date de maintenance planifiée
                                         React.createElement('div', {},
+                                            // Badge d'état actuel
+                                            React.createElement('div', { className: 'mb-3 p-3 rounded-lg border-2 ' + (scheduledDate ? 'bg-blue-50 border-blue-300' : 'bg-orange-50 border-orange-300') },
+                                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                                    React.createElement('i', { className: 'text-lg ' + (scheduledDate ? 'fas fa-calendar-check text-blue-600' : 'fas fa-user-check text-orange-600') }),
+                                                    React.createElement('span', { className: 'font-bold ' + (scheduledDate ? 'text-blue-800' : 'text-orange-800') },
+                                                        "État actuel : " + (scheduledDate ? "PLANIFIÉ" : "ASSIGNÉ")
+                                                    )
+                                                ),
+                                                scheduledDate ? 
+                                                    React.createElement('div', { className: 'mt-1 text-xs text-blue-700' },
+                                                        "📅 Date : " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+                                                    )
+                                                : React.createElement('div', { className: 'mt-1 text-xs text-orange-700' },
+                                                    "ℹ️ Aucune date planifiée - Ajoutez-en une pour planifier"
+                                                )
+                                            ), // Ferme le badge d'état (ligne 3307)
+                                            
                                             React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
                                                 React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600' }),
-                                                "Date de maintenance"
+                                                "Date de maintenance" + (scheduledDate ? " (modifier)" : " (ajouter)")
                                             ),
-                                            React.createElement('input', {
-                                                type: 'date',
-                                                value: scheduledDate,
-                                                onChange: (e) => setScheduledDate(e.target.value),
-                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
-                                            })
-                                        ),
+                                            React.createElement('div', { className: 'flex gap-2' },
+                                                React.createElement('input', {
+                                                    type: 'date',
+                                                    value: scheduledDate,
+                                                    onChange: (e) => setScheduledDate(e.target.value),
+                                                    className: 'flex-1 px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
+                                                }),
+                                                scheduledDate ? React.createElement('button', {
+                                                    type: 'button',
+                                                    onClick: () => setScheduledDate(''),
+                                                    className: 'px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold transition-all shadow-md hover:shadow-lg'
+                                                },
+                                                    React.createElement('i', { className: 'fas fa-times mr-1' }),
+                                                    "Retirer"
+                                                ) : null
+                                            ), // Ferme le div flex gap-2 (ligne 3327)
+                                            scheduledDate ? React.createElement('div', { className: 'mt-2 text-xs text-gray-600 italic' },
+                                                '💡 Cliquez sur "Retirer" pour passer de PLANIFIÉ à ASSIGNÉ'
+                                            ) : null
+                                        ), // Ferme le div principal Date de maintenance (ligne 3305)
                                         
                                         // Boutons d'action
                                         React.createElement('div', { className: 'flex justify-end gap-3 pt-3' },
@@ -3960,6 +4193,175 @@ app.get('/', (c) => {
         };
         
         
+        // ===== MODAL PARAMETRES SYSTEME (ADMIN) =====
+        const SystemSettingsModal = ({ show, onClose, currentUser }) => {
+            const [timezoneOffset, setTimezoneOffset] = React.useState('-5');
+            const [loading, setLoading] = React.useState(true);
+            const [saving, setSaving] = React.useState(false);
+            
+            React.useEffect(() => {
+                if (show) {
+                    loadSettings();
+                }
+            }, [show]);
+            
+            const loadSettings = async () => {
+                setLoading(true);
+                try {
+                    const response = await axios.get(API_URL + '/settings/timezone_offset_hours');
+                    setTimezoneOffset(response.data.setting_value);
+                } catch (error) {
+                    console.error('Erreur chargement parametres:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            const handleSave = async () => {
+                setSaving(true);
+                try {
+                    await axios.put(API_URL + '/settings/timezone_offset_hours', {
+                        value: timezoneOffset
+                    });
+                    alert("Paramètres mis à jour avec succès!");
+                    onClose();
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+                } finally {
+                    setSaving(false);
+                }
+            };
+            
+            if (!show) return null;
+            
+            return React.createElement('div', {
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    React.createElement('div', { className: 'p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50' },
+                        React.createElement('div', { className: 'flex items-center justify-between' },
+                            React.createElement('h2', { className: 'text-2xl font-bold text-gray-800 flex items-center gap-2' },
+                                React.createElement('i', { className: 'fas fa-cog' }),
+                                "Paramètres Système"
+                            ),
+                            React.createElement('button', {
+                                onClick: onClose,
+                                className: 'text-gray-500 hover:text-gray-700 text-2xl',
+                                type: 'button'
+                            }, '×')
+                        )
+                    ),
+                    
+                    React.createElement('div', { className: 'p-6 overflow-y-auto', style: { maxHeight: 'calc(90vh - 180px)' } },
+                        loading ? React.createElement('div', { className: 'text-center py-8' },
+                            React.createElement('i', { className: 'fas fa-spinner fa-spin text-3xl text-blue-600' })
+                        ) : React.createElement('div', { className: 'space-y-6' },
+                            React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4' },
+                                React.createElement('div', { className: 'flex items-start gap-3' },
+                                    React.createElement('i', { className: 'fas fa-info-circle text-blue-600 text-xl mt-1' }),
+                                    React.createElement('div', {},
+                                        React.createElement('h3', { className: 'font-bold text-blue-900 mb-2' }, "À propos du décalage horaire"),
+                                        React.createElement('p', { className: 'text-sm text-blue-800 mb-2' },
+                                            "Le décalage horaire permet d'ajuster l'heure du serveur pour correspondre à votre fuseau horaire local."
+                                        ),
+                                        React.createElement('ul', { className: 'text-sm text-blue-800 space-y-1 list-disc list-inside' },
+                                            React.createElement('li', {}, 'Hiver (EST): -5 heures'),
+                                            React.createElement('li', {}, 'Ete (EDT): -4 heures'),
+                                            React.createElement('li', {}, 'Impacte: alertes retard, countdowns')
+                                        )
+                                    )
+                                )
+                            ),
+                            
+                            React.createElement('div', {},
+                                React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                    React.createElement('i', { className: 'fas fa-clock mr-2' }),
+                                    'Decalage horaire (heures par rapport a UTC)'
+                                ),
+                                React.createElement('select', {
+                                    value: timezoneOffset,
+                                    onChange: (e) => setTimezoneOffset(e.target.value),
+                                    className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-semibold'
+                                },
+                                    React.createElement('option', { value: '-12' }, 'UTC-12'),
+                                    React.createElement('option', { value: '-11' }, 'UTC-11'),
+                                    React.createElement('option', { value: '-10' }, 'UTC-10 (Hawaii)'),
+                                    React.createElement('option', { value: '-9' }, 'UTC-9 (Alaska)'),
+                                    React.createElement('option', { value: '-8' }, 'UTC-8 (PST)'),
+                                    React.createElement('option', { value: '-7' }, 'UTC-7 (MST)'),
+                                    React.createElement('option', { value: '-6' }, 'UTC-6 (CST)'),
+                                    React.createElement('option', { value: '-5' }, 'UTC-5 (EST - Hiver Quebec)'),
+                                    React.createElement('option', { value: '-4' }, 'UTC-4 (EDT - Ete Quebec)'),
+                                    React.createElement('option', { value: '-3' }, 'UTC-3'),
+                                    React.createElement('option', { value: '-2' }, 'UTC-2'),
+                                    React.createElement('option', { value: '-1' }, 'UTC-1'),
+                                    React.createElement('option', { value: '0' }, 'UTC+0 (Londres)'),
+                                    React.createElement('option', { value: '1' }, 'UTC+1 (Paris)'),
+                                    React.createElement('option', { value: '2' }, 'UTC+2'),
+                                    React.createElement('option', { value: '3' }, 'UTC+3'),
+                                    React.createElement('option', { value: '4' }, 'UTC+4'),
+                                    React.createElement('option', { value: '5' }, 'UTC+5'),
+                                    React.createElement('option', { value: '6' }, 'UTC+6'),
+                                    React.createElement('option', { value: '7' }, 'UTC+7'),
+                                    React.createElement('option', { value: '8' }, 'UTC+8 (Hong Kong)'),
+                                    React.createElement('option', { value: '9' }, 'UTC+9 (Tokyo)'),
+                                    React.createElement('option', { value: '10' }, 'UTC+10 (Sydney)'),
+                                    React.createElement('option', { value: '11' }, 'UTC+11'),
+                                    React.createElement('option', { value: '12' }, 'UTC+12'),
+                                    React.createElement('option', { value: '13' }, 'UTC+13'),
+                                    React.createElement('option', { value: '14' }, 'UTC+14')
+                                ),
+                                React.createElement('p', { className: 'mt-2 text-sm text-gray-600' },
+                                    'Actuellement selectionne: UTC',
+                                    timezoneOffset,
+                                    ' (',
+                                    parseInt(timezoneOffset) === -5 ? 'EST - Hiver Quebec' : 
+                                    parseInt(timezoneOffset) === -4 ? 'EDT - Ete Quebec' : 
+                                    'Personnalise',
+                                    ')'
+                                )
+                            ),
+                            
+                            React.createElement('div', { className: 'bg-yellow-50 border border-yellow-200 rounded-lg p-4' },
+                                React.createElement('div', { className: 'flex items-start gap-3' },
+                                    React.createElement('i', { className: 'fas fa-exclamation-triangle text-yellow-600 text-xl mt-1' }),
+                                    React.createElement('div', {},
+                                        React.createElement('h3', { className: 'font-bold text-yellow-900 mb-1' }, "Attention"),
+                                        React.createElement('p', { className: 'text-sm text-yellow-800' },
+                                            "Changez ce paramètre uniquement lors du changement d'heure (mars et novembre)."
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    
+                    React.createElement('div', { className: 'p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3' },
+                        React.createElement('button', {
+                            onClick: onClose,
+                            disabled: saving,
+                            className: 'px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all',
+                            type: 'button'
+                        }, 'Annuler'),
+                        React.createElement('button', {
+                            onClick: handleSave,
+                            disabled: saving,
+                            className: 'px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2',
+                            type: 'button'
+                        },
+                            saving && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                            saving ? 'Enregistrement...' : 'Enregistrer'
+                        )
+                    )
+                )
+            );
+        };
+        
+        
         // Composant de gestion des utilisateurs (VERSION SIMPLIFIÉE)
         const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             const [users, setUsers] = React.useState([]);
@@ -4589,6 +4991,9 @@ app.get('/', (c) => {
             const [selectionMode, setSelectionMode] = React.useState(false);
             const [selectedMessages, setSelectedMessages] = React.useState([]);
             
+            // État pour forcer le re-render des timestamps (pas besoin de valeur, juste un toggle)
+            const [timestampTick, setTimestampTick] = React.useState(0);
+            
             const scrollToBottom = () => {
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
             };
@@ -4607,21 +5012,13 @@ app.get('/', (c) => {
                         loadPrivateMessages(initialContact.id);
                     }
                     
-                    // DÉSACTIVÉ: Rafraîchissement automatique toutes les 10 secondes
-                    // Raison: Économise les ressources serveur et évite le clignotement des messages
-                    // Solution: L'utilisateur peut cliquer sur "Actualiser" ou fermer/rouvrir la messagerie
-                    // Le compteur de messages non lus continue de se mettre à jour toutes les 30s (indépendant)
+                    // Rafraichir les timestamps ET le compteur de messages non lus toutes les 30 secondes
+                    const timestampInterval = setInterval(() => {
+                        setTimestampTick(prev => prev + 1);
+                        loadUnreadCount(); // Recharger aussi le compteur
+                    }, 30000); // 30 secondes
                     
-                    // const interval = setInterval(() => {
-                    //     if (activeTab === "public") {
-                    //         loadPublicMessages();
-                    //     } else if (selectedContact) {
-                    //         loadPrivateMessages(selectedContact.id);
-                    //     }
-                    //     loadUnreadCount();
-                    // }, 10000);
-                    
-                    // return () => clearInterval(interval);
+                    return () => clearInterval(timestampInterval);
                 }
             }, [show, activeTab, selectedContact]);
             
@@ -5107,10 +5504,7 @@ app.get('/', (c) => {
                         },
                             React.createElement('i', { className: 'fas fa-user-friends mr-1 sm:mr-2' }),
                             React.createElement('span', { className: 'hidden xs:inline' }, 'Messages Prives'),
-                            React.createElement('span', { className: 'inline xs:hidden' }, 'Prives'),
-                            unreadCount > 0 ? React.createElement('span', {
-                                className: 'absolute top-1 right-1 sm:top-2 sm:right-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full animate-pulse'
-                            }, unreadCount) : null
+                            React.createElement('span', { className: 'inline xs:hidden' }, 'Prives')
                         )
                     ),
                     
@@ -5570,6 +5964,7 @@ app.get('/', (c) => {
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
             const [showUserManagement, setShowUserManagement] = React.useState(false);
             const [showMachineManagement, setShowMachineManagement] = React.useState(false);
+            const [showSystemSettings, setShowSystemSettings] = React.useState(false);
             const [showUserGuide, setShowUserGuide] = React.useState(false);
             const [showArchived, setShowArchived] = React.useState(false);
             const [showMessaging, setShowMessaging] = React.useState(false);
@@ -5774,6 +6169,11 @@ app.get('/', (c) => {
             };
             
             
+            // === NOUVEAUX ETATS POUR BOTTOM SHEET (isoles) ===
+            const [showMoveModal, setShowMoveModal] = React.useState(false);
+            const [ticketToMove, setTicketToMove] = React.useState(null);
+            const longPressTimer = React.useRef(null);
+            
             const touchDragStart = React.useRef(null);
             const touchDragTicket = React.useRef(null);
             
@@ -5786,9 +6186,37 @@ app.get('/', (c) => {
                 const touch = e.touches[0];
                 touchDragStart.current = { x: touch.clientX, y: touch.clientY };
                 touchDragTicket.current = ticket;
+                
+                // === LONG PRESS POUR BOTTOM SHEET ===
+                // Vibration legere au debut du touch
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+                
+                // Demarrer timer long press (500ms)
+                longPressTimer.current = setTimeout(() => {
+                    // Vibration forte pour confirmer long press
+                    if (navigator.vibrate) {
+                        navigator.vibrate([50, 30, 50]);
+                    }
+                    
+                    // Ouvrir bottom sheet
+                    setTicketToMove(ticket);
+                    setShowMoveModal(true);
+                    
+                    // Annuler le drag classique pour ne pas interferer
+                    touchDragStart.current = null;
+                    touchDragTicket.current = null;
+                }, 500);
             };
             
             const handleTouchMove = (e) => {
+                // Annuler timer long press si utilisateur bouge (scroll intent)
+                if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                    longPressTimer.current = null;
+                }
+                
                 if (!touchDragStart.current || !touchDragTicket.current) return;
                 
                 const touch = e.touches[0];
@@ -5811,6 +6239,12 @@ app.get('/', (c) => {
             };
             
             const handleTouchEnd = async (e) => {
+                // Annuler timer long press si utilisateur relache avant 500ms
+                if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                    longPressTimer.current = null;
+                }
+                
                 if (draggedTicket && dragOverColumn && draggedTicket.status !== dragOverColumn) {
                     await moveTicketToStatus(draggedTicket, dragOverColumn);
                 }
@@ -5860,6 +6294,12 @@ app.get('/', (c) => {
                     }
                 }),
                 
+                React.createElement(SystemSettingsModal, {
+                    show: showSystemSettings,
+                    onClose: () => setShowSystemSettings(false),
+                    currentUser: currentUser
+                }),
+                
                 React.createElement(MachineManagementModal, {
                     show: showMachineManagement,
                     onClose: () => setShowMachineManagement(false),
@@ -5884,6 +6324,17 @@ app.get('/', (c) => {
                 React.createElement(UserGuideModal, {
                     show: showUserGuide,
                     onClose: () => setShowUserGuide(false),
+                    currentUser: currentUser
+                }),
+                
+                React.createElement(MoveTicketBottomSheet, {
+                    show: showMoveModal,
+                    onClose: () => {
+                        setShowMoveModal(false);
+                        setTicketToMove(null);
+                    },
+                    ticket: ticketToMove,
+                    onMove: moveTicketToStatus,
                     currentUser: currentUser
                 }),
                 
@@ -5984,7 +6435,16 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: "fas fa-cogs mr-2" }),
                                 "Machines"
                             ) : null,
-                            // 6. Rôles (admin uniquement - rare)
+                            // 6. Parametres systeme (admin uniquement)
+                            (currentUser?.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => setShowSystemSettings(true),
+                                className: "px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all"
+                            },
+                                React.createElement('i', { className: "fas fa-sliders-h mr-2" }),
+                                "Parametres"
+                            ) : null,
+                            // 7. Rôles (admin uniquement - rare)
                             (currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => {
@@ -6081,27 +6541,32 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu' 
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            // Banniere pour tickets planifies (date ET assignation requis) (seulement avant "En cours")
+                                            // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle) (seulement avant "En cours")
                                             // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
-                                            ((ticket.scheduled_date && ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400 overflow-hidden',
+                                            ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
+                                                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (ticket.scheduled_date 
+                                                    ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400'
+                                                    : 'bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 shadow-[0_4px_12px_rgba(234,88,12,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-yellow-400'),
                                                 style: { fontSize: '11px' }
                                             },
-                                                React.createElement('div', { className: 'flex items-center gap-1 bg-gradient-to-br from-green-500 to-green-600 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300 flex-shrink-0' },
-                                                    React.createElement('i', { className: 'fas fa-calendar-check text-white drop-shadow-lg text-[9px]' }),
-                                                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
+                                                React.createElement('div', { className: 'flex items-center gap-1 px-1.5 py-0.5 rounded flex-shrink-0 ' + (ticket.scheduled_date
+                                                    ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300'
+                                                    : 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-[0_2px_8px_rgba(234,179,8,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-yellow-300') 
+                                                },
+                                                    React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
+                                                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, ticket.scheduled_date ? "PLANIFIÉ" : "ASSIGNÉ")
                                                 ),
-                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 bg-blue-800/60 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border border-blue-500/40 truncate' },
+                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + (ticket.scheduled_date ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
                                                     ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
-                                                        ? (ticket.assigned_to === 0 ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
-                                                        : '⚠️ Non assigné'
+                                                        ? (ticket.assigned_to === 0 ? "👥 Équipe" : "👤 " + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
+                                                        : "⚠️ Non assigné"
                                                 ),
-                                                React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
+                                                ticket.scheduled_date ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
                                                     new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', { 
                                                         day: '2-digit', 
                                                         month: 'short'
                                                     })
-                                                )
+                                                ) : null
                                             ) : null,
                                             
                                             React.createElement('div', { className: 'mb-1' },
@@ -6207,27 +6672,36 @@ app.get('/', (c) => {
                                                     ? 'Cliquer pour détails | Clic droit: menu' 
                                                     : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                             },
-                                                // Banniere pour tickets planifies (date ET assignation requis) (seulement avant "En cours")
+                                                // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle)
                                                 // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
-                                                ((ticket.scheduled_date && ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
-                                                    className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 flex items-center gap-1.5 rounded-t-lg shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400 overflow-hidden',
+                                                // Si scheduled_date existe: affiche PLANIFIÉ (bleu), sinon affiche ASSIGNÉ (orange)
+                                                ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
+                                                    className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + 
+                                                    (ticket.scheduled_date 
+                                                        ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400'
+                                                        : 'bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 shadow-[0_4px_12px_rgba(234,88,12,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-yellow-400'),
                                                     style: { fontSize: '11px' }
                                                 },
-                                                    React.createElement('div', { className: 'flex items-center gap-1 bg-gradient-to-br from-green-500 to-green-600 px-1.5 py-0.5 rounded shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300 flex-shrink-0' },
-                                                        React.createElement('i', { className: 'fas fa-calendar-check text-white drop-shadow-lg text-[9px]' }),
-                                                        React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, "PLANIFIÉ")
+                                                    React.createElement('div', { className: 'flex items-center gap-1 px-1.5 py-0.5 rounded flex-shrink-0 ' + 
+                                                        (ticket.scheduled_date
+                                                            ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300'
+                                                            : 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-[0_2px_8px_rgba(234,179,8,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-yellow-300') 
+                                                    },
+                                                        React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
+                                                        React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, ticket.scheduled_date ? "PLANIFIÉ" : "ASSIGNÉ")
                                                     ),
-                                                    React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 bg-blue-800/60 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border border-blue-500/40 truncate' },
+                                                    React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + 
+                                                        (ticket.scheduled_date ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
                                                         ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
                                                             ? (ticket.assigned_to === 0 ? '👥 Équipe' : '👤 ' + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
                                                             : '⚠️ Non assigné'
                                                     ),
-                                                    React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
+                                                    ticket.scheduled_date ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
                                                         new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', { 
                                                             day: '2-digit', 
                                                             month: 'short'
                                                         })
-                                                    )
+                                                    ) : null
                                                 ) : null,
                                                 
                                                 React.createElement('div', { className: 'mb-1' },
@@ -6325,10 +6799,14 @@ app.get('/', (c) => {
                                                 ? "Cliquer pour détails | Clic droit: menu" 
                                                 : "Cliquer pour détails | Glisser pour déplacer | Clic droit: menu"
                                         },
-                                            // Banniere pour tickets planifies (date ET assignation requis)
+                                            // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle)
                                             // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
-                                            (ticket.scheduled_date && ticket.assigned_to !== null && ticket.assigned_to !== undefined) ? React.createElement('div', { 
-                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg shadow-[0_2px_8px_rgba(37,99,235,0.4)] border-b-2 border-green-400'
+                                            // Si scheduled_date existe: affiche PLANIFIÉ (bleu), sinon affiche ASSIGNÉ (orange)
+                                            ((ticket.assigned_to !== null && ticket.assigned_to !== undefined)) ? React.createElement('div', { 
+                                                className: 'mb-2 -mx-3 -mt-3 px-3 py-1.5 text-white text-xs font-bold flex items-center gap-2 rounded-t-lg ' + 
+                                                (ticket.scheduled_date 
+                                                    ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_2px_8px_rgba(37,99,235,0.4)] border-b-2 border-green-400'
+                                                    : 'bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 shadow-[0_2px_8px_rgba(234,88,12,0.4)] border-b-2 border-yellow-400')
                                             },
                                                 React.createElement('i', { className: ticket.scheduled_date ? 'fas fa-calendar-check' : 'fas fa-user-check' }),
                                                 React.createElement('span', {}, ticket.scheduled_date ? 'PLANIFIÉ' : 'ASSIGNÉ')
