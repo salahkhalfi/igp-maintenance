@@ -5565,7 +5565,7 @@ app.get('/', (c) => {
                         // PUBLIC TAB
                         activeTab === 'public' ? React.createElement('div', { className: 'flex-1 flex flex-col' },
                             // Messages publics
-                            React.createElement('div', { className: 'flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
+                            React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
                                 publicMessages.length === 0 ? React.createElement('div', {
                                     className: 'text-center text-gray-400 py-12'
                                 },
@@ -5815,7 +5815,7 @@ app.get('/', (c) => {
                                 ),
                                 
                                 // Messages
-                                React.createElement('div', { className: 'flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
+                                React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
                                     loading ? React.createElement('div', { className: 'text-center text-gray-400 py-12' },
                                         React.createElement('i', { className: 'fas fa-spinner fa-spin text-3xl sm:text-4xl text-indigo-500' })
                                     ) : privateMessages.length === 0 ? React.createElement('div', {
