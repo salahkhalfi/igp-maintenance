@@ -4382,7 +4382,14 @@ app.get('/', (c) => {
             
             React.useEffect(() => {
                 if (show) {
-                    loadUsers();
+                    loadUsers(); // Chargement initial
+                    
+                    // Polling toutes les 30 secondes pour rafraichir les statuts last_login
+                    const interval = setInterval(() => {
+                        loadUsers();
+                    }, 30000);
+                    
+                    return () => clearInterval(interval);
                 }
             }, [show]);
             
