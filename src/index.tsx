@@ -21,7 +21,6 @@ import media from './routes/media';
 import comments from './routes/comments';
 import users from './routes/users';
 import roles from './routes/roles';
-import settings from './routes/settings';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -343,7 +342,6 @@ app.route('/api/media', media);
 
 app.route('/api/comments', comments);
 
-app.route('/api/settings', settings);
 
 
 // ========================================
