@@ -5719,7 +5719,7 @@ app.get('/', (c) => {
                         ) : null,
                         
                         // PRIVATE TAB
-                        activeTab === 'private' ? React.createElement('div', { className: 'flex-1 flex flex-col sm:flex-row' },
+                        activeTab === 'private' ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col sm:flex-row' },
                             // Liste des conversations - Mobile: collapsible, Desktop: sidebar
                             React.createElement('div', { className: (selectedContact ? 'hidden sm:flex ' : 'flex ') + 'w-full sm:w-80 md:w-96 border-r border-gray-200 flex-col bg-gray-50' },
                                 React.createElement('div', { className: 'p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
@@ -5791,7 +5791,7 @@ app.get('/', (c) => {
                             ),
                             
                             // Zone de conversation
-                            selectedContact ? React.createElement('div', { className: 'flex-1 flex flex-col' },
+                            selectedContact ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col' },
                                 // Header contact with back button on mobile
                                 React.createElement('div', { className: 'p-2 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3' },
