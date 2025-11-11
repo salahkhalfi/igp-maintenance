@@ -21,6 +21,7 @@ import media from './routes/media';
 import comments from './routes/comments';
 import users from './routes/users';
 import roles from './routes/roles';
+import settings from './routes/settings';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -341,6 +342,10 @@ app.route('/api/users', users);
 app.route('/api/media', media);
 
 app.route('/api/comments', comments);
+
+// Routes des paramètres système
+app.use('/api/settings/*', authMiddleware);
+app.route('/api/settings', settings);
 
 
 
