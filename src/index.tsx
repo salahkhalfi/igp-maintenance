@@ -5430,8 +5430,8 @@ app.get('/', (c) => {
             };
             
             const formatMessageTime = (timestamp) => {
-                // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO avec T
-                const isoTimestamp = timestamp.replace(' ', 'T');
+                // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO avec T et Z (UTC)
+                const isoTimestamp = timestamp.replace(' ', 'T') + 'Z';
                 const date = new Date(isoTimestamp);
                 const now = new Date();
                 const diffMs = now - date;
