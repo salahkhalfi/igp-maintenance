@@ -1452,21 +1452,35 @@ app.get('/', (c) => {
             return statusLabels[status] || status;
         };
         
+        // FONCTION UTILITAIRE CENTRALE: Obtenir l'heure EST/EDT configurée
+        // Lit timezone_offset_hours depuis localStorage (-5 pour EST, -4 pour EDT)
+        // Cette fonction remplace tous les new Date() pour garantir que tout le monde voit la meme heure
+        const getNowEST = () => {
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            const nowUTC = new Date();
+            return new Date(nowUTC.getTime() + (offset * 60 * 60 * 1000));
+        };
+        
         // Fonction pour formater les dates en heure locale de l'appareil
         // Format québécois: JJ-MM-AAAA HH:mm
         const formatDateEST = (dateString, includeTime = true) => {
-            // Convertir le format SQL en ISO pour parsing correct
+            // Convertir le format SQL en ISO pour parsing correct avec Z pour UTC
             const isoDateString = dateString.includes('T') ? dateString : dateString.replace(' ', 'T');
-            const date = new Date(isoDateString);
+            // Ajouter Z pour forcer interpretation UTC
+            const dateUTC = new Date(isoDateString + (isoDateString.includes('Z') ? '' : 'Z'));
             
-            // Utiliser l'heure locale de l'appareil (pas de conversion de timezone)
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
+            // Obtenir l'offset EST/EDT depuis localStorage
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            // Appliquer le decalage pour obtenir l'heure EST/EDT
+            const dateEST = new Date(dateUTC.getTime() + (offset * 60 * 60 * 1000));
+            
+            const day = String(dateEST.getUTCDate()).padStart(2, '0');
+            const month = String(dateEST.getUTCMonth() + 1).padStart(2, '0');
+            const year = dateEST.getUTCFullYear();
             
             if (includeTime) {
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const hours = String(dateEST.getUTCHours()).padStart(2, '0');
+                const minutes = String(dateEST.getUTCMinutes()).padStart(2, '0');
                 return day + '-' + month + '-' + year + ' ' + hours + ':' + minutes;
             }
             
@@ -1476,11 +1490,15 @@ app.get('/', (c) => {
         // Fonction pour calculer le temps écoulé depuis la création
         // Retourne un objet {days, hours, minutes, seconds, color, bgColor}
         const getElapsedTime = (createdAt) => {
-            const now = new Date();
+            const now = getNowEST();
             // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO "YYYY-MM-DDTHH:MM:SS"
             // Si la date contient déjà un T, on ne touche pas
             const isoCreatedAt = createdAt.includes('T') ? createdAt : createdAt.replace(' ', 'T');
-            const created = new Date(isoCreatedAt);
+            // Ajouter Z pour forcer interpretation UTC
+            const createdUTC = new Date(isoCreatedAt + (isoCreatedAt.includes('Z') ? '' : 'Z'));
+            // Appliquer l'offset EST/EDT
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            const created = new Date(createdUTC.getTime() + (offset * 60 * 60 * 1000));
             
             // Si la date est invalide, retourner 0
             if (isNaN(created.getTime())) {
@@ -1714,8 +1732,13 @@ app.get('/', (c) => {
         const getCountdownInfo = (scheduledDate) => {
             if (!scheduledDate) return { text: '', className: '', isOverdue: false };
             
-            const now = new Date();
-            const scheduled = new Date(scheduledDate.replace(' ', 'T'));
+            const now = getNowEST();
+            const scheduledISO = scheduledDate.replace(' ', 'T');
+            // Ajouter Z pour forcer interpretation UTC
+            const scheduledUTC = new Date(scheduledISO + (scheduledISO.includes('Z') ? '' : 'Z'));
+            // Appliquer l'offset EST/EDT
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            const scheduled = new Date(scheduledUTC.getTime() + (offset * 60 * 60 * 1000));
             const diffMs = scheduled - now;
             const diffHours = diffMs / (1000 * 60 * 60);
             const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -4221,6 +4244,8 @@ app.get('/', (c) => {
                     await axios.put(API_URL + '/settings/timezone_offset_hours', {
                         value: timezoneOffset
                     });
+                    // Mettre a jour le localStorage immediatement pour que les changements soient visibles
+                    localStorage.setItem('timezone_offset_hours', timezoneOffset);
                     alert("Paramètres mis à jour avec succès!");
                     onClose();
                 } catch (error) {
@@ -4530,8 +4555,13 @@ app.get('/', (c) => {
                     dot: "bg-gray-400" 
                 };
                 
-                const now = new Date();
-                const loginDate = new Date(lastLogin);
+                const now = getNowEST();
+                const loginISO = lastLogin.includes('T') ? lastLogin : lastLogin.replace(' ', 'T');
+                // Ajouter Z pour forcer interpretation UTC
+                const loginUTC = new Date(loginISO + (loginISO.includes('Z') ? '' : 'Z'));
+                // Appliquer l'offset EST/EDT
+                const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+                const loginDate = new Date(loginUTC.getTime() + (offset * 60 * 60 * 1000));
                 const diffMs = now - loginDate;
                 const diffMins = Math.floor(diffMs / 60000);
                 const diffHours = Math.floor(diffMs / 3600000);
@@ -5431,9 +5461,12 @@ app.get('/', (c) => {
             
             const formatMessageTime = (timestamp) => {
                 // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO avec T et Z (UTC)
-                const isoTimestamp = timestamp.replace(' ', 'T') + 'Z';
-                const date = new Date(isoTimestamp);
-                const now = new Date();
+                const isoTimestamp = timestamp.replace(' ', 'T') + (timestamp.includes('Z') ? '' : 'Z');
+                const dateUTC = new Date(isoTimestamp);
+                // Appliquer l'offset EST/EDT
+                const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+                const date = new Date(dateUTC.getTime() + (offset * 60 * 60 * 1000));
+                const now = getNowEST();
                 const diffMs = now - date;
                 const diffMins = Math.floor(diffMs / 60000);
                 const diffHours = Math.floor(diffMs / 3600000);
@@ -7010,6 +7043,17 @@ app.get('/', (c) => {
             
             React.useEffect(() => {
                 if (isLoggedIn) {
+                    // Charger le timezone_offset_hours depuis l'API et le stocker dans localStorage
+                    axios.get(API_URL + '/settings/timezone_offset_hours')
+                        .then(response => {
+                            localStorage.setItem('timezone_offset_hours', response.data.setting_value || '-5');
+                        })
+                        .catch(error => {
+                            console.error('Erreur chargement timezone_offset_hours:', error);
+                            // Valeur par defaut si erreur
+                            localStorage.setItem('timezone_offset_hours', '-5');
+                        });
+                    
                     loadData();
                     loadUnreadMessagesCount();
                     
