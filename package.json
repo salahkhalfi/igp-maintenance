@@ -22,6 +22,7 @@
     "lint": "eslint src/**/*.{js,ts,tsx} --max-warnings 50",
     "lint:fix": "eslint src/**/*.{js,ts,tsx} --fix",
     "lint:check": "eslint src/**/*.{js,ts,tsx} --max-warnings 0",
+    "security-check": "bash check-security.sh",
     "db:migrate:local": "wrangler d1 migrations apply maintenance-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply maintenance-db",
     "db:seed": "wrangler d1 execute maintenance-db --local --file=./seed.sql",
