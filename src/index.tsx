@@ -1647,6 +1647,10 @@ app.get('/', (c) => {
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
         
+        // Variables globales pour titre et sous-titre personnalisés
+        let companyTitle = 'Gestion de la maintenance et des réparations';
+        let companySubtitle = 'Les Produits Verriers International (IGP) Inc.';
+        
         if (authToken) {
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
@@ -2498,13 +2502,12 @@ app.get('/', (c) => {
                             alt: 'IGP Logo',
                             className: 'h-20 w-auto mx-auto mb-4'
                         }),
-                        React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, 'Gestion de la maintenance et des réparations'),
+                        React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, companyTitle),
                         React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
                             'EN DÉVELOPPEMENT'
                         ),
-                        React.createElement('p', { className: 'text-sm text-gray-600 mb-1' }, 'Les Produits Verriers International'),
-                        React.createElement('p', { className: 'text-xs text-blue-700 font-semibold' }, '(IGP) Inc.')
+                        React.createElement('p', { className: 'text-sm text-gray-600' }, companySubtitle)
                     ),
                     React.createElement('form', { 
                         onSubmit: handleSubmit,
@@ -7093,9 +7096,9 @@ app.get('/', (c) => {
                                     className: 'h-12 md:h-16 w-auto object-contain'
                                 }),
                                 React.createElement('div', { className: 'border-l-2 border-gray-300 pl-3' },
-                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, 'Gestion de la maintenance et des réparations'),
+                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, companyTitle),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
-                                        'Les Produits Verriers International (IGP) Inc.'
+                                        companySubtitle
                                     ),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
@@ -7769,6 +7772,26 @@ app.get('/', (c) => {
                     setMachines(machinesRes.data.machines);
                     currentUser = userRes.data.user;
                     setCurrentUserState(userRes.data.user);
+                    
+                    // Charger titre et sous-titre personnalisés (public)
+                    try {
+                        const titleRes = await axios.get(API_URL + '/settings/company_title');
+                        if (titleRes.data.setting_value) {
+                            companyTitle = titleRes.data.setting_value;
+                        }
+                    } catch (error) {
+                        console.log('Titre personnalisé non trouvé, utilisation valeur par défaut');
+                    }
+                    
+                    try {
+                        const subtitleRes = await axios.get(API_URL + '/settings/company_subtitle');
+                        if (subtitleRes.data.setting_value) {
+                            companySubtitle = subtitleRes.data.setting_value;
+                        }
+                    } catch (error) {
+                        console.log('Sous-titre personnalisé non trouvé, utilisation valeur par défaut');
+                    }
+                    
                     setLoading(false);
                 } catch (error) {
                     console.error('Erreur chargement:', error);
