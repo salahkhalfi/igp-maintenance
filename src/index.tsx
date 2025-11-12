@@ -1899,7 +1899,7 @@ app.get('/', (c) => {
                     React.createElement('div', { className: 'flex items-center gap-1' },
                         React.createElement('span', {}, elapsed.icon),
                         React.createElement('i', { className: 'fas fa-hourglass-half' }),
-                        React.createElement('span', { className: 'ml-1 text-gray-600 font-normal' }, 'Requete recue depuis:')
+                        React.createElement('span', { className: 'ml-1 text-gray-600 font-normal' }, 'Requête reçue depuis:')
                     ),
                     React.createElement('span', { className: 'font-bold font-mono' }, formatElapsedTime(elapsed))
                 )
@@ -8688,7 +8688,7 @@ app.get('/changelog', (c) => {
                                 Clarté Affichage Temporel
                             </h3>
                             <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Ajout label explicatif "Requete recue depuis:" sur chronomètres</li>
+                                <li>• Ajout label explicatif "Requête reçue depuis:" sur chronomètres</li>
                                 <li>• Amélioration compréhension utilisateur du temps écoulé</li>
                                 <li>• Réduction confusion sur signification des indicateurs temps</li>
                             </ul>
