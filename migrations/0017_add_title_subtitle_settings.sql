@@ -7,21 +7,19 @@
 -- Si cette migration échoue, vérifier que 0016_create_system_settings.sql a été appliquée
 
 -- Insérer le titre par défaut
-INSERT INTO system_settings (setting_key, setting_value, description, updated_at) 
+INSERT INTO system_settings (setting_key, setting_value, updated_at) 
 VALUES (
   'company_title',
   'Gestion de la maintenance et des réparations',
-  'Titre principal de l''application (personnalisable par super admin)',
   CURRENT_TIMESTAMP
 )
 ON CONFLICT(setting_key) DO NOTHING;
 
 -- Insérer le sous-titre par défaut
-INSERT INTO system_settings (setting_key, setting_value, description, updated_at) 
+INSERT INTO system_settings (setting_key, setting_value, updated_at) 
 VALUES (
   'company_subtitle',
   'Les Produits Verriers International (IGP) Inc.',
-  'Sous-titre de l''application (personnalisable par super admin)',
   CURRENT_TIMESTAMP
 )
 ON CONFLICT(setting_key) DO NOTHING;
