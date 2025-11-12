@@ -4428,6 +4428,13 @@ app.get('/', (c) => {
             const [loading, setLoading] = React.useState(true);
             const [saving, setSaving] = React.useState(false);
             
+            // États pour l'upload du logo (super admin uniquement)
+            const [logoFile, setLogoFile] = React.useState(null);
+            const [logoPreview, setLogoPreview] = React.useState(null);
+            const [uploadingLogo, setUploadingLogo] = React.useState(false);
+            const [currentLogoUrl, setCurrentLogoUrl] = React.useState('/api/settings/logo');
+            const [logoRefreshKey, setLogoRefreshKey] = React.useState(Date.now());
+            
             React.useEffect(() => {
                 if (show) {
                     loadSettings();
@@ -4460,6 +4467,97 @@ app.get('/', (c) => {
                     alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
                 } finally {
                     setSaving(false);
+                }
+            };
+            
+            // Fonction pour gérer la sélection de fichier logo
+            const handleLogoFileChange = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                
+                // Validation du type
+                const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Type de fichier non autorisé. Utilisez PNG, JPEG ou WEBP.');
+                    return;
+                }
+                
+                // Validation de la taille (500 KB max)
+                if (file.size > 500 * 1024) {
+                    alert('Fichier trop volumineux (' + (file.size / 1024).toFixed(0) + ' KB). Maximum: 500 KB');
+                    return;
+                }
+                
+                setLogoFile(file);
+                
+                // Créer une preview
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setLogoPreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+            };
+            
+            // Fonction pour uploader le logo
+            const handleUploadLogo = async () => {
+                if (!logoFile) {
+                    alert('Veuillez sélectionner un fichier');
+                    return;
+                }
+                
+                setUploadingLogo(true);
+                try {
+                    const formData = new FormData();
+                    formData.append('logo', logoFile);
+                    
+                    const response = await axios.post(API_URL + '/settings/upload-logo', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                    
+                    alert('Logo uploadé avec succès!');
+                    
+                    // Rafraîchir le logo affiché
+                    setLogoRefreshKey(Date.now());
+                    setLogoFile(null);
+                    setLogoPreview(null);
+                    
+                    // Forcer le rechargement de la page pour voir le nouveau logo partout
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+                } finally {
+                    setUploadingLogo(false);
+                }
+            };
+            
+            // Fonction pour réinitialiser le logo
+            const handleResetLogo = async () => {
+                if (!confirm('Voulez-vous vraiment réinitialiser le logo au logo par défaut?')) {
+                    return;
+                }
+                
+                setUploadingLogo(true);
+                try {
+                    await axios.delete(API_URL + '/settings/logo');
+                    alert('Logo réinitialisé avec succès!');
+                    
+                    // Rafraîchir le logo
+                    setLogoRefreshKey(Date.now());
+                    setLogoFile(null);
+                    setLogoPreview(null);
+                    
+                    // Forcer le rechargement de la page
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+                } finally {
+                    setUploadingLogo(false);
                 }
             };
             
@@ -4565,6 +4663,95 @@ app.get('/', (c) => {
                                         React.createElement('p', { className: 'text-sm text-yellow-800' },
                                             "Changez ce paramètre uniquement lors du changement d'heure (mars et novembre)."
                                         )
+                                    )
+                                )
+                            ),
+                            
+                            // Section Logo de l'entreprise (SUPER ADMIN UNIQUEMENT)
+                            currentUser?.email === 'salah@khalfi.com' && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                                React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
+                                    React.createElement('div', { className: 'flex items-start gap-3' },
+                                        React.createElement('i', { className: 'fas fa-image text-purple-600 text-xl mt-1' }),
+                                        React.createElement('div', {},
+                                            React.createElement('h3', { className: 'font-bold text-purple-900 mb-2 flex items-center gap-2' },
+                                                "Logo de l'entreprise",
+                                                React.createElement('span', { className: 'text-xs bg-red-500 text-white px-2 py-1 rounded' }, 'SUPER ADMIN')
+                                            ),
+                                            React.createElement('p', { className: 'text-sm text-purple-800 mb-2' },
+                                                "Personnalisez le logo affiché dans l'application."
+                                            ),
+                                            React.createElement('ul', { className: 'text-sm text-purple-800 space-y-1 list-disc list-inside' },
+                                                React.createElement('li', {}, 'Format: PNG transparent recommandé'),
+                                                React.createElement('li', {}, 'Dimensions: 200×80 pixels (ratio 2.5:1)'),
+                                                React.createElement('li', {}, 'Taille max: 500 KB')
+                                            )
+                                        )
+                                    )
+                                ),
+                                
+                                // Logo actuel
+                                React.createElement('div', { className: 'mb-4' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                        React.createElement('i', { className: 'fas fa-eye mr-2' }),
+                                        'Logo actuel'
+                                    ),
+                                    React.createElement('div', { className: 'bg-gray-100 border-2 border-gray-300 rounded-lg p-4 flex items-center justify-center' },
+                                        React.createElement('img', {
+                                            src: currentLogoUrl + '?t=' + logoRefreshKey,
+                                            alt: 'Logo actuel',
+                                            className: 'max-h-20 max-w-full object-contain',
+                                            onError: (e) => {
+                                                e.target.src = '/static/logo-igp.png';
+                                            }
+                                        })
+                                    )
+                                ),
+                                
+                                // Upload nouveau logo
+                                React.createElement('div', { className: 'mb-4' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                        React.createElement('i', { className: 'fas fa-upload mr-2' }),
+                                        'Uploader un nouveau logo'
+                                    ),
+                                    React.createElement('input', {
+                                        type: 'file',
+                                        accept: 'image/png,image/jpeg,image/jpg,image/webp',
+                                        onChange: handleLogoFileChange,
+                                        disabled: uploadingLogo,
+                                        className: 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 disabled:opacity-50'
+                                    }),
+                                    logoPreview && React.createElement('div', { className: 'mt-3 bg-white border-2 border-purple-300 rounded-lg p-4' },
+                                        React.createElement('p', { className: 'text-sm font-semibold text-gray-700 mb-2' }, 'Aperçu:'),
+                                        React.createElement('div', { className: 'flex items-center justify-center' },
+                                            React.createElement('img', {
+                                                src: logoPreview,
+                                                alt: 'Aperçu',
+                                                className: 'max-h-20 max-w-full object-contain'
+                                            })
+                                        )
+                                    )
+                                ),
+                                
+                                // Boutons d'action
+                                React.createElement('div', { className: 'flex gap-3' },
+                                    React.createElement('button', {
+                                        onClick: handleUploadLogo,
+                                        disabled: !logoFile || uploadingLogo,
+                                        className: 'flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed',
+                                        type: 'button'
+                                    },
+                                        uploadingLogo && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                        uploadingLogo ? 'Upload en cours...' : 'Uploader le logo'
+                                    ),
+                                    React.createElement('button', {
+                                        onClick: handleResetLogo,
+                                        disabled: uploadingLogo,
+                                        className: 'px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed',
+                                        type: 'button',
+                                        title: 'Réinitialiser au logo par défaut'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-undo' }),
+                                        'Réinitialiser'
                                     )
                                 )
                             )
