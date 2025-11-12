@@ -4434,12 +4434,29 @@ app.get('/', (c) => {
             const [uploadingLogo, setUploadingLogo] = React.useState(false);
             const [currentLogoUrl, setCurrentLogoUrl] = React.useState('/api/settings/logo');
             const [logoRefreshKey, setLogoRefreshKey] = React.useState(Date.now());
+            const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
             
             React.useEffect(() => {
                 if (show) {
                     loadSettings();
+                    checkSuperAdmin();
                 }
             }, [show]);
+            
+            const checkSuperAdmin = async () => {
+                try {
+                    // Vérifier si l'utilisateur actuel est super admin
+                    // L'email salah@khalfi.com est le seul super admin
+                    if (currentUser && currentUser.email === 'salah@khalfi.com') {
+                        setIsSuperAdmin(true);
+                    } else {
+                        setIsSuperAdmin(false);
+                    }
+                } catch (error) {
+                    console.error('Erreur verification super admin:', error);
+                    setIsSuperAdmin(false);
+                }
+            };
             
             const loadSettings = async () => {
                 setLoading(true);
@@ -4668,7 +4685,7 @@ app.get('/', (c) => {
                             ),
                             
                             // Section Logo de l'entreprise (SUPER ADMIN UNIQUEMENT)
-                            currentUser?.email === 'salah@khalfi.com' && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                            isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                                 React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
                                     React.createElement('div', { className: 'flex items-start gap-3' },
                                         React.createElement('i', { className: 'fas fa-image text-purple-600 text-xl mt-1' }),
