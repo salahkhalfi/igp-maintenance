@@ -18,24 +18,14 @@ const RECOMMENDED_HEIGHT = 80;
 
 /**
  * POST /api/settings/upload-logo - Upload du logo de l'entreprise
- * Accès: Super admin uniquement
+ * Accès: Administrateurs (admin role)
  * Dimensions recommandées: 200x80 pixels (ratio 2.5:1)
  * Formats acceptés: PNG, JPEG, WEBP
  * Taille max: 500 KB
  */
-settings.post('/upload-logo', authMiddleware, async (c) => {
+settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // PROTECTION: Seul le super admin peut changer le logo
-    // Vérifier dans la DB si l'utilisateur est super admin
-    const userInfo = await c.env.DB.prepare(`
-      SELECT is_super_admin FROM users WHERE id = ?
-    `).bind(user.userId).first() as any;
-    
-    if (!userInfo || userInfo.is_super_admin !== 1) {
-      return c.json({ error: 'Action réservée au super administrateur' }, 403);
-    }
     
     const formData = await c.req.formData();
     const file = formData.get('logo') as File;
@@ -160,20 +150,11 @@ settings.get('/logo', async (c) => {
 
 /**
  * DELETE /api/settings/logo - Supprimer le logo personnalisé et revenir au logo par défaut
- * Accès: Super admin uniquement
+ * Accès: Administrateurs (admin role)
  */
-settings.delete('/logo', authMiddleware, async (c) => {
+settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // PROTECTION: Seul le super admin peut supprimer le logo
-    const userInfo = await c.env.DB.prepare(`
-      SELECT is_super_admin FROM users WHERE id = ?
-    `).bind(user.userId).first() as any;
-    
-    if (!userInfo || userInfo.is_super_admin !== 1) {
-      return c.json({ error: 'Action réservée au super administrateur' }, 403);
-    }
     
     // Récupérer la clé du logo depuis la DB
     const setting = await c.env.DB.prepare(`
@@ -207,21 +188,12 @@ settings.delete('/logo', authMiddleware, async (c) => {
 
 /**
  * PUT /api/settings/title - Mettre à jour le titre de l'application
- * Accès: Super admin uniquement
+ * Accès: Administrateurs (admin role)
  * Validation: Max 100 caractères, échappement HTML, UTF-8
  */
-settings.put('/title', authMiddleware, async (c) => {
+settings.put('/title', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // PROTECTION: Seul le super admin peut modifier le titre
-    const userInfo = await c.env.DB.prepare(`
-      SELECT is_super_admin FROM users WHERE id = ?
-    `).bind(user.userId).first() as any;
-    
-    if (!userInfo || userInfo.is_super_admin !== 1) {
-      return c.json({ error: 'Action réservée au super administrateur' }, 403);
-    }
     
     const body = await c.req.json();
     const { value } = body;
@@ -268,21 +240,12 @@ settings.put('/title', authMiddleware, async (c) => {
 
 /**
  * PUT /api/settings/subtitle - Mettre à jour le sous-titre de l'application
- * Accès: Super admin uniquement
+ * Accès: Administrateurs (admin role)
  * Validation: Max 150 caractères, échappement HTML, UTF-8
  */
-settings.put('/subtitle', authMiddleware, async (c) => {
+settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // PROTECTION: Seul le super admin peut modifier le sous-titre
-    const userInfo = await c.env.DB.prepare(`
-      SELECT is_super_admin FROM users WHERE id = ?
-    `).bind(user.userId).first() as any;
-    
-    if (!userInfo || userInfo.is_super_admin !== 1) {
-      return c.json({ error: 'Action réservée au super administrateur' }, 403);
-    }
     
     const body = await c.req.json();
     const { value } = body;
