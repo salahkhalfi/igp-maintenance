@@ -4533,20 +4533,19 @@ app.get('/', (c) => {
                         }
                     });
                     
-                    alert('Logo uploadé avec succès!');
-                    
                     // Rafraîchir le logo affiché
                     setLogoRefreshKey(Date.now());
                     setLogoFile(null);
                     setLogoPreview(null);
                     
+                    alert('Logo uploadé avec succès! La page va se recharger pour afficher le nouveau logo...');
+                    
                     // Forcer le rechargement de la page pour voir le nouveau logo partout
                     setTimeout(() => {
                         window.location.reload();
-                    }, 1000);
+                    }, 1500);
                 } catch (error) {
                     alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
-                } finally {
                     setUploadingLogo(false);
                 }
             };
@@ -4560,20 +4559,20 @@ app.get('/', (c) => {
                 setUploadingLogo(true);
                 try {
                     await axios.delete(API_URL + '/settings/logo');
-                    alert('Logo réinitialisé avec succès!');
                     
                     // Rafraîchir le logo
                     setLogoRefreshKey(Date.now());
                     setLogoFile(null);
                     setLogoPreview(null);
                     
+                    alert('Logo réinitialisé avec succès! La page va se recharger pour afficher le logo par défaut...');
+                    
                     // Forcer le rechargement de la page
                     setTimeout(() => {
                         window.location.reload();
-                    }, 1000);
+                    }, 1500);
                 } catch (error) {
                     alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
-                } finally {
                     setUploadingLogo(false);
                 }
             };
