@@ -6325,13 +6325,8 @@ app.get('/', (c) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Bloquer le menu contextuel pour les opérateurs
+                // Bloquer le menu contextuel uniquement pour les opérateurs
                 if (currentUser && currentUser.role === 'operator') {
-                    return;
-                }
-                
-                // Bloquer le menu contextuel pour les tickets terminés ou archivés
-                if (ticket.status === 'completed' || ticket.status === 'archived') {
                     return;
                 }
                 
