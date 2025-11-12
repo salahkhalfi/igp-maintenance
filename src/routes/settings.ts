@@ -241,25 +241,24 @@ settings.put('/title', authMiddleware, async (c) => {
       return c.json({ error: 'Le titre ne peut pas dépasser 100 caractères' }, 400);
     }
     
-    // Échapper les balises HTML pour éviter XSS
-    const escapedValue = trimmedValue
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+    // ⚠️ IMPORTANT: Pas d'échappement HTML ici!
+    // React.createElement() échappe automatiquement le contenu à l'affichage.
+    // On stocke la valeur BRUTE en DB (best practice).
+    // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
+    // Protection XSS: React échappe automatiquement dans createElement()
     
-    // Mettre à jour la DB
+    // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
     await c.env.DB.prepare(`
       UPDATE system_settings 
       SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
       WHERE setting_key = 'company_title'
-    `).bind(escapedValue, user.userId).run();
+    `).bind(trimmedValue, user.userId).run();
     
-    console.log(`✅ Titre modifié par user ${user.userId}: "${escapedValue}"`);
+    console.log(`✅ Titre modifié par user ${user.userId}: "${trimmedValue}"`);
     
     return c.json({ 
       message: 'Titre mis à jour avec succès',
-      setting_value: escapedValue
+      setting_value: trimmedValue
     });
   } catch (error) {
     console.error('Update title error:', error);
@@ -303,25 +302,24 @@ settings.put('/subtitle', authMiddleware, async (c) => {
       return c.json({ error: 'Le sous-titre ne peut pas dépasser 150 caractères' }, 400);
     }
     
-    // Échapper les balises HTML pour éviter XSS
-    const escapedValue = trimmedValue
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+    // ⚠️ IMPORTANT: Pas d'échappement HTML ici!
+    // React.createElement() échappe automatiquement le contenu à l'affichage.
+    // On stocke la valeur BRUTE en DB (best practice).
+    // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
+    // Protection XSS: React échappe automatiquement dans createElement()
     
-    // Mettre à jour la DB
+    // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
     await c.env.DB.prepare(`
       UPDATE system_settings 
       SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
       WHERE setting_key = 'company_subtitle'
-    `).bind(escapedValue, user.userId).run();
+    `).bind(trimmedValue, user.userId).run();
     
-    console.log(`✅ Sous-titre modifié par user ${user.userId}: "${escapedValue}"`);
+    console.log(`✅ Sous-titre modifié par user ${user.userId}: "${trimmedValue}"`);
     
     return c.json({ 
       message: 'Sous-titre mis à jour avec succès',
-      setting_value: escapedValue
+      setting_value: trimmedValue
     });
   } catch (error) {
     console.error('Update subtitle error:', error);
