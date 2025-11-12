@@ -12,73 +12,13 @@ const ALLOWED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'
 const RECOMMENDED_WIDTH = 200;
 const RECOMMENDED_HEIGHT = 80;
 
-/**
- * GET /api/settings/:key - Obtenir une valeur de paramètre
- * Accès: Tous les utilisateurs authentifiés
- */
-settings.get('/:key', async (c) => {
-  try {
-    const key = c.req.param('key');
-    
-    const result = await c.env.DB.prepare(`
-      SELECT setting_value FROM system_settings WHERE setting_key = ?
-    `).bind(key).first();
-    
-    if (!result) {
-      return c.json({ error: 'Paramètre non trouvé' }, 404);
-    }
-    
-    return c.json({ setting_value: result.setting_value });
-  } catch (error) {
-    console.error('Get setting error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-/**
- * PUT /api/settings/:key - Mettre à jour une valeur de paramètre
- * Accès: Admin uniquement
- */
-settings.put('/:key', adminOnly, async (c) => {
-  try {
-    const key = c.req.param('key');
-    const body = await c.req.json();
-    const { value } = body;
-    
-    if (value === undefined) {
-      return c.json({ error: 'Valeur requise' }, 400);
-    }
-    
-    // Vérifier si le paramètre existe
-    const existing = await c.env.DB.prepare(`
-      SELECT id FROM system_settings WHERE setting_key = ?
-    `).bind(key).first();
-    
-    if (existing) {
-      // Mise à jour
-      await c.env.DB.prepare(`
-        UPDATE system_settings 
-        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE setting_key = ?
-      `).bind(value, key).run();
-    } else {
-      // Création
-      await c.env.DB.prepare(`
-        INSERT INTO system_settings (setting_key, setting_value)
-        VALUES (?, ?)
-      `).bind(key, value).run();
-    }
-    
-    return c.json({ message: 'Paramètre mis à jour avec succès', setting_value: value });
-  } catch (error) {
-    console.error('Update setting error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
+// ============================================================================
+// ROUTES SPÉCIFIQUES (DOIVENT ÊTRE DÉCLARÉES AVANT LES ROUTES GÉNÉRIQUES)
+// ============================================================================
 
 /**
  * POST /api/settings/upload-logo - Upload du logo de l'entreprise
- * Accès: Admin uniquement (avec vérification super admin recommandée)
+ * Accès: Super admin uniquement
  * Dimensions recommandées: 200x80 pixels (ratio 2.5:1)
  * Formats acceptés: PNG, JPEG, WEBP
  * Taille max: 500 KB
@@ -177,6 +117,9 @@ settings.post('/upload-logo', authMiddleware, async (c) => {
 /**
  * GET /api/settings/logo - Récupérer le logo actuel depuis R2
  * Accès: Public (pour affichage)
+ * 
+ * NOTE: Cette route DOIT être déclarée AVANT la route générique GET /:key
+ * sinon Hono matchera /logo comme /:key avec key="logo"
  */
 settings.get('/logo', async (c) => {
   try {
@@ -259,6 +202,80 @@ settings.delete('/logo', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Delete logo error:', error);
     return c.json({ error: 'Erreur lors de la suppression du logo' }, 500);
+  }
+});
+
+// ============================================================================
+// ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
+// ============================================================================
+
+/**
+ * GET /api/settings/:key - Obtenir une valeur de paramètre
+ * Accès: Tous les utilisateurs authentifiés
+ * 
+ * Utilisé pour: timezone_offset_hours, etc.
+ * NOTE: Cette route est déclarée APRÈS les routes spécifiques (/logo, /upload-logo)
+ * pour éviter qu'elle ne les capture
+ */
+settings.get('/:key', async (c) => {
+  try {
+    const key = c.req.param('key');
+    
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = ?
+    `).bind(key).first();
+    
+    if (!result) {
+      return c.json({ error: 'Paramètre non trouvé' }, 404);
+    }
+    
+    return c.json({ setting_value: result.setting_value });
+  } catch (error) {
+    console.error('Get setting error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/:key - Mettre à jour une valeur de paramètre
+ * Accès: Admin uniquement
+ * 
+ * Utilisé pour: timezone_offset_hours, etc.
+ */
+settings.put('/:key', adminOnly, async (c) => {
+  try {
+    const key = c.req.param('key');
+    const body = await c.req.json();
+    const { value } = body;
+    
+    if (value === undefined) {
+      return c.json({ error: 'Valeur requise' }, 400);
+    }
+    
+    // Vérifier si le paramètre existe
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = ?
+    `).bind(key).first();
+    
+    if (existing) {
+      // Mise à jour
+      await c.env.DB.prepare(`
+        UPDATE system_settings 
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
+        WHERE setting_key = ?
+      `).bind(value, key).run();
+    } else {
+      // Création
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES (?, ?)
+      `).bind(key, value).run();
+    }
+    
+    return c.json({ message: 'Paramètre mis à jour avec succès', setting_value: value });
+  } catch (error) {
+    console.error('Update setting error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
 
