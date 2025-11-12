@@ -4744,14 +4744,27 @@ app.get('/', (c) => {
                                         React.createElement('i', { className: 'fas fa-upload mr-2' }),
                                         'Uploader un nouveau logo'
                                     ),
-                                    React.createElement('input', {
-                                        type: 'file',
-                                        accept: 'image/png,image/jpeg,image/jpg,image/webp',
-                                        onChange: handleLogoFileChange,
-                                        disabled: uploadingLogo,
-                                        className: 'block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 disabled:opacity-50'
-                                    }),
-                                    logoPreview && React.createElement('div', { className: 'mt-3 bg-white border-2 border-purple-300 rounded-lg p-4' },
+                                    // Bouton personnalisé pour sélectionner le fichier (en français)
+                                    React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                        React.createElement('label', { 
+                                            className: 'cursor-pointer px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold rounded-lg border-2 border-purple-300 transition-all flex items-center gap-2 ' + (uploadingLogo ? 'opacity-50 cursor-not-allowed' : ''),
+                                            style: { pointerEvents: uploadingLogo ? 'none' : 'auto' }
+                                        },
+                                            React.createElement('i', { className: 'fas fa-folder-open' }),
+                                            React.createElement('span', {}, 'Choisir un fichier'),
+                                            React.createElement('input', {
+                                                type: 'file',
+                                                accept: 'image/png,image/jpeg,image/jpg,image/webp',
+                                                onChange: handleLogoFileChange,
+                                                disabled: uploadingLogo,
+                                                className: 'hidden'
+                                            })
+                                        ),
+                                        React.createElement('span', { className: 'text-sm text-gray-600' },
+                                            logoFile ? logoFile.name : 'Aucun fichier sélectionné'
+                                        )
+                                    ),
+                                    logoPreview && React.createElement('div', { className: 'mt-3 bg-white border-2 border-purple-300 rounded-lg p-3 sm:p-4' },
                                         React.createElement('p', { className: 'text-sm font-semibold text-gray-700 mb-2' }, 'Aperçu:'),
                                         React.createElement('div', { className: 'flex items-center justify-center' },
                                             React.createElement('img', {
@@ -4764,11 +4777,11 @@ app.get('/', (c) => {
                                 ),
                                 
                                 // Boutons d'action
-                                React.createElement('div', { className: 'flex gap-3' },
+                                React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3' },
                                     React.createElement('button', {
                                         onClick: handleUploadLogo,
                                         disabled: !logoFile || uploadingLogo,
-                                        className: 'flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed',
+                                        className: 'flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base',
                                         type: 'button'
                                     },
                                         uploadingLogo && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
@@ -4777,12 +4790,13 @@ app.get('/', (c) => {
                                     React.createElement('button', {
                                         onClick: handleResetLogo,
                                         disabled: uploadingLogo,
-                                        className: 'px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed',
+                                        className: 'px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base',
                                         type: 'button',
                                         title: 'Réinitialiser au logo par défaut'
                                     },
                                         React.createElement('i', { className: 'fas fa-undo' }),
-                                        'Réinitialiser'
+                                        React.createElement('span', { className: 'hidden sm:inline' }, 'Réinitialiser'),
+                                        React.createElement('span', { className: 'sm:hidden' }, 'Reset')
                                     )
                                 )
                             )
