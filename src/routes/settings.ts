@@ -205,6 +205,130 @@ settings.delete('/logo', authMiddleware, async (c) => {
   }
 });
 
+/**
+ * PUT /api/settings/title - Mettre à jour le titre de l'application
+ * Accès: Super admin uniquement
+ * Validation: Max 100 caractères, échappement HTML, UTF-8
+ */
+settings.put('/title', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // PROTECTION: Seul le super admin peut modifier le titre
+    const userInfo = await c.env.DB.prepare(`
+      SELECT is_super_admin FROM users WHERE id = ?
+    `).bind(user.userId).first() as any;
+    
+    if (!userInfo || userInfo.is_super_admin !== 1) {
+      return c.json({ error: 'Action réservée au super administrateur' }, 403);
+    }
+    
+    const body = await c.req.json();
+    const { value } = body;
+    
+    if (!value || typeof value !== 'string') {
+      return c.json({ error: 'Titre invalide' }, 400);
+    }
+    
+    // Validation stricte
+    const trimmedValue = value.trim();
+    
+    if (trimmedValue.length === 0) {
+      return c.json({ error: 'Le titre ne peut pas être vide' }, 400);
+    }
+    
+    if (trimmedValue.length > 100) {
+      return c.json({ error: 'Le titre ne peut pas dépasser 100 caractères' }, 400);
+    }
+    
+    // Échapper les balises HTML pour éviter XSS
+    const escapedValue = trimmedValue
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+    
+    // Mettre à jour la DB
+    await c.env.DB.prepare(`
+      UPDATE system_settings 
+      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE setting_key = 'company_title'
+    `).bind(escapedValue, user.userId).run();
+    
+    console.log(`✅ Titre modifié par user ${user.userId}: "${escapedValue}"`);
+    
+    return c.json({ 
+      message: 'Titre mis à jour avec succès',
+      setting_value: escapedValue
+    });
+  } catch (error) {
+    console.error('Update title error:', error);
+    return c.json({ error: 'Erreur lors de la mise à jour du titre' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/subtitle - Mettre à jour le sous-titre de l'application
+ * Accès: Super admin uniquement
+ * Validation: Max 150 caractères, échappement HTML, UTF-8
+ */
+settings.put('/subtitle', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // PROTECTION: Seul le super admin peut modifier le sous-titre
+    const userInfo = await c.env.DB.prepare(`
+      SELECT is_super_admin FROM users WHERE id = ?
+    `).bind(user.userId).first() as any;
+    
+    if (!userInfo || userInfo.is_super_admin !== 1) {
+      return c.json({ error: 'Action réservée au super administrateur' }, 403);
+    }
+    
+    const body = await c.req.json();
+    const { value } = body;
+    
+    if (!value || typeof value !== 'string') {
+      return c.json({ error: 'Sous-titre invalide' }, 400);
+    }
+    
+    // Validation stricte
+    const trimmedValue = value.trim();
+    
+    if (trimmedValue.length === 0) {
+      return c.json({ error: 'Le sous-titre ne peut pas être vide' }, 400);
+    }
+    
+    if (trimmedValue.length > 150) {
+      return c.json({ error: 'Le sous-titre ne peut pas dépasser 150 caractères' }, 400);
+    }
+    
+    // Échapper les balises HTML pour éviter XSS
+    const escapedValue = trimmedValue
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+    
+    // Mettre à jour la DB
+    await c.env.DB.prepare(`
+      UPDATE system_settings 
+      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      WHERE setting_key = 'company_subtitle'
+    `).bind(escapedValue, user.userId).run();
+    
+    console.log(`✅ Sous-titre modifié par user ${user.userId}: "${escapedValue}"`);
+    
+    return c.json({ 
+      message: 'Sous-titre mis à jour avec succès',
+      setting_value: escapedValue
+    });
+  } catch (error) {
+    console.error('Update subtitle error:', error);
+    return c.json({ error: 'Erreur lors de la mise à jour du sous-titre' }, 500);
+  }
+});
+
 // ============================================================================
 // ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
 // ============================================================================
