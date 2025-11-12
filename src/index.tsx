@@ -352,6 +352,188 @@ app.route('/api/settings', settings);
 app.use('/api/webhooks/*', authMiddleware);
 app.route('/api/webhooks', webhooks);
 
+// Route publique pour CRON externe avec secret token
+app.post('/api/cron/check-overdue', async (c) => {
+  try {
+    // Vérifier le token secret dans l'en-tête
+    const authHeader = c.req.header('Authorization');
+    const expectedToken = 'Bearer cron_secret_igp_2025_webhook_notifications';
+    
+    if (authHeader !== expectedToken) {
+      return c.json({ error: 'Unauthorized - Invalid CRON token' }, 401);
+    }
+    
+    console.log('🔔 CRON externe démarré:', new Date().toISOString());
+    
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    // Récupérer tous les tickets planifiés expirés
+    const overdueTickets = await c.env.DB.prepare(`
+      SELECT 
+        t.id,
+        t.ticket_id,
+        t.title,
+        t.description,
+        t.priority,
+        t.status,
+        m.machine_type,
+        m.model,
+        t.scheduled_date,
+        t.assigned_to,
+        t.created_at,
+        u.full_name as assignee_name,
+        reporter.full_name as reporter_name
+      FROM tickets t
+      LEFT JOIN machines m ON t.machine_id = m.id
+      LEFT JOIN users u ON t.assigned_to = u.id
+      LEFT JOIN users reporter ON t.reported_by = reporter.id
+      WHERE t.assigned_to IS NOT NULL
+        AND t.scheduled_date IS NOT NULL
+        AND t.scheduled_date != 'null'
+        AND t.scheduled_date != ''
+        AND t.status IN ('received', 'diagnostic')
+        AND datetime(t.scheduled_date) < datetime('now')
+      ORDER BY t.scheduled_date ASC
+    `).all();
+    
+    if (!overdueTickets.results || overdueTickets.results.length === 0) {
+      console.log('✅ CRON: Aucun ticket expiré trouvé');
+      return c.json({ 
+        message: 'Aucun ticket planifié expiré trouvé',
+        checked_at: now.toISOString()
+      });
+    }
+    
+    console.log(`📋 CRON: ${overdueTickets.results.length} ticket(s) expiré(s) trouvé(s)`);
+    
+    let notificationsSent = 0;
+    const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY0MDYzMDA0M2Q1MjY5NTUzYzUxM2Ei_pc';
+    const notifications = [];
+    const errors = [];
+    
+    // Pour chaque ticket expiré
+    for (const ticket of overdueTickets.results) {
+      try {
+        // Vérifier si notification déjà envoyée dans les 24h
+        const existingNotification = await c.env.DB.prepare(`
+          SELECT id, sent_at 
+          FROM webhook_notifications 
+          WHERE ticket_id = ? 
+            AND notification_type = 'overdue_scheduled'
+            AND datetime(sent_at) > datetime(?)
+          ORDER BY sent_at DESC
+          LIMIT 1
+        `).bind(ticket.id, twentyFourHoursAgo.toISOString()).first();
+        
+        if (existingNotification) {
+          console.log(`⏭️  CRON: Ticket ${ticket.ticket_id} déjà notifié (< 24h)`);
+          continue;
+        }
+        
+        // Calculer le retard
+        const scheduledDate = new Date(ticket.scheduled_date.replace(' ', 'T') + 'Z');
+        const overdueMs = now.getTime() - scheduledDate.getTime();
+        const overdueDays = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
+        const overdueHours = Math.floor((overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const overdueMinutes = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // Préparer les données webhook
+        const webhookData = {
+          ticket_id: ticket.ticket_id,
+          title: ticket.title,
+          description: ticket.description,
+          priority: ticket.priority,
+          status: ticket.status,
+          machine: `${ticket.machine_type || 'N/A'} ${ticket.model || ''}`,
+          scheduled_date: ticket.scheduled_date,
+          assigned_to: ticket.assigned_to === 0 ? 'Équipe complète' : (ticket.assignee_name || `Technicien #${ticket.assigned_to}`),
+          reporter: ticket.reporter_name || 'N/A',
+          created_at: ticket.created_at,
+          overdue_days: overdueDays,
+          overdue_hours: overdueHours,
+          overdue_minutes: overdueMinutes,
+          overdue_text: overdueDays > 0 
+            ? `${overdueDays} jour(s) ${overdueHours}h ${overdueMinutes}min`
+            : `${overdueHours}h ${overdueMinutes}min`,
+          notification_sent_at: now.toISOString()
+        };
+        
+        // Envoyer le webhook
+        const webhookResponse = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookData)
+        });
+        
+        const responseStatus = webhookResponse.status;
+        let responseBody = '';
+        try {
+          responseBody = await webhookResponse.text();
+        } catch (e) {
+          responseBody = 'Could not read response body';
+        }
+        
+        // Capturer le timestamp APRÈS l'envoi
+        const sentAt = new Date().toISOString();
+        
+        // Enregistrer la notification
+        await c.env.DB.prepare(`
+          INSERT INTO webhook_notifications 
+          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          ticket.id,
+          'overdue_scheduled',
+          WEBHOOK_URL,
+          sentAt,
+          responseStatus,
+          responseBody.substring(0, 1000)
+        ).run();
+        
+        notificationsSent++;
+        console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
+        
+        notifications.push({
+          ticket_id: ticket.ticket_id,
+          title: ticket.title,
+          overdue_text: webhookData.overdue_text,
+          webhook_status: responseStatus,
+          sent_at: sentAt
+        });
+        
+        // Délai de 200ms entre chaque webhook
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+      } catch (error) {
+        console.error(`❌ CRON: Erreur pour ${ticket.ticket_id}:`, error);
+        errors.push({
+          ticket_id: ticket.ticket_id,
+          error: error instanceof Error ? error.message : 'Erreur inconnue'
+        });
+      }
+    }
+    
+    console.log(`🎉 CRON terminé: ${notificationsSent}/${overdueTickets.results.length} notification(s) envoyée(s)`);
+    
+    return c.json({
+      message: 'Vérification terminée',
+      total_overdue: overdueTickets.results.length,
+      notifications_sent: notificationsSent,
+      notifications: notifications,
+      errors: errors.length > 0 ? errors : undefined,
+      checked_at: now.toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ CRON: Erreur globale:', error);
+    return c.json({ 
+      error: 'Erreur serveur lors de la vérification',
+      details: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, 500);
+  }
+});
+
 
 
 // ========================================
