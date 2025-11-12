@@ -2962,7 +2962,7 @@ app.get('/', (c) => {
                                         React.createElement('button', {
                                             type: 'button',
                                             onClick: () => removeMedia(index),
-                                            className: 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                                            className: 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600'
                                         },
                                             React.createElement('i', { className: 'fas fa-times text-xs' })
                                         ),
