@@ -4451,6 +4451,16 @@ app.get('/', (c) => {
             const [logoRefreshKey, setLogoRefreshKey] = React.useState(Date.now());
             const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
             
+            // États pour titre/sous-titre (super admin uniquement)
+            const [companyTitle, setCompanyTitle] = React.useState('Gestion de la maintenance et des réparations');
+            const [companySubtitle, setCompanySubtitle] = React.useState('Les Produits Verriers International (IGP) Inc.');
+            const [editingTitle, setEditingTitle] = React.useState(false);
+            const [editingSubtitle, setEditingSubtitle] = React.useState(false);
+            const [tempTitle, setTempTitle] = React.useState('');
+            const [tempSubtitle, setTempSubtitle] = React.useState('');
+            const [savingTitle, setSavingTitle] = React.useState(false);
+            const [savingSubtitle, setSavingSubtitle] = React.useState(false);
+            
             React.useEffect(() => {
                 if (show) {
                     loadSettings();
@@ -4478,6 +4488,27 @@ app.get('/', (c) => {
                 try {
                     const response = await axios.get(API_URL + '/settings/timezone_offset_hours');
                     setTimezoneOffset(response.data.setting_value);
+                    
+                    // Charger titre et sous-titre (super admin uniquement)
+                    if (isSuperAdmin) {
+                        try {
+                            const titleResponse = await axios.get(API_URL + '/settings/company_title');
+                            if (titleResponse.data.setting_value) {
+                                setCompanyTitle(titleResponse.data.setting_value);
+                            }
+                        } catch (error) {
+                            console.log('Titre non trouvé, utilisation valeur par défaut');
+                        }
+                        
+                        try {
+                            const subtitleResponse = await axios.get(API_URL + '/settings/company_subtitle');
+                            if (subtitleResponse.data.setting_value) {
+                                setCompanySubtitle(subtitleResponse.data.setting_value);
+                            }
+                        } catch (error) {
+                            console.log('Sous-titre non trouvé, utilisation valeur par défaut');
+                        }
+                    }
                 } catch (error) {
                     console.error('Erreur chargement parametres:', error);
                 } finally {
@@ -4589,6 +4620,92 @@ app.get('/', (c) => {
                 } catch (error) {
                     alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
                     setUploadingLogo(false);
+                }
+            };
+            
+            // Fonctions pour gérer le titre
+            const handleStartEditTitle = () => {
+                setTempTitle(companyTitle);
+                setEditingTitle(true);
+            };
+            
+            const handleCancelEditTitle = () => {
+                setTempTitle('');
+                setEditingTitle(false);
+            };
+            
+            const handleSaveTitle = async () => {
+                if (!tempTitle.trim()) {
+                    alert('Le titre ne peut pas être vide');
+                    return;
+                }
+                
+                if (tempTitle.trim().length > 100) {
+                    alert('Le titre ne peut pas dépasser 100 caractères');
+                    return;
+                }
+                
+                setSavingTitle(true);
+                try {
+                    await axios.put(API_URL + '/settings/title', {
+                        value: tempTitle.trim()
+                    });
+                    
+                    setCompanyTitle(tempTitle.trim());
+                    setEditingTitle(false);
+                    setTempTitle('');
+                    
+                    alert('Titre mis à jour avec succès! La page va se recharger...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+                } finally {
+                    setSavingTitle(false);
+                }
+            };
+            
+            // Fonctions pour gérer le sous-titre
+            const handleStartEditSubtitle = () => {
+                setTempSubtitle(companySubtitle);
+                setEditingSubtitle(true);
+            };
+            
+            const handleCancelEditSubtitle = () => {
+                setTempSubtitle('');
+                setEditingSubtitle(false);
+            };
+            
+            const handleSaveSubtitle = async () => {
+                if (!tempSubtitle.trim()) {
+                    alert('Le sous-titre ne peut pas être vide');
+                    return;
+                }
+                
+                if (tempSubtitle.trim().length > 150) {
+                    alert('Le sous-titre ne peut pas dépasser 150 caractères');
+                    return;
+                }
+                
+                setSavingSubtitle(true);
+                try {
+                    await axios.put(API_URL + '/settings/subtitle', {
+                        value: tempSubtitle.trim()
+                    });
+                    
+                    setCompanySubtitle(tempSubtitle.trim());
+                    setEditingSubtitle(false);
+                    setTempSubtitle('');
+                    
+                    alert('Sous-titre mis à jour avec succès! La page va se recharger...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } catch (error) {
+                    alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+                } finally {
+                    setSavingSubtitle(false);
                 }
             };
             
@@ -4797,6 +4914,135 @@ app.get('/', (c) => {
                                         React.createElement('i', { className: 'fas fa-undo' }),
                                         React.createElement('span', { className: 'hidden sm:inline' }, 'Réinitialiser'),
                                         React.createElement('span', { className: 'sm:hidden' }, 'Reset')
+                                    )
+                                )
+                            ),
+                            
+                            // Section Titre et Sous-titre (SUPER ADMIN UNIQUEMENT)
+                            isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                                React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
+                                    React.createElement('div', { className: 'flex items-start gap-3' },
+                                        React.createElement('i', { className: 'fas fa-heading text-blue-600 text-xl mt-1' }),
+                                        React.createElement('div', {},
+                                            React.createElement('h3', { className: 'font-bold text-blue-900 mb-2 flex items-center gap-2' },
+                                                "Titre et Sous-titre de l'application",
+                                                React.createElement('span', { className: 'text-xs bg-red-500 text-white px-2 py-1 rounded' }, 'SUPER ADMIN')
+                                            ),
+                                            React.createElement('p', { className: 'text-sm text-blue-800 mb-2' },
+                                                "Personnalisez le titre et le sous-titre affichés dans l'en-tête de l'application."
+                                            ),
+                                            React.createElement('ul', { className: 'text-sm text-blue-800 space-y-1 list-disc list-inside' },
+                                                React.createElement('li', {}, 'Titre: maximum 100 caractères'),
+                                                React.createElement('li', {}, 'Sous-titre: maximum 150 caractères'),
+                                                React.createElement('li', {}, 'Les caractères spéciaux sont supportés (é, è, à, ç, etc.)')
+                                            )
+                                        )
+                                    )
+                                ),
+                                
+                                // Édition du titre
+                                React.createElement('div', { className: 'mb-4' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                        React.createElement('i', { className: 'fas fa-heading mr-2' }),
+                                        'Titre principal'
+                                    ),
+                                    !editingTitle ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                        React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
+                                            companyTitle
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: handleStartEditTitle,
+                                            className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                            type: 'button'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-edit' }),
+                                            'Modifier'
+                                        )
+                                    ) : React.createElement('div', { className: 'space-y-3' },
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            value: tempTitle,
+                                            onChange: (e) => setTempTitle(e.target.value),
+                                            placeholder: 'Entrez le nouveau titre',
+                                            maxLength: 100,
+                                            className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                            disabled: savingTitle
+                                        }),
+                                        React.createElement('div', { className: 'flex items-center justify-between' },
+                                            React.createElement('span', { className: 'text-xs text-gray-600' },
+                                                tempTitle.length + '/100 caractères'
+                                            ),
+                                            React.createElement('div', { className: 'flex gap-2' },
+                                                React.createElement('button', {
+                                                    onClick: handleCancelEditTitle,
+                                                    disabled: savingTitle,
+                                                    className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                                    type: 'button'
+                                                }, 'Annuler'),
+                                                React.createElement('button', {
+                                                    onClick: handleSaveTitle,
+                                                    disabled: !tempTitle.trim() || savingTitle,
+                                                    className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                                    type: 'button'
+                                                },
+                                                    savingTitle && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                                    savingTitle ? 'Enregistrement...' : 'Enregistrer'
+                                                )
+                                            )
+                                        )
+                                    )
+                                ),
+                                
+                                // Édition du sous-titre
+                                React.createElement('div', { className: 'mb-0' },
+                                    React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                        React.createElement('i', { className: 'fas fa-align-left mr-2' }),
+                                        'Sous-titre'
+                                    ),
+                                    !editingSubtitle ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                        React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
+                                            companySubtitle
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: handleStartEditSubtitle,
+                                            className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                            type: 'button'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-edit' }),
+                                            'Modifier'
+                                        )
+                                    ) : React.createElement('div', { className: 'space-y-3' },
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            value: tempSubtitle,
+                                            onChange: (e) => setTempSubtitle(e.target.value),
+                                            placeholder: 'Entrez le nouveau sous-titre',
+                                            maxLength: 150,
+                                            className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                            disabled: savingSubtitle
+                                        }),
+                                        React.createElement('div', { className: 'flex items-center justify-between' },
+                                            React.createElement('span', { className: 'text-xs text-gray-600' },
+                                                tempSubtitle.length + '/150 caractères'
+                                            ),
+                                            React.createElement('div', { className: 'flex gap-2' },
+                                                React.createElement('button', {
+                                                    onClick: handleCancelEditSubtitle,
+                                                    disabled: savingSubtitle,
+                                                    className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                                    type: 'button'
+                                                }, 'Annuler'),
+                                                React.createElement('button', {
+                                                    onClick: handleSaveSubtitle,
+                                                    disabled: !tempSubtitle.trim() || savingSubtitle,
+                                                    className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                                    type: 'button'
+                                                },
+                                                    savingSubtitle && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                                    savingSubtitle ? 'Enregistrement...' : 'Enregistrer'
+                                                )
+                                            )
+                                        )
                                     )
                                 )
                             )
