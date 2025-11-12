@@ -9240,6 +9240,9 @@ const scheduled = async (event: ScheduledEvent, env: Bindings, ctx: ExecutionCon
           responseBody = 'Could not read response body';
         }
         
+        // Capturer le timestamp APRÈS l'envoi pour avoir un timestamp unique par webhook
+        const sentAt = new Date().toISOString();
+        
         // Enregistrer la notification
         await env.DB.prepare(`
           INSERT INTO webhook_notifications 
@@ -9249,13 +9252,16 @@ const scheduled = async (event: ScheduledEvent, env: Bindings, ctx: ExecutionCon
           ticket.id,
           'overdue_scheduled',
           WEBHOOK_URL,
-          now.toISOString(),
+          sentAt,
           responseStatus,
           responseBody.substring(0, 1000)
         ).run();
         
         notificationsSent++;
         console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
+        
+        // Délai de 200ms entre chaque webhook pour éviter la déduplication par Pabbly Connect
+        await new Promise(resolve => setTimeout(resolve, 200));
         
       } catch (error) {
         console.error(`❌ CRON: Erreur pour ${ticket.ticket_id}:`, error);
