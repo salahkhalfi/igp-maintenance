@@ -345,7 +345,12 @@ app.route('/api/media', media);
 app.route('/api/comments', comments);
 
 // Routes des paramètres système
-app.use('/api/settings/*', authMiddleware);
+// NOTE: Pas d'authMiddleware global ici car chaque route gère sa propre auth:
+// - GET /logo : public (pour afficher le logo)
+// - GET /:key : public (pour timezone_offset_hours)
+// - POST /upload-logo : authMiddleware + super admin check
+// - DELETE /logo : authMiddleware + super admin check
+// - PUT /:key : adminOnly middleware
 app.route('/api/settings', settings);
 
 // Routes des webhooks pour notifications
