@@ -9261,8 +9261,8 @@ const scheduled = async (event: ScheduledEvent, env: Bindings, ctx: ExecutionCon
   }
 };
 
-// Export avec support du CRON
-export default {
-  fetch: app.fetch,
-  scheduled
-};
+// Export pour Cloudflare Pages
+// Note: Le handler scheduled() est défini ci-dessus mais non utilisé pour Pages
+// Pour activer les notifications automatiques, utilisez un service CRON externe
+// qui appelle POST /api/webhooks/check-overdue-tickets toutes les 5 minutes
+export default app;
