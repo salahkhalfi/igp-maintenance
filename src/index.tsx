@@ -352,6 +352,20 @@ app.route('/api/settings', settings);
 app.use('/api/webhooks/*', authMiddleware);
 app.route('/api/webhooks', webhooks);
 
+// Route de test CRON (sans authentification) - À RETIRER EN PRODUCTION
+app.post('/api/test-cron', async (c) => {
+  console.log('🧪 TEST CRON démarré manuellement');
+  try {
+    // Simuler l'événement scheduled
+    const mockEvent: any = { scheduledTime: Date.now(), cron: '*/5 * * * *' };
+    await scheduled(mockEvent, c.env, c.executionCtx);
+    return c.json({ message: 'CRON test exécuté avec succès' });
+  } catch (error) {
+    console.error('Erreur test CRON:', error);
+    return c.json({ error: 'Erreur lors du test CRON' }, 500);
+  }
+});
+
 
 
 // ========================================
@@ -9134,8 +9148,8 @@ const scheduled = async (event: ScheduledEvent, env: Bindings, ctx: ExecutionCon
         t.description,
         t.priority,
         t.status,
-        m.type as machine_type,
-        m.model as model,
+        m.machine_type,
+        m.model,
         t.scheduled_date,
         t.assigned_to,
         t.created_at,
