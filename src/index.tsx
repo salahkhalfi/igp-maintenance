@@ -22,6 +22,7 @@ import comments from './routes/comments';
 import users from './routes/users';
 import roles from './routes/roles';
 import settings from './routes/settings';
+import webhooks from './routes/webhooks';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -346,6 +347,10 @@ app.route('/api/comments', comments);
 // Routes des paramètres système
 app.use('/api/settings/*', authMiddleware);
 app.route('/api/settings', settings);
+
+// Routes des webhooks pour notifications
+app.use('/api/webhooks/*', authMiddleware);
+app.route('/api/webhooks', webhooks);
 
 
 
@@ -3175,16 +3180,16 @@ app.get('/', (c) => {
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'modal-content bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-4 md:p-8 max-w-4xl w-full mx-4 my-auto',
+                    className: 'modal-content bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-3 sm:p-6 md:p-8 max-w-5xl w-full mx-2 sm:mx-4 my-auto',
                     onClick: (e) => e.stopPropagation(),
                     style: { marginTop: 'auto', marginBottom: 'auto', maxHeight: '90vh', overflowY: 'auto' }
                 },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-6 pb-4 border-b-2 border-gradient-to-r from-blue-400 to-gray-400' },
-                        React.createElement('h2', { className: 'text-2xl font-bold bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent' },
-                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-blue-600' }),
+                    React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b-2 border-gradient-to-r from-blue-400 to-gray-400' },
+                        React.createElement('h2', { className: 'text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent' },
+                            React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-blue-600 text-sm sm:text-base' }),
                             "Détails du Ticket"
                         ),
-                        React.createElement('div', { className: 'flex gap-3' },
+                        React.createElement('div', { className: 'flex gap-2 sm:gap-3' },
                             (ticket && currentUser && (
                                 (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) || 
                                 (currentUser.role === 'supervisor') ||
@@ -3195,13 +3200,13 @@ app.get('/', (c) => {
                                 className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95',
                                 title: 'Supprimer ce ticket'
                             },
-                                React.createElement('i', { className: 'fas fa-trash-alt fa-2x' })
+                                React.createElement('i', { className: 'fas fa-trash-alt text-xl sm:text-2xl' })
                             ) : null,
                             React.createElement('button', {
                                 onClick: onClose,
                                 className: 'text-gray-500 hover:text-gray-700'
                             },
-                                React.createElement('i', { className: 'fas fa-times fa-2x' })
+                                React.createElement('i', { className: 'fas fa-times text-xl sm:text-2xl' })
                             )
                         )
                     ),
@@ -3211,7 +3216,7 @@ app.get('/', (c) => {
                         React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                     ) : ticket ? React.createElement('div', {},
                         
-                        React.createElement('div', { className: 'mb-6 p-4 sm:p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-blue-200/50' },
+                        React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-200/50' },
                             React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
                                 React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
                                 React.createElement('span', { 
@@ -3229,7 +3234,7 @@ app.get('/', (c) => {
                             ),
                             React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
                             React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 mb-4 sm:mb-5 leading-relaxed bg-white/60 p-3 sm:p-4 rounded-lg' }, ticket.description),
-                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3' },
+                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4' },
                                 React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'fas fa-cog text-blue-600 text-sm' }),
@@ -3265,15 +3270,15 @@ app.get('/', (c) => {
                         
                         // Section planification (superviseur/admin seulement)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? 
-                            React.createElement('div', { className: 'mb-6 p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-gray-200/50' },
-                                React.createElement('div', { className: 'flex justify-between items-center mb-4' },
-                                    React.createElement('h4', { className: 'text-xl font-bold bg-gradient-to-r from-slate-600 to-gray-600 bg-clip-text text-transparent flex items-center' },
-                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-600' }),
+                            React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50' },
+                                React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3 sm:mb-4' },
+                                    React.createElement('h4', { className: 'text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-slate-600 to-gray-600 bg-clip-text text-transparent flex items-center' },
+                                        React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-600 text-sm sm:text-base' }),
                                         'Planification'
                                     ),
                                     !editingSchedule ? React.createElement('button', {
                                         onClick: () => setEditingSchedule(true),
-                                        className: 'px-4 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(147,51,234,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50'
+                                        className: 'px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-xs sm:text-sm transition-all shadow-[0_6px_12px_rgba(147,51,234,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50'
                                     },
                                         React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                         'Modifier'
@@ -3311,8 +3316,8 @@ app.get('/', (c) => {
                                     React.createElement('div', { className: 'space-y-4' },
                                         // Assigner à un technicien
                                         React.createElement('div', {},
-                                            React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
-                                                React.createElement('i', { className: 'fas fa-user-cog mr-2 text-slate-600' }),
+                                            React.createElement('label', { className: 'block font-bold text-gray-700 mb-2 text-sm sm:text-base' }, 
+                                                React.createElement('i', { className: 'fas fa-user-cog mr-2 text-slate-600 text-xs sm:text-sm' }),
                                                 "Assigner à"
                                             ),
                                             React.createElement('select', {
@@ -3352,8 +3357,8 @@ app.get('/', (c) => {
                                                 )
                                             ), // Ferme le badge d'état (ligne 3307)
                                             
-                                            React.createElement('label', { className: 'block font-bold text-gray-700 mb-2' }, 
-                                                React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600' }),
+                                            React.createElement('label', { className: 'block font-bold text-gray-700 mb-2 text-sm sm:text-base' }, 
+                                                React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600 text-xs sm:text-sm' }),
                                                 "Date de maintenance" + (scheduledDate ? " (modifier)" : " (ajouter)")
                                             ),
                                             React.createElement('div', { className: 'flex gap-2' },
@@ -3378,14 +3383,14 @@ app.get('/', (c) => {
                                         ), // Ferme le div principal Date de maintenance (ligne 3305)
                                         
                                         // Boutons d'action
-                                        React.createElement('div', { className: 'flex justify-end gap-3 pt-3' },
+                                        React.createElement('div', { className: 'flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3' },
                                             React.createElement('button', {
                                                 onClick: () => {
                                                     setEditingSchedule(false);
                                                     setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
                                                     setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? ticket.scheduled_date.substring(0, 10) : '');
                                                 },
-                                                className: 'px-5 py-2.5 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-lg font-bold transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
+                                                className: 'w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
                                             },
                                                 React.createElement('i', { className: 'fas fa-times mr-1' }),
                                                 'Annuler'
@@ -3393,7 +3398,7 @@ app.get('/', (c) => {
                                             React.createElement('button', {
                                                 onClick: handleSaveSchedule,
                                                 disabled: savingSchedule,
-                                                className: 'px-5 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold transition-all shadow-[0_8px_16px_rgba(147,51,234,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(147,51,234,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-t border-blue-300/50'
+                                                className: 'w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-[0_8px_16px_rgba(147,51,234,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(147,51,234,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-t border-blue-300/50'
                                             },
                                                 savingSchedule 
                                                     ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-1' })
@@ -3407,12 +3412,12 @@ app.get('/', (c) => {
                         : null,
                         
                         
-                        (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-6' },
-                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-3 flex items-center' },
-                                React.createElement('i', { className: 'fas fa-images mr-2 text-blue-700' }),
+                        (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-4 sm:mb-6' },
+                            React.createElement('h4', { className: 'text-base sm:text-lg font-bold text-gray-800 mb-3 flex items-center' },
+                                React.createElement('i', { className: 'fas fa-images mr-2 text-blue-700 text-sm sm:text-base' }),
                                 'Photos et Vidéos (' + ticket.media.length + ')'
                             ),
-                            React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3' },
+                            React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3' },
                                 ticket.media.map((media, index) =>
                                     React.createElement('div', { 
                                         key: media.id,
@@ -3459,15 +3464,15 @@ app.get('/', (c) => {
                         ) : null,
                         
                         
-                        (!ticket.media || ticket.media.length === 0) ? React.createElement('div', { className: 'mb-6 text-center py-8 bg-gray-50 rounded' },
+                        (!ticket.media || ticket.media.length === 0) ? React.createElement('div', { className: 'mb-4 sm:mb-6 text-center py-6 sm:py-8 bg-gray-50 rounded' },
                             React.createElement('i', { className: 'fas fa-camera text-gray-400 text-4xl mb-2' }),
                             React.createElement('p', { className: 'text-gray-500' }, 'Aucune photo ou vidéo attachée à ce ticket')
                         ) : null,
                         
                         
-                        React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
-                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
-                                React.createElement('i', { className: 'fas fa-comments mr-2 text-igp-blue' }),
+                        React.createElement('div', { className: 'mb-4 sm:mb-6 border-t-2 border-gray-200 pt-4 sm:pt-6' },
+                            React.createElement('h4', { className: 'text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center' },
+                                React.createElement('i', { className: 'fas fa-comments mr-2 text-igp-blue text-sm sm:text-base' }),
                                 'Commentaires et Notes (' + comments.length + ')'
                             ),
                             
@@ -3504,7 +3509,7 @@ app.get('/', (c) => {
                             
                             React.createElement('form', { 
                                 onSubmit: handleAddComment,
-                                className: 'bg-blue-50 rounded-lg p-4 border-2 border-igp-blue'
+                                className: 'bg-blue-50 rounded-lg p-3 sm:p-4 border-2 border-igp-blue'
                             },
                                 React.createElement('h5', { className: 'font-semibold text-gray-800 mb-3 flex items-center' },
                                     React.createElement('i', { className: 'fas fa-plus-circle mr-2 text-igp-blue' }),
@@ -3548,9 +3553,9 @@ app.get('/', (c) => {
                         ),
                         
                         
-                        React.createElement('div', { className: 'mb-6 border-t-2 border-gray-200 pt-6' },
-                            React.createElement('h4', { className: 'text-lg font-bold text-gray-800 mb-4 flex items-center' },
-                                React.createElement('i', { className: 'fas fa-camera-retro mr-2 text-blue-700' }),
+                        React.createElement('div', { className: 'mb-4 sm:mb-6 border-t-2 border-gray-200 pt-4 sm:pt-6' },
+                            React.createElement('h4', { className: 'text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4 flex items-center' },
+                                React.createElement('i', { className: 'fas fa-camera-retro mr-2 text-blue-700 text-sm sm:text-base' }),
                                 'Ajouter des photos/vidéos supplémentaires'
                             ),
                             
@@ -3560,7 +3565,7 @@ app.get('/', (c) => {
                                     React.createElement('i', { className: 'fas fa-images mr-1' }),
                                     newMediaPreviews.length + ' fichier(s) sélectionné(s)'
                                 ),
-                                React.createElement('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-3 mb-3' },
+                                React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mb-3' },
                                     newMediaPreviews.map((preview, index) =>
                                         React.createElement('div', { 
                                             key: index,
@@ -3609,9 +3614,9 @@ app.get('/', (c) => {
                             ) : null,
                             
                             
-                            React.createElement('div', { className: 'flex gap-3 justify-center' },
+                            React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center' },
                                 React.createElement('label', { 
-                                    className: 'inline-block px-6 py-3 bg-blue-100 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer hover:bg-blue-200 hover:border-blue-600 transition-all'
+                                    className: 'inline-block px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-100 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer hover:bg-blue-200 hover:border-blue-600 transition-all text-center'
                                 },
                                     React.createElement('input', {
                                         type: 'file',
@@ -3621,13 +3626,13 @@ app.get('/', (c) => {
                                         className: 'hidden',
                                         id: 'photo-upload-detail'
                                     }),
-                                    React.createElement('i', { className: 'fas fa-camera text-2xl text-blue-600 mb-2 block' }),
-                                    React.createElement('span', { className: 'text-sm font-semibold text-blue-700 block' },
+                                    React.createElement('i', { className: 'fas fa-camera text-xl sm:text-2xl text-blue-600 mb-1 sm:mb-2 block' }),
+                                    React.createElement('span', { className: 'text-xs sm:text-sm font-semibold text-blue-700 block' },
                                         'Prendre une photo'
                                     )
                                 ),
                                 React.createElement('label', { 
-                                    className: 'inline-block px-6 py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-gray-600 transition-all'
+                                    className: 'inline-block px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-gray-600 transition-all text-center'
                                 },
                                     React.createElement('input', {
                                         type: 'file',
@@ -3637,8 +3642,8 @@ app.get('/', (c) => {
                                         className: 'hidden',
                                         id: 'media-upload-detail'
                                     }),
-                                    React.createElement('i', { className: 'fas fa-images text-2xl text-gray-600 mb-2 block' }),
-                                    React.createElement('span', { className: 'text-sm font-semibold text-gray-700 block' },
+                                    React.createElement('i', { className: 'fas fa-images text-xl sm:text-2xl text-gray-600 mb-1 sm:mb-2 block' }),
+                                    React.createElement('span', { className: 'text-xs sm:text-sm font-semibold text-gray-700 block' },
                                         'Choisir fichiers'
                                     )
                                 )
@@ -6615,17 +6620,17 @@ app.get('/', (c) => {
                                             ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { 
                                                 className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (hasScheduledDate(ticket.scheduled_date) 
                                                     ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400'
-                                                    : 'bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 shadow-[0_4px_12px_rgba(234,88,12,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-yellow-400'),
+                                                    : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 shadow-[0_4px_12px_rgba(51,65,85,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] border-b-2 border-cyan-400'),
                                                 style: { fontSize: '11px' }
                                             },
                                                 React.createElement('div', { className: 'flex items-center gap-1 px-1.5 py-0.5 rounded flex-shrink-0 ' + (ticket.scheduled_date
                                                     ? 'bg-gradient-to-br from-green-500 to-green-600 shadow-[0_2px_8px_rgba(34,197,94,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-green-300'
-                                                    : 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-[0_2px_8px_rgba(234,179,8,0.5),inset_0_1px_0_rgba(255,255,255,0.3)] border border-yellow-300') 
+                                                    : 'bg-gradient-to-br from-cyan-500 to-cyan-600 shadow-[0_2px_8px_rgba(6,182,212,0.6),inset_0_1px_0_rgba(255,255,255,0.3)] border border-cyan-300') 
                                                 },
                                                     React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (hasScheduledDate(ticket.scheduled_date) ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
                                                     React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, hasScheduledDate(ticket.scheduled_date) ? "PLANIFIÉ" : "ASSIGNÉ")
                                                 ),
-                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + (hasScheduledDate(ticket.scheduled_date) ? 'bg-blue-800/60 border-blue-500/40' : 'bg-orange-800/60 border-orange-500/40') },
+                                                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)] border truncate ' + (hasScheduledDate(ticket.scheduled_date) ? 'bg-blue-800/60 border-blue-500/40' : 'bg-slate-800/70 border-cyan-500/50') },
                                                     ticket.assigned_to !== null && ticket.assigned_to !== undefined && ticket.assigned_to !== ''
                                                         ? (ticket.assigned_to === 0 ? "👥 Équipe" : "👤 " + (ticket.assignee_name || 'Tech #' + ticket.assigned_to))
                                                         : "⚠️ Non assigné"
@@ -7071,13 +7076,22 @@ app.get('/', (c) => {
                     
                     loadData();
                     loadUnreadMessagesCount();
+                    checkOverdueTickets(); // Vérification initiale des tickets expirés
                     
                     // Rafraichir le compteur de messages non lus toutes les 30 secondes
-                    const interval = setInterval(() => {
+                    const messagesInterval = setInterval(() => {
                         loadUnreadMessagesCount();
                     }, 30000);
                     
-                    return () => clearInterval(interval);
+                    // Vérifier les tickets planifiés expirés toutes les 5 minutes
+                    const overdueInterval = setInterval(() => {
+                        checkOverdueTickets();
+                    }, 5 * 60 * 1000); // 5 minutes
+                    
+                    return () => {
+                        clearInterval(messagesInterval);
+                        clearInterval(overdueInterval);
+                    };
                 }
             }, [isLoggedIn]);
             
@@ -7110,6 +7124,18 @@ app.get('/', (c) => {
                     }
                 } catch (error) {
                     console.error("Erreur comptage messages non lus:", error);
+                }
+            };
+            
+            const checkOverdueTickets = async () => {
+                try {
+                    // Vérifier les tickets planifiés expirés et envoyer webhooks si nécessaire
+                    const response = await axios.post(API_URL + '/webhooks/check-overdue-tickets');
+                    if (response.data.notifications_sent > 0) {
+                        console.log('Notifications webhook envoyées:', response.data.notifications_sent, 'ticket(s)');
+                    }
+                } catch (error) {
+                    console.error('Erreur vérification tickets expirés:', error);
                 }
             };
             

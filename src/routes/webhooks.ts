@@ -1,0 +1,205 @@
+// Routes pour les notifications webhook des tickets expirés
+
+import { Hono } from 'hono';
+import type { Bindings } from '../types';
+
+const webhooks = new Hono<{ Bindings: Bindings }>();
+
+const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY0MDYzMDA0M2Q1MjY5NTUzYzUxM2Ei_pc';
+
+/**
+ * POST /api/webhooks/check-overdue-tickets - Vérifier et notifier les tickets planifiés expirés
+ * Cette route est appelée périodiquement par le frontend
+ * Envoie un webhook à Pabbly Connect pour chaque ticket expiré (max 1x/24h par ticket)
+ */
+webhooks.post('/check-overdue-tickets', async (c) => {
+  try {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    // Récupérer tous les tickets planifiés (avec assigned_to ET scheduled_date) qui ne sont pas encore en cours/terminés
+    // CRITICAL: Check assigned_to !== NULL (not falsy) because 0 is valid (team assignment)
+    const overdueTickets = await c.env.DB.prepare(`
+      SELECT 
+        t.id,
+        t.ticket_id,
+        t.title,
+        t.description,
+        t.priority,
+        t.status,
+        t.machine_type,
+        t.model,
+        t.scheduled_date,
+        t.assigned_to,
+        t.created_at,
+        u.full_name as assignee_name,
+        reporter.full_name as reporter_name
+      FROM tickets t
+      LEFT JOIN users u ON t.assigned_to = u.id
+      LEFT JOIN users reporter ON t.reported_by = reporter.id
+      WHERE t.assigned_to IS NOT NULL
+        AND t.scheduled_date IS NOT NULL
+        AND t.scheduled_date != 'null'
+        AND t.scheduled_date != ''
+        AND t.status IN ('received', 'diagnostic')
+        AND datetime(t.scheduled_date) < datetime('now')
+      ORDER BY t.scheduled_date ASC
+    `).all();
+    
+    if (!overdueTickets.results || overdueTickets.results.length === 0) {
+      return c.json({ 
+        message: 'Aucun ticket planifié expiré trouvé',
+        checked_at: now.toISOString()
+      });
+    }
+    
+    const notifications = [];
+    const errors = [];
+    
+    // Pour chaque ticket expiré, vérifier si notification déjà envoyée dans les 24h
+    for (const ticket of overdueTickets.results) {
+      try {
+        // Vérifier si une notification a déjà été envoyée dans les 24 dernières heures
+        const existingNotification = await c.env.DB.prepare(`
+          SELECT id, sent_at 
+          FROM webhook_notifications 
+          WHERE ticket_id = ? 
+            AND notification_type = 'overdue_scheduled'
+            AND datetime(sent_at) > datetime(?)
+          ORDER BY sent_at DESC
+          LIMIT 1
+        `).bind(ticket.id, twentyFourHoursAgo.toISOString()).first();
+        
+        if (existingNotification) {
+          // Notification déjà envoyée dans les 24h - skip
+          continue;
+        }
+        
+        // Calculer le retard
+        const scheduledDate = new Date(ticket.scheduled_date.replace(' ', 'T') + 'Z');
+        const overdueMs = now.getTime() - scheduledDate.getTime();
+        const overdueDays = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
+        const overdueHours = Math.floor((overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const overdueMinutes = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        // Préparer les données pour Pabbly Connect
+        const webhookData = {
+          ticket_id: ticket.ticket_id,
+          title: ticket.title,
+          description: ticket.description,
+          priority: ticket.priority,
+          status: ticket.status,
+          machine: `${ticket.machine_type} ${ticket.model}`,
+          scheduled_date: ticket.scheduled_date,
+          assigned_to: ticket.assigned_to === 0 ? 'Équipe complète' : (ticket.assignee_name || `Technicien #${ticket.assigned_to}`),
+          reporter: ticket.reporter_name || 'N/A',
+          created_at: ticket.created_at,
+          overdue_days: overdueDays,
+          overdue_hours: overdueHours,
+          overdue_minutes: overdueMinutes,
+          overdue_text: overdueDays > 0 
+            ? `${overdueDays} jour(s) ${overdueHours}h ${overdueMinutes}min`
+            : `${overdueHours}h ${overdueMinutes}min`,
+          notification_sent_at: now.toISOString()
+        };
+        
+        // Envoyer le webhook à Pabbly Connect
+        const webhookResponse = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(webhookData)
+        });
+        
+        const responseStatus = webhookResponse.status;
+        let responseBody = '';
+        try {
+          responseBody = await webhookResponse.text();
+        } catch (e) {
+          responseBody = 'Could not read response body';
+        }
+        
+        // Enregistrer la notification dans la base de données
+        await c.env.DB.prepare(`
+          INSERT INTO webhook_notifications 
+          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          ticket.id,
+          'overdue_scheduled',
+          WEBHOOK_URL,
+          now.toISOString(),
+          responseStatus,
+          responseBody.substring(0, 1000) // Limiter à 1000 caractères
+        ).run();
+        
+        notifications.push({
+          ticket_id: ticket.ticket_id,
+          title: ticket.title,
+          overdue_text: webhookData.overdue_text,
+          webhook_status: responseStatus,
+          sent_at: now.toISOString()
+        });
+        
+      } catch (error) {
+        console.error(`Erreur notification webhook ticket ${ticket.ticket_id}:`, error);
+        errors.push({
+          ticket_id: ticket.ticket_id,
+          error: error instanceof Error ? error.message : 'Erreur inconnue'
+        });
+      }
+    }
+    
+    return c.json({
+      message: 'Vérification terminée',
+      total_overdue: overdueTickets.results.length,
+      notifications_sent: notifications.length,
+      notifications: notifications,
+      errors: errors.length > 0 ? errors : undefined,
+      checked_at: now.toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Erreur vérification tickets expirés:', error);
+    return c.json({ 
+      error: 'Erreur serveur lors de la vérification',
+      details: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, 500);
+  }
+});
+
+/**
+ * GET /api/webhooks/notification-history/:ticketId - Historique des notifications pour un ticket
+ */
+webhooks.get('/notification-history/:ticketId', async (c) => {
+  try {
+    const ticketId = c.req.param('ticketId');
+    
+    const notifications = await c.env.DB.prepare(`
+      SELECT 
+        wn.id,
+        wn.notification_type,
+        wn.sent_at,
+        wn.response_status,
+        wn.response_body,
+        t.ticket_id,
+        t.title
+      FROM webhook_notifications wn
+      INNER JOIN tickets t ON wn.ticket_id = t.id
+      WHERE t.ticket_id = ?
+      ORDER BY wn.sent_at DESC
+    `).bind(ticketId).all();
+    
+    return c.json({
+      ticket_id: ticketId,
+      notifications: notifications.results || []
+    });
+    
+  } catch (error) {
+    console.error('Erreur récupération historique notifications:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+export default webhooks;
