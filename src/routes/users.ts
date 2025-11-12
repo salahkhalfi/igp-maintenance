@@ -17,6 +17,7 @@ users.use('/*', supervisorOrAdmin);
  */
 users.get('/', async (c) => {
   try {
+    // Filtrer le super admin (invisible pour tous les utilisateurs)
     const { results } = await c.env.DB.prepare(`
       SELECT 
         id, 
@@ -31,6 +32,7 @@ users.get('/', async (c) => {
           ELSE 'SHA-256 (Legacy)'
         END as hash_type
       FROM users
+      WHERE is_super_admin = 0 OR is_super_admin IS NULL
       ORDER BY created_at DESC
     `).all();
 
@@ -202,6 +204,12 @@ users.put('/:id', async (c) => {
     if (!existingUser) {
       console.log('❌ User not found:', id);
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
+    }
+
+    // PROTECTION: Bloquer toute modification du super admin
+    if (existingUser.is_super_admin === 1) {
+      console.log('❌ Cannot modify super admin');
+      return c.json({ error: 'Action non autorisée' }, 403);
     }
 
     console.log('✅ Existing user:', {
@@ -399,6 +407,11 @@ users.delete('/:id', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
+    // PROTECTION: Bloquer toute suppression du super admin
+    if (existingUser.is_super_admin === 1) {
+      return c.json({ error: 'Action non autorisée' }, 403);
+    }
+
     // RESTRICTION: Superviseur ne peut pas supprimer un admin
     if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
       return c.json({ error: 'Les superviseurs ne peuvent pas supprimer les administrateurs' }, 403);
@@ -499,11 +512,16 @@ users.post('/:id/reset-password', async (c) => {
 
     // Vérifier que l'utilisateur existe
     const existingUser = await c.env.DB.prepare(
-      'SELECT email FROM users WHERE id = ?'
+      'SELECT email, is_super_admin FROM users WHERE id = ?'
     ).bind(id).first() as any;
 
     if (!existingUser) {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
+    }
+
+    // PROTECTION: Bloquer la réinitialisation du mot de passe du super admin
+    if (existingUser.is_super_admin === 1) {
+      return c.json({ error: 'Action non autorisée' }, 403);
     }
 
     // Hasher le nouveau mot de passe
