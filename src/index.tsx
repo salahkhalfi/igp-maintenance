@@ -3610,16 +3610,16 @@ app.get('/', (c) => {
                                         className: 'relative group'
                                     },
                                         React.createElement('div', {
-                                            className: 'cursor-pointer',
+                                            className: 'cursor-pointer sm:cursor-pointer',
                                             onClick: () => setSelectedMedia(media)
                                         },
                                             media.file_type.startsWith('image/') 
                                                 ? React.createElement('img', {
                                                     src: API_URL + '/media/' + media.id,
                                                     alt: media.file_name,
-                                                    className: 'w-full h-32 object-cover rounded border-2 border-gray-300 hover:border-igp-blue transition-all'
+                                                    className: 'w-full h-32 object-cover rounded border-2 border-gray-300 hover:border-igp-blue transition-all pointer-events-none sm:pointer-events-auto'
                                                 })
-                                                : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center' },
+                                                : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center pointer-events-none sm:pointer-events-auto' },
                                                     React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
                                                 ),
                                             React.createElement('div', { className: 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center pointer-events-none' },
@@ -3639,10 +3639,11 @@ app.get('/', (c) => {
                                                 e.stopPropagation();
                                                 handleDeleteMedia(media.id);
                                             },
-                                            className: 'absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg z-10',
+                                            className: 'absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-all shadow-lg z-20',
+                                            style: { opacity: 1 },
                                             title: 'Supprimer ce media'
                                         },
-                                            React.createElement('i', { className: 'fas fa-trash text-xs' })
+                                            React.createElement('i', { className: 'fas fa-trash text-sm' })
                                         ) : null
                                     )
                                 )
