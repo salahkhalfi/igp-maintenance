@@ -2952,20 +2952,23 @@ app.get('/', (c) => {
                                             ? React.createElement('img', {
                                                 src: preview.url,
                                                 alt: preview.name,
-                                                className: 'w-full h-24 object-cover rounded border-2 border-gray-300'
+                                                className: 'w-full h-24 object-cover rounded border-2 border-gray-300 pointer-events-none'
                                             })
                                             : React.createElement('video', {
                                                 src: preview.url,
-                                                className: 'w-full h-24 object-cover rounded border-2 border-gray-300',
+                                                className: 'w-full h-24 object-cover rounded border-2 border-gray-300 pointer-events-none',
                                                 controls: false
                                             }),
                                         React.createElement('button', {
                                             type: 'button',
-                                            onClick: () => removeMedia(index),
-                                            className: 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center shadow-lg hover:bg-red-600 transition-all z-10',
+                                            onClick: (e) => {
+                                                e.stopPropagation();
+                                                removeMedia(index);
+                                            },
+                                            className: 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center shadow-lg hover:bg-red-600 transition-all z-20',
                                             style: { opacity: 1 }
                                         },
-                                            React.createElement('i', { className: 'fas fa-times text-xs' })
+                                            React.createElement('i', { className: 'fas fa-times text-sm' })
                                         ),
                                         React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded' },
                                             preview.type.startsWith('image/') ? '📷' : '🎥',
