@@ -3398,7 +3398,7 @@ app.get('/', (c) => {
                             React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-blue-600 text-sm sm:text-base' }),
                             "Détails du Ticket"
                         ),
-                        React.createElement('div', { className: 'flex gap-2 sm:gap-3' },
+                        React.createElement('div', { className: 'flex gap-4 sm:gap-5' },
                             (ticket && currentUser && (
                                 (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) || 
                                 (currentUser.role === 'supervisor') ||
@@ -3406,14 +3406,16 @@ app.get('/', (c) => {
                                 (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
                             )) ? React.createElement('button', {
                                 onClick: handleDeleteTicket,
-                                className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95',
-                                title: 'Supprimer ce ticket'
+                                className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95 p-2 -m-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
+                                title: 'Supprimer ce ticket',
+                                'aria-label': 'Supprimer ce ticket'
                             },
                                 React.createElement('i', { className: 'fas fa-trash-alt text-xl sm:text-2xl' })
                             ) : null,
                             React.createElement('button', {
                                 onClick: onClose,
-                                className: 'text-gray-500 hover:text-gray-700'
+                                className: 'text-gray-500 hover:text-gray-700 p-2 -m-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
+                                'aria-label': 'Fermer'
                             },
                                 React.createElement('i', { className: 'fas fa-times text-xl sm:text-2xl' })
                             )
