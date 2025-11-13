@@ -4571,9 +4571,9 @@ app.get('/', (c) => {
             const checkSuperAdmin = async () => {
                 try {
                     // Vérifier si l'utilisateur actuel est admin
-                    // Tous les admins peuvent modifier le logo, titre et sous-titre
-                    // Rôles acceptés: 'admin', 'super_admin'
-                    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin')) {
+                    // Tous les admins (role='admin') peuvent modifier le logo, titre et sous-titre
+                    // Le backend vérifie avec adminOnly middleware
+                    if (currentUser && currentUser.role === 'admin') {
                         setIsSuperAdmin(true);
                     } else {
                         setIsSuperAdmin(false);

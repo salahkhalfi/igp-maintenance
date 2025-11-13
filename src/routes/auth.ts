@@ -41,14 +41,15 @@ auth.post('/register', async (c) => {
 
     // Récupérer l'utilisateur créé
     const user = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at FROM users WHERE email = ?'
-    ).bind(email).first() as User;
+      'SELECT id, email, full_name, role, is_super_admin, created_at, updated_at FROM users WHERE email = ?'
+    ).bind(email).first() as any;
 
     // Générer le token JWT
     const token = await signToken({
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      isSuperAdmin: user.is_super_admin === 1
     });
 
     return c.json({ token, user }, 201);
@@ -117,7 +118,8 @@ auth.post('/login', async (c) => {
     const token = await signToken({
       userId: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      isSuperAdmin: user.is_super_admin === 1
     });
 
     return c.json({ token, user: userWithoutPassword });
