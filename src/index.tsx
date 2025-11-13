@@ -7224,8 +7224,8 @@ app.get('/', (c) => {
                 
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-start gap-4' },
-                            React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 md:space-x-3 flex-1 min-w-0 w-full' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-4' },
+                            React.createElement('div', { className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0' },
                                 React.createElement('img', { 
                                     src: '/api/settings/logo?t=' + Date.now(), 
                                     alt: 'IGP Logo',
@@ -7234,23 +7234,23 @@ app.get('/', (c) => {
                                         e.target.src = '/static/logo-igp.png';
                                     }
                                 }),
-                                React.createElement('div', { className: 'sm:border-l-2 sm:border-gray-300 sm:pl-2 md:pl-3 flex-1 min-w-0 w-full sm:w-auto' },
+                                React.createElement('div', { className: 'border-l-2 border-gray-300 pl-2 md:pl-3 flex-1 min-w-0' },
                                     React.createElement('h1', { 
-                                        className: 'text-base sm:text-sm md:text-lg lg:text-xl font-bold text-igp-blue break-words',
+                                        className: 'text-sm md:text-lg lg:text-xl font-bold text-igp-blue break-words',
                                         style: { wordBreak: 'break-word', overflowWrap: 'break-word' },
                                         title: headerTitle
                                     }, headerTitle),
                                     React.createElement('p', { 
-                                        className: 'text-sm sm:text-xs md:text-sm text-gray-600 break-words',
+                                        className: 'text-xs md:text-sm text-gray-600 break-words',
                                         style: { wordBreak: 'break-word', overflowWrap: 'break-word' },
                                         title: headerSubtitle
                                     }, 
                                         headerSubtitle
                                     ),
-                                    React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1 break-words' }, 
+                                    React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
                                     ),
-                                    React.createElement('div', { className: "flex items-center gap-2 md:gap-3 flex-wrap mt-1" },
+                                    React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
                                             getActiveTicketsCount() + " tickets actifs"
                                         ),
