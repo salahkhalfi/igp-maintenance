@@ -1726,25 +1726,37 @@ app.get('/', (c) => {
             if (!localDateTime) return null;
             
             // localDateTime = "2025-11-15T14:30"
-            const localDate = new Date(localDateTime); // Interprété comme heure locale du navigateur
+            // IMPORTANT: Parser manuellement pour éviter interprétation du fuseau navigateur
+            const parts = localDateTime.split('T');
+            const dateParts = parts[0].split('-');
+            const timeParts = parts[1].split(':');
             
-            // IMPORTANT: On doit appliquer notre offset personnalisé
-            // Car le navigateur utilise le fuseau système, pas notre fuseau configuré
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]) - 1; // Mois commence à 0
+            const day = parseInt(dateParts[2]);
+            const hours = parseInt(timeParts[0]);
+            const minutes = parseInt(timeParts[1]);
+            
+            // Créer une date UTC avec ces valeurs (sans interprétation timezone)
             const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
             
-            // Conversion: Local → UTC
-            // Si offset = -5 et heure locale = 14:30, alors UTC = 14:30 - (-5) = 19:30
-            const utcDate = new Date(localDate.getTime() - (offset * 60 * 60 * 1000));
+            // Calculer l'heure UTC en soustrayant l'offset
+            // offset = -5 signifie "UTC-5", donc pour convertir local → UTC: UTC = local - offset
+            // Exemple: 14:30 local avec offset -5 → UTC = 14:30 - (-5) = 14:30 + 5 = 19:30
+            const utcHours = hours - offset;
+            
+            // Créer la date UTC directement
+            const utcDate = new Date(Date.UTC(year, month, day, utcHours, minutes, 0));
             
             // Format SQL: YYYY-MM-DD HH:MM:SS
-            const year = utcDate.getUTCFullYear();
-            const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(utcDate.getUTCDate()).padStart(2, '0');
-            const hours = String(utcDate.getUTCHours()).padStart(2, '0');
-            const minutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
-            const seconds = '00'; // Toujours :00 pour les secondes
+            const utcYear = utcDate.getUTCFullYear();
+            const utcMonth = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+            const utcDay = String(utcDate.getUTCDate()).padStart(2, '0');
+            const utcHoursStr = String(utcDate.getUTCHours()).padStart(2, '0');
+            const utcMinutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
+            const seconds = '00';
             
-            return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+            return utcYear + '-' + utcMonth + '-' + utcDay + ' ' + utcHoursStr + ':' + utcMinutes + ':' + seconds;
         };
         
         /**
@@ -1764,10 +1776,12 @@ app.get('/', (c) => {
             const utcDate = new Date(utcDateStr);
             
             // Appliquer l'offset pour obtenir l'heure locale
+            // offset = -5 signifie "UTC-5", donc pour convertir UTC → local: local = UTC + offset
+            // Exemple: 19:30 UTC avec offset -5 → local = 19:30 + (-5) = 14:30
             const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
             const localDate = new Date(utcDate.getTime() + (offset * 60 * 60 * 1000));
             
-            // Format datetime-local: YYYY-MM-DDTHH:MM
+            // Format datetime-local: YYYY-MM-DDTHH:MM (utiliser UTC methods car on a déjà appliqué l'offset)
             const year = localDate.getUTCFullYear();
             const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
             const day = String(localDate.getUTCDate()).padStart(2, '0');
