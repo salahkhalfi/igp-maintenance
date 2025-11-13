@@ -1709,6 +1709,76 @@ app.get('/', (c) => {
             return day + '-' + month + '-' + year;
         };
         
+        // ============================================================================
+        // NOUVELLES FONCTIONS UTILITAIRES: Conversion datetime-local ↔ UTC ↔ SQL
+        // ============================================================================
+        
+        /**
+         * Convertir datetime-local (format: "2025-11-15T14:30") vers UTC SQL
+         * @param {string} localDateTime - Format: "YYYY-MM-DDTHH:MM" (heure locale saisie)
+         * @returns {string} Format SQL: "YYYY-MM-DD HH:MM:SS" (en UTC)
+         * 
+         * Exemple avec offset -5 (EST):
+         * Input:  "2025-11-15T14:30" (14h30 locale)
+         * Output: "2025-11-15 19:30:00" (19h30 UTC)
+         */
+        const localDateTimeToUTC = (localDateTime) => {
+            if (!localDateTime) return null;
+            
+            // localDateTime = "2025-11-15T14:30"
+            const localDate = new Date(localDateTime); // Interprété comme heure locale du navigateur
+            
+            // IMPORTANT: On doit appliquer notre offset personnalisé
+            // Car le navigateur utilise le fuseau système, pas notre fuseau configuré
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            
+            // Conversion: Local → UTC
+            // Si offset = -5 et heure locale = 14:30, alors UTC = 14:30 - (-5) = 19:30
+            const utcDate = new Date(localDate.getTime() - (offset * 60 * 60 * 1000));
+            
+            // Format SQL: YYYY-MM-DD HH:MM:SS
+            const year = utcDate.getUTCFullYear();
+            const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(utcDate.getUTCDate()).padStart(2, '0');
+            const hours = String(utcDate.getUTCHours()).padStart(2, '0');
+            const minutes = String(utcDate.getUTCMinutes()).padStart(2, '0');
+            const seconds = '00'; // Toujours :00 pour les secondes
+            
+            return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+        };
+        
+        /**
+         * Convertir UTC SQL vers datetime-local (format: "2025-11-15T14:30")
+         * @param {string} sqlDateTime - Format: "YYYY-MM-DD HH:MM:SS" (en UTC)
+         * @returns {string} Format datetime-local: "YYYY-MM-DDTHH:MM" (heure locale)
+         * 
+         * Exemple avec offset -5 (EST):
+         * Input:  "2025-11-15 19:30:00" (19h30 UTC)
+         * Output: "2025-11-15T14:30" (14h30 locale)
+         */
+        const utcToLocalDateTime = (sqlDateTime) => {
+            if (!sqlDateTime || sqlDateTime === 'null' || sqlDateTime === '') return '';
+            
+            // sqlDateTime = "2025-11-15 19:30:00" (UTC)
+            const utcDateStr = sqlDateTime.replace(' ', 'T') + 'Z'; // "2025-11-15T19:30:00Z"
+            const utcDate = new Date(utcDateStr);
+            
+            // Appliquer l'offset pour obtenir l'heure locale
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            const localDate = new Date(utcDate.getTime() + (offset * 60 * 60 * 1000));
+            
+            // Format datetime-local: YYYY-MM-DDTHH:MM
+            const year = localDate.getUTCFullYear();
+            const month = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(localDate.getUTCDate()).padStart(2, '0');
+            const hours = String(localDate.getUTCHours()).padStart(2, '0');
+            const minutes = String(localDate.getUTCMinutes()).padStart(2, '0');
+            
+            return year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+        };
+        
+        // ============================================================================
+        
         // Fonction pour calculer le temps écoulé depuis la création
         // Retourne un objet {days, hours, minutes, seconds, color, bgColor}
         const getElapsedTime = (createdAt) => {
@@ -2801,7 +2871,10 @@ app.get('/', (c) => {
                             requestBody.assigned_to = parseInt(assignedTo);
                         }
                         if (scheduledDate) {
-                            requestBody.scheduled_date = scheduledDate + ' 23:59:59'; // Format: YYYY-MM-DD 23:59:59 (fin de journee)
+                            // NOUVEAU: Conversion datetime-local → UTC SQL
+                            // scheduledDate = "2025-11-15T14:30" (heure locale)
+                            requestBody.scheduled_date = localDateTimeToUTC(scheduledDate);
+                            // Résultat: "2025-11-15 19:30:00" (UTC avec offset -5)
                         }
                     }
                     
@@ -3077,7 +3150,7 @@ app.get('/', (c) => {
                                             )
                                         ),
                                         React.createElement('div', { className: 'mt-1 text-xs text-blue-700' },
-                                            "📅 " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+                                            "📅 " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                                         )
                                     ) : React.createElement('div', { className: 'mb-3 p-2 rounded-lg bg-orange-50 border-2 border-orange-300' },
                                         React.createElement('div', { className: 'flex items-center gap-2' },
@@ -3093,11 +3166,14 @@ app.get('/', (c) => {
                                     
                                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 
                                         React.createElement('i', { className: 'fas fa-calendar-day mr-2' }),
-                                        'Date de maintenance' + (scheduledDate ? ' (modifier)' : ' (optionnelle)')
+                                        'Date et heure de maintenance' + (scheduledDate ? ' (modifier)' : ' (optionnelle)'),
+                                        React.createElement('span', { className: 'ml-2 text-xs text-gray-500 font-normal' },
+                                            '(heure locale EST/EDT)'
+                                        )
                                     ),
                                     React.createElement('div', { className: 'flex gap-2' },
                                         React.createElement('input', {
-                                            type: 'date',
+                                            type: 'datetime-local',
                                             value: scheduledDate,
                                             onChange: (e) => setScheduledDate(e.target.value),
                                             className: 'flex-1 px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
@@ -3182,7 +3258,8 @@ app.get('/', (c) => {
                 if (ticket) {
                     // CRITICAL: Check !== null (not just falsy) because 0 is valid (team assignment)
                     setScheduledAssignedTo(ticket.assigned_to !== null && ticket.assigned_to !== undefined ? String(ticket.assigned_to) : '');
-                    setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? ticket.scheduled_date.substring(0, 10) : '');
+                    // NOUVEAU: Conversion UTC SQL → datetime-local
+                    setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? utcToLocalDateTime(ticket.scheduled_date) : '');
                 }
             }, [show, currentUser.role, ticket]);
             
@@ -3356,7 +3433,8 @@ app.get('/', (c) => {
                     if (scheduledAssignedTo) {
                         updateData.assigned_to = parseInt(scheduledAssignedTo);
                         // Si assignation définie, sauvegarder la date (ou null si vide)
-                        updateData.scheduled_date = scheduledDate ? scheduledDate + ' 23:59:59' : null;
+                        // NOUVEAU: Conversion datetime-local → UTC SQL
+                        updateData.scheduled_date = scheduledDate ? localDateTimeToUTC(scheduledDate) : null;
                     } else {
                         // Si "Non assigné" sélectionné, retirer aussi la date (dé-planifier complètement)
                         updateData.assigned_to = null;
@@ -3561,7 +3639,7 @@ app.get('/', (c) => {
                                                 ),
                                                 scheduledDate ? 
                                                     React.createElement('div', { className: 'mt-1 text-xs text-blue-700' },
-                                                        "📅 Date : " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+                                                        "📅 Date : " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                                                     )
                                                 : React.createElement('div', { className: 'mt-1 text-xs text-orange-700' },
                                                     "ℹ️ Aucune date planifiée - Ajoutez-en une pour planifier"
@@ -3570,11 +3648,14 @@ app.get('/', (c) => {
                                             
                                             React.createElement('label', { className: 'block font-bold text-gray-700 mb-2 text-sm sm:text-base' }, 
                                                 React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600 text-xs sm:text-sm' }),
-                                                "Date de maintenance" + (scheduledDate ? " (modifier)" : " (ajouter)")
+                                                "Date et heure de maintenance" + (scheduledDate ? " (modifier)" : " (ajouter)"),
+                                                React.createElement('span', { className: 'ml-2 text-xs text-gray-500 font-normal' },
+                                                    '(heure locale EST/EDT)'
+                                                )
                                             ),
                                             React.createElement('div', { className: 'flex gap-2' },
                                                 React.createElement('input', {
-                                                    type: 'date',
+                                                    type: 'datetime-local',
                                                     value: scheduledDate,
                                                     onChange: (e) => setScheduledDate(e.target.value),
                                                     className: 'flex-1 px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
