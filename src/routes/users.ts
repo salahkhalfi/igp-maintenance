@@ -33,7 +33,7 @@ users.get('/', async (c) => {
         END as hash_type
       FROM users
       WHERE (is_super_admin = 0 OR is_super_admin IS NULL) AND id != 0
-      ORDER BY created_at DESC
+      ORDER BY full_name ASC
     `).all();
 
     return c.json({ users: results });
