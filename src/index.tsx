@@ -2582,9 +2582,12 @@ app.get('/', (c) => {
                 React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96 max-w-md mx-4' },
                     React.createElement('div', { className: 'text-center mb-8' },
                         React.createElement('img', { 
-                            src: '/static/logo-igp.png', 
+                            src: '/api/settings/logo?t=' + Date.now(), 
                             alt: 'IGP Logo',
-                            className: 'h-20 w-auto mx-auto mb-4'
+                            className: 'h-20 w-auto mx-auto mb-4',
+                            onError: (e) => {
+                                e.target.src = '/static/logo-igp.png';
+                            }
                         }),
                         React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, companyTitle),
                         React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
@@ -7189,9 +7192,12 @@ app.get('/', (c) => {
                         React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
                             React.createElement('div', { className: 'flex items-center space-x-3' },
                                 React.createElement('img', { 
-                                    src: '/static/logo-igp.png', 
+                                    src: '/api/settings/logo?t=' + Date.now(), 
                                     alt: 'IGP Logo',
-                                    className: 'h-12 md:h-16 w-auto object-contain'
+                                    className: 'h-12 md:h-16 w-auto object-contain',
+                                    onError: (e) => {
+                                        e.target.src = '/static/logo-igp.png';
+                                    }
                                 }),
                                 React.createElement('div', { className: 'border-l-2 border-gray-300 pl-3' },
                                     React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, companyTitle),
