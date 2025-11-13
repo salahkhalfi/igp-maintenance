@@ -11,7 +11,17 @@
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
-## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.10)
+## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.12)
+
+### Version 2.0.12 (13 novembre 2025) - CALENDRIER AVEC HEURE ⏰
+- **✨ NOUVELLE FONCTIONNALITÉ** : Sélection date **ET heure** pour planification maintenance
+- **🐛 FIX CRITIQUE TIMEZONE** : Correction bug tickets expiraient 5h trop tôt
+- **⏰ Input datetime-local** : Calendrier avec sélecteur d'heure intégré
+- **🌍 Conversion UTC ↔ Local** : Gestion automatique du fuseau horaire (timezone_offset_hours)
+- **✅ Tests validés** : 7/7 tests réussis (création, affichage, countdown, compatibilité)
+- **📱 UX Mobile** : Espacement boutons Close/Delete amélioré (WCAG 2.1 compliance)
+- **🔐 Permissions Admin** : Logo/titre/sous-titre modifiables par tous les admins
+- **📊 Documentation** : TEST-REPORT-DATETIME-CALENDAR.md + TIMEZONE-FIX-EXPLANATION.md
 
 ### Version 2.0.11 (9 novembre 2025) - CORRECTION CRITIQUE
 - **🔴 FIX CRITIQUE** : Correction de l'assignation d'équipe (valeur 'all' préservée au lieu de null)
@@ -58,14 +68,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.0.11 - Production Ready** (FIX CRITIQUE Assignation Équipe)
+✅ **Version 2.0.12 - Production Ready** (Calendrier avec Heure + Fix Timezone)
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v2.0.10**: ✅ Boutons "Tout/Aucun" pour sélection rapide masse
+- **NOUVEAU v2.0.12**: ⏰ Sélection date ET heure + Fix timezone critique (7/7 tests validés)
+- **v2.0.10**: ✅ Boutons "Tout/Aucun" pour sélection rapide masse
 - **v2.0.9**: 🔲 Suppression masse messages (mode sélection + checkboxes)
 - **v2.0.8**: ⏱️ Label "Requete recue depuis:" sur chronometer
 - **v2.0.7**: 🗑️ Suppression individuelle photos/vidéos avec nettoyage R2
