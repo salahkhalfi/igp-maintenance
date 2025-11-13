@@ -920,6 +920,7 @@ app.get('/api/messages/available-users', authMiddleware, async (c) => {
       FROM users
       WHERE role IN ('operator', 'furnace_operator', 'technician', 'supervisor', 'admin')
         AND id != ?
+        AND id != 0
       ORDER BY role DESC, full_name ASC
     `).bind(user.userId).all();
     
