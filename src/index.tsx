@@ -4543,7 +4543,7 @@ app.get('/', (c) => {
             const [loading, setLoading] = React.useState(true);
             const [saving, setSaving] = React.useState(false);
             
-            // États pour l'upload du logo (super admin uniquement)
+            // États pour l'upload du logo (admin uniquement)
             const [logoFile, setLogoFile] = React.useState(null);
             const [logoPreview, setLogoPreview] = React.useState(null);
             const [uploadingLogo, setUploadingLogo] = React.useState(false);
@@ -4551,7 +4551,7 @@ app.get('/', (c) => {
             const [logoRefreshKey, setLogoRefreshKey] = React.useState(Date.now());
             const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
             
-            // États pour titre/sous-titre (super admin uniquement)
+            // États pour titre/sous-titre (admin uniquement)
             const [companyTitle, setCompanyTitle] = React.useState('Gestion de la maintenance et des réparations');
             const [companySubtitle, setCompanySubtitle] = React.useState('Les Produits Verriers International (IGP) Inc.');
             const [editingTitle, setEditingTitle] = React.useState(false);
@@ -4570,15 +4570,16 @@ app.get('/', (c) => {
             
             const checkSuperAdmin = async () => {
                 try {
-                    // Vérifier si l'utilisateur actuel est super admin
-                    // L'email salah@khalfi.com est le seul super admin
-                    if (currentUser && currentUser.email === 'salah@khalfi.com') {
+                    // Vérifier si l'utilisateur actuel est admin
+                    // Tous les admins peuvent modifier le logo, titre et sous-titre
+                    // Rôles acceptés: 'admin', 'super_admin'
+                    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin')) {
                         setIsSuperAdmin(true);
                     } else {
                         setIsSuperAdmin(false);
                     }
                 } catch (error) {
-                    console.error('Erreur verification super admin:', error);
+                    console.error('Erreur verification admin:', error);
                     setIsSuperAdmin(false);
                 }
             };
@@ -4915,7 +4916,7 @@ app.get('/', (c) => {
                                 )
                             ),
                             
-                            // Section Logo de l'entreprise (SUPER ADMIN UNIQUEMENT)
+                            // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
                             isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                                 React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
                                     React.createElement('div', { className: 'flex items-start gap-3' },
@@ -4923,7 +4924,7 @@ app.get('/', (c) => {
                                         React.createElement('div', {},
                                             React.createElement('h3', { className: 'font-bold text-purple-900 mb-2 flex items-center gap-2' },
                                                 "Logo de l'entreprise",
-                                                React.createElement('span', { className: 'text-xs bg-red-500 text-white px-2 py-1 rounded' }, 'SUPER ADMIN')
+                                                React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                             ),
                                             React.createElement('p', { className: 'text-sm text-purple-800 mb-2' },
                                                 "Personnalisez le logo affiché dans l'application."
@@ -5018,7 +5019,7 @@ app.get('/', (c) => {
                                 )
                             ),
                             
-                            // Section Titre et Sous-titre (SUPER ADMIN UNIQUEMENT)
+                            // Section Titre et Sous-titre (ADMIN UNIQUEMENT)
                             isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                                 React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
                                     React.createElement('div', { className: 'flex items-start gap-3' },
@@ -5026,7 +5027,7 @@ app.get('/', (c) => {
                                         React.createElement('div', {},
                                             React.createElement('h3', { className: 'font-bold text-blue-900 mb-2 flex items-center gap-2' },
                                                 "Titre et Sous-titre de l'application",
-                                                React.createElement('span', { className: 'text-xs bg-red-500 text-white px-2 py-1 rounded' }, 'SUPER ADMIN')
+                                                React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                             ),
                                             React.createElement('p', { className: 'text-sm text-blue-800 mb-2' },
                                                 "Personnalisez le titre et le sous-titre affichés dans l'en-tête de l'application."
