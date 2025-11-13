@@ -2589,12 +2589,18 @@ app.get('/', (c) => {
                                 e.target.src = '/static/logo-igp.png';
                             }
                         }),
-                        React.createElement('h1', { className: 'text-2xl font-bold text-igp-blue mb-2' }, companyTitle),
+                        React.createElement('h1', { 
+                            className: 'text-lg sm:text-xl md:text-2xl font-bold text-igp-blue mb-2 px-2 break-words',
+                            style: { wordBreak: 'break-word', overflowWrap: 'break-word' }
+                        }, companyTitle),
                         React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
                             'EN DÉVELOPPEMENT'
                         ),
-                        React.createElement('p', { className: 'text-sm text-gray-600' }, companySubtitle)
+                        React.createElement('p', { 
+                            className: 'text-xs sm:text-sm text-gray-600 px-4 break-words',
+                            style: { wordBreak: 'break-word', overflowWrap: 'break-word' }
+                        }, companySubtitle)
                     ),
                     React.createElement('form', { 
                         onSubmit: handleSubmit,
@@ -7190,18 +7196,24 @@ app.get('/', (c) => {
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex justify-between items-center mb-4 md:mb-0 header-title' },
-                            React.createElement('div', { className: 'flex items-center space-x-3' },
+                            React.createElement('div', { className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0' },
                                 React.createElement('img', { 
                                     src: '/api/settings/logo?t=' + Date.now(), 
                                     alt: 'IGP Logo',
-                                    className: 'h-12 md:h-16 w-auto object-contain',
+                                    className: 'h-10 md:h-12 lg:h-16 w-auto object-contain flex-shrink-0',
                                     onError: (e) => {
                                         e.target.src = '/static/logo-igp.png';
                                     }
                                 }),
-                                React.createElement('div', { className: 'border-l-2 border-gray-300 pl-3' },
-                                    React.createElement('h1', { className: 'text-lg md:text-xl font-bold text-igp-blue' }, companyTitle),
-                                    React.createElement('p', { className: 'text-xs md:text-sm text-gray-600' }, 
+                                React.createElement('div', { className: 'border-l-2 border-gray-300 pl-2 md:pl-3 flex-1 min-w-0' },
+                                    React.createElement('h1', { 
+                                        className: 'text-sm md:text-lg lg:text-xl font-bold text-igp-blue truncate',
+                                        title: companyTitle
+                                    }, companyTitle),
+                                    React.createElement('p', { 
+                                        className: 'text-xs md:text-sm text-gray-600 truncate',
+                                        title: companySubtitle
+                                    }, 
                                         companySubtitle
                                     ),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
