@@ -309,7 +309,7 @@ app.get('/api/technicians', authMiddleware, async (c) => {
     const { results } = await c.env.DB.prepare(`
       SELECT id, full_name, email
       FROM users
-      WHERE role = 'technician'
+      WHERE role = 'technician' AND id != 0
       ORDER BY full_name ASC
     `).all();
     
@@ -327,6 +327,7 @@ app.get('/api/users/team', authMiddleware, technicianSupervisorOrAdmin, async (c
     const { results } = await c.env.DB.prepare(`
       SELECT id, email, full_name, role, created_at, updated_at, last_login
       FROM users
+      WHERE id != 0
       ORDER BY role DESC, full_name ASC
     `).all();
     

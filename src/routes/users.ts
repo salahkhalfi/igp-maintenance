@@ -17,7 +17,7 @@ users.use('/*', supervisorOrAdmin);
  */
 users.get('/', async (c) => {
   try {
-    // Filtrer le super admin (invisible pour tous les utilisateurs)
+    // Filtrer le super admin ET l'utilisateur système team (id=0)
     const { results } = await c.env.DB.prepare(`
       SELECT 
         id, 
@@ -32,7 +32,7 @@ users.get('/', async (c) => {
           ELSE 'SHA-256 (Legacy)'
         END as hash_type
       FROM users
-      WHERE is_super_admin = 0 OR is_super_admin IS NULL
+      WHERE (is_super_admin = 0 OR is_super_admin IS NULL) AND id != 0
       ORDER BY created_at DESC
     `).all();
 
