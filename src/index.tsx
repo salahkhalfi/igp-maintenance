@@ -6839,7 +6839,7 @@ app.get('/', (c) => {
         };
         
         
-        const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages }) => {
+        const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle }) => {
             const [contextMenu, setContextMenu] = React.useState(null);
             const [selectedTicketId, setSelectedTicketId] = React.useState(null);
             const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -8006,7 +8006,9 @@ app.get('/', (c) => {
                 setShowCreateModal,
                 onTicketCreated: loadData,
                 unreadMessagesCount: unreadMessagesCount,
-                onRefreshMessages: loadUnreadMessagesCount
+                onRefreshMessages: loadUnreadMessagesCount,
+                headerTitle: headerTitle,
+                headerSubtitle: headerSubtitle
             });
         };
         
