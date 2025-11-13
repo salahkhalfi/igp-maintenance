@@ -222,9 +222,9 @@ settings.put('/title', authMiddleware, adminOnly, async (c) => {
     // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
     await c.env.DB.prepare(`
       UPDATE system_settings 
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
       WHERE setting_key = 'company_title'
-    `).bind(trimmedValue, user.userId).run();
+    `).bind(trimmedValue).run();
     
     console.log(`✅ Titre modifié par user ${user.userId}: "${trimmedValue}"`);
     
@@ -274,9 +274,9 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
     // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
     await c.env.DB.prepare(`
       UPDATE system_settings 
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ?
+      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
       WHERE setting_key = 'company_subtitle'
-    `).bind(trimmedValue, user.userId).run();
+    `).bind(trimmedValue).run();
     
     console.log(`✅ Sous-titre modifié par user ${user.userId}: "${trimmedValue}"`);
     
