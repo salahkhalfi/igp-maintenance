@@ -2554,6 +2554,33 @@ app.get('/', (c) => {
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
             const [showPassword, setShowPassword] = React.useState(false);
+            const [loginTitle, setLoginTitle] = React.useState(companyTitle);
+            const [loginSubtitle, setLoginSubtitle] = React.useState(companySubtitle);
+            
+            // Charger dynamiquement le titre et sous-titre à chaque affichage du login
+            React.useEffect(() => {
+                const loadLoginSettings = async () => {
+                    try {
+                        const titleRes = await axios.get(API_URL + '/settings/company_title');
+                        if (titleRes.data.setting_value) {
+                            setLoginTitle(titleRes.data.setting_value);
+                        }
+                    } catch (error) {
+                        console.log('Titre personnalisé non trouvé');
+                    }
+                    
+                    try {
+                        const subtitleRes = await axios.get(API_URL + '/settings/company_subtitle');
+                        if (subtitleRes.data.setting_value) {
+                            setLoginSubtitle(subtitleRes.data.setting_value);
+                        }
+                    } catch (error) {
+                        console.log('Sous-titre personnalisé non trouvé');
+                    }
+                };
+                
+                loadLoginSettings();
+            }, []); // Exécuter une fois au montage du composant
             
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -2592,7 +2619,7 @@ app.get('/', (c) => {
                         React.createElement('h1', { 
                             className: 'text-lg sm:text-xl md:text-2xl font-bold text-igp-blue mb-2 px-2 break-words',
                             style: { wordBreak: 'break-word', overflowWrap: 'break-word' }
-                        }, companyTitle),
+                        }, loginTitle),
                         React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
                             'EN DÉVELOPPEMENT'
@@ -2600,7 +2627,7 @@ app.get('/', (c) => {
                         React.createElement('p', { 
                             className: 'text-xs sm:text-sm text-gray-600 px-4 break-words',
                             style: { wordBreak: 'break-word', overflowWrap: 'break-word' }
-                        }, companySubtitle)
+                        }, loginSubtitle)
                     ),
                     React.createElement('form', { 
                         onSubmit: handleSubmit,
@@ -7208,13 +7235,13 @@ app.get('/', (c) => {
                                 React.createElement('div', { className: 'border-l-2 border-gray-300 pl-2 md:pl-3 flex-1 min-w-0' },
                                     React.createElement('h1', { 
                                         className: 'text-sm md:text-lg lg:text-xl font-bold text-igp-blue truncate',
-                                        title: companyTitle
-                                    }, companyTitle),
+                                        title: headerTitle
+                                    }, headerTitle),
                                     React.createElement('p', { 
                                         className: 'text-xs md:text-sm text-gray-600 truncate',
-                                        title: companySubtitle
+                                        title: headerSubtitle
                                     }, 
-                                        companySubtitle
+                                        headerSubtitle
                                     ),
                                     React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
@@ -7845,6 +7872,8 @@ app.get('/', (c) => {
             const [showCreateModal, setShowCreateModal] = React.useState(false);
             const [contextMenu, setContextMenu] = React.useState(null);
             const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
+            const [headerTitle, setHeaderTitle] = React.useState(companyTitle);
+            const [headerSubtitle, setHeaderSubtitle] = React.useState(companySubtitle);
             
             React.useEffect(() => {
                 if (isLoggedIn) {
@@ -7894,6 +7923,7 @@ app.get('/', (c) => {
                         const titleRes = await axios.get(API_URL + '/settings/company_title');
                         if (titleRes.data.setting_value) {
                             companyTitle = titleRes.data.setting_value;
+                            setHeaderTitle(titleRes.data.setting_value);
                         }
                     } catch (error) {
                         console.log('Titre personnalisé non trouvé, utilisation valeur par défaut');
@@ -7903,6 +7933,7 @@ app.get('/', (c) => {
                         const subtitleRes = await axios.get(API_URL + '/settings/company_subtitle');
                         if (subtitleRes.data.setting_value) {
                             companySubtitle = subtitleRes.data.setting_value;
+                            setHeaderSubtitle(subtitleRes.data.setting_value);
                         }
                     } catch (error) {
                         console.log('Sous-titre personnalisé non trouvé, utilisation valeur par défaut');
