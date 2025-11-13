@@ -3204,7 +3204,7 @@ app.get('/', (c) => {
                                         React.createElement('div', { className: 'mt-1 text-xs text-blue-700' },
                                             "📅 " + new Date(scheduledDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                                         )
-                                    ) : React.createElement('div', { className: 'mb-3 p-2 rounded-lg bg-orange-50 border-2 border-orange-300' },
+                                    ) : assignedTo ? React.createElement('div', { className: 'mb-3 p-2 rounded-lg bg-orange-50 border-2 border-orange-300' },
                                         React.createElement('div', { className: 'flex items-center gap-2' },
                                             React.createElement('i', { className: 'fas fa-user-check text-orange-600' }),
                                             React.createElement('span', { className: 'text-sm font-bold text-orange-800' },
@@ -3214,7 +3214,7 @@ app.get('/', (c) => {
                                         React.createElement('div', { className: 'mt-1 text-xs text-orange-700' },
                                             "ℹ️ Ajoutez une date pour planifier"
                                         )
-                                    ),
+                                    ) : null,
                                     
                                     React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 
                                         React.createElement('i', { className: 'fas fa-calendar-day mr-2' }),
@@ -3682,7 +3682,7 @@ app.get('/', (c) => {
                                         // Date de maintenance planifiée
                                         React.createElement('div', {},
                                             // Badge d'état actuel
-                                            React.createElement('div', { className: 'mb-3 p-3 rounded-lg border-2 ' + (scheduledDate ? 'bg-blue-50 border-blue-300' : 'bg-orange-50 border-orange-300') },
+                                            scheduledDate || scheduledAssignedTo ? React.createElement('div', { className: 'mb-3 p-3 rounded-lg border-2 ' + (scheduledDate ? 'bg-blue-50 border-blue-300' : 'bg-orange-50 border-orange-300') },
                                                 React.createElement('div', { className: 'flex items-center gap-2' },
                                                     React.createElement('i', { className: 'text-lg ' + (scheduledDate ? 'fas fa-calendar-check text-blue-600' : 'fas fa-user-check text-orange-600') }),
                                                     React.createElement('span', { className: 'font-bold ' + (scheduledDate ? 'text-blue-800' : 'text-orange-800') },
@@ -3696,7 +3696,7 @@ app.get('/', (c) => {
                                                 : React.createElement('div', { className: 'mt-1 text-xs text-orange-700' },
                                                     "ℹ️ Aucune date planifiée - Ajoutez-en une pour planifier"
                                                 )
-                                            ), // Ferme le badge d'état (ligne 3307)
+                                            ) : null, // Ferme le badge d'état (ligne 3307)
                                             
                                             React.createElement('label', { className: 'block font-bold text-gray-700 mb-2 text-sm sm:text-base' }, 
                                                 React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600 text-xs sm:text-sm' }),
