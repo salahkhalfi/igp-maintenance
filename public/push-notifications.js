@@ -113,15 +113,43 @@ async function isPushSubscribed() {
 // Initialiser push notifications après login
 async function initPushNotifications() {
   try {
+    console.log('🔔 [INIT] Starting push notification initialization...');
+    
     // Vérifier support
     if (!('Notification' in window)) {
-      console.log('Notifications non supportées sur cet appareil');
+      console.log('❌ Notifications non supportées sur cet appareil');
       return;
+    }
+    
+    if (!('serviceWorker' in navigator)) {
+      console.log('❌ Service Worker non supporté');
+      return;
+    }
+    
+    console.log('🔔 [INIT] Permission actuelle:', Notification.permission);
+    
+    // Attendre que le Service Worker soit vraiment prêt (max 10 secondes)
+    let swReady = false;
+    for (let i = 0; i < 20; i++) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration && registration.active) {
+        swReady = true;
+        console.log('✅ [INIT] Service Worker est actif');
+        break;
+      }
+      console.log(`⏳ [INIT] Attente Service Worker... (${i + 1}/20)`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    if (!swReady) {
+      console.log('⚠️ [INIT] Service Worker pas prêt, on continue quand même');
     }
     
     // Si déjà autorisé, s'abonner automatiquement
     if (Notification.permission === 'granted') {
+      console.log('✅ [INIT] Permission déjà accordée, vérification abonnement...');
       const isSubscribed = await isPushSubscribed();
+      console.log('🔔 [INIT] Déjà abonné?', isSubscribed);
       if (!isSubscribed) {
         await subscribeToPush();
       }
@@ -130,11 +158,14 @@ async function initPushNotifications() {
     
     // Si permission non demandée, demander directement
     if (Notification.permission === 'default') {
+      console.log('🔔 [INIT] Demande de permission...');
       await requestPushPermission();
+    } else {
+      console.log('⚠️ [INIT] Permission refusée:', Notification.permission);
     }
     
   } catch (error) {
-    console.error('Erreur initialisation push notifications:', error);
+    console.error('❌ [INIT] Erreur initialisation push notifications:', error);
   }
 }
 

@@ -7986,10 +7986,13 @@ app.get('/', (c) => {
                     setIsLoggedIn(true);
                     
                     // Initialiser les notifications push après login réussi
+                    // Attendre 3 secondes pour que le Service Worker soit complètement actif
                     if (window.initPushNotifications) {
+                        console.log('🔔 [LOGIN] Login réussi, attente 3s pour Service Worker...');
                         setTimeout(() => {
+                            console.log('🔔 [LOGIN] Appel initPushNotifications');
                             window.initPushNotifications();
-                        }, 1000);
+                        }, 3000);
                     }
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
