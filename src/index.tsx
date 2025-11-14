@@ -7368,11 +7368,19 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
                             ) : null,
-                            // 7. Activer notifications push (PWA)
-                            ('Notification' in window && Notification.permission !== 'granted') ? React.createElement('button', {
+                            // 7. Activer notifications push (PWA) - DEBUG: TOUJOURS VISIBLE
+                            React.createElement('button', {
                                 onClick: async () => {
                                     try {
                                         console.log('🔔 [BOUTON] Demande manuelle de permission');
+                                        console.log('🔔 [BOUTON] Notification in window?', 'Notification' in window);
+                                        console.log('🔔 [BOUTON] Permission actuelle:', typeof Notification !== 'undefined' ? Notification.permission : 'N/A');
+                                        
+                                        if (!('Notification' in window)) {
+                                            alert('❌ Notifications non supportées sur cet appareil');
+                                            return;
+                                        }
+                                        
                                         const perm = await Notification.requestPermission();
                                         console.log('🔔 [BOUTON] Résultat:', perm);
                                         if (perm === 'granted') {
@@ -7391,8 +7399,10 @@ app.get('/', (c) => {
                                 className: 'px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
                             },
                                 React.createElement('i', { className: 'fas fa-bell mr-2' }),
-                                '🔔 Activer notifications'
-                            ) : null,
+                                ('Notification' in window) ? 
+                                    ('🔔 Notifications (' + (typeof Notification !== 'undefined' ? Notification.permission : 'N/A') + ')') :
+                                    '🔔 Notifications (non supportées)'
+                            ),
                             // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
                                 onClick: onRefresh,
