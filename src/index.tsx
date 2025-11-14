@@ -7427,14 +7427,22 @@ app.get('/', (c) => {
                                             }
                                             
                                             const result = await window.subscribeToPush();
+                                            console.log('[BOUTON] Resultat subscription:', result);
+                                            
                                             if (result.success) {
                                                 if (result.updated) {
-                                                    alert('Abonnement push deja actif (mis a jour)');
+                                                    alert('✅ Notifications deja activees (abonnement mis a jour)');
                                                 } else {
-                                                    alert('Abonnement push enregistre avec succes!');
+                                                    alert('✅ Notifications activees avec succes!\n\nVous recevrez des notifications quand un ticket vous est assigne.');
                                                 }
+                                                window.location.reload();
                                             } else {
-                                                alert('Erreur: ' + result.error);
+                                                console.error('[BOUTON] Erreur subscription:', result.error);
+                                                if (result.error && result.error.includes('401')) {
+                                                    alert('❌ Erreur authentication (401)\n\nVotre session a peut-etre expire.\n\nSolution: Deconnectez-vous et reconnectez-vous.');
+                                                } else {
+                                                    alert('❌ Erreur abonnement push:\n\n' + result.error + '\n\nConsultez la console pour plus de details.');
+                                                }
                                             }
                                             return;
                                         }
