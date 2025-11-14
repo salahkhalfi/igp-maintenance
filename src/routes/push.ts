@@ -224,7 +224,13 @@ export async function sendPushNotification(
           break; // Succes, sortir de la boucle retry
 
         } catch (error: any) {
-          console.error(`Push failed for user ${userId} (attempt ${attempt + 1}):`, error);
+          const errorDetails = {
+            message: error.message,
+            statusCode: error.statusCode,
+            body: error.body,
+            attempt: attempt + 1
+          };
+          console.error(`Push failed for user ${userId} (attempt ${attempt + 1}):`, errorDetails);
 
           // Si 410 Gone, le token a expire, supprimer et ne pas retry
           if (error.statusCode === 410) {
@@ -235,9 +241,18 @@ export async function sendPushNotification(
             break; // Ne pas retry si token expire
           }
 
-          // Si dernier essai, incrementer failed count
+          // Si dernier essai, incrementer failed count et logger l'erreur
           if (attempt === 2) {
             failedCount++;
+            // Logger l'erreur dans push_logs si c'est le dernier essai
+            try {
+              await env.DB.prepare(`
+                INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+                VALUES (?, NULL, 'send_failed', ?)
+              `).bind(userId, JSON.stringify(errorDetails)).run();
+            } catch (logError) {
+              console.error('Failed to log push error:', logError);
+            }
           } else {
             // Attendre avant retry (backoff exponentiel: 1s, 2s)
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
