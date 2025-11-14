@@ -7984,6 +7984,13 @@ app.get('/', (c) => {
                     localStorage.setItem('auth_token', authToken);
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
                     setIsLoggedIn(true);
+                    
+                    // Initialiser les notifications push après login réussi
+                    if (window.initPushNotifications) {
+                        setTimeout(() => {
+                            window.initPushNotifications();
+                        }, 1000);
+                    }
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
