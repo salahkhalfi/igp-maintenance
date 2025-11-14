@@ -7,17 +7,26 @@ import type { Bindings } from '../types';
 
 export async function authMiddleware(c: Context<{ Bindings: Bindings }>, next: Next) {
   const authHeader = c.req.header('Authorization');
+  console.log('[AUTH-MIDDLEWARE] Authorization header:', authHeader ? `Bearer ${authHeader.substring(7, 27)}...` : 'NULL');
+  
   const token = extractToken(authHeader);
+  console.log('[AUTH-MIDDLEWARE] Token extracted:', token ? `${token.substring(0, 20)}... (length: ${token.length})` : 'NULL');
 
   if (!token) {
+    console.log('[AUTH-MIDDLEWARE] REJECTING: Token manquant');
     return c.json({ error: 'Token manquant' }, 401);
   }
 
   const payload = await verifyToken(token);
+  console.log('[AUTH-MIDDLEWARE] Token verification result:', payload ? 'VALID' : 'INVALID');
+  
   if (!payload) {
+    console.log('[AUTH-MIDDLEWARE] REJECTING: Token invalide ou expiré');
     return c.json({ error: 'Token invalide ou expiré' }, 401);
   }
 
+  console.log('[AUTH-MIDDLEWARE] SUCCESS: User authenticated:', payload.userId, payload.email, payload.role);
+  
   // Stocker les informations utilisateur dans le contexte
   c.set('user', payload);
   await next();

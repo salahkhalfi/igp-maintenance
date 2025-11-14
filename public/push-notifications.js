@@ -41,21 +41,27 @@ function getDeviceInfo() {
 // S'abonner aux notifications push
 async function subscribeToPush() {
   try {
+    console.log('[SUBSCRIBE] Debut subscription push');
+    
     // Vérifier support
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.log('Push notifications non supportees');
+      console.log('[SUBSCRIBE] Push notifications non supportees');
       return { success: false, error: 'not_supported' };
     }
     
     // Verifier authentification - PRIORITE 1: axios.defaults, PRIORITE 2: localStorage
     let authToken = null;
     
+    console.log('[SUBSCRIBE] window.axios existe?', !!window.axios);
+    console.log('[SUBSCRIBE] localStorage accessible?', !!localStorage);
+    
     // Essayer d'abord axios.defaults
     if (window.axios && window.axios.defaults && window.axios.defaults.headers && window.axios.defaults.headers.common) {
       const authHeader = window.axios.defaults.headers.common['Authorization'];
+      console.log('[SUBSCRIBE] axios.defaults.headers.common.Authorization:', authHeader ? 'EXISTS' : 'NULL');
       if (authHeader && authHeader.startsWith('Bearer ')) {
         authToken = authHeader.substring(7); // Enlever 'Bearer '
-        console.log('Auth token from axios.defaults');
+        console.log('[SUBSCRIBE] Auth token from axios.defaults (length:', authToken.length, ')');
       }
     }
     
@@ -63,34 +69,52 @@ async function subscribeToPush() {
     if (!authToken) {
       authToken = localStorage.getItem('auth_token');
       if (authToken) {
-        console.log('Auth token from localStorage');
+        console.log('[SUBSCRIBE] Auth token from localStorage (length:', authToken.length, ')');
+      } else {
+        console.log('[SUBSCRIBE] localStorage.auth_token est NULL');
       }
     }
     
     if (!authToken) {
-      console.error('Token auth manquant');
+      console.error('[SUBSCRIBE] ERREUR: Token auth manquant');
+      alert('Token auth manquant. Reconnectez-vous.');
       return { success: false, error: 'not_authenticated' };
     }
     
+    console.log('[SUBSCRIBE] Token trouve, longueur:', authToken.length);
+    
     // Attendre que service worker soit ready
+    console.log('[SUBSCRIBE] Attente service worker...');
     const registration = await navigator.serviceWorker.ready;
+    console.log('[SUBSCRIBE] Service worker ready');
     
     // Recuperer cle VAPID publique (avec auth)
+    console.log('[SUBSCRIBE] Fetching VAPID public key avec Authorization header...');
+    console.log('[SUBSCRIBE] Auth header sera:', 'Bearer ' + authToken.substring(0, 20) + '...');
+    
     const response = await axios.get('/api/push/vapid-public-key', {
       headers: {
         'Authorization': 'Bearer ' + authToken
       }
     });
+    console.log('[SUBSCRIBE] VAPID key recu, status:', response.status);
     const { publicKey } = response.data;
+    console.log('[SUBSCRIBE] Public key:', publicKey.substring(0, 20) + '...');
     
     // S'abonner
+    console.log('[SUBSCRIBE] Creating browser push subscription...');
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
+    console.log('[SUBSCRIBE] Browser subscription created');
+    console.log('[SUBSCRIBE] Endpoint:', subscription.endpoint.substring(0, 50) + '...');
     
     // Envoyer au serveur (avec auth)
     const deviceInfo = getDeviceInfo();
+    console.log('[SUBSCRIBE] Device info:', deviceInfo);
+    console.log('[SUBSCRIBE] Sending subscription to /api/push/subscribe...');
+    
     await axios.post('/api/push/subscribe', {
       subscription: subscription.toJSON(),
       deviceType: deviceInfo.deviceType,
@@ -101,11 +125,29 @@ async function subscribeToPush() {
       }
     });
     
-    console.log('Push notifications activees');
+    console.log('[SUBSCRIBE] SUCCESS! Push notifications activees');
     return { success: true };
     
   } catch (error) {
-    console.error('Erreur push subscription:', error);
+    console.error('[SUBSCRIBE] ERREUR push subscription:', error);
+    
+    // Log détaillé de l'erreur
+    if (error.response) {
+      console.error('[SUBSCRIBE] Status:', error.response.status);
+      console.error('[SUBSCRIBE] Data:', error.response.data);
+      console.error('[SUBSCRIBE] Headers:', error.response.headers);
+      
+      if (error.response.status === 401) {
+        console.error('[SUBSCRIBE] ERREUR 401 AUTHENTICATION!');
+        console.error('[SUBSCRIBE] Le token auth est probablement invalide ou expire');
+        alert('Erreur authentication (401). Reconnectez-vous.');
+      }
+    } else if (error.request) {
+      console.error('[SUBSCRIBE] Pas de reponse du serveur:', error.request);
+    } else {
+      console.error('[SUBSCRIBE] Erreur setup requete:', error.message);
+    }
+    
     return { success: false, error: error.message };
   }
 }
