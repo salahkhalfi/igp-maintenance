@@ -7376,14 +7376,52 @@ app.get('/', (c) => {
                                         console.log('🔔 [BOUTON] Permission actuelle:', currentPerm);
                                         
                                         if (currentPerm === 'granted') {
-                                            alert('Permission accordee. Verification abonnement...');
-                                            if (window.initPushNotifications) {
-                                                try {
-                                                    await window.initPushNotifications();
-                                                    alert('Abonnement verifie avec succes!');
-                                                } catch (e) {
-                                                    alert('Erreur abonnement: ' + e.message);
+                                            console.log('🔔 Permission deja accordee, verification abonnement...');
+                                            console.log('🔔 window.initPushNotifications existe?', typeof window.initPushNotifications);
+                                            
+                                            // Forcer l'abonnement directement
+                                            try {
+                                                // Attendre que service worker soit pret
+                                                const registration = await navigator.serviceWorker.ready;
+                                                console.log('🔔 Service Worker pret:', registration);
+                                                
+                                                // Recuperer la cle VAPID publique
+                                                const response = await axios.get('/api/push/vapid-public-key');
+                                                const publicKey = response.data.publicKey;
+                                                console.log('🔔 Cle VAPID recue');
+                                                
+                                                // Fonction pour convertir la cle
+                                                function urlBase64ToUint8Array(base64String) {
+                                                    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                                                    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                                                    const rawData = window.atob(base64);
+                                                    const outputArray = new Uint8Array(rawData.length);
+                                                    for (let i = 0; i < rawData.length; ++i) {
+                                                        outputArray[i] = rawData.charCodeAt(i);
+                                                    }
+                                                    return outputArray;
                                                 }
+                                                
+                                                // S'abonner
+                                                const subscription = await registration.pushManager.subscribe({
+                                                    userVisibleOnly: true,
+                                                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                                                });
+                                                console.log('🔔 Subscription creee:', subscription);
+                                                
+                                                // Envoyer au serveur
+                                                const ua = navigator.userAgent;
+                                                const deviceType = /Android/.test(ua) ? 'android' : 'desktop';
+                                                await axios.post('/api/push/subscribe', {
+                                                    subscription: subscription.toJSON(),
+                                                    deviceType: deviceType,
+                                                    deviceName: ua
+                                                });
+                                                
+                                                alert('Abonnement push enregistre avec succes!');
+                                            } catch (e) {
+                                                console.error('🔔 Erreur abonnement:', e);
+                                                alert('Erreur: ' + e.message);
                                             }
                                             return;
                                         }
