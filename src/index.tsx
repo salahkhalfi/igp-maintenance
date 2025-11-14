@@ -7385,8 +7385,21 @@ app.get('/', (c) => {
                                                 const registration = await navigator.serviceWorker.ready;
                                                 console.log('🔔 Service Worker pret:', registration);
                                                 
+                                                // Verifier le token d'authentification
+                                                const authToken = localStorage.getItem('auth_token');
+                                                console.log('🔔 Auth token existe?', !!authToken);
+                                                
+                                                if (!authToken) {
+                                                    alert('Session expiree. Reconnectez-vous.');
+                                                    return;
+                                                }
+                                                
                                                 // Recuperer la cle VAPID publique
-                                                const response = await axios.get('/api/push/vapid-public-key');
+                                                const response = await axios.get('/api/push/vapid-public-key', {
+                                                    headers: {
+                                                        'Authorization': 'Bearer ' + authToken
+                                                    }
+                                                });
                                                 const publicKey = response.data.publicKey;
                                                 console.log('🔔 Cle VAPID recue');
                                                 
@@ -7416,6 +7429,10 @@ app.get('/', (c) => {
                                                     subscription: subscription.toJSON(),
                                                     deviceType: deviceType,
                                                     deviceName: ua
+                                                }, {
+                                                    headers: {
+                                                        'Authorization': 'Bearer ' + authToken
+                                                    }
                                                 });
                                                 
                                                 alert('Abonnement push enregistre avec succes!');
