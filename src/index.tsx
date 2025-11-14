@@ -7985,14 +7985,29 @@ app.get('/', (c) => {
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
                     setIsLoggedIn(true);
                     
-                    // Initialiser les notifications push après login réussi
-                    // Attendre 3 secondes pour que le Service Worker soit complètement actif
-                    if (window.initPushNotifications) {
-                        console.log('🔔 [LOGIN] Login réussi, attente 3s pour Service Worker...');
-                        setTimeout(() => {
-                            console.log('🔔 [LOGIN] Appel initPushNotifications');
-                            window.initPushNotifications();
-                        }, 3000);
+                    // TEST DIRECT IMMÉDIAT - Sans attendre Service Worker
+                    console.log('🔔 [LOGIN] Login réussi');
+                    console.log('🔔 [LOGIN] Test 1: Notification.permission =', Notification.permission);
+                    
+                    // Essai 1: Appel IMMÉDIAT (pas de délai)
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        console.log('🔔 [LOGIN] Demande permission IMMÉDIATE');
+                        try {
+                            const perm = await Notification.requestPermission();
+                            console.log('🔔 [LOGIN] Résultat:', perm);
+                            if (perm === 'granted' && window.initPushNotifications) {
+                                // Si accordé, s'abonner après 2s
+                                setTimeout(() => window.initPushNotifications(), 2000);
+                            }
+                        } catch (e) {
+                            console.error('🔔 [LOGIN] Erreur:', e);
+                        }
+                    } else {
+                        console.log('🔔 [LOGIN] Permission déjà:', Notification.permission);
+                        // Si déjà granted, initialiser
+                        if (Notification.permission === 'granted' && window.initPushNotifications) {
+                            setTimeout(() => window.initPushNotifications(), 2000);
+                        }
                     }
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
