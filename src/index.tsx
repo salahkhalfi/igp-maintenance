@@ -7403,7 +7403,7 @@ app.get('/', (c) => {
                                 'Rôles'
                             ) : null,
                             // 7. Activer notifications push (PWA)
-                            ('Notification' in window && window.subscribeToPush) ? React.createElement('button', {
+                            ('Notification' in window) ? React.createElement('button', {
                                 onClick: async () => {
                                     try {
                                         const currentPerm = Notification.permission;
@@ -7412,6 +7412,12 @@ app.get('/', (c) => {
                                         if (currentPerm === 'granted') {
                                             // Utiliser la fonction centralisee
                                             console.log('[BOUTON] Appel subscribeToPush...');
+                                            
+                                            if (!window.subscribeToPush) {
+                                                alert('Chargement en cours... Reessayez dans 1 seconde.');
+                                                return;
+                                            }
+                                            
                                             const result = await window.subscribeToPush();
                                             if (result.success) {
                                                 alert('Abonnement push enregistre avec succes!');
