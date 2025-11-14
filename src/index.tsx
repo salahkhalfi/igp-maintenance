@@ -7985,32 +7985,11 @@ app.get('/', (c) => {
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
                     setIsLoggedIn(true);
                     
-                    // TEST DIRECT: Demander permission immédiatement
-                    console.log('🔔 [LOGIN] Tentative demande notification...');
-                    console.log('🔔 [LOGIN] window.Notification existe?', typeof window.Notification);
-                    console.log('🔔 [LOGIN] window.initPushNotifications existe?', typeof window.initPushNotifications);
-                    
-                    // Essai 1: Via initPushNotifications
+                    // Initialiser les notifications push après login réussi
                     if (window.initPushNotifications) {
-                        console.log('🔔 [LOGIN] Appel initPushNotifications...');
                         setTimeout(() => {
                             window.initPushNotifications();
                         }, 1000);
-                    }
-                    
-                    // Essai 2: Appel DIRECT Notification.requestPermission (backup)
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        console.log('🔔 [LOGIN] Appel DIRECT Notification.requestPermission()');
-                        setTimeout(async () => {
-                            try {
-                                const perm = await Notification.requestPermission();
-                                console.log('🔔 [LOGIN] Permission résultat:', perm);
-                                alert('DEBUG: Permission = ' + perm);
-                            } catch (e) {
-                                console.error('🔔 [LOGIN] Erreur permission:', e);
-                                alert('DEBUG ERROR: ' + e.message);
-                            }
-                        }, 2000);
                     }
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));

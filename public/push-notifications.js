@@ -113,21 +113,15 @@ async function isPushSubscribed() {
 // Initialiser push notifications après login
 async function initPushNotifications() {
   try {
-    console.log('🔔 [DEBUG] initPushNotifications appelée');
-    
     // Vérifier support
     if (!('Notification' in window)) {
-      console.log('❌ Notifications non supportées sur cet appareil');
+      console.log('Notifications non supportées sur cet appareil');
       return;
     }
     
-    console.log('🔔 [DEBUG] Notification.permission =', Notification.permission);
-    
     // Si déjà autorisé, s'abonner automatiquement
     if (Notification.permission === 'granted') {
-      console.log('✅ Permission déjà accordée');
       const isSubscribed = await isPushSubscribed();
-      console.log('🔔 [DEBUG] Déjà abonné?', isSubscribed);
       if (!isSubscribed) {
         await subscribeToPush();
       }
@@ -136,14 +130,11 @@ async function initPushNotifications() {
     
     // Si permission non demandée, demander directement
     if (Notification.permission === 'default') {
-      console.log('🔔 [DEBUG] Demande de permission...');
       await requestPushPermission();
-    } else {
-      console.log('⚠️ Permission refusée - aller dans paramètres Android');
     }
     
   } catch (error) {
-    console.error('❌ Init push error:', error);
+    console.error('Erreur initialisation push notifications:', error);
   }
 }
 
