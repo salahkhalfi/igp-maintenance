@@ -47,8 +47,26 @@ async function subscribeToPush() {
       return { success: false, error: 'not_supported' };
     }
     
-    // Verifier authentification
-    const authToken = localStorage.getItem('auth_token');
+    // Verifier authentification - PRIORITE 1: axios.defaults, PRIORITE 2: localStorage
+    let authToken = null;
+    
+    // Essayer d'abord axios.defaults
+    if (window.axios && window.axios.defaults && window.axios.defaults.headers && window.axios.defaults.headers.common) {
+      const authHeader = window.axios.defaults.headers.common['Authorization'];
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        authToken = authHeader.substring(7); // Enlever 'Bearer '
+        console.log('Auth token from axios.defaults');
+      }
+    }
+    
+    // Sinon essayer localStorage
+    if (!authToken) {
+      authToken = localStorage.getItem('auth_token');
+      if (authToken) {
+        console.log('Auth token from localStorage');
+      }
+    }
+    
     if (!authToken) {
       console.error('Token auth manquant');
       return { success: false, error: 'not_authenticated' };
