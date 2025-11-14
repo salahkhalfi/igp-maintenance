@@ -22,7 +22,9 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **🔐 VAPID Keys** : Authentification sécurisée Web Push Protocol
 - **💾 D1 Subscriptions** : Tokens push stockés dans base de données
 - **🎯 Auto-trigger** : Permission demandée automatiquement après login
-- **✅ Tests validés** : Fonctionnel sur Android Chrome (app installée + notifications)
+- **🔧 MIGRATION CRITIQUE** : Migration de web-push vers @block65/webcrypto-web-push (Workers-compatible)
+- **✅ Build validé** : Code compilé et déployé avec succès
+- **⏳ Tests en attente** : Nécessite subscription réelle depuis navigateur pour test end-to-end
 
 ### Version 2.0.12 (13 novembre 2025) - CALENDRIER AVEC HEURE ⏰
 - **✨ NOUVELLE FONCTIONNALITÉ** : Sélection date **ET heure** pour planification maintenance
@@ -893,9 +895,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.0.11-team-assignment-fix  
-**Dernière mise à jour**: 2025-11-09  
-**Statut**: ✅ Production Ready - FIX CRITIQUE assignation équipe + Selection Tout/Aucun + Suppression masse
+**Version**: 2.0.13-push-migration  
+**Dernière mise à jour**: 2025-11-14  
+**Statut**: ✅ Build Ready - Migration @block65/webcrypto-web-push + PWA + Notifications push (test real device pending)
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 
@@ -1062,6 +1064,150 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 - **Production**: https://8ce1bac9.webapp-7t8.pages.dev
 - **Sandbox Dev**: https://3000-i99eg52ghw8axx8tockng-5185f4aa.sandbox.novita.ai
 - **GitHub**: https://github.com/salahkhalfi/igp-maintenance (tag v2.0.4-ui-polish)
+
+## 🔔 Système Push Notifications (v2.0.13) - Migration Cloudflare Workers
+
+### 🚨 Migration Critique: web-push → @block65/webcrypto-web-push
+
+#### ❌ Problème Identifié
+**Erreur**: `[unenv] https.request is not implemented yet!`
+**Cause**: La bibliothèque `web-push` utilise Node.js `https.request()` qui n'est PAS disponible dans Cloudflare Workers runtime
+**Impact**: Toutes les notifications push échouaient silencieusement en production
+
+#### ✅ Solution Implémentée
+**Migration vers**: `@block65/webcrypto-web-push` v2.0.0
+**Raison**: Utilise Web Crypto APIs natives compatibles avec Cloudflare Workers
+**Pattern API**: `buildPushPayload()` + `fetch()` au lieu de classe `webpush`
+
+#### 🔧 Changements Techniques
+
+**Avant (web-push - BROKEN)**:
+```typescript
+import webpush from 'web-push';
+
+webpush.setVapidDetails(
+  'mailto:support@igpglass.ca',
+  env.VAPID_PUBLIC_KEY,
+  env.VAPID_PRIVATE_KEY
+);
+
+await webpush.sendNotification(subscription, JSON.stringify(payload));
+```
+
+**Après (@block65/webcrypto-web-push - WORKS)**:
+```typescript
+import { buildPushPayload, type PushSubscription, type VapidKeys } from '@block65/webcrypto-web-push';
+
+const vapid: VapidKeys = {
+  subject: 'mailto:support@igpglass.ca',
+  publicKey: env.VAPID_PUBLIC_KEY,
+  privateKey: env.VAPID_PRIVATE_KEY
+};
+
+const message: PushMessage = {
+  data: JSON.stringify(payload),
+  options: { ttl: 86400 }
+};
+
+const pushPayload = await buildPushPayload(message, subscription, vapid);
+const response = await fetch(subscription.endpoint, pushPayload);
+```
+
+#### 🛠️ Modifications Fichiers
+1. **package.json**: Removed `web-push@3.6.7`, Added `@block65/webcrypto-web-push@2.0.0`
+2. **src/routes/push.ts**: Rewrote `sendPushNotification()` with new API pattern
+3. **vite.config.ts**: Added `build.target: 'esnext'` for top-level await support
+4. **migrations/0019_add_push_logs.sql**: Applied to track push errors
+
+#### ✅ Tests Effectués
+- ✅ **Build successful**: No more `https.request` errors
+- ✅ **Library imports correctly**: Functions exported as expected
+- ✅ **Push logic executes**: Function called on ticket creation/assignment
+- ✅ **Error logging works**: Errors captured in `push_logs` table
+- ✅ **Retry logic intact**: 3 attempts with exponential backoff
+- ⚠️ **End-to-end pending**: Requires real browser push subscription for full test
+
+#### 🎯 Next Steps
+1. **Real device subscription**: User must enable push notifications from browser
+2. **Test ticket creation**: Create ticket assigned to subscribed user
+3. **Verify notification received**: Check Android/iOS device for notification
+4. **Monitor push_logs**: Verify success status in database
+
+### 📱 PWA (Progressive Web App)
+
+#### 🚀 Fonctionnalités PWA
+- **Installable**: Bouton "Ajouter à l'écran d'accueil" sur mobile
+- **Standalone mode**: Lance en plein écran sans barre navigateur
+- **Offline-ready**: Service Worker cache les assets essentiels
+- **Icônes adaptatives**: 192x192, 512x512 pour tous les devices
+- **Manifest.json**: Configuration complète pour Android/iOS
+
+#### 🔐 Web Push Protocol (VAPID)
+**Variables d'environnement requises**:
+- `VAPID_PUBLIC_KEY`: Clé publique pour subscription frontend
+- `VAPID_PRIVATE_KEY`: Clé privée pour authentification backend (secret)
+- `PUSH_ENABLED`: Flag pour activer/désactiver les push
+
+**Génération des clés VAPID**:
+```bash
+npx web-push generate-vapid-keys
+```
+
+#### 📊 Base de Données Push
+
+**Table: push_subscriptions**
+```sql
+CREATE TABLE push_subscriptions (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  endpoint TEXT UNIQUE NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  device_type TEXT,
+  device_name TEXT,
+  last_used DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Table: push_logs** (Debug/Audit)
+```sql
+CREATE TABLE push_logs (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  ticket_id INTEGER,
+  status TEXT NOT NULL, -- 'success', 'failed', 'send_failed'
+  error_message TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### 🔄 Workflow Push Notifications
+1. **Login**: User logs in to app
+2. **Permission**: Browser asks for notification permission
+3. **Subscribe**: Frontend calls `/api/push/subscribe` with PushSubscription object
+4. **Store**: Subscription saved to D1 database
+5. **Trigger**: Ticket assigned → Backend calls `sendPushNotification()`
+6. **Send**: Uses `@block65/webcrypto-web-push` + `fetch()` to send notification
+7. **Receive**: User receives notification on device (even if app closed)
+8. **Log**: Result logged to `push_logs` table
+
+#### 🐛 Troubleshooting Push
+
+**Check subscription exists**:
+```sql
+SELECT * FROM push_subscriptions WHERE user_id = ?;
+```
+
+**Check push logs**:
+```sql
+SELECT * FROM push_logs ORDER BY created_at DESC LIMIT 10;
+```
+
+**Common errors**:
+- `Invalid EC key`: Subscription keys are invalid (regenerate from browser)
+- `410 Gone`: Subscription expired (user must re-subscribe)
+- `401 Unauthorized`: VAPID keys misconfigured
 
 ## 💬 Système de Messagerie et Notifications (v2.0.0+)
 
