@@ -176,6 +176,28 @@ tickets.post('/', async (c) => {
       VALUES (?, ?, 'Ticket créé', 'received', ?)
     `).bind((newTicket as any).id, user.userId, description).run();
     
+    // Envoyer notification push si ticket assigné à un technicien dès la création
+    if (assigned_to) {
+      try {
+        const { sendPushNotification } = await import('./push');
+        const pushResult = await sendPushNotification(c.env, assigned_to, {
+          title: '🔧 Nouveau ticket assigné',
+          body: `Ticket #${ticket_id}: ${title}`,
+          icon: '/icon-192.png',
+          data: { ticketId: (newTicket as any).id, url: `/tickets/${(newTicket as any).id}` }
+        });
+        
+        if (pushResult.success) {
+          console.log(`✅ Push notification sent for new ticket ${ticket_id} to user ${assigned_to}`);
+        } else {
+          console.log(`⚠️ Push notification failed for ticket ${ticket_id}:`, pushResult.error);
+        }
+      } catch (pushError) {
+        // Push échoue? Pas grave, le ticket est créé, le webhook Pabbly prendra le relais
+        console.error('⚠️ Push notification failed (non-critical):', pushError);
+      }
+    }
+    
     return c.json({ ticket: newTicket }, 201);
   } catch (error) {
     console.error('Create ticket error:', error);
