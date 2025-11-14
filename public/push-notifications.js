@@ -122,7 +122,7 @@ async function subscribeToPush() {
     console.log('[SUBSCRIBE] Device info:', deviceInfo);
     console.log('[SUBSCRIBE] Sending subscription to /api/push/subscribe...');
     
-    const response = await axios.post('/api/push/subscribe', {
+    const subscribeResponse = await axios.post('/api/push/subscribe', {
       subscription: subscription.toJSON(),
       deviceType: deviceInfo.deviceType,
       deviceName: deviceInfo.deviceName
@@ -132,7 +132,7 @@ async function subscribeToPush() {
       }
     });
     
-    console.log('[SUBSCRIBE] Backend response:', response.status, response.data);
+    console.log('[SUBSCRIBE] Backend response:', subscribeResponse.status, subscribeResponse.data);
     
     if (existingSubscription) {
       console.log('[SUBSCRIBE] SUCCESS! Subscription mise a jour');
