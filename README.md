@@ -11,7 +11,18 @@
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
-## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.12)
+## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.13)
+
+### Version 2.0.13 (14 novembre 2025) - PWA + PUSH NOTIFICATIONS 📱🔔
+- **✨ NOUVELLE FONCTIONNALITÉ** : Application PWA installable sur mobile
+- **🔔 PUSH NOTIFICATIONS** : Notifications push quand ticket assigné
+- **📱 Mode Standalone** : App s'ouvre en plein écran (sans barre navigateur)
+- **🏠 Icône écran d'accueil** : Installation "Ajouter à l'écran d'accueil"
+- **⚡ Offline-ready** : Service Worker avec cache pour mode hors ligne
+- **🔐 VAPID Keys** : Authentification sécurisée Web Push Protocol
+- **💾 D1 Subscriptions** : Tokens push stockés dans base de données
+- **🎯 Auto-trigger** : Permission demandée automatiquement après login
+- **✅ Tests validés** : Fonctionnel sur Android Chrome (app installée + notifications)
 
 ### Version 2.0.12 (13 novembre 2025) - CALENDRIER AVEC HEURE ⏰
 - **✨ NOUVELLE FONCTIONNALITÉ** : Sélection date **ET heure** pour planification maintenance
@@ -68,14 +79,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.0.12 - Production Ready** (Calendrier avec Heure + Fix Timezone)
+✅ **Version 2.0.13 - Production Ready** (PWA + Push Notifications + Calendrier avec Heure)
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v2.0.12**: ⏰ Sélection date ET heure + Fix timezone critique (7/7 tests validés)
+- **NOUVEAU v2.0.13**: 📱 PWA installable + 🔔 Push notifications (Android Chrome validé)
+- **v2.0.12**: ⏰ Sélection date ET heure + Fix timezone critique (7/7 tests validés)
 - **v2.0.10**: ✅ Boutons "Tout/Aucun" pour sélection rapide masse
 - **v2.0.9**: 🔲 Suppression masse messages (mode sélection + checkboxes)
 - **v2.0.8**: ⏱️ Label "Requete recue depuis:" sur chronometer
