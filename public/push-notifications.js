@@ -88,6 +88,13 @@ async function subscribeToPush() {
     const registration = await navigator.serviceWorker.ready;
     console.log('[SUBSCRIBE] Service worker ready');
     
+    // Verifier si deja abonne
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+      console.log('[SUBSCRIBE] Subscription deja existante, mise a jour...');
+      console.log('[SUBSCRIBE] Existing endpoint:', existingSubscription.endpoint.substring(0, 50) + '...');
+    }
+    
     // Recuperer cle VAPID publique (avec auth)
     console.log('[SUBSCRIBE] Fetching VAPID public key avec Authorization header...');
     console.log('[SUBSCRIBE] Auth header sera:', 'Bearer ' + authToken.substring(0, 20) + '...');
@@ -115,7 +122,7 @@ async function subscribeToPush() {
     console.log('[SUBSCRIBE] Device info:', deviceInfo);
     console.log('[SUBSCRIBE] Sending subscription to /api/push/subscribe...');
     
-    await axios.post('/api/push/subscribe', {
+    const response = await axios.post('/api/push/subscribe', {
       subscription: subscription.toJSON(),
       deviceType: deviceInfo.deviceType,
       deviceName: deviceInfo.deviceName
@@ -125,8 +132,15 @@ async function subscribeToPush() {
       }
     });
     
-    console.log('[SUBSCRIBE] SUCCESS! Push notifications activees');
-    return { success: true };
+    console.log('[SUBSCRIBE] Backend response:', response.status, response.data);
+    
+    if (existingSubscription) {
+      console.log('[SUBSCRIBE] SUCCESS! Subscription mise a jour');
+      return { success: true, updated: true };
+    } else {
+      console.log('[SUBSCRIBE] SUCCESS! Push notifications activees');
+      return { success: true, updated: false };
+    }
     
   } catch (error) {
     console.error('[SUBSCRIBE] ERREUR push subscription:', error);

@@ -7428,7 +7428,11 @@ app.get('/', (c) => {
                                             
                                             const result = await window.subscribeToPush();
                                             if (result.success) {
-                                                alert('Abonnement push enregistre avec succes!');
+                                                if (result.updated) {
+                                                    alert('Abonnement push deja actif (mis a jour)');
+                                                } else {
+                                                    alert('Abonnement push enregistre avec succes!');
+                                                }
                                             } else {
                                                 alert('Erreur: ' + result.error);
                                             }

@@ -20,10 +20,14 @@ push.post('/subscribe', async (c) => {
       return c.json({ success: false, error: 'Push notifications désactivées' }, 503);
     }
 
-    const session = c.get('session') as any;
-    if (!session || !session.userId) {
+    // Récupérer l'utilisateur authentifié (stocké par authMiddleware)
+    const user = c.get('user') as any;
+    if (!user || !user.userId) {
+      console.error('[PUSH-SUBSCRIBE] User not found in context:', user);
       return c.json({ error: 'Non authentifié' }, 401);
     }
+    
+    console.log('[PUSH-SUBSCRIBE] User authenticated:', user.userId, user.email);
 
     const body = await c.req.json();
     const { subscription, deviceType, deviceName } = body;
@@ -42,7 +46,7 @@ push.post('/subscribe', async (c) => {
         device_type = excluded.device_type,
         device_name = excluded.device_name
     `).bind(
-      session.userId,
+      user.userId,
       subscription.endpoint,
       subscription.keys.p256dh,
       subscription.keys.auth,
@@ -50,7 +54,7 @@ push.post('/subscribe', async (c) => {
       deviceName || 'Unknown Device'
     ).run();
 
-    console.log(`✅ Push subscription added for user ${session.userId}`);
+    console.log(`✅ Push subscription added for user ${user.userId}`);
 
     return c.json({ success: true });
   } catch (error) {
@@ -65,8 +69,10 @@ push.post('/subscribe', async (c) => {
  */
 push.post('/unsubscribe', async (c) => {
   try {
-    const session = c.get('session') as any;
-    if (!session || !session.userId) {
+    // Récupérer l'utilisateur authentifié (stocké par authMiddleware)
+    const user = c.get('user') as any;
+    if (!user || !user.userId) {
+      console.error('[PUSH-UNSUBSCRIBE] User not found in context');
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
@@ -80,9 +86,9 @@ push.post('/unsubscribe', async (c) => {
     await c.env.DB.prepare(`
       DELETE FROM push_subscriptions 
       WHERE user_id = ? AND endpoint = ?
-    `).bind(session.userId, endpoint).run();
+    `).bind(user.userId, endpoint).run();
 
-    console.log(`✅ Push subscription removed for user ${session.userId}`);
+    console.log(`✅ Push subscription removed for user ${user.userId}`);
 
     return c.json({ success: true });
   } catch (error) {
