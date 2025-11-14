@@ -7403,9 +7403,17 @@ app.get('/', (c) => {
                                 'Rôles'
                             ) : null,
                             // 7. Activer notifications push (PWA)
-                            ('Notification' in window) ? React.createElement('button', {
+                            // DEBUG: Temporarily remove condition to always show button
+                            React.createElement('button', {
                                 onClick: async () => {
+                                    console.log('[BOUTON] Button clicked! Notification support:', 'Notification' in window);
                                     try {
+                                        // Check if Notification API exists
+                                        if (!('Notification' in window)) {
+                                            alert('Votre navigateur ne supporte pas les notifications push.');
+                                            return;
+                                        }
+                                        
                                         const currentPerm = Notification.permission;
                                         console.log('[BOUTON] Permission actuelle:', currentPerm);
                                         
@@ -7466,7 +7474,7 @@ app.get('/', (c) => {
                                     : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
                                     ? 'Notifications refusees'
                                     : 'Activer les notifications'
-                            ) : null,
+                            ),
                             // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
                                 onClick: onRefresh,
