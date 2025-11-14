@@ -19,5 +19,8 @@ export default defineConfig({
         }
       ]
     })
-  ]
+  ],
+  build: {
+    target: 'esnext' // Support top-level await for @block65/webcrypto-web-push
+  }
 })

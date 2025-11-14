@@ -5,7 +5,12 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
-import webpush from 'web-push';
+import { 
+  buildPushPayload, 
+  type PushSubscription, 
+  type PushMessage, 
+  type VapidKeys 
+} from '@block65/webcrypto-web-push';
 
 const push = new Hono<{ Bindings: Bindings }>();
 
@@ -173,12 +178,12 @@ export async function sendPushNotification(
       payload.data = { truncated: true };
     }
 
-    // Configurer web-push avec les clés VAPID
-    webpush.setVapidDetails(
-      'mailto:support@igpglass.ca',
-      env.VAPID_PUBLIC_KEY,
-      env.VAPID_PRIVATE_KEY
-    );
+    // Configurer les clés VAPID
+    const vapid: VapidKeys = {
+      subject: 'mailto:support@igpglass.ca',
+      publicKey: env.VAPID_PUBLIC_KEY,
+      privateKey: env.VAPID_PRIVATE_KEY
+    };
 
     // Récupérer toutes les subscriptions actives de l'utilisateur
     const subscriptions = await env.DB.prepare(`
@@ -194,8 +199,9 @@ export async function sendPushNotification(
 
     // Envoyer notification à chaque appareil
     for (const sub of subscriptions.results) {
-      const pushSubscription = {
+      const pushSubscription: PushSubscription = {
         endpoint: sub.endpoint as string,
+        expirationTime: null,
         keys: {
           p256dh: sub.p256dh as string,
           auth: sub.auth as string
@@ -206,10 +212,25 @@ export async function sendPushNotification(
       let sent = false;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          await webpush.sendNotification(
-            pushSubscription,
-            JSON.stringify(payload)
-          );
+          // Préparer le message push
+          const message: PushMessage = {
+            data: JSON.stringify(payload),
+            options: {
+              ttl: 86400 // 24 heures
+            }
+          };
+
+          // Construire le payload avec buildPushPayload
+          const pushPayload = await buildPushPayload(message, pushSubscription, vapid);
+
+          // Envoyer via fetch natif
+          const response = await fetch(pushSubscription.endpoint, pushPayload);
+
+          // Vérifier le statut de la réponse
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No error details');
+            throw new Error(`Push failed: ${response.status} ${response.statusText} - ${errorText}`);
+          }
 
           // Mettre à jour last_used
           await env.DB.prepare(`
@@ -220,20 +241,20 @@ export async function sendPushNotification(
 
           sentCount++;
           sent = true;
-          console.log(`Push sent to user ${userId} (attempt ${attempt + 1})`);
+          console.log(`✅ Push sent to user ${userId} (attempt ${attempt + 1})`);
           break; // Succes, sortir de la boucle retry
 
         } catch (error: any) {
           const errorDetails = {
-            message: error.message,
-            statusCode: error.statusCode,
-            body: error.body,
+            message: error.message || String(error),
+            statusCode: error.statusCode || 'unknown',
+            body: error.body || null,
             attempt: attempt + 1
           };
-          console.error(`Push failed for user ${userId} (attempt ${attempt + 1}):`, errorDetails);
+          console.error(`❌ Push failed for user ${userId} (attempt ${attempt + 1}):`, errorDetails);
 
           // Si 410 Gone, le token a expire, supprimer et ne pas retry
-          if (error.statusCode === 410) {
+          if (error.message?.includes('410') || error.statusCode === 410) {
             console.log(`Removing expired subscription for user ${userId}`);
             await env.DB.prepare(`
               DELETE FROM push_subscriptions WHERE endpoint = ?
