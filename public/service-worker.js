@@ -6,22 +6,21 @@
 const CACHE_VERSION = 'v1.0.0';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
-// Fichiers à mettre en cache pour mode offline
-const STATIC_CACHE = [
-  '/',
-  '/static/style.css',
-  '/static/app.js',
-  '/manifest.json'
-];
+// Fichiers à mettre en cache pour mode offline (optionnel - désactivé pour éviter erreurs)
+// Le cache dynamique sera utilisé automatiquement lors de la navigation
+const STATIC_CACHE = [];
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
   
+  // Pas de cache statique initial - utilisation du cache dynamique uniquement
+  // Cela évite les erreurs si des fichiers n'existent pas
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll(STATIC_CACHE);
+      console.log('[SW] Cache ready (dynamic caching enabled)');
+      // Ne pas cacher de fichiers au démarrage
+      return Promise.resolve();
     })
   );
   
@@ -52,21 +51,37 @@ self.addEventListener('activate', (event) => {
 
 // Stratégie de cache: Network First, fallback to Cache
 self.addEventListener('fetch', (event) => {
+  // Ignorer les requêtes non-GET (POST, PUT, DELETE, etc.)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+  
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Mettre en cache la réponse si succès
-        if (response.status === 200) {
+        // Mettre en cache la réponse si succès et type approprié
+        if (response.status === 200 && response.type === 'basic') {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
+          }).catch((err) => {
+            // Ignorer les erreurs de cache silencieusement
+            console.log('[SW] Cache write failed (non-critical):', err.message);
           });
         }
         return response;
       })
-      .catch(() => {
-        // Si réseau échoue, utiliser le cache
-        return caches.match(event.request);
+      .catch((error) => {
+        // Si réseau échoue, essayer le cache
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // Si pas de cache, retourner une erreur réseau normale
+          // (ne pas afficher de popup d'erreur)
+          console.log('[SW] Network failed, no cache available:', event.request.url);
+          throw error;
+        });
       })
   );
 });
