@@ -7376,7 +7376,15 @@ app.get('/', (c) => {
                                         console.log('🔔 [BOUTON] Permission actuelle:', currentPerm);
                                         
                                         if (currentPerm === 'granted') {
-                                            alert('Les notifications sont deja activees!');
+                                            alert('Permission accordee. Verification abonnement...');
+                                            if (window.initPushNotifications) {
+                                                try {
+                                                    await window.initPushNotifications();
+                                                    alert('Abonnement verifie avec succes!');
+                                                } catch (e) {
+                                                    alert('Erreur abonnement: ' + e.message);
+                                                }
+                                            }
                                             return;
                                         }
                                         
