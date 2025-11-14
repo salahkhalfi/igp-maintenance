@@ -7368,7 +7368,32 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
                             ) : null,
-                            // 7. Actualiser (utile mais auto-refresh disponible)
+                            // 7. Activer notifications push (PWA)
+                            ('Notification' in window && Notification.permission !== 'granted') ? React.createElement('button', {
+                                onClick: async () => {
+                                    try {
+                                        console.log('🔔 [BOUTON] Demande manuelle de permission');
+                                        const perm = await Notification.requestPermission();
+                                        console.log('🔔 [BOUTON] Résultat:', perm);
+                                        if (perm === 'granted') {
+                                            alert('✅ Notifications activées! Vous recevrez des alertes pour les nouveaux tickets.');
+                                            if (window.initPushNotifications) {
+                                                setTimeout(() => window.initPushNotifications(), 1000);
+                                            }
+                                        } else {
+                                            alert('❌ Notifications refusées. Vous pouvez les activer plus tard dans les paramètres Android.');
+                                        }
+                                    } catch (e) {
+                                        console.error('🔔 [BOUTON] Erreur:', e);
+                                        alert('Erreur: ' + e.message);
+                                    }
+                                },
+                                className: 'px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
+                            },
+                                React.createElement('i', { className: 'fas fa-bell mr-2' }),
+                                '🔔 Activer notifications'
+                            ) : null,
+                            // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
                                 onClick: onRefresh,
                                 className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
@@ -7376,7 +7401,7 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
                                 'Actualiser'
                             ),
-                            // 8. Déconnexion (action de sortie - toujours à la fin)
+                            // 9. Déconnexion (action de sortie - toujours à la fin)
                             React.createElement('button', {
                                 onClick: onLogout,
                                 className: 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 shadow-md transition-all'
