@@ -137,8 +137,34 @@ export async function sendPushNotification(
 
     // Vérifier que les clés VAPID sont configurées
     if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-      console.error('❌ VAPID keys not configured');
+      console.error('VAPID keys not configured');
       return { success: false, sentCount: 0, failedCount: 0 };
+    }
+
+    // Valider et nettoyer le payload
+    if (!payload.title || payload.title.trim() === '') {
+      payload.title = 'Maintenance IGP';
+    }
+    if (payload.title.length > 100) {
+      payload.title = payload.title.substring(0, 97) + '...';
+    }
+
+    if (!payload.body || payload.body.trim() === '') {
+      payload.body = 'Nouvelle notification';
+    }
+    if (payload.body.length > 200) {
+      payload.body = payload.body.substring(0, 197) + '...';
+    }
+
+    // Valider icon URL
+    if (payload.icon && !payload.icon.startsWith('/') && !payload.icon.startsWith('http')) {
+      payload.icon = '/icon-192.png';
+    }
+
+    // Limiter taille data
+    if (payload.data && JSON.stringify(payload.data).length > 1000) {
+      console.warn('Payload data too large, truncating');
+      payload.data = { truncated: true };
     }
 
     // Configurer web-push avec les clés VAPID
@@ -162,40 +188,54 @@ export async function sendPushNotification(
 
     // Envoyer notification à chaque appareil
     for (const sub of subscriptions.results) {
-      try {
-        const pushSubscription = {
-          endpoint: sub.endpoint as string,
-          keys: {
-            p256dh: sub.p256dh as string,
-            auth: sub.auth as string
-          }
-        };
+      const pushSubscription = {
+        endpoint: sub.endpoint as string,
+        keys: {
+          p256dh: sub.p256dh as string,
+          auth: sub.auth as string
+        }
+      };
 
-        await webpush.sendNotification(
-          pushSubscription,
-          JSON.stringify(payload)
-        );
+      // Retry logic avec backoff exponentiel
+      let sent = false;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await webpush.sendNotification(
+            pushSubscription,
+            JSON.stringify(payload)
+          );
 
-        // Mettre à jour last_used
-        await env.DB.prepare(`
-          UPDATE push_subscriptions
-          SET last_used = datetime('now')
-          WHERE endpoint = ?
-        `).bind(sub.endpoint).run();
-
-        sentCount++;
-        console.log(`✅ Push sent to user ${userId}`);
-
-      } catch (error: any) {
-        failedCount++;
-        console.error(`❌ Push failed for subscription:`, error);
-
-        // Si 410 Gone, le token a expiré, le supprimer
-        if (error.statusCode === 410) {
-          console.log(`Removing expired subscription for user ${userId}`);
+          // Mettre à jour last_used
           await env.DB.prepare(`
-            DELETE FROM push_subscriptions WHERE endpoint = ?
+            UPDATE push_subscriptions
+            SET last_used = datetime('now')
+            WHERE endpoint = ?
           `).bind(sub.endpoint).run();
+
+          sentCount++;
+          sent = true;
+          console.log(`Push sent to user ${userId} (attempt ${attempt + 1})`);
+          break; // Succes, sortir de la boucle retry
+
+        } catch (error: any) {
+          console.error(`Push failed for user ${userId} (attempt ${attempt + 1}):`, error);
+
+          // Si 410 Gone, le token a expire, supprimer et ne pas retry
+          if (error.statusCode === 410) {
+            console.log(`Removing expired subscription for user ${userId}`);
+            await env.DB.prepare(`
+              DELETE FROM push_subscriptions WHERE endpoint = ?
+            `).bind(sub.endpoint).run();
+            break; // Ne pas retry si token expire
+          }
+
+          // Si dernier essai, incrementer failed count
+          if (attempt === 2) {
+            failedCount++;
+          } else {
+            // Attendre avant retry (backoff exponentiel: 1s, 2s)
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+          }
         }
       }
     }

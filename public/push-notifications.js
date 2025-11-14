@@ -43,15 +43,26 @@ async function subscribeToPush() {
   try {
     // Vérifier support
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.log('❌ Push notifications non supportées');
+      console.log('Push notifications non supportees');
       return { success: false, error: 'not_supported' };
+    }
+    
+    // Verifier authentification
+    const authToken = localStorage.getItem('auth_token');
+    if (!authToken) {
+      console.error('Token auth manquant');
+      return { success: false, error: 'not_authenticated' };
     }
     
     // Attendre que service worker soit ready
     const registration = await navigator.serviceWorker.ready;
     
-    // Récupérer clé VAPID publique
-    const response = await axios.get('/api/push/vapid-public-key');
+    // Recuperer cle VAPID publique (avec auth)
+    const response = await axios.get('/api/push/vapid-public-key', {
+      headers: {
+        'Authorization': 'Bearer ' + authToken
+      }
+    });
     const { publicKey } = response.data;
     
     // S'abonner
@@ -60,19 +71,23 @@ async function subscribeToPush() {
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
     
-    // Envoyer au serveur
+    // Envoyer au serveur (avec auth)
     const deviceInfo = getDeviceInfo();
     await axios.post('/api/push/subscribe', {
       subscription: subscription.toJSON(),
       deviceType: deviceInfo.deviceType,
       deviceName: deviceInfo.deviceName
+    }, {
+      headers: {
+        'Authorization': 'Bearer ' + authToken
+      }
     });
     
-    console.log('✅ Push notifications activées');
+    console.log('Push notifications activees');
     return { success: true };
     
   } catch (error) {
-    console.error('❌ Erreur push subscription:', error);
+    console.error('Erreur push subscription:', error);
     return { success: false, error: error.message };
   }
 }
@@ -169,7 +184,8 @@ async function initPushNotifications() {
   }
 }
 
-// Afficher modal de demande permission (sera appelé depuis l'app React)
+// Exposer les fonctions pour l'app React
 window.initPushNotifications = initPushNotifications;
 window.requestPushPermission = requestPushPermission;
 window.isPushSubscribed = isPushSubscribed;
+window.subscribeToPush = subscribeToPush;

@@ -1237,6 +1237,40 @@ Action requise immédiatement !
   }
 });
 
+// Route CRON pour nettoyage tokens push expires
+app.post('/api/cron/cleanup-push-tokens', async (c) => {
+  try {
+    // Verifier le token secret
+    const authHeader = c.req.header('Authorization');
+    const expectedToken = 'Bearer cron_secret_igp_2025_webhook_notifications';
+    
+    if (authHeader !== expectedToken) {
+      return c.json({ error: 'Unauthorized - Invalid CRON token' }, 401);
+    }
+    
+    console.log('CRON cleanup push tokens started:', new Date().toISOString());
+    
+    // Supprimer tokens non utilises depuis 90 jours
+    const result = await c.env.DB.prepare(`
+      DELETE FROM push_subscriptions 
+      WHERE last_used < datetime('now', '-90 days')
+    `).run();
+    
+    const deletedCount = result.meta.changes || 0;
+    console.log(`Deleted ${deletedCount} expired push tokens`);
+    
+    return c.json({ 
+      success: true,
+      deletedCount: deletedCount,
+      message: `Cleaned up ${deletedCount} expired push tokens`
+    });
+    
+  } catch (error) {
+    console.error('Cleanup push tokens error:', error);
+    return c.json({ error: 'Erreur lors du nettoyage des tokens' }, 500);
+  }
+});
+
 
 // Page d'administration des rôles (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/roles', async (c) => {
@@ -7369,76 +7403,20 @@ app.get('/', (c) => {
                                 'Rôles'
                             ) : null,
                             // 7. Activer notifications push (PWA)
-                            ('Notification' in window) ? React.createElement('button', {
+                            ('Notification' in window && window.subscribeToPush) ? React.createElement('button', {
                                 onClick: async () => {
                                     try {
                                         const currentPerm = Notification.permission;
-                                        console.log('🔔 [BOUTON] Permission actuelle:', currentPerm);
+                                        console.log('[BOUTON] Permission actuelle:', currentPerm);
                                         
                                         if (currentPerm === 'granted') {
-                                            console.log('🔔 Permission deja accordee, verification abonnement...');
-                                            console.log('🔔 window.initPushNotifications existe?', typeof window.initPushNotifications);
-                                            
-                                            // Forcer l'abonnement directement
-                                            try {
-                                                // Attendre que service worker soit pret
-                                                const registration = await navigator.serviceWorker.ready;
-                                                console.log('🔔 Service Worker pret:', registration);
-                                                
-                                                // Verifier le token d'authentification
-                                                const authToken = localStorage.getItem('auth_token');
-                                                console.log('🔔 Auth token existe?', !!authToken);
-                                                
-                                                if (!authToken) {
-                                                    alert('Session expiree. Reconnectez-vous.');
-                                                    return;
-                                                }
-                                                
-                                                // Recuperer la cle VAPID publique
-                                                const response = await axios.get('/api/push/vapid-public-key', {
-                                                    headers: {
-                                                        'Authorization': 'Bearer ' + authToken
-                                                    }
-                                                });
-                                                const publicKey = response.data.publicKey;
-                                                console.log('🔔 Cle VAPID recue');
-                                                
-                                                // Fonction pour convertir la cle
-                                                function urlBase64ToUint8Array(base64String) {
-                                                    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-                                                    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-                                                    const rawData = window.atob(base64);
-                                                    const outputArray = new Uint8Array(rawData.length);
-                                                    for (let i = 0; i < rawData.length; ++i) {
-                                                        outputArray[i] = rawData.charCodeAt(i);
-                                                    }
-                                                    return outputArray;
-                                                }
-                                                
-                                                // S'abonner
-                                                const subscription = await registration.pushManager.subscribe({
-                                                    userVisibleOnly: true,
-                                                    applicationServerKey: urlBase64ToUint8Array(publicKey)
-                                                });
-                                                console.log('🔔 Subscription creee:', subscription);
-                                                
-                                                // Envoyer au serveur
-                                                const ua = navigator.userAgent;
-                                                const deviceType = /Android/.test(ua) ? 'android' : 'desktop';
-                                                await axios.post('/api/push/subscribe', {
-                                                    subscription: subscription.toJSON(),
-                                                    deviceType: deviceType,
-                                                    deviceName: ua
-                                                }, {
-                                                    headers: {
-                                                        'Authorization': 'Bearer ' + authToken
-                                                    }
-                                                });
-                                                
+                                            // Utiliser la fonction centralisee
+                                            console.log('[BOUTON] Appel subscribeToPush...');
+                                            const result = await window.subscribeToPush();
+                                            if (result.success) {
                                                 alert('Abonnement push enregistre avec succes!');
-                                            } catch (e) {
-                                                console.error('🔔 Erreur abonnement:', e);
-                                                alert('Erreur: ' + e.message);
+                                            } else {
+                                                alert('Erreur: ' + result.error);
                                             }
                                             return;
                                         }
