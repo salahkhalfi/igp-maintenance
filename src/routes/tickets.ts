@@ -187,12 +187,33 @@ tickets.post('/', async (c) => {
           data: { ticketId: (newTicket as any).id, url: `/tickets/${(newTicket as any).id}` }
         });
         
+        // Logger le résultat
+        await c.env.DB.prepare(`
+          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          assigned_to,
+          (newTicket as any).id,
+          pushResult.success ? 'success' : 'failed',
+          pushResult.success ? null : JSON.stringify(pushResult)
+        ).run();
+        
         if (pushResult.success) {
           console.log(`✅ Push notification sent for new ticket ${ticket_id} to user ${assigned_to}`);
         } else {
-          console.log(`⚠️ Push notification failed for ticket ${ticket_id}:`, pushResult.error);
+          console.log(`⚠️ Push notification failed for ticket ${ticket_id}:`, pushResult);
         }
       } catch (pushError) {
+        // Logger l'erreur
+        await c.env.DB.prepare(`
+          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+          VALUES (?, ?, 'failed', ?)
+        `).bind(
+          assigned_to,
+          (newTicket as any).id,
+          (pushError as Error).message || String(pushError)
+        ).run();
+        
         // Push échoue? Pas grave, le ticket est créé, le webhook Pabbly prendra le relais
         console.error('⚠️ Push notification failed (non-critical):', pushError);
       }
