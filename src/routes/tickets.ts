@@ -184,7 +184,7 @@ tickets.post('/', async (c) => {
           title: '🔧 Nouveau ticket assigné',
           body: `Ticket #${ticket_id}: ${title}`,
           icon: '/icon-192.png',
-          data: { ticketId: (newTicket as any).id, url: `/tickets/${(newTicket as any).id}` }
+          data: { ticketId: (newTicket as any).id, url: '/' }
         });
         
         // Logger le résultat
@@ -324,7 +324,7 @@ tickets.patch('/:id', async (c) => {
           title: '🔧 Nouveau ticket assigné',
           body: `Ticket #${currentTicket.ticket_id}: ${currentTicket.title}`,
           icon: '/icon-192.png',
-          data: { ticketId: id, url: `/tickets/${id}` }
+          data: { ticketId: id, url: '/' }
         });
         
         if (pushResult.success) {
