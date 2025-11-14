@@ -6,6 +6,10 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "vars": {
+    "VAPID_PUBLIC_KEY": "BCX42hbbxmtjSTAnp9bDT9ombFSvwPzg24ciMOl_JcHhuhz9XBSOH_JfTtPq_SmyW5auaLJTfgET1-Q-IDF8Ig0",
+    "PUSH_ENABLED": "true"
+  },
   "d1_databases": [
     {
       "binding": "DB",

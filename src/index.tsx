@@ -23,6 +23,7 @@ import users from './routes/users';
 import roles from './routes/roles';
 import settings from './routes/settings';
 import webhooks from './routes/webhooks';
+import push from './routes/push';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -357,6 +358,10 @@ app.route('/api/settings', settings);
 // Routes des webhooks pour notifications
 app.use('/api/webhooks/*', authMiddleware);
 app.route('/api/webhooks', webhooks);
+
+// Routes des push notifications PWA
+app.use('/api/push/*', authMiddleware);
+app.route('/api/push', push);
 
 // Route publique pour CRON externe avec secret token
 app.post('/api/cron/check-overdue', async (c) => {
@@ -1252,6 +1257,12 @@ app.get('/', (c) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IGP - Système de Gestion de Maintenance</title>
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#003B73">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Maintenance IGP">
+    <link rel="apple-touch-icon" href="/icon-192.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -8019,7 +8030,21 @@ app.get('/', (c) => {
         
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(App));
+        
+        // Enregistrer le Service Worker pour PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker enregistré:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Erreur Service Worker:', error);
+                    });
+            });
+        }
     </script>
+    <script src="/push-notifications.js"></script>
 </body>
 </html>
   `);
@@ -9945,7 +9970,21 @@ app.get('/test', (c) => {
         
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(App));
+        
+        // Enregistrer le Service Worker pour PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker enregistré:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Erreur Service Worker:', error);
+                    });
+            });
+        }
     </script>
+    <script src="/push-notifications.js"></script>
 </body>
 </html>
   `);

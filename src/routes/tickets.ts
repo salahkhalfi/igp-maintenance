@@ -273,6 +273,26 @@ tickets.patch('/:id', async (c) => {
       'SELECT * FROM tickets WHERE id = ?'
     ).bind(id).first();
     
+    // Envoyer notification push si ticket assigné à un technicien (fail-safe)
+    if (body.assigned_to && body.assigned_to !== currentTicket.assigned_to) {
+      try {
+        const { sendPushNotification } = await import('./push');
+        const pushResult = await sendPushNotification(c.env, body.assigned_to, {
+          title: '🔧 Nouveau ticket assigné',
+          body: `Ticket #${currentTicket.ticket_id}: ${currentTicket.title}`,
+          icon: '/icon-192.png',
+          data: { ticketId: id, url: `/tickets/${id}` }
+        });
+        
+        if (pushResult.success) {
+          console.log(`✅ Push notification sent for ticket ${id} to user ${body.assigned_to}`);
+        }
+      } catch (pushError) {
+        // Push échoue? Pas grave, l'assignation a réussi, le webhook Pabbly prendra le relais
+        console.error('⚠️ Push notification failed (non-critical):', pushError);
+      }
+    }
+    
     return c.json({ ticket: updatedTicket });
   } catch (error) {
     console.error('Update ticket error:', error);

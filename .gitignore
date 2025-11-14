@@ -31,3 +31,7 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+# VAPID Keys (NEVER COMMIT)
+VAPID-KEYS-PRIVATE.md
+.dev.vars
