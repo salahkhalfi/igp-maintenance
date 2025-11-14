@@ -7368,41 +7368,58 @@ app.get('/', (c) => {
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
                                 'Rôles'
                             ) : null,
-                            // 7. Activer notifications push (PWA) - DEBUG: TOUJOURS VISIBLE
-                            React.createElement('button', {
+                            // 7. Activer notifications push (PWA)
+                            ('Notification' in window) ? React.createElement('button', {
                                 onClick: async () => {
                                     try {
-                                        console.log('🔔 [BOUTON] Demande manuelle de permission');
-                                        console.log('🔔 [BOUTON] Notification in window?', 'Notification' in window);
-                                        console.log('🔔 [BOUTON] Permission actuelle:', typeof Notification !== 'undefined' ? Notification.permission : 'N/A');
+                                        const currentPerm = Notification.permission;
+                                        console.log('🔔 [BOUTON] Permission actuelle:', currentPerm);
                                         
-                                        if (!('Notification' in window)) {
-                                            alert('❌ Notifications non supportées sur cet appareil');
+                                        if (currentPerm === 'granted') {
+                                            alert('Les notifications sont deja activees!');
+                                            return;
+                                        }
+                                        
+                                        if (currentPerm === 'denied') {
+                                            alert('Les notifications ont ete refusees. Allez dans Parametres Android > Apps > IGP > Notifications pour les activer.');
                                             return;
                                         }
                                         
                                         const perm = await Notification.requestPermission();
-                                        console.log('🔔 [BOUTON] Résultat:', perm);
+                                        console.log('🔔 [BOUTON] Resultat:', perm);
+                                        
                                         if (perm === 'granted') {
-                                            alert('✅ Notifications activées! Vous recevrez des alertes pour les nouveaux tickets.');
+                                            alert('Notifications activees avec succes!');
                                             if (window.initPushNotifications) {
                                                 setTimeout(() => window.initPushNotifications(), 1000);
                                             }
+                                            window.location.reload();
                                         } else {
-                                            alert('❌ Notifications refusées. Vous pouvez les activer plus tard dans les paramètres Android.');
+                                            alert('Notifications refusees.');
+                                            window.location.reload();
                                         }
                                     } catch (e) {
                                         console.error('🔔 [BOUTON] Erreur:', e);
                                         alert('Erreur: ' + e.message);
                                     }
                                 },
-                                className: 'px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
+                                className: (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
+                                    ? 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 shadow-md transition-all'
+                                    : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
+                                    ? 'px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse'
+                                    : 'px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
                             },
-                                React.createElement('i', { className: 'fas fa-bell mr-2' }),
-                                ('Notification' in window) ? 
-                                    ('🔔 Notifications (' + (typeof Notification !== 'undefined' ? Notification.permission : 'N/A') + ')') :
-                                    '🔔 Notifications (non supportées)'
-                            ),
+                                React.createElement('i', { 
+                                    className: (typeof Notification !== 'undefined' && Notification.permission === 'denied') 
+                                        ? 'fas fa-bell-slash mr-2' 
+                                        : 'fas fa-bell mr-2' 
+                                }),
+                                (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
+                                    ? 'Notifications autorisees'
+                                    : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
+                                    ? 'Notifications refusees'
+                                    : 'Activer les notifications'
+                            ) : null,
                             // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
                                 onClick: onRefresh,
