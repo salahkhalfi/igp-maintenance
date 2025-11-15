@@ -1518,7 +1518,7 @@ app.get('/', (c) => {
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 2000;
+            z-index: 10000;
             min-width: 200px;
             padding: 8px 0;
         }
@@ -7954,36 +7954,41 @@ app.get('/', (c) => {
                     )
                 ),
                 
-                contextMenu ? React.createElement('div', {
-                    className: 'context-menu',
-                    style: {
-                        top: contextMenu.y + 'px',
-                        left: contextMenu.x + 'px'
-                    }
-                },
-                    React.createElement('div', { className: 'font-bold text-xs text-gray-500 px-3 py-2 border-b' },
-                        'Déplacer vers:'
-                    ),
-                    allStatuses.map(status => {
-                        const isCurrentStatus = status.key === contextMenu.ticket.status;
-                        return React.createElement('div', {
-                            key: status.key,
-                            className: 'context-menu-item' + (isCurrentStatus ? ' bg-gray-100 cursor-not-allowed' : ''),
-                            onClick: (e) => {
-                                e.stopPropagation();
-                                if (!isCurrentStatus) {
-                                    moveTicketToStatus(contextMenu.ticket, status.key);
-                                    setContextMenu(null);
+                contextMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal ? ReactDOM.createPortal(
+                    React.createElement('div', {
+                        className: 'context-menu',
+                        style: {
+                            position: 'fixed',
+                            top: contextMenu.y + 'px',
+                            left: contextMenu.x + 'px',
+                            zIndex: 10000
+                        }
+                    },
+                        React.createElement('div', { className: 'font-bold text-xs text-gray-500 px-3 py-2 border-b' },
+                            'Déplacer vers:'
+                        ),
+                        allStatuses.map(status => {
+                            const isCurrentStatus = status.key === contextMenu.ticket.status;
+                            return React.createElement('div', {
+                                key: status.key,
+                                className: 'context-menu-item' + (isCurrentStatus ? ' bg-gray-100 cursor-not-allowed' : ''),
+                                onClick: (e) => {
+                                    e.stopPropagation();
+                                    if (!isCurrentStatus) {
+                                        moveTicketToStatus(contextMenu.ticket, status.key);
+                                        setContextMenu(null);
+                                    }
                                 }
-                            }
-                        },
-                            React.createElement('i', { 
-                                className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' 
-                            }),
-                            status.label,
-                            isCurrentStatus ? React.createElement('span', { className: 'ml-2 text-xs text-gray-400' }, '(actuel)') : null
-                        );
-                    })
+                            },
+                                React.createElement('i', { 
+                                    className: 'fas fa-' + status.icon + ' text-' + status.color + '-500 mr-2' 
+                                }),
+                                status.label,
+                                isCurrentStatus ? React.createElement('span', { className: 'ml-2 text-xs text-gray-400' }, '(actuel)') : null
+                            );
+                        })
+                    ),
+                    document.body
                 ) : null
             );
         };
