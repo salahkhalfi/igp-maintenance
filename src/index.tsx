@@ -1335,19 +1335,19 @@ app.get('/', (c) => {
         .kanban-column {
             min-height: 400px;
             min-width: 260px;
-            background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             transition: all 0.3s ease;
         }
         
         .kanban-column:hover {
-            background: rgba(255, 255, 255, 0.18);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.2);
             transform: translateY(-2px);
         }
         
