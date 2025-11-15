@@ -1323,32 +1323,31 @@ app.get('/', (c) => {
         }
     </script>
     <style>
-        /* Background neutre pour toutes les pages */
+        /* Background avec photo d'atelier IGP pour toutes les pages */
         body {
-            background: #f0f4f8;
+            background-image: url(/static/login-background.jpg);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
         }
         
         .kanban-column {
             min-height: 400px;
             min-width: 260px;
-            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 
-                8px 8px 16px rgba(71, 85, 105, 0.15),
-                -4px -4px 12px rgba(255, 255, 255, 0.7),
-                inset 1px 1px 2px rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             transition: all 0.3s ease;
         }
         
         .kanban-column:hover {
-            background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-            box-shadow: 
-                10px 10px 20px rgba(71, 85, 105, 0.18),
-                -5px -5px 14px rgba(255, 255, 255, 0.8),
-                inset 1px 1px 3px rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
             transform: translateY(-2px);
         }
         
@@ -1365,20 +1364,19 @@ app.get('/', (c) => {
         }
         
         .ticket-card {
-            background: linear-gradient(145deg, #ffffff, #f1f5f9);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 10px;
-            box-shadow: 
-                6px 6px 12px rgba(71, 85, 105, 0.12),
-                -3px -3px 8px rgba(255, 255, 255, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
             cursor: grab;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            border: 1px solid rgba(148, 163, 184, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             position: relative;
         }
         
@@ -1394,26 +1392,20 @@ app.get('/', (c) => {
         }
         
         .ticket-card:hover {
-            box-shadow: 
-                8px 8px 20px rgba(71, 85, 105, 0.18),
-                -4px -4px 12px rgba(255, 255, 255, 0.9),
-                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.3);
             transform: translateY(-3px) translateZ(10px);
         }
         .ticket-card:active {
             cursor: grabbing;
-            box-shadow: 
-                4px 4px 8px rgba(71, 85, 105, 0.2),
-                -2px -2px 6px rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.25);
         }
         
         .ticket-card.dragging {
             opacity: 0.7;
             cursor: grabbing;
             transform: rotate(3deg) scale(1.05);
-            box-shadow: 
-                12px 12px 24px rgba(71, 85, 105, 0.25),
-                -6px -6px 16px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.4);
         }
         .ticket-card.long-press-active {
             background: #eff6ff;
@@ -1626,6 +1618,30 @@ app.get('/', (c) => {
             .kanban-column-header h3 {
                 font-size: 14px;
             }
+        }
+        
+        /* Am\u00e9lioration de la visibilit\u00e9 du texte sur glassmorphism */
+        .kanban-column-header h3,
+        .kanban-column-header span {
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.8);
+            font-weight: 700;
+        }
+        
+        .ticket-card {
+            color: #1f2937;
+        }
+        
+        .ticket-card * {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Header principal avec meilleure visibilit\u00e9 */
+        .header-title h1 {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 10px rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        @media (max-width: 640px) {
+            /* Keep empty for structure */
         }
         
         @keyframes slideUp {
