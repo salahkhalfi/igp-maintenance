@@ -7357,11 +7357,11 @@ app.get('/', (c) => {
                 React.createElement('header', { 
                     className: 'shadow-lg border-b-4 border-igp-blue',
                     style: {
-                        background: 'rgba(255, 255, 255, 0.25)',
+                        background: 'rgba(255, 255, 255, 0.40)',
                         backdropFilter: 'blur(20px)',
                         WebkitBackdropFilter: 'blur(20px)',
                         boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.5)',
                         borderBottom: '4px solid #003366'
                     }
                 },
@@ -8042,11 +8042,11 @@ app.get('/', (c) => {
                 React.createElement('footer', { 
                     className: 'mt-12 py-6 text-center border-t-4 border-igp-blue',
                     style: { 
-                        background: 'rgba(255, 255, 255, 0.25)',
+                        background: 'rgba(255, 255, 255, 0.40)',
                         backdropFilter: 'blur(20px)',
                         WebkitBackdropFilter: 'blur(20px)',
                         boxShadow: '0 -8px 32px 0 rgba(0, 0, 0, 0.2)',
-                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                        border: '1px solid rgba(255, 255, 255, 0.5)',
                         borderTop: '4px solid #003366'
                     }
                 },
