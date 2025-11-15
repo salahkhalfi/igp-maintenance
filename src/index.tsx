@@ -7382,10 +7382,9 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#001a33',
+                                            color: '#000000',
                                             fontWeight: '900',
-                                            textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 8px rgba(255, 255, 255, 0.9)',
-                                            WebkitTextStroke: '0.5px rgba(255, 255, 255, 0.8)'
+                                            textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
                                         },
                                         title: headerTitle
                                     }, headerTitle),
@@ -7394,10 +7393,9 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#0f172a',
-                                            fontWeight: '700',
-                                            textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.9)',
-                                            WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.7)'
+                                            color: '#1a1a1a',
+                                            fontWeight: '800',
+                                            textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
                                         },
                                         title: headerSubtitle
                                     }, 
@@ -7406,10 +7404,9 @@ app.get('/', (c) => {
                                     React.createElement('p', { 
                                         className: 'text-xs md:text-sm font-semibold mt-1',
                                         style: {
-                                            color: '#065f46',
-                                            fontWeight: '800',
-                                            textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.9)',
-                                            WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.7)'
+                                            color: '#047857',
+                                            fontWeight: '900',
+                                            textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
                                         }
                                     }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
@@ -7418,10 +7415,9 @@ app.get('/', (c) => {
                                         React.createElement('p', { 
                                             className: "text-xs font-semibold",
                                             style: {
-                                                color: '#1e3a8a',
-                                                fontWeight: '800',
-                                                textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.9)',
-                                                WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.7)'
+                                                color: '#1e40af',
+                                                fontWeight: '900',
+                                                textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
                                             }
                                         }, 
                                             getActiveTicketsCount() + " tickets actifs"
