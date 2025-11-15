@@ -7313,11 +7313,11 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 header-actions' },
+                        React.createElement('div', { className: 'flex flex-wrap items-center gap-2 header-actions' },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
-                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all'
+                                className: 'px-3 py-1.5 bg-igp-blue text-white text-sm rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
                                 'Nouvelle Demande'
@@ -7326,7 +7326,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
-                                className: 'px-4 py-2 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
+                                className: 'px-3 py-1.5 bg-gradient-to-r from-slate-700 to-gray-700 text-white text-sm rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-comments mr-2' }),
                                 'Messagerie'
@@ -7345,9 +7345,9 @@ app.get('/', (c) => {
                                         }, 100);
                                     }
                                 },
-                                className: 'px-4 py-2 rounded-md font-semibold shadow-md transition-all flex items-center gap-2 ' + 
+                                className: 'px-3 py-1.5 rounded-md font-semibold shadow-md transition-all flex items-center gap-2 ' + 
                                     (showArchived 
-                                        ? 'bg-gray-600 text-white hover:bg-gray-700' 
+                                        ? 'bg-gray-600 text-white text-sm hover:bg-gray-700' 
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300')
                             },
                                 React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }),
@@ -7361,7 +7361,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
-                                className: "px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 font-semibold shadow-md transition-all"
+                                className: "px-3 py-1.5 bg-blue-700 text-white text-sm rounded-md hover:bg-blue-800 font-semibold shadow-md transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-users-cog mr-2" }),
                                 "Utilisateurs"
@@ -7370,7 +7370,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMachineManagement(true),
-                                className: "px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 font-semibold shadow-md transition-all"
+                                className: "px-3 py-1.5 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700 font-semibold shadow-md transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-cogs mr-2" }),
                                 "Machines"
@@ -7379,7 +7379,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowSystemSettings(true),
-                                className: "px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all"
+                                className: "px-3 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-sliders-h mr-2" }),
                                 "Parametres"
@@ -7397,7 +7397,7 @@ app.get('/', (c) => {
                                         window.location.href = '/';
                                     }
                                 },
-                                className: "px-4 py-2 bg-gradient-to-r from-blue-700 to-blue-800 text-white rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all",
+                                className: "px-3 py-1.5 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-sm rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all",
                                 title: 'Gestion des rôles et permissions (Admin)'
                             },
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
@@ -7464,10 +7464,10 @@ app.get('/', (c) => {
                                     }
                                 },
                                 className: (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
-                                    ? 'px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 shadow-md transition-all'
+                                    ? 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all'
                                     : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                                    ? 'px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse'
-                                    : 'px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
+                                    ? 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse'
+                                    : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
                             },
                                 React.createElement('i', { 
                                     className: (typeof Notification !== 'undefined' && Notification.permission === 'denied') 
@@ -7483,7 +7483,7 @@ app.get('/', (c) => {
                             // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
                                 onClick: onRefresh,
-                                className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 shadow-md transition-all'
+                                className: 'px-3 py-1.5 bg-igp-blue text-white text-sm rounded-md hover:bg-blue-800 shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
                                 'Actualiser'
@@ -7491,7 +7491,7 @@ app.get('/', (c) => {
                             // 9. Déconnexion (action de sortie - toujours à la fin)
                             React.createElement('button', {
                                 onClick: onLogout,
-                                className: 'px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 shadow-md transition-all'
+                                className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
                                 'Déconnexion'
@@ -7501,7 +7501,7 @@ app.get('/', (c) => {
                                 href: '/guide',
                                 target: '_blank',
                                 rel: 'noopener noreferrer',
-                                className: 'w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full hover:from-purple-700 hover:to-blue-700 font-bold shadow-lg transition-all inline-flex items-center justify-center text-lg self-center',
+                                className: 'w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm rounded-full hover:from-purple-700 hover:to-blue-700 font-bold shadow-lg transition-all inline-flex items-center justify-center text-lg self-center',
                                 title: 'Guide utilisateur - Aide'
                             },
                                 '?'
