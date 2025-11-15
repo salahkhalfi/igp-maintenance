@@ -1335,9 +1335,9 @@ app.get('/', (c) => {
         .kanban-column {
             min-height: 400px;
             min-width: 260px;
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 12px;
             padding: 12px;
             box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.18);
@@ -1346,7 +1346,7 @@ app.get('/', (c) => {
         }
         
         .kanban-column:hover {
-            background: rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.30);
             box-shadow: 0 8px 28px 0 rgba(0, 0, 0, 0.22);
             transform: translateY(-2px);
         }
