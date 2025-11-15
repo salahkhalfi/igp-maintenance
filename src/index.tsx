@@ -7320,7 +7320,7 @@ app.get('/', (c) => {
                                 className: 'px-4 py-2 bg-igp-blue text-white rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-plus mr-2' }),
-                                'Nouvelle Demande'
+                                'Demande'
                             ),
                             // 2. Messagerie (le plus utilisé quotidiennement)
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
@@ -7351,7 +7351,7 @@ app.get('/', (c) => {
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300')
                             },
                                 React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }),
-                                React.createElement('span', {}, showArchived ? 'Masquer Archivés' : 'Voir Archivés'),
+                                React.createElement('span', {}, showArchived ? 'Masquer' : 'Archivés'),
                                 React.createElement('span', { 
                                     className: 'px-2 py-0.5 rounded-full text-xs font-bold ' + 
                                     (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
@@ -7474,11 +7474,7 @@ app.get('/', (c) => {
                                         ? 'fas fa-bell-slash mr-2' 
                                         : 'fas fa-bell mr-2' 
                                 }),
-                                (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
-                                    ? 'Notifications autorisees'
-                                    : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                                    ? 'Notifications refusees'
-                                    : 'Activer les notifications'
+                                'Notifications'
                             ),
                             // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
