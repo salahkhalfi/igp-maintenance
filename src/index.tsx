@@ -7296,7 +7296,7 @@ app.get('/', (c) => {
                         try {
                             await axios.delete(API_URL + '/tickets/' + ticketId);
                             // Recharger les données AVANT d'afficher le message de succès
-                            await loadData();
+                            await onRefresh();
                             alert('Ticket supprime avec succes');
                         } catch (error) {
                             console.error('Erreur suppression ticket:', error);
@@ -8047,7 +8047,7 @@ app.get('/', (c) => {
                                 try {
                                     await axios.delete(API_URL + '/tickets/' + ticketId);
                                     // Recharger les données AVANT d'afficher le message de succès
-                                    await loadData();
+                                    await onRefresh();
                                     alert('Ticket supprime avec succes');
                                 } catch (error) {
                                     console.error('Erreur suppression ticket:', error);
