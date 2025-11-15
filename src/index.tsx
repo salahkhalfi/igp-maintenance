@@ -1623,7 +1623,7 @@ app.get('/', (c) => {
         /* Am\u00e9lioration de la visibilit\u00e9 du texte sur glassmorphism */
         .kanban-column-header h3,
         .kanban-column-header span {
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.8);
+            /* text-shadow removed */
             font-weight: 700;
         }
         
@@ -1631,15 +1631,8 @@ app.get('/', (c) => {
             color: #1f2937;
         }
         
-        .ticket-card * {
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(255, 255, 255, 0.7);
-        }
         
         /* Header principal avec meilleure visibilit\u00e9 */
-        .header-title h1 {
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 10px rgba(255, 255, 255, 0.9) !important;
-        }
-        
         @media (max-width: 640px) {
             /* Keep empty for structure */
         }
