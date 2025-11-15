@@ -2759,9 +2759,6 @@ app.get('/', (c) => {
             
             if (!show || !ticket) return null;
             
-            // DEBUG: Log pour vérifier currentUser
-            console.log('[MoveTicketBottomSheet] currentUser:', currentUser, 'ticket:', ticket);
-            
             // Verifier si ticket est assigné ou planifié (pour affichage info seulement, pas de blocage)
             const isAssigned = ticket.assigned_to !== null && ticket.assigned_to !== undefined;
             const isPlanned = isAssigned && ticket.scheduled_date;
@@ -2861,7 +2858,6 @@ app.get('/', (c) => {
                         (() => {
                             const canDelete = currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician' || 
                                 (currentUser?.role === 'operator' && ticket.reported_by === currentUser?.id);
-                            console.log('[DELETE BUTTON] canDelete:', canDelete, 'role:', currentUser?.role);
                             return canDelete;
                         })() ?
                         React.createElement('button', {
@@ -8097,10 +8093,10 @@ app.get('/', (c) => {
                     loadData();
                     loadUnreadMessagesCount();
                     
-                    // Rafraichir le compteur de messages non lus toutes les 30 secondes
+                    // Rafraichir le compteur de messages non lus toutes les 60 secondes (optimisé pour performance Chrome)
                     const messagesInterval = setInterval(() => {
                         loadUnreadMessagesCount();
-                    }, 30000);
+                    }, 60000);
                     
                     return () => {
                         clearInterval(messagesInterval);
