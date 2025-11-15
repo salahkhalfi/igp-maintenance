@@ -7313,7 +7313,7 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 header-actions' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 mt-4 header-actions' },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
