@@ -7357,11 +7357,11 @@ app.get('/', (c) => {
                 React.createElement('header', { 
                     className: 'shadow-lg border-b-4 border-igp-blue',
                     style: {
-                        background: 'rgba(255, 255, 255, 0.70)',
-                        backdropFilter: 'blur(15px)',
-                        WebkitBackdropFilter: 'blur(15px)',
-                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        background: 'rgba(255, 255, 255, 0.25)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.4)',
                         borderBottom: '4px solid #003366'
                     }
                 },
@@ -7382,9 +7382,10 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#002244',
+                                            color: '#001a33',
                                             fontWeight: '900',
-                                            textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                                            textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 8px rgba(255, 255, 255, 0.9)',
+                                            WebkitTextStroke: '0.5px rgba(255, 255, 255, 0.8)'
                                         },
                                         title: headerTitle
                                     }, headerTitle),
@@ -7393,9 +7394,10 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#111827',
-                                            fontWeight: '600',
-                                            textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                                            color: '#0f172a',
+                                            fontWeight: '700',
+                                            textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.9)',
+                                            WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.7)'
                                         },
                                         title: headerSubtitle
                                     }, 
@@ -7404,9 +7406,10 @@ app.get('/', (c) => {
                                     React.createElement('p', { 
                                         className: 'text-xs md:text-sm font-semibold mt-1',
                                         style: {
-                                            color: '#047857',
-                                            fontWeight: '700',
-                                            textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                                            color: '#065f46',
+                                            fontWeight: '800',
+                                            textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.9)',
+                                            WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.7)'
                                         }
                                     }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
@@ -7416,8 +7419,9 @@ app.get('/', (c) => {
                                             className: "text-xs font-semibold",
                                             style: {
                                                 color: '#1e3a8a',
-                                                fontWeight: '700',
-                                                textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                                                fontWeight: '800',
+                                                textShadow: '2px 2px 4px rgba(255, 255, 255, 1), -1px -1px 2px rgba(255, 255, 255, 1), 1px -1px 2px rgba(255, 255, 255, 1), -1px 1px 2px rgba(255, 255, 255, 1), 0 0 6px rgba(255, 255, 255, 0.9)',
+                                                WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.7)'
                                             }
                                         }, 
                                             getActiveTicketsCount() + " tickets actifs"
