@@ -7005,8 +7005,9 @@ app.get('/', (c) => {
                 
                 const menuWidth = 200;
                 const menuHeight = 300;
-                let x = e.pageX || (e.touches && e.touches[0].pageX);
-                let y = e.pageY || (e.touches && e.touches[0].pageY);
+                // Use clientX/clientY instead of pageX/pageY for position:fixed portal
+                let x = e.clientX || (e.touches && e.touches[0].clientX);
+                let y = e.clientY || (e.touches && e.touches[0].clientY);
                 
                 
                 if (x + menuWidth > window.innerWidth) {
@@ -7014,8 +7015,8 @@ app.get('/', (c) => {
                 }
                 
                 
-                if (y + menuHeight > window.innerHeight + window.scrollY) {
-                    y = window.innerHeight + window.scrollY - menuHeight - 10;
+                if (y + menuHeight > window.innerHeight) {
+                    y = window.innerHeight - menuHeight - 10;
                 }
                 
                 setContextMenu({
