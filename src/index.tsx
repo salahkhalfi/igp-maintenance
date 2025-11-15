@@ -2759,6 +2759,9 @@ app.get('/', (c) => {
             
             if (!show || !ticket) return null;
             
+            // DEBUG: Log pour vérifier currentUser
+            console.log('[MoveTicketBottomSheet] currentUser:', currentUser, 'ticket:', ticket);
+            
             // Verifier si ticket est assigné ou planifié (pour affichage info seulement, pas de blocage)
             const isAssigned = ticket.assigned_to !== null && ticket.assigned_to !== undefined;
             const isPlanned = isAssigned && ticket.scheduled_date;
@@ -2854,8 +2857,9 @@ app.get('/', (c) => {
                     ),
                     
                     React.createElement('div', { className: 'p-4 border-t border-gray-200 space-y-2' },
-                        // Bouton Supprimer (admin/supervisor/technicien seulement)
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') ?
+                        // Bouton Supprimer (admin/supervisor/technicien peuvent tout supprimer, opérateur seulement ses propres tickets)
+                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician' || 
+                         (currentUser?.role === 'operator' && ticket.reported_by === currentUser?.id)) ?
                         React.createElement('button', {
                             onClick: () => {
                                 if (navigator.vibrate) navigator.vibrate(50);
