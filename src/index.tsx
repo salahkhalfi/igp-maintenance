@@ -7249,7 +7249,7 @@ app.get('/', (c) => {
                 setDragOverColumn(null);
             };
             
-            return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+            return React.createElement('div', { className: 'min-h-screen' },
                 
                 React.createElement(CreateTicketModal, {
                     show: showCreateModal,
