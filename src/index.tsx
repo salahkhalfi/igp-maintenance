@@ -7270,7 +7270,7 @@ app.get('/', (c) => {
                 
                 React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-4' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-6' },
                             React.createElement('div', { className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0' },
                                 React.createElement('img', { 
                                     src: '/api/settings/logo?t=' + Date.now(), 
