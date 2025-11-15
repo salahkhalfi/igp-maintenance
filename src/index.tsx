@@ -7382,9 +7382,8 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#000000',
-                                            fontWeight: '900',
-                                            textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
+                                            color: '#1e3a8a',
+                                            fontWeight: '900'
                                         },
                                         title: headerTitle
                                     }, headerTitle),
