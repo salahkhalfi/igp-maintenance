@@ -7314,6 +7314,8 @@ app.get('/', (c) => {
                             )
                         ),
                         React.createElement('div', { className: 'flex flex-wrap items-center gap-2 header-actions' },
+                            // Boutons principaux visibles
+                            React.createElement('div', { className: 'flex items-center gap-2' },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
@@ -7356,12 +7358,22 @@ app.get('/', (c) => {
                                     className: 'px-2 py-0.5 rounded-full text-xs font-bold ' + 
                                     (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
                                 }, getTicketsByStatus('archived').length)
+                            )
                             ),
+                            // Menu dropdown CSS pur (groupe hover)
+                            React.createElement('div', { className: 'relative group' },
+                                React.createElement('button', {
+                                    className: 'px-3 py-1.5 bg-gray-700 text-white text-sm rounded-md hover:bg-gray-800 font-semibold shadow-md transition-all'
+                                },
+                                    React.createElement('i', { className: 'fas fa-ellipsis-h mr-2' }),
+                                    'Plus'
+                                ),
+                                React.createElement('div', { className: 'hidden group-hover:block absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50' },
                             // 4. Utilisateurs (gestion admin - moins fréquent)
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowUserManagement(true),
-                                className: "px-3 py-1.5 bg-blue-700 text-white text-sm rounded-md hover:bg-blue-800 font-semibold shadow-md transition-all"
+                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-users-cog mr-2" }),
                                 "Utilisateurs"
@@ -7370,7 +7382,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowMachineManagement(true),
-                                className: "px-3 py-1.5 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700 font-semibold shadow-md transition-all"
+                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-cogs mr-2" }),
                                 "Machines"
@@ -7379,7 +7391,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'admin') ?
                             React.createElement('button', {
                                 onClick: () => setShowSystemSettings(true),
-                                className: "px-3 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all"
+                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
                             },
                                 React.createElement('i', { className: "fas fa-sliders-h mr-2" }),
                                 "Parametres"
@@ -7397,7 +7409,7 @@ app.get('/', (c) => {
                                         window.location.href = '/';
                                     }
                                 },
-                                className: "px-3 py-1.5 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-sm rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all",
+                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all",
                                 title: 'Gestion des rôles et permissions (Admin)'
                             },
                                 React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
@@ -7464,10 +7476,10 @@ app.get('/', (c) => {
                                     }
                                 },
                                 className: (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
-                                    ? 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all'
+                                    ? 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
                                     : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                                    ? 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse'
-                                    : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse'
+                                    ? 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
+                                    : 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
                             },
                                 React.createElement('i', { 
                                     className: (typeof Notification !== 'undefined' && Notification.permission === 'denied') 
@@ -7483,10 +7495,12 @@ app.get('/', (c) => {
                             // 8. Actualiser (utile mais auto-refresh disponible)
                             React.createElement('button', {
                                 onClick: onRefresh,
-                                className: 'px-3 py-1.5 bg-igp-blue text-white text-sm rounded-md hover:bg-blue-800 shadow-md transition-all'
+                                className: 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
                             },
                                 React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
                                 'Actualiser'
+                            )
+                                )
                             ),
                             // 9. Déconnexion (action de sortie - toujours à la fin)
                             React.createElement('button', {
