@@ -1699,7 +1699,7 @@ app.get('/', (c) => {
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
     <div id="root">
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div style="text-align: center; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
