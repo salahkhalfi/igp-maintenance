@@ -2682,16 +2682,26 @@ app.get('/', (c) => {
                             }
                         }),
                         React.createElement('h1', { 
-                            className: 'text-lg sm:text-xl md:text-2xl font-bold text-igp-blue mb-2 px-2 break-words',
-                            style: { wordBreak: 'break-word', overflowWrap: 'break-word' }
+                            className: 'text-lg sm:text-xl md:text-2xl font-bold mb-2 px-2 break-words',
+                            style: { 
+                                wordBreak: 'break-word', 
+                                overflowWrap: 'break-word',
+                                color: '#003B73',
+                                textShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 8px rgba(255,255,255,0.8)'
+                            }
                         }, loginTitle),
                         React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
                             'EN DÉVELOPPEMENT'
                         ),
                         React.createElement('p', { 
-                            className: 'text-xs sm:text-sm text-gray-600 px-4 break-words',
-                            style: { wordBreak: 'break-word', overflowWrap: 'break-word' }
+                            className: 'text-xs sm:text-sm px-4 break-words font-semibold',
+                            style: { 
+                                wordBreak: 'break-word', 
+                                overflowWrap: 'break-word',
+                                color: '#1f2937',
+                                textShadow: '0 1px 3px rgba(0,0,0,0.4), 0 0 8px rgba(255,255,255,0.9)'
+                            }
                         }, loginSubtitle)
                     ),
                     React.createElement('form', { 
