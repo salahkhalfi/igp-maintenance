@@ -11,6 +11,24 @@
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
+## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.14)
+
+### Version 2.0.14 (15 novembre 2025) - AMÉLIORATION UI HEADER 🎨
+- **✨ HEADER RÉORGANISÉ** : Interface header repensée et professionnelle
+- **🎨 Boutons homogènes** : Toutes les tailles standardisées (px-3 py-1.5)
+- **🌈 Couleurs diversifiées** : Palette distincte et professionnelle
+  - Nouvelle Demande: Bleu IGP
+  - Messagerie: Cyan-Blue gradient
+  - Archives: Amber/Orange
+  - Actualiser: Vert
+  - Notifications: Bleu/Rouge/Jaune (selon statut)
+  - Plus: Violet
+  - Déconnexion: Rouge
+- **📍 Boutons toujours visibles** : Actualiser et Notifications sortis du dropdown
+- **🎯 Dropdown persistent** : Pont invisible pour meilleure stabilité du hover
+- **📱 Structure scalable** : Architecture prête pour futurs ajouts de liens
+- **✅ Tests validés** : Build réussi, service opérationnel, UI testée
+
 ## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.13)
 
 ### Version 2.0.13 (14 novembre 2025) - PWA + PUSH NOTIFICATIONS 📱🔔
