@@ -7357,11 +7357,11 @@ app.get('/', (c) => {
                 React.createElement('header', { 
                     className: 'shadow-lg border-b-4 border-igp-blue',
                     style: {
-                        background: 'rgba(255, 255, 255, 0.15)',
-                        backdropFilter: 'blur(20px)',
-                        WebkitBackdropFilter: 'blur(20px)',
+                        background: 'rgba(255, 255, 255, 0.70)',
+                        backdropFilter: 'blur(15px)',
+                        WebkitBackdropFilter: 'blur(15px)',
                         boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
-                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
                         borderBottom: '4px solid #003366'
                     }
                 },
@@ -7382,8 +7382,9 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#003366',
-                                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                            color: '#002244',
+                                            fontWeight: '900',
+                                            textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
                                         },
                                         title: headerTitle
                                     }, headerTitle),
@@ -7392,8 +7393,9 @@ app.get('/', (c) => {
                                         style: { 
                                             wordBreak: 'break-word', 
                                             overflowWrap: 'break-word',
-                                            color: '#1f2937',
-                                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                            color: '#111827',
+                                            fontWeight: '600',
+                                            textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
                                         },
                                         title: headerSubtitle
                                     }, 
@@ -7402,8 +7404,9 @@ app.get('/', (c) => {
                                     React.createElement('p', { 
                                         className: 'text-xs md:text-sm font-semibold mt-1',
                                         style: {
-                                            color: '#059669',
-                                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                            color: '#047857',
+                                            fontWeight: '700',
+                                            textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
                                         }
                                     }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
@@ -7412,8 +7415,9 @@ app.get('/', (c) => {
                                         React.createElement('p', { 
                                             className: "text-xs font-semibold",
                                             style: {
-                                                color: '#1e40af',
-                                                textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                                color: '#1e3a8a',
+                                                fontWeight: '700',
+                                                textShadow: '0 2px 4px rgba(255, 255, 255, 1), 0 1px 2px rgba(0, 0, 0, 0.1)'
                                             }
                                         }, 
                                             getActiveTicketsCount() + " tickets actifs"
