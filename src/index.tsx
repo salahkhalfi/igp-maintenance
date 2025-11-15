@@ -7632,7 +7632,14 @@ app.get('/', (c) => {
                 ),
                 
                 
-                React.createElement('div', { className: 'container mx-auto px-4 py-6' },
+                React.createElement('div', { 
+                    className: 'container mx-auto px-4 py-6',
+                    style: {
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        borderRadius: '16px',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+                    }
+                },
                     React.createElement('div', { className: 'space-y-4' },
                         // Première ligne: colonnes de workflow (Reçue, Diagnostic, En cours, Attente pièces)
                         React.createElement('div', { className: 'overflow-x-auto pb-4' },
