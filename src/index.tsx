@@ -2858,8 +2858,12 @@ app.get('/', (c) => {
                     
                     React.createElement('div', { className: 'p-4 border-t border-gray-200 space-y-2' },
                         // Bouton Supprimer (admin/supervisor/technicien peuvent tout supprimer, opérateur seulement ses propres tickets)
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician' || 
-                         (currentUser?.role === 'operator' && ticket.reported_by === currentUser?.id)) ?
+                        (() => {
+                            const canDelete = currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician' || 
+                                (currentUser?.role === 'operator' && ticket.reported_by === currentUser?.id);
+                            console.log('[DELETE BUTTON] canDelete:', canDelete, 'role:', currentUser?.role);
+                            return canDelete;
+                        })() ?
                         React.createElement('button', {
                             onClick: () => {
                                 if (navigator.vibrate) navigator.vibrate(50);
@@ -8016,7 +8020,32 @@ app.get('/', (c) => {
                                 status.label,
                                 isCurrentStatus ? React.createElement('span', { className: 'ml-2 text-xs text-gray-400' }, '(actuel)') : null
                             );
-                        })
+                        }),
+                        // Séparateur avant Supprimer
+                        React.createElement('div', { className: 'border-t my-1' }),
+                        // Bouton Supprimer dans le menu contextuel (admin/supervisor/technicien, ou opérateur pour ses propres tickets)
+                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician' || 
+                         (currentUser?.role === 'operator' && contextMenu.ticket.reported_by === currentUser?.id)) ?
+                        React.createElement('div', {
+                            className: 'context-menu-item text-red-600 hover:bg-red-50 font-semibold',
+                            onClick: async (e) => {
+                                e.stopPropagation();
+                                const confirmed = window.confirm('Supprimer ce ticket definitivement ? Cette action est irreversible.');
+                                if (!confirmed) return;
+                                
+                                try {
+                                    await axios.delete(API_URL + '/tickets/' + contextMenu.ticket.id);
+                                    alert('Ticket supprime avec succes');
+                                    setContextMenu(null);
+                                    loadData();
+                                } catch (error) {
+                                    alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                                }
+                            }
+                        },
+                            React.createElement('i', { className: 'fas fa-trash-alt mr-2' }),
+                            'Supprimer le ticket'
+                        ) : null
                     ),
                     document.body
                 ) : null
