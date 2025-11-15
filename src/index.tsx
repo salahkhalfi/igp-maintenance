@@ -8040,31 +8040,63 @@ app.get('/', (c) => {
                 ),
                 
                 React.createElement('footer', { 
-                    className: 'mt-12 py-6 text-center border-t border-gray-200',
+                    className: 'mt-12 py-6 text-center border-t-4 border-igp-blue',
                     style: { 
-                        background: 'linear-gradient(145deg, #f8fafc, #e2e8f0)',
-                        boxShadow: '0 -4px 12px rgba(71, 85, 105, 0.08)'
+                        background: 'rgba(255, 255, 255, 0.25)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        boxShadow: '0 -8px 32px 0 rgba(0, 0, 0, 0.2)',
+                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                        borderTop: '4px solid #003366'
                     }
                 },
                     React.createElement('div', { className: 'container mx-auto px-4' },
-                        React.createElement('p', { className: 'text-sm text-gray-600 font-medium mb-2' },
-                            React.createElement('i', { className: 'fas fa-code mr-2 text-igp-blue' }),
+                        React.createElement('p', { 
+                            className: 'text-sm mb-2',
+                            style: {
+                                color: '#1a1a1a',
+                                fontWeight: '700',
+                                textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
+                            }
+                        },
+                            React.createElement('i', { 
+                                className: 'fas fa-code mr-2',
+                                style: { color: '#003366' }
+                            }),
                             'Application conçue et développée par ',
                             React.createElement('span', { 
-                                className: 'font-bold text-igp-blue',
                                 style: { 
-                                    textShadow: '1px 1px 2px rgba(30, 64, 175, 0.1)'
+                                    fontWeight: '900',
+                                    color: '#003366',
+                                    textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
                                 }
                             }, "Le département des Technologies de l'Information")
                         ),
                         React.createElement('div', { className: 'flex items-center justify-center gap-4 flex-wrap' },
-                            React.createElement('p', { className: 'text-xs text-gray-500' },
+                            React.createElement('p', { 
+                                className: 'text-xs',
+                                style: {
+                                    color: '#1a1a1a',
+                                    fontWeight: '700',
+                                    textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
+                                }
+                            },
                                 '© ' + new Date().getFullYear() + ' - Produits Verriers International (IGP) Inc.'
                             ),
-                            React.createElement('span', { className: 'text-gray-300' }, '|'),
+                            React.createElement('span', { 
+                                style: { 
+                                    color: '#666666',
+                                    fontWeight: '700'
+                                }
+                            }, '|'),
                             React.createElement('a', { 
                                 href: '/changelog',
-                                className: 'text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 transition-colors'
+                                className: 'text-xs flex items-center gap-1 transition-colors',
+                                style: {
+                                    color: '#1e40af',
+                                    fontWeight: '800',
+                                    textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
+                                }
                             },
                                 React.createElement('i', { className: 'fas fa-history' }),
                                 React.createElement('span', {}, 'v2.0.11 - Historique')
