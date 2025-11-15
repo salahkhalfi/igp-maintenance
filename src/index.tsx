@@ -1323,28 +1323,10 @@ app.get('/', (c) => {
         }
     </script>
     <style>
-        /* Background global avec dégradé bleu IGP subtil */
+        /* Background global avec dégradé bleu IGP professionnel */
         body {
             background: linear-gradient(135deg, #003B73 0%, #005A9C 50%, #003B73 100%);
             min-height: 100vh;
-            position: relative;
-        }
-        
-        /* Filigrane logo IGP très discret */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60%;
-            max-width: 800px;
-            height: 60%;
-            max-height: 480px;
-            background: url('/static/logo-igp.png') center/contain no-repeat;
-            opacity: 0.025;
-            pointer-events: none;
-            z-index: 0;
         }
         
         .kanban-column {
