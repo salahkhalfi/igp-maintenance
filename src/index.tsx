@@ -1369,15 +1369,16 @@ app.get('/', (c) => {
             padding: 10px;
             margin-bottom: 10px;
             box-shadow: 
-                6px 6px 12px rgba(71, 85, 105, 0.12),
-                -3px -3px 8px rgba(255, 255, 255, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+                6px 6px 16px rgba(71, 85, 105, 0.30),
+                -3px -3px 10px rgba(255, 255, 255, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                0 2px 8px rgba(0, 0, 0, 0.15);
             cursor: grab;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            border: 1px solid rgba(148, 163, 184, 0.08);
+            border: 1px solid rgba(148, 163, 184, 0.2);
             position: relative;
         }
         
@@ -1394,16 +1395,18 @@ app.get('/', (c) => {
         
         .ticket-card:hover {
             box-shadow: 
-                8px 8px 20px rgba(71, 85, 105, 0.18),
-                -4px -4px 12px rgba(255, 255, 255, 0.9),
-                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+                8px 8px 24px rgba(71, 85, 105, 0.35),
+                -4px -4px 14px rgba(255, 255, 255, 1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                0 4px 12px rgba(0, 0, 0, 0.20);
             transform: translateY(-3px) translateZ(10px);
         }
         .ticket-card:active {
             cursor: grabbing;
             box-shadow: 
-                4px 4px 8px rgba(71, 85, 105, 0.2),
-                -2px -2px 6px rgba(255, 255, 255, 0.7);
+                4px 4px 10px rgba(71, 85, 105, 0.35),
+                -2px -2px 8px rgba(255, 255, 255, 0.8),
+                0 2px 6px rgba(0, 0, 0, 0.15);
         }
         
         .ticket-card.dragging {
@@ -1411,8 +1414,9 @@ app.get('/', (c) => {
             cursor: grabbing;
             transform: rotate(3deg) scale(1.05);
             box-shadow: 
-                12px 12px 24px rgba(71, 85, 105, 0.25),
-                -6px -6px 16px rgba(255, 255, 255, 0.5);
+                12px 12px 32px rgba(71, 85, 105, 0.40),
+                -6px -6px 18px rgba(255, 255, 255, 0.7),
+                0 6px 16px rgba(0, 0, 0, 0.25);
         }
         .ticket-card.long-press-active {
             background: #eff6ff;
