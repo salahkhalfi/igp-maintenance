@@ -2662,7 +2662,16 @@ app.get('/', (c) => {
                     backgroundAttachment: 'fixed'
                 }
             },
-                React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96 max-w-md mx-4' },
+                React.createElement('div', { 
+                    className: 'p-8 rounded-2xl w-96 max-w-md mx-4',
+                    style: {
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                        border: '1px solid rgba(255, 255, 255, 0.18)'
+                    }
+                },
                     React.createElement('div', { className: 'text-center mb-8' },
                         React.createElement('img', { 
                             src: '/api/settings/logo?t=' + Date.now(), 
