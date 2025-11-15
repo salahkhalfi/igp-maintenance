@@ -2855,7 +2855,7 @@ app.get('/', (c) => {
                     
                     React.createElement('div', { className: 'p-4 border-t border-gray-200 space-y-2' },
                         // Bouton Supprimer (admin/supervisor/technicien seulement)
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') &&
+                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') ?
                         React.createElement('button', {
                             onClick: () => {
                                 if (navigator.vibrate) navigator.vibrate(50);
@@ -2870,7 +2870,7 @@ app.get('/', (c) => {
                         },
                             React.createElement('i', { className: 'fas fa-trash-alt' }),
                             'Supprimer le ticket'
-                        ),
+                        ) : null,
                         React.createElement('button', {
                             onClick: onClose,
                             className: 'w-full py-4 text-center font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-colors no-tap-highlight',
