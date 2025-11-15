@@ -7438,7 +7438,15 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 mt-4 header-actions' },
+                        React.createElement('div', { 
+                            className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 mt-4 header-actions',
+                            style: {
+                                background: 'rgba(255, 255, 255, 1)',
+                                padding: '12px',
+                                borderRadius: '8px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                            }
+                        },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
