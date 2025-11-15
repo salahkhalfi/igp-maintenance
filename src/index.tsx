@@ -2747,7 +2747,7 @@ app.get('/', (c) => {
         
         
         // ===== BOTTOM SHEET MOBILE POUR DEPLACER TICKETS =====
-        const MoveTicketBottomSheet = ({ show, onClose, ticket, onMove, currentUser }) => {
+        const MoveTicketBottomSheet = ({ show, onClose, ticket, onMove, onDelete, currentUser }) => {
             const statuses = [
                 { key: 'received', label: 'Requete Recue', icon: '🟦', color: 'bg-blue-50 hover:bg-blue-100 active:bg-blue-200' },
                 { key: 'diagnostic', label: 'Diagnostic', icon: '🟨', color: 'bg-yellow-50 hover:bg-yellow-100 active:bg-yellow-200' },
@@ -2853,7 +2853,24 @@ app.get('/', (c) => {
                         )
                     ),
                     
-                    React.createElement('div', { className: 'p-4 border-t border-gray-200' },
+                    React.createElement('div', { className: 'p-4 border-t border-gray-200 space-y-2' },
+                        // Bouton Supprimer (admin/supervisor/technicien seulement)
+                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') &&
+                        React.createElement('button', {
+                            onClick: () => {
+                                if (navigator.vibrate) navigator.vibrate(50);
+                                onDelete(ticket.id);
+                                onClose();
+                            },
+                            className: 'w-full py-4 text-center font-semibold text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-xl transition-colors no-tap-highlight flex items-center justify-center gap-2',
+                            style: { 
+                                fontSize: '16px'
+                            },
+                            type: 'button'
+                        },
+                            React.createElement('i', { className: 'fas fa-trash-alt' }),
+                            'Supprimer le ticket'
+                        ),
                         React.createElement('button', {
                             onClick: onClose,
                             className: 'w-full py-4 text-center font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-colors no-tap-highlight',
@@ -7264,6 +7281,18 @@ app.get('/', (c) => {
                     },
                     ticket: ticketToMove,
                     onMove: moveTicketToStatus,
+                    onDelete: async (ticketId) => {
+                        const confirmed = window.confirm('Supprimer ce ticket definitivement ? Cette action est irreversible.');
+                        if (!confirmed) return;
+                        
+                        try {
+                            await axios.delete(API_URL + '/tickets/' + ticketId);
+                            alert('Ticket supprime avec succes');
+                            loadData();
+                        } catch (error) {
+                            alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                        }
+                    },
                     currentUser: currentUser
                 }),
                 
