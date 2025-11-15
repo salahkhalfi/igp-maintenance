@@ -7295,9 +7295,11 @@ app.get('/', (c) => {
                         
                         try {
                             await axios.delete(API_URL + '/tickets/' + ticketId);
+                            // Recharger les données AVANT d'afficher le message de succès
+                            await loadData();
                             alert('Ticket supprime avec succes');
-                            loadData();
                         } catch (error) {
+                            console.error('Erreur suppression ticket:', error);
                             alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
                         }
                     },
@@ -8044,9 +8046,11 @@ app.get('/', (c) => {
                                 
                                 try {
                                     await axios.delete(API_URL + '/tickets/' + ticketId);
+                                    // Recharger les données AVANT d'afficher le message de succès
+                                    await loadData();
                                     alert('Ticket supprime avec succes');
-                                    loadData();
                                 } catch (error) {
+                                    console.error('Erreur suppression ticket:', error);
                                     alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
                                 }
                             }
