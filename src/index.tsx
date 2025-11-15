@@ -2656,7 +2656,7 @@ app.get('/', (c) => {
             return React.createElement('div', { 
                 className: 'min-h-screen flex items-center justify-center',
                 style: {
-                    backgroundImage: 'linear-gradient(rgba(0, 59, 115, 0.85), rgba(0, 90, 156, 0.85)), url(/login-background.jpg)',
+                    backgroundImage: 'linear-gradient(rgba(0, 59, 115, 0.3), rgba(0, 90, 156, 0.4)), url(/login-background.jpg)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundAttachment: 'fixed'
