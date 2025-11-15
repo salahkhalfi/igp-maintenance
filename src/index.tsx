@@ -8029,14 +8029,22 @@ app.get('/', (c) => {
                         React.createElement('div', {
                             className: 'context-menu-item text-red-600 hover:bg-red-50 font-semibold',
                             onClick: async (e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
+                                
+                                // Sauvegarder le ticket ID et fermer le menu AVANT la confirmation
+                                const ticketId = contextMenu.ticket.id;
+                                setContextMenu(null);
+                                
+                                // Délai pour fermer le menu avant la confirmation
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                                
                                 const confirmed = window.confirm('Supprimer ce ticket definitivement ? Cette action est irreversible.');
                                 if (!confirmed) return;
                                 
                                 try {
-                                    await axios.delete(API_URL + '/tickets/' + contextMenu.ticket.id);
+                                    await axios.delete(API_URL + '/tickets/' + ticketId);
                                     alert('Ticket supprime avec succes');
-                                    setContextMenu(null);
                                     loadData();
                                 } catch (error) {
                                     alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
