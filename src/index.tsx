@@ -7328,7 +7328,7 @@ app.get('/', (c) => {
                             (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
                             React.createElement('button', {
                                 onClick: () => setShowMessaging(true),
-                                className: 'px-3 py-1.5 bg-gradient-to-r from-slate-700 to-gray-700 text-white text-sm rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all'
+                                className: 'px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm rounded-md hover:from-cyan-700 hover:to-blue-700 font-semibold shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-comments mr-2' }),
                                 'Messagerie'
@@ -7349,74 +7349,27 @@ app.get('/', (c) => {
                                 },
                                 className: 'px-3 py-1.5 rounded-md font-semibold shadow-md transition-all flex items-center gap-2 ' + 
                                     (showArchived 
-                                        ? 'bg-gray-600 text-white text-sm hover:bg-gray-700' 
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300')
+                                        ? 'bg-amber-600 text-white text-sm hover:bg-amber-700' 
+                                        : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-2 border-amber-300')
                             },
                                 React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }),
                                 React.createElement('span', {}, showArchived ? 'Masquer Archivés' : 'Voir Archivés'),
                                 React.createElement('span', { 
                                     className: 'px-2 py-0.5 rounded-full text-xs font-bold ' + 
-                                    (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
+                                    (showArchived ? 'bg-amber-500' : 'bg-amber-300 text-amber-900')
                                 }, getTicketsByStatus('archived').length)
                             )
                             ),
-                            // Menu dropdown CSS pur (groupe hover)
-                            React.createElement('div', { className: 'relative group' },
-                                React.createElement('button', {
-                                    className: 'px-3 py-1.5 bg-gray-700 text-white text-sm rounded-md hover:bg-gray-800 font-semibold shadow-md transition-all'
-                                },
-                                    React.createElement('i', { className: 'fas fa-ellipsis-h mr-2' }),
-                                    'Plus'
-                                ),
-                                React.createElement('div', { className: 'hidden group-hover:block absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50' },
-                            // 4. Utilisateurs (gestion admin - moins fréquent)
-                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
+                            // Actualiser button (always visible)
                             React.createElement('button', {
-                                onClick: () => setShowUserManagement(true),
-                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
+                                onClick: onRefresh,
+                                className: 'px-3 py-1.5 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 font-semibold shadow-md transition-all',
+                                title: 'Actualiser les données'
                             },
-                                React.createElement('i', { className: "fas fa-users-cog mr-2" }),
-                                "Utilisateurs"
-                            ) : null,
-                            // 5. Machines (gestion admin - moins fréquent)
-                            (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
-                            React.createElement('button', {
-                                onClick: () => setShowMachineManagement(true),
-                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
-                            },
-                                React.createElement('i', { className: "fas fa-cogs mr-2" }),
-                                "Machines"
-                            ) : null,
-                            // 6. Parametres systeme (admin uniquement)
-                            (currentUser?.role === 'admin') ?
-                            React.createElement('button', {
-                                onClick: () => setShowSystemSettings(true),
-                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
-                            },
-                                React.createElement('i', { className: "fas fa-sliders-h mr-2" }),
-                                "Parametres"
-                            ) : null,
-                            // 7. Rôles (admin uniquement - rare)
-                            (currentUser?.role === 'admin') ?
-                            React.createElement('button', {
-                                onClick: () => {
-                                    // S'assurer que le token est bien dans localStorage avant la redirection
-                                    const token = localStorage.getItem('auth_token');
-                                    if (token) {
-                                        window.location.href = '/admin/roles';
-                                    } else {
-                                        alert('Session expirée. Veuillez vous reconnecter.');
-                                        window.location.href = '/';
-                                    }
-                                },
-                                className: "px-3 py-1.5 w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all",
-                                title: 'Gestion des rôles et permissions (Admin)'
-                            },
-                                React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
-                                'Rôles'
-                            ) : null,
-                            // 7. Activer notifications push (PWA)
-                            // DEBUG: Temporarily remove condition to always show button
+                                React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
+                                'Actualiser'
+                            ),
+                            // Notifications button (always visible)
                             React.createElement('button', {
                                 onClick: async () => {
                                     console.log('[BOUTON] Button clicked! Notification support:', 'Notification' in window);
@@ -7476,10 +7429,15 @@ app.get('/', (c) => {
                                     }
                                 },
                                 className: (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
-                                    ? 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
+                                    ? 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 font-semibold shadow-md transition-all'
                                     : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                                    ? 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
-                                    : 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
+                                    ? 'px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 font-semibold shadow-md transition-all'
+                                    : 'px-3 py-1.5 bg-yellow-600 text-white text-sm rounded-md hover:bg-yellow-700 font-semibold shadow-md transition-all',
+                                title: (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
+                                    ? 'Notifications autorisées'
+                                    : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
+                                    ? 'Notifications refusées - Vérifier les paramètres'
+                                    : 'Activer les notifications push'
                             },
                                 React.createElement('i', { 
                                     className: (typeof Notification !== 'undefined' && Notification.permission === 'denied') 
@@ -7487,25 +7445,75 @@ app.get('/', (c) => {
                                         : 'fas fa-bell mr-2' 
                                 }),
                                 (typeof Notification !== 'undefined' && Notification.permission === 'granted') 
-                                    ? 'Notifications autorisees'
+                                    ? 'Notifs ✓'
                                     : (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                                    ? 'Notifications refusees'
-                                    : 'Activer les notifications'
+                                    ? 'Notifs ✗'
+                                    : 'Notifications'
                             ),
-                            // 8. Actualiser (utile mais auto-refresh disponible)
+                            // Menu dropdown CSS pur (groupe hover) - Improved hover persistence
+                            React.createElement('div', { className: 'relative group' },
+                                React.createElement('button', {
+                                    className: 'px-3 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all'
+                                },
+                                    React.createElement('i', { className: 'fas fa-cog mr-2' }),
+                                    'Plus'
+                                ),
+                                // Invisible bridge to prevent hover loss
+                                React.createElement('div', { className: 'absolute right-0 top-full w-56 pt-1' },
+                                    React.createElement('div', { className: 'hidden group-hover:block bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50' },
+                            // 4. Utilisateurs (gestion admin - moins fréquent)
+                            (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                             React.createElement('button', {
-                                onClick: onRefresh,
-                                className: 'w-full text-left px-4 py-2 hover:bg-gray-100 text-sm'
+                                onClick: () => setShowUserManagement(true),
+                                className: "w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
                             },
-                                React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
-                                'Actualiser'
-                            )
+                                React.createElement('i', { className: "fas fa-users-cog mr-2" }),
+                                "Utilisateurs"
+                            ) : null,
+                            // 5. Machines (gestion admin - moins fréquent)
+                            (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => setShowMachineManagement(true),
+                                className: "w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
+                            },
+                                React.createElement('i', { className: "fas fa-cogs mr-2" }),
+                                "Machines"
+                            ) : null,
+                            // 6. Parametres systeme (admin uniquement)
+                            (currentUser?.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => setShowSystemSettings(true),
+                                className: "w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all"
+                            },
+                                React.createElement('i', { className: "fas fa-sliders-h mr-2" }),
+                                "Parametres"
+                            ) : null,
+                            // 7. Rôles (admin uniquement - rare)
+                            (currentUser?.role === 'admin') ?
+                            React.createElement('button', {
+                                onClick: () => {
+                                    // S'assurer que le token est bien dans localStorage avant la redirection
+                                    const token = localStorage.getItem('auth_token');
+                                    if (token) {
+                                        window.location.href = '/admin/roles';
+                                    } else {
+                                        alert('Session expirée. Veuillez vous reconnecter.');
+                                        window.location.href = '/';
+                                    }
+                                },
+                                className: "w-full text-left px-4 py-2 hover:bg-gray-100 text-sm transition-all",
+                                title: 'Gestion des rôles et permissions (Admin)'
+                            },
+                                React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
+                                'Rôles'
+                            ) : null
+                                    )
                                 )
                             ),
                             // 9. Déconnexion (action de sortie - toujours à la fin)
                             React.createElement('button', {
                                 onClick: onLogout,
-                                className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 shadow-md transition-all'
+                                className: 'px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 shadow-md transition-all'
                             },
                                 React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }),
                                 'Déconnexion'
