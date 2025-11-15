@@ -7371,7 +7371,16 @@ app.get('/', (c) => {
                 },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-6' },
-                            React.createElement('div', { className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0' },
+                            React.createElement('div', { 
+                                className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0',
+                                style: {
+                                    background: 'rgba(255, 255, 255, 1)',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                    width: '100%'
+                                }
+                            },
                                 React.createElement('img', { 
                                     src: '/api/settings/logo?t=' + Date.now(), 
                                     alt: 'IGP Logo',
@@ -7438,15 +7447,7 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { 
-                            className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 mt-4 header-actions',
-                            style: {
-                                background: 'rgba(255, 255, 255, 1)',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                            }
-                        },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 mt-4 header-actions' },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
