@@ -1364,19 +1364,20 @@ app.get('/', (c) => {
         }
         
         .ticket-card {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: linear-gradient(145deg, #ffffff, #f1f5f9);
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 10px;
-            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
+            box-shadow: 
+                6px 6px 12px rgba(71, 85, 105, 0.12),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
             cursor: grab;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(148, 163, 184, 0.08);
             position: relative;
         }
         
@@ -1392,20 +1393,26 @@ app.get('/', (c) => {
         }
         
         .ticket-card:hover {
-            background: rgba(255, 255, 255, 0.35);
-            box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.3);
+            box-shadow: 
+                8px 8px 20px rgba(71, 85, 105, 0.18),
+                -4px -4px 12px rgba(255, 255, 255, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
             transform: translateY(-3px) translateZ(10px);
         }
         .ticket-card:active {
             cursor: grabbing;
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.25);
+            box-shadow: 
+                4px 4px 8px rgba(71, 85, 105, 0.2),
+                -2px -2px 6px rgba(255, 255, 255, 0.7);
         }
         
         .ticket-card.dragging {
             opacity: 0.7;
             cursor: grabbing;
             transform: rotate(3deg) scale(1.05);
-            box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.4);
+            box-shadow: 
+                12px 12px 24px rgba(71, 85, 105, 0.25),
+                -6px -6px 16px rgba(255, 255, 255, 0.5);
         }
         .ticket-card.long-press-active {
             background: #eff6ff;
@@ -1620,11 +1627,18 @@ app.get('/', (c) => {
             }
         }
         
-        /* Am\u00e9lioration de la visibilit\u00e9 du texte sur glassmorphism */
-        .kanban-column-header h3,
+        /* Titres de colonnes plus visibles */
+        .kanban-column-header h3 {
+            font-weight: 800;
+            font-size: 16px;
+            color: #1f2937;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
         .kanban-column-header span {
-            /* text-shadow removed */
             font-weight: 700;
+            font-size: 14px;
+            color: #1f2937;
         }
         
         .ticket-card {
@@ -7340,7 +7354,17 @@ app.get('/', (c) => {
                 }),
                 
                 
-                React.createElement('header', { className: 'bg-white shadow-lg border-b-4 border-igp-blue' },
+                React.createElement('header', { 
+                    className: 'shadow-lg border-b-4 border-igp-blue',
+                    style: {
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
+                        border: '1px solid rgba(255, 255, 255, 0.18)',
+                        borderBottom: '4px solid #003366'
+                    }
+                },
                     React.createElement('div', { className: 'container mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-6' },
                             React.createElement('div', { className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0' },
@@ -7352,24 +7376,46 @@ app.get('/', (c) => {
                                         e.target.src = '/static/logo-igp.png';
                                     }
                                 }),
-                                React.createElement('div', { className: 'border-l-2 border-gray-300 pl-2 md:pl-3 flex-1 min-w-0' },
+                                React.createElement('div', { className: 'border-l-2 border-gray-400 pl-2 md:pl-3 flex-1 min-w-0' },
                                     React.createElement('h1', { 
-                                        className: 'text-sm md:text-lg lg:text-xl font-bold text-igp-blue break-words',
-                                        style: { wordBreak: 'break-word', overflowWrap: 'break-word' },
+                                        className: 'text-sm md:text-lg lg:text-xl font-bold break-words',
+                                        style: { 
+                                            wordBreak: 'break-word', 
+                                            overflowWrap: 'break-word',
+                                            color: '#003366',
+                                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                        },
                                         title: headerTitle
                                     }, headerTitle),
                                     React.createElement('p', { 
-                                        className: 'text-xs md:text-sm text-gray-600 break-words',
-                                        style: { wordBreak: 'break-word', overflowWrap: 'break-word' },
+                                        className: 'text-xs md:text-sm break-words',
+                                        style: { 
+                                            wordBreak: 'break-word', 
+                                            overflowWrap: 'break-word',
+                                            color: '#1f2937',
+                                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                        },
                                         title: headerSubtitle
                                     }, 
                                         headerSubtitle
                                     ),
-                                    React.createElement('p', { className: 'text-xs md:text-sm text-green-600 font-semibold mt-1' }, 
+                                    React.createElement('p', { 
+                                        className: 'text-xs md:text-sm font-semibold mt-1',
+                                        style: {
+                                            color: '#059669',
+                                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                        }
+                                    }, 
                                         '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
-                                        React.createElement('p', { className: "text-xs text-blue-700 font-semibold" }, 
+                                        React.createElement('p', { 
+                                            className: "text-xs font-semibold",
+                                            style: {
+                                                color: '#1e40af',
+                                                textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+                                            }
+                                        }, 
                                             getActiveTicketsCount() + " tickets actifs"
                                         ),
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
