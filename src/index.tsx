@@ -2653,7 +2653,15 @@ app.get('/', (c) => {
                 setPassword(e.target.value);
             };
             
-            return React.createElement('div', { className: 'min-h-screen flex items-center justify-center bg-gradient-to-br from-igp-blue to-blue-900' },
+            return React.createElement('div', { 
+                className: 'min-h-screen flex items-center justify-center',
+                style: {
+                    backgroundImage: 'linear-gradient(rgba(0, 59, 115, 0.85), rgba(0, 90, 156, 0.85)), url(/login-background.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundAttachment: 'fixed'
+                }
+            },
                 React.createElement('div', { className: 'bg-white p-8 rounded-lg shadow-2xl w-96 max-w-md mx-4' },
                     React.createElement('div', { className: 'text-center mb-8' },
                         React.createElement('img', { 
