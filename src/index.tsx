@@ -1323,9 +1323,9 @@ app.get('/', (c) => {
         }
     </script>
     <style>
-        /* Background global avec dégradé bleu IGP professionnel */
+        /* Background neutre pour toutes les pages */
         body {
-            background: linear-gradient(135deg, #003B73 0%, #005A9C 50%, #003B73 100%);
+            background: #f0f4f8;
             min-height: 100vh;
         }
         
