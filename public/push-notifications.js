@@ -90,9 +90,17 @@ async function subscribeToPush() {
     
     // Verifier si deja abonne
     const existingSubscription = await registration.pushManager.getSubscription();
+    let wasUpdated = false;
+    
     if (existingSubscription) {
-      console.log('[SUBSCRIBE] Subscription deja existante, mise a jour...');
+      console.log('[SUBSCRIBE] Subscription existante trouvée');
       console.log('[SUBSCRIBE] Existing endpoint:', existingSubscription.endpoint.substring(0, 50) + '...');
+      
+      // IMPORTANT: Désabonner d'abord pour éviter les conflits multi-utilisateurs
+      console.log('[SUBSCRIBE] Désabonnement de la subscription existante...');
+      await existingSubscription.unsubscribe();
+      console.log('[SUBSCRIBE] Ancienne subscription révoquée');
+      wasUpdated = true;
     }
     
     // Recuperer cle VAPID publique (avec auth)
@@ -108,8 +116,8 @@ async function subscribeToPush() {
     const { publicKey } = response.data;
     console.log('[SUBSCRIBE] Public key:', publicKey.substring(0, 20) + '...');
     
-    // S'abonner
-    console.log('[SUBSCRIBE] Creating browser push subscription...');
+    // S'abonner (toujours créer une NOUVELLE subscription)
+    console.log('[SUBSCRIBE] Creating NEW browser push subscription...');
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey)
@@ -134,11 +142,11 @@ async function subscribeToPush() {
     
     console.log('[SUBSCRIBE] Backend response:', subscribeResponse.status, subscribeResponse.data);
     
-    if (existingSubscription) {
-      console.log('[SUBSCRIBE] SUCCESS! Subscription mise a jour');
+    if (wasUpdated) {
+      console.log('[SUBSCRIBE] SUCCESS! Subscription mise a jour (ancienne revoquee + nouvelle creee)');
       return { success: true, updated: true };
     } else {
-      console.log('[SUBSCRIBE] SUCCESS! Push notifications activees');
+      console.log('[SUBSCRIBE] SUCCESS! Push notifications activees (nouvelle subscription)');
       return { success: true, updated: false };
     }
     
