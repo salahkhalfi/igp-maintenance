@@ -294,4 +294,44 @@ export async function sendPushNotification(
   }
 }
 
+/**
+ * POST /api/push/test - Envoyer une notification de test (DEBUG)
+ * Permet de tester l'envoi de notifications push manuellement
+ */
+push.post('/test', async (c) => {
+  try {
+    const user = c.get('user') as any;
+    if (!user || !user.userId) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    console.log(`[PUSH-TEST] Sending test notification to user ${user.userId} (${user.email})`);
+
+    const result = await sendPushNotification(c.env, user.userId, {
+      title: '🧪 Test Notification',
+      body: 'Ceci est une notification de test envoyée manuellement',
+      icon: '/icon-192.png',
+      data: { test: true, url: '/' }
+    });
+
+    console.log('[PUSH-TEST] Result:', result);
+
+    return c.json({
+      success: result.success,
+      sentCount: result.sentCount,
+      failedCount: result.failedCount,
+      message: result.success 
+        ? `Notification envoyée avec succès à ${result.sentCount} appareil(s)` 
+        : 'Aucune notification envoyée - Vérifiez que vous êtes abonné aux notifications'
+    });
+
+  } catch (error) {
+    console.error('[PUSH-TEST] Error:', error);
+    return c.json({ 
+      error: 'Erreur lors de l\'envoi de la notification de test',
+      details: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, 500);
+  }
+});
+
 export default push;
