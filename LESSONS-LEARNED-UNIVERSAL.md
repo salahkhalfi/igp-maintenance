@@ -75,7 +75,7 @@
 
 ## ⚠️ CATÉGORIES D'ERREURS CRITIQUES UNIVERSELLES
 
-**8 Catégories Universelles:**
+**9 Catégories Universelles:**
 1. JavaScript/TypeScript - Caractères spéciaux
 2. Base de données - État local/développement
 3. CSS/UI - Lisibilité et contraste
@@ -83,7 +83,8 @@
 5. Code cleanliness - Trailing whitespace
 6. Deployment - Environnement runtime
 7. Performance - Requêtes N+1
-8. Deployment - Workflow et processus 🆕
+8. Deployment - Workflow et processus
+9. Communication IA - Token economy 🆕
 
 ---
 
@@ -870,6 +871,213 @@ npx wrangler pages deploy dist --project-name <project-name>
 
 ---
 
+### 9. COMMUNICATION IA - TOKEN ECONOMY
+
+#### ❌ Problème Récurrent
+
+**Réponses verboses avec détails inutiles qui coûtent cher en tokens**
+
+**Symptômes:**
+- Utilisateur ne lit pas 80% de la réponse
+- Tokens consommés inutilement (coût élevé)
+- Réponses longues ralentissent workflow
+- Informations importantes noyées dans détails
+- Frustration utilisateur ("trop verbeux")
+
+**Causes:**
+- IA veut "impressionner" avec détails exhaustifs
+- Pas de feedback sur préférences utilisateur
+- Format "document" au lieu de "conversation"
+- Répétition d'informations déjà connues
+
+**Impact:**
+- 💰 Coût tokens 5-10× supérieur au nécessaire
+- ⏱️ Temps lecture/parsing gaspillé
+- 😤 Expérience utilisateur dégradée
+
+#### ✅ Solutions Validées
+
+**Règle d'or:**
+> **BREF + UTILE + ACTIONNABLE** > Long et exhaustif
+
+**Format préféré:**
+
+```markdown
+## Action Principal
+[1-2 lignes max]
+
+## Commande(s)
+```bash
+cmd1
+cmd2
+```
+
+## Lien Test
+https://... (clickable)
+
+## Détails (si demandés)
+[Lien vers doc ou "Détails?" pour expansion]
+```
+
+**Exemple CORRECT:**
+
+```markdown
+✅ Déploiement terminé
+
+Production: https://mecanique.igpglass.ca
+Staging: https://abc123.webapp-7t8.pages.dev
+
+Tests:
+curl https://mecanique.igpglass.ca/api/health
+
+Détails? Voir DEPLOYMENT-SUMMARY-v2.0.X.md
+```
+
+**Exemple INCORRECT:**
+
+```markdown
+❌ [500 lignes expliquant le déploiement en détails]
+❌ [Tables comparatives non demandées]
+❌ [Explications théoriques non sollicitées]
+❌ [Répétitions de concepts déjà compris]
+```
+
+#### 🎯 Stratégies Token-Efficient
+
+**1. Structure Pyramide Inversée:**
+```
+Ligne 1: Réponse essentielle (toujours lue)
+Ligne 2-3: Action immédiate (souvent lue)
+Ligne 4+: Détails optionnels (rarement lus)
+```
+
+**2. Liens au lieu de Contenu:**
+```markdown
+✅ Voir: LESSONS-LEARNED.md#categorie-8
+✅ Doc: https://hono.dev/api
+✅ Guide: /home/user/webapp/HANDOFF.md
+
+❌ [Répéter contenu complet ici]
+```
+
+**3. Questions Confirmation:**
+```markdown
+"Déployé. Détails nécessaires? (oui/non)"
+"Build OK. Logs? (oui/non)"
+"Commit fait. Voir diff? (oui/non)"
+```
+
+**4. Format Checklist:**
+```markdown
+✅ Build: 701 KB
+✅ Deploy: OK
+✅ Tests: Passés
+
+Problème? → Logs disponibles
+```
+
+**5. One-Liners pour Actions Simples:**
+```markdown
+Q: "Déployer?"
+A: npx wrangler pages deploy dist --project-name webapp
+
+Q: "Build?"
+A: npm run build (1.5s, 701 KB)
+
+Q: "Status?"
+A: v2.0.14, production live, 0 erreurs
+```
+
+#### 📝 Best Practice Universelle
+
+**Avant chaque réponse, se demander:**
+1. L'utilisateur a-t-il VRAIMENT besoin de ces détails?
+2. Peut-on répondre en <5 lignes?
+3. Un lien suffirait-il?
+4. Est-ce répétition d'info déjà donnée?
+
+**Si réponse longue nécessaire:**
+```markdown
+## Résumé (3 lignes max)
+[Essentiel]
+
+## Action Immédiate
+[Commande ou lien]
+
+## Détails Complets
+<details>
+<summary>Cliquer pour détails</summary>
+[Long contenu ici]
+</details>
+```
+
+#### 🔍 Détection Verbosité
+
+**Red flags (signaux d'alerte):**
+- ❌ Réponse >50 lignes sans demande explicite
+- ❌ Répétition concepts déjà expliqués
+- ❌ Tables comparatives non sollicitées
+- ❌ Explications théoriques profondes non demandées
+- ❌ Emojis excessifs (>10 par réponse)
+- ❌ Sections multiples pour question simple
+
+**Green flags (bonne pratique):**
+- ✅ Réponse <10 lignes pour question simple
+- ✅ Lien vers documentation au lieu de duplication
+- ✅ "Détails?" proposé mais pas imposé
+- ✅ Format actionnable (commande + résultat attendu)
+
+#### 💰 Impact Coût
+
+**Exemple réel:**
+```
+Question: "Déployer?"
+
+Réponse Verbose (3000 tokens):
+[Explication déploiement complet]
+[Architecture Cloudflare]
+[Comparaison options]
+[Troubleshooting préventif]
+[Checklist 20 items]
+→ Coût: ~$0.30, Temps lecture: 5 min
+
+Réponse Concise (100 tokens):
+npm run build
+npx wrangler pages deploy dist --project-name webapp
+→ Résultat: https://mecanique.igpglass.ca
+→ Coût: ~$0.01, Temps lecture: 5 sec
+
+Économie: 96% tokens, 98% temps
+```
+
+#### ⚡ Application Immédiate
+
+**Ce document lui-même est un contre-exemple! 🙈**
+
+Version token-efficient de cette section:
+```markdown
+### 9. Token Economy
+
+**Problème:** Réponses trop longues = coût élevé
+
+**Solution:** BREF + UTILE + LIEN
+
+Format:
+- Action (1 ligne)
+- Commande (bash)
+- Lien test (clickable)
+- "Détails?" (optionnel)
+
+Red flag: >50 lignes sans demande
+Économie: 90%+ tokens possible
+
+Voir exemples: [lien vers ce document]
+```
+
+**Tokens:** 80 vs 1200+ (93% économie) ✅
+
+---
+
 ## 🛠️ OUTILS ET COMMANDES UNIVERSELLES
 
 ### Diagnostic Rapide
@@ -1062,6 +1270,15 @@ ab -n 1000 -c 10 http://localhost:3000/  # Apache Bench
 
 ## 📝 HISTORIQUE DES MODIFICATIONS
 
+### Version 1.2.0 (2025-01-16)
+- ✅ **Ajout catégorie 9: Communication IA - Token Economy**
+- ✅ Règles réponses concises (BREF + UTILE + LIEN)
+- ✅ Format pyramide inversée (essentiel → détails optionnels)
+- ✅ Stratégies économie tokens (96%+ réduction possible)
+- ✅ Red flags verbosité (>50 lignes, répétitions)
+- ✅ One-liners pour actions simples
+- 📌 **Raison:** Feedback utilisateur sur coût élevé et verbosité excessive
+
 ### Version 1.1.0 (2025-01-16)
 - ✅ **Ajout catégorie 8: Deployment - Workflow et Processus**
 - ✅ Distinction claire: Mise à jour vs Nouveau déploiement
@@ -1241,10 +1458,10 @@ Une leçon doit respecter **TOUS** ces critères:
 
 ---
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Date:** 2025-01-16  
 **Statut:** ✅ Production Ready  
 **Portée:** Universel - Tous projets web  
 **Langage:** Français (pour clarté)  
 **Maintenance:** Vivant - Mis à jour en continu  
-**Dernière leçon:** Deployment Workflow (Mise à jour vs Nouveau) 🆕
+**Dernière leçon:** Token Economy (Réponses concises) 🆕
