@@ -1376,7 +1376,9 @@ app.get('/', (c) => {
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(203, 213, 225, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            border-left: 1px solid rgba(255, 255, 255, 0.5);
             position: relative;
         }
 
@@ -1386,9 +1388,32 @@ app.get('/', (c) => {
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.1), transparent);
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.9) 20%,
+                rgba(255, 255, 255, 0.9) 80%,
+                transparent
+            );
             border-radius: 10px 10px 0 0;
+        }
+
+        .ticket-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            padding: 1px;
+            background: linear-gradient(145deg,
+                rgba(255, 255, 255, 0.4),
+                rgba(255, 255, 255, 0.1) 30%,
+                transparent 50%,
+                rgba(71, 85, 105, 0.1)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
         }
 
         .ticket-card:hover {
