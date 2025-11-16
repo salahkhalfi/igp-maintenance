@@ -30,7 +30,10 @@
     "db:backup": "bash scripts/backup-db.sh",
     "db:restore": "bash scripts/restore-db.sh",
     "db:list-backups": "ls -lht .wrangler/backups/ 2>/dev/null || echo 'Aucun backup trouvé'",
-    "clean-port": "fuser -k 3000/tcp 2>/dev/null || true"
+    "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
+    "hub:check": "bash check-hub-sync.sh",
+    "hub:version": "grep -m1 'Version:' LESSONS-LEARNED-MEMOIRE.md",
+    "hub:changelog": "grep -A 20 'HISTORIQUE DES MODIFICATIONS' LESSONS-LEARNED-MEMOIRE.md"
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "^1.0.2",

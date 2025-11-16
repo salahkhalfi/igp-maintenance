@@ -1,0 +1,23 @@
+================================================================================
+AUDIT PRÉ-PRODUCTION - $(date '+%Y-%m-%d %H:%M:%S')
+================================================================================
+
+SYSTÈME: Maintenance Ticketing System IGP
+VERSION: v2.0.16-smart-sorting-ui
+OBJECTIF: Vérification complète avant déploiement production
+
+================================================================================
+1. CHANGEMENTS RÉCENTS (Session actuelle)
+================================================================================
+
+0c609ea (HEAD -> main, tag: v2.0.16-smart-sorting-ui) 🎨 UX: Dropdown de tri visible uniquement si > 2 tickets
+9cf76e6 (tag: v2.0.15-realistic-sorting) 🔥 refactor: Remplacer options de tri par critères industriels réalistes
+eb94e2d (tag: v2.0.14-ticket-sorting) ✨ feat: Ajout dropdown de tri pour tickets dans chaque colonne
+22c3d97 (tag: v2.0.13-premium-borders) ✨ style: Amélioration des bordures des tickets (premium & professionnel)
+90beb60 chore: Remove temporary backup file
+dc911d3 (tag: v2.0.12-stable-cleaned-20251116) 🧹 Code cleanup: Remove trailing whitespace and excessive blank lines
+36abcf9 (tag: v2.0.11-stable-20251116-082831, origin/main) fix: Ajouter backdrop et bouton Annuler au menu contextuel mobile
+c440f52 fix: Supprimer expiration automatique des subscriptions push
+a9ad1f1 fix: VRAI PROBLÈME - Container principal avait fond blanc 95%
+8069d6f fix: PROBLÈME TROUVÉ - Retirer bg-gray-50 du body
+
