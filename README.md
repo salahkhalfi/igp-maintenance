@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.0.11-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.0.14-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
@@ -11,7 +11,18 @@
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
-## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.13)
+## 🆕 Dernières mises à jour (Versions 2.0.6 - 2.0.14)
+
+### Version 2.0.14 (16 janvier 2025) - AMÉLIORATION UX MOBILE 📱👆
+- **✨ AMÉLIORATION** : Ergonomie mobile du dropdown de tri Kanban
+- **👆 Zone tactile 44×44px** : Conforme standards Apple/Android/WCAG 2.1
+- **📱 Taille adaptative** : 14px mobile (lisible) / 12px desktop (compact)
+- **🎯 Padding généreux** : 10px vertical mobile vs 6px desktop
+- **🖼️ Visibilité accrue** : Border 2px + shadow légère
+- **♿ Accessibilité** : touch-manipulation pour réponse tactile optimale
+- **📏 Label intelligent** : Icône seule sur mobile, texte complet sur desktop
+- **✅ Tests validés** : Facilite utilisation pour utilisateurs avec gros doigts
+- **📝 Documentation** : MOBILE-SORT-IMPROVEMENTS.md avec comparatif avant/après
 
 ### Version 2.0.13 (14 novembre 2025) - PWA + PUSH NOTIFICATIONS 📱🔔
 - **✨ NOUVELLE FONCTIONNALITÉ** : Application PWA installable sur mobile
@@ -81,14 +92,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.0.13 - Production Ready** (PWA + Push Notifications + Calendrier avec Heure)
+✅ **Version 2.0.14 - Production Ready** (UX Mobile Optimisée + PWA + Push Notifications + Calendrier avec Heure)
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
 - Base de données D1 configurée avec migrations
 - Système d'authentification JWT fonctionnel
 - Gestion des médias avec Cloudflare R2
-- **NOUVEAU v2.0.13**: 📱 PWA installable + 🔔 Push notifications (Android Chrome validé)
+- **NOUVEAU v2.0.14**: 📱👆 Dropdown tri mobile optimisé (44×44px tactile, WCAG 2.1)
+- **v2.0.13**: 📱 PWA installable + 🔔 Push notifications (Android Chrome validé)
 - **v2.0.12**: ⏰ Sélection date ET heure + Fix timezone critique (7/7 tests validés)
 - **v2.0.10**: ✅ Boutons "Tout/Aucun" pour sélection rapide masse
 - **v2.0.9**: 🔲 Suppression masse messages (mode sélection + checkboxes)
