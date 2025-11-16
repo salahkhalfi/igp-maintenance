@@ -7055,16 +7055,35 @@ app.get('/', (c) => {
                 }
 
                 // Appliquer le tri selon l'option sélectionnée
-                if (sortBy === 'priority') {
-                    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-                    filteredTickets.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
-                } else if (sortBy === 'date') {
-                    filteredTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                } else if (sortBy === 'machine') {
+                if (sortBy === 'urgency') {
+                    // Tri par urgence (priorité + temps écoulé)
+                    const priorityOrder = { critical: 400, high: 300, medium: 200, low: 100 };
                     filteredTickets.sort((a, b) => {
-                        const machineA = (a.machine_type + ' ' + a.model).toLowerCase();
-                        const machineB = (b.machine_type + ' ' + b.model).toLowerCase();
-                        return machineA.localeCompare(machineB);
+                        const now = new Date();
+                        const hoursA = (now - new Date(a.created_at)) / (1000 * 60 * 60);
+                        const hoursB = (now - new Date(b.created_at)) / (1000 * 60 * 60);
+                        const scoreA = priorityOrder[a.priority] + hoursA;
+                        const scoreB = priorityOrder[b.priority] + hoursB;
+                        return scoreB - scoreA; // Score le plus élevé en premier
+                    });
+                } else if (sortBy === 'oldest') {
+                    // Tri par ancienneté (plus ancien en premier)
+                    filteredTickets.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                } else if (sortBy === 'scheduled') {
+                    // Tri par date planifiée (aujourd'hui/proche en premier)
+                    filteredTickets.sort((a, b) => {
+                        const hasScheduledA = a.scheduled_date && a.scheduled_date !== 'null';
+                        const hasScheduledB = b.scheduled_date && b.scheduled_date !== 'null';
+
+                        // Tickets planifiés en premier
+                        if (hasScheduledA && !hasScheduledB) return -1;
+                        if (!hasScheduledA && hasScheduledB) return 1;
+                        if (!hasScheduledA && !hasScheduledB) return 0;
+
+                        // Comparer les dates planifiées
+                        const dateA = new Date(a.scheduled_date.replace(' ', 'T'));
+                        const dateB = new Date(b.scheduled_date.replace(' ', 'T'));
+                        return dateA - dateB; // Plus proche en premier
                     });
                 }
                 // sortBy === 'default' : pas de tri, ordre original
@@ -7729,9 +7748,9 @@ app.get('/', (c) => {
                                         onClick: (e) => e.stopPropagation()
                                     },
                                         React.createElement('option', { value: 'default' }, 'Par défaut'),
-                                        React.createElement('option', { value: 'priority' }, '🔴 Priorité'),
-                                        React.createElement('option', { value: 'date' }, '📅 Date (récent)'),
-                                        React.createElement('option', { value: 'machine' }, '🔧 Machine (A-Z)')
+                                        React.createElement('option', { value: 'urgency' }, '🔥 Urgence (priorité + temps)'),
+                                        React.createElement('option', { value: 'oldest' }, '⏰ Plus ancien'),
+                                        React.createElement('option', { value: 'scheduled' }, '📅 Planifié')
                                     )
                                 ),
                                 React.createElement('div', { className: 'space-y-2' },
@@ -7882,9 +7901,9 @@ app.get('/', (c) => {
                                             onClick: (e) => e.stopPropagation()
                                         },
                                             React.createElement('option', { value: 'default' }, 'Par défaut'),
-                                            React.createElement('option', { value: 'priority' }, '🔴 Priorité'),
-                                            React.createElement('option', { value: 'date' }, '📅 Date (récent)'),
-                                            React.createElement('option', { value: 'machine' }, '🔧 Machine (A-Z)')
+                                            React.createElement('option', { value: 'urgency' }, '🔥 Urgence (priorité + temps)'),
+                                            React.createElement('option', { value: 'oldest' }, '⏰ Plus ancien'),
+                                            React.createElement('option', { value: 'scheduled' }, '📅 Planifié')
                                         )
                                     ),
                                     React.createElement('div', { className: 'space-y-2' },
