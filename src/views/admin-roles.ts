@@ -95,7 +95,7 @@ export const adminRolesHTML = `<!DOCTYPE html>
                     </button>
                 </div>
             </div>
-            
+
             <div class="p-4 sm:p-6">
                 <!-- Formulaire -->
                 <div class="space-y-6 mb-6">
@@ -103,36 +103,36 @@ export const adminRolesHTML = `<!DOCTYPE html>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-tag text-blue-500 mr-2"></i>Nom Technique *
                         </label>
-                        <input type="text" id="roleName" 
-                               placeholder="ex: data_analyst" 
+                        <input type="text" id="roleName"
+                               placeholder="ex: data_analyst"
                                class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                                pattern="[a-z0-9_]+"
                                required>
                         <p class="text-xs text-gray-500 mt-1">Minuscules, chiffres et underscores uniquement</p>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-text-width text-green-500 mr-2"></i>Nom d'Affichage *
                         </label>
-                        <input type="text" id="roleDisplayName" 
-                               placeholder="ex: Analyste de Données" 
+                        <input type="text" id="roleDisplayName"
+                               placeholder="ex: Analyste de Données"
                                class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                                required>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i class="fas fa-align-left text-purple-500 mr-2"></i>Description *
                         </label>
-                        <textarea id="roleDescription" 
-                                  rows="3" 
-                                  placeholder="Décrivez le rôle et ses responsabilités..." 
+                        <textarea id="roleDescription"
+                                  rows="3"
+                                  placeholder="Décrivez le rôle et ses responsabilités..."
                                   class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                                   required></textarea>
                     </div>
                 </div>
-                
+
                 <!-- Permissions -->
                 <div class="border-t pt-6">
                     <div class="flex items-center justify-between mb-4">
@@ -152,12 +152,12 @@ export const adminRolesHTML = `<!DOCTYPE html>
                             </button>
                         </div>
                     </div>
-                    
+
                     <div id="permissionsContainer" class="space-y-4 max-h-96 overflow-y-auto">
                         <!-- Les permissions seront chargées ici -->
                     </div>
                 </div>
-                
+
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 mt-6 pt-6 border-t">
                     <button onclick="closeModal()" class="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base">
@@ -182,7 +182,7 @@ export const adminRolesHTML = `<!DOCTYPE html>
                     </button>
                 </div>
             </div>
-            
+
             <div id="viewModalContent" class="p-4 sm:p-6">
                 <!-- Le contenu sera chargé dynamiquement -->
             </div>

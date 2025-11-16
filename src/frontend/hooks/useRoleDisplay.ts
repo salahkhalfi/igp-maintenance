@@ -57,7 +57,7 @@ const ROLE_DISPLAY_CONFIG: Record<string, RoleDisplayConfig> = {
  * Hook pour obtenir la configuration d'affichage d'un rôle
  * @param role - Nom du rôle (admin, supervisor, technician, operator, ou personnalisé)
  * @returns Configuration d'affichage du rôle
- * 
+ *
  * @example
  * const roleDisplay = useRoleDisplay(currentUser.role);
  * return <span className={roleDisplay.color}>

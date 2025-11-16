@@ -5,19 +5,19 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
     const [users, setUsers] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [showCreateForm, setShowCreateForm] = React.useState(false);
-    
+
     // Formulaire de création
     const [newEmail, setNewEmail] = React.useState('');
     const [newPassword, setNewPassword] = React.useState('');
     const [newFullName, setNewFullName] = React.useState('');
     const [newRole, setNewRole] = React.useState('operator');
-    
+
     React.useEffect(() => {
         if (show) {
             loadUsers();
         }
     }, [show]);
-    
+
     const loadUsers = async () => {
         try {
             setLoading(true);
@@ -29,15 +29,15 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
             setLoading(false);
         }
     };
-    
+
     const handleCreateUser = async (e: any) => {
         e.preventDefault();
-        
+
         if (!newEmail || !newPassword || !newFullName || !newRole) {
             alert('Tous les champs sont requis');
             return;
         }
-        
+
         try {
             await axios.post(API_URL + '/users', {
                 email: newEmail,
@@ -45,7 +45,7 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
                 full_name: newFullName,
                 role: newRole
             });
-            
+
             alert('Utilisateur créé avec succès');
             setNewEmail('');
             setNewPassword('');
@@ -57,12 +57,12 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
             alert('Erreur: ' + (error.response?.data?.error || 'Erreur inconnue'));
         }
     };
-    
+
     const handleDeleteUser = async (user: any) => {
         if (!confirm(`Supprimer ${user.full_name} (${user.email}) ?`)) {
             return;
         }
-        
+
         try {
             await axios.delete(API_URL + '/users/' + user.id);
             alert('Utilisateur supprimé');
@@ -71,9 +71,9 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
             alert('Erreur: ' + (error.response?.data?.error || 'Erreur inconnue'));
         }
     };
-    
+
     if (!show) return null;
-    
+
     return React.createElement('div', {
         className: 'modal active',
         onClick: onClose
@@ -96,7 +96,7 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
                     React.createElement('i', { className: 'fas fa-times fa-2x' })
                 )
             ),
-            
+
             // Bouton créer
             !showCreateForm ? React.createElement('div', { className: 'mb-6' },
                 React.createElement('button', {
@@ -107,7 +107,7 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
                     'Créer un utilisateur'
                 )
             ) : null,
-            
+
             // Formulaire création
             showCreateForm ? React.createElement('div', { className: 'mb-6 bg-blue-50 p-6 rounded-lg' },
                 React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Nouvel utilisateur'),
@@ -172,11 +172,11 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
                     )
                 )
             ) : null,
-            
+
             // Liste des utilisateurs
-            loading ? React.createElement('p', {}, 'Chargement...') : 
+            loading ? React.createElement('p', {}, 'Chargement...') :
             React.createElement('div', { className: 'space-y-4' },
-                React.createElement('h3', { className: 'text-lg font-bold mb-4' }, 
+                React.createElement('h3', { className: 'text-lg font-bold mb-4' },
                     'Utilisateurs (' + users.length + ')'
                 ),
                 users.map((user: any) =>
@@ -187,7 +187,7 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
                         React.createElement('div', {},
                             React.createElement('h4', { className: 'font-bold' }, user.full_name),
                             React.createElement('p', { className: 'text-sm text-gray-600' }, user.email),
-                            React.createElement('p', { className: 'text-sm' }, 
+                            React.createElement('p', { className: 'text-sm' },
                                 'Rôle: ' + user.role
                             )
                         ),

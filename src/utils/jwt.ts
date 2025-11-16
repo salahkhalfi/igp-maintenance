@@ -5,11 +5,11 @@ import { SignJWT, jwtVerify } from 'jose';
 
 /**
  * 🔒 SÉCURITÉ: Configuration du secret JWT
- * 
+ *
  * Le secret JWT doit être configuré via les variables d'environnement Cloudflare:
  * 1. En production: npx wrangler secret put JWT_SECRET --project-name webapp
  * 2. En développement local: ajouter JWT_SECRET dans .dev.vars
- * 
+ *
  * IMPORTANT: Le secret doit avoir au moins 32 caractères pour une sécurité optimale
  */
 
@@ -92,15 +92,15 @@ export function isJWTSecretConfigured(): boolean {
  * Obtient des informations sur la configuration JWT (pour diagnostics)
  * @returns Objet avec le statut de la configuration
  */
-export function getJWTConfig(): { 
-  configured: boolean; 
+export function getJWTConfig(): {
+  configured: boolean;
   secretLength: number;
   isSecure: boolean;
 } {
   const configured = !!JWT_SECRET_ENV;
   const secretLength = JWT_SECRET_ENV?.length || 0;
   const isSecure = configured && secretLength >= 32;
-  
+
   return {
     configured,
     secretLength: configured ? secretLength : 0,

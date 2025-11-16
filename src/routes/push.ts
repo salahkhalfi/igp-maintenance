@@ -5,11 +5,11 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
-import { 
-  buildPushPayload, 
-  type PushSubscription, 
-  type PushMessage, 
-  type VapidKeys 
+import {
+  buildPushPayload,
+  type PushSubscription,
+  type PushMessage,
+  type VapidKeys
 } from '@block65/webcrypto-web-push';
 
 const push = new Hono<{ Bindings: Bindings }>();
@@ -31,7 +31,7 @@ push.post('/subscribe', async (c) => {
       console.error('[PUSH-SUBSCRIBE] User not found in context:', user);
       return c.json({ error: 'Non authentifié' }, 401);
     }
-    
+
     console.log('[PUSH-SUBSCRIBE] User authenticated:', user.userId, user.email);
 
     const body = await c.req.json();
@@ -43,7 +43,7 @@ push.post('/subscribe', async (c) => {
 
     // Insérer ou mettre à jour la subscription
     await c.env.DB.prepare(`
-      INSERT INTO push_subscriptions 
+      INSERT INTO push_subscriptions
       (user_id, endpoint, p256dh, auth, device_type, device_name, last_used)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(endpoint) DO UPDATE SET
@@ -89,7 +89,7 @@ push.post('/unsubscribe', async (c) => {
     }
 
     await c.env.DB.prepare(`
-      DELETE FROM push_subscriptions 
+      DELETE FROM push_subscriptions
       WHERE user_id = ? AND endpoint = ?
     `).bind(user.userId, endpoint).run();
 
@@ -109,7 +109,7 @@ push.post('/unsubscribe', async (c) => {
 push.get('/vapid-public-key', async (c) => {
   try {
     const publicKey = c.env.VAPID_PUBLIC_KEY;
-    
+
     if (!publicKey) {
       return c.json({ error: 'Clé VAPID non configurée' }, 500);
     }
@@ -322,14 +322,14 @@ push.post('/test', async (c) => {
       success: result.success,
       sentCount: result.sentCount,
       failedCount: result.failedCount,
-      message: result.success 
-        ? `Notification envoyée avec succès à ${result.sentCount} appareil(s)` 
+      message: result.success
+        ? `Notification envoyée avec succès à ${result.sentCount} appareil(s)`
         : 'Aucune notification envoyée - Vérifiez que vous êtes abonné aux notifications'
     });
 
   } catch (error) {
     console.error('[PUSH-TEST] Error:', error);
-    return c.json({ 
+    return c.json({
       error: 'Erreur lors de l\'envoi de la notification de test',
       details: error instanceof Error ? error.message : 'Erreur inconnue'
     }, 500);

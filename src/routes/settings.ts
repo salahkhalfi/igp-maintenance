@@ -26,34 +26,34 @@ const RECOMMENDED_HEIGHT = 80;
 settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
+
     const formData = await c.req.formData();
     const file = formData.get('logo') as File;
-    
+
     if (!file) {
       return c.json({ error: 'Aucun fichier fourni' }, 400);
     }
-    
+
     // Validation du type de fichier
     if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
-      return c.json({ 
-        error: `Type de fichier non autorisé. Formats acceptés: ${ALLOWED_LOGO_TYPES.join(', ')}` 
+      return c.json({
+        error: `Type de fichier non autorisé. Formats acceptés: ${ALLOWED_LOGO_TYPES.join(', ')}`
       }, 400);
     }
-    
+
     // Validation de la taille
     if (file.size > MAX_LOGO_SIZE) {
-      return c.json({ 
-        error: `Fichier trop volumineux (max ${MAX_LOGO_SIZE / 1024} KB)` 
+      return c.json({
+        error: `Fichier trop volumineux (max ${MAX_LOGO_SIZE / 1024} KB)`
       }, 400);
     }
-    
+
     // Générer une clé unique pour le fichier
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(7);
     const extension = file.name.split('.').pop() || 'png';
     const fileKey = `logos/company-logo-${timestamp}-${randomStr}.${extension}`;
-    
+
     // Upload vers R2
     const arrayBuffer = await file.arrayBuffer();
     await c.env.MEDIA_BUCKET.put(fileKey, arrayBuffer, {
@@ -61,21 +61,21 @@ settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
         contentType: file.type,
       },
     });
-    
+
     console.log(`✅ Logo uploadé dans R2: ${fileKey}`);
-    
+
     // Construire l'URL du logo (via la route GET /api/settings/logo)
     const logoUrl = `/api/settings/logo?t=${timestamp}`;
-    
+
     // Mettre à jour la DB avec la clé du fichier R2
     const existing = await c.env.DB.prepare(`
       SELECT id FROM system_settings WHERE setting_key = 'company_logo_key'
     `).first();
-    
+
     if (existing) {
       await c.env.DB.prepare(`
-        UPDATE system_settings 
-        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
         WHERE setting_key = 'company_logo_key'
       `).bind(fileKey).run();
     } else {
@@ -84,10 +84,10 @@ settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
         VALUES ('company_logo_key', ?)
       `).bind(fileKey).run();
     }
-    
+
     console.log(`✅ Logo enregistré dans DB: ${fileKey}`);
-    
-    return c.json({ 
+
+    return c.json({
       message: 'Logo uploadé avec succès',
       logoUrl,
       fileKey,
@@ -107,7 +107,7 @@ settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
 /**
  * GET /api/settings/logo - Récupérer le logo actuel depuis R2
  * Accès: Public (pour affichage)
- * 
+ *
  * NOTE: Cette route DOIT être déclarée AVANT la route générique GET /:key
  * sinon Hono matchera /logo comme /:key avec key="logo"
  */
@@ -117,23 +117,23 @@ settings.get('/logo', async (c) => {
     const setting = await c.env.DB.prepare(`
       SELECT setting_value FROM system_settings WHERE setting_key = 'company_logo_key'
     `).first() as any;
-    
+
     if (!setting || !setting.setting_value) {
       // Pas de logo personnalisé, retourner le logo par défaut
       return c.redirect('/static/logo-igp.png');
     }
-    
+
     const fileKey = setting.setting_value;
-    
+
     // Récupérer le fichier depuis R2
     const object = await c.env.MEDIA_BUCKET.get(fileKey);
-    
+
     if (!object) {
       console.error(`Logo non trouvé dans R2: ${fileKey}`);
       // Fallback sur le logo par défaut
       return c.redirect('/static/logo-igp.png');
     }
-    
+
     // Retourner le logo avec cache
     return new Response(object.body, {
       headers: {
@@ -155,12 +155,12 @@ settings.get('/logo', async (c) => {
 settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
+
     // Récupérer la clé du logo depuis la DB
     const setting = await c.env.DB.prepare(`
       SELECT setting_value FROM system_settings WHERE setting_key = 'company_logo_key'
     `).first() as any;
-    
+
     if (setting && setting.setting_value) {
       // Supprimer le fichier du bucket R2
       try {
@@ -170,13 +170,13 @@ settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
         console.error(`Erreur suppression R2 ${setting.setting_value}:`, deleteError);
       }
     }
-    
+
     // Supprimer l'entrée de la DB
     await c.env.DB.prepare(`
       DELETE FROM system_settings WHERE setting_key = 'company_logo_key'
     `).run();
-    
-    return c.json({ 
+
+    return c.json({
       message: 'Logo supprimé avec succès. Le logo par défaut sera utilisé.',
       defaultLogo: '/static/logo-igp.png'
     });
@@ -194,41 +194,41 @@ settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
 settings.put('/title', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
+
     const body = await c.req.json();
     const { value } = body;
-    
+
     if (!value || typeof value !== 'string') {
       return c.json({ error: 'Titre invalide' }, 400);
     }
-    
+
     // Validation stricte
     const trimmedValue = value.trim();
-    
+
     if (trimmedValue.length === 0) {
       return c.json({ error: 'Le titre ne peut pas être vide' }, 400);
     }
-    
+
     if (trimmedValue.length > 100) {
       return c.json({ error: 'Le titre ne peut pas dépasser 100 caractères' }, 400);
     }
-    
+
     // ⚠️ IMPORTANT: Pas d'échappement HTML ici!
     // React.createElement() échappe automatiquement le contenu à l'affichage.
     // On stocke la valeur BRUTE en DB (best practice).
     // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
     // Protection XSS: React échappe automatiquement dans createElement()
-    
+
     // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
     await c.env.DB.prepare(`
-      UPDATE system_settings 
+      UPDATE system_settings
       SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
       WHERE setting_key = 'company_title'
     `).bind(trimmedValue).run();
-    
+
     console.log(`✅ Titre modifié par user ${user.userId}: "${trimmedValue}"`);
-    
-    return c.json({ 
+
+    return c.json({
       message: 'Titre mis à jour avec succès',
       setting_value: trimmedValue
     });
@@ -246,41 +246,41 @@ settings.put('/title', authMiddleware, adminOnly, async (c) => {
 settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
-    
+
     const body = await c.req.json();
     const { value } = body;
-    
+
     if (!value || typeof value !== 'string') {
       return c.json({ error: 'Sous-titre invalide' }, 400);
     }
-    
+
     // Validation stricte
     const trimmedValue = value.trim();
-    
+
     if (trimmedValue.length === 0) {
       return c.json({ error: 'Le sous-titre ne peut pas être vide' }, 400);
     }
-    
+
     if (trimmedValue.length > 150) {
       return c.json({ error: 'Le sous-titre ne peut pas dépasser 150 caractères' }, 400);
     }
-    
+
     // ⚠️ IMPORTANT: Pas d'échappement HTML ici!
     // React.createElement() échappe automatiquement le contenu à l'affichage.
     // On stocke la valeur BRUTE en DB (best practice).
     // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
     // Protection XSS: React échappe automatiquement dans createElement()
-    
+
     // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
     await c.env.DB.prepare(`
-      UPDATE system_settings 
+      UPDATE system_settings
       SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
       WHERE setting_key = 'company_subtitle'
     `).bind(trimmedValue).run();
-    
+
     console.log(`✅ Sous-titre modifié par user ${user.userId}: "${trimmedValue}"`);
-    
-    return c.json({ 
+
+    return c.json({
       message: 'Sous-titre mis à jour avec succès',
       setting_value: trimmedValue
     });
@@ -297,7 +297,7 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
 /**
  * GET /api/settings/:key - Obtenir une valeur de paramètre
  * Accès: Tous les utilisateurs authentifiés
- * 
+ *
  * Utilisé pour: timezone_offset_hours, etc.
  * NOTE: Cette route est déclarée APRÈS les routes spécifiques (/logo, /upload-logo)
  * pour éviter qu'elle ne les capture
@@ -305,15 +305,15 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
 settings.get('/:key', async (c) => {
   try {
     const key = c.req.param('key');
-    
+
     const result = await c.env.DB.prepare(`
       SELECT setting_value FROM system_settings WHERE setting_key = ?
     `).bind(key).first();
-    
+
     if (!result) {
       return c.json({ error: 'Paramètre non trouvé' }, 404);
     }
-    
+
     return c.json({ setting_value: result.setting_value });
   } catch (error) {
     console.error('Get setting error:', error);
@@ -324,7 +324,7 @@ settings.get('/:key', async (c) => {
 /**
  * PUT /api/settings/:key - Mettre à jour une valeur de paramètre
  * Accès: Admin uniquement
- * 
+ *
  * Utilisé pour: timezone_offset_hours, etc.
  */
 settings.put('/:key', adminOnly, async (c) => {
@@ -332,21 +332,21 @@ settings.put('/:key', adminOnly, async (c) => {
     const key = c.req.param('key');
     const body = await c.req.json();
     const { value } = body;
-    
+
     if (value === undefined) {
       return c.json({ error: 'Valeur requise' }, 400);
     }
-    
+
     // Vérifier si le paramètre existe
     const existing = await c.env.DB.prepare(`
       SELECT id FROM system_settings WHERE setting_key = ?
     `).bind(key).first();
-    
+
     if (existing) {
       // Mise à jour
       await c.env.DB.prepare(`
-        UPDATE system_settings 
-        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
         WHERE setting_key = ?
       `).bind(value, key).run();
     } else {
@@ -356,7 +356,7 @@ settings.put('/:key', adminOnly, async (c) => {
         VALUES (?, ?)
       `).bind(key, value).run();
     }
-    
+
     return c.json({ message: 'Paramètre mis à jour avec succès', setting_value: value });
   } catch (error) {
     console.error('Update setting error:', error);

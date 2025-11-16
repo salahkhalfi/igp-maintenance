@@ -93,7 +93,7 @@ auth.post('/login', async (c) => {
         await c.env.DB.prepare(
           'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
         ).bind(newHash, user.id).run();
-        
+
         console.log(`Password upgraded for user ${user.email} (SHA-256 → PBKDF2)`);
       } catch (error) {
         // En cas d'erreur, on continue quand même (l'utilisateur peut se connecter)
@@ -133,7 +133,7 @@ auth.post('/login', async (c) => {
 auth.get('/me', async (c) => {
   try {
     const userPayload = c.get('user') as any;
-    
+
     if (!userPayload) {
       return c.json({ error: 'Non authentifié' }, 401);
     }

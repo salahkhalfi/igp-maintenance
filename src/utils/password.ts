@@ -4,10 +4,10 @@
 
 /**
  * SYSTÈME DE HASHAGE AVEC RÉTROCOMPATIBILITÉ
- * 
+ *
  * Anciens hashs (SHA-256 sans salt): 64 caractères hexadécimaux
  * Nouveaux hashs (PBKDF2): format "v2:salt:hash" (plus de 64 caractères)
- * 
+ *
  * La fonction verifyPassword détecte automatiquement le format
  * et utilise l'algorithme approprié pour la vérification.
  */
@@ -21,10 +21,10 @@ const PBKDF2_ITERATIONS = 100000;
 export async function hashPasswordPBKDF2(password: string, saltBytes?: Uint8Array): Promise<string> {
   // Générer un salt aléatoire si non fourni
   const salt = saltBytes || crypto.getRandomValues(new Uint8Array(16));
-  
+
   const encoder = new TextEncoder();
   const passwordBuffer = encoder.encode(password);
-  
+
   // Importer la clé
   const importedKey = await crypto.subtle.importKey(
     'raw',
@@ -33,7 +33,7 @@ export async function hashPasswordPBKDF2(password: string, saltBytes?: Uint8Arra
     false,
     ['deriveBits']
   );
-  
+
   // Dériver les bits avec PBKDF2
   const derivedBits = await crypto.subtle.deriveBits(
     {
@@ -45,12 +45,12 @@ export async function hashPasswordPBKDF2(password: string, saltBytes?: Uint8Arra
     importedKey,
     256
   );
-  
+
   // Convertir en hexadécimal
   const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
   const hashHex = Array.from(new Uint8Array(derivedBits))
     .map(b => b.toString(16).padStart(2, '0')).join('');
-  
+
   // Format: v2:salt:hash
   return `v2:${saltHex}:${hashHex}`;
 }
@@ -76,7 +76,7 @@ export async function hashPassword(password: string): Promise<string> {
 
 /**
  * Vérifie un mot de passe avec rétrocompatibilité automatique
- * 
+ *
  * Détecte le format du hash:
  * - Format "v2:salt:hash" → Utilise PBKDF2
  * - Format de 64 caractères hex → Utilise SHA-256 (ancien)
@@ -102,18 +102,18 @@ async function verifyPasswordPBKDF2(password: string, storedHash: string): Promi
     if (parts.length !== 3 || parts[0] !== 'v2') {
       return false;
     }
-    
+
     const saltHex = parts[1];
     const hashHex = parts[2];
-    
+
     // Convertir le salt hex en bytes
     const salt = new Uint8Array(
       saltHex.match(/.{2}/g)!.map(byte => parseInt(byte, 16))
     );
-    
+
     const encoder = new TextEncoder();
     const passwordBuffer = encoder.encode(password);
-    
+
     // Importer la clé
     const importedKey = await crypto.subtle.importKey(
       'raw',
@@ -122,7 +122,7 @@ async function verifyPasswordPBKDF2(password: string, storedHash: string): Promi
       false,
       ['deriveBits']
     );
-    
+
     // Dériver les bits avec le même salt
     const derivedBits = await crypto.subtle.deriveBits(
       {
@@ -134,11 +134,11 @@ async function verifyPasswordPBKDF2(password: string, storedHash: string): Promi
       importedKey,
       256
     );
-    
+
     // Convertir en hex et comparer
     const hashToCheck = Array.from(new Uint8Array(derivedBits))
       .map(b => b.toString(16).padStart(2, '0')).join('');
-    
+
     return hashToCheck === hashHex;
   } catch (error) {
     console.error('Error verifying PBKDF2 password:', error);

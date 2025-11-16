@@ -1,12 +1,12 @@
 /**
  * 🪟 Modal Component - Modal Réutilisable
- * 
+ *
  * Remplace plusieurs occurrences de modals dupliqués dans index.tsx
- * 
+ *
  * @example
- * <Modal 
- *   isOpen={showModal} 
- *   onClose={() => setShowModal(false)} 
+ * <Modal
+ *   isOpen={showModal}
+ *   onClose={() => setShowModal(false)}
  *   title="Détails du Ticket"
  *   size="large"
  * >
@@ -39,10 +39,10 @@ export function Modal({
   footer,
   className = ''
 }: ModalProps) {
-  
+
   // Ne rien afficher si le modal est fermé
   if (!isOpen) return null;
-  
+
   // Tailles du modal
   const sizes = {
     small: 'max-w-md',
@@ -51,7 +51,7 @@ export function Modal({
     xlarge: 'max-w-6xl',
     full: 'max-w-7xl'
   };
-  
+
   // Empêcher le scroll du body quand modal ouvert
   React.useEffect(() => {
     if (isOpen) {
@@ -59,12 +59,12 @@ export function Modal({
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
-  
+
   // Fermer avec la touche Escape
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -72,28 +72,28 @@ export function Modal({
         onClose();
       }
     };
-    
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
-  
+
   // Handler pour le clic sur l'overlay
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
     }
   };
-  
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={handleOverlayClick}
     >
       {/* Modal Container */}
-      <div 
+      <div
         className={`
-          bg-white rounded-lg shadow-2xl 
-          ${sizes[size]} w-full 
+          bg-white rounded-lg shadow-2xl
+          ${sizes[size]} w-full
           max-h-[90vh] overflow-hidden
           animate-fadeIn
           ${className}
@@ -107,7 +107,7 @@ export function Modal({
                 {title}
               </h2>
             )}
-            
+
             {showCloseButton && (
               <button
                 onClick={onClose}
@@ -119,12 +119,12 @@ export function Modal({
             )}
           </div>
         )}
-        
+
         {/* Body */}
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-140px)]">
           {children}
         </div>
-        
+
         {/* Footer */}
         {footer && (
           <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
@@ -162,7 +162,7 @@ export function ConfirmModal({
   variant = 'warning',
   loading = false
 }: ConfirmModalProps) {
-  
+
   const variants = {
     danger: {
       icon: 'exclamation-triangle',
@@ -180,13 +180,13 @@ export function ConfirmModal({
       bg: 'bg-blue-50'
     }
   };
-  
+
   const config = variants[variant];
-  
+
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       size="small"
       showCloseButton={false}
     >
@@ -195,17 +195,17 @@ export function ConfirmModal({
         <div className={`mx-auto w-16 h-16 rounded-full ${config.bg} flex items-center justify-center mb-4`}>
           <i className={`fas fa-${config.icon} text-3xl text-${config.color}-600`} />
         </div>
-        
+
         {/* Title */}
         <h3 className="text-xl font-bold text-gray-900 mb-2">
           {title}
         </h3>
-        
+
         {/* Message */}
         <p className="text-gray-600 mb-6">
           {message}
         </p>
-        
+
         {/* Actions */}
         <div className="flex gap-3 justify-center">
           <button
@@ -215,14 +215,14 @@ export function ConfirmModal({
           >
             {cancelText}
           </button>
-          
+
           <button
             onClick={onConfirm}
             disabled={loading}
             className={`
               px-6 py-2 rounded-lg font-semibold transition-all
-              ${variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : 
-                variant === 'warning' ? 'bg-amber-600 hover:bg-amber-700' : 
+              ${variant === 'danger' ? 'bg-red-600 hover:bg-red-700' :
+                variant === 'warning' ? 'bg-amber-600 hover:bg-amber-700' :
                 'bg-blue-600 hover:bg-blue-700'}
               text-white
               ${loading ? 'opacity-50 cursor-not-allowed' : ''}
@@ -261,11 +261,11 @@ export function SuccessModal({
   message,
   buttonText = 'OK'
 }: SuccessModalProps) {
-  
+
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       size="small"
       showCloseButton={false}
     >
@@ -274,17 +274,17 @@ export function SuccessModal({
         <div className="mx-auto w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-4">
           <i className="fas fa-check-circle text-3xl text-green-600" />
         </div>
-        
+
         {/* Title */}
         <h3 className="text-xl font-bold text-gray-900 mb-2">
           {title}
         </h3>
-        
+
         {/* Message */}
         <p className="text-gray-600 mb-6">
           {message}
         </p>
-        
+
         {/* OK Button */}
         <button
           onClick={onClose}
@@ -317,11 +317,11 @@ export function ErrorModal({
   details,
   buttonText = 'Fermer'
 }: ErrorModalProps) {
-  
+
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       size="small"
       showCloseButton={false}
     >
@@ -330,17 +330,17 @@ export function ErrorModal({
         <div className="mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
           <i className="fas fa-exclamation-circle text-3xl text-red-600" />
         </div>
-        
+
         {/* Title */}
         <h3 className="text-xl font-bold text-gray-900 mb-2">
           {title}
         </h3>
-        
+
         {/* Message */}
         <p className="text-gray-600 mb-4">
           {message}
         </p>
-        
+
         {/* Details (if provided) */}
         {details && (
           <div className="mb-6 p-3 bg-gray-100 rounded-lg text-left">
@@ -349,7 +349,7 @@ export function ErrorModal({
             </p>
           </div>
         )}
-        
+
         {/* Close Button */}
         <button
           onClick={onClose}

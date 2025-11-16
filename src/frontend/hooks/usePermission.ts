@@ -1,9 +1,9 @@
 /**
  * Hooks React pour la vérification des permissions RBAC
- * 
+ *
  * Ces hooks permettent au frontend de vérifier dynamiquement les permissions
  * au lieu d'utiliser des vérifications hardcodées sur les rôles.
- * 
+ *
  * @example
  * const canCreateTickets = usePermission('tickets', 'create', 'all');
  * const canManageUsers = useAnyPermission(['users.update.all', 'users.delete.all']);
@@ -20,8 +20,8 @@ import { apiGet } from '../../utils/api';
  * @returns true si l'utilisateur a la permission, false sinon
  */
 export function usePermission(
-  resource: string, 
-  action: string, 
+  resource: string,
+  action: string,
   scope: string = 'all'
 ): boolean {
   const [hasAccess, setHasAccess] = useState(false);
@@ -53,7 +53,7 @@ export function usePermission(
  * Hook pour vérifier plusieurs permissions (AU MOINS UNE doit être vraie)
  * @param permissions - Liste de permissions au format "resource.action.scope"
  * @returns true si l'utilisateur a au moins une des permissions
- * 
+ *
  * @example
  * const canManageUsers = useAnyPermission(['users.update.all', 'users.delete.all']);
  */
@@ -92,7 +92,7 @@ export function useAnyPermission(permissions: string[]): boolean {
  * Hook pour vérifier plusieurs permissions (TOUTES doivent être vraies)
  * @param permissions - Liste de permissions au format "resource.action.scope"
  * @returns true si l'utilisateur a toutes les permissions
- * 
+ *
  * @example
  * const canFullyManageTickets = useAllPermissions([
  *   'tickets.create.all',

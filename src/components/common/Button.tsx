@@ -1,8 +1,8 @@
 /**
  * 🔘 Button Component - Composant Bouton Réutilisable
- * 
+ *
  * Remplace 62+ occurrences de boutons dupliqués dans index.tsx
- * 
+ *
  * @example
  * <Button onClick={handleSave} icon="save">Sauvegarder</Button>
  * <Button variant="danger" onClick={handleDelete} icon="trash">Supprimer</Button>
@@ -38,7 +38,7 @@ export function Button({
   size = 'md',
   className = ''
 }: ButtonProps) {
-  
+
   // Variants de couleur
   const variants = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/50',
@@ -48,14 +48,14 @@ export function Button({
     warning: 'bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/50',
     info: 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-500/50'
   };
-  
+
   // Tailles
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-base',
     lg: 'px-6 py-3 text-lg'
   };
-  
+
   // Classes combinées
   const buttonClasses = [
     'rounded-lg font-semibold transition-all duration-200',
@@ -66,7 +66,7 @@ export function Button({
     disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105',
     className
   ].filter(Boolean).join(' ');
-  
+
   return (
     <button
       type={type}
@@ -122,13 +122,13 @@ export function IconButton({
     warning: 'bg-amber-600 hover:bg-amber-700 text-white',
     info: 'bg-cyan-600 hover:bg-cyan-700 text-white'
   };
-  
+
   const sizes = {
     sm: 'p-1.5 text-sm',
     md: 'p-2 text-base',
     lg: 'p-3 text-lg'
   };
-  
+
   const buttonClasses = [
     'rounded-lg transition-all duration-200',
     'focus:outline-none focus:ring-2',
@@ -137,7 +137,7 @@ export function IconButton({
     disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110',
     className
   ].filter(Boolean).join(' ');
-  
+
   return (
     <button
       type="button"

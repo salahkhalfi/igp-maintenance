@@ -13,7 +13,7 @@ const roles = new Hono<{ Bindings: Bindings }>();
 roles.get('/', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT 
+      SELECT
         r.id,
         r.name,
         r.display_name,
@@ -53,7 +53,7 @@ roles.get('/:id', async (c) => {
 
     // Récupérer les permissions du rôle
     const { results: permissions } = await c.env.DB.prepare(`
-      SELECT 
+      SELECT
         p.id,
         p.resource,
         p.action,
@@ -66,7 +66,7 @@ roles.get('/:id', async (c) => {
       ORDER BY p.resource, p.action, p.scope
     `).bind(id).all();
 
-    return c.json({ 
+    return c.json({
       role: {
         ...role,
         permissions
@@ -84,7 +84,7 @@ roles.get('/:id', async (c) => {
 roles.get('/permissions/all', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT 
+      SELECT
         id,
         resource,
         action,
@@ -105,7 +105,7 @@ roles.get('/permissions/all', async (c) => {
       grouped[p.resource].push(p);
     }
 
-    return c.json({ 
+    return c.json({
       permissions: results,
       grouped
     });
@@ -130,16 +130,16 @@ roles.post('/', async (c) => {
 
     // Validation du nom (identifiant technique)
     const trimmedName = name.trim();
-    
+
     // 🔒 BLOCAGE CRÉATION RÔLES: Seuls les rôles système prédéfinis sont autorisés
     // L'application supporte 14 rôles système spécialement conçus pour l'industrie.
     // Ces rôles ont des permissions prédéfinies et testées.
-    // 
+    //
     // Raison du blocage:
     // - Le frontend contient 63 vérifications hardcodées sur les rôles
     // - Créer des rôles personnalisés causerait des dysfonctionnements UI
     // - Les 14 rôles système couvrent tous les besoins typiques industrie
-    // 
+    //
     // Voir: ROLES_INDUSTRIE_RECOMMANDES.md pour la liste complète
     const SYSTEM_ROLES = [
       'admin', 'supervisor', 'technician', 'operator',           // Rôles originaux
@@ -148,9 +148,9 @@ roles.post('/', async (c) => {
       'safety_officer', 'quality_inspector', 'storekeeper',       // Support
       'viewer'                                                     // Lecture seule
     ];
-    
+
     if (!SYSTEM_ROLES.includes(trimmedName)) {
-      return c.json({ 
+      return c.json({
         error: 'Seuls les rôles système prédéfinis peuvent être créés',
         reason: 'Application avec rôles système spécialisés pour l\'industrie',
         details: 'Les 14 rôles système couvrent tous les besoins typiques. Les rôles personnalisés ne sont pas supportés pour éviter des dysfonctionnements UI.',
@@ -231,7 +231,7 @@ roles.post('/', async (c) => {
       SELECT * FROM roles WHERE id = ?
     `).bind(roleId).first();
 
-    return c.json({ 
+    return c.json({
       message: 'Rôle créé avec succès',
       role: newRole
     }, 201);
@@ -286,18 +286,18 @@ roles.put('/:id', async (c) => {
     // Empêcher la modification des rôles système (nom et description seulement)
     const trimmedDisplayName = display_name ? display_name.trim() : role.display_name;
     const trimmedDescription = description ? description.trim() : role.description;
-    
+
     if (role.is_system === 1) {
       // Seul display_name et description peuvent être modifiés pour les rôles système
       await c.env.DB.prepare(`
-        UPDATE roles 
+        UPDATE roles
         SET display_name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(trimmedDisplayName, trimmedDescription, id).run();
     } else {
       // Rôle personnalisé: tout peut être modifié
       await c.env.DB.prepare(`
-        UPDATE roles 
+        UPDATE roles
         SET display_name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(trimmedDisplayName, trimmedDescription, id).run();
@@ -327,7 +327,7 @@ roles.put('/:id', async (c) => {
       SELECT * FROM roles WHERE id = ?
     `).bind(id).first();
 
-    return c.json({ 
+    return c.json({
       message: 'Rôle mis à jour avec succès',
       role: updatedRole
     });
@@ -355,8 +355,8 @@ roles.delete('/:id', async (c) => {
 
     // Empêcher la suppression des rôles système
     if (role.is_system === 1) {
-      return c.json({ 
-        error: 'Impossible de supprimer un rôle système' 
+      return c.json({
+        error: 'Impossible de supprimer un rôle système'
       }, 403);
     }
 
@@ -366,8 +366,8 @@ roles.delete('/:id', async (c) => {
     ).bind(role.name).all() as any;
 
     if (results[0] && results[0].count > 0) {
-      return c.json({ 
-        error: `Impossible de supprimer ce rôle car ${results[0].count} utilisateur(s) l'utilisent` 
+      return c.json({
+        error: `Impossible de supprimer ce rôle car ${results[0].count} utilisateur(s) l'utilisent`
       }, 400);
     }
 
@@ -379,7 +379,7 @@ roles.delete('/:id', async (c) => {
     // Vider le cache des permissions
     clearPermissionsCache();
 
-    return c.json({ 
+    return c.json({
       message: 'Rôle supprimé avec succès',
       deleted_role: role
     });

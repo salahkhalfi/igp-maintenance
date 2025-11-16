@@ -11,9 +11,9 @@ tickets.get('/', async (c) => {
   try {
     const status = c.req.query('status');
     const priority = c.req.query('priority');
-    
+
     let query = `
-      SELECT 
+      SELECT
         t.*,
         m.machine_type, m.model, m.serial_number, m.location,
         u1.full_name as reporter_name, u1.email as reporter_email,
@@ -25,27 +25,27 @@ tickets.get('/', async (c) => {
       LEFT JOIN users u2 ON t.assigned_to = u2.id
       WHERE 1=1
     `;
-    
+
     const params: any[] = [];
-    
+
     if (status) {
       query += ' AND t.status = ?';
       params.push(status);
     }
-    
+
     if (priority) {
       query += ' AND t.priority = ?';
       params.push(priority);
     }
-    
+
     query += ' ORDER BY t.created_at DESC';
-    
-    const stmt = params.length > 0 
+
+    const stmt = params.length > 0
       ? c.env.DB.prepare(query).bind(...params)
       : c.env.DB.prepare(query);
-    
+
     const { results } = await stmt.all();
-    
+
     return c.json({ tickets: results });
   } catch (error) {
     console.error('Get tickets error:', error);
@@ -57,10 +57,10 @@ tickets.get('/', async (c) => {
 tickets.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
-    
+
     // Récupérer le ticket
     const ticket = await c.env.DB.prepare(`
-      SELECT 
+      SELECT
         t.*,
         m.machine_type, m.model, m.serial_number, m.location,
         u1.full_name as reporter_name, u1.email as reporter_email,
@@ -71,19 +71,19 @@ tickets.get('/:id', async (c) => {
       LEFT JOIN users u2 ON t.assigned_to = u2.id
       WHERE t.id = ?
     `).bind(id).first();
-    
+
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
-    
+
     // Récupérer les médias
     const { results: media } = await c.env.DB.prepare(
       'SELECT * FROM media WHERE ticket_id = ? ORDER BY created_at DESC'
     ).bind(id).all();
-    
+
     // Récupérer la timeline
     const { results: timeline } = await c.env.DB.prepare(`
-      SELECT 
+      SELECT
         tl.*,
         u.full_name as user_name, u.email as user_email
       FROM ticket_timeline tl
@@ -91,8 +91,8 @@ tickets.get('/:id', async (c) => {
       WHERE tl.ticket_id = ?
       ORDER BY tl.created_at DESC
     `).bind(id).all();
-    
-    return c.json({ 
+
+    return c.json({
       ticket: {
         ...ticket,
         media,
@@ -111,71 +111,71 @@ tickets.post('/', async (c) => {
     const user = c.get('user') as any;
     const body: CreateTicketRequest = await c.req.json();
     const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
-    
+
     // Validation des champs requis
     if (!title || !description || !reporter_name || !machine_id || !priority) {
       return c.json({ error: 'Tous les champs sont requis' }, 400);
     }
-    
+
     // Validation du titre
     if (title.trim().length < 3 || title.length > 200) {
       return c.json({ error: 'Titre invalide (3-200 caractères)' }, 400);
     }
-    
+
     // Validation de la description
     if (description.trim().length < 5 || description.length > 2000) {
       return c.json({ error: 'Description invalide (5-2000 caractères)' }, 400);
     }
-    
+
     // Validation de la priorité
     const validPriorities = ['low', 'medium', 'high', 'critical'];
     if (!validPriorities.includes(priority)) {
       return c.json({ error: 'Priorité invalide (low, medium, high, critical)' }, 400);
     }
-    
+
     // Validation de l'ID machine
     const machineIdNum = parseInt(machine_id);
     if (isNaN(machineIdNum) || machineIdNum <= 0) {
       return c.json({ error: 'ID machine invalide' }, 400);
     }
-    
+
     // Récupérer les infos de la machine
     const machine = await c.env.DB.prepare(
       'SELECT machine_type, model FROM machines WHERE id = ?'
     ).bind(machine_id).first() as any;
-    
+
     if (!machine) {
       return c.json({ error: 'Machine non trouvée' }, 404);
     }
-    
+
     // Générer l'ID du ticket
     const ticket_id = generateTicketId(machine.machine_type, machine.model);
-    
+
     // Utiliser le timestamp envoyé par le client (heure locale de son appareil)
     // Si non fourni, utiliser l'heure actuelle du serveur
     const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
-    
+
     // Créer le ticket avec le timestamp de l'appareil de l'utilisateur
     const result = await c.env.DB.prepare(`
       INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, assigned_to, scheduled_date, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
     `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, assigned_to || null, scheduled_date || null, timestamp, timestamp).run();
-    
+
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
     }
-    
+
     // Récupérer le ticket créé
     const newTicket = await c.env.DB.prepare(
       'SELECT * FROM tickets WHERE ticket_id = ?'
     ).bind(ticket_id).first();
-    
+
     // Ajouter l'entrée dans la timeline
     await c.env.DB.prepare(`
       INSERT INTO ticket_timeline (ticket_id, user_id, action, new_status, comment)
       VALUES (?, ?, 'Ticket créé', 'received', ?)
     `).bind((newTicket as any).id, user.userId, description).run();
-    
+
     // Envoyer notification push si ticket assigné à un technicien dès la création
     if (assigned_to) {
       try {
@@ -186,7 +186,7 @@ tickets.post('/', async (c) => {
           icon: '/icon-192.png',
           data: { ticketId: (newTicket as any).id, url: '/' }
         });
-        
+
         // Logger le résultat
         await c.env.DB.prepare(`
           INSERT INTO push_logs (user_id, ticket_id, status, error_message)
@@ -197,7 +197,7 @@ tickets.post('/', async (c) => {
           pushResult.success ? 'success' : 'failed',
           pushResult.success ? null : JSON.stringify(pushResult)
         ).run();
-        
+
         if (pushResult.success) {
           console.log(`✅ Push notification sent for new ticket ${ticket_id} to user ${assigned_to}`);
         } else {
@@ -213,12 +213,12 @@ tickets.post('/', async (c) => {
           (newTicket as any).id,
           (pushError as Error).message || String(pushError)
         ).run();
-        
+
         // Push échoue? Pas grave, le ticket est créé, le webhook Pabbly prendra le relais
         console.error('⚠️ Push notification failed (non-critical):', pushError);
       }
     }
-    
+
     return c.json({ ticket: newTicket }, 201);
   } catch (error) {
     console.error('Create ticket error:', error);
@@ -232,72 +232,72 @@ tickets.patch('/:id', async (c) => {
     const user = c.get('user') as any;
     const id = c.req.param('id');
     const body: UpdateTicketRequest = await c.req.json();
-    
+
     // Récupérer le ticket actuel
     const currentTicket = await c.env.DB.prepare(
       'SELECT * FROM tickets WHERE id = ?'
     ).bind(id).first() as any;
-    
+
     if (!currentTicket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
-    
+
     // Vérifier les permissions: opérateur ne peut modifier que ses propres tickets
     if (user.role === 'operator' && currentTicket.reported_by !== user.userId) {
       return c.json({ error: 'Vous ne pouvez modifier que vos propres tickets' }, 403);
     }
-    
+
     // Opérateur ne peut pas changer le statut (déplacer les tickets)
     if (user.role === 'operator' && body.status && body.status !== currentTicket.status) {
       return c.json({ error: 'Les opérateurs ne peuvent pas changer le statut des tickets' }, 403);
     }
-    
+
     // Construire la requête de mise à jour
     const updates: string[] = [];
     const params: any[] = [];
-    
+
     if (body.title) {
       updates.push('title = ?');
       params.push(body.title);
     }
-    
+
     if (body.description) {
       updates.push('description = ?');
       params.push(body.description);
     }
-    
+
     if (body.status) {
       updates.push('status = ?');
       params.push(body.status);
-      
+
       if (body.status === 'completed') {
         updates.push('completed_at = CURRENT_TIMESTAMP');
       }
     }
-    
+
     if (body.priority) {
       updates.push('priority = ?');
       params.push(body.priority);
     }
-    
+
     if (body.assigned_to !== undefined) {
       updates.push('assigned_to = ?');
       params.push(body.assigned_to);
     }
-    
+
     if (body.scheduled_date !== undefined) {
       updates.push('scheduled_date = ?');
       params.push(body.scheduled_date);
     }
-    
+
     updates.push('updated_at = CURRENT_TIMESTAMP');
     params.push(id);
-    
+
     // Mettre à jour le ticket
     await c.env.DB.prepare(
       `UPDATE tickets SET ${updates.join(', ')} WHERE id = ?`
     ).bind(...params).run();
-    
+
     // Ajouter l'entrée dans la timeline
     await c.env.DB.prepare(`
       INSERT INTO ticket_timeline (ticket_id, user_id, action, old_status, new_status, comment)
@@ -310,12 +310,12 @@ tickets.patch('/:id', async (c) => {
       body.status || null,
       body.comment || null
     ).run();
-    
+
     // Récupérer le ticket mis à jour
     const updatedTicket = await c.env.DB.prepare(
       'SELECT * FROM tickets WHERE id = ?'
     ).bind(id).first();
-    
+
     // Envoyer notification push si ticket assigné à un technicien (fail-safe)
     if (body.assigned_to && body.assigned_to !== currentTicket.assigned_to) {
       try {
@@ -326,7 +326,7 @@ tickets.patch('/:id', async (c) => {
           icon: '/icon-192.png',
           data: { ticketId: id, url: '/' }
         });
-        
+
         if (pushResult.success) {
           console.log(`✅ Push notification sent for ticket ${id} to user ${body.assigned_to}`);
         }
@@ -335,7 +335,7 @@ tickets.patch('/:id', async (c) => {
         console.error('⚠️ Push notification failed (non-critical):', pushError);
       }
     }
-    
+
     return c.json({ ticket: updatedTicket });
   } catch (error) {
     console.error('Update ticket error:', error);
@@ -348,26 +348,26 @@ tickets.delete('/:id', async (c) => {
   try {
     const user = c.get('user') as any;
     const id = c.req.param('id');
-    
+
     // Récupérer le ticket pour vérifier les permissions
     const ticket = await c.env.DB.prepare(
       'SELECT * FROM tickets WHERE id = ?'
     ).bind(id).first() as any;
-    
+
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
-    
+
     // Vérifier les permissions: opérateur ne peut supprimer que ses propres tickets
     if (user.role === 'operator' && ticket.reported_by !== user.userId) {
       return c.json({ error: 'Vous ne pouvez supprimer que vos propres tickets' }, 403);
     }
-    
+
     // Récupérer tous les fichiers media associés au ticket AVANT la suppression
     const { results: mediaFiles } = await c.env.DB.prepare(
       'SELECT file_key FROM media WHERE ticket_id = ?'
     ).bind(id).all() as any;
-    
+
     // Supprimer les fichiers du bucket R2
     if (mediaFiles && mediaFiles.length > 0) {
       for (const media of mediaFiles) {
@@ -380,17 +380,17 @@ tickets.delete('/:id', async (c) => {
         }
       }
     }
-    
+
     // Supprimer le ticket (CASCADE supprimera automatiquement les enregistrements media)
     const result = await c.env.DB.prepare(
       'DELETE FROM tickets WHERE id = ?'
     ).bind(id).run();
-    
+
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la suppression du ticket' }, 500);
     }
-    
-    return c.json({ 
+
+    return c.json({
       message: 'Ticket supprimé avec succès',
       deletedFiles: mediaFiles?.length || 0
     });

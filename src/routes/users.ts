@@ -19,15 +19,15 @@ users.get('/', async (c) => {
   try {
     // Filtrer le super admin ET l'utilisateur système team (id=0)
     const { results } = await c.env.DB.prepare(`
-      SELECT 
-        id, 
-        email, 
-        full_name, 
-        role, 
-        created_at, 
+      SELECT
+        id,
+        email,
+        full_name,
+        role,
+        created_at,
         updated_at,
         last_login,
-        CASE 
+        CASE
           WHEN password_hash LIKE 'v2:%' THEN 'PBKDF2'
           ELSE 'SHA-256 (Legacy)'
         END as hash_type
@@ -50,21 +50,21 @@ users.get('/', async (c) => {
 users.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
-    
+
     const user = await c.env.DB.prepare(`
-      SELECT 
-        id, 
-        email, 
-        full_name, 
-        role, 
-        created_at, 
+      SELECT
+        id,
+        email,
+        full_name,
+        role,
+        created_at,
         updated_at,
         last_login,
-        CASE 
+        CASE
           WHEN password_hash LIKE 'v2:%' THEN 'PBKDF2'
           ELSE 'SHA-256 (Legacy)'
         END as hash_type
-      FROM users 
+      FROM users
       WHERE id = ?
     `).bind(id).first();
 
@@ -168,9 +168,9 @@ users.post('/', async (c) => {
     // Logger l'action
     console.log(`Admin ${currentUser.email} created user ${trimmedEmail} with role ${role}`);
 
-    return c.json({ 
+    return c.json({
       message: 'Utilisateur créé avec succès',
-      user: newUser 
+      user: newUser
     }, 201);
   } catch (error) {
     console.error('Create user error:', error);
@@ -240,22 +240,22 @@ users.put('/:id', async (c) => {
       currentRole: currentUser.role,
       wouldTrigger: isSelfDemotionCheck
     });
-    
+
     if (isSelfDemotionCheck) {
       console.log('❌ Admin cannot demote themselves');
-      return c.json({ 
-        error: 'Vous ne pouvez pas retirer vos propres droits administrateur' 
+      return c.json({
+        error: 'Vous ne pouvez pas retirer vos propres droits administrateur'
       }, 403);
     }
 
     // Empêcher un superviseur de se retirer ses propres droits superviseur
     if (currentUser.userId === parseInt(id) && role && role !== 'supervisor' && currentUser.role === 'supervisor') {
       console.log('❌ Supervisor cannot demote themselves');
-      return c.json({ 
-        error: 'Vous ne pouvez pas retirer vos propres droits de superviseur' 
+      return c.json({
+        error: 'Vous ne pouvez pas retirer vos propres droits de superviseur'
       }, 403);
     }
-    
+
     console.log('✅ All permission checks passed');
 
     // Validation de l'email si fourni
@@ -349,7 +349,7 @@ users.put('/:id', async (c) => {
       query: `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
       params: params
     });
-    
+
     const result = await c.env.DB.prepare(
       `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
     ).bind(...params).run();
@@ -372,12 +372,12 @@ users.put('/:id', async (c) => {
     if (full_name) changes.push(`name: ${existingUser.full_name} → ${full_name}`);
     if (role) changes.push(`role: ${existingUser.role} → ${role}`);
     if (password) changes.push('password changed');
-    
+
     console.log(`Admin ${currentUser.email} updated user ${existingUser.email}: ${changes.join(', ')}`);
 
-    return c.json({ 
+    return c.json({
       message: 'Utilisateur mis à jour avec succès',
-      user: updatedUser 
+      user: updatedUser
     });
   } catch (error) {
     console.error('❌ Update user exception:', error);
@@ -419,8 +419,8 @@ users.delete('/:id', async (c) => {
 
     // Empêcher un utilisateur de se supprimer lui-même
     if (currentUser.userId === parseInt(id)) {
-      return c.json({ 
-        error: 'Vous ne pouvez pas supprimer votre propre compte' 
+      return c.json({
+        error: 'Vous ne pouvez pas supprimer votre propre compte'
       }, 403);
     }
 
@@ -430,8 +430,8 @@ users.delete('/:id', async (c) => {
     ).bind('admin').first() as any;
 
     if (existingUser.role === 'admin' && adminCount.count <= 1) {
-      return c.json({ 
-        error: 'Impossible de supprimer le dernier administrateur du système' 
+      return c.json({
+        error: 'Impossible de supprimer le dernier administrateur du système'
       }, 403);
     }
 
@@ -441,8 +441,8 @@ users.delete('/:id', async (c) => {
     ).bind(id).first() as any;
 
     if (ticketCount && ticketCount.count > 0) {
-      return c.json({ 
-        error: `Impossible de supprimer cet utilisateur car il a créé ${ticketCount.count} ticket(s). Supprimez d'abord ses tickets ou réassignez-les.` 
+      return c.json({
+        error: `Impossible de supprimer cet utilisateur car il a créé ${ticketCount.count} ticket(s). Supprimez d'abord ses tickets ou réassignez-les.`
       }, 400);
     }
 
@@ -473,7 +473,7 @@ users.delete('/:id', async (c) => {
     // Logger l'action
     console.log(`Admin ${currentUser.email} deleted user ${existingUser.email} (role: ${existingUser.role})`);
 
-    return c.json({ 
+    return c.json({
       message: 'Utilisateur supprimé avec succès',
       deleted_user: {
         id: existingUser.id,
@@ -539,7 +539,7 @@ users.post('/:id/reset-password', async (c) => {
     // Logger l'action (sans inclure le mot de passe)
     console.log(`Admin ${currentUser.email} reset password for user ${existingUser.email}`);
 
-    return c.json({ 
+    return c.json({
       message: 'Mot de passe réinitialisé avec succès'
     });
   } catch (error) {

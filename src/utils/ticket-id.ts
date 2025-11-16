@@ -8,10 +8,10 @@ export function generateTicketId(machineType: string, model: string): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const dateStr = `${year}${month}${day}`;
-  
+
   // Génère un numéro de séquence aléatoire (en production, utiliser une vraie séquence)
   const sequence = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-  
+
   return `IGP-${machineType.toUpperCase()}-${model.toUpperCase()}-${dateStr}-${sequence}`;
 }
 
