@@ -7054,6 +7054,21 @@ app.get('/', (c) => {
                     filteredTickets = filteredTickets.filter(t => t.reported_by === currentUser.id);
                 }
 
+                // Appliquer le tri selon l'option sélectionnée
+                if (sortBy === 'priority') {
+                    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+                    filteredTickets.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+                } else if (sortBy === 'date') {
+                    filteredTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                } else if (sortBy === 'machine') {
+                    filteredTickets.sort((a, b) => {
+                        const machineA = (a.machine_type + ' ' + a.model).toLowerCase();
+                        const machineB = (b.machine_type + ' ' + b.model).toLowerCase();
+                        return machineA.localeCompare(machineB);
+                    });
+                }
+                // sortBy === 'default' : pas de tri, ordre original
+
                 return filteredTickets;
             };
 
@@ -7128,6 +7143,7 @@ app.get('/', (c) => {
 
             const [draggedTicket, setDraggedTicket] = React.useState(null);
             const [dragOverColumn, setDragOverColumn] = React.useState(null);
+            const [sortBy, setSortBy] = React.useState('default'); // default, priority, date, machine
 
 
             const handleDragStart = (e, ticket) => {
@@ -7696,6 +7712,28 @@ app.get('/', (c) => {
                                         className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
                                     }, getTicketsByStatus(status.key).length)
                                 ),
+                                // Dropdown de tri
+                                React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
+                                    React.createElement('label', {
+                                        className: 'text-xs text-gray-600 font-medium whitespace-nowrap',
+                                        htmlFor: 'sort-select-' + status.key
+                                    },
+                                        React.createElement('i', { className: 'fas fa-sort mr-1' }),
+                                        'Trier:'
+                                    ),
+                                    React.createElement('select', {
+                                        id: 'sort-select-' + status.key,
+                                        value: sortBy,
+                                        onChange: (e) => setSortBy(e.target.value),
+                                        className: 'flex-1 text-xs px-2 py-1 border border-gray-300 rounded bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer',
+                                        onClick: (e) => e.stopPropagation()
+                                    },
+                                        React.createElement('option', { value: 'default' }, 'Par défaut'),
+                                        React.createElement('option', { value: 'priority' }, '🔴 Priorité'),
+                                        React.createElement('option', { value: 'date' }, '📅 Date (récent)'),
+                                        React.createElement('option', { value: 'machine' }, '🔧 Machine (A-Z)')
+                                    )
+                                ),
                                 React.createElement('div', { className: 'space-y-2' },
                                     getTicketsByStatus(status.key).map(ticket => {
                                         return React.createElement('div', {
@@ -7826,6 +7864,28 @@ app.get('/', (c) => {
                                         React.createElement('span', {
                                             className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
                                         }, getTicketsByStatus(status.key).length)
+                                    ),
+                                    // Dropdown de tri
+                                    React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
+                                        React.createElement('label', {
+                                            className: 'text-xs text-gray-600 font-medium whitespace-nowrap',
+                                            htmlFor: 'sort-select-' + status.key
+                                        },
+                                            React.createElement('i', { className: 'fas fa-sort mr-1' }),
+                                            'Trier:'
+                                        ),
+                                        React.createElement('select', {
+                                            id: 'sort-select-' + status.key,
+                                            value: sortBy,
+                                            onChange: (e) => setSortBy(e.target.value),
+                                            className: 'flex-1 text-xs px-2 py-1 border border-gray-300 rounded bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer',
+                                            onClick: (e) => e.stopPropagation()
+                                        },
+                                            React.createElement('option', { value: 'default' }, 'Par défaut'),
+                                            React.createElement('option', { value: 'priority' }, '🔴 Priorité'),
+                                            React.createElement('option', { value: 'date' }, '📅 Date (récent)'),
+                                            React.createElement('option', { value: 'machine' }, '🔧 Machine (A-Z)')
+                                        )
                                     ),
                                     React.createElement('div', { className: 'space-y-2' },
                                         getTicketsByStatus(status.key).map(ticket => {
