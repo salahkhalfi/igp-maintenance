@@ -185,11 +185,13 @@ export async function sendPushNotification(
       privateKey: env.VAPID_PRIVATE_KEY
     };
 
-    // Récupérer toutes les subscriptions actives de l'utilisateur
+    // Récupérer toutes les subscriptions de l'utilisateur
+    // Note: Les subscriptions n'expirent que si le service push retourne 410 Gone
+    // ou si l'utilisateur se désabonne manuellement
     const subscriptions = await env.DB.prepare(`
       SELECT endpoint, p256dh, auth
       FROM push_subscriptions
-      WHERE user_id = ? AND last_used > datetime('now', '-90 days')
+      WHERE user_id = ?
     `).bind(userId).all();
 
     if (!subscriptions.results || subscriptions.results.length === 0) {
