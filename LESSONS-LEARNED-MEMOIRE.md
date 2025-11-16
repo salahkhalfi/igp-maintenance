@@ -1,9 +1,50 @@
 # 📚 MÉMOIRE COLLECTIVE - LEÇONS APPRISES
 ## Système de Gestion de Maintenance IGP
 
-**Date de création:** 2025-11-16  
+**Date de création:** 2025-01-16  
+**Dernière mise à jour:** 2025-01-16  
+**Version:** 1.0.0  
 **Objectif:** Document de référence permanent pour éviter la répétition d'erreurs  
 **Usage:** À consulter AVANT chaque modification de code  
+
+---
+
+## 🔄 PROTOCOLE DE SYNCHRONISATION HUB
+
+### Pour l'Assistant IA (Moi)
+
+**À CHAQUE SESSION:**
+1. ✅ Lire automatiquement ce document depuis le Hub au démarrage
+2. ✅ Consulter avant chaque modification de code importante
+3. ✅ Mettre à jour immédiatement après chaque nouvelle solution
+4. ✅ Push vers GitHub après chaque mise à jour
+5. ✅ Notifier l'utilisateur si changements significatifs
+
+**À CHAQUE NOUVELLE SOLUTION:**
+1. Ajouter dans la section appropriée
+2. Incrémenter le numéro de version (1.0.0 → 1.0.1)
+3. Mettre à jour "Dernière mise à jour"
+4. Commit avec message clair
+5. Push immédiat vers GitHub
+6. Rappeler à l'utilisateur de synchroniser le Hub
+
+### Pour l'Utilisateur (Vous)
+
+**SYNCHRONISATION RECOMMANDÉE:**
+- ⚡ **Urgent** (dans l'heure): Si erreur critique résolue
+- 📅 **Hebdomadaire**: Si session de travail intense
+- 🗓️ **Mensuel**: En maintenance normale
+- 🎯 **Fin de session**: Si 3+ nouvelles solutions ajoutées
+
+**COMMENT SYNCHRONISER:**
+1. Télécharger depuis GitHub: https://github.com/salahkhalfi/igp-maintenance/blob/main/LESSONS-LEARNED-MEMOIRE.md
+2. Ouvrir le Hub dans l'interface Genspark
+3. Remplacer l'ancienne version par la nouvelle
+4. Vérifier que le numéro de version a augmenté
+
+**VÉRIFICATION:**
+- Au début de la prochaine session, demandez-moi: "Quelle version du document as-tu?"
+- Je devrais répondre avec le numéro de version le plus récent
 
 ---
 
@@ -545,6 +586,26 @@ pm2 logs webapp --nostream --lines 50 | grep -i "error\|fail"
 - Tester sur petit périmètre
 - Vérifier impact avec grep
 - Ne PAS déployer si incertain
+
+---
+
+## 📝 HISTORIQUE DES MODIFICATIONS
+
+### Version 1.0.0 (2025-01-16)
+- ✅ Création initiale du document
+- ✅ 7 catégories d'erreurs critiques documentées
+- ✅ Protocole de synchronisation Hub ajouté
+- ✅ Système de versioning implémenté
+- ✅ Workflow de mémoire à long terme défini
+
+### Instructions pour Futures Versions
+**Quand une nouvelle solution est ajoutée:**
+1. Incrémenter version (1.0.0 → 1.0.1 pour ajout mineur, 1.1.0 pour catégorie majeure)
+2. Ajouter entrée dans cet historique avec date
+3. Mettre à jour "Dernière mise à jour" en haut du document
+4. Commit: `git commit -m "docs: [description] - v1.0.1"`
+5. Push vers GitHub
+6. Notifier utilisateur pour sync Hub
 
 ---
 
