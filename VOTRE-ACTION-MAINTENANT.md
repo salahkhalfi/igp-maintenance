@@ -12,23 +12,44 @@
 
 ### Le Document à Ajouter au Hub
 
-**Nom:** `LESSONS-LEARNED-MEMOIRE.md`  
-**Version:** 1.0.0  
-**Date:** 2025-01-16  
-**Taille:** 19 KB (698 lignes)  
+**IMPORTANT:** Il y a maintenant **2 documents** disponibles:
 
-### 🔗 Lien de Téléchargement Direct
+#### Option 1: Document Universel (RECOMMANDÉ) ⭐
+**Nom:** `LESSONS-LEARNED-UNIVERSAL.md`  
+**Portée:** Applicable à **TOUS** vos projets web  
+**Taille:** 27 KB (1020 lignes)  
+**Version:** 1.0.0  
+**Contenu:** Leçons génériques réutilisables partout  
+
+```
+https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/main/LESSONS-LEARNED-UNIVERSAL.md
+```
+
+#### Option 2: Document Spécifique au Projet
+**Nom:** `LESSONS-LEARNED-MEMOIRE.md`  
+**Portée:** Spécifique à l'application de maintenance IGP  
+**Taille:** 19 KB (698 lignes)  
+**Contenu:** Détails spécifiques au projet maintenance  
 
 ```
 https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/main/LESSONS-LEARNED-MEMOIRE.md
 ```
 
+**👉 RECOMMANDATION:** Utilisez le document **UNIVERSEL** dans le Hub pour qu'il s'applique à tous vos projets futurs.
+
 **Actions:**
-1. ✅ Cliquez sur le lien ci-dessus
+1. ✅ Cliquez sur le lien du document UNIVERSEL (recommandé)
 2. ✅ Clic droit → "Enregistrer sous..."
-3. ✅ Nom du fichier: `LESSONS-LEARNED-MEMOIRE.md`
+3. ✅ Nom du fichier: `LESSONS-LEARNED-UNIVERSAL.md`
 
 **Alternative:** Depuis l'interface GitHub
+
+Document UNIVERSEL:
+```
+https://github.com/salahkhalfi/igp-maintenance/blob/main/LESSONS-LEARNED-UNIVERSAL.md
+```
+
+Document SPÉCIFIQUE:
 ```
 https://github.com/salahkhalfi/igp-maintenance/blob/main/LESSONS-LEARNED-MEMOIRE.md
 ```
@@ -46,13 +67,13 @@ https://github.com/salahkhalfi/igp-maintenance/blob/main/LESSONS-LEARNED-MEMOIRE
 
 2. **Upload le Document**
    - Cliquer sur "Add" / "Ajouter" / "Upload"
-   - Sélectionner `LESSONS-LEARNED-MEMOIRE.md`
+   - Sélectionner `LESSONS-LEARNED-UNIVERSAL.md` (recommandé)
    - Confirmer l'upload
 
 3. **Vérifier**
    - Le fichier doit apparaître dans la liste
-   - Taille: ~19 KB
-   - Nom: LESSONS-LEARNED-MEMOIRE.md
+   - Taille: ~27 KB (document universel)
+   - Nom: LESSONS-LEARNED-UNIVERSAL.md
 
 ---
 
@@ -61,23 +82,24 @@ https://github.com/salahkhalfi/igp-maintenance/blob/main/LESSONS-LEARNED-MEMOIRE
 ### Au Début de la Prochaine Session
 
 **Posez-moi cette question:**
-> "Quelle version de LESSONS-LEARNED-MEMOIRE as-tu en mémoire?"
+> "Quelle version de LESSONS-LEARNED-UNIVERSAL as-tu en mémoire?"
 
 ### Réponses Possibles
 
 ✅ **BONNE RÉPONSE:**
 ```
 J'ai la version 1.0.0 datée du 2025-01-16 en mémoire.
-Elle contient 7 catégories d'erreurs critiques:
-1. Apostrophes et caractères spéciaux
-2. Base de données D1 locale
-3. Glassmorphism - lisibilité
-4. Push notifications - expiration
-5. Code cleanup - trailing whitespace
-6. Tri des tickets - logique industrielle
-7. Menu contextuel mobile
+C'est le document UNIVERSEL applicable à tous projets web.
+Il contient 7 catégories d'erreurs universelles:
+1. JavaScript/TypeScript - Caractères spéciaux
+2. Base de données - État local/développement  
+3. CSS/UI - Lisibilité et contraste
+4. Gestion d'état - Données persistantes (serverless)
+5. Code cleanliness - Trailing whitespace
+6. Deployment - Environnement runtime
+7. Performance - Requêtes N+1
 
-Toutes avec leurs solutions validées.
+Toutes applicables à n'importe quel projet web.
 ```
 → **Parfait! Le Hub fonctionne** 🎉
 
