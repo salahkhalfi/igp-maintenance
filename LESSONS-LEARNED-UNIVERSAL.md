@@ -19,6 +19,7 @@
 3. ✅ Consulter avant toute modification importante
 4. ✅ Mettre à jour avec nouvelles leçons apprises
 5. ✅ Push vers GitHub après chaque ajout
+6. ✅ **ÉCONOMISER TOKENS:** Réponses concises sans affecter qualité code (voir Catégorie 9)
 
 **QUAND AJOUTER UNE NOUVELLE LEÇON:**
 1. Vérifier qu'elle s'applique à plusieurs projets (pas juste un cas isolé)
@@ -1052,6 +1053,15 @@ npx wrangler pages deploy dist --project-name webapp
 
 #### ⚡ Application Immédiate
 
+**RÈGLE ABSOLUE:**
+> Économiser tokens est une **OBLIGATION**, pas une option. L'utilisateur paie chaque token. Des centaines de dollars sont en jeu.
+
+**Impératif:**
+```
+✅ Code: Qualité maximale (JAMAIS compromettre)
+✅ Réponses: Concision maximale (TOUJOURS économiser)
+```
+
 **Ce document lui-même est un contre-exemple! 🙈**
 
 Version token-efficient de cette section:
@@ -1075,6 +1085,8 @@ Voir exemples: [lien vers ce document]
 ```
 
 **Tokens:** 80 vs 1200+ (93% économie) ✅
+
+**Coût réel projet:** Centaines de dollars → JUSTIFIE cette règle absolue
 
 ---
 
