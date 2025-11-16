@@ -7732,19 +7732,19 @@ app.get('/', (c) => {
                                     }, getTicketsByStatus(status.key).length)
                                 ),
                                 // Dropdown de tri (visible uniquement si plus de 2 tickets)
-                                ticketsInColumn.length > 2 ? React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
+                                ticketsInColumn.length > 2 ? React.createElement('div', { className: 'mb-3 flex items-center gap-2' },
                                     React.createElement('label', {
-                                        className: 'text-xs text-gray-600 font-medium whitespace-nowrap',
+                                        className: 'text-xs text-gray-600 font-medium whitespace-nowrap flex items-center gap-1',
                                         htmlFor: 'sort-select-' + status.key
                                     },
-                                        React.createElement('i', { className: 'fas fa-sort mr-1' }),
-                                        'Trier:'
+                                        React.createElement('i', { className: 'fas fa-sort text-sm' }),
+                                        React.createElement('span', { className: 'hidden sm:inline' }, 'Trier:')
                                     ),
                                     React.createElement('select', {
                                         id: 'sort-select-' + status.key,
                                         value: sortBy,
                                         onChange: (e) => setSortBy(e.target.value),
-                                        className: 'flex-1 text-xs px-2 py-1 border border-gray-300 rounded bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer',
+                                        className: 'flex-1 text-sm sm:text-xs px-3 py-2.5 sm:py-1.5 border-2 border-gray-300 rounded-lg bg-white text-gray-700 font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer touch-manipulation min-h-[44px] sm:min-h-0',
                                         onClick: (e) => e.stopPropagation()
                                     },
                                         React.createElement('option', { value: 'default' }, 'Par défaut'),
