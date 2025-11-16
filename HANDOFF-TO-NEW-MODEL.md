@@ -16,16 +16,16 @@ Ce document vous permet de **reprendre le développement exactement où le modè
 
 ### **Document Critique 🔥**
 
-**LESSONS-LEARNED-UNIVERSAL.md** (35 KB, 8 catégories, v1.1.0)
+**LESSONS-LEARNED-UNIVERSAL.md** (37 KB, 9 catégories, v1.2.0)
 
 ```
-https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/v1.1.0/LESSONS-LEARNED-UNIVERSAL.md
+https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/v1.2.0/LESSONS-LEARNED-UNIVERSAL.md
 ```
 
 **⚠️ CRITIQUE:** Lisez ce document EN ENTIER avant toute modification de code.
 
 **Contenu:**
-- ✅ 8 catégories d'erreurs critiques à éviter
+- ✅ 9 catégories d'erreurs critiques à éviter
 - ✅ Solutions validées pour problèmes récurrents
 - ✅ Workflow de déploiement (Catégorie 8: 2 commandes, 0 questions)
 - ✅ Standards accessibilité (WCAG 2.1, 44×44px mobile)
