@@ -8121,14 +8121,27 @@ app.get('/', (c) => {
                 
                 contextMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal ? ReactDOM.createPortal(
                     React.createElement('div', {
-                        className: 'context-menu',
                         style: {
                             position: 'fixed',
-                            top: contextMenu.y + 'px',
-                            left: contextMenu.x + 'px',
-                            zIndex: 10000
-                        }
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            zIndex: 9999
+                        },
+                        onClick: () => setContextMenu(null)
                     },
+                        React.createElement('div', {
+                            className: 'context-menu',
+                            style: {
+                                position: 'fixed',
+                                top: contextMenu.y + 'px',
+                                left: contextMenu.x + 'px',
+                                zIndex: 10000
+                            },
+                            onClick: (e) => e.stopPropagation()
+                        },
                         React.createElement('div', { className: 'font-bold text-xs text-gray-500 px-3 py-2 border-b' },
                             'Déplacer vers:'
                         ),
@@ -8186,7 +8199,20 @@ app.get('/', (c) => {
                         },
                             React.createElement('i', { className: 'fas fa-trash-alt mr-2' }),
                             'Supprimer le ticket'
-                        ) : null
+                        ) : null,
+                        // Bouton Annuler
+                        React.createElement('div', { className: 'border-t mt-1' }),
+                        React.createElement('div', {
+                            className: 'context-menu-item text-gray-600 hover:bg-gray-100 font-semibold text-center',
+                            onClick: (e) => {
+                                e.stopPropagation();
+                                setContextMenu(null);
+                            }
+                        },
+                            React.createElement('i', { className: 'fas fa-times mr-2' }),
+                            'Annuler'
+                        )
+                        )
                     ),
                     document.body
                 ) : null
