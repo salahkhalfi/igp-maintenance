@@ -7731,8 +7731,8 @@ app.get('/', (c) => {
                                         className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
                                     }, getTicketsByStatus(status.key).length)
                                 ),
-                                // Dropdown de tri
-                                React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
+                                // Dropdown de tri (visible uniquement si plus de 2 tickets)
+                                ticketsInColumn.length > 2 ? React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
                                     React.createElement('label', {
                                         className: 'text-xs text-gray-600 font-medium whitespace-nowrap',
                                         htmlFor: 'sort-select-' + status.key
@@ -7752,7 +7752,7 @@ app.get('/', (c) => {
                                         React.createElement('option', { value: 'oldest' }, '⏰ Plus ancien'),
                                         React.createElement('option', { value: 'scheduled' }, '📅 Planifié')
                                     )
-                                ),
+                                ) : null,
                                 React.createElement('div', { className: 'space-y-2' },
                                     getTicketsByStatus(status.key).map(ticket => {
                                         return React.createElement('div', {
@@ -7884,8 +7884,8 @@ app.get('/', (c) => {
                                             className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
                                         }, getTicketsByStatus(status.key).length)
                                     ),
-                                    // Dropdown de tri
-                                    React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
+                                    // Dropdown de tri (visible uniquement si plus de 2 tickets)
+                                    ticketsInColumn.length > 2 ? React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
                                         React.createElement('label', {
                                             className: 'text-xs text-gray-600 font-medium whitespace-nowrap',
                                             htmlFor: 'sort-select-' + status.key
@@ -7905,7 +7905,7 @@ app.get('/', (c) => {
                                             React.createElement('option', { value: 'oldest' }, '⏰ Plus ancien'),
                                             React.createElement('option', { value: 'scheduled' }, '📅 Planifié')
                                         )
-                                    ),
+                                    ) : null,
                                     React.createElement('div', { className: 'space-y-2' },
                                         getTicketsByStatus(status.key).map(ticket => {
                                             return React.createElement('div', {
