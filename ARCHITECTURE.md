@@ -2,9 +2,9 @@
 
 ## 📊 Vue d'ensemble
 
-**Version actuelle**: 2.0.0 (Refactored Architecture)  
-**Lignes de code**: ~10,393 lignes (index.tsx)  
-**Score qualité**: 8.3/10  
+**Version actuelle**: 2.4.0 (Messages & Audio Routes Extraction)  
+**Lignes de code**: ~9,887 lignes (index.tsx) - **-506 lignes** 🎉  
+**Score qualité**: 8.7/10  
 **Tests**: 146 tests unitaires (100% passing)
 
 ---
@@ -19,17 +19,19 @@ webapp/
 │   │
 │   ├── routes/                             # Routes API modulaires ✅
 │   │   ├── auth.ts                         # Authentification
-│   │   ├── rbac.ts                         # Permissions RBAC ✨ NEW
+│   │   ├── rbac.ts                         # Permissions RBAC
 │   │   ├── tickets.ts                      # Gestion tickets
 │   │   ├── machines.ts                     # Gestion machines
 │   │   ├── users.ts                        # Gestion utilisateurs
-│   │   ├── technicians.ts                  # Techniciens/équipes ✨ NEW
+│   │   ├── technicians.ts                  # Techniciens/équipes
 │   │   ├── roles.ts                        # Gestion rôles
 │   │   ├── settings.ts                     # Paramètres système
 │   │   ├── media.ts                        # Médias (R2)
 │   │   ├── comments.ts                     # Commentaires
 │   │   ├── webhooks.ts                     # Webhooks
-│   │   └── push.ts                         # Notifications push
+│   │   ├── push.ts                         # Notifications push
+│   │   ├── messages.ts                     # Messagerie ✨ NEW (Phase 2)
+│   │   └── audio.ts                        # Serve audio ✨ NEW (Phase 2)
 │   │
 │   ├── middlewares/                        # Middleware Hono
 │   │   └── auth.ts                         # Auth, permissions
