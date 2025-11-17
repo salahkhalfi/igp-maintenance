@@ -31,7 +31,7 @@
     "db:restore": "bash scripts/restore-db.sh",
     "db:list-backups": "ls -lht .wrangler/backups/ 2>/dev/null || echo 'Aucun backup trouvé'",
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
-    "test": "vitest run",
+    "test": "vitest run --config vitest.config.simple.ts",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
