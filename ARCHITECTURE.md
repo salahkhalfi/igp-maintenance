@@ -2,9 +2,9 @@
 
 ## 📊 Vue d'ensemble
 
-**Version actuelle**: 2.4.0 (Messages & Audio Routes Extraction)  
-**Lignes de code**: ~9,887 lignes (index.tsx) - **-506 lignes** 🎉  
-**Score qualité**: 8.7/10  
+**Version actuelle**: 2.5.0 (CRON & Alerts Routes Extraction)  
+**Lignes de code**: ~9,536 lignes (index.tsx) - **-1,086 lignes (-10.2%)** 🎉🎉  
+**Score qualité**: 9.0/10  
 **Tests**: 146 tests unitaires (100% passing)
 
 ---
@@ -30,8 +30,10 @@ webapp/
 │   │   ├── comments.ts                     # Commentaires
 │   │   ├── webhooks.ts                     # Webhooks
 │   │   ├── push.ts                         # Notifications push
-│   │   ├── messages.ts                     # Messagerie ✨ NEW (Phase 2)
-│   │   └── audio.ts                        # Serve audio ✨ NEW (Phase 2)
+│   │   ├── messages.ts                     # Messagerie (Phase 2)
+│   │   ├── audio.ts                        # Serve audio (Phase 2)
+│   │   ├── cron.ts                         # Tâches CRON ✨ NEW (Phase 3)
+│   │   └── alerts.ts                       # Alertes tickets ✨ NEW (Phase 3)
 │   │
 │   ├── middlewares/                        # Middleware Hono
 │   │   └── auth.ts                         # Auth, permissions
