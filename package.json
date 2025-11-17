@@ -31,6 +31,10 @@
     "db:restore": "bash scripts/restore-db.sh",
     "db:list-backups": "ls -lht .wrangler/backups/ 2>/dev/null || echo 'Aucun backup trouvé'",
     "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "hub:check": "bash check-hub-sync.sh",
     "hub:version": "grep -m1 'Version:' LESSONS-LEARNED-MEMOIRE.md",
     "hub:changelog": "grep -A 20 'HISTORIQUE DES MODIFICATIONS' LESSONS-LEARNED-MEMOIRE.md"
@@ -45,6 +49,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.5.25",
     "@cloudflare/workers-types": "^4.20250705.0",
     "@hono/vite-build": "^1.2.0",
     "@hono/vite-dev-server": "^0.18.2",
@@ -53,6 +58,7 @@
     "eslint": "^9.39.1",
     "vite": "^6.3.5",
     "vite-plugin-static-copy": "^3.1.4",
+    "vitest": "^2.1.8",
     "wrangler": "^4.4.0"
   }
 }

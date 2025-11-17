@@ -1,0 +1,17 @@
+name = "webapp"
+compatibility_date = "2025-11-02"
+pages_build_output_dir = "./dist"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+VAPID_PUBLIC_KEY = "BCX42hbbxmtjSTAnp9bDT9ombFSvwPzg24ciMOl_JcHhuhz9XBSOH_JfTtPq_SmyW5auaLJTfgET1-Q-IDF8Ig0"
+PUSH_ENABLED = "true"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "maintenance-db"
+database_id = "6e4d996c-994b-4afc-81d2-d67faab07828"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "maintenance-media"
