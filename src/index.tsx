@@ -116,6 +116,56 @@ app.use('/api/*', cors({
   credentials: true  // Permet l'envoi de cookies/credentials
 }));
 
+/**
+ * 🛡️ HEADERS DE SÉCURITÉ HTTP
+ *
+ * Protection contre les attaques XSS, clickjacking, MIME sniffing, etc.
+ * Ces headers sont appliqués à TOUTES les réponses (API et frontend).
+ *
+ * Headers implémentés:
+ * - X-Content-Type-Options: Empêche le navigateur de "deviner" le MIME type
+ * - X-Frame-Options: Empêche l'affichage de l'app dans une iframe (clickjacking)
+ * - X-XSS-Protection: Active la protection XSS du navigateur (legacy browsers)
+ * - Referrer-Policy: Contrôle les informations envoyées dans le header Referer
+ * - Permissions-Policy: Désactive les APIs sensibles (géolocalisation, micro, caméra)
+ * - Content-Security-Policy: Définit les sources autorisées pour scripts, styles, etc.
+ */
+app.use('*', async (c, next) => {
+  await next();
+  
+  // Empêche le MIME type sniffing (force le navigateur à respecter Content-Type)
+  c.header('X-Content-Type-Options', 'nosniff');
+  
+  // Empêche l'affichage dans une iframe (protection clickjacking)
+  c.header('X-Frame-Options', 'DENY');
+  
+  // Active la protection XSS du navigateur (fallback pour anciens navigateurs)
+  c.header('X-XSS-Protection', '1; mode=block');
+  
+  // Contrôle les informations du Referer header
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Désactive les APIs sensibles (géolocalisation, micro, caméra)
+  c.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // Content Security Policy - Définit les sources autorisées
+  // Note: 'unsafe-inline' nécessaire pour Tailwind CDN et styles inline
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net",
+    "img-src 'self' data: https:",
+    "font-src 'self' cdn.jsdelivr.net",
+    "media-src 'self'",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'"
+  ].join('; ');
+  
+  c.header('Content-Security-Policy', cspDirectives);
+});
+
 
 app.use('/api/auth/me', authMiddleware);
 
