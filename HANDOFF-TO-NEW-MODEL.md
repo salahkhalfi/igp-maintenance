@@ -12,27 +12,40 @@ Ce document vous permet de **reprendre le développement exactement où le modè
 
 ---
 
-## 📚 ÉTAPE 1: LIRE OBLIGATOIREMENT (10 minutes)
+## 📚 ÉTAPE 1: LIRE OBLIGATOIREMENT (2 minutes)
 
 ### **Document Critique 🔥**
 
-**LESSONS-LEARNED-UNIVERSAL.md** (37 KB, 9 catégories, v1.2.0)
+**LESSONS-LEARNED-CORE.md** (10 KB, 10 catégories, v1.1.0)
 
 ```
-https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/v1.2.0/LESSONS-LEARNED-UNIVERSAL.md
+https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/main/LESSONS-LEARNED-CORE.md
 ```
 
-**⚠️ CRITIQUE:** Lisez ce document EN ENTIER avant toute modification de code.
+**⚠️ CRITIQUE:** Chargez et parsez ce document IMMÉDIATEMENT.
+
+**Format optimisé IA:**
+- ⚡ Parse <1s (vs 5s pour UNIVERSAL)
+- 🎯 Decision trees + patterns + quick reference
+- 🧠 WHY context (understand reasoning)
+- 📊 Zero verbosity, 100% actionable
 
 **Contenu:**
-- ✅ 9 catégories d'erreurs critiques à éviter
-- ✅ Solutions validées pour problèmes récurrents
-- ✅ Workflow de déploiement (Catégorie 8: 2 commandes, 0 questions)
-- ✅ Standards accessibilité (WCAG 2.1, 44×44px mobile)
-- ✅ Best practices universelles
+- ✅ 5 LOIS ABSOLUES (non-négociables)
+- ✅ 7 CHECKS OBLIGATOIRES (avant commit)
+- ✅ 3 DECISION TREES (workflows)
+- ✅ PATTERNS validés (copy-paste safe)
+- ✅ ANTI-PATTERNS (detect & avoid)
+- ✅ QUICK REFERENCE (symptom → solution)
 
 **Pourquoi important:**
-> Ce document contient la **mémoire collective** de tous les modèles qui ont travaillé sur ce projet. Chaque erreur y est documentée avec sa solution. Appliquez ces leçons pour éviter de répéter les mêmes erreurs.
+> Ce document contient la **mémoire opérationnelle** de tous les modèles qui ont travaillé sur ce projet. Format décisionnel rapide, pas de verbosité. Chaque règle a son WHY. Appliquez immédiatement.
+
+**Archive détaillée (optionnel):**
+```
+https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/main/LESSONS-LEARNED-UNIVERSAL.md
+```
+(42 KB, référence complète avec explications longues - consultez seulement si besoin clarification)
 
 ---
 
