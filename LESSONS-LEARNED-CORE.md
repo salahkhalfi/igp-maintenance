@@ -1,9 +1,10 @@
 # 🎯 LESSONS-LEARNED-CORE (AI-Optimized)
 
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Format:** Décisionnel rapide  
 **Parse time:** <1s  
-**Size:** ~8KB vs 42KB
+**Size:** ~9KB vs 42KB  
+**Dernière mise à jour:** 2025-11-17
 
 ---
 
@@ -48,6 +49,22 @@ LOAD → PARSE → ACTIVATE
         Global vars reset on cold start = data loss
    HOW: Persistent storage: D1/KV/R2
         Never: let cache = {} at module level
+
+6. NO_BLOCKING_AWAIT_IN_CRITICAL_FLOW
+   WHY: await on unreliable browser APIs hangs indefinitely
+        (Notification.requestPermission, getUserMedia block in GenSpark)
+        Login blocked = infinite spinner = app unusable
+   HOW: Never await in login/startup flow
+        Use setTimeout() + .then() for optional features
+        Browser APIs = background only, never blocking
+
+7. NO_ROUTE_INTERCEPTION
+   WHY: Hono routes match FIRST match, not most specific
+        app.route('/api/users', techRoute) before app.route('/api/users', userRoute)
+        = First route intercepts, second never reached
+   HOW: Order routes: specific → generic
+        Mount middleware BEFORE routes it protects
+        Never mount two handlers on same base path
 ```
 
 ---
@@ -75,6 +92,14 @@ LOAD → PARSE → ACTIVATE
 
 □ Tests exist
   WHY: No tests = regressions undetected, production bugs
+
+□ No console.log in production
+  WHY: Embedded browsers (GenSpark) can block on console calls
+       78+ console statements = performance hit + blocking risk
+
+□ Routes ordered correctly
+  WHY: Hono matches first route, order matters
+       Wrong order = routes intercepted, features break
 ```
 
 ---
@@ -142,60 +167,37 @@ Update LESSONS (collective memory)
 
 ## 🟢 PATTERNS VALIDÉS (copy-paste safe)
 
-### Apostrophes (Category 1)
-
 ```javascript
+// Apostrophes
 ❌ 'C'est cassé'
 ✅ `C'est correct`
-```
 
-### DB Migrations (Category 2)
-
-```bash
-# After rm -rf .wrangler OR git clone
-npx wrangler d1 migrations apply DB_NAME --local
-npx wrangler d1 execute DB_NAME --local --file=seed.sql
-```
-
-### Serverless State (Category 4)
-
-```javascript
+// Serverless State
 ❌ let cache = {}
 ✅ await c.env.DB.prepare('SELECT * FROM cache').all()
-```
 
-### N+1 Prevention (Category 7)
-
-```javascript
+// N+1 Prevention
 ❌ for (user of users) { posts = await db.query(...) }
 ✅ posts = await db.query('WHERE user_id IN (?)', userIds)
-```
 
-### Deployment Update (Category 8)
+// Route Order
+❌ app.route('/api/users', techRoute); app.route('/api/users', userRoute);
+✅ app.route('/api/users/team', teamRoute); app.route('/api/users', userRoute);
+
+// Non-blocking Browser APIs
+❌ await Notification.requestPermission();  // In login
+✅ setTimeout(() => Notification.requestPermission().then(...), 100);
+```
 
 ```bash
-npm run build
-npx wrangler pages deploy dist --project-name PROJECT
-```
+# DB Migrations after clean
+npx wrangler d1 migrations apply DB_NAME --local
 
-### Token Economy (Category 9)
+# Deployment
+npm run build && npx wrangler pages deploy dist --project-name PROJECT
 
-```
-Q: "Deploy?"
-A: npm run build && wrangler deploy
-   Result: https://...
-   
-NOT: [500 lines explanation]
-```
-
-### READ_FIRST (Category 10)
-
-```
-BEFORE any Edit:
-1. Read [file]
-2. Grep [feature]
-3. if exists → use
-4. if not → Edit precise
+# Token Economy Response
+Q: "Deploy?" → A: [command] + [result URL] (NOT 500 lines)
 ```
 
 ---
@@ -212,6 +214,10 @@ BEFORE any Edit:
 ❌ Duplicate existing function
 ❌ Skip tests
 ❌ Trailing whitespace committed
+❌ await browser APIs in critical flow (login/startup)
+❌ Route registration without order consideration
+❌ Push notifications/permissions in login function
+❌ Multiple routes on same path (interception)
 ```
 
 ---
@@ -229,6 +235,9 @@ Text unreadable            → Contrast ≥4.5:1
 Deployment confusion       → Detect: update vs new
 Response too long          → Apply token economy
 Breaking existing code     → READ_FIRST protocol
+Infinite spinner           → Check await in login
+Empty API response         → Check route order
+App works but slow         → Remove console.log
 ```
 
 ---
@@ -255,7 +264,7 @@ Template Literals    100% syntax errors avoided
 └──────────┬──────────────────────────┘
            ↓
     ┌──────────────┐
-    │ Check LAWS   │ (5 absolutes)
+    │ Check LAWS   │ (7 absolutes)
     └──────┬───────┘
            ↓
     ┌──────────────┐
@@ -278,7 +287,7 @@ Template Literals    100% syntax errors avoided
 ```
 Start session:
 □ LESSONS-LEARNED-CORE loaded
-□ 5 absolute laws active
+□ 7 absolute laws active
 □ Decision trees memorized
 □ Patterns ready
 
@@ -311,69 +320,33 @@ Before commit:
 ## 📈 VERSION SYNC
 
 ```
-CORE v1.0.0 = UNIVERSAL v1.3.0
+CORE v1.1.0 = UNIVERSAL v1.3.0
 
 Update both when:
 - New absolute law added
 - Critical pattern changed
 - Major category added
+
+Changelog v1.1.0 (2025-11-17):
+- Added LAW #6: NO_BLOCKING_AWAIT_IN_CRITICAL_FLOW
+- Added LAW #7: NO_ROUTE_INTERCEPTION
+- Added check: No console.log in production
+- Added check: Routes ordered correctly
+- Added anti-patterns: await browser APIs, route interception
+- Added symptoms: Infinite spinner, empty API response
 ```
 
 ---
 
 ---
 
-## 📝 MAINTENANCE (for AI updating this file)
-
-### Adding New Lesson
+## 📝 UPDATE PROTOCOL
 
 ```
-New lesson learned
-    ↓
-Is it ABSOLUTE? (non-negotiable, always apply)
-    ↓ YES                        ↓ NO
-Add to LOIS ABSOLUES        Is it VALIDATED pattern?
-    ↓                            ↓ YES              ↓ NO
-Increment law number        Add to PATTERNS    Add to QUICK REF
-                                ↓
-                        Is it workflow/decision?
-                                ↓ YES
-                        Add DECISION TREE
-```
-
-### Format Rules
-
-```
-✅ DO:
-- Decision tree (workflow)
-- Code snippet (1 example max)
-- 1-liner rule
-- Symptom → Solution
-
-❌ NEVER:
-- Long explanations
-- Multiple examples
-- Historical context
-- Verbose philosophy
-- Duplicate info
-```
-
-### Update Checklist
-
-```
-□ New content ≤10 lines
-□ Visual format (tree/table/code)
-□ No duplication
-□ Actionable (not theory)
-□ Test: Can AI parse in <1s?
-```
-
-### File Size Limit
-
-```
-CORE must stay: <10KB
-If >10KB: Remove redundancy, not content
-Priority: Speed > Completeness
+Add lesson → Check: ABSOLUTE? → Yes: Add to LAWS (increment #)
+                              → No: PATTERN or QUICK REF
+Update: ≤10 lines | Visual format | No duplication | Must parse <1s
+Size limit: <10KB | If over: Remove redundancy, not content
 ```
 
 ---
