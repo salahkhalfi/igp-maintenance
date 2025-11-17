@@ -22,24 +22,32 @@ LOAD → PARSE → ACTIVATE
 
 ```
 1. READ_FIRST
-   Before ANY file modification:
-   Read → Grep → Identify → Edit
+   WHY: 80% bugs = modifying without understanding existing code
+        Avoid duplication, regressions, breaking features
+   HOW: Read → Grep similar → Identify exact lines → Edit minimal
    
 2. TOKEN_ECONOMY
-   Response format: Action + Command + Link
-   Never >50 lines without explicit request
+   WHY: User pays hundreds $ per project, tokens cost real money
+        Verbose = expensive, concise = efficient
+   HOW: Action (1 line) + Command + Link | Never >50 lines unprompted
    
 3. DEPLOYMENT_DETECT
-   "update" → build + deploy (0 questions)
-   "new" → full setup (auth required)
+   WHY: User scared when update treated as new (confusion, questions)
+        Different workflows for different intents
+   HOW: "update/push" → build + deploy (0 questions)
+        "new/create" → full setup (auth required)
    
 4. NO_NODE_IN_WORKERS
-   Cloudflare Workers = Web APIs only
-   fs/path/process → FORBIDDEN
+   WHY: Cloudflare Workers = V8 isolates, not Node.js runtime
+        fs/process/path don't exist, causes runtime errors
+   HOW: Use Web APIs only (fetch, crypto.subtle, etc)
+        Never import Node.js built-ins
    
 5. NO_MEMORY_STATE
-   Serverless = stateless
-   Use: D1/KV/R2, Never: global vars
+   WHY: Serverless = stateless, each request = new instance
+        Global vars reset on cold start = data loss
+   HOW: Persistent storage: D1/KV/R2
+        Never: let cache = {} at module level
 ```
 
 ---
@@ -48,12 +56,25 @@ LOAD → PARSE → ACTIVATE
 
 ```
 □ Template literals (apostrophes)
+  WHY: 'C'est' causes SyntaxError, breaks app completely
+
 □ Migrations applied (after clean)
+  WHY: Empty DB = "no such table" errors, app crashes
+
 □ No N+1 queries (JOINs/IN)
+  WHY: 100 users = 101 queries, 100× slower, timeout
+
 □ Contrast ≥4.5:1 (UI text)
+  WHY: WCAG compliance, readability, accessibility
+
 □ No trailing whitespace
+  WHY: Pollutes git diff, false changes, merge conflicts
+
 □ Build passes
+  WHY: Broken build = deployment fails, wasted time
+
 □ Tests exist
+  WHY: No tests = regressions undetected, production bugs
 ```
 
 ---
@@ -63,24 +84,28 @@ LOAD → PARSE → ACTIVATE
 ### Modification Request
 
 ```
+WHY THIS TREE: Avoid rewriting existing code, prevent regressions
+
 User: "Modify X"
   ↓
-Read X exists? → NO → Grep similar → Found? → YES → Use existing
+Read X exists? → NO → Grep similar → Found? → YES → Use existing (save tokens)
   ↓                ↓                    ↓
  YES              Create new          NO → Create new
   ↓                                    
-Read full file
+Read full file (understand context)
   ↓
-Identify exact lines
+Identify exact lines (precision)
   ↓
-Edit minimal
+Edit minimal (less = safer)
   ↓
-Test immediately
+Test immediately (catch bugs fast)
 ```
 
 ### Deployment Request
 
 ```
+WHY THIS TREE: User pays for confusion, different workflows needed
+
 User: "Deploy" / "Update production"
   ↓
 Detect keywords: update/push/deploy?
@@ -88,26 +113,29 @@ Detect keywords: update/push/deploy?
  YES                  NO (new/create/first)
   ↓                    ↓
 UPDATE               NEW
+(existing project)   (first time)
   ↓                    ↓
 npm run build        setup_cloudflare_api_key
 wrangler deploy      create project
-                     configure DB
+(0 questions!)       configure DB
                      deploy
 ```
 
 ### Error Handling
 
 ```
+WHY THIS TREE: Don't reinvent solutions, learn from past
+
 Error occurs
   ↓
-In LESSONS-LEARNED? → YES → Apply documented solution
+In LESSONS-LEARNED? → YES → Apply documented solution (proven)
   ↓                           ↓
  NO                         Done ✓
   ↓
-Search codebase
-Debug
-Document solution
-Update LESSONS
+Search codebase (context)
+Debug (understand)
+Document solution (future reference)
+Update LESSONS (collective memory)
 ```
 
 ---
