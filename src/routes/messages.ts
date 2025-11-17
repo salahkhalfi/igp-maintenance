@@ -31,6 +31,40 @@ messages.post('/', authMiddleware, async (c) => {
       VALUES (?, ?, ?, ?)
     `).bind(user.userId, recipient_id || null, message_type, content).run();
 
+    // 🔔 Envoyer push notification si message privé
+    if (message_type === 'private' && recipient_id) {
+      try {
+        const { sendPushNotification } = await import('./push');
+        
+        // Obtenir le nom de l'expéditeur
+        const senderName = user.full_name || user.email || 'Un utilisateur';
+        
+        // Préparer le contenu pour la notification (max 100 caractères)
+        const notificationBody = content.length > 100 
+          ? content.substring(0, 97) + '...'
+          : content;
+        
+        await sendPushNotification(c.env, recipient_id, {
+          title: `💬 Message de ${senderName}`,
+          body: notificationBody,
+          icon: '/icon-192.png',
+          badge: '/badge-72.png',
+          data: {
+            url: `/messages/private/${user.userId}`,
+            action: 'new_private_message',
+            senderId: user.userId,
+            senderName: senderName,
+            messageId: result.meta.last_row_id
+          }
+        });
+        
+        console.log(`✅ Push notification sent to user ${recipient_id} for message from ${user.userId}`);
+      } catch (pushError) {
+        // Fail-safe: si push échoue, le message est quand même envoyé
+        console.error('❌ Push notification failed (non-blocking):', pushError);
+      }
+    }
+
     return c.json({
       message: 'Message envoye avec succes',
       id: result.meta.last_row_id
@@ -119,6 +153,44 @@ messages.post('/audio', authMiddleware, async (c) => {
     ).run();
 
     console.log(`✅ Audio message uploaded: ${fileKey} (${(audioFile.size / 1024).toFixed(1)} KB, ${duration}s)`);
+
+    // 🔔 Envoyer push notification si message privé
+    if (messageType === 'private' && recipientId) {
+      try {
+        const { sendPushNotification } = await import('./push');
+        
+        // Obtenir le nom de l'expéditeur
+        const senderName = user.full_name || user.email || 'Un utilisateur';
+        
+        // Formatter la durée pour affichage (ex: "2:35")
+        const durationMin = Math.floor(duration / 60);
+        const durationSec = duration % 60;
+        const durationText = durationSec > 0 
+          ? `${durationMin}:${durationSec.toString().padStart(2, '0')}`
+          : `${durationMin}min`;
+        
+        await sendPushNotification(c.env, parseInt(recipientId), {
+          title: `🎤 Message audio de ${senderName}`,
+          body: `Message vocal (${durationText}) - Appuyez pour écouter`,
+          icon: '/icon-192.png',
+          badge: '/badge-72.png',
+          data: {
+            url: `/messages/private/${user.userId}`,
+            action: 'new_audio_message',
+            senderId: user.userId,
+            senderName: senderName,
+            messageId: result.meta.last_row_id,
+            audioKey: fileKey,
+            duration: duration
+          }
+        });
+        
+        console.log(`✅ Push notification sent to user ${recipientId} for audio message from ${user.userId}`);
+      } catch (pushError) {
+        // Fail-safe: si push échoue, le message est quand même envoyé
+        console.error('❌ Push notification failed (non-blocking):', pushError);
+      }
+    }
 
     return c.json({
       message: 'Message vocal envoyé avec succès',
