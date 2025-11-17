@@ -11,10 +11,27 @@
 
 ## 🔄 PROTOCOLE DE SYNCHRONISATION HUB
 
+### ⚡ NOUVEAU: Format Optimisé AI
+
+**IMPORTANT:** Ce fichier (UNIVERSAL) = Archive complète avec détails  
+**OPÉRATIONNEL:** Utilisez **LESSONS-LEARNED-CORE.md** en session
+
+```
+CORE (8KB, <1s parse)     = Exécution rapide
+UNIVERSAL (42KB, ~5s)     = Référence complète
+
+Session start → Load CORE uniquement
+```
+
+**Lien CORE:**
+```
+https://raw.githubusercontent.com/salahkhalfi/igp-maintenance/main/LESSONS-LEARNED-CORE.md
+```
+
 ### Pour l'Assistant IA
 
 **À CHAQUE NOUVELLE SESSION:**
-1. ✅ Lire ce document depuis le Hub au démarrage
+1. ✅ Lire **LESSONS-LEARNED-CORE.md** depuis le Hub au démarrage
 2. ✅ Appliquer les principes à TOUS les projets
 3. ✅ Consulter avant toute modification importante
 4. ✅ Mettre à jour avec nouvelles leçons apprises
