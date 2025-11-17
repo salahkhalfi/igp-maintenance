@@ -193,9 +193,7 @@ app.use('/api/machines/*', authMiddleware);
 app.route('/api/machines', machines);
 
 // Routes des techniciens et équipes
-// IMPORTANT: La route /api/users/team doit être montée avant /api/users/*
 app.route('/api/technicians', technicians);
-app.route('/api/users', technicians);  // Pour /api/users/team
 
 // Routes des utilisateurs
 app.use('/api/users/*', authMiddleware);
