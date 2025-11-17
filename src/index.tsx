@@ -368,7 +368,7 @@ app.post('/api/cron/check-overdue', async (c) => {
   try {
     // Vérifier le token secret dans l'en-tête
     const authHeader = c.req.header('Authorization');
-    const expectedToken = 'Bearer cron_secret_igp_2025_webhook_notifications';
+    const expectedToken = c.env.CRON_SECRET;
 
     if (authHeader !== expectedToken) {
       return c.json({ error: 'Unauthorized - Invalid CRON token' }, 401);
@@ -1240,7 +1240,7 @@ app.post('/api/cron/cleanup-push-tokens', async (c) => {
   try {
     // Verifier le token secret
     const authHeader = c.req.header('Authorization');
-    const expectedToken = 'Bearer cron_secret_igp_2025_webhook_notifications';
+    const expectedToken = c.env.CRON_SECRET;
 
     if (authHeader !== expectedToken) {
       return c.json({ error: 'Unauthorized - Invalid CRON token' }, 401);
