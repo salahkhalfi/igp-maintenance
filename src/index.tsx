@@ -5,7 +5,41 @@
  * @organization Produits Verriers International (IGP) Inc.
  * @department Département des Technologies de l'Information
  * @description Application de gestion de maintenance pour équipements industriels
- * @version 1.0.0
+ * @version 2.0.0 - Refactored Architecture
+ *
+ * ARCHITECTURE MODULAIRE:
+ * =======================
+ * Routes modulaires (src/routes/):
+ *   - auth.ts: Authentification (login, register, logout)
+ *   - rbac.ts: Test et vérification des permissions RBAC
+ *   - tickets.ts: Gestion complète des tickets
+ *   - machines.ts: Gestion des machines et interventions
+ *   - users.ts: Gestion des utilisateurs
+ *   - technicians.ts: Routes spécifiques techniciens et équipes
+ *   - roles.ts: Gestion des rôles et permissions
+ *   - settings.ts: Paramètres système
+ *   - media.ts: Upload et gestion des médias
+ *   - comments.ts: Commentaires sur tickets
+ *   - webhooks.ts: Webhooks externes
+ *   - push.ts: Notifications push
+ *
+ * Routes inline (dans ce fichier):
+ *   - Messagerie (/api/messages/*) - Système de messagerie audio/texte
+ *   - Alertes (/api/alerts/*) - Alertes tickets en retard
+ *   - CRON (/api/cron/*) - Tâches planifiées
+ *   - Frontend (/, /guide, /changelog, /test) - Pages HTML
+ *   - Admin HTML (/admin/roles) - Interface admin
+ *
+ * Middleware (src/middlewares/):
+ *   - auth.ts: authMiddleware, adminOnly, requirePermission, etc.
+ *
+ * Utilitaires (src/utils/):
+ *   - password.ts: Hashing PBKDF2
+ *   - jwt.ts: Génération et validation JWT
+ *   - permissions.ts: Système RBAC
+ *   - validation.ts: Validation des données
+ *   - formatters.ts: Formatage des données
+ *   - ticket-id.ts: Génération des IDs de tickets
  */
 
 import { Hono } from 'hono';
@@ -24,6 +58,8 @@ import roles from './routes/roles';
 import settings from './routes/settings';
 import webhooks from './routes/webhooks';
 import push from './routes/push';
+import rbac from './routes/rbac';
+import technicians from './routes/technicians';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -79,217 +115,15 @@ app.use('/api/*', cors({
 
 app.use('/api/auth/me', authMiddleware);
 
+// ========================================
+// ROUTES API MODULAIRES
+// ========================================
 
+// Routes d'authentification
 app.route('/api/auth', auth);
 
-
-// ========================================
-// ROUTES RBAC - TEST ET GESTION
-// ========================================
-
-// Route de test RBAC (accessible à tous les utilisateurs authentifiés)
-app.get('/api/rbac/test', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-
-    // Récupérer toutes les permissions du rôle de l'utilisateur
-    const userPermissions = await getRolePermissions(c.env.DB, user.role);
-
-    // Tester quelques permissions spécifiques
-    const tests = {
-      canCreateTickets: await hasPermission(c.env.DB, user.role, 'tickets', 'create', 'all'),
-      canDeleteAllTickets: await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'all'),
-      canDeleteOwnTickets: await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'own'),
-      canCreateMachines: await hasPermission(c.env.DB, user.role, 'machines', 'create', 'all'),
-      canCreateUsers: await hasPermission(c.env.DB, user.role, 'users', 'create', 'all'),
-      canManageRoles: await hasPermission(c.env.DB, user.role, 'roles', 'create', 'all'),
-    };
-
-    return c.json({
-      message: 'Test RBAC réussi',
-      user: {
-        id: user.userId,
-        email: user.email,
-        role: user.role
-      },
-      permissions: {
-        total: userPermissions.length,
-        list: userPermissions
-      },
-      specificTests: tests,
-      interpretation: {
-        role: user.role,
-        description:
-          user.role === 'admin' ? 'Accès complet - Peut tout faire' :
-          user.role === 'supervisor' ? 'Gestion complète sauf rôles/permissions' :
-          user.role === 'technician' ? 'Gestion tickets + lecture' :
-          user.role === 'operator' ? 'Tickets propres uniquement' :
-          'Rôle personnalisé'
-      }
-    });
-  } catch (error) {
-    console.error('RBAC test error:', error);
-    return c.json({ error: 'Erreur lors du test RBAC' }, 500);
-  }
-});
-
-// ========================================
-// ENDPOINTS RBAC - VÉRIFICATION PERMISSIONS FRONTEND
-// ========================================
-
-/**
- * GET /api/rbac/check - Vérifier une permission simple
- * Query params: resource, action, scope (défaut: 'all')
- * Retourne: { allowed: boolean }
- */
-app.get('/api/rbac/check', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    const resource = c.req.query('resource');
-    const action = c.req.query('action');
-    const scope = c.req.query('scope') || 'all';
-
-    if (!resource || !action) {
-      return c.json({
-        error: 'Paramètres manquants',
-        required: ['resource', 'action'],
-        optional: ['scope (défaut: all)']
-      }, 400);
-    }
-
-    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
-
-    return c.json({
-      allowed,
-      permission: `${resource}.${action}.${scope}`,
-      user_role: user.role
-    });
-  } catch (error) {
-    console.error('RBAC check error:', error);
-    return c.json({ error: 'Erreur vérification permission' }, 500);
-  }
-});
-
-/**
- * GET /api/rbac/check-any - Vérifier plusieurs permissions (AU MOINS UNE)
- * Query param: permissions (CSV: "resource.action.scope,resource2.action2.scope2")
- * Retourne: { allowed: boolean, matched?: string }
- */
-app.get('/api/rbac/check-any', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    const permsParam = c.req.query('permissions');
-
-    if (!permsParam) {
-      return c.json({
-        error: 'Paramètre manquant',
-        required: 'permissions (CSV format: "resource.action.scope,...")'
-      }, 400);
-    }
-
-    const permissions = permsParam.split(',');
-
-    // Vérifier chaque permission jusqu'à trouver une correspondance
-    for (const perm of permissions) {
-      const parts = perm.trim().split('.');
-      if (parts.length < 2) continue;
-
-      const [resource, action, scope = 'all'] = parts;
-      const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
-
-      if (allowed) {
-        return c.json({
-          allowed: true,
-          matched: perm.trim(),
-          user_role: user.role
-        });
-      }
-    }
-
-    return c.json({
-      allowed: false,
-      checked: permissions,
-      user_role: user.role
-    });
-  } catch (error) {
-    console.error('RBAC check-any error:', error);
-    return c.json({ error: 'Erreur vérification permissions' }, 500);
-  }
-});
-
-/**
- * GET /api/rbac/check-all - Vérifier plusieurs permissions (TOUTES)
- * Query param: permissions (CSV: "resource.action.scope,resource2.action2.scope2")
- * Retourne: { allowed: boolean, failed?: string[] }
- */
-app.get('/api/rbac/check-all', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    const permsParam = c.req.query('permissions');
-
-    if (!permsParam) {
-      return c.json({
-        error: 'Paramètre manquant',
-        required: 'permissions (CSV format: "resource.action.scope,...")'
-      }, 400);
-    }
-
-    const permissions = permsParam.split(',');
-    const failed: string[] = [];
-
-    // Vérifier toutes les permissions
-    for (const perm of permissions) {
-      const parts = perm.trim().split('.');
-      if (parts.length < 2) {
-        failed.push(perm.trim() + ' (format invalide)');
-        continue;
-      }
-
-      const [resource, action, scope = 'all'] = parts;
-      const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
-
-      if (!allowed) {
-        failed.push(perm.trim());
-      }
-    }
-
-    const allAllowed = failed.length === 0;
-
-    return c.json({
-      allowed: allAllowed,
-      checked: permissions,
-      ...(failed.length > 0 && { failed }),
-      user_role: user.role
-    });
-  } catch (error) {
-    console.error('RBAC check-all error:', error);
-    return c.json({ error: 'Erreur vérification permissions' }, 500);
-  }
-});
-
-// Route de test avec middleware requirePermission
-app.get('/api/rbac/test-permission',
-  authMiddleware,
-  requirePermission('tickets', 'read', 'all'),
-  async (c) => {
-    return c.json({
-      message: 'Permission accordée!',
-      requiredPermission: 'tickets.read.all'
-    });
-  }
-);
-
-// Route de test avec middleware requireAnyPermission
-app.get('/api/rbac/test-any-permission',
-  authMiddleware,
-  requireAnyPermission(['tickets.read.all', 'tickets.read.own']),
-  async (c) => {
-    return c.json({
-      message: 'Au moins une permission accordée!',
-      requiredPermissions: ['tickets.read.all', 'tickets.read.own']
-    });
-  }
-);
+// Routes RBAC - Test et vérification des permissions
+app.route('/api/rbac', rbac);
 
 // API de gestion des rôles (admin uniquement)
 app.use('/api/roles/*', authMiddleware, adminOnly);
@@ -300,45 +134,16 @@ app.use('/api/tickets/*', authMiddleware);
 app.route('/api/tickets', tickets);
 
 
+// Routes des machines
 app.use('/api/machines/*', authMiddleware);
 app.route('/api/machines', machines);
 
+// Routes des techniciens et équipes
+// IMPORTANT: La route /api/users/team doit être montée avant /api/users/*
+app.route('/api/technicians', technicians);
+app.route('/api/users', technicians);  // Pour /api/users/team
 
-// Route pour récupérer la liste des techniciens (accessible par tous les utilisateurs authentifiés)
-app.get('/api/technicians', authMiddleware, async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare(`
-      SELECT id, full_name, email
-      FROM users
-      WHERE role = 'technician' AND id != 0
-      ORDER BY full_name ASC
-    `).all();
-
-    return c.json({ technicians: results });
-  } catch (error) {
-    console.error('Get technicians error:', error);
-    return c.json({ error: 'Erreur lors de la récupération des techniciens' }, 500);
-  }
-});
-
-// Route pour que les techniciens voient la liste de tous les utilisateurs
-// IMPORTANT: Cette route doit etre AVANT app.route('/api/users') pour ne pas etre bloquee par supervisorOrAdmin
-app.get('/api/users/team', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare(`
-      SELECT id, email, full_name, role, created_at, updated_at, last_login
-      FROM users
-      WHERE id != 0
-      ORDER BY role DESC, full_name ASC
-    `).all();
-
-    return c.json({ users: results });
-  } catch (error) {
-    console.error('Get team users error:', error);
-    return c.json({ error: 'Erreur lors de la récupération de l equipe' }, 500);
-  }
-});
-
+// Routes des utilisateurs
 app.use('/api/users/*', authMiddleware);
 app.route('/api/users', users);
 
