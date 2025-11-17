@@ -3,8 +3,8 @@
 ## 🎯 Vue d'ensemble
 
 **Framework**: Vitest v2.1.8  
-**Couverture**: 92 tests unitaires (100% passing)  
-**Modules testés**: `validation`, `permissions`, `formatters`, `password`, `jwt`
+**Couverture**: 146 tests unitaires (100% passing)  
+**Modules testés**: `validation`, `permissions`, `formatters`, `password`, `jwt`, `ticket-id`, et plus
 
 ---
 
@@ -139,9 +139,11 @@ mockDB.addTestData('users', [
 | **utils/validation** | 24 | ✅ 100% |
 | **utils/permissions** | 20 | ✅ 100% |
 | **utils/formatters** | 23 | ✅ 100% |
+| **utils/formatters-extended** | 32 | ✅ 100% |
 | **utils/password** | 15 | ✅ 100% |
 | **utils/jwt** | 10 | ✅ 100% |
-| **Total** | **92** | **✅ 100%** |
+| **utils/ticket-id** | 22 | ✅ 100% |
+| **Total** | **146** | **✅ 100%** |
 
 ---
 

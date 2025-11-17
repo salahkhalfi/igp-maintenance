@@ -5,6 +5,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
-    exclude: ['node_modules', 'dist', '.wrangler'],
+    exclude: ['node_modules', 'dist', '.wrangler', 'tests/_integration_draft/**'],
   },
 });
