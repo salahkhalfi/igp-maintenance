@@ -6310,6 +6310,16 @@ app.get('/', (c) => {
             const [messagingTab, setMessagingTab] = React.useState("public");
             const [showScrollTop, setShowScrollTop] = React.useState(false);
 
+            // Ouvrir automatiquement le guide si paramètre URL openGuide=true
+            React.useEffect(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('openGuide') === 'true') {
+                    setShowUserGuide(true);
+                    // Nettoyer l'URL sans recharger la page
+                    window.history.replaceState({}, '', '/');
+                }
+            }, []);
+
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
                 const handleScroll = () => {
@@ -7826,6 +7836,12 @@ app.get('/', (c) => {
 
 // Route du guide utilisateur
 app.get('/guide', (c) => {
+  // Redirection vers page principale avec modal guide ouvert
+  return c.redirect('/?openGuide=true');
+});
+
+// ANCIEN GUIDE HTML (conservé pour référence, non utilisé)
+app.get('/guide-old', (c) => {
   return c.html(`
 <!DOCTYPE html>
 <html lang="fr">
@@ -7964,7 +7980,7 @@ app.get('/guide', (c) => {
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
-            <p class="text-xs text-gray-500 mb-6">v2.0.11</p>
+            <p class="text-xs text-gray-500 mb-6">v2.5.4</p>
 
             <nav class="space-y-2">
                 <a href="#introduction" class="mobile-nav-link nav-link block px-3 py-2 text-sm text-gray-600 rounded-lg border-l-3 border-transparent">
