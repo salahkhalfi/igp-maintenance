@@ -1,9 +1,9 @@
 # 🎯 LESSONS-LEARNED-CORE (AI-Optimized)
 
-**Version:** 1.2.0  
+**Version:** 1.3.0  
 **Format:** Décisionnel rapide  
 **Parse time:** <1s  
-**Size:** ~10KB vs 42KB  
+**Size:** ~11KB vs 42KB  
 **Dernière mise à jour:** 2025-11-18
 
 ---
@@ -81,6 +81,17 @@ LOAD → PARSE → ACTIVATE
    HOW: Deploy to 'main' branch for Production environment
         Use --branch main flag for wrangler pages deploy
         Preview = testing code only, Production = full features
+
+10. FIRE_AND_FORGET_BROWSER_APIS
+    WHY: Browser APIs can block forever in embedded/sandboxed environments
+         await Notification.requestPermission() in login = infinite spinner
+         State changes MUST complete before any blocking operation
+         Critical path (login/startup) must NEVER wait for optional features
+    HOW: setTimeout() + .then() pattern (fire and forget)
+         Decouple browser APIs from critical user flows
+         Multiple protection layers (API check, permission check, error catch)
+         Never: await browserAPI() in login/critical path
+         Always: setState() → setTimeout(() => browserAPI().then())
 ```
 
 ---
@@ -212,9 +223,20 @@ Update LESSONS (collective memory)
 ❌ npx wrangler pages deploy dist  // Preview = no bindings
 ✅ npx wrangler pages deploy dist --branch main  // Production = bindings active
 
-// Non-blocking Browser APIs
-❌ await Notification.requestPermission();  // In login
-✅ setTimeout(() => Notification.requestPermission().then(...), 100);
+// Non-blocking Browser APIs (Fire and Forget)
+❌ const perm = await Notification.requestPermission();  // In login = BLOCKS
+✅ setTimeout(() => Notification.requestPermission().then(...).catch(...), 100);
+
+// Complete safe pattern
+✅ function requestPermissionSafely() {
+     setTimeout(() => {
+       if ('Notification' in window && Notification.permission === 'default') {
+         Notification.requestPermission()
+           .then(perm => { if (perm === 'granted') initPush(); })
+           .catch(err => console.error('Ignored:', err));
+       }
+     }, 100);
+   }
 ```
 
 ```bash
@@ -247,10 +269,11 @@ Q: "Deploy?" → A: [command] + [result URL] (NOT 500 lines)
 ❌ Trailing whitespace committed
 ❌ await browser APIs in critical flow (login/startup)
 ❌ Route registration without order consideration
-❌ Push notifications/permissions in login function
+❌ Push notifications/permissions with await in login
 ❌ Multiple routes on same path (interception)
 ❌ Deploy without checking Cloudflare status
 ❌ Deploy to Preview when Production bindings needed
+❌ Blocking operations before state changes complete
 ```
 
 ---
@@ -268,12 +291,13 @@ Text unreadable            → Contrast ≥4.5:1
 Deployment confusion       → Detect: update vs new
 Response too long          → Apply token economy
 Breaking existing code     → READ_FIRST protocol
-Infinite spinner           → Check await in login
+Infinite spinner           → Check await in login (browser APIs blocking)
 Empty API response         → Check route order
 App works but slow         → Remove console.log
 Deploy 503 errors          → Check Cloudflare status
 "Utilisateur non trouvé"   → Check bindings (Production vs Preview)
 Bindings not working       → Deploy to main branch
+Login hangs after success  → Browser API blocking (use fire-and-forget)
 ```
 
 ---
@@ -356,12 +380,19 @@ Before commit:
 ## 📈 VERSION SYNC
 
 ```
-CORE v1.1.0 = UNIVERSAL v1.3.0
+CORE v1.3.0 = UNIVERSAL v1.4.0
 
 Update both when:
 - New absolute law added
 - Critical pattern changed
 - Major category added
+
+Changelog v1.3.0 (2025-11-18):
+- Added LAW #10: FIRE_AND_FORGET_BROWSER_APIS
+- Added complete safe pattern: setTimeout + .then() + multi-layer protection
+- Added anti-pattern: Blocking operations before state changes
+- Added symptom: Login hangs after success
+- Root cause analysis: Remember Me conflict with push notifications
 
 Changelog v1.2.0 (2025-11-18):
 - Added LAW #8: CHECK_CLOUDFLARE_STATUS_BEFORE_DEPLOY
