@@ -1,7 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.6.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.5.4-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
