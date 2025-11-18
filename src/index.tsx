@@ -7326,7 +7326,9 @@ app.get('/', (c) => {
                     setLoading(false);
                 } catch (error) {
                     if (error.response?.status === 401) {
+                        // ✅ Token expiré : nettoyage silencieux sans message d'erreur
                         logout();
+                        setLoading(false);
                     }
                 }
             };
