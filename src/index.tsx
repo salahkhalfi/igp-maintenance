@@ -7349,25 +7349,58 @@ app.get('/', (c) => {
                     
                     setIsLoggedIn(true);
 
-                    // TEST DIRECT IMMÉDIAT - Sans attendre Service Worker
-                    // Demande permissions notifications après login réussi
-                    if ('Notification' in window && Notification.permission === 'default') {
-                        try {
-                            const perm = await Notification.requestPermission();
-                            if (perm === 'granted' && window.initPushNotifications) {
-                                setTimeout(() => window.initPushNotifications(), 2000);
-                            }
-                        } catch (e) {
-                            // Erreur silencieuse
-                        }
-                    } else {
-                        if (Notification.permission === 'granted' && window.initPushNotifications) {
-                            setTimeout(() => window.initPushNotifications(), 2000);
-                        }
-                    }
+                    // ✅ LAW #10: Fire-and-forget pattern (100% non-blocking)
+                    // Demande permissions notifications en arrière-plan, ne bloque JAMAIS le login
+                    requestNotificationPermissionSafely();
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
+            };
+
+            // ✅ LAW #10: Fire-and-forget notification permission (100% safe)
+            // Cette fonction ne peut JAMAIS bloquer le login car :
+            // 1. setTimeout() = nouvelle task queue (isolation totale)
+            // 2. .then() au lieu de await (non-blocking)
+            // 3. Multi-layer protection (API check, permission check)
+            // 4. Erreurs silencieuses (jamais d'impact utilisateur)
+            const requestNotificationPermissionSafely = () => {
+                setTimeout(() => {
+                    // Protection 1 : Vérifier que l'API existe
+                    if (!('Notification' in window)) {
+                        console.log('[PUSH] Notification API non disponible');
+                        return;
+                    }
+                    
+                    // Protection 2 : Permission déjà accordée ?
+                    if (Notification.permission === 'granted') {
+                        console.log('[PUSH] Permission déjà accordée');
+                        if (window.initPushNotifications) {
+                            setTimeout(() => window.initPushNotifications(), 2000);
+                        }
+                        return;
+                    }
+                    
+                    // Protection 3 : Permission déjà refusée ?
+                    if (Notification.permission === 'denied') {
+                        console.log('[PUSH] Permission refusée par utilisateur');
+                        return;
+                    }
+                    
+                    // Demander permission (promesse, pas await = non-blocking)
+                    console.log('[PUSH] Demande de permission...');
+                    Notification.requestPermission()
+                        .then(permission => {
+                            console.log('[PUSH] Permission résultat:', permission);
+                            if (permission === 'granted' && window.initPushNotifications) {
+                                setTimeout(() => window.initPushNotifications(), 2000);
+                            }
+                        })
+                        .catch(error => {
+                            // Erreur silencieuse, ne bloque rien
+                            console.error('[PUSH] Erreur permission (ignorée):', error);
+                        });
+                        
+                }, 100);  // Petit délai pour garantir que le login est terminé
             };
 
             const logout = async () => {
