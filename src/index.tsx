@@ -193,6 +193,20 @@ app.use('/api/webhooks/*', authMiddleware);
 app.route('/api/webhooks', webhooks);
 
 // Routes des push notifications PWA
+// IMPORTANT: VAPID public key DOIT être accessible sans auth (frontend en a besoin avant login)
+app.get('/api/push/vapid-public-key', async (c) => {
+  try {
+    const publicKey = c.env.VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      return c.json({ error: 'Clé VAPID non configurée' }, 500);
+    }
+    return c.json({ publicKey });
+  } catch (error) {
+    console.error('❌ VAPID key error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+// Appliquer auth middleware aux autres routes push (subscribe, unsubscribe, test)
 app.use('/api/push/*', authMiddleware);
 app.route('/api/push', push);
 
