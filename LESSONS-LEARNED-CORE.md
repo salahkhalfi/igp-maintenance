@@ -1,10 +1,10 @@
 # 🎯 LESSONS-LEARNED-CORE (AI-Optimized)
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Format:** Décisionnel rapide  
 **Parse time:** <1s  
-**Size:** ~9KB vs 42KB  
-**Dernière mise à jour:** 2025-11-17
+**Size:** ~10KB vs 42KB  
+**Dernière mise à jour:** 2025-11-18
 
 ---
 
@@ -65,6 +65,22 @@ LOAD → PARSE → ACTIVATE
    HOW: Order routes: specific → generic
         Mount middleware BEFORE routes it protects
         Never mount two handlers on same base path
+
+8. CHECK_CLOUDFLARE_STATUS_BEFORE_DEPLOY
+   WHY: Cloudflare outages cause 503 errors, wasted time
+        API marked "Operational" ≠ actually stable
+        Multiple deploy attempts = frustration
+   HOW: Always check https://www.cloudflarestatus.com first
+        Wait for "Resolved" status, not just "Operational"
+        Test with simple API call (whoami) before full deploy
+
+9. PRODUCTION_VS_PREVIEW_BINDINGS
+   WHY: Cloudflare Pages bindings (D1/R2/KV) only on Production
+        Preview deployments = no bindings = runtime errors
+        "Utilisateur non trouvé" = binding missing, not code bug
+   HOW: Deploy to 'main' branch for Production environment
+        Use --branch main flag for wrangler pages deploy
+        Preview = testing code only, Production = full features
 ```
 
 ---
@@ -100,6 +116,14 @@ LOAD → PARSE → ACTIVATE
 □ Routes ordered correctly
   WHY: Hono matches first route, order matters
        Wrong order = routes intercepted, features break
+
+□ Cloudflare status operational
+  WHY: Deploy during outage = 503 errors, time wasted
+       "Operational" status ≠ actually stable
+
+□ Deploy to main for Production
+  WHY: Bindings (D1/R2) only on Production environment
+       Preview = no bindings = app broken
 ```
 
 ---
@@ -184,6 +208,10 @@ Update LESSONS (collective memory)
 ❌ app.route('/api/users', techRoute); app.route('/api/users', userRoute);
 ✅ app.route('/api/users/team', teamRoute); app.route('/api/users', userRoute);
 
+// Cloudflare Deployment
+❌ npx wrangler pages deploy dist  // Preview = no bindings
+✅ npx wrangler pages deploy dist --branch main  // Production = bindings active
+
 // Non-blocking Browser APIs
 ❌ await Notification.requestPermission();  // In login
 ✅ setTimeout(() => Notification.requestPermission().then(...), 100);
@@ -193,8 +221,11 @@ Update LESSONS (collective memory)
 # DB Migrations after clean
 npx wrangler d1 migrations apply DB_NAME --local
 
-# Deployment
-npm run build && npx wrangler pages deploy dist --project-name PROJECT
+# Deployment (Production with bindings)
+npm run build && npx wrangler pages deploy dist --project-name PROJECT --branch main
+
+# Check Cloudflare Status before deploy
+curl -s https://www.cloudflarestatus.com | grep -i "operational\|degraded"
 
 # Token Economy Response
 Q: "Deploy?" → A: [command] + [result URL] (NOT 500 lines)
@@ -218,6 +249,8 @@ Q: "Deploy?" → A: [command] + [result URL] (NOT 500 lines)
 ❌ Route registration without order consideration
 ❌ Push notifications/permissions in login function
 ❌ Multiple routes on same path (interception)
+❌ Deploy without checking Cloudflare status
+❌ Deploy to Preview when Production bindings needed
 ```
 
 ---
@@ -238,6 +271,9 @@ Breaking existing code     → READ_FIRST protocol
 Infinite spinner           → Check await in login
 Empty API response         → Check route order
 App works but slow         → Remove console.log
+Deploy 503 errors          → Check Cloudflare status
+"Utilisateur non trouvé"   → Check bindings (Production vs Preview)
+Bindings not working       → Deploy to main branch
 ```
 
 ---
@@ -326,6 +362,15 @@ Update both when:
 - New absolute law added
 - Critical pattern changed
 - Major category added
+
+Changelog v1.2.0 (2025-11-18):
+- Added LAW #8: CHECK_CLOUDFLARE_STATUS_BEFORE_DEPLOY
+- Added LAW #9: PRODUCTION_VS_PREVIEW_BINDINGS
+- Added check: Cloudflare status operational
+- Added check: Deploy to main for Production
+- Added pattern: Cloudflare deployment with --branch main
+- Added anti-patterns: Deploy without status check, Preview when bindings needed
+- Added symptoms: Deploy 503, bindings not working, "Utilisateur non trouvé"
 
 Changelog v1.1.0 (2025-11-17):
 - Added LAW #6: NO_BLOCKING_AWAIT_IN_CRITICAL_FLOW
