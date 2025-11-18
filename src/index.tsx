@@ -4350,8 +4350,8 @@ app.get('/', (c) => {
             const loadUsers = async () => {
                 try {
                     setLoading(true);
-                    // Les techniciens utilisent la route /api/users/team pour voir tous les utilisateurs
-                    const endpoint = currentUser.role === 'technician' ? '/users/team' : '/users';
+                    // Tous les utilisateurs utilisent la route /api/users/team pour voir tous les utilisateurs
+                    const endpoint = '/users/team';
                     const response = await axios.get(API_URL + endpoint);
                     setUsers(response.data.users);
                 } catch (error) {
