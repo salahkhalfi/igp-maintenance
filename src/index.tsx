@@ -1165,7 +1165,7 @@ app.get('/', (c) => {
                         "",
                         "📋 CE QUE VOUS POUVEZ FAIRE:",
                         "• 🎫 Gérer tickets de maintenance",
-                        "• 💬 Messagerie d'équipe (texte + audio)",
+                        "• 💬 Messagerie equipe (texte + audio)",
                         "• 🏭 Gérer machines et équipements",
                         "• 👥 Collaborer en temps réel",
                         "",
@@ -1241,7 +1241,7 @@ app.get('/', (c) => {
                     color: "blue",
                     content: [
                         "🎯 VUE D'ENSEMBLE:",
-                        "6 colonnes pour suivre l'avancement",
+                        "6 colonnes pour suivre avancement",
                         "",
                         "📍 LES 6 ÉTAPES:",
                         "1️⃣ 🟦 Requête Reçue - Nouveau ticket",
@@ -1277,7 +1277,7 @@ app.get('/', (c) => {
                         "",
                         "📸 AJOUTER PHOTOS:",
                         "• Cliquez 'Prendre photo'",
-                        "• 📱 Mobile: caméra s'ouvre auto",
+                        "• 📱 Mobile: camera ouvre auto",
                         "• 💻 PC: sélection fichier",
                         "• Max 10MB par fichier",
                         "",
@@ -1290,13 +1290,13 @@ app.get('/', (c) => {
                     ]
                 },
                 details_ticket: {
-                    title: "🔍 Détails d'un Ticket",
+                    title: "🔍 Details Ticket",
                     icon: "fa-info-circle",
                     color: "blue",
                     content: [
                         "👆 OUVRIR:",
-                        "• Cliquez sur n'importe quelle carte",
-                        "• Modal détaillé s'affiche",
+                        "• Cliquez sur nimporte quelle carte",
+                        "• Modal detaille saffiche",
                         "",
                         "📋 INFORMATIONS AFFICHÉES:",
                         "• 🆔 ID unique du ticket",
@@ -1342,7 +1342,7 @@ app.get('/', (c) => {
                         '👀 VISIBILITÉ:',
                         '• Tous les commentaires sont publics',
                         '• Horodatage automatique',
-                        '• Nom de l\'auteur affiché',
+                        '• Nom auteur affiche',
                         '• Historique conservé définitivement',
                         '',
                         '💡 Communication = clé du succès!'
@@ -1355,7 +1355,7 @@ app.get('/', (c) => {
                     content: [
                         "📷 LORS DE LA CRÉATION:",
                         "• Bouton 'Prendre photo' dans le formulaire",
-                        "• 📱 Mobile: caméra s'ouvre automatiquement",
+                        "• 📱 Mobile: camera ouvre automatiquement",
                         "• 💻 PC: sélection fichier",
                         "",
                         "➕ APRÈS CRÉATION:",
@@ -1378,14 +1378,14 @@ app.get('/', (c) => {
                     ]
                 },
                 messagerie: {
-                    title: '💬 Messagerie d\'Équipe',
+                    title: '💬 Messagerie Equipe',
                     icon: 'fa-comments',
                     color: 'teal',
                     content: [
                         '📨 DEUX TYPES DE MESSAGES:',
                         '',
                         '🌐 MESSAGES PUBLICS:',
-                        '• Visibles par toute l\'équipe',
+                        '• Visibles par toute equipe',
                         '• Annonces générales',
                         '• Communication de groupe',
                         '• Ordre anti-chronologique (nouveau en haut)',
@@ -1412,7 +1412,7 @@ app.get('/', (c) => {
                         '• Compteur messages non-lus',
                         '• Refresh auto toutes les 30s',
                         '',
-                        '💡 Communiquez rapidement avec l\'équipe!'
+                        '💡 Communiquez rapidement avec equipe!'
                     ]
                 },
                 machines: {
@@ -1426,9 +1426,9 @@ app.get('/', (c) => {
                         '',
                         '📋 INFORMATIONS MACHINE:',
                         '• 🏷️ Nom et identification',
-                        '• 🏭 Type d\'équipement',
-                        '• 📍 Localisation dans l\'usine',
-                        '• 📅 Date d\'installation',
+                        '• 🏭 Type equipement',
+                        '• 📍 Localisation dans usine',
+                        '• 📅 Date installation',
                         '• ✅ Statut opérationnel',
                         '',
                         '➕ CRÉER UNE MACHINE:',
@@ -1484,7 +1484,7 @@ app.get('/', (c) => {
                         '• ⎋ Escape = Effacer recherche',
                         '• Focus auto sur champ recherche',
                         '',
-                        '💡 Trouvez n\'importe quel ticket en 2 secondes!'
+                        '💡 Trouvez nimporte quel ticket en 2 secondes!'
                     ]
                 },
                 gestion_users: {
@@ -1553,7 +1553,7 @@ app.get('/', (c) => {
                         '',
                         '📸 CAMÉRA INTÉGRÉE:',
                         '• Bouton "Prendre photo"',
-                        '• Caméra s\'ouvre automatiquement',
+                        '• Camera souvre automatiquement',
                         '• Upload direct après capture',
                         '• Aperçu avant validation',
                         '',
@@ -1629,7 +1629,7 @@ app.get('/', (c) => {
                         "• Validation stricte côté serveur",
                         "",
                         "👥 PERMISSIONS:",
-                        "• Contrôle d'accès par rôle (RBAC)",
+                        "• Controle acces par role (RBAC)",
                         "• 14 niveaux de permissions",
                         "• Validation backend pour chaque action",
                         "• Impossible contourner restrictions",
@@ -1707,7 +1707,7 @@ app.get('/', (c) => {
                         "❌ AUTRE PROBLÈME:",
                         "• Contactez administrateur système",
                         "• Décrivez: quoi + quand + navigateur",
-                        "• Joindre capture d'écran si possible",
+                        "• Joindre capture ecran si possible",
                         "",
                         "💡 La plupart des problèmes = F5!"
                     ]
@@ -1727,7 +1727,7 @@ app.get('/', (c) => {
                         "",
                         "🔧 AMÉLIORATIONS:",
                         "• Gestion silencieuse tokens expirés",
-                        "• Plus d'erreurs intempestives",
+                        "• Plus erreurs intempestives",
                         "• Chargement page optimisé",
                         "",
                         "━━━━━━━━━━━━━━━━━━━━━━━━",
@@ -2895,7 +2895,7 @@ app.get('/', (c) => {
                     setNewComment('');
                     loadComments();
                 } catch (error) {
-                    alert('Erreur lors de l\\'ajout du commentaire');
+                    alert('Erreur lors ajout du commentaire');
                 } finally {
                     setSubmittingComment(false);
                 }
@@ -2950,7 +2950,7 @@ app.get('/', (c) => {
                     setNewMediaPreviews([]);
                     loadTicketDetails();
                 } catch (error) {
-                    alert('Erreur lors de l\\'upload des médias');
+                    alert('Erreur lors upload des medias');
                 } finally {
                     setUploadingMedia(false);
                 }
