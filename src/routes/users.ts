@@ -2,13 +2,34 @@
 
 import { Hono } from 'hono';
 import { hashPassword, isLegacyHash } from '../utils/password';
-import { supervisorOrAdmin } from '../middlewares/auth';
+import { supervisorOrAdmin, technicianSupervisorOrAdmin } from '../middlewares/auth';
 import type { Bindings, User } from '../types';
 import { LIMITS } from '../utils/validation';
 
 const users = new Hono<{ Bindings: Bindings }>();
 
-// Toutes les routes nécessitent les droits admin ou superviseur
+/**
+ * GET /api/users/team - Liste toute l'équipe (pour tous les rôles)
+ * Accès: Technicien, Superviseur, Admin
+ * NOTE: Cette route doit être AVANT le middleware supervisorOrAdmin
+ */
+users.get('/team', technicianSupervisorOrAdmin, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT id, email, full_name, role, created_at, updated_at, last_login
+      FROM users
+      WHERE id != 0
+      ORDER BY role DESC, full_name ASC
+    `).all();
+
+    return c.json({ users: results });
+  } catch (error) {
+    console.error('Get team users error:', error);
+    return c.json({ error: 'Erreur lors de la récupération de l equipe' }, 500);
+  }
+});
+
+// Toutes les AUTRES routes nécessitent les droits admin ou superviseur
 users.use('/*', supervisorOrAdmin);
 
 /**
