@@ -687,6 +687,9 @@ app.get('/', (c) => {
         let companyTitle = 'Gestion de la maintenance et des réparations';
         let companySubtitle = 'Les Produits Verriers International (IGP) Inc.';
 
+        // ✅ Configure axios to send cookies with every request (for HttpOnly auth_token)
+        axios.defaults.withCredentials = true;
+
         if (authToken) {
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
@@ -1590,6 +1593,7 @@ app.get('/', (c) => {
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
             const [showPassword, setShowPassword] = React.useState(false);
+            const [rememberMe, setRememberMe] = React.useState(false);
             const [loginTitle, setLoginTitle] = React.useState(companyTitle);
             const [loginSubtitle, setLoginSubtitle] = React.useState(companySubtitle);
 
@@ -1620,7 +1624,7 @@ app.get('/', (c) => {
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                onLogin(email, password);
+                onLogin(email, password, rememberMe);
             };
 
             const handleInvalidEmail = (e) => {
@@ -1739,6 +1743,20 @@ app.get('/', (c) => {
                                     React.createElement('i', {
                                         className: showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'
                                     })
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'mb-6' },
+                            React.createElement('label', { className: 'flex items-center cursor-pointer' },
+                                React.createElement('input', {
+                                    type: 'checkbox',
+                                    checked: rememberMe,
+                                    onChange: (e) => setRememberMe(e.target.checked),
+                                    className: 'mr-2 h-4 w-4 text-igp-blue border-gray-300 rounded focus:ring-2 focus:ring-igp-blue'
+                                }),
+                                React.createElement('span', { className: 'text-sm text-gray-700 font-medium' },
+                                    React.createElement('i', { className: 'fas fa-clock mr-1 text-igp-blue' }),
+                                    'Se souvenir de moi (30 jours)'
                                 )
                             )
                         ),
@@ -7318,14 +7336,17 @@ app.get('/', (c) => {
                 }
             };
 
-            const login = async (email, password) => {
+            const login = async (email, password, rememberMe = false) => {
                 try {
-                    const response = await axios.post(API_URL + '/auth/login', { email, password });
+                    const response = await axios.post(API_URL + '/auth/login', { email, password, rememberMe });
                     authToken = response.data.token;
                     currentUser = response.data.user;
                     setCurrentUserState(response.data.user);
+                    
+                    // ✅ Pour backward compatibility: garder le token en localStorage pour API calls
                     localStorage.setItem('auth_token', authToken);
                     axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
+                    
                     setIsLoggedIn(true);
 
                     // TEST DIRECT IMMÉDIAT - Sans attendre Service Worker
@@ -7349,7 +7370,15 @@ app.get('/', (c) => {
                 }
             };
 
-            const logout = () => {
+            const logout = async () => {
+                try {
+                    // ✅ Appeler l'endpoint backend pour effacer le cookie HttpOnly
+                    await axios.post(API_URL + '/auth/logout');
+                } catch (error) {
+                    // Erreur non-bloquante
+                }
+                
+                // Nettoyage local
                 localStorage.removeItem('auth_token');
                 delete axios.defaults.headers.common['Authorization'];
                 authToken = null;
