@@ -116,8 +116,31 @@ app.use('/api/*', cors({
   credentials: true  // Permet l'envoi de cookies/credentials
 }));
 
-// Security headers removed - GenSpark browser incompatibility
-// See: NO_SECURITY_HEADERS.md
+/**
+ * 🛡️ SAFE SECURITY HEADERS
+ * 
+ * Headers qui NE cassent PAS GenSpark browser:
+ * - X-Frame-Options: Protection clickjacking
+ * - X-Content-Type-Options: Anti MIME sniffing
+ * - Referrer-Policy: Contrôle Referer header
+ * 
+ * Headers ÉVITÉS (incompatibles GenSpark):
+ * - Content-Security-Policy (casse CDN)
+ * - Permissions-Policy (casse APIs browser)
+ * - X-XSS-Protection (legacy, obsolète)
+ */
+app.use('*', async (c, next) => {
+  await next();
+  
+  // Protection clickjacking - empêche iframe malveillant
+  c.header('X-Frame-Options', 'DENY');
+  
+  // Protection MIME sniffing - force respect Content-Type
+  c.header('X-Content-Type-Options', 'nosniff');
+  
+  // Contrôle Referer - protège privacy utilisateur
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+});
 
 
 app.use('/api/auth/me', authMiddleware);
