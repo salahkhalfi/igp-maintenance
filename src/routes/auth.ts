@@ -1,6 +1,7 @@
 // Routes d'authentification
 
 import { Hono } from 'hono';
+import { setCookie } from 'hono/cookie';
 import { hashPassword, verifyPassword, isLegacyHash, upgradeLegacyHash } from '../utils/password';
 import { signToken } from '../utils/jwt';
 import type { Bindings, LoginRequest, RegisterRequest, User } from '../types';
@@ -62,8 +63,8 @@ auth.post('/register', async (c) => {
 // POST /api/auth/login - Connexion
 auth.post('/login', async (c) => {
   try {
-    const body: LoginRequest = await c.req.json();
-    const { email, password } = body;
+    const body: LoginRequest & { rememberMe?: boolean } = await c.req.json();
+    const { email, password, rememberMe = false } = body;
 
     // Validation
     if (!email || !password) {
@@ -114,12 +115,25 @@ auth.post('/login', async (c) => {
     // Retirer le hash du mot de passe
     const { password_hash, ...userWithoutPassword } = user;
 
-    // Générer le token JWT
+    // Expiration dynamique selon Remember Me
+    const expiresInDays = rememberMe ? 30 : 7;
+    const expiresInSeconds = expiresInDays * 24 * 60 * 60;
+
+    // Générer le token JWT avec expiration dynamique
     const token = await signToken({
       userId: user.id,
       email: user.email,
       role: user.role,
       isSuperAdmin: user.is_super_admin === 1
+    }, expiresInSeconds);
+
+    // Définir le cookie HttpOnly sécurisé
+    setCookie(c, 'auth_token', token, {
+      httpOnly: true,                    // Pas accessible JavaScript (protection XSS)
+      secure: true,                      // HTTPS seulement
+      sameSite: 'Lax',                   // Protection CSRF (Lax pour compatibilité OAuth)
+      maxAge: expiresInSeconds,          // Expiration (7j ou 30j)
+      path: '/'                          // Accessible sur toutes les routes
     });
 
     return c.json({ token, user: userWithoutPassword });
@@ -149,6 +163,25 @@ auth.get('/me', async (c) => {
     return c.json({ user });
   } catch (error) {
     console.error('Me error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+// POST /api/auth/logout - Déconnexion (clear cookie)
+auth.post('/logout', async (c) => {
+  try {
+    // Effacer le cookie en le définissant avec maxAge=0
+    setCookie(c, 'auth_token', '', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      maxAge: 0,  // Expire immédiatement
+      path: '/'
+    });
+
+    return c.json({ message: 'Déconnexion réussie' });
+  } catch (error) {
+    console.error('Logout error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });

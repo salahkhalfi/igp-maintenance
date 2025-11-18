@@ -43,13 +43,14 @@ export interface JWTPayload {
 /**
  * Génère un token JWT signé pour l'utilisateur
  * @param payload Données de l'utilisateur à inclure dans le token
- * @returns Token JWT signé (valide 7 jours)
+ * @param expiresInSeconds Durée de validité en secondes (défaut: 7 jours)
+ * @returns Token JWT signé
  */
-export async function signToken(payload: JWTPayload): Promise<string> {
+export async function signToken(payload: JWTPayload, expiresInSeconds: number = 7 * 24 * 60 * 60): Promise<string> {
   return await new SignJWT(payload as any)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('7d')  // Token valide 7 jours
+    .setExpirationTime(Math.floor(Date.now() / 1000) + expiresInSeconds)  // Expiration dynamique
     .sign(JWT_SECRET);
 }
 

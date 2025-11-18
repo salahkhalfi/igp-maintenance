@@ -1,15 +1,22 @@
 // Middleware d'authentification
 
 import { Context, Next } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { extractToken, verifyToken } from '../utils/jwt';
 import { hasPermission, hasAnyPermission, type PermissionString } from '../utils/permissions';
 import type { Bindings } from '../types';
 
 export async function authMiddleware(c: Context<{ Bindings: Bindings }>, next: Next) {
+  // ✅ DUAL-MODE AUTHENTICATION: Cookie (browser) OU Authorization header (API/mobile)
+  const cookieToken = getCookie(c, 'auth_token');
   const authHeader = c.req.header('Authorization');
+  
+  console.log('[AUTH-MIDDLEWARE] Cookie token:', cookieToken ? `${cookieToken.substring(0, 20)}... (length: ${cookieToken.length})` : 'NULL');
   console.log('[AUTH-MIDDLEWARE] Authorization header:', authHeader ? `Bearer ${authHeader.substring(7, 27)}...` : 'NULL');
 
-  const token = extractToken(authHeader);
+  // Priorité: Cookie d'abord (secure), puis Authorization header (backward compat)
+  const token = cookieToken || extractToken(authHeader);
+  console.log('[AUTH-MIDDLEWARE] Token source:', cookieToken ? 'COOKIE (secure)' : authHeader ? 'HEADER (legacy)' : 'NONE');
   console.log('[AUTH-MIDDLEWARE] Token extracted:', token ? `${token.substring(0, 20)}... (length: ${token.length})` : 'NULL');
 
   if (!token) {
