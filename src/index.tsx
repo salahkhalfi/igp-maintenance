@@ -1178,8 +1178,14 @@ app.get('/', (c) => {
                         "🌐 mecanique.igpglass.ca",
                         "📧 Votre email",
                         "🔑 Votre mot de passe",
+                        "",
+                        "🕐 REMEMBER ME (NOUVEAU!):",
+                        "☑️ Cocher 'Se souvenir de moi' = 30 jours",
+                        "☐ Non coché = 7 jours (par défaut)",
+                        "",
                         "✅ Clic 'Se connecter'",
                         "",
+                        "💡 Connexion sécurisée avec cookies HttpOnly",
                         "❌ Mot de passe oublié? → Contactez admin"
                     ]
                 },
@@ -1395,27 +1401,28 @@ app.get('/', (c) => {
                     ]
                 },
                 optimisations: {
-                    title: "⚡ Nouveautés v2.0.11",
+                    title: "⚡ Nouveautés v2.5.4",
                     icon: "fa-rocket",
                     color: "green",
                     content: [
-                        "🚀 OPTIMISATIONS PERFORMANCE:",
+                        "🆕 REMEMBER ME (v2.5.4):",
+                        "• 🕐 Sessions persistantes 7 ou 30 jours",
+                        "• 🔒 Cookies HttpOnly sécurisés",
+                        "• 🛡️ Protection XSS + CSRF",
+                        "• ✅ Backward compatible API/mobile",
+                        "",
+                        "🚀 OPTIMISATIONS (v2.0.11):",
                         "• ⚡ 40% moins de re-renders React",
-                        "• 🧠 Mémorisation intelligente (useMemo/useCallback)",
+                        "• 🧠 Mémorisation intelligente",
                         "• 🐛 Zéro memory leaks",
                         "• 📦 Build 15% plus rapide",
                         "",
                         "🧹 CODE NETTOYÉ:",
                         "• 🗑️ -1452 lignes code obsolète",
                         "• 📦 -9 packages npm inutiles",
-                        "• 🎯 RoleDropdown portal optimisé",
+                        "• 🎯 RoleDropdown optimisé",
                         "",
-                        "🎯 STABILITÉ MAXIMALE:",
-                        "• ✅ Fiabilité absolue",
-                        "• ✅ Performance optimale",
-                        "• ✅ Maintenabilité améliorée",
-                        "",
-                        "💡 L'app est plus rapide et stable!"
+                        "💡 L'app est plus rapide, stable et sécurisée!"
                     ]
                 },
                 contact: {
@@ -1432,7 +1439,7 @@ app.get('/', (c) => {
                         "🎓 RESSOURCES:",
                         "• 🌐 mecanique.igpglass.ca",
                         "• 📖 Ce guide",
-                        "• 🏷️ Version 2.0.11"
+                        "• 🏷️ Version 2.5.4 (Remember Me)"
                     ]
                 }
             };
@@ -1451,7 +1458,7 @@ app.get('/', (c) => {
                 { id: 'mobile', icon: 'fa-mobile-alt', label: 'Mobile' },
                 { id: 'raccourcis', icon: 'fa-keyboard', label: 'Raccourcis Clavier' },
                 { id: 'securite', icon: 'fa-lock', label: 'Sécurité' },
-                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.0.11' },
+                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.5.4' },
                 { id: 'problemes', icon: 'fa-exclamation-triangle', label: 'Problèmes' },
                 { id: 'contact', icon: 'fa-phone', label: 'Contact' }
             ];
