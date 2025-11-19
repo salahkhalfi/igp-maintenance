@@ -317,14 +317,16 @@ tickets.patch('/:id', async (c) => {
     ).bind(id).first();
 
     // Envoyer notification push si ticket assigné à un technicien (fail-safe)
-    if (body.assigned_to && body.assigned_to !== currentTicket.assigned_to) {
+    // Support force_notify pour rappels manuels
+    if (body.assigned_to && (body.assigned_to !== currentTicket.assigned_to || body.force_notify)) {
       try {
         const { sendPushNotification } = await import('./push');
+        const isReassignment = body.assigned_to === currentTicket.assigned_to;
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
-          title: '🔧 Nouveau ticket assigné',
+          title: isReassignment ? '🔔 Rappel: Ticket assigné' : '🔧 Nouveau ticket assigné',
           body: `Ticket #${currentTicket.ticket_id}: ${currentTicket.title}`,
           icon: '/icon-192.png',
-          data: { ticketId: id, url: '/' }
+          data: { ticketId: id, url: '/', isReassignment }
         });
 
         if (pushResult.success) {
