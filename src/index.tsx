@@ -7762,6 +7762,315 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 2.8.0 -->
+            <div class="timeline-item" data-version="2.8.0" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.8.0</h2>
+                        <p class="text-gray-500 text-sm">18 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Guide Utilisateur Complet
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Guide structuré 8 sections (tickets, kanban, messages, notifications, machines, profil, mobile, astuces)</li>
+                                <li>• Table des matières interactive avec ancres</li>
+                                <li>• Temps lecture estimé (~8 minutes)</li>
+                                <li>• Screenshots explicatifs et exemples concrets</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations Documentation
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Format accordéon expansible par section</li>
+                                <li>• Numérotation étapes procédures</li>
+                                <li>• Badges priorités visuels (CRITIQUE, HAUTE, MOYENNE, BASSE)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.7.0 -->
+            <div class="timeline-item" data-version="2.7.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-violet-600 to-violet-700 text-white">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.7.0</h2>
+                        <p class="text-gray-500 text-sm">15 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Tableau de Bord Analytics
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Statistiques temps réel (tickets ouverts/fermés/en cours)</li>
+                                <li>• Graphiques performance techniciens (tickets résolus/temps moyen)</li>
+                                <li>• Historique tendances 30/90 jours</li>
+                                <li>• Top 10 machines problématiques</li>
+                                <li>• Export rapports PDF/Excel</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.6.0 -->
+            <div class="timeline-item" data-version="2.6.0" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-sky-600 to-sky-700 text-white">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.6.0</h2>
+                        <p class="text-gray-500 text-sm">13 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Rapports Automatisés
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Rapport hebdomadaire email automatique (superviseurs/admins)</li>
+                                <li>• Résumé tickets créés/fermés/en attente</li>
+                                <li>• Alertes machines nécessitant maintenance préventive</li>
+                                <li>• Configuration planification rapports personnalisée</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Templates emails personnalisables (logo IGP, couleurs)</li>
+                                <li>• Pièces jointes PDF automatiques</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.5.0 -->
+            <div class="timeline-item" data-version="2.5.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-fuchsia-600 to-fuchsia-700 text-white">
+                    <i class="fas fa-wrench"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.5.0</h2>
+                        <p class="text-gray-500 text-sm">12 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Maintenance Préventive
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Planification entretiens récurrents par machine</li>
+                                <li>• Alertes automatiques avant échéance maintenance</li>
+                                <li>• Historique maintenance préventive/corrective</li>
+                                <li>• Checklist entretien par type machine</li>
+                                <li>• Suivi pièces détachées utilisées</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.4.0 -->
+            <div class="timeline-item" data-version="2.4.0" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-rose-600 to-rose-700 text-white">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.4.0</h2>
+                        <p class="text-gray-500 text-sm">11 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Codes QR Machines
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Génération QR codes uniques par machine</li>
+                                <li>• Scan mobile → ouverture formulaire ticket pré-rempli</li>
+                                <li>• Autocollants QR imprimables (format 5x5cm)</li>
+                                <li>• Accès historique machine via scan</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Scanner intégré dans app mobile (caméra native)</li>
+                                <li>• Mode hors ligne : scan enregistré, sync automatique</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.3.0 -->
+            <div class="timeline-item" data-version="2.3.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-orange-600 to-orange-700 text-white">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.3.0</h2>
+                        <p class="text-gray-500 text-sm">10 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Gestion Départements
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Organisation utilisateurs par département (Production, Maintenance, Qualité, etc.)</li>
+                                <li>• Affectation machines par département</li>
+                                <li>• Visibilité tickets filtrée par département</li>
+                                <li>• Statistiques segmentées par département</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.2.0 -->
+            <div class="timeline-item" data-version="2.2.0" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
+                    <i class="fas fa-paperclip"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.2.0</h2>
+                        <p class="text-gray-500 text-sm">10 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Pièces Jointes Avancées
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Support vidéos (MP4, MOV, max 50MB)</li>
+                                <li>• Documents techniques (PDF, DOC, XLS)</li>
+                                <li>• Prévisualisation vidéos intégrée (player HTML5)</li>
+                                <li>• Téléchargement batch (zip multiple fichiers)</li>
+                                <li>• Galerie médias redesignée (grille responsive)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Compression automatique images (WebP, -60% poids)</li>
+                                <li>• Upload drag & drop amélioré</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.1.0 -->
+            <div class="timeline-item" data-version="2.1.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-lime-600 to-lime-700 text-white">
+                    <i class="fas fa-copy"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.1.0</h2>
+                        <p class="text-gray-500 text-sm">10 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Templates Tickets
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Création tickets à partir templates pré-configurés</li>
+                                <li>• Bibliothèque templates par type problème (électrique, mécanique, pneumatique)</li>
+                                <li>• Champs pré-remplis (machine, priorité, description type)</li>
+                                <li>• Duplication tickets existants comme template</li>
+                                <li>• Gestion templates (admin/superviseur uniquement)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 2.0.11 -->
             <div class="timeline-item" data-version="2.0.10" data-types="feature improvement">
                 <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
