@@ -7815,7 +7815,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.7.0</h2>
-                        <p class="text-gray-500 text-sm">15 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">19 octobre 2025</p>
                     </div>
 
                     <div class="space-y-4">
@@ -7848,7 +7848,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.6.0</h2>
-                        <p class="text-gray-500 text-sm">13 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">16 octobre 2025</p>
                     </div>
 
                     <div class="space-y-4">
@@ -7892,7 +7892,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.5.0</h2>
-                        <p class="text-gray-500 text-sm">12 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">11 octobre 2025</p>
                     </div>
 
                     <div class="space-y-4">
@@ -7925,7 +7925,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.4.0</h2>
-                        <p class="text-gray-500 text-sm">11 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">7 octobre 2025</p>
                     </div>
 
                     <div class="space-y-4">
@@ -7969,7 +7969,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.3.0</h2>
-                        <p class="text-gray-500 text-sm">10 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">3 octobre 2025</p>
                     </div>
 
                     <div class="space-y-4">
@@ -8001,7 +8001,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.2.0</h2>
-                        <p class="text-gray-500 text-sm">10 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">28 septembre 2025</p>
                     </div>
 
                     <div class="space-y-4">
@@ -8046,7 +8046,7 @@ app.get('/changelog', (c) => {
                 <div class="version-card">
                     <div class="mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">Version 2.1.0</h2>
-                        <p class="text-gray-500 text-sm">10 novembre 2025</p>
+                        <p class="text-gray-500 text-sm">22 septembre 2025</p>
                     </div>
 
                     <div class="space-y-4">
