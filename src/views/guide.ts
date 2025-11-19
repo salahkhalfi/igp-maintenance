@@ -814,7 +814,8 @@ export const guideHTML = `
                     Optimisations pour efficacité
                 </h3>
                 <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Utilisez les filtres</strong> : "Mes Tickets" et "Urgents" pour vous concentrer</li>
+                    <li>• <strong>Triez par Urgence</strong> : Utilisez le tri "🔥 Urgence" pour voir les tickets les plus pressants en premier</li>
+                    <li>• <strong>Planifiez votre journée</strong> : Le tri "📅 Planifié" affiche vos interventions à venir par ordre chronologique</li>
                     <li>• <strong>Commentez régulièrement</strong> : Documentez vos actions pour les collègues</li>
                     <li>• <strong>Photos systématiques</strong> : Prenez des photos avant/après intervention</li>
                     <li>• <strong>Messages vocaux</strong> : Plus rapide qu'écrire quand vous êtes sur le terrain</li>
