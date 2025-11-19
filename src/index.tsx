@@ -1415,7 +1415,7 @@ app.get('/', (c) => {
                     ]
                 },
                 optimisations: {
-                    title: "⚡ Nouveautés v2.8.1",
+                    title: "⚡ Nouveautés v2.2.0",
                     icon: "fa-rocket",
                     color: "green",
                     content: [
@@ -1452,7 +1452,7 @@ app.get('/', (c) => {
                         "🎓 RESSOURCES:",
                         "• 🌐 mecanique.igpglass.ca",
                         "• 📖 Ce guide",
-                        "• 🏷️ Version 2.8.1"
+                        "• 🏷️ Version 2.2.0"
                     ]
                 }
             };
@@ -1471,7 +1471,7 @@ app.get('/', (c) => {
                 { id: 'mobile', icon: 'fa-mobile-alt', label: 'Mobile' },
                 { id: 'raccourcis', icon: 'fa-keyboard', label: 'Raccourcis Clavier' },
                 { id: 'securite', icon: 'fa-lock', label: 'Sécurité' },
-                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.8.1' },
+                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.2.0' },
                 { id: 'problemes', icon: 'fa-exclamation-triangle', label: 'Problèmes' },
                 { id: 'contact', icon: 'fa-phone', label: 'Contact' }
             ];
@@ -1557,7 +1557,7 @@ app.get('/', (c) => {
                                 "⎋ Escape pour fermer"
                             ),
                             React.createElement('span', { className: 'text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full' },
-                                "✨ v2.8.1 - Mise à jour 2025-11-19"
+                                "✨ v2.2.0 - Mise à jour 2025-11-19"
                             )
                         ),
                         React.createElement('button', {
@@ -7155,7 +7155,7 @@ app.get('/', (c) => {
                                 }
                             },
                                 React.createElement('i', { className: 'fas fa-history' }),
-                                React.createElement('span', {}, 'v2.8.1 - Historique')
+                                React.createElement('span', {}, 'v2.2.0 - Historique')
                             )
                         )
                     )
@@ -7700,15 +7700,15 @@ app.get('/changelog', (c) => {
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.8.1 - ACTUELLE -->
-            <div class="timeline-item" data-version="2.8.1" data-types="feature design">
+            <!-- Version 2.2.0 - ACTUELLE -->
+            <div class="timeline-item" data-version="2.2.0" data-types="feature design">
                 <div class="timeline-dot bg-gradient-to-br from-blue-600 to-purple-700 text-white">
                     <i class="fas fa-sparkles"></i>
                 </div>
                 <div class="version-card">
                     <div class="flex items-start justify-between mb-4">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Version 2.8.1</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.2.0</h2>
                             <p class="text-gray-500 text-sm">19 novembre 2025</p>
                         </div>
                         <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
@@ -7762,14 +7762,14 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
-            <!-- Version 2.8.0 -->
-            <div class="timeline-item" data-version="2.8.0" data-types="feature improvement">
+            <!-- Version 2.1.0 -->
+            <div class="timeline-item" data-version="2.1.0" data-types="feature improvement">
                 <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
                     <i class="fas fa-book-open"></i>
                 </div>
                 <div class="version-card">
                     <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.8.0</h2>
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.1.0</h2>
                         <p class="text-gray-500 text-sm">18 novembre 2025</p>
                     </div>
 
