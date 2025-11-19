@@ -27,9 +27,26 @@ export const guideHTML = `
         }
     </script>
     <style>
+        /* Background avec photo d'atelier IGP + gradient */
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-image: url(/static/login-background.jpg);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
+        }
+        
+        /* Gradient overlay par-dessus la photo */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+            z-index: -1;
+            pointer-events: none;
         }
         
         .guide-container {
