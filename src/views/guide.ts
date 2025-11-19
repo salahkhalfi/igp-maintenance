@@ -27,11 +27,9 @@ export const guideHTML = `
         }
     </script>
     <style>
-        /* Background avec photo d'atelier IGP + gradient overlay */
+        /* Background avec photo d'atelier IGP */
         body {
-            background-image: 
-                linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%),
-                url(/static/login-background.jpg);
+            background-image: url(/static/login-background.jpg);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
