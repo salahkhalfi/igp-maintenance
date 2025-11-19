@@ -7155,7 +7155,7 @@ app.get('/', (c) => {
                                 }
                             },
                                 React.createElement('i', { className: 'fas fa-history' }),
-                                React.createElement('span', {}, 'v2.0.11 - Historique')
+                                React.createElement('span', {}, 'v2.8.1 - Historique')
                             )
                         )
                     )
