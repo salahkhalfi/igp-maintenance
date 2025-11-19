@@ -114,17 +114,91 @@
         }
         
         .toc-link {
-            color: #3b82f6;
+            color: #1e293b;
             text-decoration: none;
-            padding: 8px 16px;
-            display: block;
-            border-radius: 8px;
-            transition: all 0.2s ease;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.50);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+            font-weight: 500;
+            font-size: 0.9375rem;
+            letter-spacing: -0.01em;
         }
         
         .toc-link:hover {
-            background: linear-gradient(145deg, #dbeafe, #bfdbfe);
-            padding-left: 24px;
+            background: rgba(255, 255, 255, 0.80);
+            border-color: #3b82f6;
+            box-shadow: 
+                0 4px 12px rgba(59, 130, 246, 0.15),
+                0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateX(4px);
+        }
+        
+        .toc-link:active {
+            transform: translateX(2px) scale(0.98);
+        }
+        
+        .toc-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+            box-shadow: 
+                inset 2px 2px 5px rgba(148, 163, 184, 0.2),
+                inset -2px -2px 5px rgba(255, 255, 255, 0.9);
+            flex-shrink: 0;
+        }
+        
+        .toc-link:hover .toc-icon {
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            box-shadow: 
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+        
+        .toc-icon i {
+            font-size: 1.125rem;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        
+        .toc-link:hover .toc-icon i {
+            color: #ffffff;
+            transform: scale(1.1);
+        }
+        
+        .toc-number {
+            font-weight: 700;
+            color: #64748b;
+            font-size: 0.875rem;
+            min-width: 20px;
+            transition: color 0.3s ease;
+        }
+        
+        .toc-link:hover .toc-number {
+            color: #3b82f6;
+        }
+        
+        .toc-text {
+            flex: 1;
+            line-height: 1.4;
+            color: #334155;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .toc-link:hover .toc-text {
+            color: #1e293b;
         }
         
         .step-number {
@@ -296,8 +370,23 @@
             
             /* TOC responsive */
             .toc-link {
-                padding: 0.5rem 1rem;
+                padding: 12px 16px;
                 font-size: 0.875rem;
+                gap: 10px;
+            }
+            
+            .toc-icon {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .toc-icon i {
+                font-size: 1rem;
+            }
+            
+            .toc-number {
+                font-size: 0.8125rem;
+                min-width: 18px;
             }
             
             /* Liste items plus compacts */
@@ -371,7 +460,26 @@
             
             /* TOC très compact */
             .toc-link {
-                padding: 0.5rem 0.75rem;
+                padding: 10px 12px;
+                font-size: 0.8125rem;
+                gap: 8px;
+            }
+            
+            .toc-icon {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .toc-icon i {
+                font-size: 0.875rem;
+            }
+            
+            .toc-number {
+                font-size: 0.75rem;
+                min-width: 16px;
+            }
+            
+            .toc-text {
                 font-size: 0.8125rem;
             }
             
@@ -758,19 +866,70 @@
 
         <!-- Table des matières - 100% responsive -->
         <div class="section-card" id="table-of-contents">
-            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
-                <i class="fas fa-list text-blue-600 text-base sm:text-lg"></i>
+            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-3">
+                <div class="icon-badge text-blue-600">
+                    <i class="fas fa-th-list"></i>
+                </div>
                 <span class="leading-tight">Table des matières</span>
             </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <a href="#tickets" class="toc-link">📋 1. Gestion des Tickets</a>
-                <a href="#kanban" class="toc-link">🎯 2. Tableau Kanban</a>
-                <a href="#messages" class="toc-link">💬 3. Messagerie Interne</a>
-                <a href="#notifications" class="toc-link">🔔 4. Notifications Push</a>
-                <a href="#machines" class="toc-link">⚙️ 5. Gestion des Machines</a>
-                <a href="#profile" class="toc-link">👤 6. Profil & Paramètres</a>
-                <a href="#mobile" class="toc-link">📱 7. Utilisation Mobile</a>
-                <a href="#tips" class="toc-link">💡 8. Trucs & Astuces</a>
+            <p class="text-sm text-gray-600 mb-4 ml-1">Sélectionnez une section pour y accéder directement</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <a href="#tickets" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <span class="toc-number">01</span>
+                    <span class="toc-text">Gestion des Tickets</span>
+                </a>
+                <a href="#kanban" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-columns"></i>
+                    </div>
+                    <span class="toc-number">02</span>
+                    <span class="toc-text">Tableau Kanban</span>
+                </a>
+                <a href="#messages" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <span class="toc-number">03</span>
+                    <span class="toc-text">Messagerie Interne</span>
+                </a>
+                <a href="#notifications" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <span class="toc-number">04</span>
+                    <span class="toc-text">Notifications Push</span>
+                </a>
+                <a href="#machines" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="toc-number">05</span>
+                    <span class="toc-text">Gestion des Machines</span>
+                </a>
+                <a href="#profile" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <span class="toc-number">06</span>
+                    <span class="toc-text">Profil & Paramètres</span>
+                </a>
+                <a href="#mobile" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <span class="toc-number">07</span>
+                    <span class="toc-text">Utilisation Mobile</span>
+                </a>
+                <a href="#tips" class="toc-link">
+                    <div class="toc-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <span class="toc-number">08</span>
+                    <span class="toc-text">Trucs & Astuces</span>
+                </a>
             </div>
         </div>
 
