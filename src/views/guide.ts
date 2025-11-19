@@ -1,5 +1,4 @@
-export const guideHTML = `
-<!DOCTYPE html>
+export const guideHTML = `<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -1359,14 +1358,14 @@ export const guideHTML = `
             </h2>
             <div class="ml-12 space-y-3 text-gray-700">
                 <p>
+                    <i class="fas fa-phone text-green-600 mr-2"></i>
+                    <strong>Salah</strong> : 
+                    <a href="tel:+15244632889" class="text-green-600 hover:underline font-mono">524-463-2889</a>
+                </p>
+                <p>
                     <i class="fas fa-envelope text-blue-600 mr-2"></i>
                     <strong>Support technique</strong> : 
                     <a href="mailto:support@igpglass.ca" class="text-blue-600 hover:underline">support@igpglass.ca</a>
-                </p>
-                <p>
-                    <i class="fas fa-phone text-green-600 mr-2"></i>
-                    <strong>Téléphone</strong> : 
-                    <span class="font-mono">1-800-IGP-HELP</span>
                 </p>
                 <p>
                     <i class="fas fa-user-tie text-purple-600 mr-2"></i>
@@ -1552,5 +1551,4 @@ export const guideHTML = `
         console.log('✨ Améliorations premium actives');
     </script>
 </body>
-</html>
-`;
+</html>`;
