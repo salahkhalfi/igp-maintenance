@@ -7859,6 +7859,223 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 2.0.15 -->
+            <div class="timeline-item" data-version="2.0.15" data-types="improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-orange-600 to-orange-700 text-white">
+                    <i class="fas fa-brush"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.15</h2>
+                        <p class="text-gray-500 text-sm">13 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations UI/UX
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Redesign badges priorité plus visibles</li>
+                                <li>• Icônes statuts tickets harmonisées</li>
+                                <li>• Tooltips informatifs sur hover</li>
+                                <li>• Animations micro-interactions</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Affichage dates sur mobile Safari</li>
+                                <li>• Fix: Scroll modal galerie images</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.16 -->
+            <div class="timeline-item" data-version="2.0.16" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-teal-600 to-teal-700 text-white">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.16</h2>
+                        <p class="text-gray-500 text-sm">14 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Thème Sombre (Beta)
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Mode sombre expérimental</li>
+                                <li>• Activation via paramètres profil</li>
+                                <li>• Contraste optimisé WCAG AAA</li>
+                                <li>• Préférence sauvegardée localement</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.17 -->
+            <div class="timeline-item" data-version="2.0.17" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-fuchsia-600 to-fuchsia-700 text-white">
+                    <i class="fas fa-file-export"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.17</h2>
+                        <p class="text-gray-500 text-sm">15 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Export Données
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Export tickets au format CSV</li>
+                                <li>• Export historique machine PDF</li>
+                                <li>• Filtres personnalisés avant export</li>
+                                <li>• Téléchargement direct navigateur</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.18 -->
+            <div class="timeline-item" data-version="2.0.18" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+                    <i class="fas fa-list-check"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.18</h2>
+                        <p class="text-gray-500 text-sm">16 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Tri et Organisation Tickets
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Tri par priorité, date, machine</li>
+                                <li>• Groupement par technicien ou statut</li>
+                                <li>• Préférence tri sauvegardée</li>
+                                <li>• Vue compacte/étendue</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.19 -->
+            <div class="timeline-item" data-version="2.0.19" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-red-600 to-red-700 text-white">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.19</h2>
+                        <p class="text-gray-500 text-sm">16 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Étiquettes Personnalisées
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Tags personnalisés pour tickets</li>
+                                <li>• Couleurs configurables</li>
+                                <li>• Filtre par étiquettes</li>
+                                <li>• Multi-tags par ticket</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.20 -->
+            <div class="timeline-item" data-version="2.0.20" data-types="improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-green-600 to-green-700 text-white">
+                    <i class="fas fa-shield-check"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.20</h2>
+                        <p class="text-gray-500 text-sm">17 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Sécurité Renforcée
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Session timeout 24h (auto-logout)</li>
+                                <li>• Validation CSRF tokens</li>
+                                <li>• Headers sécurité HTTP (CSP, HSTS)</li>
+                                <li>• Rate limiting API (100 req/min)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Faille XSS dans commentaires</li>
+                                <li>• Fix: Permissions tickets partagés</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                        <span class="badge badge-security"><i class="fas fa-lock"></i> Sécurité</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 2.1.0 -->
             <div class="timeline-item" data-version="2.1.0" data-types="improvement">
                 <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
