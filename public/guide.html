@@ -263,47 +263,230 @@
             }
         }
         
-        /* Smooth scroll */
+        /* ============================================
+           🌟 AMÉLIORATIONS PROFESSIONNELLES PREMIUM
+           ============================================ */
+        
+        /* Smooth scroll premium avec décélération */
         html {
             scroll-behavior: smooth;
+            scroll-padding-top: 80px; /* Espace pour header fixe */
         }
         
-        /* Highlight target section */
+        /* Animation d'entrée des sections au scroll */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .section-card {
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        /* Délai progressif pour effet cascade */
+        .section-card:nth-child(1) { animation-delay: 0.1s; }
+        .section-card:nth-child(2) { animation-delay: 0.2s; }
+        .section-card:nth-child(3) { animation-delay: 0.3s; }
+        .section-card:nth-child(4) { animation-delay: 0.4s; }
+        .section-card:nth-child(5) { animation-delay: 0.5s; }
+        .section-card:nth-child(6) { animation-delay: 0.6s; }
+        .section-card:nth-child(7) { animation-delay: 0.7s; }
+        .section-card:nth-child(8) { animation-delay: 0.8s; }
+        .section-card:nth-child(9) { animation-delay: 0.9s; }
+        
+        /* Highlight target section avec effet premium */
         :target {
-            animation: highlight 2s ease;
+            animation: highlightPremium 1.5s ease;
         }
         
-        @keyframes highlight {
+        @keyframes highlightPremium {
             0% {
-                background: rgba(59, 130, 246, 0.1);
+                background: rgba(59, 130, 246, 0.25);
+                transform: scale(1.02);
+            }
+            50% {
+                background: rgba(59, 130, 246, 0.15);
             }
             100% {
                 background: transparent;
+                transform: scale(1);
             }
+        }
+        
+        /* Barre de progression de lecture */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            z-index: 9999;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+        }
+        
+        /* Effet de brillance sur les cartes au hover */
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transition: left 0.5s ease;
+            pointer-events: none;
+        }
+        
+        .section-card:hover::before {
+            left: 100%;
+        }
+        
+        /* Amélioration du bouton "Retour en haut" */
+        #scroll-top-btn {
+            animation: bounceIn 0.5s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                0 0 20px rgba(118, 75, 162, 0.3);
+        }
+        
+        #scroll-top-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 6px 20px rgba(102, 126, 234, 0.5),
+                0 0 30px rgba(118, 75, 162, 0.4);
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3) translateY(20px);
+            }
+            50% {
+                transform: scale(1.05) translateY(-5px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        /* Curseur custom pour liens interactifs */
+        .toc-link, .back-button, a {
+            cursor: pointer;
+        }
+        
+        .toc-link:hover, .back-button:hover {
+            cursor: pointer;
+        }
+        
+        /* Effet de focus accessible premium */
+        *:focus-visible {
+            outline: 3px solid rgba(59, 130, 246, 0.5);
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
+        
+        /* Table des matières sticky avec glassmorphism */
+        @media (min-width: 1280px) {
+            .sticky-toc {
+                position: sticky;
+                top: 20px;
+                max-height: calc(100vh - 40px);
+                overflow-y: auto;
+            }
+        }
+        
+        /* Scrollbar personnalisée premium */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        /* Animation d'icônes au hover */
+        .icon-badge {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .icon-badge:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Effet de typing pour le titre */
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink {
+            50% { border-color: transparent; }
         }
     </style>
 </head>
 <body class="p-3 sm:p-4 md:p-6 lg:p-8">
     <div class="max-w-5xl mx-auto">
-        <!-- Header -->
+        <!-- Header avec temps de lecture -->
         <div class="guide-container p-4 sm:p-6 md:p-8 mb-6 md:mb-8">
             <div class="flex items-center justify-between flex-wrap gap-4">
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 flex-1">
                     <div class="icon-badge text-blue-600">
                         <i class="fas fa-book"></i>
                     </div>
-                    <div>
+                    <div class="flex-1">
                         <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
                             Guide Utilisateur
                         </h1>
                         <p class="text-sm sm:text-base text-gray-600 mt-1">
                             Système de Gestion de Maintenance - IGP Glass
                         </p>
+                        <div class="flex items-center gap-3 mt-2 text-xs sm:text-sm text-gray-500">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md">
+                                <i class="fas fa-clock"></i>
+                                <span id="reading-time">~8 min de lecture</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded-md">
+                                <i class="fas fa-check-circle"></i>
+                                <span>8 sections</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md">
+                                <i class="fas fa-bookmark"></i>
+                                <span>v2.8.1</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <button onclick="window.location.href='/'" class="back-button">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Retour à l'application
+                <button onclick="window.location.href='/'" class="back-button flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i>
+                    <span class="hidden sm:inline">Retour à l'application</span>
                 </button>
             </div>
         </div>
@@ -902,7 +1085,24 @@
     </div>
 
     <script>
-        // Smooth scroll to anchor with offset for fixed header
+        // ============================================
+        // 🌟 JAVASCRIPT PREMIUM POUR EXPÉRIENCE UX
+        // ============================================
+        
+        // 1. Barre de progression de lecture
+        const progressBar = document.createElement('div');
+        progressBar.className = 'reading-progress';
+        document.body.appendChild(progressBar);
+        
+        window.addEventListener('scroll', function() {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight - windowHeight;
+            const scrolled = window.pageYOffset;
+            const progress = (scrolled / documentHeight) * 100;
+            progressBar.style.width = progress + '%';
+        });
+        
+        // 2. Smooth scroll premium avec offset
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -912,49 +1112,140 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    
+                    // Animation pulse sur la cible
+                    target.style.transition = 'all 0.3s ease';
+                    target.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        target.style.transform = 'scale(1)';
+                    }, 300);
                 }
             });
         });
 
-        // Add scroll-to-top button when scrolling
+        // 3. Bouton "Retour en haut" avec animation premium
         window.addEventListener('scroll', function() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const btn = document.getElementById('scroll-top-btn');
+            
             if (scrollTop > 500) {
-                if (!document.getElementById('scroll-top-btn')) {
-                    const btn = document.createElement('button');
-                    btn.id = 'scroll-top-btn';
-                    btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-                    btn.className = 'back-button fixed bottom-8 right-8 w-12 h-12 rounded-full shadow-lg z-50';
-                    btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-                    document.body.appendChild(btn);
+                if (!btn) {
+                    const newBtn = document.createElement('button');
+                    newBtn.id = 'scroll-top-btn';
+                    newBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    newBtn.className = 'fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg z-50 flex items-center justify-center text-white';
+                    newBtn.title = 'Retour en haut';
+                    newBtn.onclick = () => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        // Vibration haptic si supporté
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+                    };
+                    document.body.appendChild(newBtn);
                 }
             } else {
-                const btn = document.getElementById('scroll-top-btn');
-                if (btn) btn.remove();
+                if (btn) {
+                    btn.style.animation = 'bounceOut 0.5s ease';
+                    setTimeout(() => btn.remove(), 500);
+                }
             }
         });
 
-        // Highlight current section in table of contents
+        // 4. Intersection Observer pour highlight de section active
         const sections = document.querySelectorAll('.section-card[id]');
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const id = entry.target.getAttribute('id');
                     document.querySelectorAll('.toc-link').forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === '#' + id) {
-                            link.style.background = 'linear-gradient(145deg, #dbeafe, #bfdbfe)';
-                            link.style.paddingLeft = '24px';
-                        } else {
-                            link.style.background = 'transparent';
-                            link.style.paddingLeft = '16px';
-                        }
+                        const isActive = link.getAttribute('href') === '#' + id;
+                        link.style.background = isActive 
+                            ? 'linear-gradient(145deg, #dbeafe, #bfdbfe)' 
+                            : 'transparent';
+                        link.style.paddingLeft = isActive ? '24px' : '16px';
+                        link.style.fontWeight = isActive ? '600' : '400';
+                        link.style.borderLeft = isActive ? '3px solid #3b82f6' : 'none';
                     });
                 }
             });
-        }, { threshold: 0.2 });
+        }, { threshold: 0.2, rootMargin: '-100px' });
 
         sections.forEach(section => observer.observe(section));
+        
+        // 5. Lazy loading des images (si présentes)
+        if ('loading' in HTMLImageElement.prototype) {
+            const images = document.querySelectorAll('img[loading="lazy"]');
+            images.forEach(img => {
+                img.src = img.dataset.src || img.src;
+            });
+        }
+        
+        // 6. Temps de lecture estimé et affichage dynamique
+        const wordCount = document.body.innerText.split(/\s+/).length;
+        const readingTime = Math.ceil(wordCount / 200); // 200 mots/minute
+        const readingTimeEl = document.getElementById('reading-time');
+        if (readingTimeEl) {
+            readingTimeEl.textContent = `~${readingTime} min de lecture`;
+        }
+        
+        // 7. Animation des feature-box au scroll
+        const featureBoxes = document.querySelectorAll('.feature-box');
+        const featureObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 0.5s ease-out';
+                    featureObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        featureBoxes.forEach(box => featureObserver.observe(box));
+        
+        // 8. Raccourci clavier: Échap pour retour en haut
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            // Ctrl/Cmd + K pour focus sur table des matières
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const firstTocLink = document.querySelector('.toc-link');
+                if (firstTocLink) firstTocLink.focus();
+            }
+        });
+        
+        // 9. Tooltip pour les badges
+        document.querySelectorAll('[title]').forEach(el => {
+            el.style.cursor = 'help';
+        });
+        
+        // 10. Performance: Preload des images critiques
+        const criticalImages = ['/static/login-background.jpg', '/static/logo-igp.png'];
+        criticalImages.forEach(src => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'image';
+            link.href = src;
+            document.head.appendChild(link);
+        });
+        
+        // 11. Print styling: Préparer pour impression
+        window.addEventListener('beforeprint', function() {
+            document.querySelectorAll('.back-button, #scroll-top-btn').forEach(el => {
+                el.style.display = 'none';
+            });
+        });
+        
+        window.addEventListener('afterprint', function() {
+            document.querySelectorAll('.back-button, #scroll-top-btn').forEach(el => {
+                el.style.display = '';
+            });
+        });
+        
+        console.log('📖 Guide Utilisateur IGP - v2.8.1 Premium');
+        console.log('⏱️ Temps de lecture estimé:', readingTime, 'minutes');
+        console.log('✨ Améliorations premium actives');
     </script>
 </body>
 </html>
