@@ -49,6 +49,7 @@ import { authMiddleware, adminOnly, technicianOrAdmin, technicianSupervisorOrAdm
 import { hasPermission, getRolePermissions } from './utils/permissions';
 import { adminRolesHTML } from './views/admin-roles';
 import { guideHTML } from './views/guide';
+import { historiqueHTML } from './views/historique';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
@@ -7496,6 +7497,11 @@ app.get('/', (c) => {
 // Route du guide utilisateur
 app.get('/guide', (c) => {
   return c.html(guideHTML);
+});
+
+// Route historique des améliorations
+app.get('/historique', (c) => {
+  return c.html(historiqueHTML);
 });
 
 // Route Changelog
