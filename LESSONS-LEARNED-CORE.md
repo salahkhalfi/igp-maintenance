@@ -92,6 +92,34 @@ LOAD → PARSE → ACTIVATE
          Multiple protection layers (API check, permission check, error catch)
          Never: await browserAPI() in login/critical path
          Always: setState() → setTimeout(() => browserAPI().then())
+
+11. NOTIFICATION_UX_FIRST
+    WHY: Generic titles make notifications indistinguishable
+         Users scan titles, not bodies (mobile notifications)
+         "🔧 Nouveau ticket assigné" × 10 = impossible to differentiate
+    HOW: Put unique info in title, generic in body
+         Title = ticket/message content (scannable)
+         Body = action description (context)
+         Before: "🔧 New ticket" / "Ticket #IGP-123..."
+         After: "🔧 Ticket title" / "Nouveau ticket assigné"
+
+12. TEST_USER_FACING_ONLY
+    WHY: Backend bugs = logs show errors, frontend bugs = user confusion
+         User-facing features need validation, backend can fail gracefully
+         Time spent testing invisible code = wasted time
+    HOW: Always test: UI changes, notifications, user flows
+         Skip tests: Backend optimizations, internal refactors, logs
+         Rule: "If user sees it, test it. If user doesn't, deploy."
+         Example: Push notification format change = test required
+
+13. PRAGMATISM_OVER_PERFECTION
+    WHY: Perfect solution costs time/money, good solution solves problem
+         2 clicks vs 1 click = 45min dev time (not worth it)
+         Over-engineering = technical debt, not value
+    HOW: Ask: "How often is this used? What's the workaround cost?"
+         Accept imperfect if: workaround easy + rarely needed
+         Build only when: pain point proven by real usage
+         Example: Manual backup once/month = CLI is fine
 ```
 
 ---
