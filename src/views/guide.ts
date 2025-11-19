@@ -13,6 +13,19 @@ export const guideHTML = `
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'igp-blue': '#1e40af',
+                        'igp-orange': '#ea580c',
+                        'igp-red': '#dc2626',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
