@@ -7850,6 +7850,64 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 2.0.10 -->
+            <div class="timeline-item" data-version="2.0.10" data-types="improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-orange-600 to-orange-700 text-white">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.10</h2>
+                        <p class="text-gray-500 text-sm">8 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations UX Bulk Operations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Animations fluides lors sélection/désélection multiple</li>
+                                <li>• Feedback visuel améliored (highlights, transitions)</li>
+                                <li>• Progress bar suppression batch (affichage X/Y messages)</li>
+                                <li>• Confirmation modale avec récapitulatif avant suppression</li>
+                                <li>• Raccourcis clavier : Ctrl+A (tout), Escape (annuler)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Désélection automatique après suppression batch</li>
+                                <li>• Fix: Compteur sélection incorrect après filtrage</li>
+                                <li>• Fix: Conflit permissions sur messages partagés multi-utilisateurs</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Itération UX basée sur feedback utilisateurs post-lancement v2.0.9.
+                                Corrections issues critiques identifiées durant tests utilisateurs (15 opérateurs).
+                                Phase finale avant lancement fonctionnalité sélection rapide v2.0.11.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 2.0.8 -->
             <div class="timeline-item" data-version="2.0.8" data-types="improvement">
                 <div class="timeline-dot bg-gradient-to-br from-teal-600 to-teal-700 text-white">
@@ -8278,6 +8336,38 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 1.9.1 -->
+            <div class="timeline-item" data-version="1.9.1" data-types="fix">
+                <div class="timeline-dot bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.9.1</h2>
+                        <p class="text-gray-500 text-sm">29 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Hotfix Critique
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Timers se désynchronisant après 24h inactivité</li>
+                                <li>• Fix: Indicateur urgence incorrect pour tickets créés manuellement</li>
+                                <li>• Fix: Colonne archives ne s'affichant pas correctement sur iPad</li>
+                                <li>• Fix: Performance dégradée avec plus de 50 tickets ouverts</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 1.9.0 -->
             <div class="timeline-item" data-version="1.9.0" data-types="feature improvement">
                 <div class="timeline-dot bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
@@ -8363,6 +8453,147 @@ app.get('/changelog', (c) => {
 
                     <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
                         <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.8.4 -->
+            <div class="timeline-item" data-version="1.8.4" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
+                    <i class="fas fa-keyboard"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.4</h2>
+                        <p class="text-gray-500 text-sm">14 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Raccourcis Clavier
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Ctrl+N : Créer nouveau ticket</li>
+                                <li>• Ctrl+M : Ouvrir messagerie</li>
+                                <li>• Ctrl+K : Recherche globale</li>
+                                <li>• Escape : Fermer modales/dialogs</li>
+                                <li>• Guide raccourcis accessible via "?" (touche point d'interrogation)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.8.3 -->
+            <div class="timeline-item" data-version="1.8.3" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-pink-600 to-pink-700 text-white">
+                    <i class="fas fa-paint-brush"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.3</h2>
+                        <p class="text-gray-500 text-sm">12 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations Visuelles
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Redesign cartes tickets (shadows, borders premium)</li>
+                                <li>• Animations transitions fluides entre colonnes Kanban</li>
+                                <li>• Icônes priorités redesignées (plus visibles)</li>
+                                <li>• Couleurs IGP harmonisées (bleu #1e40af, orange #ea580c)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.8.2 -->
+            <div class="timeline-item" data-version="1.8.2" data-types="improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-yellow-600 to-yellow-700 text-white">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.2</h2>
+                        <p class="text-gray-500 text-sm">8 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Recherche Améliorée
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Recherche globale multi-critères (tickets, machines, utilisateurs)</li>
+                                <li>• Filtres avancés : statut, priorité, technicien, date</li>
+                                <li>• Suggestions auto-complétion temps réel</li>
+                                <li>• Historique recherches récentes (5 dernières)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Recherche insensible aux accents français</li>
+                                <li>• Fix: Résultats dupliqués sur critères multiples</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 1.8.1 -->
+            <div class="timeline-item" data-version="1.8.1" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-lime-600 to-lime-700 text-white">
+                    <i class="fas fa-filter"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.1</h2>
+                        <p class="text-gray-500 text-sm">4 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Filtres Kanban Avancés
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Filtres persistants (sauvegardés par utilisateur)</li>
+                                <li>• Vue personnalisée par technicien ("Mes tickets")</li>
+                                <li>• Filtre par machine avec multi-sélection</li>
+                                <li>• Compteurs temps réel par filtre actif</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
                         <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
                     </div>
                 </div>
