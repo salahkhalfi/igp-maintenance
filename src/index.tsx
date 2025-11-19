@@ -7499,9 +7499,9 @@ app.get('/guide', (c) => {
   return c.html(guideHTML);
 });
 
-// Route historique des améliorations
+// Route historique (redirection vers changelog)
 app.get('/historique', (c) => {
-  return c.html(historiqueHTML);
+  return c.redirect('/changelog');
 });
 
 // Route Changelog
@@ -7641,7 +7641,7 @@ app.get('/changelog', (c) => {
                     <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold text-blue-600">v2.0.11</div>
+                    <div class="text-2xl font-bold text-blue-600">v2.8.1</div>
                     <div class="text-sm text-gray-500">Version actuelle</div>
                 </div>
             </div>
@@ -7693,18 +7693,77 @@ app.get('/changelog', (c) => {
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.0.11 - ACTUELLE -->
+            <!-- Version 2.8.1 - ACTUELLE -->
+            <div class="timeline-item" data-version="2.8.1" data-types="feature design">
+                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-purple-700 text-white">
+                    <i class="fas fa-sparkles"></i>
+                </div>
+                <div class="version-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.8.1</h2>
+                            <p class="text-gray-500 text-sm">19 novembre 2025</p>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-book text-blue-500 mr-2"></i>
+                                Guide Utilisateur Premium
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Table des matières avec design neomorphique</li>
+                                <li>• Icônes FontAwesome professionnelles</li>
+                                <li>• Navigation bidirectionnelle intelligente ⬆️⬇️</li>
+                                <li>• Glassmorphism et animations premium</li>
+                                <li>• 8 sections détaillées (tickets, kanban, messages, etc.)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-phone text-green-500 mr-2"></i>
+                                Support & Contact
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Contact direct: Salah (514-462-2889)</li>
+                                <li>• Formulaire Formcan intégré</li>
+                                <li>• Documentation compatibilité audio/push iOS</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-mobile text-purple-500 mr-2"></i>
+                                Améliorations UX Mobile
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Bouton scroll intelligent (adapte direction selon position)</li>
+                                <li>• 7 breakpoints responsive (320px à 4K)</li>
+                                <li>• Touch targets WCAG 2.1 AA (44x44px minimum)</li>
+                                <li>• Gain temps navigation: 90%</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Design Premium</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.11 -->
             <div class="timeline-item" data-version="2.0.10" data-types="feature improvement">
                 <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
                     <i class="fas fa-check-double"></i>
                 </div>
                 <div class="version-card">
-                    <div class="flex items-start justify-between mb-4">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Version 2.0.11</h2>
-                            <p class="text-gray-500 text-sm">9 novembre 2025</p>
-                        </div>
-                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.11</h2>
+                        <p class="text-gray-500 text-sm">9 novembre 2025</p>
                     </div>
 
                     <div class="space-y-4">
