@@ -36,44 +36,44 @@ export const guideHTML = `
             min-height: 100vh;
         }
         
+        /* Effet glassmorphism (vitreux) comme les colonnes Kanban */
         .guide-container {
-            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 12px;
-            box-shadow: 
-                12px 12px 24px rgba(71, 85, 105, 0.15),
-                -6px -6px 16px rgba(255, 255, 255, 0.7),
-                inset 1px 1px 2px rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
         }
         
         .section-card {
-            background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 
-                8px 8px 16px rgba(71, 85, 105, 0.12),
-                -4px -4px 12px rgba(255, 255, 255, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(148, 163, 184, 0.08);
+            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
         
         .section-card:hover {
-            box-shadow: 
-                10px 10px 20px rgba(71, 85, 105, 0.15),
-                -5px -5px 14px rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 28px 0 rgba(0, 0, 0, 0.20);
             transform: translateY(-2px);
         }
         
         .feature-box {
-            background: linear-gradient(145deg, #ffffff, #f1f5f9);
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 12px;
-            box-shadow: 
-                4px 4px 8px rgba(71, 85, 105, 0.1),
-                -2px -2px 6px rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-left: 4px solid #3b82f6;
         }
         
@@ -85,10 +85,11 @@ export const guideHTML = `
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            background: linear-gradient(145deg, #ffffff, #f1f5f9);
-            box-shadow: 
-                4px 4px 8px rgba(71, 85, 105, 0.12),
-                -2px -2px 6px rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.50);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
         
         .back-button {
@@ -165,31 +166,32 @@ export const guideHTML = `
             border-radius: 6px;
             font-size: 0.85em;
             font-weight: 600;
-            box-shadow: 
-                2px 2px 4px rgba(0, 0, 0, 0.1),
-                -1px -1px 2px rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         .priority-critical {
-            background: linear-gradient(145deg, #fee2e2, #fecaca);
+            background: rgba(254, 226, 226, 0.70);
             color: #dc2626;
             border-left: 3px solid #dc2626;
         }
         
         .priority-high {
-            background: linear-gradient(145deg, #fef3c7, #fde68a);
+            background: rgba(254, 243, 199, 0.70);
             color: #d97706;
             border-left: 3px solid #f59e0b;
         }
         
         .priority-medium {
-            background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+            background: rgba(219, 234, 254, 0.70);
             color: #1d4ed8;
             border-left: 3px solid #3b82f6;
         }
         
         .priority-low {
-            background: linear-gradient(145deg, #d1fae5, #a7f3d0);
+            background: rgba(209, 250, 229, 0.70);
             color: #059669;
             border-left: 3px solid #10b981;
         }
@@ -202,10 +204,11 @@ export const guideHTML = `
             border-radius: 6px;
             font-size: 0.85em;
             font-weight: 600;
-            background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-            box-shadow: 
-                2px 2px 4px rgba(71, 85, 105, 0.1),
-                -1px -1px 2px rgba(255, 255, 255, 0.8);
+            background: rgba(241, 245, 249, 0.60);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(71, 85, 105, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
         
         @media (max-width: 768px) {
