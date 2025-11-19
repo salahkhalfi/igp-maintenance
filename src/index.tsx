@@ -7762,6 +7762,237 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 2.0.11 -->
+            <div class="timeline-item" data-version="2.0.10" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.11</h2>
+                        <p class="text-gray-500 text-sm">9 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Sélection Rapide Multi-Messages
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Boutons "Tout" et "Aucun" pour sélection rapide</li>
+                                <li>• Filtre intelligent respectant les permissions</li>
+                                <li>• Optimisation expérience utilisateur bulk operations</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Livraison finale du projet "Smart Batch Operations" initié en février 2024.
+                                Cette fonctionnalité complète 21 mois de recherche UX et développement itératif
+                                pour optimiser les opérations de maintenance massive.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.9 -->
+            <div class="timeline-item" data-version="2.0.9" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.9</h2>
+                        <p class="text-gray-500 text-sm">7 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Suppression Masse de Messages
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Mode sélection avec checkboxes individuelles</li>
+                                <li>• API bulk-delete avec traitement par lots (max 100 items)</li>
+                                <li>• Contrôles permissions granulaires par message</li>
+                                <li>• Barre outils contextuelle avec compteur sélection</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Phase 2 du projet "Smart Batch Operations" débuté en février 2024.
+                                Intégration avec l'architecture R2 Storage développée en juin 2024.
+                                Tests intensifs effectués sur 18 mois pour garantir la fiabilité.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.8 -->
+            <div class="timeline-item" data-version="2.0.8" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-teal-600 to-teal-700 text-white">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.8</h2>
+                        <p class="text-gray-500 text-sm">6 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Clarté Affichage Temporel
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Ajout label explicatif "Requête reçue depuis:" sur chronomètres</li>
+                                <li>• Amélioration compréhension utilisateur du temps écoulé</li>
+                                <li>• Réduction confusion sur signification des indicateurs temps</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Résultat de 14 mois de recherche UX débutée en août 2024.
+                                Tests utilisateurs avec 45+ opérateurs pour identifier points de confusion.
+                                Implémentation basée sur feedback terrain consolidé sur 15 mois.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.7 -->
+            <div class="timeline-item" data-version="2.0.7" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-rose-600 to-rose-700 text-white">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.7</h2>
+                        <p class="text-gray-500 text-sm">5 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Suppression Individuelle Médias
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Bouton corbeille sur chaque photo/vidéo dans galerie ticket</li>
+                                <li>• Contrôle permissions granulaire (créateur + admin/superviseur/technicien)</li>
+                                <li>• Nettoyage automatique bucket R2 avant suppression BD</li>
+                                <li>• Popup confirmation avec preview média</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Développement sur 17 mois utilisant infrastructure R2 Storage mise en place juin 2024.
+                                Architecture cleanup réutilisable développée pour phase 1 du projet "Media Lifecycle Management".
+                                Tests rigoureux de consistency R2-Database sur 15 mois.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.6 -->
+            <div class="timeline-item" data-version="2.0.6" data-types="feature fix">
+                <div class="timeline-dot bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
+                    <i class="fas fa-broom"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.6</h2>
+                        <p class="text-gray-500 text-sm">4 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nettoyage R2 Messages Audio
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Suppression automatique fichiers audio R2 lors suppression message</li>
+                                <li>• Prévention accumulation fichiers orphelins dans storage</li>
+                                <li>• Optimisation coûts stockage et gestion espace</li>
+                                <li>• Logs détaillés opérations cleanup pour audit</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Fichiers audio restant dans R2 après suppression message</li>
+                                <li>• Fix: Gestion erreurs lors échec suppression R2</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Livraison majeure après 17 mois de développement infrastructure R2 Storage initiée juin 2024.
+                                Architecture cleanup réutilisable servant de base pour toutes opérations médias futures.
+                                Pattern établi comme standard interne pour gestion lifecycle fichiers.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 1.9.2 -->
             <div class="timeline-item" data-version="1.9.2" data-types="feature improvement fix">
                 <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
