@@ -1360,7 +1360,7 @@ export const guideHTML = `<!DOCTYPE html>
                 <p>
                     <i class="fas fa-phone text-green-600 mr-2"></i>
                     <strong>Salah</strong> : 
-                    <a href="tel:+15244632889" class="text-green-600 hover:underline font-mono">524-463-2889</a>
+                    <a href="tel:+15144622889" class="text-green-600 hover:underline font-mono">514-462-2889</a>
                 </p>
                 <p>
                     <i class="fas fa-envelope text-blue-600 mr-2"></i>
@@ -1372,6 +1372,22 @@ export const guideHTML = `<!DOCTYPE html>
                     <strong>Superviseur</strong> : 
                     Contactez votre superviseur d'équipe via la messagerie interne
                 </p>
+            </div>
+            
+            <!-- Formulaire de contact Formcan -->
+            <div class="mt-6 pt-6 border-t border-gray-300">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-paper-plane text-blue-600"></i>
+                    Formulaire de Contact
+                </h3>
+                <div class="ml-12">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Vous pouvez également nous envoyer un message détaillé via ce formulaire.
+                        Nous vous répondrons dans les plus brefs délais.
+                    </p>
+                    <div class="plato-form-widget" data-pf-id="fr9ercvp1ay" data-pf-host="form.formcan.com/"></div>
+                    <script src="//static.formcan.com/assets/dist/formbuilder.js?v=20"></script>
+                </div>
             </div>
         </div>
 
