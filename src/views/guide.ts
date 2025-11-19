@@ -34,7 +34,7 @@ export const guideHTML = `
         
         .guide-container {
             background: linear-gradient(145deg, #ffffff, #f8fafc);
-            border-radius: 16px;
+            border-radius: 12px;
             box-shadow: 
                 12px 12px 24px rgba(71, 85, 105, 0.15),
                 -6px -6px 16px rgba(255, 255, 255, 0.7),
@@ -45,8 +45,8 @@ export const guideHTML = `
         .section-card {
             background: linear-gradient(145deg, #f8fafc, #e2e8f0);
             border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
+            padding: 16px;
+            margin-bottom: 16px;
             box-shadow: 
                 8px 8px 16px rgba(71, 85, 105, 0.12),
                 -4px -4px 12px rgba(255, 255, 255, 0.8),
@@ -206,11 +206,59 @@ export const guideHTML = `
         
         @media (max-width: 768px) {
             .section-card {
-                padding: 16px;
+                padding: 12px;
+                margin-bottom: 12px;
             }
             
             .guide-container {
-                margin: 12px;
+                margin: 8px;
+                padding: 12px;
+            }
+            
+            .feature-box {
+                padding: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .icon-badge {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .step-number {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            
+            .back-button {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .guide-container {
+                margin: 4px;
+                padding: 12px;
+                border-radius: 8px;
+            }
+            
+            .section-card {
+                padding: 12px;
+                border-radius: 8px;
+            }
+            
+            .toc-link {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            .priority-badge,
+            .status-badge {
+                font-size: 12px;
+                padding: 3px 8px;
             }
         }
         
@@ -234,20 +282,20 @@ export const guideHTML = `
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-3 sm:p-4 md:p-6 lg:p-8">
     <div class="max-w-5xl mx-auto">
         <!-- Header -->
-        <div class="guide-container p-8 mb-8">
+        <div class="guide-container p-4 sm:p-6 md:p-8 mb-6 md:mb-8">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-4">
                     <div class="icon-badge text-blue-600">
                         <i class="fas fa-book"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
                             Guide Utilisateur
                         </h1>
-                        <p class="text-gray-600 mt-1">
+                        <p class="text-sm sm:text-base text-gray-600 mt-1">
                             Système de Gestion de Maintenance - IGP Glass
                         </p>
                     </div>
@@ -261,7 +309,7 @@ export const guideHTML = `
 
         <!-- Table des matières -->
         <div class="section-card" id="table-of-contents">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-list text-blue-600"></i>
                 Table des matières
             </h2>
@@ -279,13 +327,13 @@ export const guideHTML = `
 
         <!-- Section 1: Gestion des Tickets -->
         <div class="section-card" id="tickets">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-ticket-alt text-blue-600"></i>
                 1. Gestion des Tickets
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Créer un nouveau ticket
                 </h3>
@@ -306,7 +354,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Comprendre les priorités
                 </h3>
@@ -339,7 +387,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Modifier un ticket existant
                 </h3>
@@ -353,7 +401,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">4</div>
                     Joindre des fichiers
                 </h3>
@@ -368,13 +416,13 @@ export const guideHTML = `
 
         <!-- Section 2: Tableau Kanban -->
         <div class="section-card" id="kanban">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-columns text-purple-600"></i>
                 2. Tableau Kanban
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Comprendre les colonnes
                 </h3>
@@ -419,7 +467,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Déplacer un ticket (Drag & Drop)
                 </h3>
@@ -432,7 +480,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Filtrer et rechercher
                 </h3>
@@ -448,13 +496,13 @@ export const guideHTML = `
 
         <!-- Section 3: Messagerie -->
         <div class="section-card" id="messages">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-comments text-green-600"></i>
                 3. Messagerie Interne
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Envoyer un message texte
                 </h3>
@@ -468,7 +516,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Envoyer un message vocal
                 </h3>
@@ -482,7 +530,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Indicateurs de conversation
                 </h3>
@@ -509,13 +557,13 @@ export const guideHTML = `
 
         <!-- Section 4: Notifications Push -->
         <div class="section-card" id="notifications">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-bell text-yellow-600"></i>
                 4. Notifications Push
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Activer les notifications
                 </h3>
@@ -532,7 +580,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Types de notifications reçues
                 </h3>
@@ -562,7 +610,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Fonctionnement des notifications
                 </h3>
@@ -577,13 +625,13 @@ export const guideHTML = `
 
         <!-- Section 5: Gestion des Machines -->
         <div class="section-card" id="machines">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-cogs text-gray-600"></i>
                 5. Gestion des Machines
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Consulter les machines
                 </h3>
@@ -595,7 +643,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Historique des interventions
                 </h3>
@@ -608,7 +656,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Ajouter une nouvelle machine (Admin)
                 </h3>
@@ -623,13 +671,13 @@ export const guideHTML = `
 
         <!-- Section 6: Profil & Paramètres -->
         <div class="section-card" id="profile">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-user-cog text-indigo-600"></i>
                 6. Profil & Paramètres
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Modifier votre profil
                 </h3>
@@ -643,7 +691,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Préférences de notifications
                 </h3>
@@ -656,7 +704,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Se déconnecter
                 </h3>
@@ -670,13 +718,13 @@ export const guideHTML = `
 
         <!-- Section 7: Utilisation Mobile -->
         <div class="section-card" id="mobile">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-mobile-alt text-pink-600"></i>
                 7. Utilisation Mobile (PWA)
             </h2>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">1</div>
                     Installer l'application (recommandé)
                 </h3>
@@ -703,7 +751,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">2</div>
                     Avantages de l'installation
                 </h3>
@@ -717,7 +765,7 @@ export const guideHTML = `
             </div>
 
             <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
                     Gestes tactiles
                 </h3>
@@ -732,7 +780,7 @@ export const guideHTML = `
 
         <!-- Section 8: Trucs & Astuces -->
         <div class="section-card" id="tips">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-lightbulb text-yellow-500"></i>
                 8. Trucs & Astuces
             </h2>
@@ -822,7 +870,7 @@ export const guideHTML = `
 
         <!-- Section Aide -->
         <div class="section-card">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-life-ring text-red-600"></i>
                 Besoin d'aide ?
             </h2>
