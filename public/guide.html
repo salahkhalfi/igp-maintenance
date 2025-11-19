@@ -476,14 +476,15 @@
             <div class="feature-box">
                 <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
                     <div class="step-number">3</div>
-                    Filtrer et rechercher
+                    Trier les tickets
                 </h3>
                 <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Utilisez les <strong>onglets</strong> en haut pour filtrer par type de tickets</li>
-                    <li>• <strong>"Tous"</strong> : Affiche tous les tickets actifs</li>
-                    <li>• <strong>"Mes Tickets"</strong> : Uniquement les tickets qui vous sont assignés</li>
-                    <li>• <strong>"Urgents"</strong> : Tickets prioritaires (Critique + Haute)</li>
-                    <li>• <strong>Recherche</strong> : Tapez dans la barre de recherche pour trouver un ticket spécifique</li>
+                    <li>• Utilisez le menu déroulant <strong>"Trier:"</strong> en haut du tableau</li>
+                    <li>• <strong>Par défaut</strong> : Ordre original (création)</li>
+                    <li>• <strong>🔥 Urgence</strong> : Calcul automatique (priorité + temps écoulé) - Les plus urgents en premier</li>
+                    <li>• <strong>⏰ Plus ancien</strong> : Tickets les plus anciens en premier</li>
+                    <li>• <strong>📅 Planifié</strong> : Tickets avec date de planification, triés par date la plus proche</li>
+                    <li>• Le tri est visible uniquement s'il y a <strong>3 tickets ou plus</strong> dans le tableau</li>
                 </ul>
             </div>
         </div>
@@ -781,26 +782,19 @@
 
             <div class="feature-box">
                 <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                    <i class="fas fa-star text-yellow-500 mr-2"></i>
-                    Raccourcis utiles
+                    <i class="fas fa-keyboard text-blue-500 mr-2"></i>
+                    Raccourcis clavier
                 </h3>
                 <div class="ml-12 space-y-2 text-gray-700">
                     <div class="flex items-center gap-3">
-                        <kbd>Ctrl</kbd> + <kbd>K</kbd>
-                        <span>Ouvrir la recherche rapide</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <kbd>N</kbd>
-                        <span>Nouveau ticket (quand sur la page principale)</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <kbd>M</kbd>
-                        <span>Ouvrir la messagerie</span>
-                    </div>
-                    <div class="flex items-center gap-3">
                         <kbd>Esc</kbd>
-                        <span>Fermer les fenêtres modales</span>
+                        <span>Fermer les fenêtres modales (popups, formulaires)</span>
                     </div>
+                    <div class="flex items-center gap-3">
+                        <kbd>Enter</kbd>
+                        <span>Soumettre le formulaire actif (création ticket, commentaire, etc.)</span>
+                    </div>
+                    <p class="text-sm text-gray-600 italic mt-3">Note: L'application privilégie les clics pour éviter les conflits de raccourcis.</p>
                 </div>
             </div>
 
