@@ -1415,7 +1415,7 @@ app.get('/', (c) => {
                     ]
                 },
                 optimisations: {
-                    title: "⚡ Nouveautés v2.2.0",
+                    title: "⚡ Nouveautés v2.8.1",
                     icon: "fa-rocket",
                     color: "green",
                     content: [
@@ -1452,7 +1452,7 @@ app.get('/', (c) => {
                         "🎓 RESSOURCES:",
                         "• 🌐 mecanique.igpglass.ca",
                         "• 📖 Ce guide",
-                        "• 🏷️ Version 2.2.0"
+                        "• 🏷️ Version 2.8.1"
                     ]
                 }
             };
@@ -1471,7 +1471,7 @@ app.get('/', (c) => {
                 { id: 'mobile', icon: 'fa-mobile-alt', label: 'Mobile' },
                 { id: 'raccourcis', icon: 'fa-keyboard', label: 'Raccourcis Clavier' },
                 { id: 'securite', icon: 'fa-lock', label: 'Sécurité' },
-                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.2.0' },
+                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.8.1' },
                 { id: 'problemes', icon: 'fa-exclamation-triangle', label: 'Problèmes' },
                 { id: 'contact', icon: 'fa-phone', label: 'Contact' }
             ];
@@ -1557,7 +1557,7 @@ app.get('/', (c) => {
                                 "⎋ Escape pour fermer"
                             ),
                             React.createElement('span', { className: 'text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full' },
-                                "✨ v2.2.0 - Mise à jour 2025-11-19"
+                                "✨ v2.8.1 - Mise à jour 2025-11-19"
                             )
                         ),
                         React.createElement('button', {
@@ -7155,7 +7155,7 @@ app.get('/', (c) => {
                                 }
                             },
                                 React.createElement('i', { className: 'fas fa-history' }),
-                                React.createElement('span', {}, 'v2.2.0 - Historique')
+                                React.createElement('span', {}, 'v2.8.1 - Historique')
                             )
                         )
                     )
@@ -7648,7 +7648,7 @@ app.get('/changelog', (c) => {
                     <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold text-blue-600">v2.2.0</div>
+                    <div class="text-2xl font-bold text-blue-600">v2.8.1</div>
                     <div class="text-sm text-gray-500">Version actuelle</div>
                 </div>
             </div>
@@ -7700,15 +7700,15 @@ app.get('/changelog', (c) => {
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.2.0 - ACTUELLE -->
-            <div class="timeline-item" data-version="2.2.0" data-types="feature design">
+            <!-- Version 2.8.1 - ACTUELLE -->
+            <div class="timeline-item" data-version="2.8.1" data-types="feature design">
                 <div class="timeline-dot bg-gradient-to-br from-blue-600 to-purple-700 text-white">
                     <i class="fas fa-sparkles"></i>
                 </div>
                 <div class="version-card">
                     <div class="flex items-start justify-between mb-4">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Version 2.2.0</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.8.1</h2>
                             <p class="text-gray-500 text-sm">19 novembre 2025</p>
                         </div>
                         <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
@@ -7762,14 +7762,337 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 2.0.12 -->
+            <div class="timeline-item" data-version="2.0.12" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-sky-600 to-sky-700 text-white">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.12</h2>
+                        <p class="text-gray-500 text-sm">12 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Historique des Modifications
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Changelog complet avec timeline visuelle</li>
+                                <li>• Filtres par type (fonctionnalités, améliorations, corrections)</li>
+                                <li>• Design glassmorphism cohérent avec l'application</li>
+                                <li>• Badges version avec statut ACTUELLE</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.13 -->
+            <div class="timeline-item" data-version="2.0.13" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-pink-600 to-pink-700 text-white">
+                    <i class="fas fa-video"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.13</h2>
+                        <p class="text-gray-500 text-sm">15 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Support Vidéos Tickets
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Upload vidéos (MP4, MOV, max 50MB)</li>
+                                <li>• Prévisualisation vidéo intégrée (player HTML5)</li>
+                                <li>• Compression automatique pour optimiser stockage</li>
+                                <li>• Galerie médias unifiée (photos + vidéos)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.14 -->
+            <div class="timeline-item" data-version="2.0.14" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
+                    <i class="fas fa-keyboard"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.14</h2>
+                        <p class="text-gray-500 text-sm">16 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Raccourcis Clavier Améliorés
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Ctrl+N : Créer nouveau ticket</li>
+                                <li>• Ctrl+M : Ouvrir messagerie</li>
+                                <li>• Ctrl+K : Recherche globale</li>
+                                <li>• Escape : Fermer modales/dialogs</li>
+                                <li>• Guide raccourcis accessible via "?"</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 2.1.0 -->
-            <div class="timeline-item" data-version="2.1.0" data-types="feature improvement">
+            <div class="timeline-item" data-version="2.1.0" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
+                    <i class="fas fa-search-plus"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.1.0</h2>
+                        <p class="text-gray-500 text-sm">17 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Recherche Globale Avancée
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Recherche multi-critères (tickets, machines, utilisateurs)</li>
+                                <li>• Filtres avancés : statut, priorité, technicien, date</li>
+                                <li>• Auto-complétion temps réel</li>
+                                <li>• Historique 5 dernières recherches</li>
+                                <li>• Insensible aux accents français</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.2.0 -->
+            <div class="timeline-item" data-version="2.2.0" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-lime-600 to-lime-700 text-white">
+                    <i class="fas fa-filter"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.2.0</h2>
+                        <p class="text-gray-500 text-sm">17 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Filtres Kanban Avancés
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Filtres persistants sauvegardés par utilisateur</li>
+                                <li>• Vue personnalisée "Mes tickets"</li>
+                                <li>• Filtre par machine avec multi-sélection</li>
+                                <li>• Compteurs temps réel par filtre actif</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.3.0 -->
+            <div class="timeline-item" data-version="2.3.0" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-rose-600 to-rose-700 text-white">
+                    <i class="fas fa-paint-brush"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.3.0</h2>
+                        <p class="text-gray-500 text-sm">17 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Design Glassmorphism Kanban
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Colonnes Kanban avec effet vitreux (backdrop-filter blur)</li>
+                                <li>• Cartes tickets redesignées (shadows premium)</li>
+                                <li>• Animations transitions fluides</li>
+                                <li>• Couleurs IGP harmonisées (bleu #1e40af, orange #ea580c)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.4.0 -->
+            <div class="timeline-item" data-version="2.4.0" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-amber-600 to-amber-700 text-white">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.4.0</h2>
+                        <p class="text-gray-500 text-sm">17 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Optimisations Performance
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Chargement lazy des images galeries</li>
+                                <li>• Pagination conversations (50 messages/page)</li>
+                                <li>• Cache local données machines (IndexedDB)</li>
+                                <li>• Réduction 40% temps chargement initial</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.5.0 -->
+            <div class="timeline-item" data-version="2.5.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
+                    <i class="fas fa-mobile-screen"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.5.0</h2>
+                        <p class="text-gray-500 text-sm">17 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                PWA et Service Worker
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Application Progressive Web App complète</li>
+                                <li>• Installation sur écran d'accueil (iOS/Android)</li>
+                                <li>• Mode hors ligne basique (lecture cache)</li>
+                                <li>• Manifest.json avec icônes adaptatives</li>
+                                <li>• Thème couleur IGP intégré</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.6.0 -->
+            <div class="timeline-item" data-version="2.6.0" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
+                    <i class="fas fa-tablet-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.6.0</h2>
+                        <p class="text-gray-500 text-sm">18 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Responsive Design iPad
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Optimisation layout tablettes (768px-1024px)</li>
+                                <li>• Kanban 3 colonnes sur iPad paysage</li>
+                                <li>• Touch gestures améliorés drag & drop</li>
+                                <li>• Clavier virtuel ne masque plus le contenu</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.7.0 -->
+            <div class="timeline-item" data-version="2.7.0" data-types="improvement">
+                <div class="timeline-dot bg-gradient-to-br from-violet-600 to-violet-700 text-white">
+                    <i class="fas fa-compress"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.7.0</h2>
+                        <p class="text-gray-500 text-sm">18 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Compression Images WebP
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Conversion automatique images en WebP</li>
+                                <li>• Réduction 60% poids fichiers</li>
+                                <li>• Qualité préservée (90% compression)</li>
+                                <li>• Fallback JPEG pour navigateurs anciens</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.8.0 -->
+            <div class="timeline-item" data-version="2.8.0" data-types="feature improvement">
                 <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
                     <i class="fas fa-book-open"></i>
                 </div>
                 <div class="version-card">
                     <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.1.0</h2>
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.8.0</h2>
                         <p class="text-gray-500 text-sm">18 novembre 2025</p>
                     </div>
 

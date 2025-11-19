@@ -866,7 +866,7 @@ export const guideHTML = `<!DOCTYPE html>
                             </span>
                             <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md whitespace-nowrap">
                                 <i class="fas fa-bookmark text-xs"></i>
-                                <span class="text-xs">v2.2.0</span>
+                                <span class="text-xs">v2.8.1</span>
                             </span>
                         </div>
                     </div>
