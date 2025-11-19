@@ -121,18 +121,37 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
   
-  // Ouvrir l'URL du ticket si disponible
-  const urlToOpen = event.notification.data?.url || '/';
+  const notificationData = event.notification.data || {};
+  const action = notificationData.action;
+  
+  // Construire l'URL appropriée selon le type de notification
+  let urlToOpen = notificationData.url || '/';
+  
+  // Pour les messages audio, ajouter paramètres pour auto-play
+  if (action === 'new_audio_message' && notificationData.messageId) {
+    urlToOpen = `/?openAudioMessage=${notificationData.messageId}&sender=${notificationData.senderId}`;
+  }
+  // Pour les messages texte privés
+  else if (action === 'new_private_message' && notificationData.senderId) {
+    urlToOpen = `/?openMessages=${notificationData.senderId}`;
+  }
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Si une fenêtre est déjà ouverte, l'utiliser
+      // Si une fenêtre est déjà ouverte, l'utiliser et envoyer un message
       for (const client of clientList) {
-        if (client.url.includes(urlToOpen) && 'focus' in client) {
-          return client.focus();
+        if ('focus' in client) {
+          client.focus();
+          // Envoyer les données de notification au client pour action
+          client.postMessage({
+            type: 'NOTIFICATION_CLICK',
+            action: action,
+            data: notificationData
+          });
+          return;
         }
       }
-      // Sinon, ouvrir nouvelle fenêtre
+      // Sinon, ouvrir nouvelle fenêtre avec URL
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
