@@ -978,6 +978,18 @@ export const guideHTML = `
                     <li>• <strong>Avantages</strong> : Parfait pour les mains occupées ou messages complexes</li>
                     <li>• Le destinataire peut écouter directement dans l'application</li>
                 </ul>
+                <div class="mt-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-sm text-gray-700">
+                    <p class="font-semibold text-blue-800 mb-1">
+                        <i class="fas fa-info-circle"></i> Compatibilité des messages audio
+                    </p>
+                    <p>✅ <strong>Détection automatique du format</strong> : L'application choisit le meilleur format audio supporté par votre appareil</p>
+                    <ul class="mt-2 space-y-1 ml-4">
+                        <li>• <strong>iPhone/iPad (Safari)</strong> : MP4/AAC ou MP3</li>
+                        <li>• <strong>Android (Chrome)</strong> : MP3, MP4 ou WebM</li>
+                        <li>• <strong>Lecture universelle</strong> : Tous les appareils peuvent lire les messages audio reçus</li>
+                    </ul>
+                    <p class="mt-2 text-xs text-gray-600">Note: Les formats MP3 et MP4 sont universellement compatibles sur iOS et Android</p>
+                </div>
             </div>
 
             <div class="feature-box">
@@ -1028,6 +1040,17 @@ export const guideHTML = `
                     </ul>
                     <li>• Trouvez <strong>mecanique.igpglass.ca</strong> et activez les notifications</li>
                 </ul>
+                <div class="mt-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-sm text-gray-700">
+                    <p class="font-semibold text-amber-800 mb-1">
+                        <i class="fas fa-exclamation-triangle"></i> Important pour iPhone/iPad
+                    </p>
+                    <p class="mb-2">Les notifications push sur iOS <strong>nécessitent l'installation de l'application sur l'écran d'accueil</strong> (voir section 7 - Utilisation Mobile).</p>
+                    <p class="text-xs text-gray-600"><strong>Pourquoi ?</strong> Apple requiert que les PWA soient installées pour recevoir des notifications push. Sans installation, les notifications ne fonctionneront pas sur iPhone/iPad.</p>
+                    <p class="mt-2 font-medium text-amber-700">
+                        ✅ <strong>Android</strong> : Notifications fonctionnent dans le navigateur Chrome<br>
+                        ⚠️ <strong>iOS</strong> : Installation requise (Safari → Partager → "Sur l'écran d'accueil")
+                    </p>
+                </div>
             </div>
 
             <div class="feature-box">
@@ -1207,12 +1230,27 @@ export const guideHTML = `
                     Avantages de l'installation
                 </h3>
                 <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Accès rapide</strong> : Lancez l'app comme une application native</li>
-                    <li>• <strong>Mode plein écran</strong> : Plus d'espace pour travailler</li>
+                    <li>• <strong>Accès rapide</strong> : Lancez l'app comme une application native depuis votre écran d'accueil</li>
+                    <li>• <strong>Mode plein écran</strong> : Plus d'espace pour travailler sans barre d'adresse</li>
                     <li>• <strong>Notifications push</strong> : Recevez des alertes même si l'app est fermée</li>
                     <li>• <strong>Fonctionne hors ligne</strong> : Consultez les données récentes sans connexion</li>
                     <li>• <strong>Plus rapide</strong> : Chargement instantané après installation</li>
+                    <li>• <strong>Icône sur l'écran d'accueil</strong> : Logo IGP visible avec vos autres applications</li>
                 </ul>
+                <div class="mt-3 p-3 bg-purple-50 border-l-4 border-purple-500 rounded text-sm text-gray-700">
+                    <p class="font-semibold text-purple-800 mb-2">
+                        <i class="fas fa-star"></i> Recommandation forte pour iPhone/iPad
+                    </p>
+                    <p class="mb-2">L'installation est <strong>fortement recommandée</strong> et même <strong>obligatoire pour les notifications push</strong> sur iOS.</p>
+                    <p class="text-xs text-gray-600">
+                        <strong>Différence Android vs iOS :</strong><br>
+                        • <strong>Android</strong> : Installation optionnelle (améliore l'expérience)<br>
+                        • <strong>iOS</strong> : Installation obligatoire pour les notifications push
+                    </p>
+                    <p class="mt-2 font-medium text-purple-700">
+                        💡 L'installation prend 10 secondes et transforme le site web en application native complète!
+                    </p>
+                </div>
             </div>
 
             <div class="feature-box">
