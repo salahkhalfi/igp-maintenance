@@ -730,11 +730,25 @@ export const guideHTML = `<!DOCTYPE html>
         
         /* Amélioration du bouton de navigation (up/down) */
         #scroll-nav-btn {
+            position: fixed !important;
+            bottom: 2rem !important;
+            right: 2rem !important;
+            width: 3.5rem !important;
+            height: 3.5rem !important;
+            border-radius: 50% !important;
+            z-index: 9999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: white !important;
+            cursor: pointer !important;
+            border: none !important;
             animation: bounceIn 0.5s ease;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 
                 0 4px 15px rgba(102, 126, 234, 0.4),
                 0 0 20px rgba(118, 75, 162, 0.3);
+            transition: all 0.3s ease !important;
         }
         
         #scroll-nav-btn:hover {
