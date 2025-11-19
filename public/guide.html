@@ -205,20 +205,54 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
         }
         
-        @media (max-width: 768px) {
-            .section-card {
-                padding: 12px;
-                margin-bottom: 12px;
+        /* ============================================
+           📱 RESPONSIVE DESIGN PROFESSIONNEL
+           ============================================ */
+        
+        /* Tablet (768px - 1024px) */
+        @media (max-width: 1024px) {
+            body {
+                padding: 2rem 1rem;
             }
             
             .guide-container {
-                margin: 8px;
-                padding: 12px;
+                padding: 1.5rem;
+                margin: 0 auto 1.5rem;
+            }
+            
+            .section-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
             }
             
             .feature-box {
-                padding: 12px;
-                margin-bottom: 8px;
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+            }
+        }
+        
+        /* Mobile Large (480px - 768px) */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+            
+            .guide-container {
+                margin: 0 0 1rem;
+                padding: 1rem;
+                border-radius: 10px;
+            }
+            
+            .section-card {
+                padding: 0.875rem;
+                margin-bottom: 0.875rem;
+                border-radius: 10px;
+            }
+            
+            .feature-box {
+                padding: 0.875rem;
+                margin-bottom: 0.75rem;
+                border-radius: 8px;
             }
             
             .icon-badge {
@@ -230,36 +264,267 @@
             .step-number {
                 width: 28px;
                 height: 28px;
-                font-size: 14px;
+                font-size: 13px;
             }
             
             .back-button {
-                padding: 10px 16px;
+                padding: 0.625rem 1rem;
                 font-size: 14px;
+                width: auto;
+            }
+            
+            /* Header responsive */
+            h1 {
+                font-size: 1.75rem !important;
+                line-height: 1.2;
+            }
+            
+            h2 {
+                font-size: 1.5rem !important;
+            }
+            
+            h3 {
+                font-size: 1.25rem !important;
+            }
+            
+            /* Badges responsive */
+            .priority-badge,
+            .status-badge {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.625rem;
+            }
+            
+            /* TOC responsive */
+            .toc-link {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            /* Liste items plus compacts */
+            ul, ol {
+                padding-left: 1.5rem;
+            }
+            
+            li {
+                margin-bottom: 0.5rem;
             }
         }
         
+        /* Mobile Small (320px - 480px) */
         @media (max-width: 480px) {
+            body {
+                padding: 0.5rem 0.25rem;
+            }
+            
             .guide-container {
-                margin: 4px;
-                padding: 12px;
+                margin: 0 0 0.75rem;
+                padding: 0.75rem;
                 border-radius: 8px;
             }
             
             .section-card {
-                padding: 12px;
+                padding: 0.75rem;
                 border-radius: 8px;
+                margin-bottom: 0.75rem;
+            }
+            
+            .feature-box {
+                padding: 0.75rem;
+                margin-bottom: 0.625rem;
+            }
+            
+            /* Typographie très petite */
+            h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            h2 {
+                font-size: 1.25rem !important;
+            }
+            
+            h3 {
+                font-size: 1.125rem !important;
+            }
+            
+            p, li, span {
+                font-size: 0.875rem;
+            }
+            
+            /* Badges très compacts */
+            .priority-badge,
+            .status-badge {
+                font-size: 0.6875rem;
+                padding: 0.1875rem 0.5rem;
+            }
+            
+            .icon-badge {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+            
+            .step-number {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+            
+            /* TOC très compact */
+            .toc-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8125rem;
+            }
+            
+            /* Bouton retour compact */
+            .back-button {
+                padding: 0.5rem 0.75rem;
+                font-size: 13px;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Listes ultra-compactes */
+            ul, ol {
+                padding-left: 1.25rem;
+            }
+            
+            li {
+                margin-bottom: 0.375rem;
+            }
+            
+            /* Code blocks */
+            kbd {
+                font-size: 0.75rem;
+                padding: 0.125rem 0.5rem;
+            }
+            
+            /* Scroll to top button */
+            #scroll-top-btn {
+                width: 48px !important;
+                height: 48px !important;
+                bottom: 1rem !important;
+                right: 1rem !important;
+                font-size: 1rem;
+            }
+            
+            /* Table responsive */
+            table {
+                font-size: 0.75rem;
+            }
+            
+            /* Badges info header */
+            .flex.items-center.gap-3 {
+                flex-wrap: wrap;
+                gap: 0.5rem !important;
+            }
+            
+            .flex.items-center.gap-3 > span {
+                font-size: 0.6875rem !important;
+                padding: 0.25rem 0.5rem !important;
+            }
+        }
+        
+        /* Mobile Extra Small (< 360px) */
+        @media (max-width: 360px) {
+            body {
+                padding: 0.375rem 0.125rem;
+            }
+            
+            .guide-container {
+                padding: 0.625rem;
+            }
+            
+            .section-card {
+                padding: 0.625rem;
+            }
+            
+            .feature-box {
+                padding: 0.625rem;
+            }
+            
+            h1 {
+                font-size: 1.375rem !important;
+            }
+            
+            h2 {
+                font-size: 1.125rem !important;
+            }
+            
+            h3 {
+                font-size: 1rem !important;
+            }
+            
+            p, li, span {
+                font-size: 0.8125rem;
+            }
+            
+            .back-button {
+                padding: 0.5rem;
+                font-size: 12px;
+            }
+        }
+        
+        /* Landscape mobile */
+        @media (max-height: 600px) and (orientation: landscape) {
+            html {
+                scroll-padding-top: 60px;
+            }
+            
+            .guide-container {
+                padding: 1rem;
+            }
+            
+            .section-card {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            #scroll-top-btn {
+                bottom: 0.75rem !important;
+                right: 0.75rem !important;
+            }
+        }
+        
+        /* Touch targets - Accessibilité mobile */
+        @media (pointer: coarse) {
+            .toc-link,
+            .back-button,
+            button,
+            a {
+                min-height: 44px;
+                min-width: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .toc-link {
-                padding: 6px 12px;
-                font-size: 14px;
+                padding: 0.75rem 1rem;
+            }
+        }
+        
+        /* Print media query */
+        @media print {
+            body {
+                background: white !important;
             }
             
-            .priority-badge,
-            .status-badge {
-                font-size: 12px;
-                padding: 3px 8px;
+            .guide-container,
+            .section-card,
+            .feature-box {
+                background: white !important;
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            
+            .back-button,
+            #scroll-top-btn,
+            .reading-progress {
+                display: none !important;
+            }
+            
+            .section-card {
+                page-break-inside: avoid;
             }
         }
         
@@ -454,50 +719,50 @@
 </head>
 <body class="p-3 sm:p-4 md:p-6 lg:p-8">
     <div class="max-w-5xl mx-auto">
-        <!-- Header avec temps de lecture -->
-        <div class="guide-container p-4 sm:p-6 md:p-8 mb-6 md:mb-8">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-                <div class="flex items-center gap-4 flex-1">
-                    <div class="icon-badge text-blue-600">
+        <!-- Header avec temps de lecture - 100% responsive -->
+        <div class="guide-container p-3 sm:p-4 md:p-6 lg:p-8 mb-4 md:mb-6 lg:mb-8">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                <div class="flex items-start gap-3 sm:gap-4 flex-1 w-full">
+                    <div class="icon-badge text-blue-600 flex-shrink-0">
                         <i class="fas fa-book"></i>
                     </div>
-                    <div class="flex-1">
-                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 leading-tight">
                             Guide Utilisateur
                         </h1>
-                        <p class="text-sm sm:text-base text-gray-600 mt-1">
+                        <p class="text-xs sm:text-sm md:text-base text-gray-600 mt-1 leading-snug">
                             Système de Gestion de Maintenance - IGP Glass
                         </p>
-                        <div class="flex items-center gap-3 mt-2 text-xs sm:text-sm text-gray-500">
-                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md">
-                                <i class="fas fa-clock"></i>
-                                <span id="reading-time">~8 min de lecture</span>
+                        <div class="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-500">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md whitespace-nowrap">
+                                <i class="fas fa-clock text-xs"></i>
+                                <span id="reading-time" class="text-xs">~8 min</span>
                             </span>
-                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded-md">
-                                <i class="fas fa-check-circle"></i>
-                                <span>8 sections</span>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded-md whitespace-nowrap">
+                                <i class="fas fa-check-circle text-xs"></i>
+                                <span class="text-xs">8 sections</span>
                             </span>
-                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md">
-                                <i class="fas fa-bookmark"></i>
-                                <span>v2.8.1</span>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md whitespace-nowrap">
+                                <i class="fas fa-bookmark text-xs"></i>
+                                <span class="text-xs">v2.8.1</span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <button onclick="window.location.href='/'" class="back-button flex items-center gap-2">
+                <button onclick="window.location.href='/'" class="back-button flex items-center justify-center gap-2 w-full sm:w-auto flex-shrink-0">
                     <i class="fas fa-arrow-left"></i>
-                    <span class="hidden sm:inline">Retour à l'application</span>
+                    <span>Retour</span>
                 </button>
             </div>
         </div>
 
-        <!-- Table des matières -->
+        <!-- Table des matières - 100% responsive -->
         <div class="section-card" id="table-of-contents">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-list text-blue-600"></i>
-                Table des matières
+            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                <i class="fas fa-list text-blue-600 text-base sm:text-lg"></i>
+                <span class="leading-tight">Table des matières</span>
             </h2>
-            <div class="grid md:grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <a href="#tickets" class="toc-link">📋 1. Gestion des Tickets</a>
                 <a href="#kanban" class="toc-link">🎯 2. Tableau Kanban</a>
                 <a href="#messages" class="toc-link">💬 3. Messagerie Interne</a>
