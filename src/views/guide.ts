@@ -398,8 +398,8 @@ export const guideHTML = `<!DOCTYPE html>
                 padding: 0.125rem 0.5rem;
             }
             
-            /* Scroll to top button */
-            #scroll-top-btn {
+            /* Scroll navigation button (up/down) */
+            #scroll-nav-btn {
                 width: 48px !important;
                 height: 48px !important;
                 bottom: 1rem !important;
@@ -479,7 +479,7 @@ export const guideHTML = `<!DOCTYPE html>
                 margin-bottom: 0.75rem;
             }
             
-            #scroll-top-btn {
+            #scroll-nav-btn {
                 bottom: 0.75rem !important;
                 right: 0.75rem !important;
             }
@@ -518,7 +518,7 @@ export const guideHTML = `<!DOCTYPE html>
             }
             
             .back-button,
-            #scroll-top-btn,
+            #scroll-nav-btn,
             .reading-progress {
                 display: none !important;
             }
@@ -620,8 +620,8 @@ export const guideHTML = `<!DOCTYPE html>
             left: 100%;
         }
         
-        /* Amélioration du bouton "Retour en haut" */
-        #scroll-top-btn {
+        /* Amélioration du bouton de navigation (up/down) */
+        #scroll-nav-btn {
             animation: bounceIn 0.5s ease;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 
@@ -629,7 +629,7 @@ export const guideHTML = `<!DOCTYPE html>
                 0 0 20px rgba(118, 75, 162, 0.3);
         }
         
-        #scroll-top-btn:hover {
+        #scroll-nav-btn:hover {
             transform: translateY(-5px) scale(1.05);
             box-shadow: 
                 0 6px 20px rgba(102, 126, 234, 0.5),
@@ -1442,28 +1442,46 @@ export const guideHTML = `<!DOCTYPE html>
             });
         });
 
-        // 3. Bouton "Retour en haut" avec animation premium
+        // 3. Bouton de navigation bidirectionnel (Haut/Bas) avec animation premium
         window.addEventListener('scroll', function() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const btn = document.getElementById('scroll-top-btn');
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100;
             
-            if (scrollTop > 500) {
+            let btn = document.getElementById('scroll-nav-btn');
+            
+            // Afficher le bouton si on a scrollé plus de 300px
+            if (scrollTop > 300) {
                 if (!btn) {
-                    const newBtn = document.createElement('button');
-                    newBtn.id = 'scroll-top-btn';
-                    newBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-                    newBtn.className = 'fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg z-50 flex items-center justify-center text-white';
-                    newBtn.title = 'Retour en haut';
-                    newBtn.onclick = () => {
+                    // Créer le bouton
+                    btn = document.createElement('button');
+                    btn.id = 'scroll-nav-btn';
+                    btn.className = 'fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg z-50 flex items-center justify-center text-white transition-all duration-300';
+                    btn.style.animation = 'bounceIn 0.5s ease';
+                    document.body.appendChild(btn);
+                }
+                
+                // Déterminer la direction: Haut (≥50% de scroll) ou Bas (<50% de scroll)
+                if (scrollPercentage >= 50) {
+                    // On est en bas → Flèche vers le HAUT pour remonter
+                    btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    btn.title = 'Retour en haut';
+                    btn.onclick = () => {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
-                        // Vibration haptic si supporté
-                        if (navigator.vibrate) {
-                            navigator.vibrate(50);
-                        }
+                        if (navigator.vibrate) navigator.vibrate(50);
                     };
-                    document.body.appendChild(newBtn);
+                } else {
+                    // On est en haut → Flèche vers le BAS pour descendre
+                    btn.innerHTML = '<i class="fas fa-arrow-down"></i>';
+                    btn.title = 'Aller en bas';
+                    btn.onclick = () => {
+                        window.scrollTo({ top: documentHeight, behavior: 'smooth' });
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    };
                 }
             } else {
+                // Masquer le bouton quand on est tout en haut
                 if (btn) {
                     btn.style.animation = 'bounceOut 0.5s ease';
                     setTimeout(() => btn.remove(), 500);
@@ -1551,13 +1569,13 @@ export const guideHTML = `<!DOCTYPE html>
         
         // 11. Print styling: Préparer pour impression
         window.addEventListener('beforeprint', function() {
-            document.querySelectorAll('.back-button, #scroll-top-btn').forEach(el => {
+            document.querySelectorAll('.back-button, #scroll-nav-btn').forEach(el => {
                 el.style.display = 'none';
             });
         });
         
         window.addEventListener('afterprint', function() {
-            document.querySelectorAll('.back-button, #scroll-top-btn').forEach(el => {
+            document.querySelectorAll('.back-button, #scroll-nav-btn').forEach(el => {
                 el.style.display = '';
             });
         });
