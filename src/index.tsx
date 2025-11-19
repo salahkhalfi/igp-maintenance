@@ -7993,6 +7993,233 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
+            <!-- Version 2.0.5 -->
+            <div class="timeline-item" data-version="2.0.5" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.5</h2>
+                        <p class="text-gray-500 text-sm">2 novembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Messagerie Avancée
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Enregistrement messages vocaux (format adaptatif MP3/MP4/WebM)</li>
+                                <li>• Player audio intégré avec contrôles lecture</li>
+                                <li>• Upload fichiers multiples (documents, images)</li>
+                                <li>• Prévisualisation médias avant envoi</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations UX
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Interface messagerie redesignée (style glassmorphism)</li>
+                                <li>• Auto-scroll vers nouveaux messages</li>
+                                <li>• Horodatage format québécois (JJ-MM-AAAA HH:MM)</li>
+                                <li>• Indicateurs lecture/non-lu par utilisateur</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.4 -->
+            <div class="timeline-item" data-version="2.0.4" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.4</h2>
+                        <p class="text-gray-500 text-sm">30 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Système de Notifications Push
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Notifications temps réel pour nouveaux tickets</li>
+                                <li>• Alertes changements statut tickets assignés</li>
+                                <li>• Notifications nouveaux messages conversations</li>
+                                <li>• Support PWA (installation requise sur iOS)</li>
+                                <li>• Badge compteur non-lus dans barre navigation</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-mobile-alt text-purple-500 mr-2"></i>
+                                Configuration
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Activation/désactivation par utilisateur</li>
+                                <li>• Paramètres granulaires par type notification</li>
+                                <li>• Instructions installation PWA intégrées</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.3 -->
+            <div class="timeline-item" data-version="2.0.3" data-types="improvement fix">
+                <div class="timeline-dot bg-gradient-to-br from-green-600 to-green-700 text-white">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.3</h2>
+                        <p class="text-gray-500 text-sm">28 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Optimisations Performance
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Chargement lazy des images galeries tickets</li>
+                                <li>• Pagination conversations messagerie (50 messages/page)</li>
+                                <li>• Cache local données machines (IndexedDB)</li>
+                                <li>• Réduction 40% temps chargement initial</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-wrench text-red-500 mr-2"></i>
+                                Corrections
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Crash mobile lors upload vidéos volumineuses</li>
+                                <li>• Fix: Doublons notifications push</li>
+                                <li>• Fix: Perte focus champ recherche machines</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.2 -->
+            <div class="timeline-item" data-version="2.0.2" data-types="feature improvement">
+                <div class="timeline-dot bg-gradient-to-br from-amber-600 to-amber-700 text-white">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.2</h2>
+                        <p class="text-gray-500 text-sm">25 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Profil Utilisateur Enrichi
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Page profil avec statistiques personnelles</li>
+                                <li>• Tableau de bord : tickets créés/assignés/résolus</li>
+                                <li>• Historique activités (30 derniers jours)</li>
+                                <li>• Changement mot de passe sécurisé</li>
+                                <li>• Paramètres préférences utilisateur (langue, thème)</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Avatar utilisateur personnalisable</li>
+                                <li>• Validation email format québécois</li>
+                                <li>• Indicateur force mot de passe en temps réel</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.0.1 -->
+            <div class="timeline-item" data-version="2.0.1" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-red-600 to-red-700 text-white">
+                    <i class="fas fa-comments-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.1</h2>
+                        <p class="text-gray-500 text-sm">20 octobre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Messagerie Interne (MVP)
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Système conversations entre utilisateurs</li>
+                                <li>• Messages texte temps réel</li>
+                                <li>• Liste conversations avec preview dernier message</li>
+                                <li>• Compteur messages non-lus</li>
+                                <li>• Recherche conversations par nom utilisateur</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
+                                Contexte Développement
+                            </h3>
+                            <p class="text-gray-600 text-sm ml-6">
+                                Lancement phase 1 messagerie après 3 mois développement infrastructure temps réel.
+                                Base WebSocket établie pour futures features (notifications, collaboration temps réel).
+                                MVP testé avec 20+ utilisateurs pilotes sur 2 semaines.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Version 1.9.2 -->
             <div class="timeline-item" data-version="1.9.2" data-types="feature improvement fix">
                 <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
