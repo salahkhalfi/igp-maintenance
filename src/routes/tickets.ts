@@ -181,8 +181,8 @@ tickets.post('/', async (c) => {
       try {
         const { sendPushNotification } = await import('./push');
         const pushResult = await sendPushNotification(c.env, assigned_to, {
-          title: '🔧 Nouveau ticket assigné',
-          body: `Ticket #${ticket_id}: ${title}`,
+          title: `🔧 ${title}`,
+          body: `Nouveau ticket assigné`,
           icon: '/icon-192.png',
           data: { ticketId: (newTicket as any).id, url: '/' }
         });
@@ -321,8 +321,8 @@ tickets.patch('/:id', async (c) => {
       try {
         const { sendPushNotification } = await import('./push');
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
-          title: '🔧 Nouveau ticket assigné',
-          body: `Ticket #${currentTicket.ticket_id}: ${currentTicket.title}`,
+          title: `🔧 ${currentTicket.title}`,
+          body: `Ticket réassigné`,
           icon: '/icon-192.png',
           data: { ticketId: id, url: '/' }
         });
