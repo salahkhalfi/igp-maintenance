@@ -1415,7 +1415,7 @@ app.get('/', (c) => {
                     ]
                 },
                 optimisations: {
-                    title: "⚡ Nouveautés v2.0.11",
+                    title: "⚡ Nouveautés v2.8.1",
                     icon: "fa-rocket",
                     color: "green",
                     content: [
@@ -1452,7 +1452,7 @@ app.get('/', (c) => {
                         "🎓 RESSOURCES:",
                         "• 🌐 mecanique.igpglass.ca",
                         "• 📖 Ce guide",
-                        "• 🏷️ Version 2.0.11"
+                        "• 🏷️ Version 2.8.1"
                     ]
                 }
             };
@@ -1471,7 +1471,7 @@ app.get('/', (c) => {
                 { id: 'mobile', icon: 'fa-mobile-alt', label: 'Mobile' },
                 { id: 'raccourcis', icon: 'fa-keyboard', label: 'Raccourcis Clavier' },
                 { id: 'securite', icon: 'fa-lock', label: 'Sécurité' },
-                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.0.11' },
+                { id: 'optimisations', icon: 'fa-rocket', label: 'Nouveautés v2.8.1' },
                 { id: 'problemes', icon: 'fa-exclamation-triangle', label: 'Problèmes' },
                 { id: 'contact', icon: 'fa-phone', label: 'Contact' }
             ];
@@ -1557,7 +1557,7 @@ app.get('/', (c) => {
                                 "⎋ Escape pour fermer"
                             ),
                             React.createElement('span', { className: 'text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full' },
-                                "✨ v2.0.11 - Mise à jour 2025-11-09"
+                                "✨ v2.8.1 - Mise à jour 2025-11-19"
                             )
                         ),
                         React.createElement('button', {
