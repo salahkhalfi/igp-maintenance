@@ -368,27 +368,39 @@ export const guideHTML = `
                 <div class="space-y-3 ml-12">
                     <div class="flex items-start gap-3">
                         <span class="status-badge">
-                            <i class="fas fa-inbox text-gray-600"></i> EN ATTENTE
+                            🟦 REQUETE RECUE
                         </span>
-                        <span class="text-gray-700">Tickets nouveaux, non encore pris en charge</span>
+                        <span class="text-gray-700">Nouvelle demande reçue, en attente d'analyse</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="status-badge">
-                            <i class="fas fa-tools text-blue-600"></i> EN COURS
+                            🟨 DIAGNOSTIC
                         </span>
-                        <span class="text-gray-700">Intervention en cours par le technicien assigné</span>
+                        <span class="text-gray-700">Analyse du problème en cours par le technicien</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="status-badge">
-                            <i class="fas fa-pause text-orange-600"></i> EN PAUSE
+                            🟧 EN COURS
                         </span>
-                        <span class="text-gray-700">En attente de pièces, validation, ou autre ressource</span>
+                        <span class="text-gray-700">Intervention active par le technicien assigné</span>
                     </div>
                     <div class="flex items-start gap-3">
                         <span class="status-badge">
-                            <i class="fas fa-check text-green-600"></i> TERMINÉ
+                            🟪 EN ATTENTE PIECES
+                        </span>
+                        <span class="text-gray-700">En attente de pièces de rechange ou matériel</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="status-badge">
+                            🟩 TERMINE
                         </span>
                         <span class="text-gray-700">Intervention complétée et validée</span>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="status-badge">
+                            ⬜ ARCHIVE
+                        </span>
+                        <span class="text-gray-700">Ticket archivé pour historique et consultation</span>
                     </div>
                 </div>
             </div>
