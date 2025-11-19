@@ -7762,241 +7762,10 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
-            <!-- Version 2.0.11 -->
-            <div class="timeline-item" data-version="2.0.10" data-types="feature improvement">
-                <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
-                    <i class="fas fa-check-double"></i>
-                </div>
-                <div class="version-card">
-                    <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.11</h2>
-                        <p class="text-gray-500 text-sm">9 novembre 2025</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-star text-blue-500 mr-2"></i>
-                                Sélection Rapide Multi-Messages
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Boutons "Tout" et "Aucun" pour sélection rapide</li>
-                                <li>• Filtre intelligent respectant les permissions</li>
-                                <li>• Optimisation expérience utilisateur bulk operations</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
-                                Contexte Développement
-                            </h3>
-                            <p class="text-gray-600 text-sm ml-6">
-                                Livraison finale du projet "Smart Batch Operations" initié en février 2024.
-                                Cette fonctionnalité complète 21 mois de recherche UX et développement itératif
-                                pour optimiser les opérations de maintenance massive.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
-                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Version 2.0.9 -->
-            <div class="timeline-item" data-version="2.0.9" data-types="feature">
-                <div class="timeline-dot bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <div class="version-card">
-                    <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.9</h2>
-                        <p class="text-gray-500 text-sm">7 novembre 2025</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-star text-blue-500 mr-2"></i>
-                                Suppression Masse de Messages
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Mode sélection avec checkboxes individuelles</li>
-                                <li>• API bulk-delete avec traitement par lots (max 100 items)</li>
-                                <li>• Contrôles permissions granulaires par message</li>
-                                <li>• Barre outils contextuelle avec compteur sélection</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
-                                Contexte Développement
-                            </h3>
-                            <p class="text-gray-600 text-sm ml-6">
-                                Phase 2 du projet "Smart Batch Operations" débuté en février 2024.
-                                Intégration avec l'architecture R2 Storage développée en juin 2024.
-                                Tests intensifs effectués sur 18 mois pour garantir la fiabilité.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Version 2.0.8 -->
-            <div class="timeline-item" data-version="2.0.8" data-types="improvement">
-                <div class="timeline-dot bg-gradient-to-br from-teal-600 to-teal-700 text-white">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="version-card">
-                    <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.8</h2>
-                        <p class="text-gray-500 text-sm">6 novembre 2025</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
-                                Clarté Affichage Temporel
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Ajout label explicatif "Requête reçue depuis:" sur chronomètres</li>
-                                <li>• Amélioration compréhension utilisateur du temps écoulé</li>
-                                <li>• Réduction confusion sur signification des indicateurs temps</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
-                                Contexte Développement
-                            </h3>
-                            <p class="text-gray-600 text-sm ml-6">
-                                Résultat de 14 mois de recherche UX débutée en août 2024.
-                                Tests utilisateurs avec 45+ opérateurs pour identifier points de confusion.
-                                Implémentation basée sur feedback terrain consolidé sur 15 mois.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                        <span class="badge badge-improvement"><i class="fas fa-arrow-up"></i> Amélioration</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Version 2.0.7 -->
-            <div class="timeline-item" data-version="2.0.7" data-types="feature">
-                <div class="timeline-dot bg-gradient-to-br from-rose-600 to-rose-700 text-white">
-                    <i class="fas fa-trash-alt"></i>
-                </div>
-                <div class="version-card">
-                    <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.7</h2>
-                        <p class="text-gray-500 text-sm">5 novembre 2025</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-star text-blue-500 mr-2"></i>
-                                Suppression Individuelle Médias
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Bouton corbeille sur chaque photo/vidéo dans galerie ticket</li>
-                                <li>• Contrôle permissions granulaire (créateur + admin/superviseur/technicien)</li>
-                                <li>• Nettoyage automatique bucket R2 avant suppression BD</li>
-                                <li>• Popup confirmation avec preview média</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
-                                Contexte Développement
-                            </h3>
-                            <p class="text-gray-600 text-sm ml-6">
-                                Développement sur 17 mois utilisant infrastructure R2 Storage mise en place juin 2024.
-                                Architecture cleanup réutilisable développée pour phase 1 du projet "Media Lifecycle Management".
-                                Tests rigoureux de consistency R2-Database sur 15 mois.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Version 2.0.6 -->
-            <div class="timeline-item" data-version="2.0.6" data-types="feature fix">
-                <div class="timeline-dot bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
-                    <i class="fas fa-broom"></i>
-                </div>
-                <div class="version-card">
-                    <div class="mb-4">
-                        <h2 class="text-2xl font-bold text-gray-800">Version 2.0.6</h2>
-                        <p class="text-gray-500 text-sm">4 novembre 2025</p>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-star text-blue-500 mr-2"></i>
-                                Nettoyage R2 Messages Audio
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Suppression automatique fichiers audio R2 lors suppression message</li>
-                                <li>• Prévention accumulation fichiers orphelins dans storage</li>
-                                <li>• Optimisation coûts stockage et gestion espace</li>
-                                <li>• Logs détaillés opérations cleanup pour audit</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-wrench text-red-500 mr-2"></i>
-                                Corrections
-                            </h3>
-                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Fix: Fichiers audio restant dans R2 après suppression message</li>
-                                <li>• Fix: Gestion erreurs lors échec suppression R2</li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
-                                <i class="fas fa-info-circle text-amber-500 mr-2"></i>
-                                Contexte Développement
-                            </h3>
-                            <p class="text-gray-600 text-sm ml-6">
-                                Livraison majeure après 17 mois de développement infrastructure R2 Storage initiée juin 2024.
-                                Architecture cleanup réutilisable servant de base pour toutes opérations médias futures.
-                                Pattern établi comme standard interne pour gestion lifecycle fichiers.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
-                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Version 1.9.2 -->
             <div class="timeline-item" data-version="1.9.2" data-types="feature improvement fix">
-                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-blue-700 text-white">
-                    <i class="fas fa-rocket"></i>
+                <div class="timeline-dot bg-gradient-to-br from-purple-600 to-purple-700 text-white">
+                    <i class="fas fa-archive"></i>
                 </div>
                 <div class="version-card">
                     <div class="mb-4">
@@ -8053,8 +7822,8 @@ app.get('/changelog', (c) => {
 
             <!-- Version 1.9.0 -->
             <div class="timeline-item" data-version="1.9.0" data-types="feature improvement">
-                <div class="timeline-dot bg-gradient-to-br from-slate-600 to-gray-600 text-white">
-                    <i class="fas fa-bolt"></i>
+                <div class="timeline-dot bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
+                    <i class="fas fa-clock"></i>
                 </div>
                 <div class="version-card">
                     <div class="mb-4">
@@ -8072,7 +7841,7 @@ app.get('/changelog', (c) => {
                                 <li>• Timer dynamique sur chaque ticket (mise à jour chaque seconde)</li>
                                 <li>• Indicateur d'urgence coloré (vert/jaune/orange/rouge)</li>
                                 <li>• Colonnes adaptatives (vides=200px, pleines=280-320px)</li>
-                                <li>• Toggle pour afficher/masquer colonne archivée</li>
+                                <li>• Toggle pour afficher/masquer colonne archive</li>
                             </ul>
                         </div>
 
@@ -8084,7 +7853,7 @@ app.get('/changelog', (c) => {
                             <ul class="space-y-1 text-gray-600 text-sm ml-6">
                                 <li>• Design compact: badges réduits (CRIT/HAUT/MOY/BAS)</li>
                                 <li>• Badges priorité déplacés sous le titre</li>
-                                <li>• Layout desktop optimisé (6 colonnes à 5+1)</li>
+                                <li>• Layout desktop optimisé (6 colonnes 5+1)</li>
                                 <li>• Espacement réduit pour plus de densité</li>
                             </ul>
                         </div>
@@ -8099,7 +7868,7 @@ app.get('/changelog', (c) => {
 
             <!-- Version 1.8.5 -->
             <div class="timeline-item" data-version="1.8.5" data-types="feature improvement">
-                <div class="timeline-dot bg-gradient-to-br from-green-500 to-teal-600 text-white">
+                <div class="timeline-dot bg-gradient-to-br from-teal-600 to-teal-700 text-white">
                     <i class="fas fa-mobile-alt"></i>
                 </div>
                 <div class="version-card">
@@ -8112,13 +7881,24 @@ app.get('/changelog', (c) => {
                         <div>
                             <h3 class="font-bold text-gray-700 mb-2 flex items-center">
                                 <i class="fas fa-star text-blue-500 mr-2"></i>
-                                Support Mobile & Tablette
+                                Nouvelles Fonctionnalités
                             </h3>
                             <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Interface complètement responsive</li>
+                                <li>• Support complet mobile et tablette</li>
                                 <li>• Guide utilisateur accordéon (7 sections)</li>
                                 <li>• Touch events pour drag & drop mobile</li>
-                                <li>• Navigation tactile optimisée</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-arrow-up text-green-500 mr-2"></i>
+                                Améliorations
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Design responsive optimisé</li>
+                                <li>• Navigation simplifiée sur mobile</li>
+                                <li>• Interface tactile intuitive</li>
                             </ul>
                         </div>
                     </div>
@@ -8130,146 +7910,221 @@ app.get('/changelog', (c) => {
                 </div>
             </div>
 
-            <!-- Versions Antérieures Résumé -->
-            <div class="timeline-item">
-                <div class="timeline-dot bg-gradient-to-br from-gray-500 to-gray-600 text-white">
-                    <i class="fas fa-ellipsis-h"></i>
-                </div>
-                <div class="version-card bg-gray-50">
-                    <h2 class="text-xl font-bold text-gray-800 mb-3">Versions 2025 Antérieures</h2>
-                    <div class="space-y-2 text-sm text-gray-600">
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.8.0 - 1 octobre 2025</span>
-                            <span class="text-xs">Format dates québécois & Timezone EST</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.7.0 - 20 septembre 2025</span>
-                            <span class="text-xs">Multi-rôles & Sécurité renforcée</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.6.0 - 5 septembre 2025</span>
-                            <span class="text-xs">Upload images (Cloudflare R2)</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.5.0 - 22 août 2025</span>
-                            <span class="text-xs">Système de commentaires</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.4.0 - 8 août 2025</span>
-                            <span class="text-xs">Menu contextuel avancé</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.3.0 - 25 juillet 2025</span>
-                            <span class="text-xs">Gestion des machines</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2 border-b">
-                            <span class="font-semibold">v1.2.0 - 10 juillet 2025</span>
-                            <span class="text-xs">Interface Kanban drag & drop</span>
-                        </div>
-                        <div class="flex items-center justify-between py-2">
-                            <span class="font-semibold">v1.0.0-1.1.0 - Juin 2025</span>
-                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Lancement production</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 2024 -->
-            <div class="timeline-item">
-                <div class="timeline-dot bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+            <!-- Version 1.8.0 -->
+            <div class="timeline-item" data-version="1.8.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-blue-600 to-blue-700 text-white">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
-                <div class="version-card bg-gradient-to-br from-orange-50 to-amber-50">
-                    <h2 class="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                        <i class="fas fa-hammer text-orange-600"></i>
-                        Développements 2024
-                    </h2>
-                    <div class="space-y-3 text-sm text-gray-700">
-                        <div class="bg-white rounded p-3 border-l-4 border-orange-500">
-                            <div class="font-semibold text-orange-800 mb-1">Q4 2024 (Oct-Déc)</div>
-                            <ul class="space-y-1 ml-4 text-xs">
-                                <li>• Tests UAT intensifs sur infrastructure complète</li>
-                                <li>• Optimisations performance et scalabilité</li>
-                                <li>• Finalisation documentation technique</li>
-                                <li>• Préparation lancement production Q2 2025</li>
-                            </ul>
-                        </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.8.0</h2>
+                        <p class="text-gray-500 text-sm">1 octobre 2025</p>
+                    </div>
 
-                        <div class="bg-white rounded p-3 border-l-4 border-amber-500">
-                            <div class="font-semibold text-amber-800 mb-1">Q3 2024 (Juil-Sep)</div>
-                            <ul class="space-y-1 ml-4 text-xs">
-                                <li>• <strong>Août 2024:</strong> Début recherche UX chronometer labels (14 mois)</li>
-                                <li>• Développement système permissions granulaires</li>
-                                <li>• Implémentation audit logs et traçabilité</li>
-                                <li>• Tests sécurité et pénétration</li>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Format dates québécois (JJ-MM-AAAA)</li>
+                                <li>• Timezone EST (America/Toronto)</li>
+                                <li>• Affichage heure locale pour tous les timestamps</li>
                             </ul>
                         </div>
+                    </div>
 
-                        <div class="bg-white rounded p-3 border-l-4 border-yellow-500">
-                            <div class="font-semibold text-yellow-800 mb-1">Q2 2024 (Avr-Juin)</div>
-                            <ul class="space-y-1 ml-4 text-xs">
-                                <li>• <strong>Juin 2024:</strong> Infrastructure Cloudflare R2 Storage (17 mois dev)</li>
-                                <li>• Architecture cleanup médias et lifecycle management</li>
-                                <li>• Développement upload/galerie photos tickets</li>
-                                <li>• Intégration messages audio avec R2</li>
-                            </ul>
-                        </div>
-
-                        <div class="bg-white rounded p-3 border-l-4 border-lime-500">
-                            <div class="font-semibold text-lime-800 mb-1">Q1 2024 (Jan-Mar)</div>
-                            <ul class="space-y-1 ml-4 text-xs">
-                                <li>• <strong>Février 2024:</strong> Lancement projet "Smart Batch Operations" (21 mois)</li>
-                                <li>• R&D bulk operations et sélection multiple</li>
-                                <li>• Architecture API batch processing</li>
-                                <li>• POC mode sélection avec checkboxes</li>
-                            </ul>
-                        </div>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 2023 -->
-            <div class="timeline-item">
-                <div class="timeline-dot bg-gradient-to-br from-violet-500 to-purple-600 text-white">
-                    <i class="fas fa-seedling"></i>
+            <!-- Version 1.7.0 -->
+            <div class="timeline-item" data-version="1.7.0" data-types="feature security">
+                <div class="timeline-dot bg-gradient-to-br from-red-600 to-red-700 text-white">
+                    <i class="fas fa-shield-alt"></i>
                 </div>
-                <div class="version-card bg-gradient-to-br from-violet-50 to-purple-50">
-                    <h2 class="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                        <i class="fas fa-lightbulb text-violet-600"></i>
-                        Fondations 2023
-                    </h2>
-                    <div class="space-y-3 text-sm text-gray-700">
-                        <div class="bg-white rounded p-3 border-l-4 border-violet-500">
-                            <div class="font-semibold text-violet-800 mb-1">Q4 2023 (Oct-Déc)</div>
-                            <ul class="space-y-1 ml-4 text-xs">
-                                <li>• Développement POC (Proof of Concept) interface Kanban</li>
-                                <li>• Tests architecture Cloudflare Workers + D1 Database</li>
-                                <li>• Validation approche serverless edge computing</li>
-                                <li>• Design system et guidelines UI/UX</li>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.7.0</h2>
+                        <p class="text-gray-500 text-sm">20 septembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Gestion utilisateurs multi-rôles (Admin/Technicien/Opérateur)</li>
+                                <li>• Permissions granulaires par rôle</li>
+                                <li>• Interface admin pour créer/modifier utilisateurs</li>
                             </ul>
                         </div>
 
-                        <div class="bg-white rounded p-3 border-l-4 border-purple-500">
-                            <div class="font-semibold text-purple-800 mb-1">Q3 2023 (Juil-Sep)</div>
-                            <ul class="space-y-1 ml-4 text-xs">
-                                <li>• Analyse besoins département mécanique IGP</li>
-                                <li>• Recherche technologies: Cloudflare ecosystem</li>
-                                <li>• Architecture technique & choix technologiques</li>
-                                <li>• Planification roadmap développement 2024-2025</li>
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-lock text-red-500 mr-2"></i>
+                                Sécurité
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Sécurité renforcée (JWT + bcrypt PBKDF2)</li>
+                                <li>• Hash mots de passe avec 100,000 itérations</li>
+                                <li>• Tokens expiration 24h</li>
                             </ul>
                         </div>
+                    </div>
 
-                        <div class="bg-white rounded p-3 border-l-4 border-fuchsia-500">
-                            <div class="font-semibold text-fuchsia-800 mb-1">🎯 Juillet 2023 - Lancement Projet</div>
-                            <p class="text-xs mt-1">
-                                Démarrage officiel du projet "Système de Gestion de Maintenance IGP"
-                                par le Département des Technologies de l'Information.
-                                Objectif: Moderniser processus maintenance avec solution cloud innovante.
-                            </p>
-                        </div>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-security"><i class="fas fa-lock"></i> Sécurité</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Version 1.6.0 -->
+            <div class="timeline-item" data-version="1.6.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-green-600 to-green-700 text-white">
+                    <i class="fas fa-images"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.6.0</h2>
+                        <p class="text-gray-500 text-sm">5 septembre 2025</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Nouvelles Fonctionnalités
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Upload d'images sur tickets (Cloudflare R2)</li>
+                                <li>• Galerie photos par ticket</li>
+                                <li>• Indicateur compteur photos sur carte</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Versions antérieures -->
+            <div class="timeline-item" data-version="1.5.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.5.0</h2>
+                        <p class="text-gray-500 text-sm">22 août 2025</p>
+                    </div>
+                    <ul class="space-y-1 text-gray-600 text-sm">
+                        <li>• Système de commentaires</li>
+                    </ul>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-version="1.4.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <i class="fas fa-ellipsis-v"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.4.0</h2>
+                        <p class="text-gray-500 text-sm">8 août 2025</p>
+                    </div>
+                    <ul class="space-y-1 text-gray-600 text-sm">
+                        <li>• Menu contextuel</li>
+                    </ul>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-version="1.3.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.3.0</h2>
+                        <p class="text-gray-500 text-sm">25 juillet 2025</p>
+                    </div>
+                    <ul class="space-y-1 text-gray-600 text-sm">
+                        <li>• Gestion des machines</li>
+                    </ul>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-version="1.2.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <i class="fas fa-columns"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.2.0</h2>
+                        <p class="text-gray-500 text-sm">10 juillet 2025</p>
+                    </div>
+                    <ul class="space-y-1 text-gray-600 text-sm">
+                        <li>• Interface Kanban drag & drop</li>
+                    </ul>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-version="1.1.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-gray-600 to-gray-700 text-white">
+                    <i class="fas fa-plug"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.1.0</h2>
+                        <p class="text-gray-500 text-sm">26 juin 2025</p>
+                    </div>
+                    <ul class="space-y-1 text-gray-600 text-sm">
+                        <li>• API REST complète</li>
+                    </ul>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item" data-version="1.0.0" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-yellow-600 to-yellow-700 text-white">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="version-card">
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Version 1.0.0</h2>
+                        <p class="text-gray-500 text-sm">12 juin 2025</p>
+                    </div>
+                    <ul class="space-y-1 text-gray-600 text-sm">
+                        <li>• Lancement initial</li>
+                    </ul>
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Section Roadmap (À Venir) -->
