@@ -45,12 +45,12 @@ messages.post('/', authMiddleware, async (c) => {
           : content;
         
         await sendPushNotification(c.env, recipient_id, {
-          title: `💬 Message de ${senderName}`,
+          title: `💬 ${senderName}`,
           body: notificationBody,
           icon: '/icon-192.png',
           badge: '/badge-72.png',
           data: {
-            url: `/messages/private/${user.userId}`,
+            url: '/',
             action: 'new_private_message',
             senderId: user.userId,
             senderName: senderName,
@@ -170,12 +170,12 @@ messages.post('/audio', authMiddleware, async (c) => {
           : `${durationMin}min`;
         
         await sendPushNotification(c.env, parseInt(recipientId), {
-          title: `🎤 Message audio de ${senderName}`,
-          body: `Message vocal (${durationText}) - Appuyez pour écouter`,
+          title: `🎤 ${senderName}`,
+          body: `Message vocal (${durationText})`,
           icon: '/icon-192.png',
           badge: '/badge-72.png',
           data: {
-            url: `/messages/private/${user.userId}`,
+            url: '/',
             action: 'new_audio_message',
             senderId: user.userId,
             senderName: senderName,
