@@ -7523,7 +7523,10 @@ app.get('/changelog', (c) => {
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-image: url(/static/login-background.jpg);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
         }
 
@@ -7562,16 +7565,20 @@ app.get('/changelog', (c) => {
         }
 
         .version-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
         }
 
         .version-card:hover {
+            background: rgba(255, 255, 255, 0.65);
             transform: translateY(-2px);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 28px 0 rgba(0, 0, 0, 0.20);
         }
 
         .badge {
@@ -7623,7 +7630,7 @@ app.get('/changelog', (c) => {
 <body class="p-4 md:p-8">
     <!-- Bouton Fermer Sticky -->
     <div class="fixed top-4 right-4 z-50">
-        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition-all shadow-xl border-2 border-gray-200">
+        <a href="/" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg font-semibold transition-all shadow-lg" style="background: linear-gradient(145deg, #3b82f6, #2563eb);">
             <i class="fas fa-times"></i>
             <span class="hidden md:inline">Fermer</span>
         </a>
@@ -7631,7 +7638,7 @@ app.get('/changelog', (c) => {
 
     <div class="max-w-5xl mx-auto">
         <!-- Header -->
-        <div class="bg-white rounded-xl shadow-xl p-6 md:p-8 mb-8">
+        <div class="p-6 md:p-8 mb-8" style="background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.18); border: 1px solid rgba(255, 255, 255, 0.6);">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
