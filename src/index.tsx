@@ -1704,7 +1704,7 @@ app.get('/', (c) => {
                         }, loginTitle),
                         React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                             React.createElement('i', { className: 'fas fa-tools mr-1' }),
-                            'EN DÉVELOPPEMENT'
+                            'ENVIRONNEMENT DE TEST'
                         ),
                         React.createElement('p', {
                             className: 'text-xs sm:text-sm px-4 break-words font-semibold',
@@ -9370,7 +9370,7 @@ app.get('/changelog', (c) => {
                         </div>
                         <div class="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-full font-bold text-sm animate-pulse shadow-lg">
                             <i class="fas fa-hourglass-half mr-2"></i>
-                            EN DÉVELOPPEMENT
+                            ENVIRONNEMENT DE TEST
                         </div>
                     </div>
 
