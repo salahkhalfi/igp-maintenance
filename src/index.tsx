@@ -253,31 +253,11 @@ app.get('/', (c) => {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Maintenance IGP">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        // Couleurs primaires IGP (existantes)
-                        'igp-blue': '#1e40af',
-                        'igp-orange': '#ea580c',
-                        'igp-red': '#dc2626',
-
-                        // Nouvelles couleurs harmonisées IGP
-                        'igp-blue-light': '#3b82f6',
-                        'igp-blue-dark': '#1e3a8a',
-                        'igp-green': '#10b981',
-                        'igp-yellow': '#f59e0b',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         /* Background avec photo d'atelier IGP pour toutes les pages */
         body {
@@ -7515,7 +7495,7 @@ app.get('/changelog', (c) => {
     <title>Historique des Versions - IGP Maintenance</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" href="/icon-192.png">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         html {

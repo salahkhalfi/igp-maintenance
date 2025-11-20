@@ -20,7 +20,18 @@ export default defineConfig({
       ]
     })
   ],
+  css: {
+    postcss: './postcss.config.js'
+  },
   build: {
-    target: 'esnext' // Support top-level await for @block65/webcrypto-web-push
+    target: 'esnext', // Support top-level await for @block65/webcrypto-web-push
+    rollupOptions: {
+      input: {
+        styles: 'src/styles.css'
+      },
+      output: {
+        assetFileNames: 'static/[name][extname]'
+      }
+    }
   }
 })
