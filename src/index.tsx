@@ -1774,8 +1774,8 @@ app.get('/', (c) => {
                                     onChange: (e) => setRememberMe(e.target.checked),
                                     className: 'mr-2 h-4 w-4 text-igp-blue border-gray-300 rounded focus:ring-2 focus:ring-igp-blue'
                                 }),
-                                React.createElement('span', { className: 'text-sm text-gray-900 font-semibold drop-shadow-sm' },
-                                    React.createElement('i', { className: 'fas fa-clock mr-1 text-igp-blue' }),
+                                React.createElement('span', { className: 'text-sm text-white font-semibold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]' },
+                                    React.createElement('i', { className: 'fas fa-clock mr-1 text-blue-300' }),
                                     'Se souvenir de moi (30 jours)'
                                 )
                             )
