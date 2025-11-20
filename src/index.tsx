@@ -5686,7 +5686,7 @@ app.get('/', (c) => {
                                         style: { boxShadow: '0 6px 20px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
                                         value: ''
                                     },
-                                        React.createElement('option', { value: '', disabled: true }, '📝 Nouvelle conversation...'),
+                                        React.createElement('option', { value: '' }, '📝 Nouvelle conversation...'),
                                         availableUsers.map(user => React.createElement('option', {
                                             key: user.id,
                                             value: user.id
@@ -5904,7 +5904,14 @@ app.get('/', (c) => {
                             ) : React.createElement('div', { className: 'flex-1 flex items-center justify-center bg-gray-50' },
                                 React.createElement('div', { className: 'text-center text-gray-400' },
                                     React.createElement('i', { className: 'fas fa-arrow-left text-6xl mb-4' }),
-                                    React.createElement('p', { className: 'text-lg' }, 'Selectionnez un contact')
+                                    React.createElement('p', { className: 'text-lg mb-6' }, 'Sélectionnez un contact'),
+                                    React.createElement('button', {
+                                        onClick: onClose,
+                                        className: 'mt-4 px-6 py-3 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-lg hover:from-slate-800 hover:to-gray-800 font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-times' }),
+                                        React.createElement('span', {}, 'Fermer')
+                                    )
                                 )
                             )
                         ) : null
