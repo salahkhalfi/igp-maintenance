@@ -61,16 +61,8 @@ cron.post('/check-overdue', async (c) => {
 
     console.log(`⚠️ CRON: ${overdueTickets.results.length} ticket(s) expiré(s) trouvé(s)`);
 
-    // Récupérer le webhook URL
-    const WEBHOOK_URL = c.env.PABBLY_WEBHOOK_URL;
-
-    if (!WEBHOOK_URL) {
-      console.error('❌ CRON: PABBLY_WEBHOOK_URL non configuré');
-      return c.json({
-        error: 'Webhook URL non configuré',
-        ticketsFound: overdueTickets.results.length
-      }, 500);
-    }
+    // URL du webhook Pabbly Connect (même URL que dans webhooks.ts)
+    const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY0MDYzMDA0M2Q1MjY5NTUzYzUxM2Ei_pc';
 
     let notificationsSent = 0;
     const notifications = [];
