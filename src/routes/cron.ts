@@ -5,7 +5,7 @@ import type { Bindings } from '../types';
 
 const cron = new Hono<{ Bindings: Bindings }>();
 
-// POST /api/cron/check-overdue - Vérification tickets expirés + webhooks Make.com
+// POST /api/cron/check-overdue - Vérification tickets expirés + webhooks Pabbly Connect
 // Route publique CRON sécurisée par CRON_SECRET token
 cron.post('/check-overdue', async (c) => {
   try {
@@ -62,10 +62,10 @@ cron.post('/check-overdue', async (c) => {
     console.log(`⚠️ CRON: ${overdueTickets.results.length} ticket(s) expiré(s) trouvé(s)`);
 
     // Récupérer le webhook URL
-    const WEBHOOK_URL = c.env.MAKE_WEBHOOK_URL;
+    const WEBHOOK_URL = c.env.PABBLY_WEBHOOK_URL;
 
     if (!WEBHOOK_URL) {
-      console.error('❌ CRON: MAKE_WEBHOOK_URL non configuré');
+      console.error('❌ CRON: PABBLY_WEBHOOK_URL non configuré');
       return c.json({
         error: 'Webhook URL non configuré',
         ticketsFound: overdueTickets.results.length
