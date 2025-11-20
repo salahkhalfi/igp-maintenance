@@ -1,5 +1,9 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
+**Auteur:** Salah Khalfi  
+**Organisation:** Produits Verriers International (IGP) Inc.  
+**Département:** Technologies de l'Information
+
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
 [![Version](https://img.shields.io/badge/version-2.6.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
