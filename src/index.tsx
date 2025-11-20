@@ -5675,18 +5675,25 @@ app.get('/', (c) => {
                                     React.createElement('select', {
                                         onChange: (e) => {
                                             const userId = parseInt(e.target.value);
-                                            if (!userId) return;
+                                            if (!userId) {
+                                                // Reset le select à la valeur par défaut
+                                                e.target.value = '';
+                                                return;
+                                            }
                                             const user = availableUsers.find(u => u.id === userId);
                                             if (user) {
                                                 setSelectedContact(user);
                                                 loadPrivateMessages(user.id);
                                             }
+                                            // Reset le select après sélection
+                                            e.target.value = '';
                                         },
                                         className: "w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-br from-white/95 to-gray-50/80 backdrop-blur-sm border-2 border-blue-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold text-xs sm:text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236366f1%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
                                         style: { boxShadow: '0 6px 20px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
                                         value: ''
                                     },
-                                        React.createElement('option', { value: '' }, '📝 Nouvelle conversation...'),
+                                        React.createElement('option', { value: '', disabled: true }, '📝 Nouvelle conversation...'),
+                                        React.createElement('option', { value: '0' }, '❌ Fermer ce menu'),
                                         availableUsers.map(user => React.createElement('option', {
                                             key: user.id,
                                             value: user.id
