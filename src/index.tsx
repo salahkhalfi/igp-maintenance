@@ -6447,7 +6447,7 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center gap-2 mt-4 header-actions' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center md:justify-center gap-2 mt-4 header-actions' },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
@@ -6634,7 +6634,7 @@ app.get('/', (c) => {
 
 
                 React.createElement('div', {
-                    className: 'container mx-auto px-4 py-6'
+                    className: 'max-w-[1600px] mx-auto px-4 py-6'
                 },
                     React.createElement('div', { className: 'space-y-4' },
                         // Première ligne: colonnes de workflow (Reçue, Diagnostic, En cours, Attente pièces)
@@ -7100,7 +7100,7 @@ app.get('/', (c) => {
                         borderTop: '4px solid #003366'
                     }
                 },
-                    React.createElement('div', { className: 'container mx-auto px-4' },
+                    React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4' },
                         React.createElement('p', {
                             className: 'text-sm mb-2',
                             style: {
