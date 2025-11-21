@@ -66,6 +66,7 @@ import messages from './routes/messages';
 import audio from './routes/audio';
 import cron from './routes/cron';
 import alerts from './routes/alerts';
+import scheduledHandler from './scheduled';
 import type { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -9593,155 +9594,16 @@ app.get('/api/health', (c) => {
 });
 
 // ========================================
-// CRON HANDLER - Vérification automatique des tickets expirés
+// EXPORTS - Cloudflare Pages/Workers
 // ========================================
-// Ce handler s'exécute automatiquement toutes les 5 minutes
-// même si personne n'utilise l'application
-const scheduled = async (event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) => {
-  console.log('🔔 CRON démarré:', new Date().toISOString());
 
-  try {
-    const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    // Récupérer tous les tickets planifiés expirés
-    const overdueTickets = await env.DB.prepare(`
-      SELECT
-        t.id,
-        t.ticket_id,
-        t.title,
-        t.description,
-        t.priority,
-        t.status,
-        m.machine_type,
-        m.model,
-        t.scheduled_date,
-        t.assigned_to,
-        t.created_at,
-        u.full_name as assignee_name,
-        reporter.full_name as reporter_name
-      FROM tickets t
-      LEFT JOIN machines m ON t.machine_id = m.id
-      LEFT JOIN users u ON t.assigned_to = u.id
-      LEFT JOIN users reporter ON t.reported_by = reporter.id
-      WHERE t.assigned_to IS NOT NULL
-        AND t.scheduled_date IS NOT NULL
-        AND t.scheduled_date != 'null'
-        AND t.scheduled_date != ''
-        AND t.status IN ('received', 'diagnostic')
-        AND datetime(t.scheduled_date) < datetime('now')
-      ORDER BY t.scheduled_date ASC
-    `).all();
-
-    if (!overdueTickets.results || overdueTickets.results.length === 0) {
-      console.log('✅ CRON: Aucun ticket expiré trouvé');
-      return;
-    }
-
-    console.log(`📋 CRON: ${overdueTickets.results.length} ticket(s) expiré(s) trouvé(s)`);
-
-    let notificationsSent = 0;
-    const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY0MDYzMDA0M2Q1MjY5NTUzYzUxM2Ei_pc';
-
-    // Pour chaque ticket expiré
-    for (const ticket of overdueTickets.results) {
-      try {
-        // Vérifier si notification déjà envoyée dans les 24h
-        const existingNotification = await env.DB.prepare(`
-          SELECT id, sent_at
-          FROM webhook_notifications
-          WHERE ticket_id = ?
-            AND notification_type = 'overdue_scheduled'
-            AND datetime(sent_at) > datetime(?)
-          ORDER BY sent_at DESC
-          LIMIT 1
-        `).bind(ticket.id, twentyFourHoursAgo.toISOString()).first();
-
-        if (existingNotification) {
-          console.log(`⏭️  CRON: Ticket ${ticket.ticket_id} déjà notifié (< 24h)`);
-          continue;
-        }
-
-        // Calculer le retard
-        const scheduledDate = new Date(ticket.scheduled_date.replace(' ', 'T') + 'Z');
-        const overdueMs = now.getTime() - scheduledDate.getTime();
-        const overdueDays = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
-        const overdueHours = Math.floor((overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const overdueMinutes = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
-
-        // Préparer les données webhook
-        const webhookData = {
-          ticket_id: ticket.ticket_id,
-          title: ticket.title,
-          description: ticket.description,
-          priority: ticket.priority,
-          status: ticket.status,
-          machine: `${ticket.machine_type || 'N/A'} ${ticket.model || ''}`,
-          scheduled_date: ticket.scheduled_date,
-          assigned_to: ticket.assigned_to === 0 ? 'Équipe complète' : (ticket.assignee_name || `Technicien #${ticket.assigned_to}`),
-          reporter: ticket.reporter_name || 'N/A',
-          created_at: ticket.created_at,
-          overdue_days: overdueDays,
-          overdue_hours: overdueHours,
-          overdue_minutes: overdueMinutes,
-          overdue_text: overdueDays > 0
-            ? `${overdueDays} jour(s) ${overdueHours}h ${overdueMinutes}min`
-            : `${overdueHours}h ${overdueMinutes}min`,
-          notification_sent_at: now.toISOString()
-        };
-
-        // Envoyer le webhook
-        const webhookResponse = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookData)
-        });
-
-        const responseStatus = webhookResponse.status;
-        let responseBody = '';
-        try {
-          responseBody = await webhookResponse.text();
-        } catch (e) {
-          responseBody = 'Could not read response body';
-        }
-
-        // Capturer le timestamp APRÈS l'envoi pour avoir un timestamp unique par webhook
-        const sentAt = new Date().toISOString();
-
-        // Enregistrer la notification
-        await env.DB.prepare(`
-          INSERT INTO webhook_notifications
-          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).bind(
-          ticket.id,
-          'overdue_scheduled',
-          WEBHOOK_URL,
-          sentAt,
-          responseStatus,
-          responseBody.substring(0, 1000)
-        ).run();
-
-        notificationsSent++;
-        console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
-
-        // Délai de 200ms entre chaque webhook pour éviter la déduplication par Pabbly Connect
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-      } catch (error) {
-        console.error(`❌ CRON: Erreur pour ${ticket.ticket_id}:`, error);
-      }
-    }
-
-    console.log(`🎉 CRON terminé: ${notificationsSent}/${overdueTickets.results.length} notification(s) envoyée(s)`);
-
-  } catch (error) {
-    console.error('❌ CRON: Erreur globale:', error);
-  }
-};
-
-// Export pour Cloudflare Pages
-// Note: Le handler scheduled() est défini ci-dessus mais non utilisé pour Pages
-// Pour activer les notifications automatiques, utilisez un service CRON externe
-// qui appelle POST /api/webhooks/check-overdue-tickets toutes les 5 minutes
+// Export principal: Application Hono
 export default app;
+
+// Export du scheduled handler pour Cloudflare Workers CRON Triggers
+// Ce handler s'exécute automatiquement selon le schedule dans wrangler.jsonc
+// Schedule: "0 2 * * *" = Quotidien à 2h du matin UTC
+// Tâches:
+//   1. Cleanup subscriptions push inactives >30 jours
+//   2. Vérification tickets expirés (scheduled_date dépassée)
+export const scheduled = scheduledHandler.scheduled;
