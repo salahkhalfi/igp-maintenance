@@ -6374,10 +6374,13 @@ app.get('/', (c) => {
                             React.createElement('div', {
                                 className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0',
                                 style: {
-                                    background: 'rgba(255, 255, 255, 1)',
+                                    background: 'linear-gradient(135deg, rgba(219, 234, 254, 0.95) 0%, rgba(191, 219, 254, 0.9) 100%)',
+                                    backdropFilter: 'blur(12px)',
+                                    WebkitBackdropFilter: 'blur(12px)',
                                     padding: '12px',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
+                                    border: '1px solid rgba(255, 255, 255, 0.3)',
                                     width: '100%'
                                 }
                             },
