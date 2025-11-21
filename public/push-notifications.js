@@ -192,6 +192,8 @@ async function requestPushPermission() {
 }
 
 // Vérifier si déjà abonné
+// IMPORTANT: Vérifie à la fois le navigateur ET la base de données
+// pour éviter les conflits multi-utilisateurs sur un même appareil
 async function isPushSubscribed() {
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -201,8 +203,58 @@ async function isPushSubscribed() {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     
-    return subscription !== null;
+    // Si aucune subscription dans le navigateur, retourner false
+    if (!subscription) {
+      console.log('[IS_SUBSCRIBED] No browser subscription found');
+      return false;
+    }
+    
+    console.log('[IS_SUBSCRIBED] Browser subscription exists, verifying with backend...');
+    
+    // Vérifier si cette subscription appartient à l'utilisateur actuel
+    // en interrogeant le backend
+    try {
+      let authToken = null;
+      
+      // Essayer d'abord axios.defaults
+      if (window.axios && window.axios.defaults && window.axios.defaults.headers && window.axios.defaults.headers.common) {
+        const authHeader = window.axios.defaults.headers.common['Authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          authToken = authHeader.substring(7);
+        }
+      }
+      
+      // Sinon essayer localStorage
+      if (!authToken) {
+        authToken = localStorage.getItem('auth_token');
+      }
+      
+      if (!authToken) {
+        console.log('[IS_SUBSCRIBED] No auth token, cannot verify');
+        return false;
+      }
+      
+      // Appeler le backend pour vérifier
+      const response = await axios.post('/api/push/verify-subscription', {
+        endpoint: subscription.endpoint
+      }, {
+        headers: {
+          'Authorization': 'Bearer ' + authToken
+        }
+      });
+      
+      const isValid = response.data && response.data.isSubscribed;
+      console.log('[IS_SUBSCRIBED] Backend verification result:', isValid);
+      return isValid;
+      
+    } catch (error) {
+      console.error('[IS_SUBSCRIBED] Backend verification failed:', error);
+      // En cas d'erreur backend, considérer comme non abonné pour forcer réabonnement
+      return false;
+    }
+    
   } catch (error) {
+    console.error('[IS_SUBSCRIBED] Error:', error);
     return false;
   }
 }

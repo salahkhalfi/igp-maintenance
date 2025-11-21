@@ -297,6 +297,52 @@ export async function sendPushNotification(
 }
 
 /**
+ * POST /api/push/verify-subscription
+ * Vérifier si une subscription appartient à l'utilisateur connecté
+ * Permet d'éviter les conflits multi-utilisateurs sur un même appareil
+ */
+push.post('/verify-subscription', async (c) => {
+  try {
+    const user = c.get('user') as any;
+    if (!user || !user.userId) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { endpoint } = body;
+
+    if (!endpoint) {
+      return c.json({ error: 'Endpoint requis' }, 400);
+    }
+
+    console.log(`[VERIFY-SUB] Verifying subscription for user ${user.userId} (${user.email})`);
+    console.log(`[VERIFY-SUB] Endpoint: ${endpoint.substring(0, 50)}...`);
+
+    // Vérifier si cette subscription existe pour CET utilisateur
+    const subscription = await c.env.DB.prepare(`
+      SELECT id FROM push_subscriptions
+      WHERE user_id = ? AND endpoint = ?
+    `).bind(user.userId, endpoint).first();
+
+    const isSubscribed = subscription !== null;
+
+    console.log(`[VERIFY-SUB] Result: ${isSubscribed ? 'VALID' : 'INVALID'}`);
+
+    return c.json({
+      isSubscribed,
+      userId: user.userId,
+      message: isSubscribed
+        ? 'Subscription valide pour cet utilisateur'
+        : 'Subscription inexistante ou appartient à un autre utilisateur'
+    });
+
+  } catch (error) {
+    console.error('[VERIFY-SUB] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
  * POST /api/push/test - Envoyer une notification de test (DEBUG)
  * Permet de tester l'envoi de notifications push manuellement
  */
@@ -329,6 +375,84 @@ push.post('/test', async (c) => {
 
   } catch (error) {
     console.error('[PUSH-TEST] Error:', error);
+    return c.json({
+      error: 'Erreur lors de l\'envoi de la notification de test',
+      details: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, 500);
+  }
+});
+
+/**
+ * POST /api/push/test-user/:userId - Envoyer une notification de test à un utilisateur spécifique (ADMIN ONLY)
+ * Permet de tester l'envoi de notifications push à n'importe quel utilisateur
+ */
+push.post('/test-user/:userId', async (c) => {
+  try {
+    const user = c.get('user') as any;
+    if (!user || !user.userId) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    // Vérifier si l'utilisateur est admin
+    if (user.role !== 'admin' && user.role !== 'supervisor') {
+      return c.json({ error: 'Accès refusé - Admin ou Superviseur requis' }, 403);
+    }
+
+    const targetUserId = parseInt(c.req.param('userId'));
+    if (isNaN(targetUserId)) {
+      return c.json({ error: 'userId invalide' }, 400);
+    }
+
+    // Vérifier que l'utilisateur cible existe
+    const targetUser = await c.env.DB.prepare(`
+      SELECT id, email, full_name FROM users WHERE id = ?
+    `).bind(targetUserId).first();
+
+    if (!targetUser) {
+      return c.json({ error: `Utilisateur ${targetUserId} introuvable` }, 404);
+    }
+
+    console.log(`[PUSH-TEST-USER] Admin ${user.email} sending test notification to user ${targetUserId} (${targetUser.email})`);
+
+    const result = await sendPushNotification(c.env, targetUserId, {
+      title: '🔔 Test Push Notification',
+      body: `Notification de diagnostic envoyée par ${user.full_name || user.email}`,
+      icon: '/icon-192.png',
+      data: { test: true, url: '/', sentBy: user.userId }
+    });
+
+    // Logger dans push_logs
+    await c.env.DB.prepare(`
+      INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+      VALUES (?, NULL, ?, ?)
+    `).bind(
+      targetUserId,
+      result.success ? 'test_success' : 'test_failed',
+      JSON.stringify({ 
+        sentBy: user.userId, 
+        sentByEmail: user.email,
+        result: result 
+      })
+    ).run();
+
+    console.log('[PUSH-TEST-USER] Result:', result);
+
+    return c.json({
+      success: result.success,
+      sentCount: result.sentCount,
+      failedCount: result.failedCount,
+      targetUser: {
+        id: targetUser.id,
+        email: targetUser.email,
+        full_name: targetUser.full_name
+      },
+      message: result.success
+        ? `✅ Notification envoyée avec succès à ${targetUser.full_name} (${result.sentCount} appareil(s))`
+        : `❌ Échec d'envoi à ${targetUser.full_name} - Vérifiez qu'il est abonné aux notifications`
+    });
+
+  } catch (error) {
+    console.error('[PUSH-TEST-USER] Error:', error);
     return c.json({
       error: 'Erreur lors de l\'envoi de la notification de test',
       details: error instanceof Error ? error.message : 'Erreur inconnue'
