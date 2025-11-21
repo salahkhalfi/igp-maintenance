@@ -22,10 +22,5 @@
       "binding": "MEDIA_BUCKET",
       "bucket_name": "maintenance-media"
     }
-  ],
-  "triggers": {
-    "crons": [
-      "0 2 * * *"
-    ]
-  }
+  ]
 }
