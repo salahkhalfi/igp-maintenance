@@ -224,11 +224,12 @@ cron.post('/check-overdue', async (c) => {
   }
 });
 
-// POST /api/cron/cleanup-push-tokens - Nettoyage tokens push expirés
+// POST /api/cron/cleanup-push-tokens - Nettoyage subscriptions inactives >30 jours
 // Route publique CRON sécurisée par CRON_SECRET token
+// Recommandation #2 de l'audit: Cleanup automatique des subscriptions inactives
 cron.post('/cleanup-push-tokens', async (c) => {
   try {
-    // Verifier le token secret
+    // Vérifier le token secret
     const authHeader = c.req.header('Authorization');
     const expectedToken = c.env.CRON_SECRET;
 
@@ -236,26 +237,80 @@ cron.post('/cleanup-push-tokens', async (c) => {
       return c.json({ error: 'Unauthorized - Invalid CRON token' }, 401);
     }
 
-    console.log('CRON cleanup push tokens started:', new Date().toISOString());
+    const now = new Date();
+    console.log('🧹 CRON cleanup-push-tokens démarré:', now.toISOString());
 
-    // Supprimer tokens non utilises depuis 90 jours
+    // ÉTAPE 1: Identifier les subscriptions inactives >30 jours AVANT suppression
+    const { results: inactiveSubscriptions } = await c.env.DB.prepare(`
+      SELECT 
+        id, 
+        user_id, 
+        device_name, 
+        created_at, 
+        last_used,
+        julianday('now') - julianday(last_used) as days_inactive
+      FROM push_subscriptions
+      WHERE julianday('now') - julianday(last_used) > 30
+      ORDER BY last_used ASC
+    `).all();
+
+    if (!inactiveSubscriptions || inactiveSubscriptions.length === 0) {
+      console.log('✅ CRON: Aucune subscription inactive >30 jours trouvée');
+      return c.json({
+        success: true,
+        deletedCount: 0,
+        message: 'Aucune subscription inactive à nettoyer',
+        checked_at: now.toISOString()
+      });
+    }
+
+    console.log(`⚠️ CRON: ${inactiveSubscriptions.length} subscription(s) inactive(s) >30 jours trouvée(s)`);
+
+    // ÉTAPE 2: Logger les détails AVANT suppression
+    const deletedDevices: any[] = [];
+    for (const sub of inactiveSubscriptions as any[]) {
+      console.log(`🗑️ CRON: Suppression device "${sub.device_name}" (user_id:${sub.user_id}, ${Math.floor(sub.days_inactive)} jours inactif)`);
+      deletedDevices.push({
+        user_id: sub.user_id,
+        device_name: sub.device_name,
+        last_used: sub.last_used,
+        days_inactive: Math.floor(sub.days_inactive)
+      });
+    }
+
+    // ÉTAPE 3: Suppression réelle des subscriptions inactives
     const result = await c.env.DB.prepare(`
       DELETE FROM push_subscriptions
-      WHERE last_used < datetime('now', '-90 days')
+      WHERE julianday('now') - julianday(last_used) > 30
     `).run();
 
     const deletedCount = result.meta.changes || 0;
-    console.log(`Deleted ${deletedCount} expired push tokens`);
+    console.log(`✅ CRON: ${deletedCount} subscription(s) inactive(s) supprimée(s)`);
+
+    // ÉTAPE 4: Vérifier l'état post-cleanup
+    const { results: remainingSubscriptions } = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count FROM push_subscriptions
+    `).all();
+    const remainingCount = (remainingSubscriptions[0] as any)?.count || 0;
+
+    console.log(`📊 CRON: ${remainingCount} subscription(s) active(s) restante(s)`);
+    console.log(`🎉 CRON cleanup-push-tokens terminé: ${deletedCount} suppression(s)`);
 
     return c.json({
       success: true,
       deletedCount: deletedCount,
-      message: `Cleaned up ${deletedCount} expired push tokens`
+      remainingCount: remainingCount,
+      deletedDevices: deletedDevices,
+      message: `Nettoyage terminé: ${deletedCount} subscription(s) inactive(s) >30 jours supprimée(s)`,
+      checked_at: now.toISOString()
     });
 
   } catch (error) {
-    console.error('Cleanup push tokens error:', error);
-    return c.json({ error: 'Erreur lors du nettoyage des tokens' }, 500);
+    console.error('❌ CRON: Erreur cleanup-push-tokens:', error);
+    return c.json({ 
+      error: 'Erreur lors du nettoyage des subscriptions', 
+      details: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, 500);
   }
 });
 
