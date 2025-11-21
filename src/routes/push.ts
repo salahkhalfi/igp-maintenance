@@ -41,6 +41,52 @@ push.post('/subscribe', async (c) => {
       return c.json({ error: 'Subscription invalide' }, 400);
     }
 
+    // ==========================================
+    // LIMITE 5 APPAREILS PAR UTILISATEUR
+    // ==========================================
+    // Vérifier si cet endpoint existe déjà (mise à jour vs nouveau)
+    const existingSubscription = await c.env.DB.prepare(`
+      SELECT id FROM push_subscriptions WHERE endpoint = ?
+    `).bind(subscription.endpoint).first();
+
+    const isNewSubscription = !existingSubscription;
+
+    if (isNewSubscription) {
+      // C'est un NOUVEAU appareil, vérifier la limite
+      const { results: countResult } = await c.env.DB.prepare(`
+        SELECT COUNT(*) as count FROM push_subscriptions WHERE user_id = ?
+      `).bind(user.userId).all();
+
+      const currentCount = (countResult[0] as any)?.count || 0;
+      console.log(`[PUSH-SUBSCRIBE] User ${user.userId} has ${currentCount} device(s) currently`);
+
+      if (currentCount >= 5) {
+        // Limite atteinte, supprimer le PLUS ANCIEN (last_used le plus vieux)
+        const { results: oldestDevices } = await c.env.DB.prepare(`
+          SELECT id, endpoint, device_name, last_used 
+          FROM push_subscriptions 
+          WHERE user_id = ? 
+          ORDER BY last_used ASC 
+          LIMIT 1
+        `).bind(user.userId).all();
+
+        if (oldestDevices.length > 0) {
+          const oldestDevice = oldestDevices[0] as any;
+          
+          console.log(`⚠️ [PUSH-SUBSCRIBE] User ${user.userId} reached limit (5 devices)`);
+          console.log(`🗑️ [PUSH-SUBSCRIBE] Removing oldest device: ${oldestDevice.device_name} (last used: ${oldestDevice.last_used})`);
+
+          await c.env.DB.prepare(`
+            DELETE FROM push_subscriptions WHERE id = ?
+          `).bind(oldestDevice.id).run();
+
+          console.log(`✅ [PUSH-SUBSCRIBE] Oldest device removed, making room for new one`);
+        }
+      }
+    } else {
+      console.log(`[PUSH-SUBSCRIBE] Updating existing subscription for user ${user.userId}`);
+    }
+
     // Insérer ou mettre à jour la subscription
     await c.env.DB.prepare(`
       INSERT INTO push_subscriptions
@@ -59,9 +105,16 @@ push.post('/subscribe', async (c) => {
       deviceName || 'Unknown Device'
     ).run();
 
-    console.log(`✅ Push subscription added for user ${user.userId}`);
+    if (isNewSubscription) {
+      console.log(`✅ Push subscription added for user ${user.userId} (new device)`);
+    } else {
+      console.log(`✅ Push subscription updated for user ${user.userId} (existing device)`);
+    }
 
-    return c.json({ success: true });
+    return c.json({ 
+      success: true,
+      isNewDevice: isNewSubscription
+    });
   } catch (error) {
     console.error('❌ Push subscribe error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
