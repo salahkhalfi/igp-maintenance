@@ -148,6 +148,42 @@ cron.post('/check-overdue', async (c) => {
         notificationsSent++;
         console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
 
+        // ENVOYER PUSH NOTIFICATION au technicien assigné
+        try {
+          const { sendPushNotification } = await import('./push');
+          const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
+            title: `🔴 Ticket Expiré`,
+            body: `${ticket.title} - En retard de ${overdueText}`,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            data: { 
+              ticketId: ticket.id, 
+              ticket_id: ticket.ticket_id,
+              type: 'overdue',
+              url: '/' 
+            }
+          });
+
+          // Logger push result
+          await c.env.DB.prepare(`
+            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+            VALUES (?, ?, ?, ?)
+          `).bind(
+            ticket.assigned_to,
+            ticket.id,
+            pushResult.success ? 'success' : 'failed',
+            pushResult.success ? null : JSON.stringify(pushResult)
+          ).run();
+
+          if (pushResult.success) {
+            console.log(`✅ CRON: Push notification envoyée pour ${ticket.ticket_id} (${pushResult.sentCount} appareil(s))`);
+          } else {
+            console.log(`⚠️ CRON: Push notification échouée pour ${ticket.ticket_id}`);
+          }
+        } catch (pushError) {
+          console.error(`⚠️ CRON: Erreur push notification pour ${ticket.ticket_id} (non-critique):`, pushError);
+        }
+
         notifications.push({
           ticket_id: ticket.ticket_id,
           title: ticket.title,
