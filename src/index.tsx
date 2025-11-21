@@ -4332,10 +4332,10 @@ app.get('/', (c) => {
                 if (show) {
                     loadUsers(); // Chargement initial
 
-                    // Polling toutes les 30 secondes pour rafraichir les statuts last_login
+                    // Polling toutes les 2 minutes pour rafraichir les statuts last_login
                     const interval = setInterval(() => {
                         loadUsers();
-                    }, 30000);
+                    }, 120000); // 2 minutes (au lieu de 30 secondes)
 
                     return () => clearInterval(interval);
                 }
