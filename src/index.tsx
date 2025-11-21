@@ -6369,7 +6369,7 @@ app.get('/', (c) => {
                         borderBottom: '4px solid #003366'
                     }
                 },
-                    React.createElement('div', { className: 'container mx-auto px-4 py-3' },
+                    React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-6' },
                             React.createElement('div', {
                                 className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0',
@@ -6447,7 +6447,7 @@ app.get('/', (c) => {
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 mt-4 header-actions' },
+                        React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center gap-2 mt-4 header-actions' },
                             // 1. Nouvelle Demande (action primaire)
                             React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
