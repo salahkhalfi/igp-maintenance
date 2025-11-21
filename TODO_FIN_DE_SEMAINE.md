@@ -21,7 +21,48 @@
 
 ---
 
-### 2. **CSS: Refactoring Classes TailwindCSS** 🎨 MEDIUM PRIORITY
+### 2. **PUSH: Fix Bouton Couleur Multi-Utilisateurs** 🔔 HIGH PRIORITY
+- **Objectif**: Bouton push affiche vraie couleur (ownership subscription)
+- **Effort**: 1 heure
+- **Problème**: Téléphone partagé → User B voit bouton vert de User A
+
+**Bug Actuel**:
+- User A s'abonne → Logout
+- User B login même téléphone → Voit bouton VERT (faux!)
+- User B pense être abonné mais reçoit rien
+
+**Solution**:
+1. Appeler `/api/push/verify-subscription` après login
+2. Vérifier si subscription appartient à user connecté
+3. Si non → Désabonner + Afficher bouton ORANGE
+4. **CRITIQUE**: Protéger avec try/catch pour Brave Browser
+
+**Code à Ajouter**:
+```javascript
+// Vérifier AVANT d'utiliser Service Worker (Brave bloque parfois)
+if (!('serviceWorker' in navigator)) {
+    setIsPushSubscribedForThisUser(false);
+    return;
+}
+
+try {
+    const registration = await navigator.serviceWorker.ready;
+    // ... reste du code
+} catch (error) {
+    console.warn('[PUSH] SW not available:', error);
+    setIsPushSubscribedForThisUser(false);
+}
+```
+
+**Tests Requis**:
+- ✅ Chrome (fonctionne)
+- ✅ Brave (écran blanc à corriger)
+- ✅ Firefox
+- ✅ Safari iOS
+
+---
+
+### 3. **CSS: Refactoring Classes TailwindCSS** 🎨 MEDIUM PRIORITY
 - **Objectif**: Extraire classes répétées dans `src/styles.css`
 - **Effort**: 1-2 heures
 - **Impact**: Modal utilisateurs + autres composants lourds
@@ -71,8 +112,9 @@
 ## 📝 Notes Importantes
 
 ### Ordre de Priorité Recommandé:
-1. **CSS Refactoring** (1-2h) - Quick win, amélioration immédiate
-2. **CRON VAPID** (1-2 jours) - Important pour sécurité
+1. **Push Button Fix** (1h) - Fix bug multi-users + compatibilité Brave
+2. **CSS Refactoring** (1-2h) - Quick win, amélioration immédiate
+3. **CRON VAPID** (1-2 jours) - Important pour sécurité
 
 ### Avant de Commencer:
 - ✅ Lire INSTRUCTIONS_SESSION_MARC.md (si créé)
