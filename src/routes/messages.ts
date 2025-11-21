@@ -44,7 +44,7 @@ messages.post('/', authMiddleware, async (c) => {
           ? content.substring(0, 97) + '...'
           : content;
         
-        await sendPushNotification(c.env, recipient_id, {
+        const pushResult = await sendPushNotification(c.env, recipient_id, {
           title: `💬 ${senderName}`,
           body: notificationBody,
           icon: '/icon-192.png',
@@ -58,8 +58,33 @@ messages.post('/', authMiddleware, async (c) => {
           }
         });
         
+        // Logger le résultat dans push_logs
+        await c.env.DB.prepare(`
+          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          recipient_id,
+          null,  // Pas de ticket_id pour messages privés
+          pushResult.success ? 'success' : 'failed',
+          pushResult.success ? null : JSON.stringify(pushResult)
+        ).run();
+        
         console.log(`✅ Push notification sent to user ${recipient_id} for message from ${user.userId}`);
       } catch (pushError) {
+        // Logger l'erreur
+        try {
+          await c.env.DB.prepare(`
+            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+            VALUES (?, ?, ?, ?)
+          `).bind(
+            recipient_id,
+            null,
+            'error',
+            (pushError as Error).message || String(pushError)
+          ).run();
+        } catch (logError) {
+          console.error('Failed to log push error:', logError);
+        }
         // Fail-safe: si push échoue, le message est quand même envoyé
         console.error('❌ Push notification failed (non-blocking):', pushError);
       }
@@ -169,7 +194,7 @@ messages.post('/audio', authMiddleware, async (c) => {
           ? `${durationMin}:${durationSec.toString().padStart(2, '0')}`
           : `${durationMin}min`;
         
-        await sendPushNotification(c.env, parseInt(recipientId), {
+        const pushResult = await sendPushNotification(c.env, parseInt(recipientId), {
           title: `🎤 ${senderName}`,
           body: `Message vocal (${durationText})`,
           icon: '/icon-192.png',
@@ -185,8 +210,33 @@ messages.post('/audio', authMiddleware, async (c) => {
           }
         });
         
+        // Logger le résultat dans push_logs
+        await c.env.DB.prepare(`
+          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          parseInt(recipientId),
+          null,  // Pas de ticket_id pour messages audio
+          pushResult.success ? 'success' : 'failed',
+          pushResult.success ? null : JSON.stringify(pushResult)
+        ).run();
+        
         console.log(`✅ Push notification sent to user ${recipientId} for audio message from ${user.userId}`);
       } catch (pushError) {
+        // Logger l'erreur
+        try {
+          await c.env.DB.prepare(`
+            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+            VALUES (?, ?, ?, ?)
+          `).bind(
+            parseInt(recipientId),
+            null,
+            'error',
+            (pushError as Error).message || String(pushError)
+          ).run();
+        } catch (logError) {
+          console.error('Failed to log push error:', logError);
+        }
         // Fail-safe: si push échoue, le message est quand même envoyé
         console.error('❌ Push notification failed (non-blocking):', pushError);
       }

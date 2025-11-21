@@ -327,10 +327,37 @@ tickets.patch('/:id', async (c) => {
           data: { ticketId: id, url: '/' }
         });
 
+        // Logger le résultat dans push_logs
+        await c.env.DB.prepare(`
+          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          body.assigned_to,
+          id,
+          pushResult.success ? 'success' : 'failed',
+          pushResult.success ? null : JSON.stringify(pushResult)
+        ).run();
+
         if (pushResult.success) {
           console.log(`✅ Push notification sent for ticket ${id} to user ${body.assigned_to}`);
+        } else {
+          console.log(`⚠️ Push notification failed for ticket ${id}:`, pushResult);
         }
       } catch (pushError) {
+        // Logger l'erreur
+        try {
+          await c.env.DB.prepare(`
+            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+            VALUES (?, ?, ?, ?)
+          `).bind(
+            body.assigned_to,
+            id,
+            'error',
+            (pushError as Error).message || String(pushError)
+          ).run();
+        } catch (logError) {
+          console.error('Failed to log push error:', logError);
+        }
         // Push échoue? Pas grave, l'assignation a réussi, le webhook Pabbly prendra le relais
         console.error('⚠️ Push notification failed (non-critical):', pushError);
       }
