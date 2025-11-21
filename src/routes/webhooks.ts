@@ -60,19 +60,21 @@ webhooks.post('/check-overdue-tickets', async (c) => {
     // Pour chaque ticket expiré, vérifier si notification déjà envoyée dans les 24h
     for (const ticket of overdueTickets.results) {
       try {
-        // Vérifier si une notification a déjà été envoyée dans les 24 dernières heures
+        // Vérifier si une notification a déjà été envoyée POUR CETTE DATE PLANIFIÉE spécifique
+        // Important: On ne vérifie plus juste les 24h, mais la date planifiée exacte
+        // Cela permet de re-notifier si l'utilisateur change la scheduled_date
         const existingNotification = await c.env.DB.prepare(`
-          SELECT id, sent_at
+          SELECT id, sent_at, scheduled_date_notified
           FROM webhook_notifications
           WHERE ticket_id = ?
+            AND scheduled_date_notified = ?
             AND notification_type = 'overdue_scheduled'
-            AND datetime(sent_at) > datetime(?)
           ORDER BY sent_at DESC
           LIMIT 1
-        `).bind(ticket.id, twentyFourHoursAgo.toISOString()).first();
+        `).bind(ticket.id, ticket.scheduled_date).first();
 
         if (existingNotification) {
-          // Notification déjà envoyée dans les 24h - skip
+          // Notification déjà envoyée pour cette date planifiée - skip
           continue;
         }
 
@@ -121,18 +123,19 @@ webhooks.post('/check-overdue-tickets', async (c) => {
           responseBody = 'Could not read response body';
         }
 
-        // Enregistrer la notification dans la base de données
+        // Enregistrer la notification dans la base de données avec la date planifiée
         await c.env.DB.prepare(`
           INSERT INTO webhook_notifications
-          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body)
-          VALUES (?, ?, ?, ?, ?, ?)
+          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body, scheduled_date_notified)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `).bind(
           ticket.id,
           'overdue_scheduled',
           WEBHOOK_URL,
           now.toISOString(),
           responseStatus,
-          responseBody.substring(0, 1000) // Limiter à 1000 caractères
+          responseBody.substring(0, 1000), // Limiter à 1000 caractères
+          ticket.scheduled_date
         ).run();
 
         notifications.push({

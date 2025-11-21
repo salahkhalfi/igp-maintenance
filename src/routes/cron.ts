@@ -71,6 +71,24 @@ cron.post('/check-overdue', async (c) => {
     // Envoyer webhook pour chaque ticket expiré
     for (const ticket of overdueTickets.results as any[]) {
       try {
+        // VÉRIFICATION: Une notification a-t-elle déjà été envoyée pour cette date planifiée?
+        // Important: On vérifie scheduled_date_notified, pas juste le temps écoulé
+        // Cela permet de re-notifier si l'utilisateur change la scheduled_date
+        const existingNotification = await c.env.DB.prepare(`
+          SELECT id, sent_at, scheduled_date_notified
+          FROM webhook_notifications
+          WHERE ticket_id = ?
+            AND scheduled_date_notified = ?
+            AND notification_type = 'overdue_scheduled'
+          ORDER BY sent_at DESC
+          LIMIT 1
+        `).bind(ticket.id, ticket.scheduled_date).first();
+
+        if (existingNotification) {
+          console.log(`⏭️ CRON: Skip ${ticket.ticket_id} - notification déjà envoyée pour cette date (${ticket.scheduled_date})`);
+          continue;
+        }
+
         const scheduledDate = new Date(ticket.scheduled_date);
         const delay = now.getTime() - scheduledDate.getTime();
         const delayHours = Math.floor(delay / (1000 * 60 * 60));
@@ -111,18 +129,20 @@ cron.post('/check-overdue', async (c) => {
         const responseStatus = response.status;
         const responseBody = await response.text();
 
-        // Enregistrer notification dans DB
+        // Enregistrer notification dans DB avec la date planifiée
         const sentAt = now.toISOString();
         await c.env.DB.prepare(`
-          INSERT INTO webhook_notifications (ticket_id, event_type, webhook_url, sent_at, response_status, response_body)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT INTO webhook_notifications 
+          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body, scheduled_date_notified)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `).bind(
           ticket.id,
           'overdue_scheduled',
           WEBHOOK_URL,
           sentAt,
           responseStatus,
-          responseBody.substring(0, 1000)
+          responseBody.substring(0, 1000),
+          ticket.scheduled_date
         ).run();
 
         notificationsSent++;
