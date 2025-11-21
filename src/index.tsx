@@ -6374,16 +6374,32 @@ app.get('/', (c) => {
                             React.createElement('div', {
                                 className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0',
                                 style: {
-                                    background: 'linear-gradient(135deg, rgba(219, 234, 254, 0.95) 0%, rgba(191, 219, 254, 0.9) 100%)',
-                                    backdropFilter: 'blur(12px)',
-                                    WebkitBackdropFilter: 'blur(12px)',
-                                    padding: '12px',
-                                    borderRadius: '12px',
-                                    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.5)',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                                    width: '100%'
+                                    background: 'linear-gradient(135deg, rgba(240, 249, 255, 0.85) 0%, rgba(224, 242, 254, 0.75) 50%, rgba(186, 230, 253, 0.8) 100%)',
+                                    backdropFilter: 'blur(20px) saturate(180%)',
+                                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37), 0 4px 16px rgba(0, 51, 102, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.8), inset 0 -2px 4px rgba(186, 230, 253, 0.3)',
+                                    border: '2px solid rgba(255, 255, 255, 0.6)',
+                                    borderTop: '2px solid rgba(255, 255, 255, 0.9)',
+                                    borderLeft: '2px solid rgba(255, 255, 255, 0.8)',
+                                    position: 'relative',
+                                    width: '100%',
+                                    overflow: 'hidden'
                                 }
                             },
+                                React.createElement('div', {
+                                    style: {
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        height: '50%',
+                                        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%)',
+                                        borderRadius: '16px 16px 0 0',
+                                        pointerEvents: 'none'
+                                    }
+                                }),
                                 React.createElement('img', {
                                     src: '/api/settings/logo?t=' + Date.now(),
                                     alt: 'IGP Logo',
@@ -6392,7 +6408,13 @@ app.get('/', (c) => {
                                         e.target.src = '/static/logo-igp.png';
                                     }
                                 }),
-                                React.createElement('div', { className: 'border-l-2 border-gray-400 pl-2 md:pl-3 flex-1 min-w-0' },
+                                React.createElement('div', { 
+                                    className: 'pl-2 md:pl-3 flex-1 min-w-0',
+                                    style: {
+                                        borderLeft: '2px solid rgba(147, 197, 253, 0.5)',
+                                        position: 'relative'
+                                    }
+                                },
                                     React.createElement('h1', {
                                         className: 'text-sm md:text-lg lg:text-xl font-bold break-words',
                                         style: {
