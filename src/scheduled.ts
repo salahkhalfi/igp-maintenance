@@ -257,15 +257,11 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
         }
         
         // ENVOYER PUSH NOTIFICATION À TOUS LES ADMINS (fail-safe, non-bloquant)
-        console.log(`🔍 CRON: Début traitement push admins pour ticket ${ticket.ticket_id}`);
         try {
-          
           // Récupérer tous les administrateurs
-          console.log(`🔍 CRON: Récupération des admins...`);
           const { results: admins } = await env.DB.prepare(`
             SELECT id, full_name FROM users WHERE role = 'admin'
           `).all();
-          console.log(`🔍 CRON: Admins récupérés:`, admins ? admins.length : 'null');
           
           if (admins && admins.length > 0) {
             console.log(`🔔 CRON: Envoi push aux ${admins.length} admin(s) pour ticket expiré ${ticket.ticket_id}`);
