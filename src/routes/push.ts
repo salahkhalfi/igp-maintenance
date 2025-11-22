@@ -111,6 +111,17 @@ push.post('/subscribe', async (c) => {
       console.log(`✅ Push subscription updated for user ${user.userId} (existing device)`);
     }
 
+    // 🔔 QUEUE: Envoyer les notifications en attente (fire-and-forget)
+    c.executionCtx?.waitUntil(
+      (async () => {
+        try {
+          await processPendingNotifications(c.env, user.userId);
+        } catch (error) {
+          console.error(`❌ Failed to process pending notifications for user ${user.userId}:`, error);
+        }
+      })()
+    );
+
     return c.json({ 
       success: true,
       isNewDevice: isNewSubscription
@@ -248,7 +259,27 @@ export async function sendPushNotification(
     `).bind(userId).all();
 
     if (!subscriptions.results || subscriptions.results.length === 0) {
-      console.log(`No active push subscriptions for user ${userId}`);
+      console.log(`No active push subscriptions for user ${userId} - queueing notification`);
+      
+      // 🔔 QUEUE: Mettre la notification en attente
+      try {
+        await env.DB.prepare(`
+          INSERT INTO pending_notifications (user_id, title, body, icon, badge, data)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          userId,
+          payload.title,
+          payload.body,
+          payload.icon || null,
+          payload.badge || null,
+          payload.data ? JSON.stringify(payload.data) : null
+        ).run();
+        
+        console.log(`✅ Notification queued for user ${userId} - will be sent when they subscribe`);
+      } catch (queueError) {
+        console.error(`❌ Failed to queue notification for user ${userId}:`, queueError);
+      }
+      
       return { success: false, sentCount: 0, failedCount: 0 };
     }
 
@@ -512,5 +543,70 @@ push.post('/test-user/:userId', async (c) => {
     }, 500);
   }
 });
+
+/**
+ * 🔔 QUEUE: Traiter les notifications en attente pour un utilisateur
+ * Appelée automatiquement quand l'utilisateur s'abonne aux push
+ */
+async function processPendingNotifications(env: Bindings, userId: number): Promise<void> {
+  try {
+    console.log(`[PENDING-QUEUE] Processing pending notifications for user ${userId}`);
+    
+    // Récupérer toutes les notifications en attente
+    const { results: pending } = await env.DB.prepare(`
+      SELECT id, title, body, icon, badge, data, created_at
+      FROM pending_notifications
+      WHERE user_id = ?
+      ORDER BY created_at ASC
+    `).bind(userId).all();
+    
+    if (!pending || pending.length === 0) {
+      console.log(`[PENDING-QUEUE] No pending notifications for user ${userId}`);
+      return;
+    }
+    
+    console.log(`[PENDING-QUEUE] Found ${pending.length} pending notification(s) for user ${userId}`);
+    
+    let sentCount = 0;
+    let failedCount = 0;
+    
+    // Envoyer chaque notification
+    for (const notif of pending) {
+      try {
+        const payload = {
+          title: notif.title as string,
+          body: notif.body as string,
+          icon: (notif.icon as string) || '/icon-192.png',
+          badge: (notif.badge as string) || '/icon-192.png',
+          data: notif.data ? JSON.parse(notif.data as string) : {}
+        };
+        
+        const result = await sendPushNotification(env, userId, payload);
+        
+        if (result.success) {
+          sentCount++;
+          console.log(`✅ [PENDING-QUEUE] Sent notification ${notif.id} to user ${userId}`);
+          
+          // Supprimer de la queue après envoi réussi
+          await env.DB.prepare(`
+            DELETE FROM pending_notifications WHERE id = ?
+          `).bind(notif.id).run();
+        } else {
+          failedCount++;
+          console.log(`❌ [PENDING-QUEUE] Failed to send notification ${notif.id} to user ${userId}`);
+        }
+        
+      } catch (notifError) {
+        failedCount++;
+        console.error(`❌ [PENDING-QUEUE] Error sending notification ${notif.id}:`, notifError);
+      }
+    }
+    
+    console.log(`[PENDING-QUEUE] Processed ${pending.length} notifications for user ${userId}: ${sentCount} sent, ${failedCount} failed`);
+    
+  } catch (error) {
+    console.error(`[PENDING-QUEUE] Error processing pending notifications for user ${userId}:`, error);
+  }
+}
 
 export default push;
