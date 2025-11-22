@@ -314,15 +314,18 @@ async function initPushNotifications() {
       console.log('⚠️ [INIT] Service Worker pas prêt, on continue quand même');
     }
     
-    // Si déjà autorisé, s'abonner automatiquement
+    // Si déjà autorisé, vérifier ownership AVANT de subscribe
     if (Notification.permission === 'granted') {
       console.log('✅ [INIT] Permission déjà accordée, vérification abonnement...');
       const isSubscribed = await isPushSubscribed();
       console.log('🔔 [INIT] Déjà abonné?', isSubscribed);
+      
+      // IMPORTANT: Ne pas subscribe si appartient à un autre user
       if (!isSubscribed) {
-        await subscribeToPush();
+        console.log('⚠️ [INIT] Subscription absente ou appartient à autre user - NE PAS auto-subscribe');
       }
-      // Update button color based on ownership
+      
+      // Always update button color based on ACTUAL ownership
       await updatePushButtonColor();
       return;
     }
