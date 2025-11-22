@@ -411,7 +411,7 @@ async function updatePushButtonColor() {
       console.log('[UPDATE-BTN] Button set to RED (denied)');
     } else {
       // ORANGE - not subscribed or belongs to another user
-      button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center';
+      button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse-orange-red flex items-center';
       button.style.minWidth = '155px'; // Fixed width to prevent size changes during text alternation
       if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (not subscribed)
       

@@ -6632,7 +6632,7 @@ app.get('/', (c) => {
                                 },
                                 className: (typeof Notification !== 'undefined' && Notification.permission === 'denied')
                                     ? 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center'
-                                    : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center',
+                                    : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse-orange-red flex items-center',
                                 style: { minWidth: '155px' }
                             },
                                 React.createElement('i', {
