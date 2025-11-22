@@ -384,25 +384,44 @@ async function updatePushButtonColor() {
     const isSubscribed = await isPushSubscribed();
     console.log('[UPDATE-BTN] Subscription status:', isSubscribed);
     
-    // Find the icon element inside the button
+    // Find the icon element and text node inside the button
     const icon = button.querySelector('i');
+    const textNode = Array.from(button.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
     
-    // Update button classes and icon based on ownership
+    // Clear any existing text alternation interval
+    if (window.pushButtonTextInterval) {
+      clearInterval(window.pushButtonTextInterval);
+      window.pushButtonTextInterval = null;
+    }
+    
+    // Update button classes, icon, and text based on ownership
     if (Notification.permission === 'granted' && isSubscribed) {
       // GREEN - subscribed for this user
       button.className = 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all flex items-center';
       if (icon) icon.className = 'fas fa-bell mr-2'; // Bell icon (subscribed)
-      console.log('[UPDATE-BTN] Button set to GREEN (subscribed)');
+      if (textNode) textNode.textContent = 'Activé'; // Fixed text for subscribed
+      console.log('[UPDATE-BTN] Button set to GREEN (subscribed) - Text: Activé');
     } else if (Notification.permission === 'denied') {
       // RED - denied
       button.className = 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center';
       if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (denied)
+      if (textNode) textNode.textContent = 'Notifications';
       console.log('[UPDATE-BTN] Button set to RED (denied)');
     } else {
       // ORANGE - not subscribed or belongs to another user
       button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center';
       if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (not subscribed)
-      console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed)');
+      
+      // Alternate text between "Notifications" and "Non activé" every 2 seconds
+      if (textNode) {
+        let isAlternate = false;
+        textNode.textContent = 'Notifications';
+        window.pushButtonTextInterval = setInterval(() => {
+          isAlternate = !isAlternate;
+          textNode.textContent = isAlternate ? 'Non activé' : 'Notifications';
+        }, 2000);
+      }
+      console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed) - Text alternating');
     }
     
   } catch (error) {
