@@ -398,28 +398,31 @@ async function updatePushButtonColor() {
     if (Notification.permission === 'granted' && isSubscribed) {
       // GREEN - subscribed for this user
       button.className = 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all flex items-center';
+      button.style.minWidth = '155px'; // Fixed width to prevent size changes
       if (icon) icon.className = 'fas fa-bell mr-2'; // Bell icon (subscribed)
       if (textNode) textNode.textContent = 'Activé'; // Fixed text for subscribed
       console.log('[UPDATE-BTN] Button set to GREEN (subscribed) - Text: Activé');
     } else if (Notification.permission === 'denied') {
       // RED - denied
       button.className = 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center';
+      button.style.minWidth = '155px'; // Fixed width to prevent size changes
       if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (denied)
       if (textNode) textNode.textContent = 'Notifications';
       console.log('[UPDATE-BTN] Button set to RED (denied)');
     } else {
       // ORANGE - not subscribed or belongs to another user
       button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center';
+      button.style.minWidth = '155px'; // Fixed width to prevent size changes during text alternation
       if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (not subscribed)
       
-      // Alternate text between "Notifications" and "Non activées " every 2 seconds
-      // Note: "Non activées " has trailing space to match 13 chars like "Notifications"
+      // Alternate text between "Notifications" and "Non activées" every 2 seconds
+      // Button has fixed min-width so text length doesn't matter
       if (textNode) {
         let isAlternate = false;
         textNode.textContent = 'Notifications';
         window.pushButtonTextInterval = setInterval(() => {
           isAlternate = !isAlternate;
-          textNode.textContent = isAlternate ? 'Non activées ' : 'Notifications';
+          textNode.textContent = isAlternate ? 'Non activées' : 'Notifications';
         }, 2000);
       }
       console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed) - Text alternating');
