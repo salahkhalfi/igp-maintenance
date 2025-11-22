@@ -83,8 +83,24 @@ async function subscribeToPush() {
     
     console.log('[SUBSCRIBE] Token trouve, longueur:', authToken.length);
     
-    // Attendre que service worker soit ready
+    // Attendre que service worker soit VRAIMENT ready (same logic as initPushNotifications)
     console.log('[SUBSCRIBE] Attente service worker...');
+    let swReady = false;
+    for (let i = 0; i < 20; i++) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.active) {
+        swReady = true;
+        console.log('[SUBSCRIBE] Service Worker est actif');
+        break;
+      }
+      console.log('[SUBSCRIBE] Waiting for SW... (' + (i + 1) + '/20)');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    if (!swReady) {
+      console.log('[SUBSCRIBE] SW not ready after 10s, trying anyway...');
+    }
+    
     const registration = await navigator.serviceWorker.ready;
     console.log('[SUBSCRIBE] Service worker ready');
     
