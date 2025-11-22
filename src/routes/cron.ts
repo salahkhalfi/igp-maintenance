@@ -2,6 +2,7 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
+import { getTimezoneOffset, convertToLocalTime } from '../utils/timezone';
 
 const cron = new Hono<{ Bindings: Bindings }>();
 
@@ -19,6 +20,9 @@ cron.post('/check-overdue', async (c) => {
 
     console.log('🔔 CRON externe démarré:', new Date().toISOString());
 
+    // Récupérer le décalage horaire configuré
+    const timezoneOffset = await getTimezoneOffset(c.env.DB);
+    
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -102,7 +106,7 @@ cron.post('/check-overdue', async (c) => {
           ? 'Toute l\'équipe'
           : ticket.assignee_name || 'Non assigné';
 
-        // Préparer données webhook
+        // Préparer données webhook avec dates en heure locale
         const webhookData = {
           ticket_id: ticket.ticket_id,
           title: ticket.title,
@@ -111,12 +115,12 @@ cron.post('/check-overdue', async (c) => {
           status: ticket.status,
           machine_type: ticket.machine_type,
           model: ticket.model,
-          scheduled_date: ticket.scheduled_date,
+          scheduled_date: convertToLocalTime(ticket.scheduled_date, timezoneOffset),
           assigned_to: assigneeInfo,
           reporter: ticket.reporter_name || 'Inconnu',
           overdue_text: overdueText,
-          created_at: ticket.created_at,
-          notification_time: now.toISOString()
+          created_at: convertToLocalTime(ticket.created_at, timezoneOffset),
+          notification_time: convertToLocalTime(now, timezoneOffset)
         };
 
         // Envoyer webhook

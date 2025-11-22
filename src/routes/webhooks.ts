@@ -2,6 +2,7 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
+import { getTimezoneOffset, convertToLocalTime } from '../utils/timezone';
 
 const webhooks = new Hono<{ Bindings: Bindings }>();
 
@@ -14,6 +15,9 @@ const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjY
  */
 webhooks.post('/check-overdue-tickets', async (c) => {
   try {
+    // Récupérer le décalage horaire configuré
+    const timezoneOffset = await getTimezoneOffset(c.env.DB);
+    
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -85,7 +89,7 @@ webhooks.post('/check-overdue-tickets', async (c) => {
         const overdueHours = Math.floor((overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const overdueMinutes = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
 
-        // Préparer les données pour Pabbly Connect
+        // Préparer les données pour Pabbly Connect avec dates en heure locale
         const webhookData = {
           ticket_id: ticket.ticket_id,
           title: ticket.title,
@@ -93,17 +97,17 @@ webhooks.post('/check-overdue-tickets', async (c) => {
           priority: ticket.priority,
           status: ticket.status,
           machine: `${ticket.machine_type} ${ticket.model}`,
-          scheduled_date: ticket.scheduled_date,
+          scheduled_date: convertToLocalTime(ticket.scheduled_date, timezoneOffset),
           assigned_to: ticket.assigned_to === 0 ? 'Équipe complète' : (ticket.assignee_name || `Technicien #${ticket.assigned_to}`),
           reporter: ticket.reporter_name || 'N/A',
-          created_at: ticket.created_at,
+          created_at: convertToLocalTime(ticket.created_at, timezoneOffset),
           overdue_days: overdueDays,
           overdue_hours: overdueHours,
           overdue_minutes: overdueMinutes,
           overdue_text: overdueDays > 0
             ? `${overdueDays} jour(s) ${overdueHours}h ${overdueMinutes}min`
             : `${overdueHours}h ${overdueMinutes}min`,
-          notification_sent_at: now.toISOString()
+          notification_sent_at: convertToLocalTime(now, timezoneOffset)
         };
 
         // Envoyer le webhook à Pabbly Connect
