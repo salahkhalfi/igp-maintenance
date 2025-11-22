@@ -258,30 +258,34 @@ export async function sendPushNotification(
       WHERE user_id = ?
     `).bind(userId).all();
 
+    // 🔔 QUEUE: TOUJOURS mettre en queue (Approche B)
+    // Permet de garantir qu'aucun message n'est perdu, même si certains appareils ne sont pas abonnés
+    try {
+      await env.DB.prepare(`
+        INSERT INTO pending_notifications (user_id, title, body, icon, badge, data)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).bind(
+        userId,
+        payload.title,
+        payload.body,
+        payload.icon || null,
+        payload.badge || null,
+        payload.data ? JSON.stringify(payload.data) : null
+      ).run();
+      
+      console.log(`✅ Notification queued for user ${userId} (always queue strategy)`);
+    } catch (queueError) {
+      console.error(`❌ Failed to queue notification for user ${userId}:`, queueError);
+    }
+
+    // Si pas de subscriptions actives, on s'arrête ici
     if (!subscriptions.results || subscriptions.results.length === 0) {
-      console.log(`No active push subscriptions for user ${userId} - queueing notification`);
-      
-      // 🔔 QUEUE: Mettre la notification en attente
-      try {
-        await env.DB.prepare(`
-          INSERT INTO pending_notifications (user_id, title, body, icon, badge, data)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).bind(
-          userId,
-          payload.title,
-          payload.body,
-          payload.icon || null,
-          payload.badge || null,
-          payload.data ? JSON.stringify(payload.data) : null
-        ).run();
-        
-        console.log(`✅ Notification queued for user ${userId} - will be sent when they subscribe`);
-      } catch (queueError) {
-        console.error(`❌ Failed to queue notification for user ${userId}:`, queueError);
-      }
-      
+      console.log(`No active push subscriptions for user ${userId} - notification only in queue`);
       return { success: false, sentCount: 0, failedCount: 0 };
     }
+    
+    // Si subscriptions existent, envoyer immédiatement (en plus de la queue)
+    console.log(`Sending immediate notification to ${subscriptions.results.length} device(s) for user ${userId}`);
 
     // Envoyer notification à chaque appareil
     for (const sub of subscriptions.results) {
