@@ -199,7 +199,8 @@ export async function sendPushNotification(
     badge?: string;
     data?: any;
   },
-  skipQueue: boolean = false
+  skipQueue: boolean = false,
+  excludeEndpoints: string[] = []
 ): Promise<{ success: boolean; sentCount: number; failedCount: number }> {
   let sentCount = 0;
   let failedCount = 0;
@@ -259,14 +260,16 @@ export async function sendPushNotification(
       WHERE user_id = ?
     `).bind(userId).all();
 
-    // 🔔 QUEUE: TOUJOURS mettre en queue (Approche B)
+    // 🔔 QUEUE: TOUJOURS mettre en queue (Approche C - avec tracking)
     // Permet de garantir qu'aucun message n'est perdu, même si certains appareils ne sont pas abonnés
     // SAUF si skipQueue=true (pour éviter récursion infinie lors du traitement de la queue)
+    let pendingNotificationId: number | null = null;
+    
     if (!skipQueue) {
       try {
-        await env.DB.prepare(`
-          INSERT INTO pending_notifications (user_id, title, body, icon, badge, data)
-          VALUES (?, ?, ?, ?, ?, ?)
+        const result = await env.DB.prepare(`
+          INSERT INTO pending_notifications (user_id, title, body, icon, badge, data, sent_to_endpoints)
+          VALUES (?, ?, ?, ?, ?, ?, '[]')
         `).bind(
           userId,
           payload.title,
@@ -276,7 +279,8 @@ export async function sendPushNotification(
           payload.data ? JSON.stringify(payload.data) : null
         ).run();
         
-        console.log(`✅ Notification queued for user ${userId} (always queue strategy)`);
+        pendingNotificationId = result.meta.last_row_id as number;
+        console.log(`✅ Notification queued for user ${userId} (id: ${pendingNotificationId})`);
       } catch (queueError) {
         console.error(`❌ Failed to queue notification for user ${userId}:`, queueError);
       }
@@ -288,11 +292,23 @@ export async function sendPushNotification(
       return { success: false, sentCount: 0, failedCount: 0 };
     }
     
-    // Si subscriptions existent, envoyer immédiatement (en plus de la queue)
-    console.log(`Sending immediate notification to ${subscriptions.results.length} device(s) for user ${userId}`);
+    // Filtrer les endpoints à exclure (déjà envoyés)
+    const subscriptionsToSend = subscriptions.results.filter(sub => 
+      !excludeEndpoints.includes(sub.endpoint as string)
+    );
+    
+    if (subscriptionsToSend.length === 0) {
+      console.log(`All ${subscriptions.results.length} device(s) already received this notification`);
+      return { success: false, sentCount: 0, failedCount: 0 };
+    }
+    
+    console.log(`Sending notification to ${subscriptionsToSend.length}/${subscriptions.results.length} device(s) for user ${userId} (${excludeEndpoints.length} excluded)`);
+    
+    // Collecter les endpoints qui reçoivent la notification
+    const sentEndpoints: string[] = [];
 
     // Envoyer notification à chaque appareil
-    for (const sub of subscriptions.results) {
+    for (const sub of subscriptionsToSend) {
       const pushSubscription: PushSubscription = {
         endpoint: sub.endpoint as string,
         expirationTime: null,
@@ -335,6 +351,10 @@ export async function sendPushNotification(
 
           sentCount++;
           sent = true;
+          
+          // Tracker cet endpoint comme ayant reçu la notification
+          sentEndpoints.push(sub.endpoint as string);
+          
           console.log(`✅ Push sent to user ${userId} (attempt ${attempt + 1})`);
           break; // Succes, sortir de la boucle retry
 
@@ -373,6 +393,21 @@ export async function sendPushNotification(
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
           }
         }
+      }
+    }
+
+    // Mettre à jour la queue avec les endpoints ayant reçu la notification
+    if (pendingNotificationId && sentEndpoints.length > 0) {
+      try {
+        await env.DB.prepare(`
+          UPDATE pending_notifications
+          SET sent_to_endpoints = ?
+          WHERE id = ?
+        `).bind(JSON.stringify(sentEndpoints), pendingNotificationId).run();
+        
+        console.log(`✅ Updated queue (id: ${pendingNotificationId}) with ${sentEndpoints.length} endpoint(s)`);
+      } catch (updateError) {
+        console.error(`❌ Failed to update queue tracking:`, updateError);
       }
     }
 
@@ -560,9 +595,9 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
   try {
     console.log(`[PENDING-QUEUE] Processing pending notifications for user ${userId}`);
     
-    // Récupérer toutes les notifications en attente
+    // Récupérer toutes les notifications en attente avec tracking des endpoints
     const { results: pending } = await env.DB.prepare(`
-      SELECT id, title, body, icon, badge, data, created_at
+      SELECT id, title, body, icon, badge, data, sent_to_endpoints, created_at
       FROM pending_notifications
       WHERE user_id = ?
       ORDER BY created_at ASC
@@ -589,7 +624,15 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
           data: notif.data ? JSON.parse(notif.data as string) : {}
         };
         
-        const result = await sendPushNotification(env, userId, payload, true); // skipQueue=true
+        // Parser les endpoints déjà envoyés
+        const sentToEndpoints = notif.sent_to_endpoints 
+          ? JSON.parse(notif.sent_to_endpoints as string) 
+          : [];
+        
+        console.log(`[PENDING-QUEUE] Notification ${notif.id}: ${sentToEndpoints.length} endpoint(s) already received`);
+        
+        // Envoyer seulement aux nouveaux appareils
+        const result = await sendPushNotification(env, userId, payload, true, sentToEndpoints);
         
         if (result.success) {
           sentCount++;
