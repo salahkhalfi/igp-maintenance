@@ -3,6 +3,7 @@
 // Schedule: "0 2 * * *" = Quotidien à 2h du matin UTC
 
 import type { Bindings } from './types';
+import { sendPushNotification } from './routes/push';
 
 /**
  * Scheduled event handler (Cloudflare Workers CRON)
@@ -221,7 +222,6 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
 
         if (!existingTechnicianPush) {
           try {
-            const { sendPushNotification } = await import('./routes/push');
             const pushResult = await sendPushNotification(env, ticket.assigned_to, {
               title: `🔴 Ticket Expiré`,
               body: `${ticket.title} - En retard de ${overdueText}`,
@@ -257,13 +257,15 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
         }
         
         // ENVOYER PUSH NOTIFICATION À TOUS LES ADMINS (fail-safe, non-bloquant)
+        console.log(`🔍 CRON: Début traitement push admins pour ticket ${ticket.ticket_id}`);
         try {
-          const { sendPushNotification } = await import('./routes/push');
           
           // Récupérer tous les administrateurs
+          console.log(`🔍 CRON: Récupération des admins...`);
           const { results: admins } = await env.DB.prepare(`
             SELECT id, full_name FROM users WHERE role = 'admin'
           `).all();
+          console.log(`🔍 CRON: Admins récupérés:`, admins ? admins.length : 'null');
           
           if (admins && admins.length > 0) {
             console.log(`🔔 CRON: Envoi push aux ${admins.length} admin(s) pour ticket expiré ${ticket.ticket_id}`);
