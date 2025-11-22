@@ -18,6 +18,13 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.7.1 (22 novembre 2025) - QUEUE NOTIFICATIONS COMPLÈTE 🔔
+- **🔔 QUEUE UNIVERSELLE** : Tous les types de notifications utilisent la queue (messages, audio, tickets, alertes)
+- **⚠️ ALERTES RETARD** : Ajout queue push aux alertes manuelles admins (POST /api/alerts/check-overdue)
+- **📊 COUVERTURE 100%** : Assignation, planification, CRON automatique, alertes manuelles
+- **🛡️ FAIL-SAFE** : Try-catch sur tous les push, message DB toujours envoyé même si push échoue
+- **📝 AUDIT TRAIL** : Tous les push loggés dans push_logs avec status success/failed/error
+
 ### Version 2.7.0 (21 novembre 2025) - PUSH NOTIFICATIONS OPTIMISÉES 🔔
 - **🔧 LIMITE 5 APPAREILS** : Suppression automatique du device le plus ancien (58% réduction charges)
 - **🧹 CLEANUP AUTO 30 JOURS** : CRON quotidien nettoie subscriptions inactives (25% gain performance)
