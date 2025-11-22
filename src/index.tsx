@@ -6576,8 +6576,15 @@ app.get('/', (c) => {
                                         const currentPerm = Notification.permission;
 
                                         if (currentPerm === 'granted') {
-                                            if (!window.subscribeToPush) {
+                                            if (!window.subscribeToPush || !window.isPushSubscribed) {
                                                 alert('Chargement en cours... Reessayez dans 1 seconde.');
+                                                return;
+                                            }
+
+                                            // Check if already subscribed for THIS user
+                                            const isAlreadySubscribed = await window.isPushSubscribed();
+                                            if (isAlreadySubscribed) {
+                                                alert('Vous etes deja abonne aux notifications push!');
                                                 return;
                                             }
 
@@ -6587,6 +6594,10 @@ app.get('/', (c) => {
                                                     alert('Abonnement push deja actif (mis a jour)');
                                                 } else {
                                                     alert('Abonnement push enregistre avec succes!');
+                                                }
+                                                // Update button color after successful subscribe
+                                                if (window.updatePushButtonColor) {
+                                                    setTimeout(() => window.updatePushButtonColor(), 500);
                                                 }
                                             } else {
                                                 alert('Erreur: ' + result.error);
