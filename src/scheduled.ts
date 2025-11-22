@@ -210,7 +210,7 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
         notificationsSent++;
         console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
 
-        // ENVOYER PUSH NOTIFICATION
+        // ENVOYER PUSH NOTIFICATION AU TECHNICIEN ASSIGNÉ
         try {
           const { sendPushNotification } = await import('./routes/push');
           const pushResult = await sendPushNotification(env, ticket.assigned_to, {
@@ -238,10 +238,78 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
           ).run();
 
           if (pushResult.success) {
-            console.log(`✅ CRON: Push notification envoyée pour ${ticket.ticket_id} (${pushResult.sentCount} appareil(s))`);
+            console.log(`✅ CRON: Push notification envoyée au technicien ${ticket.assigned_to} pour ${ticket.ticket_id} (${pushResult.sentCount} appareil(s))`);
           }
         } catch (pushError) {
-          console.error(`⚠️ CRON: Erreur push notification pour ${ticket.ticket_id}:`, pushError);
+          console.error(`⚠️ CRON: Erreur push notification technicien pour ${ticket.ticket_id}:`, pushError);
+        }
+        
+        // ENVOYER PUSH NOTIFICATION À TOUS LES ADMINS (fail-safe, non-bloquant)
+        try {
+          const { sendPushNotification } = await import('./routes/push');
+          
+          // Récupérer tous les administrateurs
+          const { results: admins } = await env.DB.prepare(`
+            SELECT id, full_name FROM users WHERE role = 'admin'
+          `).all();
+          
+          if (admins && admins.length > 0) {
+            console.log(`🔔 CRON: Envoi push aux ${admins.length} admin(s) pour ticket expiré ${ticket.ticket_id}`);
+            
+            // Envoyer à chaque admin
+            for (const admin of admins as any[]) {
+              try {
+                const adminPushResult = await sendPushNotification(env, admin.id as number, {
+                  title: `⚠️ TICKET EXPIRÉ`,
+                  body: `${ticket.ticket_id}: ${ticket.title} - En retard de ${overdueText}`,
+                  icon: '/icon-192.png',
+                  badge: '/badge-72.png',
+                  data: {
+                    url: '/',
+                    action: 'overdue_cron',
+                    ticketId: ticket.id,
+                    ticket_id: ticket.ticket_id,
+                    priority: ticket.priority,
+                    assignedTo: ticket.assigned_to
+                  }
+                });
+                
+                // Logger le résultat dans push_logs
+                await env.DB.prepare(`
+                  INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+                  VALUES (?, ?, ?, ?)
+                `).bind(
+                  admin.id,
+                  ticket.id,
+                  adminPushResult.success ? 'success' : 'failed',
+                  adminPushResult.success ? null : JSON.stringify(adminPushResult)
+                ).run();
+                
+                if (adminPushResult.success) {
+                  console.log(`✅ CRON: Push notification envoyée à admin ${admin.id} (${admin.full_name})`);
+                }
+              } catch (adminPushError) {
+                // Logger l'erreur mais continuer avec les autres admins
+                try {
+                  await env.DB.prepare(`
+                    INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+                    VALUES (?, ?, ?, ?)
+                  `).bind(
+                    admin.id,
+                    ticket.id,
+                    'error',
+                    (adminPushError as Error).message || String(adminPushError)
+                  ).run();
+                } catch (logError) {
+                  console.error('Failed to log admin push error:', logError);
+                }
+                console.error(`⚠️ CRON: Erreur push admin ${admin.id}:`, adminPushError);
+              }
+            }
+          }
+        } catch (adminsError) {
+          // Fail-safe: si récupération admins échoue, le webhook fonctionne quand même
+          console.error(`⚠️ CRON: Erreur récupération admins pour ${ticket.ticket_id}:`, adminsError);
         }
 
         // Délai entre webhooks
