@@ -106,7 +106,9 @@ cron.post('/check-overdue', async (c) => {
           ? 'Toute l\'équipe'
           : ticket.assignee_name || 'Non assigné';
 
-        // Préparer données webhook avec dates en heure locale
+        // Préparer données webhook
+        // NOTE: Les dates dans la DB sont déjà en heure locale (insérées depuis le frontend)
+        // On les envoie directement sans conversion
         const webhookData = {
           ticket_id: ticket.ticket_id,
           title: ticket.title,
@@ -115,11 +117,11 @@ cron.post('/check-overdue', async (c) => {
           status: ticket.status,
           machine_type: ticket.machine_type,
           model: ticket.model,
-          scheduled_date: convertToLocalTime(ticket.scheduled_date, timezoneOffset),
+          scheduled_date: ticket.scheduled_date,
           assigned_to: assigneeInfo,
           reporter: ticket.reporter_name || 'Inconnu',
           overdue_text: overdueText,
-          created_at: convertToLocalTime(ticket.created_at, timezoneOffset),
+          created_at: ticket.created_at,
           notification_time: convertToLocalTime(now, timezoneOffset)
         };
 
