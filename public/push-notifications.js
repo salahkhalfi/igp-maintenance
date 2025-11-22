@@ -100,6 +100,10 @@ async function subscribeToPush() {
       console.log('[SUBSCRIBE] Désabonnement de la subscription existante...');
       await existingSubscription.unsubscribe();
       console.log('[SUBSCRIBE] Ancienne subscription révoquée');
+      
+      // Wait for Service Worker to process unsubscribe (critical for multi-user devices)
+      console.log('[SUBSCRIBE] Waiting 1s for SW to process unsubscribe...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
       wasUpdated = true;
     }
     
