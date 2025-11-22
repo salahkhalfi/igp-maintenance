@@ -302,8 +302,13 @@ async function initPushNotifications() {
       if (!isSubscribed) {
         await subscribeToPush();
       }
+      // Update button color based on ownership
+      await updatePushButtonColor();
       return;
     }
+    
+    // Update button color for denied/default states
+    await updatePushButtonColor();
     
     // Si permission non demandée, demander directement
     if (Notification.permission === 'default') {
@@ -318,8 +323,51 @@ async function initPushNotifications() {
   }
 }
 
+// Update push button color based on subscription ownership
+async function updatePushButtonColor() {
+  try {
+    console.log('[UPDATE-BTN] Checking subscription ownership...');
+    
+    // Wait for button to exist in DOM
+    let button = null;
+    for (let i = 0; i < 10; i++) {
+      button = document.querySelector('button:has(i.fa-bell), button:has(i.fa-bell-slash)');
+      if (button) break;
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    if (!button) {
+      console.log('[UPDATE-BTN] Push button not found in DOM');
+      return;
+    }
+    
+    // Check if user is subscribed for THIS user
+    const isSubscribed = await isPushSubscribed();
+    console.log('[UPDATE-BTN] Subscription status:', isSubscribed);
+    
+    // Update button classes based on ownership
+    if (Notification.permission === 'granted' && isSubscribed) {
+      // GREEN - subscribed for this user
+      button.className = 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all flex items-center';
+      console.log('[UPDATE-BTN] Button set to GREEN (subscribed)');
+    } else if (Notification.permission === 'denied') {
+      // RED - denied
+      button.className = 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center';
+      console.log('[UPDATE-BTN] Button set to RED (denied)');
+    } else {
+      // ORANGE - not subscribed or belongs to another user
+      button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center';
+      console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed)');
+    }
+    
+  } catch (error) {
+    console.error('[UPDATE-BTN] Error updating button:', error);
+  }
+}
+
 // Exposer les fonctions pour l'app React
 window.initPushNotifications = initPushNotifications;
 window.requestPushPermission = requestPushPermission;
 window.isPushSubscribed = isPushSubscribed;
 window.subscribeToPush = subscribeToPush;
+window.updatePushButtonColor = updatePushButtonColor;
