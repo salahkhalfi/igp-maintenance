@@ -106,7 +106,15 @@ self.addEventListener('push', (event) => {
     badge: data.badge || '/icon-192.png',
     data: data.data || {},
     vibrate: [200, 100, 200],
-    tag: data.data?.ticketId || 'default',
+    // Use unique tag to prevent notification grouping
+    // - For tickets: use ticketId (allows grouping per ticket)
+    // - For messages: use messageId (each message separate)
+    // - Fallback: timestamp (always unique)
+    tag: data.data?.ticketId 
+      ? `ticket-${data.data.ticketId}` 
+      : data.data?.messageId 
+        ? `message-${data.data.messageId}` 
+        : `notif-${Date.now()}`,
     requireInteraction: false
   };
   
