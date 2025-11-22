@@ -198,7 +198,8 @@ export async function sendPushNotification(
     icon?: string;
     badge?: string;
     data?: any;
-  }
+  },
+  skipQueue: boolean = false
 ): Promise<{ success: boolean; sentCount: number; failedCount: number }> {
   let sentCount = 0;
   let failedCount = 0;
@@ -260,22 +261,25 @@ export async function sendPushNotification(
 
     // 🔔 QUEUE: TOUJOURS mettre en queue (Approche B)
     // Permet de garantir qu'aucun message n'est perdu, même si certains appareils ne sont pas abonnés
-    try {
-      await env.DB.prepare(`
-        INSERT INTO pending_notifications (user_id, title, body, icon, badge, data)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).bind(
-        userId,
-        payload.title,
-        payload.body,
-        payload.icon || null,
-        payload.badge || null,
-        payload.data ? JSON.stringify(payload.data) : null
-      ).run();
-      
-      console.log(`✅ Notification queued for user ${userId} (always queue strategy)`);
-    } catch (queueError) {
-      console.error(`❌ Failed to queue notification for user ${userId}:`, queueError);
+    // SAUF si skipQueue=true (pour éviter récursion infinie lors du traitement de la queue)
+    if (!skipQueue) {
+      try {
+        await env.DB.prepare(`
+          INSERT INTO pending_notifications (user_id, title, body, icon, badge, data)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          userId,
+          payload.title,
+          payload.body,
+          payload.icon || null,
+          payload.badge || null,
+          payload.data ? JSON.stringify(payload.data) : null
+        ).run();
+        
+        console.log(`✅ Notification queued for user ${userId} (always queue strategy)`);
+      } catch (queueError) {
+        console.error(`❌ Failed to queue notification for user ${userId}:`, queueError);
+      }
     }
 
     // Si pas de subscriptions actives, on s'arrête ici
@@ -585,7 +589,7 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
           data: notif.data ? JSON.parse(notif.data as string) : {}
         };
         
-        const result = await sendPushNotification(env, userId, payload);
+        const result = await sendPushNotification(env, userId, payload, true); // skipQueue=true
         
         if (result.success) {
           sentCount++;
