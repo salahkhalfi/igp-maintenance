@@ -184,6 +184,90 @@ cron.post('/check-overdue', async (c) => {
           console.error(`⚠️ CRON: Erreur push notification pour ${ticket.ticket_id} (non-critique):`, pushError);
         }
 
+        // ENVOYER PUSH NOTIFICATION À TOUS LES ADMINS
+        try {
+          const { sendPushNotification } = await import('./push');
+          
+          // Récupérer tous les administrateurs
+          const { results: admins } = await c.env.DB.prepare(`
+            SELECT id, full_name FROM users WHERE role = 'admin'
+          `).all();
+          
+          if (admins && admins.length > 0) {
+            console.log(`🔔 CRON: Envoi push aux ${admins.length} admin(s) pour ticket expiré ${ticket.ticket_id}`);
+            
+            // Envoyer à chaque admin
+            for (const admin of admins as any[]) {
+              // Vérifier si push déjà envoyé à cet admin pour ce ticket (dans les dernières 24h)
+              const existingAdminPush = await c.env.DB.prepare(`
+                SELECT id FROM push_logs
+                WHERE user_id = ? AND ticket_id = ?
+                  AND datetime(created_at) > datetime('now', '-24 hours')
+                LIMIT 1
+              `).bind(admin.id, ticket.id).first();
+
+              if (existingAdminPush) {
+                console.log(`⏭️ CRON: Push déjà envoyé à admin ${admin.id} pour ${ticket.ticket_id}`);
+                continue;
+              }
+
+              try {
+                const adminPushResult = await sendPushNotification(c.env, admin.id as number, {
+                  title: `⚠️ TICKET EXPIRÉ`,
+                  body: `${ticket.ticket_id}: ${ticket.title} - En retard de ${overdueText}`,
+                  icon: '/icon-192.png',
+                  badge: '/badge-72.png',
+                  data: {
+                    url: '/',
+                    action: 'overdue_cron',
+                    ticketId: ticket.id,
+                    ticket_id: ticket.ticket_id,
+                    priority: ticket.priority,
+                    assignedTo: ticket.assigned_to
+                  }
+                });
+                
+                // Logger le résultat dans push_logs
+                await c.env.DB.prepare(`
+                  INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+                  VALUES (?, ?, ?, ?)
+                `).bind(
+                  admin.id,
+                  ticket.id,
+                  adminPushResult.success ? 'success' : 'failed',
+                  adminPushResult.success ? null : JSON.stringify(adminPushResult)
+                ).run();
+                
+                if (adminPushResult.success) {
+                  console.log(`✅ CRON: Push notification envoyée à admin ${admin.id} (${admin.full_name})`);
+                } else {
+                  console.log(`⚠️ CRON: Push notification failed pour admin ${admin.id}: ${JSON.stringify(adminPushResult)}`);
+                }
+              } catch (adminPushError) {
+                // Logger l'erreur mais continuer avec les autres admins
+                try {
+                  await c.env.DB.prepare(`
+                    INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+                    VALUES (?, ?, ?, ?)
+                  `).bind(
+                    admin.id,
+                    ticket.id,
+                    'error',
+                    (adminPushError as Error).message || String(adminPushError)
+                  ).run();
+                } catch (logError) {
+                  console.error('Failed to log admin push error:', logError);
+                }
+                console.error(`⚠️ CRON: Erreur push admin ${admin.id}:`, adminPushError);
+              }
+            }
+          } else {
+            console.log(`⚠️ CRON: Aucun admin trouvé pour notifier du ticket ${ticket.ticket_id}`);
+          }
+        } catch (adminsError) {
+          console.error(`⚠️ CRON: Erreur récupération admins pour ${ticket.ticket_id}:`, adminsError);
+        }
+
         notifications.push({
           ticket_id: ticket.ticket_id,
           title: ticket.title,
