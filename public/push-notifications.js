@@ -348,10 +348,17 @@ async function updatePushButtonColor() {
   try {
     console.log('[UPDATE-BTN] Checking subscription ownership...');
     
-    // Wait for button to exist in DOM
+    // Wait for button to exist in DOM - find button containing bell icon text
     let button = null;
     for (let i = 0; i < 10; i++) {
-      button = document.querySelector('button:has(i.fa-bell), button:has(i.fa-bell-slash)');
+      const buttons = document.querySelectorAll('button');
+      for (const btn of buttons) {
+        const text = btn.textContent || '';
+        if (text.includes('Notifications')) {
+          button = btn;
+          break;
+        }
+      }
       if (button) break;
       await new Promise(resolve => setTimeout(resolve, 200));
     }
@@ -360,6 +367,8 @@ async function updatePushButtonColor() {
       console.log('[UPDATE-BTN] Push button not found in DOM');
       return;
     }
+    
+    console.log('[UPDATE-BTN] Button found:', button.textContent);
     
     // Check if user is subscribed for THIS user
     const isSubscribed = await isPushSubscribed();

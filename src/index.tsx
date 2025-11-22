@@ -7403,6 +7403,13 @@ app.get('/', (c) => {
                     // ✅ LAW #10: Fire-and-forget pattern (100% non-blocking)
                     // Demande permissions notifications en arrière-plan, ne bloque JAMAIS le login
                     requestNotificationPermissionSafely();
+                    
+                    // Update push button color after login to reflect ownership
+                    setTimeout(() => {
+                        if (window.updatePushButtonColor) {
+                            window.updatePushButtonColor();
+                        }
+                    }, 2000);
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
