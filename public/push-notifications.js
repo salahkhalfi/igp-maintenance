@@ -384,18 +384,24 @@ async function updatePushButtonColor() {
     const isSubscribed = await isPushSubscribed();
     console.log('[UPDATE-BTN] Subscription status:', isSubscribed);
     
-    // Update button classes based on ownership
+    // Find the icon element inside the button
+    const icon = button.querySelector('i');
+    
+    // Update button classes and icon based on ownership
     if (Notification.permission === 'granted' && isSubscribed) {
       // GREEN - subscribed for this user
       button.className = 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all flex items-center';
+      if (icon) icon.className = 'fas fa-bell mr-2'; // Bell icon (subscribed)
       console.log('[UPDATE-BTN] Button set to GREEN (subscribed)');
     } else if (Notification.permission === 'denied') {
       // RED - denied
       button.className = 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center';
+      if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (denied)
       console.log('[UPDATE-BTN] Button set to RED (denied)');
     } else {
       // ORANGE - not subscribed or belongs to another user
       button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center';
+      if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (not subscribed)
       console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed)');
     }
     

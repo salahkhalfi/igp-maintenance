@@ -6635,9 +6635,7 @@ app.get('/', (c) => {
                                     : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center'
                             },
                                 React.createElement('i', {
-                                    className: (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                                        ? 'fas fa-bell-slash mr-2'
-                                        : 'fas fa-bell mr-2'
+                                    className: 'fas fa-bell-slash mr-2'
                                 }),
                                 'Notifications'
                             ),
