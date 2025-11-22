@@ -6585,6 +6585,10 @@ app.get('/', (c) => {
                                             const isAlreadySubscribed = await window.isPushSubscribed();
                                             if (isAlreadySubscribed) {
                                                 alert('Vous etes deja abonne aux notifications push!');
+                                                // Update button color to green since user is subscribed
+                                                if (window.updatePushButtonColor) {
+                                                    setTimeout(() => window.updatePushButtonColor(), 100);
+                                                }
                                                 return;
                                             }
 
@@ -7366,6 +7370,13 @@ app.get('/', (c) => {
                     }
 
                     setLoading(false);
+                    
+                    // Update push button color after data is loaded and UI is ready
+                    setTimeout(() => {
+                        if (window.updatePushButtonColor) {
+                            window.updatePushButtonColor();
+                        }
+                    }, 500);
                 } catch (error) {
                     if (error.response?.status === 401) {
                         logout();
@@ -7407,7 +7418,7 @@ app.get('/', (c) => {
                         if (window.updatePushButtonColor) {
                             window.updatePushButtonColor();
                         }
-                    }, 2000);
+                    }, 3000);
                 } catch (error) {
                     alert('Erreur de connexion: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
