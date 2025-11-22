@@ -50,6 +50,7 @@ auth.post('/register', async (c) => {
       userId: user.id,
       email: user.email,
       role: user.role,
+      full_name: user.full_name,
       isSuperAdmin: user.is_super_admin === 1
     });
 
@@ -124,6 +125,7 @@ auth.post('/login', async (c) => {
       userId: user.id,
       email: user.email,
       role: user.role,
+      full_name: user.full_name,
       isSuperAdmin: user.is_super_admin === 1
     }, expiresInSeconds);
 
