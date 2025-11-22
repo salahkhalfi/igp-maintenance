@@ -617,4 +617,126 @@ messages.get('/test/r2', async (c) => {
   }
 });
 
+/**
+ * 🔔 LOGIN SUMMARY NOTIFICATION (LAW #12)
+ * Envoie UNE notification de résumé lors du login si messages non lus
+ * - Throttling: Maximum 1 fois par 24h par utilisateur
+ * - Non-bloquant: Ne doit jamais faire échouer le login
+ * - Isolé: N'affecte pas les autres notifications push
+ */
+export async function sendLoginSummaryNotification(
+  env: Bindings,
+  userId: number
+): Promise<void> {
+  try {
+    console.log(`[LOGIN-SUMMARY] Starting check for user ${userId}`);
+    
+    // 1️⃣ Vérifier le throttling (max 1 fois par 24h)
+    const lastSummary = await env.DB.prepare(`
+      SELECT created_at 
+      FROM push_logs 
+      WHERE user_id = ? 
+        AND status = 'login_summary_sent'
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `).bind(userId).first();
+    
+    if (lastSummary) {
+      const lastSummaryTime = new Date(lastSummary.created_at as string);
+      const now = new Date();
+      const hoursSinceLastSummary = (now.getTime() - lastSummaryTime.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursSinceLastSummary < 24) {
+        console.log(`[LOGIN-SUMMARY] Throttled for user ${userId} (last summary: ${hoursSinceLastSummary.toFixed(1)}h ago)`);
+        return; // Sortir silencieusement
+      }
+    }
+    
+    // 2️⃣ Compter les messages non lus
+    const unreadResult = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM messages
+      WHERE recipient_id = ? AND is_read = 0
+    `).bind(userId).first();
+    
+    const unreadCount = (unreadResult?.count as number) || 0;
+    
+    if (unreadCount === 0) {
+      console.log(`[LOGIN-SUMMARY] No unread messages for user ${userId}`);
+      return; // Pas de messages non lus, sortir silencieusement
+    }
+    
+    console.log(`[LOGIN-SUMMARY] User ${userId} has ${unreadCount} unread message(s)`);
+    
+    // 3️⃣ Vérifier que l'utilisateur a des push subscriptions actives
+    const subscriptions = await env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM push_subscriptions
+      WHERE user_id = ?
+    `).bind(userId).first();
+    
+    const subscriptionCount = (subscriptions?.count as number) || 0;
+    
+    if (subscriptionCount === 0) {
+      console.log(`[LOGIN-SUMMARY] User ${userId} has no push subscriptions`);
+      return; // Pas d'abonnement push, sortir silencieusement
+    }
+    
+    // 4️⃣ Envoyer la notification de résumé
+    const { sendPushNotification } = await import('./push');
+    
+    const messageText = unreadCount === 1 
+      ? 'Vous avez 1 message non lu'
+      : `Vous avez ${unreadCount} messages non lus`;
+    
+    const pushResult = await sendPushNotification(env, userId, {
+      title: '📬 Messages en attente',
+      body: messageText,
+      icon: '/icon-192.png',
+      badge: '/badge-72.png',
+      data: {
+        url: '/',
+        action: 'login_summary',
+        unreadCount: unreadCount
+      }
+    });
+    
+    // 5️⃣ Logger le résultat
+    await env.DB.prepare(`
+      INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+      VALUES (?, ?, ?, ?)
+    `).bind(
+      userId,
+      null,
+      pushResult.success ? 'login_summary_sent' : 'login_summary_failed',
+      pushResult.success ? null : JSON.stringify(pushResult)
+    ).run();
+    
+    if (pushResult.success) {
+      console.log(`✅ [LOGIN-SUMMARY] Summary notification sent to user ${userId} (${unreadCount} unread)`);
+    } else {
+      console.log(`❌ [LOGIN-SUMMARY] Failed to send summary to user ${userId}`);
+    }
+    
+  } catch (error) {
+    // 🛡️ FAIL-SAFE: Toutes les erreurs sont silencieuses
+    console.error(`❌ [LOGIN-SUMMARY] Error for user ${userId} (non-blocking):`, error);
+    
+    // Tenter de logger l'erreur (best-effort)
+    try {
+      await env.DB.prepare(`
+        INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+        VALUES (?, ?, ?, ?)
+      `).bind(
+        userId,
+        null,
+        'login_summary_error',
+        (error as Error).message || String(error)
+      ).run();
+    } catch (logError) {
+      console.error('[LOGIN-SUMMARY] Failed to log error:', logError);
+    }
+  }
+}
+
 export default messages;

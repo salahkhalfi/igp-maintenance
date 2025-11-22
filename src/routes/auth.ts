@@ -138,6 +138,24 @@ auth.post('/login', async (c) => {
       path: '/'                          // Accessible sur toutes les routes
     });
 
+    // 🔔 LOGIN SUMMARY NOTIFICATION (LAW #12)
+    // Fire-and-forget: Ne bloque pas la réponse de connexion
+    // Délai de 5 secondes pour laisser le temps au client de s'abonner aux push
+    c.executionCtx.waitUntil(
+      (async () => {
+        try {
+          // Attendre 5 secondes pour laisser le client initialiser les push
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          
+          const { sendLoginSummaryNotification } = await import('./messages');
+          await sendLoginSummaryNotification(c.env, user.id);
+        } catch (error) {
+          // Silent failure - ne doit jamais impacter le login
+          console.error('[LOGIN] Summary notification failed (non-blocking):', error);
+        }
+      })()
+    );
+
     return c.json({ token, user: userWithoutPassword });
   } catch (error) {
     console.error('Login error:', error);
