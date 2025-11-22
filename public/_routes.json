@@ -8,6 +8,7 @@
     "/robots.txt",
     "/*.js",
     "/*.css",
+    "/*.json",
     "/*.png",
     "/*.jpg",
     "/*.jpeg",
