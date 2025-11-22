@@ -141,20 +141,26 @@ auth.post('/login', async (c) => {
     // 🔔 LOGIN SUMMARY NOTIFICATION (LAW #12)
     // Fire-and-forget: Ne bloque pas la réponse de connexion
     // Délai de 5 secondes pour laisser le temps au client de s'abonner aux push
-    c.executionCtx.waitUntil(
-      (async () => {
-        try {
-          // Attendre 5 secondes pour laisser le client initialiser les push
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          
-          const { sendLoginSummaryNotification } = await import('./messages');
-          await sendLoginSummaryNotification(c.env, user.id);
-        } catch (error) {
-          // Silent failure - ne doit jamais impacter le login
-          console.error('[LOGIN] Summary notification failed (non-blocking):', error);
-        }
-      })()
-    );
+    // Vérification de sécurité: executionCtx existe en production Cloudflare Workers
+    if (c.executionCtx?.waitUntil) {
+      c.executionCtx.waitUntil(
+        (async () => {
+          try {
+            // Attendre 5 secondes pour laisser le client initialiser les push
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            
+            const { sendLoginSummaryNotification } = await import('./messages');
+            await sendLoginSummaryNotification(c.env, user.id);
+          } catch (error) {
+            // Silent failure - ne doit jamais impacter le login
+            console.error('[LOGIN] Summary notification failed (non-blocking):', error);
+          }
+        })()
+      );
+    } else {
+      // Fallback si executionCtx non disponible (dev local)
+      console.log('[LOGIN] executionCtx.waitUntil not available, skipping summary notification');
+    }
 
     return c.json({ token, user: userWithoutPassword });
   } catch (error) {
