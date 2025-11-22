@@ -259,6 +259,7 @@ app.get('/', (c) => {
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <style>
         /* Background avec photo d'atelier IGP pour toutes les pages */
         body {
@@ -6044,6 +6045,17 @@ app.get('/', (c) => {
                         comment: 'Changement de statut: ' + ticket.status + ' → ' + newStatus
                     });
                     onTicketCreated(); // Refresh
+                    
+                    // 🎉 Confetti celebration when ticket is completed!
+                    if (newStatus === 'completed' && typeof confetti !== 'undefined') {
+                        // Confetti from center with IGP colors (blue, gold, silver)
+                        confetti({
+                            particleCount: 100,
+                            spread: 70,
+                            origin: { y: 0.6 },
+                            colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B']
+                        });
+                    }
                 } catch (error) {
                     alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
                 }
