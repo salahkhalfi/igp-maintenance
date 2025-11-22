@@ -146,8 +146,9 @@ auth.post('/login', async (c) => {
       c.executionCtx.waitUntil(
         (async () => {
           try {
-            // Attendre 5 secondes pour laisser le client initialiser les push
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Attendre 10 secondes pour laisser le client initialiser les push
+            // Augmenté de 5s à 10s pour couvrir cas connexion lente + popup permission
+            await new Promise(resolve => setTimeout(resolve, 10000));
             
             const { sendLoginSummaryNotification } = await import('./messages');
             await sendLoginSummaryNotification(c.env, user.id);
