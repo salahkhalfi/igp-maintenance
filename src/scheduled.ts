@@ -141,8 +141,14 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
     // Envoyer webhook pour chaque ticket expiré
     for (const ticket of overdueTickets.results as any[]) {
       try {
-        // VÉRIFICATION: Notification déjà envoyée pour cette date planifiée?
-        const existingNotification = await env.DB.prepare(`
+        const scheduledDate = new Date(ticket.scheduled_date);
+        const delay = now.getTime() - scheduledDate.getTime();
+        const delayHours = Math.floor(delay / (1000 * 60 * 60));
+        const delayMinutes = Math.floor((delay % (1000 * 60 * 60)) / (1000 * 60));
+        const overdueText = delayHours > 0 ? `${delayHours}h ${delayMinutes}min` : `${delayMinutes}min`;
+
+        // VÉRIFICATION: Webhook déjà envoyé pour cette date planifiée?
+        const existingWebhook = await env.DB.prepare(`
           SELECT id FROM webhook_notifications
           WHERE ticket_id = ?
             AND scheduled_date_notified = ?
@@ -151,97 +157,103 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
           LIMIT 1
         `).bind(ticket.id, ticket.scheduled_date).first();
 
-        if (existingNotification) {
-          console.log(`⏭️ CRON: Skip ${ticket.ticket_id} - notification déjà envoyée`);
-          continue;
-        }
+        // Envoyer webhook SEULEMENT si pas déjà envoyé
+        if (!existingWebhook) {
+          const assigneeInfo = ticket.assigned_to === 0 ? 'Toute l\'équipe' : ticket.assignee_name || 'Non assigné';
 
-        const scheduledDate = new Date(ticket.scheduled_date);
-        const delay = now.getTime() - scheduledDate.getTime();
-        const delayHours = Math.floor(delay / (1000 * 60 * 60));
-        const delayMinutes = Math.floor((delay % (1000 * 60 * 60)) / (1000 * 60));
-        const overdueText = delayHours > 0 ? `${delayHours}h ${delayMinutes}min` : `${delayMinutes}min`;
+          // Préparer données webhook
+          const webhookData = {
+            ticket_id: ticket.ticket_id,
+            title: ticket.title,
+            description: ticket.description || '',
+            priority: ticket.priority,
+            status: ticket.status,
+            machine_type: ticket.machine_type,
+            model: ticket.model,
+            scheduled_date: ticket.scheduled_date,
+            assigned_to: assigneeInfo,
+            reporter: ticket.reporter_name || 'Inconnu',
+            overdue_text: overdueText,
+            created_at: ticket.created_at,
+            notification_time: now.toISOString()
+          };
 
-        const assigneeInfo = ticket.assigned_to === 0 ? 'Toute l\'équipe' : ticket.assignee_name || 'Non assigné';
-
-        // Préparer données webhook
-        const webhookData = {
-          ticket_id: ticket.ticket_id,
-          title: ticket.title,
-          description: ticket.description || '',
-          priority: ticket.priority,
-          status: ticket.status,
-          machine_type: ticket.machine_type,
-          model: ticket.model,
-          scheduled_date: ticket.scheduled_date,
-          assigned_to: assigneeInfo,
-          reporter: ticket.reporter_name || 'Inconnu',
-          overdue_text: overdueText,
-          created_at: ticket.created_at,
-          notification_time: now.toISOString()
-        };
-
-        // Envoyer webhook
-        const response = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookData)
-        });
-
-        const responseStatus = response.status;
-        const responseBody = await response.text();
-
-        // Enregistrer notification dans DB
-        const sentAt = now.toISOString();
-        await env.DB.prepare(`
-          INSERT INTO webhook_notifications 
-          (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body, scheduled_date_notified)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).bind(
-          ticket.id,
-          'overdue_scheduled',
-          WEBHOOK_URL,
-          sentAt,
-          responseStatus,
-          responseBody.substring(0, 1000),
-          ticket.scheduled_date
-        ).run();
-
-        notificationsSent++;
-        console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
-
-        // ENVOYER PUSH NOTIFICATION AU TECHNICIEN ASSIGNÉ
-        try {
-          const { sendPushNotification } = await import('./routes/push');
-          const pushResult = await sendPushNotification(env, ticket.assigned_to, {
-            title: `🔴 Ticket Expiré`,
-            body: `${ticket.title} - En retard de ${overdueText}`,
-            icon: '/icon-192.png',
-            badge: '/icon-192.png',
-            data: { 
-              ticketId: ticket.id, 
-              ticket_id: ticket.ticket_id,
-              type: 'overdue',
-              url: '/' 
-            }
+          // Envoyer webhook
+          const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookData)
           });
 
-          // Logger push result
+          const responseStatus = response.status;
+          const responseBody = await response.text();
+
+          // Enregistrer notification dans DB
+          const sentAt = now.toISOString();
           await env.DB.prepare(`
-            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO webhook_notifications 
+            (ticket_id, notification_type, webhook_url, sent_at, response_status, response_body, scheduled_date_notified)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
           `).bind(
-            ticket.assigned_to,
             ticket.id,
-            pushResult.success ? 'success' : 'failed',
-            pushResult.success ? null : JSON.stringify(pushResult)
+            'overdue_scheduled',
+            WEBHOOK_URL,
+            sentAt,
+            responseStatus,
+            responseBody.substring(0, 1000),
+            ticket.scheduled_date
           ).run();
 
-          if (pushResult.success) {
-            console.log(`✅ CRON: Push notification envoyée au technicien ${ticket.assigned_to} pour ${ticket.ticket_id} (${pushResult.sentCount} appareil(s))`);
+          notificationsSent++;
+          console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
+        } else {
+          console.log(`⏭️ CRON: Webhook déjà envoyé pour ${ticket.ticket_id}, skip webhook`);
+        }
+
+        // ENVOYER PUSH NOTIFICATION AU TECHNICIEN ASSIGNÉ
+        // Vérifier si push déjà envoyé pour ce ticket + user (dans les dernières 24h)
+        const existingTechnicianPush = await env.DB.prepare(`
+          SELECT id FROM push_logs
+          WHERE user_id = ? AND ticket_id = ?
+            AND datetime(created_at) > datetime('now', '-24 hours')
+          LIMIT 1
+        `).bind(ticket.assigned_to, ticket.id).first();
+
+        if (!existingTechnicianPush) {
+          try {
+            const { sendPushNotification } = await import('./routes/push');
+            const pushResult = await sendPushNotification(env, ticket.assigned_to, {
+              title: `🔴 Ticket Expiré`,
+              body: `${ticket.title} - En retard de ${overdueText}`,
+              icon: '/icon-192.png',
+              badge: '/icon-192.png',
+              data: { 
+                ticketId: ticket.id, 
+                ticket_id: ticket.ticket_id,
+                type: 'overdue',
+                url: '/' 
+              }
+            });
+
+            // Logger push result
+            await env.DB.prepare(`
+              INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+              VALUES (?, ?, ?, ?)
+            `).bind(
+              ticket.assigned_to,
+              ticket.id,
+              pushResult.success ? 'success' : 'failed',
+              pushResult.success ? null : JSON.stringify(pushResult)
+            ).run();
+
+            if (pushResult.success) {
+              console.log(`✅ CRON: Push notification envoyée au technicien ${ticket.assigned_to} pour ${ticket.ticket_id} (${pushResult.sentCount} appareil(s))`);
+            }
+          } catch (pushError) {
+            console.error(`⚠️ CRON: Erreur push notification technicien pour ${ticket.ticket_id}:`, pushError);
           }
-        } catch (pushError) {
-          console.error(`⚠️ CRON: Erreur push notification technicien pour ${ticket.ticket_id}:`, pushError);
+        } else {
+          console.log(`⏭️ CRON: Push déjà envoyé au technicien ${ticket.assigned_to} pour ${ticket.ticket_id}`);
         }
         
         // ENVOYER PUSH NOTIFICATION À TOUS LES ADMINS (fail-safe, non-bloquant)
@@ -258,6 +270,19 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
             
             // Envoyer à chaque admin
             for (const admin of admins as any[]) {
+              // Vérifier si push déjà envoyé à cet admin pour ce ticket (dans les dernières 24h)
+              const existingAdminPush = await env.DB.prepare(`
+                SELECT id FROM push_logs
+                WHERE user_id = ? AND ticket_id = ?
+                  AND datetime(created_at) > datetime('now', '-24 hours')
+                LIMIT 1
+              `).bind(admin.id, ticket.id).first();
+
+              if (existingAdminPush) {
+                console.log(`⏭️ CRON: Push déjà envoyé à admin ${admin.id} pour ${ticket.ticket_id}`);
+                continue;
+              }
+
               try {
                 const adminPushResult = await sendPushNotification(env, admin.id as number, {
                   title: `⚠️ TICKET EXPIRÉ`,
@@ -287,6 +312,8 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
                 
                 if (adminPushResult.success) {
                   console.log(`✅ CRON: Push notification envoyée à admin ${admin.id} (${admin.full_name})`);
+                } else {
+                  console.log(`⚠️ CRON: Push notification failed pour admin ${admin.id}: ${JSON.stringify(adminPushResult)}`);
                 }
               } catch (adminPushError) {
                 // Logger l'erreur mais continuer avec les autres admins
@@ -306,6 +333,8 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
                 console.error(`⚠️ CRON: Erreur push admin ${admin.id}:`, adminPushError);
               }
             }
+          } else {
+            console.log(`⚠️ CRON: Aucun admin trouvé pour notifier du ticket ${ticket.ticket_id}`);
           }
         } catch (adminsError) {
           // Fail-safe: si récupération admins échoue, le webhook fonctionne quand même
