@@ -6036,6 +6036,39 @@ app.get('/', (c) => {
                 return filteredTickets;
             };
 
+            // 🔊 Play celebration sound using Web Audio API (0 KB - synthesized)
+            const playCelebrationSound = () => {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create three-note ascending ding (C-E-G chord)
+                    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                    const now = audioContext.currentTime;
+                    
+                    notes.forEach((freq, i) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine'; // Smooth tone
+                        
+                        // Volume envelope: quick fade in/out
+                        gainNode.gain.setValueAtTime(0, now + i * 0.08);
+                        gainNode.gain.linearRampToValueAtTime(0.15, now + i * 0.08 + 0.02); // Low volume
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.3);
+                        
+                        oscillator.start(now + i * 0.08);
+                        oscillator.stop(now + i * 0.08 + 0.3);
+                    });
+                } catch (error) {
+                    // Silent fail - sound is optional
+                    console.log('Audio not available:', error);
+                }
+            };
+
             const moveTicketToStatus = async (ticket, newStatus) => {
                 if (ticket.status === newStatus) return;
 
@@ -6047,14 +6080,19 @@ app.get('/', (c) => {
                     onTicketCreated(); // Refresh
                     
                     // 🎉 Confetti celebration when ticket is completed!
-                    if (newStatus === 'completed' && typeof confetti !== 'undefined') {
-                        // Confetti from center with IGP colors (blue, gold, silver)
-                        confetti({
-                            particleCount: 100,
-                            spread: 70,
-                            origin: { y: 0.6 },
-                            colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B']
-                        });
+                    if (newStatus === 'completed') {
+                        // Visual: Confetti
+                        if (typeof confetti !== 'undefined') {
+                            confetti({
+                                particleCount: 100,
+                                spread: 70,
+                                origin: { y: 0.6 },
+                                colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B']
+                            });
+                        }
+                        
+                        // Audio: Pleasant "ding" sound
+                        playCelebrationSound();
                     }
                 } catch (error) {
                     alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
