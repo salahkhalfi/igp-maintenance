@@ -12,7 +12,8 @@
 ## 🚀 Deployment Details
 
 ### URLs
-- **Production**: https://2e8ed28b.webapp-7t8.pages.dev
+- **Production Officielle**: https://mecanique.igpglass.ca
+- **Cloudflare Pages (backup)**: https://2e8ed28b.webapp-7t8.pages.dev
 - **Project Name**: webapp
 - **Branch**: main
 
