@@ -127,12 +127,72 @@ Action requise immédiatement !
 
       // Envoyer à tous les administrateurs
       for (const admin of admins) {
-        await c.env.DB.prepare(`
+        // Insert message dans DB
+        const result = await c.env.DB.prepare(`
           INSERT INTO messages (sender_id, recipient_id, message_type, content)
           VALUES (?, ?, 'private', ?)
         `).bind(1, admin.id, messageContent).run(); // sender_id = 1 (système)
 
         sentCount++;
+
+        // 🔔 Envoyer push notification (fail-safe, non-bloquant)
+        try {
+          const { sendPushNotification } = await import('./push');
+          
+          // Formatter le retard pour la notification
+          const delayText = delayHours > 0 
+            ? `${delayHours}h ${delayMinutes}min` 
+            : `${delayMinutes}min`;
+          
+          const pushResult = await sendPushNotification(c.env, admin.id as number, {
+            title: `⚠️ ALERTE RETARD`,
+            body: `${ticket.ticket_id}: ${ticket.title} - En retard de ${delayText}`,
+            icon: '/icon-192.png',
+            badge: '/badge-72.png',
+            data: {
+              url: '/',
+              action: 'overdue_alert_manual',
+              ticketId: ticket.id,
+              ticket_id: ticket.ticket_id,
+              priority: ticket.priority,
+              delayHours: delayHours
+            }
+          });
+          
+          // Logger le résultat dans push_logs
+          await c.env.DB.prepare(`
+            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+            VALUES (?, ?, ?, ?)
+          `).bind(
+            admin.id,
+            ticket.id,
+            pushResult.success ? 'success' : 'failed',
+            pushResult.success ? null : JSON.stringify(pushResult)
+          ).run();
+          
+          if (pushResult.success) {
+            console.log(`✅ Push notification sent for overdue alert to admin ${admin.id} (${admin.full_name})`);
+          } else {
+            console.log(`⚠️ Push notification failed for admin ${admin.id}:`, pushResult);
+          }
+        } catch (pushError) {
+          // Logger l'erreur
+          try {
+            await c.env.DB.prepare(`
+              INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+              VALUES (?, ?, ?, ?)
+            `).bind(
+              admin.id,
+              ticket.id,
+              'error',
+              (pushError as Error).message || String(pushError)
+            ).run();
+          } catch (logError) {
+            console.error('Failed to log push error:', logError);
+          }
+          // Fail-safe: si push échoue, le message privé est quand même envoyé
+          console.error('⚠️ Push notification failed (non-blocking):', pushError);
+        }
       }
     }
 
