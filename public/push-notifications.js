@@ -112,6 +112,10 @@ async function subscribeToPush() {
       console.log('[SUBSCRIBE] Subscription existante trouvée');
       console.log('[SUBSCRIBE] Existing endpoint:', existingSubscription.endpoint.substring(0, 50) + '...');
       
+      // Vérifier si cette subscription appartient à CET utilisateur
+      const isMySubscription = await isPushSubscribed();
+      console.log('[SUBSCRIBE] Cette subscription m\'appartient?', isMySubscription);
+      
       // IMPORTANT: Désabonner d'abord pour éviter les conflits multi-utilisateurs
       console.log('[SUBSCRIBE] Désabonnement de la subscription existante...');
       await existingSubscription.unsubscribe();
@@ -120,7 +124,10 @@ async function subscribeToPush() {
       // Wait for Service Worker to process unsubscribe (critical for multi-user devices)
       console.log('[SUBSCRIBE] Waiting 1s for SW to process unsubscribe...');
       await new Promise(resolve => setTimeout(resolve, 1000));
-      wasUpdated = true;
+      
+      // C'est une "mise à jour" seulement si c'était MA subscription
+      wasUpdated = isMySubscription;
+      console.log('[SUBSCRIBE] wasUpdated:', wasUpdated, '(true = mise à jour, false = nouvel abonnement)');
     }
     
     // Recuperer cle VAPID publique (avec auth)
