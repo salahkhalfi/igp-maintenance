@@ -412,13 +412,14 @@ async function updatePushButtonColor() {
       button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse flex items-center';
       if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (not subscribed)
       
-      // Alternate text between "Notifications" and "Non activé" every 2 seconds
+      // Alternate text between "Notifications" and "Non activées " every 2 seconds
+      // Note: "Non activées " has trailing space to match 13 chars like "Notifications"
       if (textNode) {
         let isAlternate = false;
         textNode.textContent = 'Notifications';
         window.pushButtonTextInterval = setInterval(() => {
           isAlternate = !isAlternate;
-          textNode.textContent = isAlternate ? 'Non activé' : 'Notifications';
+          textNode.textContent = isAlternate ? 'Non activées ' : 'Notifications';
         }, 2000);
       }
       console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed) - Text alternating');
