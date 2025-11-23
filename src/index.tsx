@@ -6039,15 +6039,32 @@ app.get('/', (c) => {
                 return filteredTickets;
             };
 
-            // 🔊 Play celebration voice "C'est fini!" (16 KB MP3 - French female voice)
+            // 🔊 Play celebration sound using Web Audio API (0 KB - synthesized)
             const playCelebrationSound = () => {
                 try {
-                    // Use CDN-hosted audio file for reliability across all environments
-                    const audio = new Audio('https://www.genspark.ai/api/files/s/KHmcjdDt');
-                    audio.volume = 0.7; // 70% volume
-                    audio.play().catch(error => {
-                        // Silent fail - audio playback may be blocked by browser
-                        console.log('Audio playback failed:', error);
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Create three-note ascending ding (C-E-G chord)
+                    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                    const now = audioContext.currentTime;
+                    
+                    notes.forEach((freq, i) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine'; // Smooth tone
+                        
+                        // Volume envelope: quick fade in/out
+                        gainNode.gain.setValueAtTime(0, now + i * 0.08);
+                        gainNode.gain.linearRampToValueAtTime(0.15, now + i * 0.08 + 0.02); // Low volume
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.3);
+                        
+                        oscillator.start(now + i * 0.08);
+                        oscillator.stop(now + i * 0.08 + 0.3);
                     });
                 } catch (error) {
                     // Silent fail - sound is optional
