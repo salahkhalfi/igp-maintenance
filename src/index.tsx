@@ -6039,36 +6039,18 @@ app.get('/', (c) => {
                 return filteredTickets;
             };
 
-            // 🔊 Play celebration voice using Web Speech API (0 KB - native browser TTS)
+            // 🔊 Play celebration voice "C'est fini!" (16 KB MP3 - French female voice)
             const playCelebrationSound = () => {
                 try {
-                    // Check if speech synthesis is available
-                    if (!window.speechSynthesis) {
-                        console.log('Speech synthesis not available');
-                        return;
-                    }
-                    
-                    // Create speech utterance
-                    const utterance = new SpeechSynthesisUtterance('C\'est fini!');
-                    
-                    // Configure voice settings
-                    utterance.lang = 'fr-FR'; // French language
-                    utterance.rate = 1.1; // Slightly faster (default is 1)
-                    utterance.pitch = 1.2; // Slightly higher pitch for excitement
-                    utterance.volume = 0.8; // 80% volume
-                    
-                    // Try to select a French voice if available
-                    const voices = window.speechSynthesis.getVoices();
-                    const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
-                    if (frenchVoice) {
-                        utterance.voice = frenchVoice;
-                    }
-                    
-                    // Speak!
-                    window.speechSynthesis.speak(utterance);
+                    const audio = new Audio('/static/cest-fini.mp3');
+                    audio.volume = 0.7; // 70% volume
+                    audio.play().catch(error => {
+                        // Silent fail - audio playback may be blocked by browser
+                        console.log('Audio playback failed:', error);
+                    });
                 } catch (error) {
                     // Silent fail - sound is optional
-                    console.log('Speech synthesis error:', error);
+                    console.log('Audio not available:', error);
                 }
             };
 
