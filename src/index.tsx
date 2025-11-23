@@ -6862,8 +6862,8 @@ app.get('/', (c) => {
                                                 React.createElement('i', { className: 'fas fa-user mr-1 text-blue-600' }),
                                                 React.createElement('span', { className: 'font-semibold' }, 'Rapporté par ' + (ticket.reporter_name || 'N/A'))
                                             ),
-                                            // Badge de planification (si ticket planifié ET pas encore commencé)
-                                            (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                            // Badge de planification (si ticket planifié ET pas terminé/archivé)
+                                            (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived') ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
@@ -7019,8 +7019,8 @@ app.get('/', (c) => {
                                                     React.createElement('i', { className: 'fas fa-user mr-1 text-blue-600' }),
                                                     React.createElement('span', { className: 'font-semibold' }, 'Rapporté par ' + (ticket.reporter_name || 'N/A'))
                                                 ),
-                                                // Badge de planification (si ticket planifié ET pas encore commencé)
-                                                (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                                // Badge de planification (si ticket planifié ET pas terminé/archivé)
+                                                (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived') ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                     React.createElement('div', { className: 'flex items-center gap-1' },
                                                         React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                     ),
@@ -7127,8 +7127,8 @@ app.get('/', (c) => {
                                                 React.createElement('i', { className: 'fas fa-user mr-1 text-blue-600' }),
                                                 React.createElement('span', { className: 'font-semibold' }, 'Rapporté par ' + (ticket.reporter_name || 'N/A'))
                                             ),
-                                            // Badge de planification (si ticket planifié ET pas encore commencé)
-                                            (ticket.scheduled_date && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
+                                            // Badge de planification (si ticket planifié ET pas terminé/archivé)
+                                            (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived') ? React.createElement('div', { className: 'flex flex-col gap-1 mb-1' },
                                                 React.createElement('div', { className: 'flex items-center gap-1' },
                                                     React.createElement(ScheduledCountdown, { scheduledDate: ticket.scheduled_date })
                                                 ),
