@@ -85,10 +85,11 @@ Commande: `hub_files_tool(action="read", file_name="salah.md", limit=633)`
 - Appelle: `/api/cron/*`
 
 **Timezone:**
-- Dates stockées EN HEURE LOCALE dans DB (pas UTC)
-- Webhooks Pabbly reçoivent dates BRUTES (déjà locales)
+- Dates stockées EN UTC dans DB (via `localDateTimeToUTC()` frontend)
+- Webhooks Pabbly reçoivent dates CONVERTIES en local (via `convertToLocalTime()`)
 - `getTimezoneOffset()` utilisé (cron.ts, webhooks.ts)
 - `getCurrentLocalTime()` JAMAIS utilisée
+- UI utilise `parseUTCDate()` pour affichage (ajoute 'Z' suffix)
 
 **Push Notifications:**
 - Queue: table `pending_notifications` (users offline)

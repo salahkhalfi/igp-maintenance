@@ -107,8 +107,9 @@ cron.post('/check-overdue', async (c) => {
           : ticket.assignee_name || 'Non assigné';
 
         // Préparer données webhook
-        // NOTE: Les dates dans la DB sont déjà en heure locale (insérées depuis le frontend)
-        // On les envoie directement sans conversion
+        // CORRECTION 2025-11-23: Les dates dans la DB sont stockées en UTC (via localDateTimeToUTC() frontend).
+        // On convertit en heure locale pour affichage lisible dans les emails Pabbly.
+        // NOTE: La déduplication utilise ticket.scheduled_date (UTC brut) donc pas d'impact.
         const webhookData = {
           ticket_id: ticket.ticket_id,
           title: ticket.title,
@@ -117,11 +118,11 @@ cron.post('/check-overdue', async (c) => {
           status: ticket.status,
           machine_type: ticket.machine_type,
           model: ticket.model,
-          scheduled_date: ticket.scheduled_date,
+          scheduled_date: convertToLocalTime(ticket.scheduled_date, timezoneOffset),
           assigned_to: assigneeInfo,
           reporter: ticket.reporter_name || 'Inconnu',
           overdue_text: overdueText,
-          created_at: ticket.created_at,
+          created_at: convertToLocalTime(ticket.created_at, timezoneOffset),
           notification_time: convertToLocalTime(now, timezoneOffset)
         };
 

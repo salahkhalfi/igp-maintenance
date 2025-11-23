@@ -90,8 +90,8 @@ webhooks.post('/check-overdue-tickets', async (c) => {
         const overdueMinutes = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
 
         // Préparer les données pour Pabbly Connect
-        // NOTE: Les dates dans la DB sont déjà en heure locale (insérées depuis le frontend)
-        // On les envoie directement sans conversion
+        // CORRECTION 2025-11-23: Les dates dans la DB sont stockées en UTC (via localDateTimeToUTC() frontend).
+        // On convertit en heure locale pour affichage lisible dans les emails Pabbly.
         const webhookData = {
           ticket_id: ticket.ticket_id,
           title: ticket.title,
@@ -99,10 +99,10 @@ webhooks.post('/check-overdue-tickets', async (c) => {
           priority: ticket.priority,
           status: ticket.status,
           machine: `${ticket.machine_type} ${ticket.model}`,
-          scheduled_date: ticket.scheduled_date,
+          scheduled_date: convertToLocalTime(ticket.scheduled_date, timezoneOffset),
           assigned_to: ticket.assigned_to === 0 ? 'Équipe complète' : (ticket.assignee_name || `Technicien #${ticket.assigned_to}`),
           reporter: ticket.reporter_name || 'N/A',
-          created_at: ticket.created_at,
+          created_at: convertToLocalTime(ticket.created_at, timezoneOffset),
           overdue_days: overdueDays,
           overdue_hours: overdueHours,
           overdue_minutes: overdueMinutes,
