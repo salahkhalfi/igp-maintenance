@@ -488,6 +488,9 @@ app.get('/', (c) => {
             z-index: 10000;
             min-width: 200px;
             padding: 8px 0;
+            max-height: calc(100vh - 20px);
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         .context-menu-item {
             padding: 12px 20px;
@@ -6131,25 +6134,36 @@ app.get('/', (c) => {
 
 
                 const menuWidth = 200;
-                const menuHeight = 300;
+                const menuHeightEstimate = 350; // Estimation hauteur menu (ajuster si besoin)
                 // Use clientX/clientY instead of pageX/pageY for position:fixed portal
                 let x = e.clientX || (e.touches && e.touches[0].clientX);
                 let y = e.clientY || (e.touches && e.touches[0].clientY);
+                let openUpward = false;
 
-
+                // Ajuster horizontalement si déborde à droite
                 if (x + menuWidth > window.innerWidth) {
                     x = window.innerWidth - menuWidth - 10;
                 }
 
+                // Vérifier si assez d'espace en bas
+                const spaceBelow = window.innerHeight - y;
+                const spaceAbove = y;
 
-                if (y + menuHeight > window.innerHeight) {
-                    y = window.innerHeight - menuHeight - 10;
+                // Si pas assez d'espace en bas mais plus d'espace en haut, ouvrir vers le haut
+                if (spaceBelow < menuHeightEstimate && spaceAbove > spaceBelow) {
+                    openUpward = true;
+                    // Positionner le menu au-dessus du curseur
+                    y = Math.max(10, y - Math.min(menuHeightEstimate, spaceAbove - 10));
+                } else {
+                    // Ouvrir vers le bas normalement, mais limiter à l'espace disponible
+                    y = Math.min(y, window.innerHeight - 60); // Laisser 60px marge minimale
                 }
 
                 setContextMenu({
                     x: x,
                     y: y,
-                    ticket: ticket
+                    ticket: ticket,
+                    openUpward: openUpward
                 });
             };
 
