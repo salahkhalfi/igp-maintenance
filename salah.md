@@ -1,7 +1,15 @@
-# .AI-CONTEXT.md - Guide de Travail Unique
-**Version:** 1.0.0  
+# salah.md - Guide de Travail Unique
+**Version:** 1.0.1  
 **Date:** 2025-11-23  
 **Statut:** Guide opérationnel permanent
+
+---
+
+## 📖 INSTRUCTION DE LECTURE (POUR L'IA)
+
+**Quand Salah dit "lis salah" → Lire CE fichier EN ENTIER (pas juste 100 lignes)**
+
+Commande: `hub_files_tool(action="read", file_name="salah.md", limit=633)`
 
 ---
 
