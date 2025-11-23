@@ -6039,36 +6039,36 @@ app.get('/', (c) => {
                 return filteredTickets;
             };
 
-            // 🔊 Play celebration sound using Web Audio API (0 KB - synthesized)
+            // 🔊 Play celebration voice using Web Speech API (0 KB - native browser TTS)
             const playCelebrationSound = () => {
                 try {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    // Check if speech synthesis is available
+                    if (!window.speechSynthesis) {
+                        console.log('Speech synthesis not available');
+                        return;
+                    }
                     
-                    // Create three-note ascending ding (C-E-G chord)
-                    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-                    const now = audioContext.currentTime;
+                    // Create speech utterance
+                    const utterance = new SpeechSynthesisUtterance('C\'est fini!');
                     
-                    notes.forEach((freq, i) => {
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        
-                        oscillator.frequency.value = freq;
-                        oscillator.type = 'sine'; // Smooth tone
-                        
-                        // Volume envelope: quick fade in/out
-                        gainNode.gain.setValueAtTime(0, now + i * 0.08);
-                        gainNode.gain.linearRampToValueAtTime(0.15, now + i * 0.08 + 0.02); // Low volume
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.3);
-                        
-                        oscillator.start(now + i * 0.08);
-                        oscillator.stop(now + i * 0.08 + 0.3);
-                    });
+                    // Configure voice settings
+                    utterance.lang = 'fr-FR'; // French language
+                    utterance.rate = 1.1; // Slightly faster (default is 1)
+                    utterance.pitch = 1.2; // Slightly higher pitch for excitement
+                    utterance.volume = 0.8; // 80% volume
+                    
+                    // Try to select a French voice if available
+                    const voices = window.speechSynthesis.getVoices();
+                    const frenchVoice = voices.find(voice => voice.lang.startsWith('fr'));
+                    if (frenchVoice) {
+                        utterance.voice = frenchVoice;
+                    }
+                    
+                    // Speak!
+                    window.speechSynthesis.speak(utterance);
                 } catch (error) {
                     // Silent fail - sound is optional
-                    console.log('Audio not available:', error);
+                    console.log('Speech synthesis error:', error);
                 }
             };
 
