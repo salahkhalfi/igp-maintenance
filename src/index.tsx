@@ -6806,9 +6806,9 @@ app.get('/', (c) => {
                                                 ? 'Cliquer pour détails | Clic droit: menu'
                                                 : 'Cliquer pour détails | Glisser pour déplacer | Clic droit: menu'
                                         },
-                                            // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle) (seulement avant "En cours")
+                                            // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle)
                                             // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
-                                            ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', {
+                                            ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status !== 'completed' && ticket.status !== 'archived')) ? React.createElement('div', {
                                                 className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (hasScheduledDate(ticket.scheduled_date)
                                                     ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400'
                                                     : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 shadow-[0_4px_12px_rgba(51,65,85,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] border-b-2 border-cyan-400'),
@@ -6962,7 +6962,7 @@ app.get('/', (c) => {
                                                 // Banniere pour tickets assignés ou planifiés (assignation requise, date optionnelle)
                                                 // CRITICAL: Check !== null (not falsy) because 0 is valid (team assignment)
                                                 // Si scheduled_date existe: affiche PLANIFIÉ (bleu), sinon affiche ASSIGNÉ (orange)
-                                                ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status === 'received' || ticket.status === 'diagnostic')) ? React.createElement('div', {
+                                                ((ticket.assigned_to !== null && ticket.assigned_to !== undefined) && (ticket.status !== 'completed' && ticket.status !== 'archived')) ? React.createElement('div', {
                                                     className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' +
                                                     (ticket.scheduled_date
                                                         ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] border-b-2 border-green-400'
