@@ -612,15 +612,13 @@ pm2 restart webapp
 
 ---
 
-## 🌐 DOMAINE PMEAPP.COM - SETUP IMMÉDIAT
+## 🌐 DOMAINE PMEAPP.COM - SETUP TECHNIQUE
 
-### Contexte
-- **Domaine acheté:** pmeapp.com
-- **But:** Version commerciale multi-tenant white-label SaaS
-- **Architecture:** Subdomains par client (client1.pmeapp.com, client2.pmeapp.com)
-- **Timeline:** Setup maintenant, fork projet après validation IGP (6-12 mois)
+**⚠️ IMPORTANT:** Cette section contient UNIQUEMENT actions techniques domaine.
 
-### Actions Immédiates (Faire MAINTENANT)
+**Pour stratégie commerciale complète → Lire STRATEGIE-COMMERCIALE.md**
+
+### Actions Techniques Immédiates
 
 #### 1. Protéger le Domaine
 ```bash
@@ -632,146 +630,62 @@ pm2 restart webapp
 ✅ Verrouiller transfert domaine
 ```
 
-#### 2. SSL Wildcard Certificate
-```bash
-# Cloudflare gère automatiquement SSL pour:
-- pmeapp.com
-- www.pmeapp.com
-- *.pmeapp.com (wildcard pour tous subdomains)
-
-# Vérifier dans Cloudflare Dashboard:
-SSL/TLS → Edge Certificates → "Universal SSL" actif
-```
-
-#### 3. DNS Records Basiques (Cloudflare DNS)
+#### 2. Setup DNS Cloudflare
 ```dns
 # Type  | Name | Content                          | Proxy
 A       | @    | <Cloudflare Pages IP>            | ✅ Proxied
 CNAME   | www  | webapp.pages.dev                 | ✅ Proxied
-CNAME   | *    | webapp.pages.dev                 | ✅ Proxied (wildcard subdomains)
+CNAME   | *    | webapp.pages.dev                 | ✅ Proxied
 MX      | @    | route1.mx.cloudflare.net         | ❌ DNS only
 MX      | @    | route2.mx.cloudflare.net         | ❌ DNS only
 TXT     | @    | v=spf1 include:_spf.mx.cloudflare.net ~all
 ```
 
-#### 4. Email Professionnel (Cloudflare Email Routing - GRATUIT)
+#### 3. Email Professionnel (Cloudflare Email Routing)
 ```bash
 # Email Routing → Destination addresses:
 contact@pmeapp.com   → salah@igpglass.ca
 support@pmeapp.com   → salah@igpglass.ca
 demo@pmeapp.com      → salah@igpglass.ca
-admin@pmeapp.com     → salah@igpglass.ca
 
-# Email Routing → Catch-all:
-*@pmeapp.com → salah@igpglass.ca
+# Catch-all: *@pmeapp.com → salah@igpglass.ca
 ```
 
-#### 5. Custom Domain sur Cloudflare Pages
+#### 4. Custom Domain Cloudflare Pages
 ```bash
-# Dans Cloudflare Dashboard → Pages → webapp:
 cd /home/user/webapp
-
-# Ajouter custom domain:
 npx wrangler pages domain add pmeapp.com --project-name webapp
 npx wrangler pages domain add www.pmeapp.com --project-name webapp
-npx wrangler pages domain add app.pmeapp.com --project-name webapp
-
-# Vérifier domains:
 npx wrangler pages domain list --project-name webapp
 ```
 
-### Multi-Tenancy Architecture (Pour Fork Futur)
+### Multi-Tenancy Code Patterns (Pour Fork)
 
-#### Database Schema Pattern
+**Database schema:**
 ```sql
--- CRITIQUE: tenant_id dans TOUTES tables (sauf users_tenants mapping)
-CREATE TABLE IF NOT EXISTS work_orders (
+CREATE TABLE work_orders (
   id TEXT PRIMARY KEY,
-  tenant_id TEXT NOT NULL,  -- ← OBLIGATOIRE
-  -- ... autres colonnes
+  tenant_id TEXT NOT NULL,  -- ← OBLIGATOIRE partout
+  -- autres colonnes...
   FOREIGN KEY (tenant_id) REFERENCES tenants(id)
 );
-
 CREATE INDEX idx_work_orders_tenant ON work_orders(tenant_id);
-
--- Table mapping users ↔ tenants (many-to-many)
-CREATE TABLE IF NOT EXISTS users_tenants (
-  user_id TEXT NOT NULL,
-  tenant_id TEXT NOT NULL,
-  role TEXT NOT NULL,
-  PRIMARY KEY (user_id, tenant_id)
-);
 ```
 
-#### Subdomain Routing Pattern
+**Subdomain routing:**
 ```typescript
-// src/index.tsx - Pattern pour fork commercial
-const app = new Hono<{ Bindings: Bindings }>();
-
 app.use('*', async (c, next) => {
-  const host = c.req.header('host') || '';
-  
-  // Extraire subdomain: client1.pmeapp.com → client1
-  const subdomain = host.split('.')[0];
-  
-  if (subdomain === 'www' || subdomain === 'pmeapp') {
-    // Landing page marketing
-    return c.html(renderLandingPage());
-  }
-  
-  // Vérifier tenant existe
+  const subdomain = c.req.header('host')?.split('.')[0];
   const tenant = await c.env.DB.prepare(
-    'SELECT id, name, logo_url FROM tenants WHERE subdomain = ?'
+    'SELECT * FROM tenants WHERE subdomain = ?'
   ).bind(subdomain).first();
-  
-  if (!tenant) {
-    return c.html('<h1>Tenant not found</h1>', 404);
-  }
-  
-  // Injecter tenant dans context
   c.set('tenant', tenant);
   await next();
 });
-
-// Toutes queries DB incluent tenant_id
-app.get('/api/work-orders', async (c) => {
-  const tenant = c.get('tenant');
-  const orders = await c.env.DB.prepare(
-    'SELECT * FROM work_orders WHERE tenant_id = ?'
-  ).bind(tenant.id).all();
-  
-  return c.json(orders);
-});
 ```
 
-#### White-Label Config (Déjà Implémenté)
-```typescript
-// Déjà dans code actuel:
-interface TenantConfig {
-  logo_url: string;
-  app_title: string;
-  app_subtitle: string;
-}
-
-// À réutiliser dans fork commercial
-```
-
-### Checklist Pre-Fork Commercial
-- [ ] IGP validation complète (6-12 mois usage)
-- [ ] Analytics usage features (tracking ajouté)
-- [ ] Liste features à garder/retirer
-- [ ] Plan refactoring architecture (165-230h)
-- [ ] Landing page www.pmeapp.com créée
-- [ ] Tests multi-tenant en staging
-- [ ] Migration path IGP → pmeapp.com subdomain
-- [ ] Documentation API pour intégrations
-- [ ] Pricing tiers définis ($15-25/user/month)
-
-### Notes Importantes
-- **NE PAS toucher projet actuel (webapp)** - fork propre après validation
-- **IGP reste sur mecanique.igpglass.ca** - migration optionnelle plus tard
-- **Fork = refactoring complet** - architecture propre dès départ
-- **Domain setup = investissement temps 2-3h** - protection asset stratégique
+**⚠️ Pour détails stratégie commerciale, marketing, pricing, roadmap:**
+**→ Lire `/home/user/webapp/STRATEGIE-COMMERCIALE.md`**
 
 ---
 
@@ -797,8 +711,8 @@ interface TenantConfig {
 
 **Fin du guide. Si contradiction trouvée entre ce fichier et autres docs → Ce fichier prime.**
 
-**Version:** 1.0.2  
+**Version:** 1.0.3  
 **Créé:** 2025-11-23  
-**Dernière MAJ:** 2025-11-23 (ajout section pmeapp.com domain setup)  
+**Dernière MAJ:** 2025-11-23 (simplification section pmeapp.com - stratégie déplacée vers STRATEGIE-COMMERCIALE.md)  
 **Basé sur:** 210 fichiers .md analysés  
 **Statut:** ✅ Opérationnel
