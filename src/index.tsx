@@ -835,6 +835,24 @@ app.get('/', (c) => {
             return year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
         };
 
+        /**
+         * Convertir une date SQL UTC vers un objet Date JavaScript
+         * @param {string} sqlDateTime - Format: "YYYY-MM-DD HH:MM:SS" (UTC dans la DB)
+         * @returns {Date} Objet Date parsé en UTC
+         * 
+         * CRITICAL: Les dates dans la DB sont stockées en UTC.
+         * JavaScript's new Date("YYYY-MM-DD HH:MM:SS") les interprète comme LOCAL TIME.
+         * On doit ajouter 'Z' pour forcer l'interprétation UTC.
+         */
+        const parseUTCDate = (sqlDateTime) => {
+            if (!sqlDateTime || sqlDateTime === 'null' || sqlDateTime === '') return null;
+            
+            // Convertir "YYYY-MM-DD HH:MM:SS" → "YYYY-MM-DDTHH:MM:SSZ"
+            const isoFormat = sqlDateTime.replace(' ', 'T');
+            const utcFormat = isoFormat + (isoFormat.includes('Z') ? '' : 'Z');
+            return new Date(utcFormat);
+        };
+
         // ============================================================================
 
         // Fonction pour calculer le temps écoulé depuis la création
@@ -2713,7 +2731,7 @@ app.get('/', (c) => {
                         ),
 
                         // Badge "En retard" si ticket expiré (visible pour tous)
-                        (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived' && new Date(ticket.scheduled_date) < new Date()) ?
+                        (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived' && parseUTCDate(ticket.scheduled_date) < new Date()) ?
                             React.createElement('div', { className: 'mb-4 sm:mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-400 rounded-xl shadow-lg p-4 sm:p-6' },
                                 React.createElement('div', { className: 'flex flex-col sm:flex-row items-start gap-4' },
                                     React.createElement('div', { className: 'text-4xl sm:text-5xl flex-shrink-0' }, '⏰'),
@@ -2723,7 +2741,8 @@ app.get('/', (c) => {
                                             React.createElement('span', { className: 'text-sm sm:text-base font-normal text-orange-700' },
                                                 ' - ',
                                                 (() => {
-                                                    const delay = new Date().getTime() - new Date(ticket.scheduled_date).getTime();
+                                                    const scheduledUTC = parseUTCDate(ticket.scheduled_date);
+                                                    const delay = new Date().getTime() - scheduledUTC.getTime();
                                                     const hours = Math.floor(delay / (1000 * 60 * 60));
                                                     const minutes = Math.floor((delay % (1000 * 60 * 60)) / (1000 * 60));
                                                     return hours > 0 ? hours + 'h ' + minutes + 'min' : minutes + 'min';
@@ -6076,8 +6095,8 @@ app.get('/', (c) => {
                         if (!hasScheduledA && !hasScheduledB) return 0;
 
                         // Comparer les dates planifiées
-                        const dateA = new Date(a.scheduled_date.replace(' ', 'T'));
-                        const dateB = new Date(b.scheduled_date.replace(' ', 'T'));
+                        const dateA = parseUTCDate(a.scheduled_date);
+                        const dateB = parseUTCDate(b.scheduled_date);
                         return dateA - dateB; // Plus proche en premier
                     });
                 }
@@ -6874,7 +6893,7 @@ app.get('/', (c) => {
                                                         : "⚠️ Non assigné"
                                                 ),
                                                 (ticket.scheduled_date && ticket.scheduled_date !== 'null') ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
-                                                    new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', {
+                                                    parseUTCDate(ticket.scheduled_date).toLocaleDateString('fr-FR', {
                                                         day: '2-digit',
                                                         month: 'short'
                                                     })
@@ -7031,7 +7050,7 @@ app.get('/', (c) => {
                                                             : '⚠️ Non assigné'
                                                     ),
                                                     hasScheduledDate(ticket.scheduled_date) ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] border border-blue-600 whitespace-nowrap flex-shrink-0' },
-                                                        new Date(ticket.scheduled_date.replace(' ', 'T')).toLocaleDateString('fr-FR', {
+                                                        parseUTCDate(ticket.scheduled_date).toLocaleDateString('fr-FR', {
                                                             day: '2-digit',
                                                             month: 'short'
                                                         })
