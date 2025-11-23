@@ -50,7 +50,7 @@ cron.post('/check-overdue', async (c) => {
         AND t.scheduled_date IS NOT NULL
         AND t.scheduled_date != 'null'
         AND t.scheduled_date != ''
-        AND t.status IN ('received', 'diagnostic')
+        AND t.status NOT IN ('completed', 'archived')
         AND datetime(t.scheduled_date) < datetime('now')
       ORDER BY t.scheduled_date ASC
     `).all();
