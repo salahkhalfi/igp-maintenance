@@ -159,7 +159,7 @@ cron.post('/check-overdue', async (c) => {
           const { sendPushNotification } = await import('./push');
           const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
             title: `🔴 Ticket Expiré`,
-            body: `${ticket.title} - En retard de ${overdueText}`,
+            body: `${ticket.title} - Retard ${overdueText}. Changez la date planifiée si nécessaire`,
             icon: '/icon-192.png',
             badge: '/icon-192.png',
             data: { 
@@ -220,7 +220,7 @@ cron.post('/check-overdue', async (c) => {
               try {
                 const adminPushResult = await sendPushNotification(c.env, admin.id as number, {
                   title: `⚠️ TICKET EXPIRÉ`,
-                  body: `${ticket.ticket_id}: ${ticket.title} - En retard de ${overdueText}`,
+                  body: `${ticket.ticket_id}: ${ticket.title} - Retard ${overdueText}`,
                   icon: '/icon-192.png',
                   badge: '/badge-72.png',
                   data: {

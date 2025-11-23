@@ -2712,9 +2712,56 @@ app.get('/', (c) => {
                             )
                         ),
 
+                        // Badge "En retard" si ticket expiré (visible pour tous)
+                        (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived' && new Date(ticket.scheduled_date) < new Date()) ?
+                            React.createElement('div', { className: 'mb-4 sm:mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-400 rounded-xl shadow-lg p-4 sm:p-6' },
+                                React.createElement('div', { className: 'flex flex-col sm:flex-row items-start gap-4' },
+                                    React.createElement('div', { className: 'text-4xl sm:text-5xl flex-shrink-0' }, '⏰'),
+                                    React.createElement('div', { className: 'flex-1 w-full' },
+                                        React.createElement('h4', { className: 'font-bold text-orange-900 text-lg sm:text-xl mb-2 flex items-center gap-2' },
+                                            React.createElement('span', {}, 'Ticket en retard'),
+                                            React.createElement('span', { className: 'text-sm sm:text-base font-normal text-orange-700' },
+                                                ' - ',
+                                                (() => {
+                                                    const delay = new Date().getTime() - new Date(ticket.scheduled_date).getTime();
+                                                    const hours = Math.floor(delay / (1000 * 60 * 60));
+                                                    const minutes = Math.floor((delay % (1000 * 60 * 60)) / (1000 * 60));
+                                                    return hours > 0 ? hours + 'h ' + minutes + 'min' : minutes + 'min';
+                                                })()
+                                            )
+                                        ),
+                                        React.createElement('p', { className: 'text-sm sm:text-base text-orange-800 mb-4' },
+                                            'En attente de pièces, validation externe, ou autre blocage?'
+                                        ),
+                                        (currentUser.role === 'admin' || currentUser.role === 'supervisor') ?
+                                            React.createElement('button', {
+                                                onClick: () => {
+                                                    setEditingSchedule(true);
+                                                    // Scroll vers section planification
+                                                    setTimeout(() => {
+                                                        const section = document.querySelector('[data-section="planning"]');
+                                                        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }, 100);
+                                                },
+                                                className: 'bg-orange-500 hover:bg-orange-600 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0'
+                                            },
+                                                React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
+                                                'Modifier la date planifiée'
+                                            ) :
+                                            React.createElement('p', { className: 'text-xs sm:text-sm text-orange-700 italic bg-orange-100/50 px-3 py-2 rounded-lg border border-orange-300' },
+                                                React.createElement('i', { className: 'fas fa-info-circle mr-2' }),
+                                                'Contactez un superviseur ou administrateur pour modifier la date planifiée'
+                                            )
+                                    )
+                                )
+                            ) : null,
+
                         // Section planification (superviseur/admin seulement)
                         (currentUser.role === 'admin' || currentUser.role === 'supervisor') ?
-                            React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50' },
+                            React.createElement('div', { 
+                                className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50',
+                                'data-section': 'planning'
+                            },
                                 React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3 sm:mb-4' },
                                     React.createElement('h4', { className: 'text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-slate-600 to-gray-600 bg-clip-text text-transparent flex items-center' },
                                         React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-600 text-sm sm:text-base' }),
