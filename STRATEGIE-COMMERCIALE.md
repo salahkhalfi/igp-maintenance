@@ -14,6 +14,7 @@
 6. [Plan de Développement](#plan-de-développement)
 7. [Marketing et Acquisition](#marketing-et-acquisition)
 8. [Métriques de Succès](#métriques-de-succès)
+9. [Architecture Subdomains](#architecture-subdomains)
 
 ---
 
@@ -1307,8 +1308,402 @@ Pourquoi: Indique usage réel + valeur délivrée (pas juste signups vanity)
 
 ---
 
-**Version:** 1.0.0  
+## 🌐 ARCHITECTURE SUBDOMAINS
+
+### Recommandation Structure Complète
+
+**Décision stratégique basée sur analyse SaaS leaders (Slack, Asana, ClickUp)**
+
+#### Structure URLs Production
+
+```
+www.pmeapp.com              → Landing page marketing
+pmeapp.com                  → Redirect vers www
+
+app.pmeapp.com              → Portail login centralisé + workspace selector
+{client}.pmeapp.com         → Application tenant spécifique
+
+admin.pmeapp.com            → Super admin portal (gestion tous tenants)
+support.pmeapp.com          → Documentation + FAQ + centre d'aide
+status.pmeapp.com           → Status page uptime monitoring
+
+api.pmeapp.com              → API publique (si exposée)
+docs.pmeapp.com             → Documentation API pour développeurs
+staging.pmeapp.com          → Environnement staging/testing
+```
+
+### Pourquoi `app.pmeapp.com` ? (RECOMMANDÉ)
+
+**Pattern Login Centralisé vs Direct Subdomain:**
+
+| Approche | Pattern | Pros | Cons |
+|----------|---------|------|------|
+| **Login Centralisé** | `app.pmeapp.com` → détecte tenant → redirect `{client}.pmeapp.com` | ✅ UX familière<br>✅ Multi-tenant users support<br>✅ Découverte automatique<br>✅ Onboarding simple | ⚠️ 1 redirect supplémentaire |
+| **Direct Subdomain** | User va direct à `{client}.pmeapp.com/login` | ✅ 0 redirect<br>✅ URL courte | ❌ User doit mémoriser subdomain<br>❌ Multi-tenant users compliqué<br>❌ Onboarding confus |
+
+**Recommandation: Login Centralisé** (utilisé par 80% des SaaS modernes)
+
+### Flow Utilisateur Optimal
+
+```
+1. User → www.pmeapp.com
+2. Clique "Connexion" → app.pmeapp.com
+3. Entre email → Système détecte tenant(s) automatiquement
+4. Si 1 tenant → Redirect igpglass.pmeapp.com/dashboard
+5. Si 2+ tenants → Selector "Choisir espace: IGP Glass, Acme Corp..."
+```
+
+### Architecture Routing Code
+
+```typescript
+// app.pmeapp.com/login - Portail centralisé
+app.post('/login', async (c) => {
+  const { email, password } = await c.req.json();
+  
+  // Authenticate user
+  const user = await authenticateUser(email, password);
+  if (!user) {
+    return c.json({ error: 'Invalid credentials' }, 401);
+  }
+  
+  // Find user's tenant(s)
+  const userTenants = await c.env.DB.prepare(`
+    SELECT t.subdomain, t.name, t.logo_url, ut.role
+    FROM users_tenants ut
+    JOIN tenants t ON t.id = ut.tenant_id
+    WHERE ut.user_id = ?
+    AND t.status IN ('trial', 'active')
+    ORDER BY t.name
+  `).bind(user.id).all();
+  
+  if (userTenants.results.length === 0) {
+    return c.json({ error: 'No active workspace found' }, 404);
+  }
+  
+  if (userTenants.results.length === 1) {
+    // Single tenant → direct redirect
+    const tenant = userTenants.results[0];
+    const token = generateJWT(user, tenant);
+    
+    return c.json({ 
+      redirect: `https://${tenant.subdomain}.pmeapp.com/dashboard`,
+      token: token,
+      tenant: tenant
+    });
+  }
+  
+  // Multiple tenants → show workspace selector
+  return c.json({ 
+    tenants: userTenants.results,
+    message: 'Select your workspace'
+  });
+});
+
+// {client}.pmeapp.com - Tenant-specific app
+app.use('*', async (c, next) => {
+  const host = c.req.header('host') || '';
+  const subdomain = host.split('.')[0];
+  
+  // Skip tenant resolution for special subdomains
+  if (['www', 'app', 'admin', 'support', 'status', 'api', 'docs', 'staging'].includes(subdomain)) {
+    return await next();
+  }
+  
+  // Lookup tenant by subdomain
+  const tenant = await c.env.DB.prepare(
+    'SELECT * FROM tenants WHERE subdomain = ? AND status IN (?, ?)'
+  ).bind(subdomain, 'trial', 'active').first();
+  
+  if (!tenant) {
+    return c.html('<h1>Workspace not found</h1><p>Please contact support.</p>', 404);
+  }
+  
+  // Inject tenant context for all downstream handlers
+  c.set('tenant', tenant);
+  
+  await next();
+});
+
+// All API routes automatically scoped to tenant
+app.get('/api/work-orders', async (c) => {
+  const tenant = c.get('tenant'); // Always available
+  
+  const orders = await c.env.DB.prepare(
+    'SELECT * FROM work_orders WHERE tenant_id = ? ORDER BY created_at DESC LIMIT 50'
+  ).bind(tenant.id).all();
+  
+  return c.json(orders);
+});
+```
+
+### Session Management Cross-Subdomain
+
+**JWT Token Strategy:**
+
+```typescript
+// Token structure
+interface JWTPayload {
+  user_id: string;
+  tenant_id: string;
+  role: string;
+  exp: number; // Expiration timestamp
+}
+
+// Generate token (app.pmeapp.com)
+function generateJWT(user: User, tenant: Tenant): string {
+  const payload: JWTPayload = {
+    user_id: user.id,
+    tenant_id: tenant.id,
+    role: user.role_in_tenant,
+    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
+  };
+  
+  return jwt.sign(payload, c.env.JWT_SECRET);
+}
+
+// Validate token (tenant.pmeapp.com)
+app.use('/api/*', async (c, next) => {
+  const token = c.req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  
+  try {
+    const decoded = await jwt.verify(token, c.env.JWT_SECRET);
+    const tenant = c.get('tenant');
+    
+    // Verify token belongs to current tenant
+    if (decoded.tenant_id !== tenant.id) {
+      return c.json({ error: 'Invalid token for this workspace' }, 403);
+    }
+    
+    c.set('user', decoded);
+    await next();
+  } catch (err) {
+    return c.json({ error: 'Invalid or expired token' }, 401);
+  }
+});
+```
+
+**Cookie Strategy (Alternative):**
+
+```typescript
+// Set cookie on app.pmeapp.com with domain=.pmeapp.com
+setCookie(c, 'session_token', token, {
+  domain: '.pmeapp.com',  // Accessible on all subdomains
+  httpOnly: true,
+  secure: true,
+  sameSite: 'Lax',
+  maxAge: 86400  // 24h
+});
+```
+
+### DNS Configuration Complète
+
+```dns
+# Marketing
+@               A       192.0.2.1                       Proxied
+www             CNAME   webapp.pages.dev                Proxied
+
+# Application
+app             CNAME   webapp.pages.dev                Proxied
+*               CNAME   webapp.pages.dev                Proxied  # Wildcard tenants
+
+# Admin/Support
+admin           CNAME   webapp.pages.dev                Proxied
+support         CNAME   webapp.pages.dev                Proxied
+status          CNAME   webapp.pages.dev                Proxied
+docs            CNAME   webapp.pages.dev                Proxied
+api             CNAME   webapp.pages.dev                Proxied
+staging         CNAME   webapp-test.pages.dev           Proxied
+
+# Email (Cloudflare Email Routing)
+@               MX      route1.mx.cloudflare.net    10  DNS only
+@               MX      route2.mx.cloudflare.net    20  DNS only
+@               TXT     v=spf1 include:_spf.mx.cloudflare.net ~all
+_dmarc          TXT     v=DMARC1; p=quarantine; rua=mailto:admin@pmeapp.com
+```
+
+### Wrangler Custom Domains Setup
+
+```bash
+# Add all subdomains to Cloudflare Pages
+cd /home/user/webapp
+
+# Marketing
+npx wrangler pages domain add pmeapp.com --project-name webapp
+npx wrangler pages domain add www.pmeapp.com --project-name webapp
+
+# Application
+npx wrangler pages domain add app.pmeapp.com --project-name webapp
+# Note: Wildcard *.pmeapp.com handled by DNS CNAME * record
+
+# Admin/Support
+npx wrangler pages domain add admin.pmeapp.com --project-name webapp
+npx wrangler pages domain add support.pmeapp.com --project-name webapp
+npx wrangler pages domain add status.pmeapp.com --project-name webapp
+npx wrangler pages domain add docs.pmeapp.com --project-name webapp
+npx wrangler pages domain add api.pmeapp.com --project-name webapp
+
+# Staging (optional - different project)
+npx wrangler pages domain add staging.pmeapp.com --project-name webapp-test
+
+# Verify
+npx wrangler pages domain list --project-name webapp
+```
+
+### Exemples Concurrents SaaS
+
+| SaaS | Structure | Pattern Utilisé |
+|------|-----------|-----------------|
+| **Slack** | `app.slack.com` → `{workspace}.slack.com` | Login centralisé ✅ |
+| **Asana** | `app.asana.com` → Workspace selector | Login centralisé ✅ |
+| **ClickUp** | `app.clickup.com` → Workspace selector | Login centralisé ✅ |
+| **Notion** | `notion.so` → `{workspace}.notion.so` | Direct subdomain ⚠️ |
+| **Monday** | `{company}.monday.com` | Direct subdomain ⚠️ |
+| **Trello** | `trello.com` (board-based, pas subdomain) | Single domain |
+
+**Tendance dominante 2024-2025:** Login centralisé avec `app.` = Meilleure UX
+
+### Branding Examples par Client
+
+**Client: IGP Glass**
+```
+URL:            igpglass.pmeapp.com
+Logo:           Logo IGP Glass
+Titre:          "IGP Maintenance"
+Sous-titre:     "Système de gestion maintenance"
+Email sender:   notifications@pmeapp.com
+```
+
+**Client: Acme Industries**
+```
+URL:            acme.pmeapp.com
+Logo:           Logo Acme
+Titre:          "Acme GMAO"
+Sous-titre:     "Plateforme maintenance industrielle"
+Email sender:   notifications@pmeapp.com
+```
+
+**Client: MetalFab Inc.**
+```
+URL:            metalfab.pmeapp.com
+Logo:           Logo MetalFab
+Titre:          "MetalFab Ops"
+Sous-titre:     "Gestion opérations et maintenance"
+Email sender:   notifications@pmeapp.com
+```
+
+### Email Templates Multi-Tenant
+
+```typescript
+// Email service avec branding tenant
+async function sendEmail(tenant: Tenant, user: User, template: string, data: any) {
+  const emailHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        .header { 
+          background: ${tenant.brand_color || '#3B82F6'}; 
+          padding: 20px; 
+          text-align: center; 
+        }
+        .logo { max-width: 150px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="${tenant.logo_url}" alt="${tenant.name}" class="logo">
+        <h1 style="color: white;">${tenant.app_title}</h1>
+      </div>
+      <div style="padding: 20px;">
+        ${renderTemplate(template, data)}
+      </div>
+      <footer style="text-align: center; color: #666; padding: 20px;">
+        <p>${tenant.name} - Propulsé par PME App</p>
+        <p><a href="https://${tenant.subdomain}.pmeapp.com">Accéder à l'application</a></p>
+      </footer>
+    </body>
+    </html>
+  `;
+  
+  await sendEmailViaSMTP({
+    from: 'notifications@pmeapp.com',
+    replyTo: tenant.support_email || 'support@pmeapp.com',
+    to: user.email,
+    subject: data.subject,
+    html: emailHTML
+  });
+}
+```
+
+### Checklist Implémentation
+
+**Phase 1: Infrastructure (Semaine 1)**
+- [ ] Acheter/configurer pmeapp.com
+- [ ] Setup DNS Cloudflare (A, CNAME, MX, TXT records)
+- [ ] Configurer Email Routing
+- [ ] SSL wildcard actif
+- [ ] Test: `dig app.pmeapp.com`, `dig igpglass.pmeapp.com`
+
+**Phase 2: Code Base (Semaines 2-3)**
+- [ ] Refactor routing: séparer app.pmeapp.com vs tenant subdomains
+- [ ] Implémenter tenant middleware
+- [ ] JWT token generation/validation
+- [ ] Session management cross-subdomain
+- [ ] Email templates avec branding tenant
+
+**Phase 3: Testing (Semaine 4)**
+- [ ] Créer 3 tenants test: test1, test2, test3
+- [ ] Tester login centralisé app.pmeapp.com
+- [ ] Tester tenant selector (user multi-tenant)
+- [ ] Tester isolation données par tenant
+- [ ] Tester branding (logo, couleurs, emails)
+
+**Phase 4: Production (Semaine 5)**
+- [ ] Migrer IGP vers igpglass.pmeapp.com
+- [ ] Update DNS mecanique.igpglass.ca → CNAME vers igpglass.pmeapp.com (ou redirect)
+- [ ] Deploy admin.pmeapp.com portal
+- [ ] Deploy support.pmeapp.com documentation
+- [ ] Monitoring + alertes
+
+### Notes Techniques Importantes
+
+**Cloudflare Pages Wildcard Subdomains:**
+- DNS `CNAME * → webapp.pages.dev` handle tous subdomains automatiquement
+- Pas besoin ajouter chaque client individuellement dans wrangler
+- Routing géré par code (tenant middleware)
+
+**Limites Cloudflare Workers:**
+- 1,000 subdomains custom max par projet Pages (largement suffisant)
+- Wildcard SSL inclus gratuitement
+- Latency subdomain routing: <5ms overhead
+
+**SEO Considerations:**
+- `www.pmeapp.com`: Indexé Google (marketing)
+- `app.pmeapp.com`: noindex (application)
+- `{client}.pmeapp.com`: noindex (données privées clients)
+- `support.pmeapp.com`: Indexé (documentation publique)
+
+### Rationale Décision Finale
+
+**Pourquoi cette structure:**
+
+1. **UX Optimale**: Pattern familier utilisateurs SaaS modernes
+2. **Multi-tenant Support**: Users appartenant à plusieurs clients (consultants, freelances)
+3. **Scalabilité**: 0 configuration par nouveau client (wildcard DNS)
+4. **Sécurité**: Isolation complète données par subdomain
+5. **SEO**: Séparation claire marketing (indexé) vs app (privé)
+6. **Branding**: White-label parfait avec subdomain dédié
+7. **Performance**: Edge routing Cloudflare = latency minimale
+
+---
+
+**Version:** 1.0.1  
 **Créé:** 2025-11-23  
+**Dernière MAJ:** 2025-11-23 (ajout section Architecture Subdomains)  
 **Auteur:** Salah Khalfi + AI Assistant  
 **Basé sur:** Conversations stratégiques multi-sessions + recherche marché  
 **Statut:** ✅ Living Document - Éditer au besoin
