@@ -6042,7 +6042,8 @@ app.get('/', (c) => {
             // 🔊 Play celebration voice "C'est fini!" (16 KB MP3 - French female voice)
             const playCelebrationSound = () => {
                 try {
-                    const audio = new Audio('/static/cest-fini.mp3');
+                    // Use CDN-hosted audio file for reliability across all environments
+                    const audio = new Audio('https://www.genspark.ai/api/files/s/KHmcjdDt');
                     audio.volume = 0.7; // 70% volume
                     audio.play().catch(error => {
                         // Silent fail - audio playback may be blocked by browser
