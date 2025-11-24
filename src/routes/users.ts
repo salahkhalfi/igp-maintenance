@@ -418,7 +418,10 @@ users.put('/:id', async (c) => {
     // Logger l'action
     const changes = [];
     if (email) changes.push(`email: ${existingUser.email} → ${email}`);
-    if (full_name) changes.push(`name: ${existingUser.full_name} → ${full_name}`);
+    if (first_name !== undefined && first_name !== null && first_name.trim().length > 0) {
+      const newFullName = last_name ? `${first_name.trim()} ${last_name.trim()}` : first_name.trim();
+      changes.push(`name: ${existingUser.full_name} → ${newFullName}`);
+    }
     if (role) changes.push(`role: ${existingUser.role} → ${role}`);
     if (password) changes.push('password changed');
 
