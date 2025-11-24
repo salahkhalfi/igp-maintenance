@@ -190,7 +190,7 @@ auth.get('/me', async (c) => {
     }
 
     const user = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
+      'SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
     ).bind(userPayload.userId).first() as User;
 
     if (!user) {
