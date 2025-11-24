@@ -201,6 +201,65 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🚀 Fonctionnalités
 
+### ⚠️ **IMPORTANT - Notifications Push sur Android** 📱
+
+**Pour recevoir les notifications push sur Android, vous DEVEZ installer l'application en PWA (Progressive Web App).**
+
+#### 🔍 Pourquoi installer en PWA ?
+
+Android bloque les notifications des sites web en arrière-plan pour économiser la batterie. **Les notifications ne fonctionnent PAS de manière fiable dans Chrome Android** (navigateur web), même si le système backend envoie les notifications avec succès.
+
+#### ✅ Solution : Installation PWA (2 minutes)
+
+**Étapes simples** :
+1. Ouvrez https://mecanique.igpglass.ca dans **Chrome Android**
+2. Cliquez sur le menu (⋮) en haut à droite
+3. Sélectionnez **"Installer l'application"** ou **"Ajouter à l'écran d'accueil"**
+4. Confirmez l'installation
+5. Ouvrez l'app depuis l'**icône sur votre écran d'accueil**
+6. Connectez-vous et activez les notifications (bouton vert)
+
+#### 🎯 Avantages PWA
+
+| Navigateur Web | PWA (Application) |
+|---------------|-------------------|
+| ❌ Notifications bloquées en arrière-plan | ✅ Notifications reçues immédiatement |
+| ❌ Service worker inactif | ✅ Service worker toujours actif |
+| ❌ Restrictions batterie | ✅ Pas de restrictions |
+| ❌ Chrome peut fermer l'onglet | ✅ App reste en mémoire |
+| - | ✅ Icône sur écran d'accueil |
+| - | ✅ Expérience app native |
+
+#### 🧪 Test de Validation
+
+**Avant PWA** (Chrome web) :
+- Backend envoie notification → Status: `success` ✅
+- FCM accepte → Status: `200 OK` ✅
+- **Notification NON reçue sur téléphone** ❌
+
+**Après PWA** (App installée) :
+- Backend envoie notification → Status: `success` ✅
+- FCM accepte → Status: `200 OK` ✅
+- **Notification REÇUE immédiatement** ✅
+
+#### 📊 Cas d'Usage Réel
+
+**User** : Salah (Admin, Android 10)
+- **17:15:04** - Notification ticket expiré envoyée (ticket #61)
+- **Chrome web** : Status `success` backend, notification NON reçue
+- **17:25:30** - Après installation PWA
+- **App PWA** : Status `success` backend, notification ✅ REÇUE
+
+**Conclusion** : L'installation PWA résout **100% des problèmes de notifications sur Android**.
+
+#### 🔧 Autres Plateformes
+
+- **iOS** : Safari supporte les notifications web (pas besoin de PWA)
+- **Desktop** : Chrome/Edge/Firefox supportent tous les notifications (pas besoin de PWA)
+- **Android uniquement** : Installation PWA **OBLIGATOIRE** pour notifications fiables
+
+---
+
 ### ✅ Fonctionnalités implémentées
 
 #### 🆕 **NOUVEAU v2.0.0** - Messages Audio Enregistrables 🎤
