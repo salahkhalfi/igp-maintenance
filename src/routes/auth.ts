@@ -12,12 +12,15 @@ const auth = new Hono<{ Bindings: Bindings }>();
 auth.post('/register', async (c) => {
   try {
     const body: RegisterRequest = await c.req.json();
-    const { email, password, full_name, role } = body;
+    const { email, password, first_name, last_name, role } = body;
 
     // Validation
-    if (!email || !password || !full_name || !role) {
-      return c.json({ error: 'Tous les champs sont requis' }, 400);
+    if (!email || !password || !first_name || !role) {
+      return c.json({ error: 'Email, mot de passe, prénom et rôle requis' }, 400);
     }
+
+    // Construire full_name pour compatibilité
+    const full_name = last_name ? `${first_name} ${last_name}` : first_name;
 
     // Vérifier si l'email existe déjà
     const existing = await c.env.DB.prepare(
@@ -33,8 +36,8 @@ auth.post('/register', async (c) => {
 
     // Créer l'utilisateur
     const result = await c.env.DB.prepare(
-      'INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)'
-    ).bind(email, password_hash, full_name, role).run();
+      'INSERT INTO users (email, password_hash, full_name, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(email, password_hash, full_name, first_name, last_name, role).run();
 
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du compte' }, 500);
@@ -42,7 +45,7 @@ auth.post('/register', async (c) => {
 
     // Récupérer l'utilisateur créé
     const user = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, is_super_admin, created_at, updated_at FROM users WHERE email = ?'
+      'SELECT id, email, full_name, first_name, last_name, role, is_super_admin, created_at, updated_at FROM users WHERE email = ?'
     ).bind(email).first() as any;
 
     // Générer le token JWT
@@ -51,6 +54,8 @@ auth.post('/register', async (c) => {
       email: user.email,
       role: user.role,
       full_name: user.full_name,
+      first_name: user.first_name,
+      last_name: user.last_name,
       isSuperAdmin: user.is_super_admin === 1
     });
 
@@ -74,7 +79,7 @@ auth.post('/login', async (c) => {
 
     // Récupérer l'utilisateur
     const user = await c.env.DB.prepare(
-      'SELECT * FROM users WHERE email = ?'
+      'SELECT id, email, password_hash, full_name, first_name, last_name, role, is_super_admin, created_at, updated_at FROM users WHERE email = ?'
     ).bind(email).first() as any;
 
     if (!user) {
@@ -126,6 +131,8 @@ auth.post('/login', async (c) => {
       email: user.email,
       role: user.role,
       full_name: user.full_name,
+      first_name: user.first_name,
+      last_name: user.last_name,
       isSuperAdmin: user.is_super_admin === 1
     }, expiresInSeconds);
 

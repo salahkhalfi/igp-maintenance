@@ -3,7 +3,9 @@
 export interface User {
   id: number;
   email: string;
-  full_name: string;
+  full_name: string; // Keep for backwards compatibility
+  first_name: string;
+  last_name: string;
   role: 'admin' | 'supervisor' | 'technician' | 'operator';
   created_at: string;
   updated_at: string;
@@ -94,7 +96,8 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   role: 'admin' | 'supervisor' | 'technician' | 'operator';
 }
 
