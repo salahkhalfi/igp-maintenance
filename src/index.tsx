@@ -213,6 +213,8 @@ app.get('/api/push/vapid-public-key', async (c) => {
 app.use('/api/push/subscribe', authMiddleware);
 app.use('/api/push/unsubscribe', authMiddleware);
 app.use('/api/push/test', authMiddleware);
+app.use('/api/push/verify-subscription', authMiddleware);
+app.use('/api/push/vapid-public-key', authMiddleware);
 
 // Enregistrer les routes push (send-test-to-salah sera accessible sans auth)
 app.route('/api/push', push);
