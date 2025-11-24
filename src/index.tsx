@@ -9859,11 +9859,11 @@ app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
         AND datetime(scheduled_date) < datetime('now')
     `).first();
 
-    // Count active technicians (technicians + supervisors)
+    // Count active technicians (only technicians, not supervisors)
     const techniciansResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM users
-      WHERE role IN ('technician', 'supervisor')
+      WHERE role = 'technician'
     `).first();
 
     return c.json({
