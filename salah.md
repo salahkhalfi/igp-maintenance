@@ -1,6 +1,6 @@
 # salah.md - Guide de Travail Unique
-**Version:** 1.0.4  
-**Date:** 2025-11-23  
+**Version:** 1.0.5  
+**Date:** 2025-11-24  
 **Statut:** Guide opérationnel permanent
 
 ---
@@ -9,7 +9,7 @@
 
 **Quand Salah dit "lis salah" → Lire CE fichier EN ENTIER (pas juste 100 lignes)**
 
-Commande: `hub_files_tool(action="read", file_name="salah.md", limit=633)`
+Commande: `hub_files_tool(action="read", file_name="salah.md", limit=800)`
 
 ---
 
@@ -168,6 +168,27 @@ import { readFileSync } from 'fs';
 const response = await fetch('/static/file.txt');
 ```
 
+### 8. Android Push Notifications (Chrome Web)
+**Symptôme:** Backend logs "success" mais notifications NON reçues sur Android  
+**Cause:** Android bloque notifications des sites web en arrière-plan (économie batterie)  
+**Impact:** 0% notifications reçues sur Chrome Android web  
+**Solution:** Installation PWA (Progressive Web App) OBLIGATOIRE
+
+**Étapes installation PWA:**
+1. Chrome Android → mecanique.igpglass.ca
+2. Menu (⋮) → "Installer l'application"
+3. Ouvrir app depuis écran d'accueil
+4. Activer notifications (bouton vert)
+
+**Résultat:** 100% notifications reçues après PWA
+
+**Documentation:**
+- `/home/user/webapp/GUIDE_INSTALLATION_PWA_ANDROID.md`
+- `/home/user/webapp/SESSION_ANDROID_PWA_FIX.md`
+- README.md section "Android/PWA"
+
+**Note:** iOS Safari et Desktop Chrome/Edge fonctionnent SANS PWA (Android uniquement)
+
 ---
 
 ## 🚀 DÉPLOIEMENT
@@ -306,6 +327,22 @@ rm -rf .wrangler/state/v3/d1
 npm run db:migrate:local
 ```
 
+### Route Debug Push (Salah)
+```bash
+# Test push immédiat user_id 11 (Salah)
+curl https://mecanique.igpglass.ca/api/push/send-test-to-salah
+
+# Retourne:
+# - success: true/false
+# - subscriptionsCount: nombre devices
+# - subscriptions: liste endpoints
+# - pushResult: sentCount/failedCount
+```
+
+**Fichier:** `src/routes/push.ts` lignes 509-561  
+**Auth:** PUBLIC (pas de middleware)  
+**Usage:** Diagnostic push rapide
+
 ### Production
 ```bash
 # Migrations prod
@@ -400,6 +437,16 @@ pm2 logs --nostream
 
 **Mettre à jour après changements majeurs**
 
+### Documents Créés (2025-11-24)
+**Audit et documentation Android PWA:**
+1. `AUDIT_LOGIQUE_GENERALE.md` - Audit complet 2,269 lignes code (100/100 score)
+2. `SESSION_ANDROID_PWA_FIX.md` - Diagnostic Android push (22 min, résolu)
+3. `GUIDE_INSTALLATION_PWA_ANDROID.md` - Guide utilisateur PWA (154 lignes)
+4. `AUDIT_SYSTEME_NOTIFICATIONS_COMPLET.md` - Section 8.5 Android ajoutée
+5. `README.md` - Section Android/PWA warnings (60 lignes)
+
+**Total:** 1,318 lignes documentation créées
+
 ### Ce Fichier (.AI-CONTEXT.md)
 **Mettre à jour:**
 - Nouvelles erreurs critiques découvertes
@@ -481,8 +528,8 @@ db.query(`SELECT * WHERE id = ${id}`)  // SQL Injection!
 ### Versions
 - **Production:** mecanique.igpglass.ca
 - **Test:** webapp-test.pages.dev
-- **Version app:** v2.7.1
-- **Déploiements:** 348 (normal, aucun problème)
+- **Version app:** v2.8.1
+- **Déploiements:** 350+ (normal, aucun problème)
 
 ### Ce Qui Fonctionne
 ✅ Push notifications (admin + users)  
@@ -712,8 +759,15 @@ app.use('*', async (c, next) => {
 
 **Fin du guide. Si contradiction trouvée entre ce fichier et autres docs → Ce fichier prime.**
 
-**Version:** 1.0.4  
+**Version:** 1.0.5  
 **Créé:** 2025-11-23  
-**Dernière MAJ:** 2025-11-23 (correction timezone: dates UTC dans DB + conversion webhooks)  
-**Basé sur:** 210 fichiers .md analysés  
+**Dernière MAJ:** 2025-11-24  
+**Changements v1.0.5:**
+- ✅ Android PWA obligatoire (erreur #8 ajoutée)
+- ✅ Route debug `/api/push/send-test-to-salah`
+- ✅ Version app → 2.8.1
+- ✅ 5 documents audit créés aujourd'hui
+- ✅ Limite lecture → 800 lignes
+
+**Basé sur:** 210+ fichiers .md analysés  
 **Statut:** ✅ Opérationnel
