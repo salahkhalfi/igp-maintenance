@@ -340,13 +340,10 @@ async function initPushNotifications() {
     // Update button color for denied/default states
     await updatePushButtonColor();
     
-    // Si permission non demandée, demander directement
-    if (Notification.permission === 'default') {
-      console.log('🔔 [INIT] Demande de permission...');
-      await requestPushPermission();
-    } else {
-      console.log('⚠️ [INIT] Permission refusée:', Notification.permission);
-    }
+    // NE JAMAIS demander automatiquement la permission
+    // L'utilisateur doit cliquer manuellement sur le bouton "Notifications"
+    console.log('🔔 [INIT] Permission status:', Notification.permission);
+    console.log('🔔 [INIT] Abonnement uniquement manuel via bouton');
     
   } catch (error) {
     console.error('❌ [INIT] Erreur initialisation push notifications:', error);
