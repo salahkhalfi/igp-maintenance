@@ -6635,7 +6635,8 @@ app.get('/', (c) => {
                                                 color: '#1e40af',
                                                 fontWeight: '900',
                                                 textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
-                                            }
+                                            },
+                                            id: 'active-tickets-count'
                                         },
                                             getActiveTicketsCount() + " tickets actifs"
                                         ),
@@ -7672,6 +7673,34 @@ app.get('/', (c) => {
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(React.createElement(App));
+
+        // Simple stats loader - no React state, just direct DOM update
+        window.loadSimpleStats = function() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+
+            axios.get('/api/stats/active-tickets', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(response => {
+                const count = response.data.activeTickets;
+                const element = document.getElementById('active-tickets-count');
+                if (element && count !== undefined) {
+                    element.textContent = count + ' tickets actifs (Global)';
+                }
+            })
+            .catch(error => {
+                // Silently fail - keep showing local count
+                console.log('[Stats] Could not load global stats');
+            });
+        };
+
+        // Load stats once after a short delay (let app render first)
+        setTimeout(() => {
+            if (window.loadSimpleStats) {
+                window.loadSimpleStats();
+            }
+        }, 2000);
 
         // Enregistrer le Service Worker pour PWA
         if ('serviceWorker' in navigator) {
@@ -9763,6 +9792,34 @@ app.get('/test', (c) => {
 </body>
 </html>
   `);
+});
+
+// ========================================
+// STATS API - Simple active tickets count
+// ========================================
+app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Only admins and supervisors can see stats
+    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
+      return c.json({ error: 'Accès refusé' }, 403);
+    }
+
+    // Count active tickets (not completed, not cancelled, not archived)
+    const result = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM tickets
+      WHERE status NOT IN ('completed', 'cancelled', 'archived')
+    `).first();
+
+    return c.json({
+      activeTickets: (result as any)?.count || 0
+    });
+  } catch (error) {
+    console.error('[Stats API] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
 });
 
 app.get('/api/health', (c) => {
