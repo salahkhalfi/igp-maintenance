@@ -6658,6 +6658,15 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'fas fa-users mr-1' }),
                                             '0 techs'
                                         ) : null,
+                                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
+                                        React.createElement('span', {
+                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300',
+                                            id: 'push-devices-badge',
+                                            title: 'Appareils avec notifications push'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }),
+                                            '0 apps'
+                                        ) : null,
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', {
                                             className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
@@ -7724,6 +7733,13 @@ app.get('/', (c) => {
                 const techElement = document.getElementById('technicians-count-badge');
                 if (techElement && techCount !== undefined) {
                     techElement.innerHTML = '<i class="fas fa-users mr-1"></i>' + techCount + ' techs';
+                }
+
+                // Update push devices badge
+                const pushCount = response.data.pushDevices;
+                const pushElement = document.getElementById('push-devices-badge');
+                if (pushElement && pushCount !== undefined) {
+                    pushElement.innerHTML = '<i class="fas fa-mobile-alt mr-1"></i>' + pushCount + ' apps';
                 }
             })
             .catch(error => {
@@ -9867,10 +9883,17 @@ app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
         AND id != 0
     `).first();
 
+    // Count registered push notification devices
+    const pushDevicesResult = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM push_subscriptions
+    `).first();
+
     return c.json({
       activeTickets: (activeResult as any)?.count || 0,
       overdueTickets: (overdueResult as any)?.count || 0,
-      activeTechnicians: (techniciansResult as any)?.count || 0
+      activeTechnicians: (techniciansResult as any)?.count || 0,
+      pushDevices: (pushDevicesResult as any)?.count || 0
     });
   } catch (error) {
     console.error('[Stats API] Error:', error);
