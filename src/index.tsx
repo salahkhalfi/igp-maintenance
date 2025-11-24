@@ -4413,6 +4413,19 @@ app.get('/', (c) => {
                 }
             }, [show]);
 
+            // Reset edit form states when modal is closed
+            React.useEffect(() => {
+                if (!show) {
+                    // Modal is closed - reset all edit form states
+                    setEditingUser(null);
+                    setEditEmail('');
+                    setEditFirstName('');
+                    setEditLastName('');
+                    setEditRole('operator');
+                    setShowCreateForm(false);
+                }
+            }, [show]);
+
             React.useEffect(() => {
                 const handleEscape = (e) => {
                     if (e.key === 'Escape') {
