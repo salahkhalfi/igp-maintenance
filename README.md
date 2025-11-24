@@ -29,8 +29,11 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Avant** : Formulaire modification restait affiché (bug)
 - **Après** : Modal réouvre avec liste utilisateurs (correct)
 
-**Commit:** 008c522  
-**Déployé:** 2025-11-24 14:45
+**Commit:** 008c522 + ba0095f  
+**Tag:** v2.8.1  
+**Déployé:** 2025-11-24 15:10 (Production)  
+**URL:** https://8d6184ce.webapp-7t8.pages.dev  
+**Domaine:** https://mecanique.igpglass.ca
 
 ### Version 2.8.0 (24 novembre 2025) - CORRECTIONS NOTIFICATIONS PARFAITES 🔔✨
 - **🐛 FIX #1** : Limite exacte déduplication (>= au lieu de >) dans cron.ts
