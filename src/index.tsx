@@ -6640,6 +6640,15 @@ app.get('/', (c) => {
                                         },
                                             getActiveTicketsCount() + " tickets actifs"
                                         ),
+                                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
+                                        React.createElement('span', {
+                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300',
+                                            id: 'overdue-tickets-badge',
+                                            title: 'Tickets en retard'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-clock mr-1' }),
+                                            '0 retard'
+                                        ) : null,
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', {
                                             className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
@@ -7683,10 +7692,22 @@ app.get('/', (c) => {
                 headers: { 'Authorization': 'Bearer ' + token }
             })
             .then(response => {
-                const count = response.data.activeTickets;
-                const element = document.getElementById('active-tickets-count');
-                if (element && count !== undefined) {
-                    element.textContent = count + ' tickets actifs (Global)';
+                // Update active tickets count
+                const activeCount = response.data.activeTickets;
+                const activeElement = document.getElementById('active-tickets-count');
+                if (activeElement && activeCount !== undefined) {
+                    activeElement.textContent = activeCount + ' tickets actifs (Global)';
+                }
+
+                // Update overdue tickets badge
+                const overdueCount = response.data.overdueTickets;
+                const overdueElement = document.getElementById('overdue-tickets-badge');
+                if (overdueElement && overdueCount !== undefined) {
+                    overdueElement.innerHTML = '<i class="fas fa-clock mr-1"></i>' + overdueCount + ' retard';
+                    // Change color if there are overdue tickets
+                    if (overdueCount > 0) {
+                        overdueElement.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 animate-pulse';
+                    }
                 }
             })
             .catch(error => {
@@ -9807,14 +9828,24 @@ app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
     }
 
     // Count active tickets (not completed, not cancelled, not archived)
-    const result = await c.env.DB.prepare(`
+    const activeResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM tickets
       WHERE status NOT IN ('completed', 'cancelled', 'archived')
     `).first();
 
+    // Count overdue tickets (scheduled_date in the past)
+    const overdueResult = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM tickets
+      WHERE status NOT IN ('completed', 'cancelled', 'archived')
+        AND scheduled_date IS NOT NULL
+        AND datetime(scheduled_date) < datetime('now')
+    `).first();
+
     return c.json({
-      activeTickets: (result as any)?.count || 0
+      activeTickets: (activeResult as any)?.count || 0,
+      overdueTickets: (overdueResult as any)?.count || 0
     });
   } catch (error) {
     console.error('[Stats API] Error:', error);
