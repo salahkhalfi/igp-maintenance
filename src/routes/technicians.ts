@@ -10,10 +10,10 @@ const technicians = new Hono<{ Bindings: Bindings }>();
 technicians.get('/', authMiddleware, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT id, full_name, email
+      SELECT id, first_name, email
       FROM users
       WHERE role = 'technician' AND id != 0
-      ORDER BY full_name ASC
+      ORDER BY first_name ASC
     `).all();
 
     return c.json({ technicians: results });
@@ -28,10 +28,10 @@ technicians.get('/', authMiddleware, async (c) => {
 technicians.get('/team', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT id, email, full_name, role, created_at, updated_at, last_login
+      SELECT id, email, first_name, role, created_at, updated_at, last_login
       FROM users
       WHERE id != 0
-      ORDER BY role DESC, full_name ASC
+      ORDER BY role DESC, first_name ASC
     `).all();
 
     return c.json({ users: results });

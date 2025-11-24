@@ -37,7 +37,7 @@ messages.post('/', authMiddleware, async (c) => {
         const { sendPushNotification } = await import('./push');
         
         // Obtenir le nom de l'expéditeur
-        const senderName = user.full_name || user.email || 'Un utilisateur';
+        const senderName = user.first_name || user.email || 'Un utilisateur';
         
         // Préparer le contenu pour la notification (max 100 caractères)
         const notificationBody = content.length > 100 
@@ -185,7 +185,7 @@ messages.post('/audio', authMiddleware, async (c) => {
         const { sendPushNotification } = await import('./push');
         
         // Obtenir le nom de l'expéditeur
-        const senderName = user.full_name || user.email || 'Un utilisateur';
+        const senderName = user.first_name || user.email || 'Un utilisateur';
         
         // Formatter la durée pour affichage (ex: "2:35")
         const durationMin = Math.floor(duration / 60);
@@ -442,12 +442,12 @@ messages.get('/available-users', authMiddleware, async (c) => {
     const user = c.get('user');
 
     const { results } = await c.env.DB.prepare(`
-      SELECT id, full_name, role, email
+      SELECT id, first_name, role, email
       FROM users
       WHERE role IN ('operator', 'furnace_operator', 'technician', 'supervisor', 'admin')
         AND id != ?
         AND id != 0
-      ORDER BY role DESC, full_name ASC
+      ORDER BY role DESC, first_name ASC
     `).bind(user.userId).all();
 
     return c.json({ users: results });

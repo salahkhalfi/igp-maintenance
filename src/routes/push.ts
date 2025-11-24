@@ -532,7 +532,7 @@ push.post('/test-user/:userId', async (c) => {
 
     // Vérifier que l'utilisateur cible existe
     const targetUser = await c.env.DB.prepare(`
-      SELECT id, email, full_name FROM users WHERE id = ?
+      SELECT id, email, first_name FROM users WHERE id = ?
     `).bind(targetUserId).first();
 
     if (!targetUser) {
@@ -543,7 +543,7 @@ push.post('/test-user/:userId', async (c) => {
 
     const result = await sendPushNotification(c.env, targetUserId, {
       title: '🔔 Test Push Notification',
-      body: `Notification de diagnostic envoyée par ${user.full_name || user.email}`,
+      body: `Notification de diagnostic envoyée par ${user.first_name || user.email}`,
       icon: '/icon-192.png',
       data: { test: true, url: '/', sentBy: user.userId }
     });
@@ -571,11 +571,11 @@ push.post('/test-user/:userId', async (c) => {
       targetUser: {
         id: targetUser.id,
         email: targetUser.email,
-        full_name: targetUser.full_name
+        first_name: targetUser.first_name
       },
       message: result.success
-        ? `✅ Notification envoyée avec succès à ${targetUser.full_name} (${result.sentCount} appareil(s))`
-        : `❌ Échec d'envoi à ${targetUser.full_name} - Vérifiez qu'il est abonné aux notifications`
+        ? `✅ Notification envoyée avec succès à ${targetUser.first_name} (${result.sentCount} appareil(s))`
+        : `❌ Échec d'envoi à ${targetUser.first_name} - Vérifiez qu'il est abonné aux notifications`
     });
 
   } catch (error) {

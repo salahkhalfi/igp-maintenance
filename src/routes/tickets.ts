@@ -16,8 +16,8 @@ tickets.get('/', async (c) => {
       SELECT
         t.*,
         m.machine_type, m.model, m.serial_number, m.location,
-        u1.full_name as reporter_name, u1.email as reporter_email,
-        u2.full_name as assignee_name, u2.email as assignee_email,
+        u1.first_name as reporter_name, u1.email as reporter_email,
+        u2.first_name as assignee_name, u2.email as assignee_email,
         (SELECT COUNT(*) FROM media WHERE media.ticket_id = t.id) as media_count
       FROM tickets t
       LEFT JOIN machines m ON t.machine_id = m.id
@@ -63,8 +63,8 @@ tickets.get('/:id', async (c) => {
       SELECT
         t.*,
         m.machine_type, m.model, m.serial_number, m.location,
-        u1.full_name as reporter_name, u1.email as reporter_email,
-        u2.full_name as assignee_name, u2.email as assignee_email
+        u1.first_name as reporter_name, u1.email as reporter_email,
+        u2.first_name as assignee_name, u2.email as assignee_email
       FROM tickets t
       LEFT JOIN machines m ON t.machine_id = m.id
       LEFT JOIN users u1 ON t.reported_by = u1.id
@@ -85,7 +85,7 @@ tickets.get('/:id', async (c) => {
     const { results: timeline } = await c.env.DB.prepare(`
       SELECT
         tl.*,
-        u.full_name as user_name, u.email as user_email
+        u.first_name as user_name, u.email as user_email
       FROM ticket_timeline tl
       LEFT JOIN users u ON tl.user_id = u.id
       WHERE tl.ticket_id = ?

@@ -42,8 +42,8 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
         t.status,
         t.scheduled_date,
         t.assigned_to,
-        u.full_name as assigned_name,
-        r.full_name as reporter_name
+        u.first_name as assigned_name,
+        r.first_name as reporter_name
       FROM tickets t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users r ON t.reported_by = r.id
@@ -59,7 +59,7 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
 
     // Trouver tous les administrateurs
     const { results: admins } = await c.env.DB.prepare(`
-      SELECT id, full_name
+      SELECT id, first_name
       FROM users
       WHERE role = 'admin'
     `).all();
@@ -171,7 +171,7 @@ Action requise immédiatement !
           ).run();
           
           if (pushResult.success) {
-            console.log(`✅ Push notification sent for overdue alert to admin ${admin.id} (${admin.full_name})`);
+            console.log(`✅ Push notification sent for overdue alert to admin ${admin.id} (${admin.first_name})`);
           } else {
             console.log(`⚠️ Push notification failed for admin ${admin.id}:`, pushResult);
           }

@@ -114,8 +114,8 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
         t.scheduled_date,
         t.assigned_to,
         t.created_at,
-        u.full_name as assignee_name,
-        reporter.full_name as reporter_name
+        u.first_name as assignee_name,
+        reporter.first_name as reporter_name
       FROM tickets t
       LEFT JOIN machines m ON t.machine_id = m.id
       LEFT JOIN users u ON t.assigned_to = u.id
@@ -260,7 +260,7 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
         try {
           // Récupérer tous les administrateurs
           const { results: admins } = await env.DB.prepare(`
-            SELECT id, full_name FROM users WHERE role = 'admin'
+            SELECT id, first_name FROM users WHERE role = 'admin'
           `).all();
           
           if (admins && admins.length > 0) {
@@ -309,7 +309,7 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
                 ).run();
                 
                 if (adminPushResult.success) {
-                  console.log(`✅ CRON: Push notification envoyée à admin ${admin.id} (${admin.full_name})`);
+                  console.log(`✅ CRON: Push notification envoyée à admin ${admin.id} (${admin.first_name})`);
                 } else {
                   console.log(`⚠️ CRON: Push notification failed pour admin ${admin.id}: ${JSON.stringify(adminPushResult)}`);
                 }

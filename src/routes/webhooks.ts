@@ -36,8 +36,8 @@ webhooks.post('/check-overdue-tickets', async (c) => {
         t.scheduled_date,
         t.assigned_to,
         t.created_at,
-        u.full_name as assignee_name,
-        reporter.full_name as reporter_name
+        u.first_name as assignee_name,
+        reporter.first_name as reporter_name
       FROM tickets t
       LEFT JOIN machines m ON t.machine_id = m.id
       LEFT JOIN users u ON t.assigned_to = u.id
