@@ -1,5 +1,5 @@
 # salah.md - Guide de Travail Unique
-**Version:** 1.0.1  
+**Version:** 1.0.4  
 **Date:** 2025-11-23  
 **Statut:** Guide opérationnel permanent
 
@@ -514,8 +514,8 @@ db.query(`SELECT * WHERE id = ${id}`)  // SQL Injection!
 # Push admin absent
 → Code dans cron.ts (pas scheduled.ts)
 
-# Dates UTC dans emails
-→ Dates DÉJÀ locales, envoyer brut
+# Dates converties en local pour webhooks
+→ convertToLocalTime() appliqué (cron.ts, webhooks.ts)
 
 # Build marche local, pas prod
 → Oubli wrangler pages deploy
@@ -712,8 +712,8 @@ app.use('*', async (c, next) => {
 
 **Fin du guide. Si contradiction trouvée entre ce fichier et autres docs → Ce fichier prime.**
 
-**Version:** 1.0.3  
+**Version:** 1.0.4  
 **Créé:** 2025-11-23  
-**Dernière MAJ:** 2025-11-23 (simplification section pmeapp.com - stratégie déplacée vers STRATEGIE-COMMERCIALE.md)  
+**Dernière MAJ:** 2025-11-23 (correction timezone: dates UTC dans DB + conversion webhooks)  
 **Basé sur:** 210 fichiers .md analysés  
 **Statut:** ✅ Opérationnel
