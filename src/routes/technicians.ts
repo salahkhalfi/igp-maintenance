@@ -28,7 +28,7 @@ technicians.get('/', authMiddleware, async (c) => {
 technicians.get('/team', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT id, email, first_name, role, created_at, updated_at, last_login
+      SELECT id, email, first_name, last_name, full_name, role, created_at, updated_at, last_login
       FROM users
       WHERE id != 0
       ORDER BY role DESC, first_name ASC

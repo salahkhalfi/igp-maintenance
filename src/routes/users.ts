@@ -325,13 +325,15 @@ users.put('/:id', async (c) => {
     }
 
     // Validation du prénom si fourni
-    if (first_name !== undefined) {
+    if (first_name !== undefined && first_name !== null) {
       const trimmedFirstName = first_name.trim();
-      if (trimmedFirstName.length < LIMITS.NAME_MIN) {
-        return c.json({ error: `Prénom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
-      }
-      if (first_name.length > LIMITS.NAME_MAX) {
-        return c.json({ error: `Prénom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+      if (trimmedFirstName.length > 0) {
+        if (trimmedFirstName.length < LIMITS.NAME_MIN) {
+          return c.json({ error: `Prénom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+        }
+        if (first_name.length > LIMITS.NAME_MAX) {
+          return c.json({ error: `Prénom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+        }
       }
     }
 
@@ -358,17 +360,21 @@ users.put('/:id', async (c) => {
       updates.push('email = ?');
       params.push(email.trim().toLowerCase());
     }
-    if (first_name !== undefined) {
+    if (first_name !== undefined && first_name !== null) {
       const trimmedFirstName = first_name.trim();
       const trimmedLastName = last_name ? last_name.trim() : '';
-      const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
       
-      updates.push('first_name = ?');
-      params.push(trimmedFirstName);
-      updates.push('last_name = ?');
-      params.push(trimmedLastName);
-      updates.push('full_name = ?');
-      params.push(full_name);
+      // Ne mettre à jour que si first_name n'est pas vide
+      if (trimmedFirstName.length > 0) {
+        const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
+        
+        updates.push('first_name = ?');
+        params.push(trimmedFirstName);
+        updates.push('last_name = ?');
+        params.push(trimmedLastName);
+        updates.push('full_name = ?');
+        params.push(full_name);
+      }
     }
     if (role) {
       updates.push('role = ?');
