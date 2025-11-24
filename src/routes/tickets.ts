@@ -320,6 +320,37 @@ tickets.patch('/:id', async (c) => {
     if (body.assigned_to && body.assigned_to !== currentTicket.assigned_to) {
       try {
         const { sendPushNotification } = await import('./push');
+        
+        // NOUVEAU: Notifier l'ancien assigné que le ticket lui a été retiré
+        if (currentTicket.assigned_to && currentTicket.assigned_to !== 0) {
+          try {
+            const oldAssigneePush = await sendPushNotification(c.env, currentTicket.assigned_to, {
+              title: `📤 ${currentTicket.title}`,
+              body: `Ticket retiré de votre liste (réassigné)`,
+              icon: '/icon-192.png',
+              data: { ticketId: id, url: '/', action: 'unassigned' }
+            });
+
+            // Logger
+            await c.env.DB.prepare(`
+              INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+              VALUES (?, ?, ?, ?)
+            `).bind(
+              currentTicket.assigned_to,
+              id,
+              oldAssigneePush.success ? 'success' : 'failed',
+              oldAssigneePush.success ? null : JSON.stringify(oldAssigneePush)
+            ).run();
+
+            if (oldAssigneePush.success) {
+              console.log(`✅ Push notification sent to old assignee ${currentTicket.assigned_to} for ticket ${id}`);
+            }
+          } catch (oldPushError) {
+            console.error(`⚠️ Failed to notify old assignee (non-critical):`, oldPushError);
+          }
+        }
+
+        // Notifier le nouvel assigné
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
           title: `🔧 ${currentTicket.title}`,
           body: `Ticket réassigné`,

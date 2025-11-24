@@ -1,4 +1,25 @@
-// Routes pour les notifications webhook des tickets expirés
+/**
+ * ==================================================================================
+ * WEBHOOKS.TS - NOTIFICATIONS MANUELLES (Déclenchement Frontend)
+ * ==================================================================================
+ * 
+ * Ce fichier gère les notifications webhook MANUELLES déclenchées par le frontend.
+ * 
+ * DIFFÉRENCE AVEC CRON.TS:
+ * - webhooks.ts = Déclenchement MANUEL (bouton frontend, API call)
+ * - cron.ts = Déclenchement AUTOMATIQUE (toutes les 1 minute)
+ * 
+ * NOTIFICATIONS ENVOYÉES PAR CE FICHIER:
+ * ✅ Webhook Email (Pabbly Connect)
+ * ❌ Push Notification Assigné (NON)
+ * ❌ Push Notification Admins (NON)
+ * 
+ * DÉDUPLICATION:
+ * - Basée sur scheduled_date (même mécanisme que cron.ts)
+ * - Permet re-notification si date changée
+ * 
+ * ==================================================================================
+ */
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
@@ -10,8 +31,8 @@ const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjY
 
 /**
  * POST /api/webhooks/check-overdue-tickets - Vérifier et notifier les tickets planifiés expirés
- * Cette route est appelée périodiquement par le frontend
- * Envoie un webhook à Pabbly Connect pour chaque ticket expiré (max 1x/24h par ticket)
+ * Cette route est appelée MANUELLEMENT par le frontend (bouton ou action utilisateur)
+ * Envoie SEULEMENT un webhook email à Pabbly Connect (pas de push notifications)
  */
 webhooks.post('/check-overdue-tickets', async (c) => {
   try {

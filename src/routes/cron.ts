@@ -1,4 +1,29 @@
-// Routes CRON - Tâches planifiées (sécurisées par CRON_SECRET token)
+/**
+ * ==================================================================================
+ * CRON.TS - NOTIFICATIONS AUTOMATIQUES (Déclenchement Cron 1/min)
+ * ==================================================================================
+ * 
+ * Ce fichier gère les notifications AUTOMATIQUES déclenchées par cron (toutes les 1 minute).
+ * 
+ * DIFFÉRENCE AVEC WEBHOOKS.TS:
+ * - cron.ts = Déclenchement AUTOMATIQUE (toutes les 1 minute)
+ * - webhooks.ts = Déclenchement MANUEL (bouton frontend, API call)
+ * 
+ * NOTIFICATIONS ENVOYÉES PAR CE FICHIER:
+ * ✅ Webhook Email (Pabbly Connect)
+ * ✅ Push Notification Assigné (avec déduplication 5 minutes)
+ * ✅ Push Notification Admins (avec déduplication 24 heures)
+ * 
+ * DÉDUPLICATION:
+ * - Webhook: Basée sur scheduled_date (permet re-notification si date changée)
+ * - Push Assigné: Fenêtre 5 minutes (évite doublons création + cron)
+ * - Push Admins: Fenêtre 24 heures (évite spam admins)
+ * 
+ * SÉCURITÉ:
+ * - Route sécurisée par CRON_SECRET token dans Authorization header
+ * 
+ * ==================================================================================
+ */
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
@@ -6,8 +31,14 @@ import { getTimezoneOffset, convertToLocalTime } from '../utils/timezone';
 
 const cron = new Hono<{ Bindings: Bindings }>();
 
-// POST /api/cron/check-overdue - Vérification tickets expirés + webhooks Pabbly Connect
-// Route publique CRON sécurisée par CRON_SECRET token
+/**
+ * POST /api/cron/check-overdue - Vérification automatique tickets expirés
+ * 
+ * Appelée AUTOMATIQUEMENT par Cloudflare Cron Triggers (toutes les 1 minute)
+ * Envoie: Webhook email + Push assigné + Push admins
+ * 
+ * Sécurisée par CRON_SECRET token dans Authorization header
+ */
 cron.post('/check-overdue', async (c) => {
   try {
     // Vérifier le token secret dans l'en-tête
@@ -162,7 +193,7 @@ cron.post('/check-overdue', async (c) => {
           const existingAssigneePush = await c.env.DB.prepare(`
             SELECT id FROM push_logs
             WHERE user_id = ? AND ticket_id = ?
-              AND datetime(created_at) > datetime('now', '-5 minutes')
+              AND datetime(created_at) >= datetime('now', '-5 minutes')
             LIMIT 1
           `).bind(ticket.assigned_to, ticket.id).first();
 
@@ -223,7 +254,7 @@ cron.post('/check-overdue', async (c) => {
               const existingAdminPush = await c.env.DB.prepare(`
                 SELECT id FROM push_logs
                 WHERE user_id = ? AND ticket_id = ?
-                  AND datetime(created_at) > datetime('now', '-24 hours')
+                  AND datetime(created_at) >= datetime('now', '-24 hours')
                 LIMIT 1
               `).bind(admin.id, ticket.id).first();
 
