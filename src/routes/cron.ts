@@ -156,9 +156,22 @@ cron.post('/check-overdue', async (c) => {
         console.log(`✅ CRON: Webhook envoyé pour ${ticket.ticket_id} (status: ${responseStatus})`);
 
         // ENVOYER PUSH NOTIFICATION au technicien assigné
+        // ⚠️ DÉDUPLICATION: Vérifier si un push a déjà été envoyé récemment (fenêtre de 5 minutes)
+        // pour éviter les doublons quand un ticket est créé déjà expiré
         try {
-          const { sendPushNotification } = await import('./push');
-          const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
+          const existingAssigneePush = await c.env.DB.prepare(`
+            SELECT id FROM push_logs
+            WHERE user_id = ? AND ticket_id = ?
+              AND datetime(created_at) > datetime('now', '-5 minutes')
+            LIMIT 1
+          `).bind(ticket.assigned_to, ticket.id).first();
+
+          if (existingAssigneePush) {
+            console.log(`⏭️ CRON: Push déjà envoyé récemment pour ${ticket.ticket_id} (assigné: ${ticket.assigned_to}), skip pour éviter doublon`);
+          } else {
+            // Aucun push récent, on envoie
+            const { sendPushNotification } = await import('./push');
+            const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
             title: `🔴 Ticket Expiré`,
             body: `${ticket.title} - Retard ${overdueText}. Changez la date planifiée si nécessaire`,
             icon: '/icon-192.png',
@@ -187,6 +200,7 @@ cron.post('/check-overdue', async (c) => {
           } else {
             console.log(`⚠️ CRON: Push notification échouée pour ${ticket.ticket_id}`);
           }
+          } // Fin du else (déduplication)
         } catch (pushError) {
           console.error(`⚠️ CRON: Erreur push notification pour ${ticket.ticket_id} (non-critique):`, pushError);
         }
