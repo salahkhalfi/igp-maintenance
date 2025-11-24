@@ -14,8 +14,11 @@ auth.post('/register', async (c) => {
     const body: RegisterRequest = await c.req.json();
     const { email, password, first_name, last_name, role } = body;
 
+    console.log('[REGISTER] Received:', { email, has_password: !!password, first_name, last_name, role });
+
     // Validation
     if (!email || !password || !first_name || !role) {
+      console.log('[REGISTER] Validation failed:', { email: !!email, password: !!password, first_name: !!first_name, role: !!role });
       return c.json({ error: 'Email, mot de passe, prénom et rôle requis' }, 400);
     }
 

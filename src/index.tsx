@@ -4385,7 +4385,8 @@ app.get('/', (c) => {
             const [showCreateForm, setShowCreateForm] = React.useState(false);
             const [newEmail, setNewEmail] = React.useState('');
             const [newPassword, setNewPassword] = React.useState('');
-            const [newFullName, setNewFullName] = React.useState('');
+            const [newFirstName, setNewFirstName] = React.useState('');
+            const [newLastName, setNewLastName] = React.useState('');
             const [newRole, setNewRole] = React.useState('operator');
             const [editingUser, setEditingUser] = React.useState(null);
             const [editEmail, setEditEmail] = React.useState('');
@@ -4457,13 +4458,15 @@ app.get('/', (c) => {
                     await axios.post(API_URL + '/users', {
                         email: newEmail,
                         password: newPassword,
-                        full_name: newFullName,
+                        first_name: newFirstName,
+                        last_name: newLastName,
                         role: newRole
                     });
                     setToast({ show: true, message: 'Utilisateur cree avec succes!', type: 'success' });
                     setNewEmail('');
                     setNewPassword('');
-                    setNewFullName('');
+                    setNewFirstName('');
+                    setNewLastName('');
                     setNewRole('operator');
                     setShowCreateForm(false);
                     loadUsers();
@@ -4472,7 +4475,7 @@ app.get('/', (c) => {
                 } finally {
                     setButtonLoading(null);
                 }
-            }, [newEmail, newPassword, newFullName, newRole, loadUsers]);
+            }, [newEmail, newPassword, newFirstName, newLastName, newRole, loadUsers]);
 
             // Gestionnaires validation formulaires admin
             const handleInvalidAdminField = (e) => {
@@ -4755,14 +4758,26 @@ app.get('/', (c) => {
                                     })
                                 ),
                                 React.createElement('div', {},
-                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Nom complet'),
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Prénom'),
                                     React.createElement('input', {
                                         type: 'text',
-                                        value: newFullName,
-                                        onChange: (e) => handleInputAdminEmail(e, setNewFullName),
+                                        value: newFirstName,
+                                        onChange: (e) => handleInputAdminEmail(e, setNewFirstName),
                                         onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
+                                        placeholder: 'Jean',
                                         required: true
+                                    })
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Nom (optionnel)'),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: newLastName,
+                                        onChange: (e) => handleInputAdminEmail(e, setNewLastName),
+                                        onInvalid: handleInvalidAdminField,
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
+                                        placeholder: 'Dupont'
                                     })
                                 )
                             ),
@@ -6577,7 +6592,7 @@ app.get('/', (c) => {
                                             textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
                                         }
                                     },
-                                        '👋 Bonjour ' + (currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
+                                        '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', {

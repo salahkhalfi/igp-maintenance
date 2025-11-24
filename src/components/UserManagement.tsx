@@ -9,7 +9,8 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
     // Formulaire de création
     const [newEmail, setNewEmail] = React.useState('');
     const [newPassword, setNewPassword] = React.useState('');
-    const [newFullName, setNewFullName] = React.useState('');
+    const [newFirstName, setNewFirstName] = React.useState('');
+    const [newLastName, setNewLastName] = React.useState('');
     const [newRole, setNewRole] = React.useState('operator');
 
     React.useEffect(() => {
@@ -33,8 +34,8 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
     const handleCreateUser = async (e: any) => {
         e.preventDefault();
 
-        if (!newEmail || !newPassword || !newFullName || !newRole) {
-            alert('Tous les champs sont requis');
+        if (!newEmail || !newPassword || !newFirstName || !newRole) {
+            alert('Email, mot de passe, prénom et rôle sont requis');
             return;
         }
 
@@ -42,14 +43,16 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
             await axios.post(API_URL + '/users', {
                 email: newEmail,
                 password: newPassword,
-                full_name: newFullName,
+                first_name: newFirstName,
+                last_name: newLastName,
                 role: newRole
             });
 
             alert('Utilisateur créé avec succès');
             setNewEmail('');
             setNewPassword('');
-            setNewFullName('');
+            setNewFirstName('');
+            setNewLastName('');
             setNewRole('operator');
             setShowCreateForm(false);
             loadUsers();
@@ -124,13 +127,24 @@ export const UserManagementModal = ({ show, onClose, currentUser, API_URL, axios
                             })
                         ),
                         React.createElement('div', {},
-                            React.createElement('label', { className: 'block mb-2' }, 'Nom complet'),
+                            React.createElement('label', { className: 'block mb-2' }, 'Prénom'),
                             React.createElement('input', {
                                 type: 'text',
-                                value: newFullName,
-                                onChange: (e: any) => setNewFullName(e.target.value),
+                                value: newFirstName,
+                                onChange: (e: any) => setNewFirstName(e.target.value),
                                 className: 'w-full px-3 py-2 border rounded-md',
+                                placeholder: 'Jean',
                                 required: true
+                            })
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('label', { className: 'block mb-2' }, 'Nom (optionnel)'),
+                            React.createElement('input', {
+                                type: 'text',
+                                value: newLastName,
+                                onChange: (e: any) => setNewLastName(e.target.value),
+                                className: 'w-full px-3 py-2 border rounded-md',
+                                placeholder: 'Dupont'
                             })
                         )
                     ),

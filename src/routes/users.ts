@@ -16,7 +16,7 @@ const users = new Hono<{ Bindings: Bindings }>();
 users.get('/team', technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT id, email, full_name, role, created_at, updated_at, last_login
+      SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login
       FROM users
       WHERE id != 0
       ORDER BY role DESC, full_name ASC
@@ -44,6 +44,8 @@ users.get('/', async (c) => {
         id,
         email,
         full_name,
+        first_name,
+        last_name,
         role,
         created_at,
         updated_at,
@@ -77,6 +79,8 @@ users.get('/:id', async (c) => {
         id,
         email,
         full_name,
+        first_name,
+        last_name,
         role,
         created_at,
         updated_at,
@@ -108,20 +112,25 @@ users.post('/', async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const body = await c.req.json();
-    const { email, password, full_name, role } = body;
+    const { email, password, first_name, last_name, role } = body;
 
     // Validation des champs requis
-    if (!email || !password || !full_name || !role) {
-      return c.json({ error: 'Tous les champs sont requis' }, 400);
+    if (!email || !password || !first_name || !role) {
+      return c.json({ error: 'Email, mot de passe, prénom et rôle requis' }, 400);
     }
 
-    // Validation du nom complet
+    // Construire full_name pour compatibilité
+    const full_name = last_name ? `${first_name} ${last_name}` : first_name;
     const trimmedFullName = full_name.trim();
-    if (trimmedFullName.length < LIMITS.NAME_MIN) {
-      return c.json({ error: `Nom complet trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    const trimmedFirstName = first_name.trim();
+    const trimmedLastName = last_name ? last_name.trim() : '';
+
+    // Validation du prénom
+    if (trimmedFirstName.length < LIMITS.NAME_MIN) {
+      return c.json({ error: `Prénom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
     }
-    if (full_name.length > LIMITS.NAME_MAX) {
-      return c.json({ error: `Nom complet trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+    if (first_name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Prénom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
     }
 
     // Validation de l'email
@@ -174,8 +183,8 @@ users.post('/', async (c) => {
 
     // Créer l'utilisateur
     const result = await c.env.DB.prepare(
-      'INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)'
-    ).bind(trimmedEmail, password_hash, trimmedFullName, role).run();
+      'INSERT INTO users (email, password_hash, full_name, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(trimmedEmail, password_hash, trimmedFullName, trimmedFirstName, trimmedLastName, role).run();
 
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création de l\'utilisateur' }, 500);
@@ -183,7 +192,7 @@ users.post('/', async (c) => {
 
     // Récupérer l'utilisateur créé
     const newUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE email = ?'
+      'SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login FROM users WHERE email = ?'
     ).bind(trimmedEmail).first() as User;
 
     // Logger l'action
@@ -384,7 +393,7 @@ users.put('/:id', async (c) => {
 
     // Récupérer l'utilisateur mis à jour
     const updatedUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
+      'SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
     ).bind(id).first() as User;
 
     // Logger l'action
