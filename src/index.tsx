@@ -2033,7 +2033,7 @@ app.get('/', (c) => {
                     const requestBody = {
                         title,
                         description,
-                        reporter_name: currentUser.first_name,
+                        reporter_name: currentUser.first_name || currentUser.full_name || currentUser.email?.split('@')[0] || 'Utilisateur',
                         machine_id: parseInt(machineId),
                         priority,
                         created_at: localTimestamp

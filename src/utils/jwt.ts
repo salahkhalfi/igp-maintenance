@@ -37,6 +37,8 @@ export interface JWTPayload {
   email: string;
   role: string;
   full_name?: string;
+  first_name?: string;
+  last_name?: string;
   iat?: number;
   exp?: number;
 }
