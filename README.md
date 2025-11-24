@@ -5,7 +5,7 @@
 **Département:** Technologies de l'Information
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.8.0-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.8.1-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
@@ -17,6 +17,20 @@
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
 ## 🆕 Dernières mises à jour
+
+### Version 2.8.1 (24 novembre 2025) - FIX UI MODAL UTILISATEURS 🖥️✨
+- **🐛 FIX UI** : Formulaire modification utilisateur ne persiste plus après fermeture modal
+- **🔄 RESET STATE** : Tous les états edit form réinitialisés quand modal fermée
+- **✅ COMPORTEMENT ATTENDU** : Modal réouvre proprement sans formulaire fantôme
+- **🎯 UX AMÉLIORÉE** : Navigation modale plus intuitive et prévisible
+
+**Bug corrigé :**
+- Ouvrir modal Utilisateurs → Cliquer "Modifier" → Fermer modal → Réouvrir modal
+- **Avant** : Formulaire modification restait affiché (bug)
+- **Après** : Modal réouvre avec liste utilisateurs (correct)
+
+**Commit:** 008c522  
+**Déployé:** 2025-11-24 14:45
 
 ### Version 2.8.0 (24 novembre 2025) - CORRECTIONS NOTIFICATIONS PARFAITES 🔔✨
 - **🐛 FIX #1** : Limite exacte déduplication (>= au lieu de >) dans cron.ts
