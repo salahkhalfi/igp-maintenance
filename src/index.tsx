@@ -209,8 +209,12 @@ app.get('/api/push/vapid-public-key', async (c) => {
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
-// Appliquer auth middleware aux autres routes push (subscribe, unsubscribe, test)
-app.use('/api/push/*', authMiddleware);
+// Appliquer auth middleware aux routes push (sauf send-test-to-salah)
+app.use('/api/push/subscribe', authMiddleware);
+app.use('/api/push/unsubscribe', authMiddleware);
+app.use('/api/push/test', authMiddleware);
+
+// Enregistrer les routes push (send-test-to-salah sera accessible sans auth)
 app.route('/api/push', push);
 
 // Routes de la messagerie (messages publics/privés, audio)
