@@ -6649,6 +6649,15 @@ app.get('/', (c) => {
                                             React.createElement('i', { className: 'fas fa-clock mr-1' }),
                                             '0 retard'
                                         ) : null,
+                                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
+                                        React.createElement('span', {
+                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300',
+                                            id: 'technicians-count-badge',
+                                            title: 'Techniciens actifs'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-users mr-1' }),
+                                            '0 techs'
+                                        ) : null,
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', {
                                             className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
@@ -7708,6 +7717,13 @@ app.get('/', (c) => {
                     if (overdueCount > 0) {
                         overdueElement.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 animate-pulse';
                     }
+                }
+
+                // Update technicians count badge
+                const techCount = response.data.activeTechnicians;
+                const techElement = document.getElementById('technicians-count-badge');
+                if (techElement && techCount !== undefined) {
+                    techElement.innerHTML = '<i class="fas fa-users mr-1"></i>' + techCount + ' techs';
                 }
             })
             .catch(error => {
@@ -9843,9 +9859,17 @@ app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
         AND datetime(scheduled_date) < datetime('now')
     `).first();
 
+    // Count active technicians (technicians + supervisors)
+    const techniciansResult = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE role IN ('technician', 'supervisor')
+    `).first();
+
     return c.json({
       activeTickets: (activeResult as any)?.count || 0,
-      overdueTickets: (overdueResult as any)?.count || 0
+      overdueTickets: (overdueResult as any)?.count || 0,
+      activeTechnicians: (techniciansResult as any)?.count || 0
     });
   } catch (error) {
     console.error('[Stats API] Error:', error);
