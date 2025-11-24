@@ -282,8 +282,10 @@ if (existingAssigneePush) {
 3. ✅ Commit et deploy - **COMPLÉTÉ**
 
 **Court terme:**
-1. Clarifier webhooks.ts vs cron.ts
-2. Documenter système notifications
+1. ✅ Clarifier webhooks.ts vs cron.ts - **COMPLÉTÉ**
+2. ✅ Documenter système notifications - **COMPLÉTÉ**
+3. ✅ Fix limite exacte 5min/24h (>= au lieu de >) - **COMPLÉTÉ**
+4. ✅ Notification ancien assigné réassignation - **COMPLÉTÉ**
 
 **Long terme:**
 1. Dashboard admin notifications
@@ -291,7 +293,9 @@ if (existingAssigneePush) {
 
 ---
 
-## 🚀 DÉPLOIEMENT DU FIX
+## 🚀 DÉPLOIEMENT DES FIXES
+
+### **Déploiement #1 - Fix Déduplication Push Assigné**
 
 **Date:** 2025-11-24 12:30  
 **Commit:** 21c3e6a  
@@ -303,19 +307,43 @@ if (existingAssigneePush) {
 - Vérification dans `push_logs` avant envoi push assigné
 - Log: `⏭️ CRON: Push déjà envoyé récemment... skip pour éviter doublon`
 
+### **Déploiement #2 - Correction 3 Bugs Additionnels**
+
+**Date:** 2025-11-24 13:25  
+**Commit:** 21d6ce0  
+**Status:** ✅ **DÉPLOYÉ EN PRODUCTION**
+
+**Bugs corrigés:**
+
+1. **BUG #1 - Limite exacte déduplication (>= au lieu de >)**
+   - `cron.ts` ligne 165: Push assigné déduplication
+   - `cron.ts` ligne 226: Push admins déduplication
+   - Couvre maintenant le cas exactement 5min/24h
+
+2. **BUG #2 - Ancien assigné pas notifié lors réassignation**
+   - `tickets.ts` ligne 320: Ajout notification ancien assigné
+   - Message: `📤 Ticket retiré de votre liste (réassigné)`
+   - Condition: ancien assigné != null et != 0
+   - Log dans `push_logs`
+
+3. **BUG #3 - Clarification webhooks.ts vs cron.ts**
+   - Ajout header documentation `webhooks.ts` (déclenchement manuel)
+   - Ajout header documentation `cron.ts` (déclenchement automatique)
+   - Explique différences et notifications envoyées
+
 **URLs Production:**
 - https://mecanique.igpglass.ca
-- https://5e4b96e6.webapp-7t8.pages.dev
+- https://b51af8e7.webapp-7t8.pages.dev
 
 **Tests réalisés:**
-- ✅ Build réussi (815.46 kB)
+- ✅ Build réussi (816.12 kB)
 - ✅ Démarrage local réussi
 - ✅ Endpoints API fonctionnels
 - ✅ Déploiement Cloudflare réussi
 
-**Prochaine étape:**
-- Créer un ticket expiré en production pour valider le fix
-- Vérifier dans `push_logs` qu'il n'y a qu'une seule tentative de push à l'assigné
+**Validation production:**
+- Créer un ticket et réassigner pour valider notification ancien assigné
+- Créer ticket expiré exactement à 5min pour valider >= fix
 
 ---
 

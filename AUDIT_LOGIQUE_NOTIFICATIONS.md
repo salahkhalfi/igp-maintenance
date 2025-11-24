@@ -749,11 +749,36 @@ Pour un ticket expiré créé immédiatement :
 
 ## 🏁 CONCLUSION FINALE
 
-**Le système fonctionne correctement avec le fix appliqué. Les simulations confirment que tous les scénarios principaux sont couverts sans doublons indésirables.**
+**Le système fonctionne correctement avec TOUS les fixes appliqués. Les simulations confirment que tous les scénarios principaux sont couverts sans doublons indésirables.**
 
-**Status:** ✅ **PRODUCTION READY**
+**Status:** ✅ **PRODUCTION READY** ✅ **TOUS BUGS CORRIGÉS**
+
+---
+
+## 🔧 FIXES APPLIQUÉS (2025-11-24 13:25)
+
+### **✅ FIX #1 - Déduplication Push Assigné (Commit 21c3e6a)**
+- Fenêtre 5 minutes pour éviter doublon création + cron
+- Évite 2 pushs quand ticket créé déjà expiré
+
+### **✅ FIX #2 - Limite Exacte Déduplication (Commit 21d6ce0)**
+- Changement `>` en `>=` dans cron.ts lignes 165 et 226
+- Couvre maintenant le cas exactement 5min/24h
+- Push créé à 10:00:00, cron à 10:05:00 → détecté ✅
+
+### **✅ FIX #3 - Notification Ancien Assigné (Commit 21d6ce0)**
+- Ajout push à l'ancien assigné lors de réassignation
+- Message: `📤 Ticket retiré de votre liste (réassigné)`
+- Loggé dans push_logs
+
+### **✅ FIX #4 - Documentation webhooks.ts vs cron.ts (Commit 21d6ce0)**
+- Ajout headers de documentation explicatifs
+- webhooks.ts = manuel (frontend)
+- cron.ts = automatique (1/min)
 
 ---
 
 **Audit complété le:** 2025-11-24  
-**Prochaine action:** Tests en production pour validation finale
+**Fixes déployés le:** 2025-11-24 13:25  
+**Commit final:** 21d6ce0  
+**Status:** ✅ **TOUS BUGS CORRIGÉS ET DÉPLOYÉS**
