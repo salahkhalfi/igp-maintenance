@@ -217,7 +217,7 @@ users.put('/:id', async (c) => {
     const currentUser = c.get('user') as any;
     const id = c.req.param('id');
     const body = await c.req.json();
-    const { email, full_name, role, password } = body;
+    const { email, first_name, last_name, role, password } = body;
 
     console.log('🔍 UPDATE USER - Start:', {
       currentUserId: currentUser.userId,
@@ -324,15 +324,20 @@ users.put('/:id', async (c) => {
       }
     }
 
-    // Validation du nom complet si fourni
-    if (full_name) {
-      const trimmedFullName = full_name.trim();
-      if (trimmedFullName.length < LIMITS.NAME_MIN) {
-        return c.json({ error: `Nom complet trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    // Validation du prénom si fourni
+    if (first_name !== undefined) {
+      const trimmedFirstName = first_name.trim();
+      if (trimmedFirstName.length < LIMITS.NAME_MIN) {
+        return c.json({ error: `Prénom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
       }
-      if (full_name.length > LIMITS.NAME_MAX) {
-        return c.json({ error: `Nom complet trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+      if (first_name.length > LIMITS.NAME_MAX) {
+        return c.json({ error: `Prénom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
       }
+    }
+
+    // Validation du nom si fourni (optionnel)
+    if (last_name && last_name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Nom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
     }
 
     // Validation du mot de passe si fourni
@@ -353,9 +358,17 @@ users.put('/:id', async (c) => {
       updates.push('email = ?');
       params.push(email.trim().toLowerCase());
     }
-    if (full_name) {
+    if (first_name !== undefined) {
+      const trimmedFirstName = first_name.trim();
+      const trimmedLastName = last_name ? last_name.trim() : '';
+      const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
+      
+      updates.push('first_name = ?');
+      params.push(trimmedFirstName);
+      updates.push('last_name = ?');
+      params.push(trimmedLastName);
       updates.push('full_name = ?');
-      params.push(full_name.trim());
+      params.push(full_name);
     }
     if (role) {
       updates.push('role = ?');

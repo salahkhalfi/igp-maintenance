@@ -4390,7 +4390,8 @@ app.get('/', (c) => {
             const [newRole, setNewRole] = React.useState('operator');
             const [editingUser, setEditingUser] = React.useState(null);
             const [editEmail, setEditEmail] = React.useState('');
-            const [editFullName, setEditFullName] = React.useState('');
+            const [editFirstName, setEditFirstName] = React.useState('');
+            const [editLastName, setEditLastName] = React.useState('');
             const [editRole, setEditRole] = React.useState('operator');
             const [notification, setNotification] = React.useState({ show: false, message: '', type: 'info' });
             const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
@@ -4638,7 +4639,8 @@ app.get('/', (c) => {
             const handleEditUser = React.useCallback((user) => {
                 setEditingUser(user);
                 setEditEmail(user.email);
-                setEditFullName(user.full_name);
+                setEditFirstName(user.first_name || '');
+                setEditLastName(user.last_name || '');
                 setEditRole(user.role);
             }, []);
 
@@ -4648,7 +4650,8 @@ app.get('/', (c) => {
                 try {
                     await axios.put(API_URL + '/users/' + editingUser.id, {
                         email: editEmail,
-                        full_name: editFullName,
+                        first_name: editFirstName,
+                        last_name: editLastName,
                         role: editRole
                     });
                     setToast({ show: true, message: 'Utilisateur modifie avec succes!', type: 'success' });
@@ -4659,7 +4662,7 @@ app.get('/', (c) => {
                 } finally {
                     setButtonLoading(null);
                 }
-            }, [editingUser, editEmail, editFullName, editRole, loadUsers]);
+            }, [editingUser, editEmail, editFirstName, editLastName, editRole, loadUsers]);
 
             const handleResetPassword = React.useCallback((userId, userName) => {
                 setPromptDialog({
@@ -4842,14 +4845,26 @@ app.get('/', (c) => {
                                     })
                                 ),
                                 React.createElement('div', {},
-                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Nom complet'),
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Prénom'),
                                     React.createElement('input', {
                                         type: 'text',
-                                        value: editFullName,
-                                        onChange: (e) => handleInputAdminEmail(e, setEditFullName),
+                                        value: editFirstName,
+                                        onChange: (e) => handleInputAdminEmail(e, setEditFirstName),
                                         onInvalid: handleInvalidAdminField,
                                         className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
+                                        placeholder: 'Jean',
                                         required: true
+                                    })
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('label', { className: 'block font-bold mb-2' }, 'Nom (optionnel)'),
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: editLastName,
+                                        onChange: (e) => handleInputAdminEmail(e, setEditLastName),
+                                        onInvalid: handleInvalidAdminField,
+                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
+                                        placeholder: 'Dupont'
                                     })
                                 )
                             ),
