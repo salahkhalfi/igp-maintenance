@@ -6615,6 +6615,8 @@ app.get('/', (c) => {
             const [showSearchResults, setShowSearchResults] = React.useState(false);
             const [searchLoading, setSearchLoading] = React.useState(false);
             const searchTimeoutRef = React.useRef(null);
+            const searchInputRef = React.useRef(null);
+            const [searchDropdownPosition, setSearchDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
 
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
@@ -7203,13 +7205,35 @@ app.get('/', (c) => {
                                     ),
                                     React.createElement('div', { className: 'relative w-full max-w-md my-2', style: { zIndex: 99999 } },
                                         React.createElement('input', {
+                                            ref: searchInputRef,
                                             type: 'text',
                                             placeholder: 'Rechercher ticket, machine, lieu...',
                                             className: 'w-full px-4 py-2 pr-10 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
                                             value: searchQuery,
+                                            onFocus: () => {
+                                                if (searchInputRef.current) {
+                                                    const rect = searchInputRef.current.getBoundingClientRect();
+                                                    setSearchDropdownPosition({
+                                                        top: rect.bottom + window.scrollY,
+                                                        left: rect.left + window.scrollX,
+                                                        width: rect.width
+                                                    });
+                                                }
+                                            },
                                             onChange: (e) => {
                                                 const query = e.target.value;
                                                 setSearchQuery(query);
+                                                
+                                                // Update dropdown position dynamically
+                                                if (searchInputRef.current) {
+                                                    const rect = searchInputRef.current.getBoundingClientRect();
+                                                    setSearchDropdownPosition({
+                                                        top: rect.bottom + window.scrollY,
+                                                        left: rect.left + window.scrollX,
+                                                        width: rect.width
+                                                    });
+                                                }
+                                                
                                                 if (searchTimeoutRef.current) {
                                                     clearTimeout(searchTimeoutRef.current);
                                                 }
@@ -7243,10 +7267,13 @@ app.get('/', (c) => {
                                             className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                                         }),
                                         showSearchResults && searchResults.length > 0 && React.createElement('div', {
-                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto md:w-[28rem] bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
+                                            className: 'fixed bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
                                             style: { 
-                                                zIndex: 99999, 
-                                                top: 'calc(var(--search-input-top, 200px) + 45px)',
+                                                zIndex: 99999,
+                                                top: searchDropdownPosition.top + 'px',
+                                                left: searchDropdownPosition.left + 'px',
+                                                width: searchDropdownPosition.width + 'px',
+                                                minWidth: '320px',
                                                 maxWidth: '28rem'
                                             }
                                         },
@@ -7282,10 +7309,13 @@ app.get('/', (c) => {
                                             )
                                         ),
                                         showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
-                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto md:w-[28rem] bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
+                                            className: 'fixed bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
                                             style: { 
-                                                zIndex: 99999, 
-                                                top: 'calc(var(--search-input-top, 200px) + 45px)',
+                                                zIndex: 99999,
+                                                top: searchDropdownPosition.top + 'px',
+                                                left: searchDropdownPosition.left + 'px',
+                                                width: searchDropdownPosition.width + 'px',
+                                                minWidth: '320px',
                                                 maxWidth: '28rem'
                                             }
                                         },
