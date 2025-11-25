@@ -7263,9 +7263,15 @@ app.get('/', (c) => {
                                                         React.createElement('i', { className: 'fas fa-cog mr-1' }),
                                                         result.machine_type + ' - ' + result.model
                                                     ),
-                                                    result.location && React.createElement('div', { className: 'text-xs text-gray-500 mt-1' },
-                                                        React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
-                                                        result.location
+                                                    React.createElement('div', { className: 'flex items-center gap-2 mt-1' },
+                                                        result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                            React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
+                                                            result.location
+                                                        ),
+                                                        result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                            React.createElement('i', { className: 'fas fa-comment mr-1' }),
+                                                            result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : '')
+                                                        )
                                                     )
                                                 )
                                             )
