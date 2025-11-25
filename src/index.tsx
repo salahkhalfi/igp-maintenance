@@ -4592,13 +4592,13 @@ app.get('/', (c) => {
                         const commentsMap = {};
                         for (const ticket of overdue) {
                             try {
-                                const commentsResponse = await fetch('/api/tickets/' + ticket.id, {
+                                const commentsResponse = await fetch('/api/comments/ticket/' + ticket.id, {
                                     headers: {
                                         'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
                                     }
                                 });
-                                const ticketData = await commentsResponse.json();
-                                commentsMap[ticket.id] = ticketData.comments || [];
+                                const commentsData = await commentsResponse.json();
+                                commentsMap[ticket.id] = commentsData.comments || [];
                             } catch (err) {
                                 console.error('Erreur chargement commentaires ticket ' + ticket.id + ':', err);
                                 commentsMap[ticket.id] = [];
