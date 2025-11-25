@@ -8099,6 +8099,15 @@ app.get('/', (c) => {
                             window.updatePushButtonColor();
                         }
                     }, 500);
+
+                    // Update stats badges immediately after data refresh
+                    // This ensures all badges (overdue, technicians, push devices) are instantly updated
+                    // when tickets/machines/users change, maintaining consistency with active tickets count
+                    setTimeout(() => {
+                        if (window.loadSimpleStats) {
+                            window.loadSimpleStats();
+                        }
+                    }, 600);
                 } catch (error) {
                     if (error.response?.status === 401) {
                         logout();
