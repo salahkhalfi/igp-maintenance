@@ -6631,6 +6631,28 @@ app.get('/', (c) => {
                 return () => window.removeEventListener('scroll', handleScroll);
             }, [showArchived]);
 
+            // Recalculer la position du dropdown lors du redimensionnement
+            React.useEffect(() => {
+                const updateDropdownPosition = () => {
+                    if (searchInputRef.current && showSearchResults) {
+                        const rect = searchInputRef.current.getBoundingClientRect();
+                        setSearchDropdownPosition({
+                            top: rect.bottom + window.scrollY,
+                            left: rect.left + window.scrollX,
+                            width: rect.width
+                        });
+                    }
+                };
+
+                window.addEventListener('resize', updateDropdownPosition);
+                window.addEventListener('orientationchange', updateDropdownPosition);
+
+                return () => {
+                    window.removeEventListener('resize', updateDropdownPosition);
+                    window.removeEventListener('orientationchange', updateDropdownPosition);
+                };
+            }, [showSearchResults]);
+
             const allStatuses = [
                 { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
                 { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
@@ -7267,13 +7289,14 @@ app.get('/', (c) => {
                                             className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                                         }),
                                         showSearchResults && searchResults.length > 0 && React.createElement('div', {
-                                            className: 'fixed bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
+                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
                                             style: { 
                                                 zIndex: 99999,
                                                 top: searchDropdownPosition.top + 'px',
-                                                left: searchDropdownPosition.left + 'px',
-                                                width: searchDropdownPosition.width + 'px',
-                                                minWidth: '320px',
+                                                left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
+                                                right: window.innerWidth < 768 ? '1rem' : 'auto',
+                                                width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
+                                                minWidth: window.innerWidth < 768 ? 'auto' : '320px',
                                                 maxWidth: '28rem'
                                             }
                                         },
@@ -7309,13 +7332,14 @@ app.get('/', (c) => {
                                             )
                                         ),
                                         showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
-                                            className: 'fixed bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
+                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
                                             style: { 
                                                 zIndex: 99999,
                                                 top: searchDropdownPosition.top + 'px',
-                                                left: searchDropdownPosition.left + 'px',
-                                                width: searchDropdownPosition.width + 'px',
-                                                minWidth: '320px',
+                                                left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
+                                                right: window.innerWidth < 768 ? '1rem' : 'auto',
+                                                width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
+                                                minWidth: window.innerWidth < 768 ? 'auto' : '320px',
                                                 maxWidth: '28rem'
                                             }
                                         },
