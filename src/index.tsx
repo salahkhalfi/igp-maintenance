@@ -4400,7 +4400,7 @@ app.get('/', (c) => {
                     setLoading(true);
                     const response = await fetch('/api/stats/technicians-performance', {
                         headers: {
-                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                            'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
                         }
                     });
                     const data = await response.json();
@@ -4558,7 +4558,7 @@ app.get('/', (c) => {
                     setLoading(true);
                     const response = await fetch('/api/tickets', {
                         headers: {
-                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                            'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
                         }
                     });
                     const data = await response.json();
@@ -4744,7 +4744,7 @@ app.get('/', (c) => {
                     setLoading(true);
                     const response = await fetch('/api/push/subscriptions-list', {
                         headers: {
-                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                            'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
                         }
                     });
                     const data = await response.json();
