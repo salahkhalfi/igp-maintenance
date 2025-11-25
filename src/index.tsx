@@ -9901,6 +9901,46 @@ app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
   }
 });
 
+// ========================================
+// STATS API - Technicians Performance
+// ========================================
+app.get('/api/stats/technicians-performance', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Only admins and supervisors can see performance stats
+    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
+      return c.json({ error: 'Accès refusé' }, 403);
+    }
+
+    // Get top 3 technicians by completed tickets (last 30 days)
+    const topTechnicians = await c.env.DB.prepare(`
+      SELECT 
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.full_name,
+        COUNT(t.id) as completed_count
+      FROM users u
+      LEFT JOIN tickets t ON t.assigned_to = u.id 
+        AND t.status = 'completed'
+        AND t.completed_at >= datetime('now', '-30 days')
+      WHERE u.role = 'technician' 
+        AND u.id != 0
+      GROUP BY u.id
+      ORDER BY completed_count DESC
+      LIMIT 3
+    `).all();
+
+    return c.json({
+      topTechnicians: topTechnicians.results || []
+    });
+  } catch (error) {
+    console.error('[Performance Stats API] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
 app.get('/api/health', (c) => {
   return c.json({
     status: 'ok',
