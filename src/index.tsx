@@ -8271,6 +8271,15 @@ app.get('/', (c) => {
             }
         }, 2000);
 
+        // Auto-refresh stats every 60 seconds for real-time updates
+        // Uses same technique as unread messages counter (line 8051)
+        // Direct DOM manipulation ensures no visual flickering
+        setInterval(() => {
+            if (window.loadSimpleStats) {
+                window.loadSimpleStats();
+            }
+        }, 60000); // 60 seconds
+
         // Enregistrer le Service Worker pour PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
