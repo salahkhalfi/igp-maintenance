@@ -55,6 +55,7 @@ import tickets from './routes/tickets';
 import machines from './routes/machines';
 import media from './routes/media';
 import comments from './routes/comments';
+import search from './routes/search';
 import users from './routes/users';
 import roles from './routes/roles';
 import settings from './routes/settings';
@@ -181,6 +182,9 @@ app.route('/api/users', users);
 app.route('/api/media', media);
 
 app.route('/api/comments', comments);
+
+app.use('/api/search/*', authMiddleware);
+app.route('/api/search', search);
 
 // Routes des paramètres système
 // NOTE: Pas d'authMiddleware global ici car chaque route gère sa propre auth:
@@ -6606,6 +6610,11 @@ app.get('/', (c) => {
             const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
             const [showOverdueModal, setShowOverdueModal] = React.useState(false);
             const [showPushDevicesModal, setShowPushDevicesModal] = React.useState(false);
+            const [searchQuery, setSearchQuery] = React.useState('');
+            const [searchResults, setSearchResults] = React.useState([]);
+            const [showSearchResults, setShowSearchResults] = React.useState(false);
+            const [searchLoading, setSearchLoading] = React.useState(false);
+            const searchTimeoutRef = React.useRef(null);
 
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
@@ -7191,6 +7200,83 @@ app.get('/', (c) => {
                                         }
                                     },
                                         '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
+                                    ),
+                                    React.createElement('div', { className: 'relative w-full max-w-md my-2' },
+                                        React.createElement('input', {
+                                            type: 'text',
+                                            placeholder: 'Rechercher ticket, machine, lieu...',
+                                            className: 'w-full px-4 py-2 pr-10 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
+                                            value: searchQuery,
+                                            onChange: (e) => {
+                                                const query = e.target.value;
+                                                setSearchQuery(query);
+                                                if (searchTimeoutRef.current) {
+                                                    clearTimeout(searchTimeoutRef.current);
+                                                }
+                                                if (query.trim().length >= 2) {
+                                                    setSearchLoading(true);
+                                                    searchTimeoutRef.current = setTimeout(async () => {
+                                                        try {
+                                                            const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
+                                                                headers: {
+                                                                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                                                }
+                                                            });
+                                                            const data = await response.json();
+                                                            setSearchResults(data.results || []);
+                                                            setShowSearchResults(true);
+                                                        } catch (err) {
+                                                            console.error('Erreur recherche:', err);
+                                                        } finally {
+                                                            setSearchLoading(false);
+                                                        }
+                                                    }, 300);
+                                                } else {
+                                                    setSearchResults([]);
+                                                    setShowSearchResults(false);
+                                                    setSearchLoading(false);
+                                                }
+                                            },
+                                            onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
+                                        }),
+                                        React.createElement('i', {
+                                            className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+                                        }),
+                                        showSearchResults && searchResults.length > 0 && React.createElement('div', {
+                                            className: 'absolute top-full left-0 right-0 mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50'
+                                        },
+                                            searchResults.map((result) =>
+                                                React.createElement('div', {
+                                                    key: result.id,
+                                                    className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                                    onClick: () => {
+                                                        handleTicketClick(result);
+                                                        setSearchQuery('');
+                                                        setShowSearchResults(false);
+                                                    }
+                                                },
+                                                    React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title),
+                                                        React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                                    ),
+                                                    React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                        React.createElement('i', { className: 'fas fa-cog mr-1' }),
+                                                        result.machine_type + ' - ' + result.model
+                                                    ),
+                                                    result.location && React.createElement('div', { className: 'text-xs text-gray-500 mt-1' },
+                                                        React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
+                                                        result.location
+                                                    )
+                                                )
+                                            )
+                                        ),
+                                        showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
+                                            className: 'absolute top-full left-0 right-0 mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg p-4 z-50'
+                                        },
+                                            React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
+                                                'Aucun résultat trouvé'
+                                            )
+                                        )
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', {
