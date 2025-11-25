@@ -7227,8 +7227,9 @@ app.get('/', (c) => {
                                         React.createElement('div', {
                                             key: result.id,
                                             className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
-                                            onClick: () => {
-                                                handleTicketClick(result);
+                                            onClick: (e) => {
+                                                setSelectedTicketId(result.id);
+                                                setShowDetailsModal(true);
                                                 setSearchQuery('');
                                                 setShowSearchResults(false);
                                             }
