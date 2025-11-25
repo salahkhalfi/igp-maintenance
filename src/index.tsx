@@ -7147,6 +7147,131 @@ app.get('/', (c) => {
                     }
                 },
                     React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
+                        React.createElement('div', { className: 'w-full max-w-md mx-auto mb-4' },
+                            React.createElement('div', { className: 'relative w-full', style: { zIndex: 99999 } },
+                                React.createElement('input', {
+                                    ref: searchInputRef,
+                                    type: 'text',
+                                    placeholder: 'Rechercher ticket, machine, lieu...',
+                                    className: 'w-full px-4 py-2 pr-10 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
+                                    value: searchQuery,
+                                    onFocus: () => {
+                                        if (searchInputRef.current) {
+                                            const rect = searchInputRef.current.getBoundingClientRect();
+                                            setSearchDropdownPosition({
+                                                top: rect.bottom + window.scrollY,
+                                                left: rect.left + window.scrollX,
+                                                width: rect.width
+                                            });
+                                        }
+                                    },
+                                    onChange: (e) => {
+                                        const query = e.target.value;
+                                        setSearchQuery(query);
+                                        
+                                        // Update dropdown position dynamically
+                                        if (searchInputRef.current) {
+                                            const rect = searchInputRef.current.getBoundingClientRect();
+                                            setSearchDropdownPosition({
+                                                top: rect.bottom + window.scrollY,
+                                                left: rect.left + window.scrollX,
+                                                width: rect.width
+                                            });
+                                        }
+                                        
+                                        if (searchTimeoutRef.current) {
+                                            clearTimeout(searchTimeoutRef.current);
+                                        }
+                                        if (query.trim().length >= 2) {
+                                            setSearchLoading(true);
+                                            searchTimeoutRef.current = setTimeout(async () => {
+                                                try {
+                                                    const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
+                                                        headers: {
+                                                            'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                                        }
+                                                    });
+                                                    const data = await response.json();
+                                                    setSearchResults(data.results || []);
+                                                    setShowSearchResults(true);
+                                                } catch (err) {
+                                                    console.error('Erreur recherche:', err);
+                                                } finally {
+                                                    setSearchLoading(false);
+                                                }
+                                            }, 300);
+                                        } else {
+                                            setSearchResults([]);
+                                            setShowSearchResults(false);
+                                            setSearchLoading(false);
+                                        }
+                                    },
+                                    onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
+                                }),
+                                React.createElement('i', {
+                                    className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+                                }),
+                                showSearchResults && searchResults.length > 0 && React.createElement('div', {
+                                    className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
+                                    style: { 
+                                        zIndex: 99999,
+                                        top: searchDropdownPosition.top + 'px',
+                                        left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
+                                        right: window.innerWidth < 768 ? '1rem' : 'auto',
+                                        width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
+                                        minWidth: window.innerWidth < 768 ? 'auto' : '320px',
+                                        maxWidth: '28rem'
+                                    }
+                                },
+                                    searchResults.map((result) =>
+                                        React.createElement('div', {
+                                            key: result.id,
+                                            className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                            onClick: () => {
+                                                handleTicketClick(result);
+                                                setSearchQuery('');
+                                                setShowSearchResults(false);
+                                            }
+                                        },
+                                            React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                                                React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title),
+                                                React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                            ),
+                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                React.createElement('i', { className: 'fas fa-cog mr-1' }),
+                                                result.machine_type + ' - ' + result.model
+                                            ),
+                                            React.createElement('div', { className: 'flex items-center gap-2 mt-1' },
+                                                result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                    React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
+                                                    result.location
+                                                ),
+                                                result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                    React.createElement('i', { className: 'fas fa-comment mr-1' }),
+                                                    result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : '')
+                                                )
+                                            )
+                                        )
+                                    )
+                                ),
+                                showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
+                                    className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
+                                    style: { 
+                                        zIndex: 99999,
+                                        top: searchDropdownPosition.top + 'px',
+                                        left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
+                                        right: window.innerWidth < 768 ? '1rem' : 'auto',
+                                        width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
+                                        minWidth: window.innerWidth < 768 ? 'auto' : '320px',
+                                        maxWidth: '28rem'
+                                    }
+                                },
+                                    React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
+                                        'Aucun résultat trouvé'
+                                    )
+                                )
+                            )
+                        ),
                         React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-6' },
                             React.createElement('div', {
                                 className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0',
@@ -7224,129 +7349,6 @@ app.get('/', (c) => {
                                         }
                                     },
                                         '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
-                                    ),
-                                    React.createElement('div', { className: 'relative w-full max-w-md my-2', style: { zIndex: 99999 } },
-                                        React.createElement('input', {
-                                            ref: searchInputRef,
-                                            type: 'text',
-                                            placeholder: 'Rechercher ticket, machine, lieu...',
-                                            className: 'w-full px-4 py-2 pr-10 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
-                                            value: searchQuery,
-                                            onFocus: () => {
-                                                if (searchInputRef.current) {
-                                                    const rect = searchInputRef.current.getBoundingClientRect();
-                                                    setSearchDropdownPosition({
-                                                        top: rect.bottom + window.scrollY,
-                                                        left: rect.left + window.scrollX,
-                                                        width: rect.width
-                                                    });
-                                                }
-                                            },
-                                            onChange: (e) => {
-                                                const query = e.target.value;
-                                                setSearchQuery(query);
-                                                
-                                                // Update dropdown position dynamically
-                                                if (searchInputRef.current) {
-                                                    const rect = searchInputRef.current.getBoundingClientRect();
-                                                    setSearchDropdownPosition({
-                                                        top: rect.bottom + window.scrollY,
-                                                        left: rect.left + window.scrollX,
-                                                        width: rect.width
-                                                    });
-                                                }
-                                                
-                                                if (searchTimeoutRef.current) {
-                                                    clearTimeout(searchTimeoutRef.current);
-                                                }
-                                                if (query.trim().length >= 2) {
-                                                    setSearchLoading(true);
-                                                    searchTimeoutRef.current = setTimeout(async () => {
-                                                        try {
-                                                            const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
-                                                                headers: {
-                                                                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-                                                                }
-                                                            });
-                                                            const data = await response.json();
-                                                            setSearchResults(data.results || []);
-                                                            setShowSearchResults(true);
-                                                        } catch (err) {
-                                                            console.error('Erreur recherche:', err);
-                                                        } finally {
-                                                            setSearchLoading(false);
-                                                        }
-                                                    }, 300);
-                                                } else {
-                                                    setSearchResults([]);
-                                                    setShowSearchResults(false);
-                                                    setSearchLoading(false);
-                                                }
-                                            },
-                                            onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
-                                        }),
-                                        React.createElement('i', {
-                                            className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
-                                        }),
-                                        showSearchResults && searchResults.length > 0 && React.createElement('div', {
-                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
-                                            style: { 
-                                                zIndex: 99999,
-                                                top: searchDropdownPosition.top + 'px',
-                                                left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
-                                                right: window.innerWidth < 768 ? '1rem' : 'auto',
-                                                width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
-                                                minWidth: window.innerWidth < 768 ? 'auto' : '320px',
-                                                maxWidth: '28rem'
-                                            }
-                                        },
-                                            searchResults.map((result) =>
-                                                React.createElement('div', {
-                                                    key: result.id,
-                                                    className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
-                                                    onClick: () => {
-                                                        handleTicketClick(result);
-                                                        setSearchQuery('');
-                                                        setShowSearchResults(false);
-                                                    }
-                                                },
-                                                    React.createElement('div', { className: 'flex justify-between items-start mb-1' },
-                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title),
-                                                        React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
-                                                    ),
-                                                    React.createElement('div', { className: 'text-xs text-gray-600' },
-                                                        React.createElement('i', { className: 'fas fa-cog mr-1' }),
-                                                        result.machine_type + ' - ' + result.model
-                                                    ),
-                                                    React.createElement('div', { className: 'flex items-center gap-2 mt-1' },
-                                                        result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
-                                                            React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
-                                                            result.location
-                                                        ),
-                                                        result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
-                                                            React.createElement('i', { className: 'fas fa-comment mr-1' }),
-                                                            result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : '')
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        ),
-                                        showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
-                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
-                                            style: { 
-                                                zIndex: 99999,
-                                                top: searchDropdownPosition.top + 'px',
-                                                left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
-                                                right: window.innerWidth < 768 ? '1rem' : 'auto',
-                                                width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
-                                                minWidth: window.innerWidth < 768 ? 'auto' : '320px',
-                                                maxWidth: '28rem'
-                                            }
-                                        },
-                                            React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
-                                                'Aucun résultat trouvé'
-                                            )
-                                        )
                                     ),
                                     React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
                                         React.createElement('p', {
