@@ -4702,7 +4702,7 @@ app.get('/', (c) => {
                                                 ),
                                                 React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Assigné à: '),
-                                                    React.createElement('span', { className: 'font-medium ml-1 break-all' }, ticket.assignee_email || 'Non assigné')
+                                                    React.createElement('span', { className: 'font-medium ml-1 break-all' }, ticket.assignee_name || 'Non assigné')
                                                 ),
                                                 React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Date prévue: '),
