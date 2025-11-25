@@ -737,6 +737,60 @@ app.use('*', async (c, next) => {
 
 ---
 
+## ⏱️ FRÉQUENCES DE MISE À JOUR (RÉFÉRENCE)
+
+### Stats Badges (Header Principal)
+**Intervalle:** 60 secondes (60000ms)  
+**Localisation:** index.tsx ligne 8273-8280  
+**API:** `/api/stats/active-tickets` (1 requête pour 4 badges)  
+**Méthode:** setInterval + manipulation DOM directe  
+**Impact:** Aucun clignotement, mise à jour silencieuse
+
+**Badges concernés:**
+- Tickets actifs (badge vert)
+- Tickets en retard (badge orange)
+- Techniciens actifs (badge bleu)
+- Appareils push (badge vert)
+
+### Messages Non Lus
+**Intervalle:** 60 secondes (60000ms)  
+**Localisation:** index.tsx ligne 8051  
+**API:** `/api/messages/unread-count`  
+**Méthode:** setInterval + manipulation DOM directe
+
+### Modal Utilisateurs (last_login)
+**Intervalle:** 120 secondes (120000ms)  
+**Localisation:** index.tsx ligne 4905  
+**API:** `/api/admin/users`  
+**Méthode:** setInterval + React setState
+
+### Temps Écoulés Tickets
+**Intervalle:** 1 seconde (1000ms)  
+**Localisation:** index.tsx ligne 1059  
+**Méthode:** setInterval + React setState  
+**Note:** Calcul local, pas d'API
+
+### Comptes à Rebours Planifiés
+**Intervalle:** 1 seconde (1000ms)  
+**Localisation:** index.tsx ligne 1090  
+**Méthode:** setInterval + React setState  
+**Note:** Calcul local, pas d'API
+
+### Recommandations Changement Intervalle
+**Avant de modifier un intervalle, considérer:**
+1. Charge serveur (requêtes/heure/utilisateur)
+2. Importance temps réel des données
+3. Impact UX (fluidité vs performance)
+4. Cohérence avec intervalles similaires
+
+**Intervalles standards approuvés:**
+- **1s** → Timers locaux (pas d'API)
+- **60s** → Stats temps réel modéré
+- **120s** → Stats temps réel conservateur
+- **300s+** → Stats non-critiques
+
+---
+
 ## 📌 NOTES FINALES
 
 ### Ce Fichier N'Est PAS
@@ -759,9 +813,15 @@ app.use('*', async (c, next) => {
 
 **Fin du guide. Si contradiction trouvée entre ce fichier et autres docs → Ce fichier prime.**
 
-**Version:** 1.0.6  
+**Version:** 1.0.7  
 **Créé:** 2025-11-23  
 **Dernière MAJ:** 2025-11-25  
+**Changements v1.0.7:**
+- ✅ Auto-refresh stats badges (60s interval)
+- ✅ Modals interactifs pour tous badges (performance, retards, push devices)
+- ✅ Design professionnel (slate/rose/teal theme)
+- ✅ Audit complet (10 phases, 50+ tests, aucun conflit)
+
 **Changements v1.0.6:**
 - ✅ Dashboard statistiques en temps réel (v2.9.0)
 - ✅ 4 statistiques admin/supervisor (tickets actifs, retards, techniciens, push devices)
