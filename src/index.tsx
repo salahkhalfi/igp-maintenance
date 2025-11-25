@@ -7243,8 +7243,12 @@ app.get('/', (c) => {
                                             className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                                         }),
                                         showSearchResults && searchResults.length > 0 && React.createElement('div', {
-                                            className: 'absolute top-full left-0 right-0 mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
-                                            style: { zIndex: 99999, position: 'absolute' }
+                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto md:w-[28rem] bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
+                                            style: { 
+                                                zIndex: 99999, 
+                                                top: 'calc(var(--search-input-top, 200px) + 45px)',
+                                                maxWidth: '28rem'
+                                            }
                                         },
                                             searchResults.map((result) =>
                                                 React.createElement('div', {
@@ -7278,8 +7282,12 @@ app.get('/', (c) => {
                                             )
                                         ),
                                         showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
-                                            className: 'absolute top-full left-0 right-0 mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
-                                            style: { zIndex: 99999, position: 'absolute' }
+                                            className: 'fixed left-4 right-4 md:left-auto md:right-auto md:w-[28rem] bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
+                                            style: { 
+                                                zIndex: 99999, 
+                                                top: 'calc(var(--search-input-top, 200px) + 45px)',
+                                                maxWidth: '28rem'
+                                            }
                                         },
                                             React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
                                                 'Aucun résultat trouvé'
