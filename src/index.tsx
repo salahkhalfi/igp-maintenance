@@ -7156,32 +7156,32 @@ app.get('/', (c) => {
                                         (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                         React.createElement('span', {
                                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
-                                            id: 'overdue-tickets-badge',
+                                            id: 'overdue-tickets-badge-wrapper',
                                             title: 'Tickets en retard - Cliquer pour voir détails',
                                             onClick: () => setShowOverdueModal(true)
                                         },
                                             React.createElement('i', { className: 'fas fa-clock mr-1' }),
-                                            '0 retard'
+                                            React.createElement('span', { id: 'overdue-tickets-badge' }, '0 retard')
                                         ) : null,
                                         (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                         React.createElement('span', {
                                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
-                                            id: 'technicians-count-badge',
+                                            id: 'technicians-count-badge-wrapper',
                                             title: 'Techniciens actifs - Cliquer pour voir performance',
                                             onClick: () => setShowPerformanceModal(true)
                                         },
                                             React.createElement('i', { className: 'fas fa-users mr-1' }),
-                                            '0 techs'
+                                            React.createElement('span', { id: 'technicians-count-badge' }, '0 techs')
                                         ) : null,
                                         (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                         React.createElement('span', {
                                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300 cursor-pointer hover:bg-green-200 transition-colors',
-                                            id: 'push-devices-badge',
+                                            id: 'push-devices-badge-wrapper',
                                             title: 'Appareils avec notifications push - Cliquer pour voir liste',
                                             onClick: () => setShowPushDevicesModal(true)
                                         },
                                             React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }),
-                                            '0 apps'
+                                            React.createElement('span', { id: 'push-devices-badge' }, '0 apps')
                                         ) : null,
                                         (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                                         React.createElement('div', {
@@ -8245,11 +8245,14 @@ app.get('/', (c) => {
                 // Update overdue tickets badge
                 const overdueCount = response.data.overdueTickets;
                 const overdueElement = document.getElementById('overdue-tickets-badge');
+                const overdueWrapper = document.getElementById('overdue-tickets-badge-wrapper');
                 if (overdueElement && overdueCount !== undefined) {
-                    overdueElement.innerHTML = '<i class="fas fa-clock mr-1"></i>' + overdueCount + ' retard';
+                    overdueElement.textContent = overdueCount + ' retard';
                     // Change color if there are overdue tickets
-                    if (overdueCount > 0) {
-                        overdueElement.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 animate-pulse';
+                    if (overdueWrapper && overdueCount > 0) {
+                        overdueWrapper.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 cursor-pointer hover:bg-red-200 transition-colors animate-pulse';
+                    } else if (overdueWrapper) {
+                        overdueWrapper.className = 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors';
                     }
                 }
 
@@ -8257,14 +8260,14 @@ app.get('/', (c) => {
                 const techCount = response.data.activeTechnicians;
                 const techElement = document.getElementById('technicians-count-badge');
                 if (techElement && techCount !== undefined) {
-                    techElement.innerHTML = '<i class="fas fa-users mr-1"></i>' + techCount + ' techs';
+                    techElement.textContent = techCount + ' techs';
                 }
 
                 // Update push devices badge
                 const pushCount = response.data.pushDevices;
                 const pushElement = document.getElementById('push-devices-badge');
                 if (pushElement && pushCount !== undefined) {
-                    pushElement.innerHTML = '<i class="fas fa-mobile-alt mr-1"></i>' + pushCount + ' apps';
+                    pushElement.textContent = pushCount + ' apps';
                 }
             })
             .catch(error => {
