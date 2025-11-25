@@ -4384,6 +4384,80 @@ app.get('/', (c) => {
         };
 
 
+        // Composant de performance des techniciens (ÉTAPE 2: VERSION BASIQUE)
+        const PerformanceModal = ({ show, onClose }) => {
+            const [loading, setLoading] = React.useState(true);
+            const [performanceData, setPerformanceData] = React.useState(null);
+
+            React.useEffect(() => {
+                if (show) {
+                    loadPerformanceData();
+                }
+            }, [show]);
+
+            const loadPerformanceData = async () => {
+                try {
+                    setLoading(true);
+                    const response = await fetch('/api/stats/technicians-performance', {
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    });
+                    const data = await response.json();
+                    setPerformanceData(data);
+                } catch (error) {
+                    console.error('Erreur chargement performance:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (!show) return null;
+
+            return React.createElement('div', {
+                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-lg p-6 max-w-2xl w-full mx-4',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    // Header
+                    React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                        React.createElement('h2', { className: 'text-xl font-bold' }, 'Performance des Techniciens'),
+                        React.createElement('button', {
+                            className: 'text-gray-500 hover:text-gray-700',
+                            onClick: onClose
+                        }, '✕')
+                    ),
+
+                    // Content
+                    loading ? 
+                        React.createElement('div', { className: 'text-center py-8' }, 'Chargement...') :
+                        React.createElement('div', {},
+                            React.createElement('h3', { className: 'font-bold mb-2' }, 'Top 3 Techniciens (30 derniers jours)'),
+                            React.createElement('table', { className: 'w-full border' },
+                                React.createElement('thead', {},
+                                    React.createElement('tr', { className: 'bg-gray-100' },
+                                        React.createElement('th', { className: 'border p-2 text-left' }, 'Technicien'),
+                                        React.createElement('th', { className: 'border p-2 text-right' }, 'Tickets complétés')
+                                    )
+                                ),
+                                React.createElement('tbody', {},
+                                    performanceData?.topTechnicians?.map((tech, index) =>
+                                        React.createElement('tr', { key: tech.id },
+                                            React.createElement('td', { className: 'border p-2' }, tech.full_name || (tech.first_name + ' ' + tech.last_name)),
+                                            React.createElement('td', { className: 'border p-2 text-right' }, tech.completed_count)
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                )
+            );
+        };
+
+
         // Composant de gestion des utilisateurs (VERSION SIMPLIFIÉE)
         const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             const [users, setUsers] = React.useState([]);
@@ -6061,6 +6135,7 @@ app.get('/', (c) => {
             const [messagingContact, setMessagingContact] = React.useState(null);
             const [messagingTab, setMessagingTab] = React.useState("public");
             const [showScrollTop, setShowScrollTop] = React.useState(false);
+            const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
 
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
@@ -6468,6 +6543,12 @@ app.get('/', (c) => {
                 }),
 
 
+                React.createElement(PerformanceModal, {
+                    show: showPerformanceModal,
+                    onClose: () => setShowPerformanceModal(false)
+                }),
+
+
                 React.createElement(UserManagementModal, {
                     show: showUserManagement,
                     onClose: () => setShowUserManagement(false),
@@ -6651,9 +6732,10 @@ app.get('/', (c) => {
                                         ) : null,
                                         (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                         React.createElement('span', {
-                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300',
+                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
                                             id: 'technicians-count-badge',
-                                            title: 'Techniciens actifs'
+                                            title: 'Techniciens actifs - Cliquer pour voir performance',
+                                            onClick: () => setShowPerformanceModal(true)
                                         },
                                             React.createElement('i', { className: 'fas fa-users mr-1' }),
                                             '0 techs'
