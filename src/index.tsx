@@ -4562,6 +4562,8 @@ app.get('/', (c) => {
                         }
                     });
                     const data = await response.json();
+                    console.log('[OverdueModal] API returned', (data.tickets || []).length, 'tickets');
+                    console.log('[OverdueModal] Current time (browser):', new Date().toISOString());
                     
                     // Filter overdue tickets
                     const now = new Date();
@@ -4573,9 +4575,18 @@ app.get('/', (c) => {
                         if (!ticket.scheduled_date || ticket.scheduled_date === 'null') {
                             return false;
                         }
-                        const scheduledDate = new Date(ticket.scheduled_date);
-                        return scheduledDate < now;
+                        // CRITICAL FIX: Force UTC interpretation to avoid timezone issues
+                        // Replace space with 'T' and add 'Z' for consistent ISO 8601 UTC format
+                        // "2025-11-25 10:16:00" → "2025-11-25T10:16:00Z"
+                        const isoDate = ticket.scheduled_date.replace(' ', 'T') + 'Z';
+                        const scheduledDate = new Date(isoDate);
+                        const isOverdue = scheduledDate < now;
+                        console.log('[OverdueModal]', ticket.ticket_id, '| Raw:', ticket.scheduled_date, '| ISO:', isoDate, '| Parsed:', scheduledDate.toISOString(), '| Now:', now.toISOString(), '| Overdue?', isOverdue);
+                        return isOverdue;
                     });
+                    
+                    console.log('[OverdueModal] Filtered to', overdue.length, 'overdue tickets');
+                    console.log('[OverdueModal] Will render:', overdue.map(t => t.ticket_id).join(', '));
                     
                     // Sort by scheduled date (oldest first)
                     overdue.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
