@@ -4415,44 +4415,128 @@ app.get('/', (c) => {
             if (!show) return null;
 
             return React.createElement('div', {
-                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50',
+                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
-                    className: 'bg-white rounded-lg p-6 max-w-2xl w-full mx-4',
+                    className: 'bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden',
                     onClick: (e) => e.stopPropagation()
                 },
-                    // Header
-                    React.createElement('div', { className: 'flex justify-between items-center mb-4' },
-                        React.createElement('h2', { className: 'text-xl font-bold' }, 'Performance des Techniciens'),
-                        React.createElement('button', {
-                            className: 'text-gray-500 hover:text-gray-700',
-                            onClick: onClose
-                        }, '✕')
+                    // Header with gradient
+                    React.createElement('div', { 
+                        className: 'bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6'
+                    },
+                        React.createElement('div', { className: 'flex justify-between items-center' },
+                            React.createElement('div', {},
+                                React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-2' },
+                                    React.createElement('i', { className: 'fas fa-chart-line' }),
+                                    'Tableau de Performance'
+                                ),
+                                React.createElement('p', { className: 'text-blue-100 text-sm mt-1' }, 
+                                    'Analyse des performances sur les 30 derniers jours'
+                                )
+                            ),
+                            React.createElement('button', {
+                                className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-colors',
+                                onClick: onClose
+                            }, React.createElement('i', { className: 'fas fa-times' }))
+                        )
                     ),
 
                     // Content
-                    loading ? 
-                        React.createElement('div', { className: 'text-center py-8' }, 'Chargement...') :
-                        React.createElement('div', {},
-                            React.createElement('h3', { className: 'font-bold mb-2' }, 'Top 3 Techniciens (30 derniers jours)'),
-                            React.createElement('table', { className: 'w-full border' },
-                                React.createElement('thead', {},
-                                    React.createElement('tr', { className: 'bg-gray-100' },
-                                        React.createElement('th', { className: 'border p-2 text-left' }, 'Technicien'),
-                                        React.createElement('th', { className: 'border p-2 text-right' }, 'Tickets complétés')
+                    React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
+                        loading ? 
+                            React.createElement('div', { className: 'text-center py-12' },
+                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-blue-500 mb-4' }),
+                                React.createElement('p', { className: 'text-gray-600' }, 'Chargement des données...')
+                            ) :
+                            React.createElement('div', { className: 'space-y-6' },
+                                // Top Performers Section
+                                React.createElement('div', {},
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
+                                        React.createElement('i', { className: 'fas fa-trophy text-yellow-500 text-xl' }),
+                                        React.createElement('h3', { className: 'text-lg font-bold text-gray-800' }, 
+                                            'Top Performers'
+                                        ),
+                                        React.createElement('span', { className: 'text-sm text-gray-500' }, 
+                                            '(Meilleurs techniciens)'
+                                        )
+                                    ),
+                                    
+                                    // Performance Cards
+                                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },
+                                        performanceData?.topTechnicians?.slice(0, 3).map((tech, index) => {
+                                            const rankColors = [
+                                                { bg: 'bg-gradient-to-br from-yellow-50 to-yellow-100', border: 'border-yellow-300', icon: 'fa-medal text-yellow-500', badge: 'bg-yellow-500' },
+                                                { bg: 'bg-gradient-to-br from-gray-50 to-gray-100', border: 'border-gray-300', icon: 'fa-medal text-gray-400', badge: 'bg-gray-400' },
+                                                { bg: 'bg-gradient-to-br from-orange-50 to-orange-100', border: 'border-orange-300', icon: 'fa-medal text-orange-600', badge: 'bg-orange-600' }
+                                            ];
+                                            const colors = rankColors[index] || rankColors[2];
+                                            
+                                            return React.createElement('div', {
+                                                key: tech.id,
+                                                className: 'border-2 rounded-lg p-4 ' + colors.bg + ' ' + colors.border + ' hover:shadow-lg transition-shadow'
+                                            },
+                                                React.createElement('div', { className: 'flex items-start justify-between mb-3' },
+                                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                                        React.createElement('i', { className: 'fas ' + colors.icon + ' text-2xl' }),
+                                                        React.createElement('span', { className: 'text-xs font-semibold text-gray-600' }, 
+                                                            '#' + (index + 1)
+                                                        )
+                                                    ),
+                                                    React.createElement('span', { 
+                                                        className: 'px-2 py-1 rounded-full text-white text-xs font-bold ' + colors.badge 
+                                                    }, tech.completed_count + ' tickets')
+                                                ),
+                                                React.createElement('div', {},
+                                                    React.createElement('p', { className: 'font-bold text-gray-800 mb-1' }, 
+                                                        tech.full_name || (tech.first_name + ' ' + tech.last_name)
+                                                    ),
+                                                    React.createElement('div', { className: 'flex items-center gap-2 text-xs text-gray-600' },
+                                                        React.createElement('i', { className: 'fas fa-check-circle text-green-500' }),
+                                                        React.createElement('span', {}, tech.completed_count + ' interventions réussies')
+                                                    )
+                                                )
+                                            );
+                                        })
                                     )
                                 ),
-                                React.createElement('tbody', {},
-                                    performanceData?.topTechnicians?.map((tech, index) =>
-                                        React.createElement('tr', { key: tech.id },
-                                            React.createElement('td', { className: 'border p-2' }, tech.full_name || (tech.first_name + ' ' + tech.last_name)),
-                                            React.createElement('td', { className: 'border p-2 text-right' }, tech.completed_count)
-                                        )
+
+                                // Stats Summary
+                                performanceData?.topTechnicians?.length > 0 && React.createElement('div', { 
+                                    className: 'bg-blue-50 border border-blue-200 rounded-lg p-4'
+                                },
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                        React.createElement('i', { className: 'fas fa-info-circle text-blue-500' }),
+                                        React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-gray-700' },
+                                        'Total de ',
+                                        React.createElement('span', { className: 'font-bold' }, 
+                                            performanceData.topTechnicians.reduce((sum, t) => sum + t.completed_count, 0)
+                                        ),
+                                        ' tickets complétés par les ',
+                                        React.createElement('span', { className: 'font-bold' }, 
+                                            performanceData.topTechnicians.length
+                                        ),
+                                        ' meilleurs techniciens au cours des 30 derniers jours.'
+                                    )
+                                ),
+
+                                // Empty state
+                                performanceData?.topTechnicians?.length === 0 && React.createElement('div', {
+                                    className: 'text-center py-12 bg-gray-50 rounded-lg'
+                                },
+                                    React.createElement('i', { className: 'fas fa-inbox text-5xl text-gray-300 mb-4' }),
+                                    React.createElement('p', { className: 'text-gray-600 font-medium' }, 
+                                        'Aucune donnée de performance disponible'
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-gray-500 mt-2' }, 
+                                        'Les statistiques apparaîtront une fois que les techniciens auront complété des tickets.'
                                     )
                                 )
                             )
-                        )
+                    )
                 )
             );
         };
