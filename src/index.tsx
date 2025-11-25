@@ -4424,7 +4424,7 @@ app.get('/', (c) => {
                 },
                     // Header with gradient
                     React.createElement('div', { 
-                        className: 'bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6'
+                        className: 'bg-gradient-to-r from-slate-700 to-slate-800 text-white p-6'
                     },
                         React.createElement('div', { className: 'flex justify-between items-center' },
                             React.createElement('div', {},
@@ -4432,7 +4432,7 @@ app.get('/', (c) => {
                                     React.createElement('i', { className: 'fas fa-chart-line' }),
                                     'Tableau de Performance'
                                 ),
-                                React.createElement('p', { className: 'text-blue-100 text-sm mt-1' }, 
+                                React.createElement('p', { className: 'text-slate-200 text-sm mt-1' }, 
                                     'Analyse des performances sur les 30 derniers jours'
                                 )
                             ),
@@ -4447,7 +4447,7 @@ app.get('/', (c) => {
                     React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
                         loading ? 
                             React.createElement('div', { className: 'text-center py-12' },
-                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-blue-500 mb-4' }),
+                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-slate-500 mb-4' }),
                                 React.createElement('p', { className: 'text-gray-600' }, 'Chargement des données...')
                             ) :
                             React.createElement('div', { className: 'space-y-6' },
@@ -4467,9 +4467,9 @@ app.get('/', (c) => {
                                     React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' },
                                         performanceData?.topTechnicians?.slice(0, 3).map((tech, index) => {
                                             const rankColors = [
-                                                { bg: 'bg-gradient-to-br from-yellow-50 to-yellow-100', border: 'border-yellow-300', icon: 'fa-medal text-yellow-500', badge: 'bg-yellow-500' },
-                                                { bg: 'bg-gradient-to-br from-gray-50 to-gray-100', border: 'border-gray-300', icon: 'fa-medal text-gray-400', badge: 'bg-gray-400' },
-                                                { bg: 'bg-gradient-to-br from-orange-50 to-orange-100', border: 'border-orange-300', icon: 'fa-medal text-orange-600', badge: 'bg-orange-600' }
+                                                { bg: 'bg-gradient-to-br from-amber-50 to-amber-100', border: 'border-amber-400', icon: 'fa-medal text-amber-600', badge: 'bg-amber-600' },
+                                                { bg: 'bg-gradient-to-br from-slate-50 to-slate-100', border: 'border-slate-300', icon: 'fa-medal text-slate-500', badge: 'bg-slate-500' },
+                                                { bg: 'bg-gradient-to-br from-orange-50 to-orange-100', border: 'border-orange-400', icon: 'fa-medal text-orange-700', badge: 'bg-orange-700' }
                                             ];
                                             const colors = rankColors[index] || rankColors[2];
                                             
@@ -4504,10 +4504,10 @@ app.get('/', (c) => {
 
                                 // Stats Summary
                                 performanceData?.topTechnicians?.length > 0 && React.createElement('div', { 
-                                    className: 'bg-blue-50 border border-blue-200 rounded-lg p-4'
+                                    className: 'bg-slate-50 border border-slate-200 rounded-lg p-4'
                                 },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                        React.createElement('i', { className: 'fas fa-info-circle text-blue-500' }),
+                                        React.createElement('i', { className: 'fas fa-info-circle text-slate-600' }),
                                         React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-gray-700' },
@@ -4625,7 +4625,7 @@ app.get('/', (c) => {
                 },
                     // Header
                     React.createElement('div', { 
-                        className: 'bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6'
+                        className: 'bg-gradient-to-r from-rose-800 to-rose-900 text-white p-6'
                     },
                         React.createElement('div', { className: 'flex justify-between items-center' },
                             React.createElement('div', {},
@@ -4633,7 +4633,7 @@ app.get('/', (c) => {
                                     React.createElement('i', { className: 'fas fa-exclamation-triangle' }),
                                     'Tickets en Retard'
                                 ),
-                                React.createElement('p', { className: 'text-orange-100 text-sm mt-1' }, 
+                                React.createElement('p', { className: 'text-rose-200 text-sm mt-1' }, 
                                     'Interventions nécessitant une attention immédiate'
                                 )
                             ),
@@ -4648,19 +4648,19 @@ app.get('/', (c) => {
                     React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
                         loading ? 
                             React.createElement('div', { className: 'text-center py-12' },
-                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-orange-500 mb-4' }),
+                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-rose-600 mb-4' }),
                                 React.createElement('p', { className: 'text-gray-600' }, 'Chargement des tickets...')
                             ) :
                             overdueTickets.length > 0 ?
                                 React.createElement('div', { className: 'space-y-4' },
                                     // Stats summary
-                                    React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6' },
+                                    React.createElement('div', { className: 'bg-rose-50 border border-rose-200 rounded-lg p-4 mb-6' },
                                         React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                            React.createElement('i', { className: 'fas fa-info-circle text-orange-500' }),
+                                            React.createElement('i', { className: 'fas fa-info-circle text-rose-700' }),
                                             React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
                                         ),
                                         React.createElement('p', { className: 'text-sm text-gray-700' },
-                                            React.createElement('span', { className: 'font-bold text-orange-700' }, overdueTickets.length),
+                                            React.createElement('span', { className: 'font-bold text-rose-800' }, overdueTickets.length),
                                             ' ticket(s) en retard nécessitant une action urgente.'
                                         )
                                     ),
@@ -4669,7 +4669,7 @@ app.get('/', (c) => {
                                     overdueTickets.map((ticket) =>
                                         React.createElement('div', {
                                             key: ticket.id,
-                                            className: 'border-2 border-orange-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white'
+                                            className: 'border-2 border-rose-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white'
                                         },
                                             React.createElement('div', { className: 'flex justify-between items-start mb-3' },
                                                 React.createElement('div', { className: 'flex-1' },
@@ -4784,7 +4784,7 @@ app.get('/', (c) => {
                 },
                     // Header
                     React.createElement('div', { 
-                        className: 'bg-gradient-to-r from-green-600 to-green-700 text-white p-6'
+                        className: 'bg-gradient-to-r from-teal-700 to-teal-800 text-white p-6'
                     },
                         React.createElement('div', { className: 'flex justify-between items-center' },
                             React.createElement('div', {},
@@ -4792,7 +4792,7 @@ app.get('/', (c) => {
                                     React.createElement('i', { className: 'fas fa-bell' }),
                                     'Appareils Notifications Push'
                                 ),
-                                React.createElement('p', { className: 'text-green-100 text-sm mt-1' }, 
+                                React.createElement('p', { className: 'text-teal-200 text-sm mt-1' }, 
                                     'Appareils enregistrés pour recevoir les notifications'
                                 )
                             ),
@@ -4807,19 +4807,19 @@ app.get('/', (c) => {
                     React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
                         loading ? 
                             React.createElement('div', { className: 'text-center py-12' },
-                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-green-500 mb-4' }),
+                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-teal-600 mb-4' }),
                                 React.createElement('p', { className: 'text-gray-600' }, 'Chargement des appareils...')
                             ) :
                             devices.length > 0 ?
                                 React.createElement('div', { className: 'space-y-4' },
                                     // Stats summary
-                                    React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-6' },
+                                    React.createElement('div', { className: 'bg-teal-50 border border-teal-200 rounded-lg p-4 mb-6' },
                                         React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                            React.createElement('i', { className: 'fas fa-info-circle text-green-500' }),
+                                            React.createElement('i', { className: 'fas fa-info-circle text-teal-700' }),
                                             React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
                                         ),
                                         React.createElement('p', { className: 'text-sm text-gray-700' },
-                                            React.createElement('span', { className: 'font-bold text-green-700' }, devices.length),
+                                            React.createElement('span', { className: 'font-bold text-teal-800' }, devices.length),
                                             ' appareil(s) enregistré(s) pour recevoir les notifications push.'
                                         )
                                     ),
@@ -4829,12 +4829,12 @@ app.get('/', (c) => {
                                         devices.map((device, index) =>
                                             React.createElement('div', {
                                                 key: device.id,
-                                                className: 'border-2 border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-white'
+                                                className: 'border-2 border-teal-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gradient-to-br from-teal-50 to-white'
                                             },
                                                 React.createElement('div', { className: 'flex items-start gap-3' },
-                                                    React.createElement('div', { className: 'w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0' },
+                                                    React.createElement('div', { className: 'w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0' },
                                                         React.createElement('i', { 
-                                                            className: 'fas ' + getDeviceIcon(device.device_type) + ' text-green-600 text-xl'
+                                                            className: 'fas ' + getDeviceIcon(device.device_type) + ' text-teal-700 text-xl'
                                                         })
                                                     ),
                                                     React.createElement('div', { className: 'flex-1' },
@@ -4846,7 +4846,7 @@ app.get('/', (c) => {
                                                         ),
                                                         React.createElement('div', { className: 'flex items-center gap-2' },
                                                             React.createElement('span', { 
-                                                                className: 'px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700'
+                                                                className: 'px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700'
                                                             },
                                                                 React.createElement('i', { className: 'fas fa-check-circle mr-1' }),
                                                                 'Actif'
