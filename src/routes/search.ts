@@ -109,22 +109,23 @@ search.get('/', authMiddleware, async (c) => {
         searchTerm, searchTerm, searchTerm,
         searchTerm, searchTerm, searchTerm, searchTerm
       ];
-    
-    // Ajouter filtre status si détecté (sauf si recherche commentaires)
-    if (!onlyWithComments && statusFilter) {
-      sqlQuery += ' OR t.status = ?';
-      params.push(statusFilter);
-    }
-    
-    // Ajouter filtre priorité si détecté (sauf si recherche commentaires)
-    if (!onlyWithComments && priorityFilter) {
-      sqlQuery += ' OR t.priority = ?';
-      params.push(priorityFilter);
-    }
-    
-    // Fermer la requête (sauf si recherche commentaires, déjà fermée)
-    if (!onlyWithComments) {
-      sqlQuery += `) ORDER BY t.created_at DESC LIMIT 20`;
+      
+      // Ajouter filtre status si détecté (sauf si recherche commentaires)
+      if (!onlyWithComments && statusFilter) {
+        sqlQuery += ' OR t.status = ?';
+        params.push(statusFilter);
+      }
+      
+      // Ajouter filtre priorité si détecté (sauf si recherche commentaires)
+      if (!onlyWithComments && priorityFilter) {
+        sqlQuery += ' OR t.priority = ?';
+        params.push(priorityFilter);
+      }
+      
+      // Fermer la requête (sauf si recherche commentaires, déjà fermée)
+      if (!onlyWithComments) {
+        sqlQuery += `) ORDER BY t.created_at DESC LIMIT 20`;
+      }
     }
 
     let { results } = await c.env.DB.prepare(sqlQuery).bind(...params).all();
