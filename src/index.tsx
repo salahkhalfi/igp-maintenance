@@ -4546,6 +4546,7 @@ app.get('/', (c) => {
         const OverdueTicketsModal = ({ show, onClose, currentUser }) => {
             const [loading, setLoading] = React.useState(true);
             const [overdueTickets, setOverdueTickets] = React.useState([]);
+            const [ticketComments, setTicketComments] = React.useState({});
 
             React.useEffect(() => {
                 if (show) {
@@ -4585,6 +4586,26 @@ app.get('/', (c) => {
                     overdue.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
                     
                     setOverdueTickets(overdue);
+                    
+                    // Load comments for all overdue tickets
+                    if (overdue.length > 0) {
+                        const commentsMap = {};
+                        for (const ticket of overdue) {
+                            try {
+                                const commentsResponse = await fetch('/api/tickets/' + ticket.id, {
+                                    headers: {
+                                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                    }
+                                });
+                                const ticketData = await commentsResponse.json();
+                                commentsMap[ticket.id] = ticketData.comments || [];
+                            } catch (err) {
+                                console.error('Erreur chargement commentaires ticket ' + ticket.id + ':', err);
+                                commentsMap[ticket.id] = [];
+                            }
+                        }
+                        setTicketComments(commentsMap);
+                    }
                 } catch (error) {
                     console.error('Erreur chargement tickets en retard:', error);
                 } finally {
@@ -4713,6 +4734,29 @@ app.get('/', (c) => {
                                                 React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Lieu: '),
                                                     React.createElement('span', { className: 'font-medium ml-1' }, ticket.location)
+                                                )
+                                            ),
+                                            // Comments section
+                                            ticketComments[ticket.id] && ticketComments[ticket.id].length > 0 && 
+                                            React.createElement('div', { className: 'mt-3 pt-3 border-t border-rose-100' },
+                                                React.createElement('h4', { className: 'text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1' },
+                                                    React.createElement('i', { className: 'fas fa-comment text-rose-600' }),
+                                                    'Commentaires (' + ticketComments[ticket.id].length + ')'
+                                                ),
+                                                React.createElement('div', { className: 'space-y-2 max-h-32 overflow-y-auto' },
+                                                    ticketComments[ticket.id].map((comment, idx) =>
+                                                        React.createElement('div', { 
+                                                            key: idx,
+                                                            className: 'bg-gray-50 rounded p-2 text-xs'
+                                                        },
+                                                            React.createElement('div', { className: 'font-semibold text-rose-700 mb-1' },
+                                                                'Commentaire de ' + comment.user_name + ':'
+                                                            ),
+                                                            React.createElement('div', { className: 'text-gray-700' },
+                                                                comment.comment
+                                                            )
+                                                        )
+                                                    )
                                                 )
                                             )
                                         )
