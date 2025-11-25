@@ -4562,8 +4562,6 @@ app.get('/', (c) => {
                         }
                     });
                     const data = await response.json();
-                    console.log('[OverdueModal] API returned', (data.tickets || []).length, 'tickets');
-                    console.log('[OverdueModal] Current time (browser):', new Date().toISOString());
                     
                     // Filter overdue tickets
                     const now = new Date();
@@ -4580,13 +4578,8 @@ app.get('/', (c) => {
                         // "2025-11-25 10:16:00" → "2025-11-25T10:16:00Z"
                         const isoDate = ticket.scheduled_date.replace(' ', 'T') + 'Z';
                         const scheduledDate = new Date(isoDate);
-                        const isOverdue = scheduledDate < now;
-                        console.log('[OverdueModal]', ticket.ticket_id, '| Raw:', ticket.scheduled_date, '| ISO:', isoDate, '| Parsed:', scheduledDate.toISOString(), '| Now:', now.toISOString(), '| Overdue?', isOverdue);
-                        return isOverdue;
+                        return scheduledDate < now;
                     });
-                    
-                    console.log('[OverdueModal] Filtered to', overdue.length, 'overdue tickets');
-                    console.log('[OverdueModal] Will render:', overdue.map(t => t.ticket_id).join(', '));
                     
                     // Sort by scheduled date (oldest first)
                     overdue.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
@@ -4630,7 +4623,7 @@ app.get('/', (c) => {
             if (!show) return null;
 
             return React.createElement('div', {
-                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4',
+                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4',
                 onClick: onClose
             },
                 React.createElement('div', {
@@ -4639,15 +4632,15 @@ app.get('/', (c) => {
                 },
                     // Header
                     React.createElement('div', { 
-                        className: 'bg-gradient-to-r from-rose-800 to-rose-900 text-white p-6'
+                        className: 'bg-gradient-to-r from-rose-800 to-rose-900 text-white p-4 sm:p-6'
                     },
                         React.createElement('div', { className: 'flex justify-between items-center' },
                             React.createElement('div', {},
-                                React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-2' },
+                                React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold flex items-center gap-2' },
                                     React.createElement('i', { className: 'fas fa-exclamation-triangle' }),
                                     'Tickets en Retard'
                                 ),
-                                React.createElement('p', { className: 'text-rose-200 text-sm mt-1' }, 
+                                React.createElement('p', { className: 'text-rose-200 text-xs sm:text-sm mt-1' }, 
                                     'Interventions nécessitant une attention immédiate'
                                 )
                             ),
@@ -4659,16 +4652,16 @@ app.get('/', (c) => {
                     ),
 
                     // Content
-                    React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
+                    React.createElement('div', { className: 'p-3 sm:p-6 overflow-y-auto max-h-[calc(90vh-100px)] sm:max-h-[calc(90vh-120px)]' },
                         loading ? 
                             React.createElement('div', { className: 'text-center py-12' },
                                 React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-rose-600 mb-4' }),
                                 React.createElement('p', { className: 'text-gray-600' }, 'Chargement des tickets...')
                             ) :
                             overdueTickets.length > 0 ?
-                                React.createElement('div', { className: 'space-y-4' },
+                                React.createElement('div', { className: 'space-y-3 sm:space-y-4' },
                                     // Stats summary
-                                    React.createElement('div', { className: 'bg-rose-50 border border-rose-200 rounded-lg p-4 mb-6' },
+                                    React.createElement('div', { className: 'bg-rose-50 border border-rose-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6' },
                                         React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
                                             React.createElement('i', { className: 'fas fa-info-circle text-rose-700' }),
                                             React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
@@ -4683,9 +4676,9 @@ app.get('/', (c) => {
                                     overdueTickets.map((ticket) =>
                                         React.createElement('div', {
                                             key: ticket.id,
-                                            className: 'border-2 border-rose-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white'
+                                            className: 'border-2 border-rose-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow bg-white'
                                         },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                                            React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start mb-3 gap-2' },
                                                 React.createElement('div', { className: 'flex-1' },
                                                     React.createElement('h3', { className: 'font-bold text-gray-800 mb-1' }, ticket.title),
                                                     React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, ticket.ticket_id)
@@ -4702,24 +4695,24 @@ app.get('/', (c) => {
                                                     )
                                                 )
                                             ),
-                                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
-                                                React.createElement('div', {},
+                                            React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm' },
+                                                React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Machine: '),
-                                                    React.createElement('span', { className: 'font-medium' }, ticket.machine_type + ' - ' + ticket.model)
+                                                    React.createElement('span', { className: 'font-medium ml-1' }, ticket.machine_type + ' - ' + ticket.model)
                                                 ),
-                                                React.createElement('div', {},
+                                                React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Assigné à: '),
-                                                    React.createElement('span', { className: 'font-medium' }, ticket.assignee_email || 'Non assigné')
+                                                    React.createElement('span', { className: 'font-medium ml-1 break-all' }, ticket.assignee_email || 'Non assigné')
                                                 ),
-                                                React.createElement('div', {},
+                                                React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Date prévue: '),
-                                                    React.createElement('span', { className: 'font-medium text-red-600' }, 
-                                                        new Date(ticket.scheduled_date).toLocaleDateString('fr-FR')
+                                                    React.createElement('span', { className: 'font-medium text-red-600 ml-1' }, 
+                                                        new Date(ticket.scheduled_date.replace(' ', 'T') + 'Z').toLocaleDateString('fr-FR')
                                                     )
                                                 ),
-                                                React.createElement('div', {},
+                                                React.createElement('div', { className: 'flex flex-wrap' },
                                                     React.createElement('span', { className: 'text-gray-500' }, 'Lieu: '),
-                                                    React.createElement('span', { className: 'font-medium' }, ticket.location)
+                                                    React.createElement('span', { className: 'font-medium ml-1' }, ticket.location)
                                                 )
                                             )
                                         )
