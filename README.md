@@ -18,6 +18,36 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.9.0 (25 novembre 2025) - STATISTIQUES DASHBOARD ADMIN 📊✨
+- **📊 NOUVELLE FONCTIONNALITÉ** : Barre de statistiques en temps réel dans l'en-tête
+- **4 STATISTIQUES CLÉS** : Affichage dynamique pour admin/supervisor uniquement
+  - ✅ **Tickets actifs (Global)** - Total des tickets non terminés en base de données
+  - ⚠️ **Tickets en retard** - Badge orange/rouge avec animation pulse si retards détectés
+  - 👥 **Techniciens actifs** - Compteur des vrais techniciens (exclut compte système)
+  - 📱 **Appareils push** - Nombre d'appareils avec notifications push enregistrés
+- **🎨 DESIGN HARMONISÉ** : Badges colorés cohérents avec palette IGP
+  - Badge orange → rouge animé si tickets en retard
+  - Badge bleu pour techniciens (icône fas fa-users)
+  - Badge vert pour appareils push (icône fas fa-mobile-alt)
+- **⚡ MISE À JOUR AUTO** : Chargement via `loadSimpleStats()` après délai 2s
+- **🔒 SÉCURITÉ** : API `/api/stats/active-tickets` protégée par authMiddleware
+- **📊 REQUÊTES SQL OPTIMISÉES** : 
+  - Tickets actifs: `WHERE status NOT IN ('completed', 'cancelled', 'archived')`
+  - Tickets retard: `WHERE scheduled_date < datetime('now')`
+  - Techniciens: `WHERE role = 'technician' AND id != 0` (exclut "Toute l'équipe")
+  - Push devices: `SELECT COUNT(*) FROM push_subscriptions`
+
+**Phases implémentées :**
+- ✅ **Phase 1** : Tickets actifs (texte dans header)
+- ✅ **Phase 2** : Tickets en retard (badge orange/rouge animé)
+- ✅ **Phase 3** : Techniciens actifs (badge bleu, 3 techs réels)
+- ✅ **Phase 4** : Appareils push (badge vert)
+
+**Commits:** b17c4f2, 1a96c33, 6403e8f, 549f5f7, faf4d72, 347928b  
+**Déployé:** 2025-11-25 (Production)  
+**URL:** https://816310df.webapp-7t8.pages.dev  
+**Domaine:** https://mecanique.igpglass.ca
+
 ### Version 2.8.1 (24 novembre 2025) - FIX UI MODAL UTILISATEURS 🖥️✨
 - **🐛 FIX UI** : Formulaire modification utilisateur ne persiste plus après fermeture modal
 - **🔄 RESET STATE** : Tous les états edit form réinitialisés quand modal fermée
@@ -176,7 +206,7 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.8.0 - Production Ready** (Système Notifications Parfait + 0 Bug Résiduel + 100% Couverture Tests)
+✅ **Version 2.9.0 - Production Ready** (Dashboard Statistiques + Système Notifications Parfait + 100% Couverture Tests)
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop
@@ -1050,9 +1080,9 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ---
 
-**Version**: 2.8.0  
-**Dernière mise à jour**: 2025-11-24  
-**Statut**: ✅ **PRODUCTION READY** - Système notifications parfait, 0 bug résiduel, 100% couverture tests
+**Version**: 2.9.0  
+**Dernière mise à jour**: 2025-11-25  
+**Statut**: ✅ **PRODUCTION READY** - Dashboard statistiques, système notifications parfait, 100% couverture tests
 
 ## 🆕 Nouveautés v2.0.3 (2025-11-07) - Solution Portal Finale
 

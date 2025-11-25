@@ -528,8 +528,8 @@ db.query(`SELECT * WHERE id = ${id}`)  // SQL Injection!
 ### Versions
 - **Production:** mecanique.igpglass.ca
 - **Test:** webapp-test.pages.dev
-- **Version app:** v2.8.1
-- **Déploiements:** 350+ (normal, aucun problème)
+- **Version app:** v2.9.0
+- **Déploiements:** 355+ (normal, aucun problème)
 
 ### Ce Qui Fonctionne
 ✅ Push notifications (admin + users)  
@@ -759,15 +759,15 @@ app.use('*', async (c, next) => {
 
 **Fin du guide. Si contradiction trouvée entre ce fichier et autres docs → Ce fichier prime.**
 
-**Version:** 1.0.5  
+**Version:** 1.0.6  
 **Créé:** 2025-11-23  
-**Dernière MAJ:** 2025-11-24  
-**Changements v1.0.5:**
-- ✅ Android PWA obligatoire (erreur #8 ajoutée)
-- ✅ Route debug `/api/push/send-test-to-salah`
-- ✅ Version app → 2.8.1
-- ✅ 5 documents audit créés aujourd'hui
-- ✅ Limite lecture → 800 lignes
+**Dernière MAJ:** 2025-11-25  
+**Changements v1.0.6:**
+- ✅ Dashboard statistiques en temps réel (v2.9.0)
+- ✅ 4 statistiques admin/supervisor (tickets actifs, retards, techniciens, push devices)
+- ✅ Version app → 2.9.0
+- ✅ 6 commits statistiques (b17c4f2 à 347928b)
+- ✅ API `/api/stats/active-tickets` avec auth middleware
 
 **Basé sur:** 210+ fichiers .md analysés  
 **Statut:** ✅ Opérationnel
