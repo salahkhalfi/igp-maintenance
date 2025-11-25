@@ -4542,6 +4542,339 @@ app.get('/', (c) => {
         };
 
 
+        // Composant modal des tickets en retard
+        const OverdueTicketsModal = ({ show, onClose, currentUser }) => {
+            const [loading, setLoading] = React.useState(true);
+            const [overdueTickets, setOverdueTickets] = React.useState([]);
+
+            React.useEffect(() => {
+                if (show) {
+                    loadOverdueTickets();
+                }
+            }, [show]);
+
+            const loadOverdueTickets = async () => {
+                try {
+                    setLoading(true);
+                    const response = await fetch('/api/tickets', {
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    // Filter overdue tickets
+                    const now = new Date();
+                    const overdue = (data.tickets || []).filter(ticket => {
+                        if (ticket.status === 'completed' || ticket.status === 'cancelled' || ticket.status === 'archived') {
+                            return false;
+                        }
+                        if (!ticket.scheduled_date) return false;
+                        const scheduledDate = new Date(ticket.scheduled_date);
+                        return scheduledDate < now;
+                    });
+                    
+                    // Sort by scheduled date (oldest first)
+                    overdue.sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+                    
+                    setOverdueTickets(overdue);
+                } catch (error) {
+                    console.error('Erreur chargement tickets en retard:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const getDaysOverdue = (scheduledDate) => {
+                const now = new Date();
+                const scheduled = new Date(scheduledDate);
+                const diffTime = Math.abs(now - scheduled);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays;
+            };
+
+            const getPriorityColor = (priority) => {
+                const colors = {
+                    'critical': 'bg-red-100 text-red-800 border-red-300',
+                    'high': 'bg-orange-100 text-orange-800 border-orange-300',
+                    'medium': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                    'low': 'bg-green-100 text-green-800 border-green-300'
+                };
+                return colors[priority] || colors.medium;
+            };
+
+            const getPriorityLabel = (priority) => {
+                const labels = {
+                    'critical': 'Critique',
+                    'high': 'Haute',
+                    'medium': 'Moyenne',
+                    'low': 'Basse'
+                };
+                return labels[priority] || priority;
+            };
+
+            if (!show) return null;
+
+            return React.createElement('div', {
+                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    // Header
+                    React.createElement('div', { 
+                        className: 'bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6'
+                    },
+                        React.createElement('div', { className: 'flex justify-between items-center' },
+                            React.createElement('div', {},
+                                React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-2' },
+                                    React.createElement('i', { className: 'fas fa-exclamation-triangle' }),
+                                    'Tickets en Retard'
+                                ),
+                                React.createElement('p', { className: 'text-orange-100 text-sm mt-1' }, 
+                                    'Interventions nécessitant une attention immédiate'
+                                )
+                            ),
+                            React.createElement('button', {
+                                className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-colors',
+                                onClick: onClose
+                            }, React.createElement('i', { className: 'fas fa-times' }))
+                        )
+                    ),
+
+                    // Content
+                    React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
+                        loading ? 
+                            React.createElement('div', { className: 'text-center py-12' },
+                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-orange-500 mb-4' }),
+                                React.createElement('p', { className: 'text-gray-600' }, 'Chargement des tickets...')
+                            ) :
+                            overdueTickets.length > 0 ?
+                                React.createElement('div', { className: 'space-y-4' },
+                                    // Stats summary
+                                    React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6' },
+                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                            React.createElement('i', { className: 'fas fa-info-circle text-orange-500' }),
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
+                                        ),
+                                        React.createElement('p', { className: 'text-sm text-gray-700' },
+                                            React.createElement('span', { className: 'font-bold text-orange-700' }, overdueTickets.length),
+                                            ' ticket(s) en retard nécessitant une action urgente.'
+                                        )
+                                    ),
+
+                                    // Tickets list
+                                    overdueTickets.map((ticket) =>
+                                        React.createElement('div', {
+                                            key: ticket.id,
+                                            className: 'border-2 border-orange-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white'
+                                        },
+                                            React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                                                React.createElement('div', { className: 'flex-1' },
+                                                    React.createElement('h3', { className: 'font-bold text-gray-800 mb-1' }, ticket.title),
+                                                    React.createElement('p', { className: 'text-sm text-gray-600 mb-2' }, ticket.ticket_id)
+                                                ),
+                                                React.createElement('div', { className: 'flex flex-col items-end gap-2' },
+                                                    React.createElement('span', { 
+                                                        className: 'px-3 py-1 rounded-full text-xs font-bold border-2 ' + getPriorityColor(ticket.priority)
+                                                    }, getPriorityLabel(ticket.priority)),
+                                                    React.createElement('span', { 
+                                                        className: 'px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border-2 border-red-300'
+                                                    }, 
+                                                        React.createElement('i', { className: 'fas fa-clock mr-1' }),
+                                                        getDaysOverdue(ticket.scheduled_date) + ' jours'
+                                                    )
+                                                )
+                                            ),
+                                            React.createElement('div', { className: 'grid grid-cols-2 gap-4 text-sm' },
+                                                React.createElement('div', {},
+                                                    React.createElement('span', { className: 'text-gray-500' }, 'Machine: '),
+                                                    React.createElement('span', { className: 'font-medium' }, ticket.machine_type + ' - ' + ticket.model)
+                                                ),
+                                                React.createElement('div', {},
+                                                    React.createElement('span', { className: 'text-gray-500' }, 'Assigné à: '),
+                                                    React.createElement('span', { className: 'font-medium' }, ticket.assignee_email || 'Non assigné')
+                                                ),
+                                                React.createElement('div', {},
+                                                    React.createElement('span', { className: 'text-gray-500' }, 'Date prévue: '),
+                                                    React.createElement('span', { className: 'font-medium text-red-600' }, 
+                                                        new Date(ticket.scheduled_date).toLocaleDateString('fr-FR')
+                                                    )
+                                                ),
+                                                React.createElement('div', {},
+                                                    React.createElement('span', { className: 'text-gray-500' }, 'Lieu: '),
+                                                    React.createElement('span', { className: 'font-medium' }, ticket.location)
+                                                )
+                                            )
+                                        )
+                                    )
+                                ) :
+                                React.createElement('div', {
+                                    className: 'text-center py-12 bg-gray-50 rounded-lg'
+                                },
+                                    React.createElement('i', { className: 'fas fa-check-circle text-5xl text-green-500 mb-4' }),
+                                    React.createElement('p', { className: 'text-gray-600 font-medium' }, 
+                                        'Aucun ticket en retard !'
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-gray-500 mt-2' }, 
+                                        'Toutes les interventions sont à jour.'
+                                    )
+                                )
+                    )
+                )
+            );
+        };
+
+
+        // Composant modal des appareils push
+        const PushDevicesModal = ({ show, onClose }) => {
+            const [loading, setLoading] = React.useState(true);
+            const [devices, setDevices] = React.useState([]);
+
+            React.useEffect(() => {
+                if (show) {
+                    loadDevices();
+                }
+            }, [show]);
+
+            const loadDevices = async () => {
+                try {
+                    setLoading(true);
+                    const response = await fetch('/api/push/subscriptions-list', {
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    });
+                    const data = await response.json();
+                    setDevices(data.subscriptions || []);
+                } catch (error) {
+                    console.error('Erreur chargement appareils:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const getDeviceIcon = (deviceType) => {
+                if (!deviceType) return 'fa-mobile-alt';
+                const type = deviceType.toLowerCase();
+                if (type.includes('mobile') || type.includes('phone')) return 'fa-mobile-alt';
+                if (type.includes('tablet') || type.includes('ipad')) return 'fa-tablet-alt';
+                if (type.includes('desktop') || type.includes('windows')) return 'fa-desktop';
+                if (type.includes('laptop') || type.includes('mac')) return 'fa-laptop';
+                return 'fa-mobile-alt';
+            };
+
+            const getDevicePlatform = (deviceType, deviceName) => {
+                if (deviceName) return deviceName;
+                if (!deviceType) return 'Appareil inconnu';
+                return deviceType;
+            };
+
+            if (!show) return null;
+
+            return React.createElement('div', {
+                className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4',
+                onClick: onClose
+            },
+                React.createElement('div', {
+                    className: 'bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden',
+                    onClick: (e) => e.stopPropagation()
+                },
+                    // Header
+                    React.createElement('div', { 
+                        className: 'bg-gradient-to-r from-green-600 to-green-700 text-white p-6'
+                    },
+                        React.createElement('div', { className: 'flex justify-between items-center' },
+                            React.createElement('div', {},
+                                React.createElement('h2', { className: 'text-2xl font-bold flex items-center gap-2' },
+                                    React.createElement('i', { className: 'fas fa-bell' }),
+                                    'Appareils Notifications Push'
+                                ),
+                                React.createElement('p', { className: 'text-green-100 text-sm mt-1' }, 
+                                    'Appareils enregistrés pour recevoir les notifications'
+                                )
+                            ),
+                            React.createElement('button', {
+                                className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-colors',
+                                onClick: onClose
+                            }, React.createElement('i', { className: 'fas fa-times' }))
+                        )
+                    ),
+
+                    // Content
+                    React.createElement('div', { className: 'p-6 overflow-y-auto max-h-[calc(90vh-120px)]' },
+                        loading ? 
+                            React.createElement('div', { className: 'text-center py-12' },
+                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-4xl text-green-500 mb-4' }),
+                                React.createElement('p', { className: 'text-gray-600' }, 'Chargement des appareils...')
+                            ) :
+                            devices.length > 0 ?
+                                React.createElement('div', { className: 'space-y-4' },
+                                    // Stats summary
+                                    React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-6' },
+                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                            React.createElement('i', { className: 'fas fa-info-circle text-green-500' }),
+                                            React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Résumé')
+                                        ),
+                                        React.createElement('p', { className: 'text-sm text-gray-700' },
+                                            React.createElement('span', { className: 'font-bold text-green-700' }, devices.length),
+                                            ' appareil(s) enregistré(s) pour recevoir les notifications push.'
+                                        )
+                                    ),
+
+                                    // Devices list
+                                    React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4' },
+                                        devices.map((device, index) =>
+                                            React.createElement('div', {
+                                                key: device.id,
+                                                className: 'border-2 border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-white'
+                                            },
+                                                React.createElement('div', { className: 'flex items-start gap-3' },
+                                                    React.createElement('div', { className: 'w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0' },
+                                                        React.createElement('i', { 
+                                                            className: 'fas ' + getDeviceIcon(device.device_type) + ' text-green-600 text-xl'
+                                                        })
+                                                    ),
+                                                    React.createElement('div', { className: 'flex-1' },
+                                                        React.createElement('h3', { className: 'font-bold text-gray-800 mb-1' }, 
+                                                            getDevicePlatform(device.device_type, device.device_name)
+                                                        ),
+                                                        React.createElement('p', { className: 'text-xs text-gray-500 mb-2' }, 
+                                                            'Utilisateur: ' + (device.user_full_name || 'Inconnu')
+                                                        ),
+                                                        React.createElement('div', { className: 'flex items-center gap-2' },
+                                                            React.createElement('span', { 
+                                                                className: 'px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700'
+                                                            },
+                                                                React.createElement('i', { className: 'fas fa-check-circle mr-1' }),
+                                                                'Actif'
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                ) :
+                                React.createElement('div', {
+                                    className: 'text-center py-12 bg-gray-50 rounded-lg'
+                                },
+                                    React.createElement('i', { className: 'fas fa-mobile-alt text-5xl text-gray-300 mb-4' }),
+                                    React.createElement('p', { className: 'text-gray-600 font-medium' }, 
+                                        'Aucun appareil enregistré'
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-gray-500 mt-2' }, 
+                                        'Les appareils apparaîtront ici une fois les notifications push activées.'
+                                    )
+                                )
+                    )
+                )
+            );
+        };
+
+
         // Composant de gestion des utilisateurs (VERSION SIMPLIFIÉE)
         const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             const [users, setUsers] = React.useState([]);
@@ -6220,6 +6553,8 @@ app.get('/', (c) => {
             const [messagingTab, setMessagingTab] = React.useState("public");
             const [showScrollTop, setShowScrollTop] = React.useState(false);
             const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
+            const [showOverdueModal, setShowOverdueModal] = React.useState(false);
+            const [showPushDevicesModal, setShowPushDevicesModal] = React.useState(false);
 
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
@@ -6633,6 +6968,19 @@ app.get('/', (c) => {
                 }),
 
 
+                React.createElement(OverdueTicketsModal, {
+                    show: showOverdueModal,
+                    onClose: () => setShowOverdueModal(false),
+                    currentUser: currentUser
+                }),
+
+
+                React.createElement(PushDevicesModal, {
+                    show: showPushDevicesModal,
+                    onClose: () => setShowPushDevicesModal(false)
+                }),
+
+
                 React.createElement(UserManagementModal, {
                     show: showUserManagement,
                     onClose: () => setShowUserManagement(false),
@@ -6807,9 +7155,10 @@ app.get('/', (c) => {
                                         ),
                                         (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                         React.createElement('span', {
-                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300',
+                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
                                             id: 'overdue-tickets-badge',
-                                            title: 'Tickets en retard'
+                                            title: 'Tickets en retard - Cliquer pour voir détails',
+                                            onClick: () => setShowOverdueModal(true)
                                         },
                                             React.createElement('i', { className: 'fas fa-clock mr-1' }),
                                             '0 retard'
@@ -6826,9 +7175,10 @@ app.get('/', (c) => {
                                         ) : null,
                                         (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                         React.createElement('span', {
-                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300',
+                                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300 cursor-pointer hover:bg-green-200 transition-colors',
                                             id: 'push-devices-badge',
-                                            title: 'Appareils avec notifications push'
+                                            title: 'Appareils avec notifications push - Cliquer pour voir liste',
+                                            onClick: () => setShowPushDevicesModal(true)
                                         },
                                             React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }),
                                             '0 apps'
@@ -10103,6 +10453,42 @@ app.get('/api/stats/technicians-performance', authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error('[Performance Stats API] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+// API: Push subscriptions list
+app.get('/api/push/subscriptions-list', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Only admins and supervisors can see subscriptions list
+    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
+      return c.json({ error: 'Accès refusé' }, 403);
+    }
+
+    // Get all push subscriptions with user info
+    const subscriptions = await c.env.DB.prepare(`
+      SELECT 
+        ps.id,
+        ps.user_id,
+        ps.endpoint,
+        ps.device_type,
+        ps.device_name,
+        ps.created_at,
+        u.full_name as user_full_name,
+        u.email as user_email,
+        u.role as user_role
+      FROM push_subscriptions ps
+      LEFT JOIN users u ON ps.user_id = u.id
+      ORDER BY ps.created_at DESC
+    `).all();
+
+    return c.json({
+      subscriptions: subscriptions.results || []
+    });
+  } catch (error) {
+    console.error('[Push Subscriptions List API] Error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
