@@ -4565,13 +4565,23 @@ app.get('/', (c) => {
                     
                     // Filter overdue tickets
                     const now = new Date();
+                    console.log('[OverdueModal] Current time:', now.toISOString());
+                    console.log('[OverdueModal] Total tickets:', (data.tickets || []).length);
+                    
                     const overdue = (data.tickets || []).filter(ticket => {
                         if (ticket.status === 'completed' || ticket.status === 'cancelled' || ticket.status === 'archived') {
+                            console.log('[OverdueModal] Skipped (status):', ticket.ticket_id, 'Status:', ticket.status);
                             return false;
                         }
-                        if (!ticket.scheduled_date) return false;
+                        // Handle both null and string "null" from database
+                        if (!ticket.scheduled_date || ticket.scheduled_date === 'null') {
+                            console.log('[OverdueModal] Skipped (no date):', ticket.ticket_id, 'scheduled_date:', ticket.scheduled_date);
+                            return false;
+                        }
                         const scheduledDate = new Date(ticket.scheduled_date);
-                        return scheduledDate < now;
+                        const isOverdue = scheduledDate < now;
+                        console.log('[OverdueModal] Ticket:', ticket.ticket_id, 'Scheduled:', ticket.scheduled_date, 'Parsed:', scheduledDate.toISOString(), 'Now:', now.toISOString(), 'Overdue?', isOverdue);
+                        return isOverdue;
                     });
                     
                     // Sort by scheduled date (oldest first)
