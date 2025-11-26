@@ -201,10 +201,17 @@ cron.post('/check-overdue', async (c) => {
             console.log(`⏭️ CRON: Push déjà envoyé récemment pour ${ticket.ticket_id} (assigné: ${ticket.assigned_to}), skip pour éviter doublon`);
           } else {
             // Aucun push récent, on envoie
+            // Récupérer le nom de l'utilisateur assigné
+            const assignedUser = await c.env.DB.prepare(
+              'SELECT first_name FROM users WHERE id = ?'
+            ).bind(ticket.assigned_to).first() as { first_name: string } | null;
+            
+            const userName = assignedUser?.first_name || 'Technicien';
+            
             const { sendPushNotification } = await import('./push');
             const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
-            title: `🔴 Ticket Expiré: ${ticket.ticket_id}`,
-            body: `${ticket.title} - Retard ${overdueText}. Changez la date planifiée`,
+            title: `🔴 ${userName}, ticket expiré`,
+            body: `${ticket.ticket_id}: ${ticket.title} - Retard ${overdueText}`,
             icon: '/icon-192.png',
             badge: '/icon-192.png',
             data: { 
@@ -265,9 +272,11 @@ cron.post('/check-overdue', async (c) => {
               }
 
               try {
+                const adminName = admin.first_name || 'Admin';
+                
                 const adminPushResult = await sendPushNotification(c.env, admin.id as number, {
-                  title: `⚠️ TICKET EXPIRÉ: ${ticket.ticket_id}`,
-                  body: `${ticket.title} - Retard ${overdueText}`,
+                  title: `⚠️ ${adminName}, ticket expiré`,
+                  body: `${ticket.ticket_id}: ${ticket.title} - Retard ${overdueText}`,
                   icon: '/icon-192.png',
                   badge: '/badge-72.png',
                   data: {

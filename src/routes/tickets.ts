@@ -182,10 +182,17 @@ tickets.post('/', async (c) => {
         // Envoyer notification push si ticket assigné à un technicien dès la création
         if (assigned_to) {
           try {
+            // Récupérer le nom de l'utilisateur assigné
+            const assignedUser = await c.env.DB.prepare(
+              'SELECT first_name FROM users WHERE id = ?'
+            ).bind(assigned_to).first() as { first_name: string } | null;
+            
+            const userName = assignedUser?.first_name || 'Technicien';
+            
             const { sendPushNotification } = await import('./push');
             const pushResult = await sendPushNotification(c.env, assigned_to, {
-              title: `🔧 ${title}`,
-              body: `Nouveau ticket assigné: ${ticket_id}`,
+              title: `🔧 ${userName}, nouveau ticket`,
+              body: `${ticket_id}: ${title}`,
               icon: '/icon-192.png',
               data: { 
                 ticketId: (newTicket as any).id,
@@ -361,9 +368,16 @@ tickets.patch('/:id', async (c) => {
         // NOUVEAU: Notifier l'ancien assigné que le ticket lui a été retiré
         if (currentTicket.assigned_to && currentTicket.assigned_to !== 0) {
           try {
+            // Récupérer le nom de l'ancien assigné
+            const oldAssignedUser = await c.env.DB.prepare(
+              'SELECT first_name FROM users WHERE id = ?'
+            ).bind(currentTicket.assigned_to).first() as { first_name: string } | null;
+            
+            const oldUserName = oldAssignedUser?.first_name || 'Technicien';
+            
             const oldAssigneePush = await sendPushNotification(c.env, currentTicket.assigned_to, {
-              title: `📤 ${currentTicket.title}`,
-              body: `Ticket ${currentTicket.ticket_id} retiré de votre liste (réassigné)`,
+              title: `📤 ${oldUserName}, ticket retiré`,
+              body: `${currentTicket.ticket_id} réassigné à quelqu'un d'autre`,
               icon: '/icon-192.png',
               data: { 
                 ticketId: id,
@@ -393,9 +407,16 @@ tickets.patch('/:id', async (c) => {
         }
 
         // Notifier le nouvel assigné
+        // Récupérer le nom du nouvel assigné
+        const newAssignedUser = await c.env.DB.prepare(
+          'SELECT first_name FROM users WHERE id = ?'
+        ).bind(body.assigned_to).first() as { first_name: string } | null;
+        
+        const newUserName = newAssignedUser?.first_name || 'Technicien';
+        
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
-          title: `🔧 ${currentTicket.title}`,
-          body: `Ticket ${currentTicket.ticket_id} réassigné à vous`,
+          title: `🔧 ${newUserName}, ticket réassigné`,
+          body: `${currentTicket.ticket_id}: ${currentTicket.title}`,
           icon: '/icon-192.png',
           data: { 
             ticketId: id,
