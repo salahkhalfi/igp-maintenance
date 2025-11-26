@@ -7209,7 +7209,9 @@ app.get('/', (c) => {
                         WebkitBackdropFilter: 'blur(20px)',
                         boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
                         border: '1px solid rgba(255, 255, 255, 0.5)',
-                        borderBottom: '4px solid #003366'
+                        borderBottom: '4px solid #003366',
+                        position: 'relative',
+                        zIndex: 10
                     }
                 },
                     React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
@@ -7284,14 +7286,15 @@ app.get('/', (c) => {
                                 showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && React.createElement('div', {
                                     className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl overflow-y-auto',
                                     style: { 
-                                        zIndex: 999999,
+                                        zIndex: 9999999,
                                         top: searchDropdownPosition.top + 'px',
                                         left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
                                         right: window.innerWidth < 768 ? '1rem' : 'auto',
                                         width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
                                         minWidth: window.innerWidth < 768 ? 'auto' : '320px',
                                         maxWidth: '32rem',
-                                        maxHeight: 'calc(100vh - ' + searchDropdownPosition.top + 'px - 2rem)'
+                                        maxHeight: 'calc(100vh - ' + searchDropdownPosition.top + 'px - 2rem)',
+                                        pointerEvents: 'auto'
                                     }
                                 },
                                     // Section 1: Résultats par mot-clé
@@ -7432,13 +7435,14 @@ app.get('/', (c) => {
                                 showSearchResults && searchKeywordResults.length === 0 && searchTextResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
                                     className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
                                     style: { 
-                                        zIndex: 999999,
+                                        zIndex: 9999999,
                                         top: searchDropdownPosition.top + 'px',
                                         left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
                                         right: window.innerWidth < 768 ? '1rem' : 'auto',
                                         width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
                                         minWidth: window.innerWidth < 768 ? 'auto' : '320px',
-                                        maxWidth: '28rem'
+                                        maxWidth: '28rem',
+                                        pointerEvents: 'auto'
                                     }
                                 },
                                     React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
