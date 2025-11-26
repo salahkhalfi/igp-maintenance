@@ -7282,15 +7282,16 @@ app.get('/', (c) => {
                                     className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                                 }),
                                 showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && React.createElement('div', {
-                                    className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[32rem] overflow-y-auto',
+                                    className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl overflow-y-auto',
                                     style: { 
-                                        zIndex: 99999,
+                                        zIndex: 999999,
                                         top: searchDropdownPosition.top + 'px',
                                         left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
                                         right: window.innerWidth < 768 ? '1rem' : 'auto',
                                         width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
                                         minWidth: window.innerWidth < 768 ? 'auto' : '320px',
-                                        maxWidth: '32rem'
+                                        maxWidth: '32rem',
+                                        maxHeight: 'calc(100vh - ' + searchDropdownPosition.top + 'px - 2rem)'
                                     }
                                 },
                                     // Section 1: Résultats par mot-clé
@@ -7431,7 +7432,7 @@ app.get('/', (c) => {
                                 showSearchResults && searchKeywordResults.length === 0 && searchTextResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
                                     className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
                                     style: { 
-                                        zIndex: 99999,
+                                        zIndex: 999999,
                                         top: searchDropdownPosition.top + 'px',
                                         left: window.innerWidth < 768 ? '1rem' : searchDropdownPosition.left + 'px',
                                         right: window.innerWidth < 768 ? '1rem' : 'auto',
