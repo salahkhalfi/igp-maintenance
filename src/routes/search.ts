@@ -181,7 +181,57 @@ search.get('/', authMiddleware, async (c) => {
 
     const { results } = await c.env.DB.prepare(sqlQuery).bind(...params).all();
 
-    return c.json({ results });
+    // NOUVEAU: Si mot-clé détecté, aussi chercher dans le texte pour résultats additionnels
+    let keywordResults = [];
+    let textResults = [];
+    
+    if (isKeywordSearch && results.length > 0) {
+      // Les résultats actuels sont les résultats du mot-clé
+      keywordResults = results;
+      
+      // Chercher aussi dans le texte pour contexte additionnel
+      const textSearchQuery = `
+        SELECT DISTINCT
+          t.*,
+          m.machine_type, m.model, m.serial_number, m.location,
+          u1.first_name as reporter_name,
+          u2.first_name as assignee_name,
+          (SELECT COUNT(*) FROM ticket_comments tc WHERE tc.ticket_id = t.id) as comments_count
+        FROM tickets t
+        LEFT JOIN machines m ON t.machine_id = m.id
+        LEFT JOIN users u1 ON t.reported_by = u1.id
+        LEFT JOIN users u2 ON t.assigned_to = u2.id
+        LEFT JOIN ticket_comments c ON t.id = c.ticket_id
+        WHERE 
+          t.status != 'archived' AND (
+            t.ticket_id LIKE ? OR
+            t.title LIKE ? OR
+            t.description LIKE ? OR
+            c.comment LIKE ?
+          )
+        ORDER BY t.created_at DESC
+        LIMIT 20
+      `;
+      
+      const textSearchResults = await c.env.DB.prepare(textSearchQuery)
+        .bind(searchTerm, searchTerm, searchTerm, searchTerm)
+        .all();
+      
+      // Filtrer pour exclure les tickets déjà dans keywordResults
+      const keywordIds = new Set(keywordResults.map((t: any) => t.id));
+      textResults = textSearchResults.results.filter((t: any) => !keywordIds.has(t.id));
+    } else if (!isKeywordSearch) {
+      // Recherche textuelle pure, pas de séparation
+      keywordResults = results;
+    }
+
+    return c.json({ 
+      results,
+      keywordResults,
+      textResults,
+      isKeywordSearch,
+      keyword: isKeywordSearch ? queryLower : null
+    });
   } catch (error) {
     console.error('Search error:', error);
     return c.json({ error: 'Erreur lors de la recherche' }, 500);

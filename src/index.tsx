@@ -6679,6 +6679,10 @@ app.get('/', (c) => {
             const searchTimeoutRef = React.useRef(null);
             const searchInputRef = React.useRef(null);
             const [searchDropdownPosition, setSearchDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
+            const [searchKeywordResults, setSearchKeywordResults] = React.useState([]);
+            const [searchTextResults, setSearchTextResults] = React.useState([]);
+            const [searchIsKeyword, setSearchIsKeyword] = React.useState(false);
+            const [searchKeywordType, setSearchKeywordType] = React.useState(null);
 
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
@@ -7255,6 +7259,10 @@ app.get('/', (c) => {
                                                     });
                                                     const data = await response.json();
                                                     setSearchResults(data.results || []);
+                                                    setSearchKeywordResults(data.keywordResults || []);
+                                                    setSearchTextResults(data.textResults || []);
+                                                    setSearchIsKeyword(data.isKeywordSearch || false);
+                                                    setSearchKeywordType(data.keyword || null);
                                                     setShowSearchResults(true);
                                                 } catch (err) {
                                                     console.error('Erreur recherche:', err);
@@ -7273,8 +7281,8 @@ app.get('/', (c) => {
                                 React.createElement('i', {
                                     className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                                 }),
-                                showSearchResults && searchResults.length > 0 && React.createElement('div', {
-                                    className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-96 overflow-y-auto',
+                                showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && React.createElement('div', {
+                                    className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[32rem] overflow-y-auto',
                                     style: { 
                                         zIndex: 99999,
                                         top: searchDropdownPosition.top + 'px',
@@ -7282,14 +7290,117 @@ app.get('/', (c) => {
                                         right: window.innerWidth < 768 ? '1rem' : 'auto',
                                         width: window.innerWidth < 768 ? 'auto' : searchDropdownPosition.width + 'px',
                                         minWidth: window.innerWidth < 768 ? 'auto' : '320px',
-                                        maxWidth: '28rem'
+                                        maxWidth: '32rem'
                                     }
                                 },
-                                    searchResults.map((result) =>
+                                    // Section 1: Résultats par mot-clé
+                                    searchIsKeyword && searchKeywordResults.length > 0 && React.createElement('div', {},
+                                        React.createElement('div', { className: 'bg-gradient-to-r from-red-50 to-orange-50 px-4 py-2 border-b-2 border-red-200 sticky top-0 z-10' },
+                                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                                React.createElement('span', { className: 'text-xs font-bold text-red-700 uppercase' },
+                                                    searchKeywordType === 'retard' || searchKeywordType === 'retards' || searchKeywordType === 'overdue' ? '🔴 TICKETS EN RETARD' :
+                                                    searchKeywordType === 'urgent' || searchKeywordType === 'critique' || searchKeywordType === 'critical' ? '🔴 TICKETS CRITIQUES' :
+                                                    searchKeywordType === 'haute' || searchKeywordType === 'high' ? '🟠 HAUTE PRIORITÉ' :
+                                                    searchKeywordType === 'commentaire' || searchKeywordType === 'commentaires' || searchKeywordType === 'note' ? '💬 AVEC COMMENTAIRES' :
+                                                    '🎯 RÉSULTATS CIBLÉS'
+                                                ),
+                                                React.createElement('span', { className: 'text-xs font-semibold text-gray-600 bg-white px-2 py-0.5 rounded-full' },
+                                                    searchKeywordResults.length
+                                                )
+                                            )
+                                        ),
+                                        searchKeywordResults.map((result) =>
+                                            React.createElement('div', {
+                                                key: 'kw-' + result.id,
+                                                className: 'p-3 hover:bg-red-50 cursor-pointer border-b border-gray-100 transition-colors',
+                                                onClick: () => {
+                                                    setSelectedTicketId(result.id);
+                                                    setShowDetailsModal(true);
+                                                    setSearchQuery('');
+                                                    setShowSearchResults(false);
+                                                }
+                                            },
+                                                React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                                                    React.createElement('div', { className: 'flex items-center gap-2 flex-1' },
+                                                        React.createElement('span', { className: 'px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white' },
+                                                            searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
+                                                            searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
+                                                            searchKeywordType === 'haute' ? '🟠' : '💬'
+                                                        ),
+                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title)
+                                                    ),
+                                                    React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                                ),
+                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-8' },
+                                                    React.createElement('i', { className: 'fas fa-cog mr-1' }),
+                                                    result.machine_type + ' - ' + result.model
+                                                ),
+                                                React.createElement('div', { className: 'flex items-center gap-2 mt-1 ml-8' },
+                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                        React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
+                                                        result.location
+                                                    ),
+                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                        React.createElement('i', { className: 'fas fa-comment mr-1' }),
+                                                        result.comments_count
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    // Section 2: Résultats textuels
+                                    searchIsKeyword && searchTextResults.length > 0 && React.createElement('div', {},
+                                        React.createElement('div', { className: 'bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2 border-b border-gray-300 sticky top-0 z-10' },
+                                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                                React.createElement('span', { className: 'text-xs font-bold text-gray-600 uppercase' },
+                                                    '📄 AUTRES RÉSULTATS'
+                                                ),
+                                                React.createElement('span', { className: 'text-xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full' },
+                                                    searchTextResults.length
+                                                )
+                                            )
+                                        ),
+                                        searchTextResults.map((result) =>
+                                            React.createElement('div', {
+                                                key: 'txt-' + result.id,
+                                                className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                                onClick: () => {
+                                                    setSelectedTicketId(result.id);
+                                                    setShowDetailsModal(true);
+                                                    setSearchQuery('');
+                                                    setShowSearchResults(false);
+                                                }
+                                            },
+                                                React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                                                    React.createElement('div', { className: 'flex items-center gap-2 flex-1' },
+                                                        React.createElement('span', { className: 'px-2 py-0.5 rounded text-xs font-bold bg-gray-400 text-white' }, '📝'),
+                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title)
+                                                    ),
+                                                    React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                                ),
+                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-8' },
+                                                    React.createElement('i', { className: 'fas fa-cog mr-1' }),
+                                                    result.machine_type + ' - ' + result.model
+                                                ),
+                                                React.createElement('div', { className: 'flex items-center gap-2 mt-1 ml-8' },
+                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                        React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
+                                                        result.location
+                                                    ),
+                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                        React.createElement('i', { className: 'fas fa-comment mr-1' }),
+                                                        result.comments_count
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    // Section unique: Recherche textuelle pure
+                                    !searchIsKeyword && searchKeywordResults.length > 0 && searchKeywordResults.map((result) =>
                                         React.createElement('div', {
                                             key: result.id,
                                             className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
-                                            onClick: (e) => {
+                                            onClick: () => {
                                                 setSelectedTicketId(result.id);
                                                 setShowDetailsModal(true);
                                                 setSearchQuery('');
@@ -7317,7 +7428,7 @@ app.get('/', (c) => {
                                         )
                                     )
                                 ),
-                                showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
+                                showSearchResults && searchKeywordResults.length === 0 && searchTextResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
                                     className: 'fixed left-4 right-4 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
                                     style: { 
                                         zIndex: 99999,
