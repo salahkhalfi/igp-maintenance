@@ -11,28 +11,43 @@ export async function authMiddleware(c: Context<{ Bindings: Bindings }>, next: N
   const cookieToken = getCookie(c, 'auth_token');
   const authHeader = c.req.header('Authorization');
   
-  console.log('[AUTH-MIDDLEWARE] Cookie token:', cookieToken ? `${cookieToken.substring(0, 20)}... (length: ${cookieToken.length})` : 'NULL');
-  console.log('[AUTH-MIDDLEWARE] Authorization header:', authHeader ? `Bearer ${authHeader.substring(7, 27)}...` : 'NULL');
+  // Development logging only
+  if (c.env.ENVIRONMENT !== 'production') {
+    console.log('[AUTH-MIDDLEWARE] Cookie token:', cookieToken ? `${cookieToken.substring(0, 20)}... (length: ${cookieToken.length})` : 'NULL');
+    console.log('[AUTH-MIDDLEWARE] Authorization header:', authHeader ? `Bearer ${authHeader.substring(7, 27)}...` : 'NULL');
+  }
 
   // Priorité: Cookie d'abord (secure), puis Authorization header (backward compat)
   const token = cookieToken || extractToken(authHeader);
-  console.log('[AUTH-MIDDLEWARE] Token source:', cookieToken ? 'COOKIE (secure)' : authHeader ? 'HEADER (legacy)' : 'NONE');
-  console.log('[AUTH-MIDDLEWARE] Token extracted:', token ? `${token.substring(0, 20)}... (length: ${token.length})` : 'NULL');
+  
+  if (c.env.ENVIRONMENT !== 'production') {
+    console.log('[AUTH-MIDDLEWARE] Token source:', cookieToken ? 'COOKIE (secure)' : authHeader ? 'HEADER (legacy)' : 'NONE');
+    console.log('[AUTH-MIDDLEWARE] Token extracted:', token ? `${token.substring(0, 20)}... (length: ${token.length})` : 'NULL');
+  }
 
   if (!token) {
-    console.log('[AUTH-MIDDLEWARE] REJECTING: Token manquant');
+    if (c.env.ENVIRONMENT !== 'production') {
+      console.log('[AUTH-MIDDLEWARE] REJECTING: Token manquant');
+    }
     return c.json({ error: 'Token manquant' }, 401);
   }
 
   const payload = await verifyToken(token);
-  console.log('[AUTH-MIDDLEWARE] Token verification result:', payload ? 'VALID' : 'INVALID');
+  
+  if (c.env.ENVIRONMENT !== 'production') {
+    console.log('[AUTH-MIDDLEWARE] Token verification result:', payload ? 'VALID' : 'INVALID');
+  }
 
   if (!payload) {
-    console.log('[AUTH-MIDDLEWARE] REJECTING: Token invalide ou expiré');
+    if (c.env.ENVIRONMENT !== 'production') {
+      console.log('[AUTH-MIDDLEWARE] REJECTING: Token invalide ou expiré');
+    }
     return c.json({ error: 'Token invalide ou expiré' }, 401);
   }
 
-  console.log('[AUTH-MIDDLEWARE] SUCCESS: User authenticated:', payload.userId, payload.email, payload.role);
+  if (c.env.ENVIRONMENT !== 'production') {
+    console.log('[AUTH-MIDDLEWARE] SUCCESS: User authenticated:', payload.userId, payload.email, payload.role);
+  }
 
   // Stocker les informations utilisateur dans le contexte
   c.set('user', payload);

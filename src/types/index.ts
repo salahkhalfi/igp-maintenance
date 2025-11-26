@@ -112,4 +112,5 @@ export interface Bindings {
   MEDIA_BUCKET: R2Bucket;
   JWT_SECRET?: string;
   CRON_SECRET?: string;
+  ENVIRONMENT?: string; // 'production' | 'development' | 'staging'
 }
