@@ -6800,6 +6800,53 @@ app.get('/', (c) => {
                 }
             }, [tickets]);
 
+            // Écouter les messages du Service Worker (notification click quand app déjà ouverte)
+            React.useEffect(() => {
+                const handleServiceWorkerMessage = (event) => {
+                    console.log('[Push] Service Worker message received:', event.data);
+                    
+                    if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+                        const { action, data } = event.data;
+                        
+                        // Ouvrir le ticket si action view_ticket
+                        if (action === 'view_ticket' && data.ticketId) {
+                            const ticketId = data.ticketId;
+                            const ticket = tickets.find(t => t.id === ticketId);
+                            
+                            if (ticket) {
+                                console.log('[Push] Opening ticket from notification click:', ticketId);
+                                setSelectedTicketId(ticketId);
+                                setShowDetailsModal(true);
+                            } else {
+                                console.log('[Push] Ticket not found, reloading data...');
+                                // Ticket pas encore chargé, recharger les données
+                                loadData().then(() => {
+                                    const foundTicket = tickets.find(t => t.id === ticketId);
+                                    if (foundTicket) {
+                                        setSelectedTicketId(ticketId);
+                                        setShowDetailsModal(true);
+                                    }
+                                });
+                            }
+                        }
+                        // Ouvrir messagerie pour messages audio
+                        else if (action === 'new_audio_message' && data.messageId) {
+                            setShowMessagesModal(true);
+                        }
+                        // Ouvrir conversation privée
+                        else if (action === 'new_private_message' && data.senderId) {
+                            setShowMessagesModal(true);
+                        }
+                    }
+                };
+                
+                navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+                
+                return () => {
+                    navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+                };
+            }, [tickets]);
+
             const getTicketsByStatus = (status) => {
                 let filteredTickets = tickets.filter(t => t.status === status);
 
