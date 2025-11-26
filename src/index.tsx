@@ -6684,14 +6684,23 @@ app.get('/', (c) => {
             const [searchIsKeyword, setSearchIsKeyword] = React.useState(false);
             const [searchKeywordType, setSearchKeywordType] = React.useState(null);
             
-            // Placeholder animé avec exemples de mots-clés
-            const searchPlaceholders = [
+            // Placeholder animé avec exemples de mots-clés (versions desktop et mobile)
+            const searchPlaceholdersDesktop = [
                 'Essayez: "retard" pour voir les tickets en retard',
                 'Essayez: "urgent" pour voir les priorités critiques',
                 'Essayez: "commentaire" pour voir les tickets avec notes',
                 'Essayez: "haute" pour voir les haute priorité',
                 'Ou cherchez par machine, lieu, ticket...'
             ];
+            const searchPlaceholdersMobile = [
+                'Ex: "retard" tickets en retard',
+                'Ex: "urgent" tickets critiques',
+                'Ex: "commentaire" avec notes',
+                'Ex: "haute" haute priorité',
+                'Machine, lieu, ticket...'
+            ];
+            const isMobile = window.innerWidth < 768;
+            const searchPlaceholders = isMobile ? searchPlaceholdersMobile : searchPlaceholdersDesktop;
             const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
             
             // Rotation automatique du placeholder toutes les 4 secondes
@@ -7233,13 +7242,13 @@ app.get('/', (c) => {
                     }
                 },
                     React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
-                        React.createElement('div', { className: 'w-full max-w-md mx-auto mb-4' },
+                        React.createElement('div', { className: 'w-full max-w-md md:max-w-2xl mx-auto mb-4' },
                             React.createElement('div', { className: 'relative w-full', style: { zIndex: 99999 } },
                                 React.createElement('input', {
                                     ref: searchInputRef,
                                     type: 'text',
                                     placeholder: searchPlaceholders[placeholderIndex],
-                                    className: 'w-full px-4 py-2 pr-20 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm placeholder-gray-400',
+                                    className: 'w-full px-3 md:px-4 py-2 pr-14 md:pr-20 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-xs md:text-sm placeholder-gray-400',
                                     value: searchQuery,
                                     onKeyDown: (e) => {
                                         if (e.key === 'Escape') {
