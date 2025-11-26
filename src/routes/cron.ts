@@ -276,8 +276,6 @@ cron.post('/check-overdue', async (c) => {
                     action: 'view_ticket',
                     url: `/?ticket=${ticket.id}`,
                     overdue_cron: true,
-                    ticketId: ticket.id,
-                    ticket_id: ticket.ticket_id,
                     priority: ticket.priority,
                     assignedTo: ticket.assigned_to
                   }
