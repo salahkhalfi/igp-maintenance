@@ -6683,6 +6683,24 @@ app.get('/', (c) => {
             const [searchTextResults, setSearchTextResults] = React.useState([]);
             const [searchIsKeyword, setSearchIsKeyword] = React.useState(false);
             const [searchKeywordType, setSearchKeywordType] = React.useState(null);
+            
+            // Placeholder animé avec exemples de mots-clés
+            const searchPlaceholders = [
+                'Essayez: "retard" pour voir les tickets en retard',
+                'Essayez: "urgent" pour voir les priorités critiques',
+                'Essayez: "commentaire" pour voir les tickets avec notes',
+                'Essayez: "haute" pour voir les haute priorité',
+                'Ou cherchez par machine, lieu, ticket...'
+            ];
+            const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
+            
+            // Rotation automatique du placeholder toutes les 4 secondes
+            React.useEffect(() => {
+                const interval = setInterval(() => {
+                    setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+                }, 4000);
+                return () => clearInterval(interval);
+            }, []);
 
             // Détection du scroll pour afficher/masquer le bouton "Retour en haut"
             React.useEffect(() => {
@@ -7220,8 +7238,8 @@ app.get('/', (c) => {
                                 React.createElement('input', {
                                     ref: searchInputRef,
                                     type: 'text',
-                                    placeholder: 'Rechercher ticket, machine, lieu...',
-                                    className: 'w-full px-4 py-2 pr-20 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
+                                    placeholder: searchPlaceholders[placeholderIndex],
+                                    className: 'w-full px-4 py-2 pr-20 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm placeholder-gray-400',
                                     value: searchQuery,
                                     onKeyDown: (e) => {
                                         if (e.key === 'Escape') {
