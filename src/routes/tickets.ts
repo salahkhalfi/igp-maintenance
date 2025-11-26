@@ -105,7 +105,7 @@ tickets.get('/:id', async (c) => {
   }
 });
 
-// POST /api/tickets - Créer un nouveau ticket
+// POST /api/tickets - Créer un nouveau ticket (avec retry logic pour race conditions)
 tickets.post('/', async (c) => {
   try {
     const user = c.get('user') as any;
@@ -148,78 +148,110 @@ tickets.post('/', async (c) => {
       return c.json({ error: 'Machine non trouvée' }, 404);
     }
 
-    // Générer l'ID du ticket (nouveau format: TYPE-YYYY-NNNN, ex: CNC-2025-0001)
-    const ticket_id = await generateTicketId(c.env.DB, machine.machine_type);
-
     // Utiliser le timestamp envoyé par le client (heure locale de son appareil)
     // Si non fourni, utiliser l'heure actuelle du serveur
     const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-    // Créer le ticket avec le timestamp de l'appareil de l'utilisateur
-    const result = await c.env.DB.prepare(`
-      INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, assigned_to, scheduled_date, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
-    `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, assigned_to || null, scheduled_date || null, timestamp, timestamp).run();
-
-    if (!result.success) {
-      return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
-    }
-
-    // Récupérer le ticket créé
-    const newTicket = await c.env.DB.prepare(
-      'SELECT * FROM tickets WHERE ticket_id = ?'
-    ).bind(ticket_id).first();
-
-    // Ajouter l'entrée dans la timeline
-    await c.env.DB.prepare(`
-      INSERT INTO ticket_timeline (ticket_id, user_id, action, new_status, comment)
-      VALUES (?, ?, 'Ticket créé', 'received', ?)
-    `).bind((newTicket as any).id, user.userId, description).run();
-
-    // Envoyer notification push si ticket assigné à un technicien dès la création
-    if (assigned_to) {
+    // Fonction interne de création avec retry logic pour gérer les race conditions
+    const createTicketWithRetry = async (attempt = 0): Promise<any> => {
       try {
-        const { sendPushNotification } = await import('./push');
-        const pushResult = await sendPushNotification(c.env, assigned_to, {
-          title: `🔧 ${title}`,
-          body: `Nouveau ticket assigné`,
-          icon: '/icon-192.png',
-          data: { ticketId: (newTicket as any).id, url: '/' }
-        });
+        // Générer l'ID du ticket (format: TYPE-MMYY-NNNN, ex: CNC-1125-0001)
+        const ticket_id = await generateTicketId(c.env.DB, machine.machine_type);
 
-        // Logger le résultat
-        await c.env.DB.prepare(`
-          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-          VALUES (?, ?, ?, ?)
-        `).bind(
-          assigned_to,
-          (newTicket as any).id,
-          pushResult.success ? 'success' : 'failed',
-          pushResult.success ? null : JSON.stringify(pushResult)
-        ).run();
+        // Créer le ticket avec le timestamp de l'appareil de l'utilisateur
+        const result = await c.env.DB.prepare(`
+          INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, assigned_to, scheduled_date, status, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
+        `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, assigned_to || null, scheduled_date || null, timestamp, timestamp).run();
 
-        if (pushResult.success) {
-          console.log(`✅ Push notification sent for new ticket ${ticket_id} to user ${assigned_to}`);
-        } else {
-          console.log(`⚠️ Push notification failed for ticket ${ticket_id}:`, pushResult);
+        if (!result.success) {
+          throw new Error('Insert failed');
         }
-      } catch (pushError) {
-        // Logger l'erreur
+
+        // Récupérer le ticket créé
+        const newTicket = await c.env.DB.prepare(
+          'SELECT * FROM tickets WHERE ticket_id = ?'
+        ).bind(ticket_id).first();
+
+        // Ajouter l'entrée dans la timeline
         await c.env.DB.prepare(`
-          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-          VALUES (?, ?, 'failed', ?)
-        `).bind(
-          assigned_to,
-          (newTicket as any).id,
-          (pushError as Error).message || String(pushError)
-        ).run();
+          INSERT INTO ticket_timeline (ticket_id, user_id, action, new_status, comment)
+          VALUES (?, ?, 'Ticket créé', 'received', ?)
+        `).bind((newTicket as any).id, user.userId, description).run();
 
-        // Push échoue? Pas grave, le ticket est créé, le webhook Pabbly prendra le relais
-        console.error('⚠️ Push notification failed (non-critical):', pushError);
+        // Envoyer notification push si ticket assigné à un technicien dès la création
+        if (assigned_to) {
+          try {
+            const { sendPushNotification } = await import('./push');
+            const pushResult = await sendPushNotification(c.env, assigned_to, {
+              title: `🔧 ${title}`,
+              body: `Nouveau ticket assigné`,
+              icon: '/icon-192.png',
+              data: { ticketId: (newTicket as any).id, url: '/' }
+            });
+
+            // Logger le résultat
+            await c.env.DB.prepare(`
+              INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+              VALUES (?, ?, ?, ?)
+            `).bind(
+              assigned_to,
+              (newTicket as any).id,
+              pushResult.success ? 'success' : 'failed',
+              pushResult.success ? null : JSON.stringify(pushResult)
+            ).run();
+
+            if (pushResult.success) {
+              console.log(`✅ Push notification sent for new ticket ${ticket_id} to user ${assigned_to}`);
+            } else {
+              console.log(`⚠️ Push notification failed for ticket ${ticket_id}:`, pushResult);
+            }
+          } catch (pushError) {
+            // Logger l'erreur
+            await c.env.DB.prepare(`
+              INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+              VALUES (?, ?, 'failed', ?)
+            `).bind(
+              assigned_to,
+              (newTicket as any).id,
+              (pushError as Error).message || String(pushError)
+            ).run();
+
+            // Push échoue? Pas grave, le ticket est créé, le webhook Pabbly prendra le relais
+            console.error('⚠️ Push notification failed (non-critical):', pushError);
+          }
+        }
+
+        return newTicket;
+
+      } catch (error: any) {
+        // Détecter erreur UNIQUE constraint (collision d'ID)
+        const isUniqueConstraint = 
+          error.message?.includes('UNIQUE') || 
+          error.message?.includes('constraint') ||
+          error.code === 'SQLITE_CONSTRAINT';
+
+        // Si collision ET pas encore max retries
+        if (isUniqueConstraint && attempt < 2) {
+          // Attendre un peu avec backoff exponentiel (50ms, 100ms)
+          await new Promise(resolve => setTimeout(resolve, 50 * (attempt + 1)));
+          
+          // Log pour debugging
+          console.log(`⚠️ Ticket ID collision detected, retrying (attempt ${attempt + 1}/3)...`);
+          
+          // Retenter
+          return createTicketWithRetry(attempt + 1);
+        }
+
+        // Sinon, propager l'erreur
+        throw error;
       }
-    }
+    };
 
+    // Tenter création avec retry
+    const newTicket = await createTicketWithRetry();
     return c.json({ ticket: newTicket }, 201);
+
   } catch (error) {
     console.error('Create ticket error:', error);
     return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
