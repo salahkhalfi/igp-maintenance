@@ -18,6 +18,20 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.9.1 (26 novembre 2025) - RECHERCHE INTELLIGENTE AVEC PLACEHOLDER ANIMÉ 🔍✨
+- **🔍 NOUVELLE FONCTIONNALITÉ** : Placeholder animé avec exemples de mots-clés
+- **🎯 SUGGESTIONS TOURNANTES** : 5 exemples qui changent toutes les 4 secondes
+  - "Essayez: 'retard' pour voir les tickets en retard"
+  - "Essayez: 'urgent' pour voir les priorités critiques"
+  - "Essayez: 'commentaire' pour voir les tickets avec notes"
+  - "Essayez: 'haute' pour voir les haute priorité"
+  - "Ou cherchez par machine, lieu, ticket..."
+- **💡 GUIDE DÉCIDEURS** : Facilite la découverte des mots-clés lors de la première utilisation
+- **🎨 STYLE ÉLÉGANT** : Texte gris discret (placeholder-gray-400) qui impressionne
+- **⚡ ROTATION AUTO** : useEffect avec interval de 4000ms pour animation fluide
+- **🧠 UX OPTIMISÉE** : Montre la puissance de la recherche sans documentation
+- **✅ PRODUCTION-READY** : Build testé et déployé avec succès
+
 ### Version 2.9.0 (25 novembre 2025) - STATISTIQUES DASHBOARD ADMIN 📊✨
 - **📊 NOUVELLE FONCTIONNALITÉ** : Barre de statistiques en temps réel dans l'en-tête
 - **4 STATISTIQUES CLÉS** : Affichage dynamique pour admin/supervisor uniquement
