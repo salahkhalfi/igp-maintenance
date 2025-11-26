@@ -3314,6 +3314,20 @@ app.get('/', (c) => {
             // Référence pour le scroll
             const scrollContainerRef = React.useRef(null);
 
+            // Gestion touche Escape pour fermer le modal
+            React.useEffect(() => {
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape' && show) {
+                        onClose();
+                    }
+                };
+                
+                if (show) {
+                    document.addEventListener('keydown', handleEscape);
+                    return () => document.removeEventListener('keydown', handleEscape);
+                }
+            }, [show, onClose]);
+
             const handleCreate = async (e) => {
                 e.preventDefault();
                 if (!newType || !newModel || !newSerial) {
@@ -3421,9 +3435,10 @@ app.get('/', (c) => {
                         ),
                         React.createElement("button", {
                             onClick: onClose,
-                            className: "text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
+                            className: "text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 sm:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center transition-all active:scale-95",
+                            'aria-label': "Fermer"
                         },
-                            React.createElement("i", { className: "fas fa-times text-xl" })
+                            React.createElement("i", { className: "fas fa-times text-xl sm:text-2xl" })
                         )
                     ),
                     React.createElement("div", { className: "flex-1 overflow-y-auto p-3 sm:p-6", ref: scrollContainerRef },
