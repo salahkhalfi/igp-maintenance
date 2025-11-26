@@ -7388,16 +7388,16 @@ app.get('/', (c) => {
                                                     setShowSearchResults(false);
                                                 }
                                             },
-                                                React.createElement('div', { className: 'flex justify-between items-start mb-1 gap-2' },
-                                                    React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 flex-1 min-w-0' },
-                                                        React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white flex-shrink-0' },
-                                                            searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
-                                                            searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
-                                                            searchKeywordType === 'haute' ? '🟠' : '💬'
-                                                        ),
-                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-xs md:text-sm truncate' }, result.title)
+                                                React.createElement('div', { className: 'flex justify-end mb-1' },
+                                                    React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, result.ticket_id)
+                                                ),
+                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mb-1' },
+                                                    React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white flex-shrink-0' },
+                                                        searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
+                                                        searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
+                                                        searchKeywordType === 'haute' ? '🟠' : '💬'
                                                     ),
-                                                    React.createElement('span', { className: 'text-xs text-gray-500 flex-shrink-0' }, result.ticket_id)
+                                                    React.createElement('span', { className: 'font-bold text-gray-800 text-sm md:text-base' }, result.title)
                                                 ),
                                                 React.createElement('div', { className: 'text-xs text-gray-600 ml-6 md:ml-8 truncate' },
                                                     React.createElement('i', { className: 'fas fa-cog mr-1' }),
@@ -7439,12 +7439,12 @@ app.get('/', (c) => {
                                                     setShowSearchResults(false);
                                                 }
                                             },
-                                                React.createElement('div', { className: 'flex justify-between items-start mb-1 gap-2' },
-                                                    React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 flex-1 min-w-0' },
-                                                        React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-gray-400 text-white flex-shrink-0' }, '📝'),
-                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-xs md:text-sm truncate' }, result.title)
-                                                    ),
-                                                    React.createElement('span', { className: 'text-xs text-gray-500 flex-shrink-0' }, result.ticket_id)
+                                                React.createElement('div', { className: 'flex justify-end mb-1' },
+                                                    React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, result.ticket_id)
+                                                ),
+                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mb-1' },
+                                                    React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-gray-400 text-white flex-shrink-0' }, '📝'),
+                                                    React.createElement('span', { className: 'font-bold text-gray-800 text-sm md:text-base' }, result.title)
                                                 ),
                                                 React.createElement('div', { className: 'text-xs text-gray-600 ml-6 md:ml-8 truncate' },
                                                     React.createElement('i', { className: 'fas fa-cog mr-1' }),
@@ -7475,9 +7475,11 @@ app.get('/', (c) => {
                                                 setShowSearchResults(false);
                                             }
                                         },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-1 gap-2' },
-                                                React.createElement('span', { className: 'font-bold text-gray-800 text-xs md:text-sm truncate flex-1 min-w-0' }, result.title),
-                                                React.createElement('span', { className: 'text-xs text-gray-500 flex-shrink-0' }, result.ticket_id)
+                                            React.createElement('div', { className: 'flex justify-end mb-1' },
+                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, result.ticket_id)
+                                            ),
+                                            React.createElement('div', { className: 'mb-1' },
+                                                React.createElement('span', { className: 'font-bold text-gray-800 text-sm md:text-base' }, result.title)
                                             ),
                                             React.createElement('div', { className: 'text-xs text-gray-600 truncate' },
                                                 React.createElement('i', { className: 'fas fa-cog mr-1' }),
