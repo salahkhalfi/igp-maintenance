@@ -5,7 +5,7 @@
 **Département:** Technologies de l'Information
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.9.3-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.9.4-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
@@ -17,6 +17,39 @@
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
 ## 🆕 Dernières mises à jour
+
+### Version 2.9.4 (26 novembre 2025) - FORMAT ID AVEC TYPE MACHINE 🏭✨
+- **🎯 ÉVOLUTION DU FORMAT** : Remplacement du préfixe `IGP` par le type de machine
+- **📋 NOUVEAU FORMAT** : `TYPE-YYYY-NNNN` au lieu de `IGP-YYYY-NNNN`
+- **✨ EXEMPLES CONCRETS** :
+  - `CNC-2025-0001` → Premier ticket CNC de 2025
+  - `FOUR-2025-0042` → 42ème ticket Four de 2025
+  - `POL-2025-0123` → 123ème ticket Polisseuse de 2025
+  - `THERMO-2025-0005` → 5ème ticket Thermos de 2025
+  - `WJ-2025-0010` → 10ème ticket WaterJet de 2025
+- **🏷️ CODES MACHINES** : CNC, DEC, FOUR, LAM, POL, THERMO, WJ, AUT
+- **🔍 IDENTIFICATION IMMÉDIATE** : Type de machine visible sans ouvrir le ticket
+- **🚫 SUPPRESSION REDONDANCE** : "IGP" retiré (on sait où on est!)
+- **📊 NUMÉROTATION LOGIQUE** : Compteur séparé par type de machine ET par année
+- **🔄 RÉTROCOMPATIBILITÉ** : Validation supporte 3 formats (actuel, v2.9.3, ancien)
+
+**Avantages clés :**
+- Identification instantanée du type de machine dans l'ID
+- Plus besoin de consulter les détails pour savoir de quelle machine il s'agit
+- Numérotation plus logique (par type plutôt que global)
+- Facilite le tri et le filtrage des tickets
+- Communication plus claire entre équipes
+
+**Formats supportés :**
+- ✅ Actuel : `TYPE-2025-NNNN` (CNC-2025-0001)
+- ✅ v2.9.3 : `IGP-2025-NNNN` (IGP-2025-0001)
+- ✅ Ancien : `IGP-TYPE-MODEL-YYYYMMDD-NNN`
+
+**Commit:** f25589e  
+**Tag:** v2.9.4  
+**Déployé:** 2025-11-26  
+**URL:** https://a65e388f.webapp-7t8.pages.dev  
+**Domaine:** https://mecanique.igpglass.ca
 
 ### Version 2.9.3 (26 novembre 2025) - FORMAT ID TICKET SIMPLIFIÉ 🎫✨
 - **🎯 NOUVEAU FORMAT** : ID tickets simplifié de `IGP-TYPE-MODEL-YYYYMMDD-NNN` à `IGP-YYYY-NNNN`
