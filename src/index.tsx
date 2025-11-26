@@ -2423,6 +2423,11 @@ app.get('/', (c) => {
             const [scheduledDate, setScheduledDate] = React.useState('');
             const [technicians, setTechnicians] = React.useState([]);
             const [savingSchedule, setSavingSchedule] = React.useState(false);
+            
+            // États pour l'édition de priorité
+            const [editingPriority, setEditingPriority] = React.useState(false);
+            const [newPriority, setNewPriority] = React.useState('');
+            const [savingPriority, setSavingPriority] = React.useState(false);
 
             React.useEffect(() => {
                 if (show && ticketId) {
@@ -2607,6 +2612,22 @@ app.get('/', (c) => {
                 }
             };
 
+            const handleSavePriority = async () => {
+                try {
+                    setSavingPriority(true);
+                    await axios.patch(API_URL + '/tickets/' + ticketId, {
+                        priority: newPriority
+                    });
+                    alert('Priorité mise à jour avec succès !');
+                    setEditingPriority(false);
+                    loadTicketDetails(); // Recharger les détails
+                } catch (error) {
+                    alert('Erreur lors de la mise à jour de la priorité');
+                } finally {
+                    setSavingPriority(false);
+                }
+            };
+
             const handleSaveSchedule = async () => {
                 try {
                     setSavingSchedule(true);
@@ -2691,17 +2712,58 @@ app.get('/', (c) => {
                         React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-200/50' },
                             React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
                                 React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
-                                React.createElement('span', {
-                                    className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-md text-xs sm:text-sm ' +
-                                    (ticket.priority === 'critical' ? 'bg-igp-red text-white' :
-                                     ticket.priority === 'high' ? 'bg-igp-yellow text-white' :
-                                     ticket.priority === 'medium' ? 'bg-yellow-500 text-white' :
-                                     'bg-igp-green text-white')
-                                },
-                                    ticket.priority === 'critical' ? '🔴 CRITIQUE' :
-                                    ticket.priority === 'high' ? '🟠 HAUTE' :
-                                    ticket.priority === 'medium' ? '🟡 MOYENNE' :
-                                    '🟢 FAIBLE'
+                                !editingPriority ? React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement('span', {
+                                        className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-md text-xs sm:text-sm ' +
+                                        (ticket.priority === 'critical' ? 'bg-igp-red text-white' :
+                                         ticket.priority === 'high' ? 'bg-igp-yellow text-white' :
+                                         ticket.priority === 'medium' ? 'bg-yellow-500 text-white' :
+                                         'bg-igp-green text-white')
+                                    },
+                                        ticket.priority === 'critical' ? '🔴 CRITIQUE' :
+                                        ticket.priority === 'high' ? '🟠 HAUTE' :
+                                        ticket.priority === 'medium' ? '🟡 MOYENNE' :
+                                        '🟢 FAIBLE'
+                                    ),
+                                    (currentUser && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) ? React.createElement('button', {
+                                        onClick: () => {
+                                            setEditingPriority(true);
+                                            setNewPriority(ticket.priority);
+                                        },
+                                        className: 'text-blue-600 hover:text-blue-800 transition-colors p-1',
+                                        title: 'Modifier la priorité'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-edit' })
+                                    ) : null
+                                ) : React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement('select', {
+                                        value: newPriority,
+                                        onChange: (e) => setNewPriority(e.target.value),
+                                        className: 'px-3 py-2 border-2 border-blue-500 rounded-lg text-sm font-semibold'
+                                    },
+                                        React.createElement('option', { value: 'low' }, '🟢 FAIBLE'),
+                                        React.createElement('option', { value: 'medium' }, '🟡 MOYENNE'),
+                                        React.createElement('option', { value: 'high' }, '🟠 HAUTE'),
+                                        React.createElement('option', { value: 'critical' }, '🔴 CRITIQUE')
+                                    ),
+                                    React.createElement('button', {
+                                        onClick: handleSavePriority,
+                                        disabled: savingPriority,
+                                        className: 'px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50',
+                                        title: 'Sauvegarder'
+                                    },
+                                        savingPriority ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-check' })
+                                    ),
+                                    React.createElement('button', {
+                                        onClick: () => {
+                                            setEditingPriority(false);
+                                            setNewPriority(ticket.priority);
+                                        },
+                                        className: 'px-3 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-400',
+                                        title: 'Annuler'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-times' })
+                                    )
                                 )
                             ),
                             React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
