@@ -5,7 +5,7 @@
 **Département:** Technologies de l'Information
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.9.4-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.9.5-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
@@ -17,6 +17,44 @@
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
 ## 🆕 Dernières mises à jour
+
+### Version 2.9.5 (26 novembre 2025) - PRÉCISION MENSUELLE ID TICKETS 📅✨
+- **🎯 ÉVOLUTION FORMAT** : Passage de `TYPE-YYYY-NNNN` à `TYPE-MMYY-NNNN`
+- **📅 PRÉCISION MENSUELLE** : MMYY = Mois (01-12) + Année (2 derniers chiffres)
+- **✨ EXEMPLES CONCRETS** :
+  - `CNC-1125-0001` → Premier ticket CNC de Novembre 2025
+  - `FOUR-0125-0042` → 42ème ticket Four de Janvier 2025
+  - `POL-0625-0123` → 123ème ticket Polisseuse de Juin 2025
+  - `THERMO-1225-0005` → 5ème ticket Thermos de Décembre 2025
+  - `WJ-0925-0010` → 10ème ticket WaterJet de Septembre 2025
+- **📈 COMPTEUR MENSUEL** : Remise à zéro chaque mois pour chaque type de machine
+- **📊 NUMÉROS PLUS PETITS** : Moins de tickets par mois = numéros de séquence plus courts
+- **📖 DÉCODAGE MMYY** :
+  - `0125` = Janvier 2025
+  - `0625` = Juin 2025
+  - `1125` = Novembre 2025
+  - `1225` = Décembre 2025
+- **🗂️ ORGANISATION** : Tickets groupés par mois ET par type de machine
+- **🔄 RÉTROCOMPATIBILITÉ** : Tous les formats antérieurs restent valides
+
+**Avantages clés :**
+- Identification précise du mois ET de l'année dans l'ID
+- Numéros de séquence plus courts (remise à zéro mensuelle)
+- Meilleure organisation temporelle des tickets
+- Facilite le suivi mensuel des interventions
+- Permet analyse précise par mois et par machine
+
+**Formats supportés (rétrocompatibles) :**
+- ✅ v2.9.5 : `TYPE-MMYY-NNNN` (CNC-1125-0001)
+- ✅ v2.9.4 : `TYPE-YYYY-NNNN` (CNC-2025-0001)
+- ✅ v2.9.3 : `IGP-YYYY-NNNN` (IGP-2025-0001)
+- ✅ Legacy : `IGP-TYPE-MODEL-YYYYMMDD-NNN`
+
+**Commit:** 3f23511  
+**Tag:** v2.9.5  
+**Déployé:** 2025-11-26  
+**URL:** https://cc0d45fb.webapp-7t8.pages.dev  
+**Domaine:** https://mecanique.igpglass.ca
 
 ### Version 2.9.4 (26 novembre 2025) - FORMAT ID AVEC TYPE MACHINE 🏭✨
 - **🎯 ÉVOLUTION DU FORMAT** : Remplacement du préfixe `IGP` par le type de machine
