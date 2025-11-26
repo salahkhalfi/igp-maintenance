@@ -7221,8 +7221,15 @@ app.get('/', (c) => {
                                     ref: searchInputRef,
                                     type: 'text',
                                     placeholder: 'Rechercher ticket, machine, lieu...',
-                                    className: 'w-full px-4 py-2 pr-10 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
+                                    className: 'w-full px-4 py-2 pr-20 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm',
                                     value: searchQuery,
+                                    onKeyDown: (e) => {
+                                        if (e.key === 'Escape') {
+                                            setSearchQuery('');
+                                            setShowSearchResults(false);
+                                            e.target.blur();
+                                        }
+                                    },
                                     onFocus: () => {
                                         if (searchInputRef.current) {
                                             const rect = searchInputRef.current.getBoundingClientRect();
@@ -7280,6 +7287,21 @@ app.get('/', (c) => {
                                     },
                                     onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
                                 }),
+                                // Bouton effacer (visible si query non vide)
+                                searchQuery && React.createElement('button', {
+                                    onClick: (e) => {
+                                        e.stopPropagation();
+                                        setSearchQuery('');
+                                        setShowSearchResults(false);
+                                        setSearchResults([]);
+                                        setSearchKeywordResults([]);
+                                        setSearchTextResults([]);
+                                    },
+                                    className: 'absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1',
+                                    title: 'Effacer la recherche (Esc)'
+                                },
+                                    React.createElement('i', { className: 'fas fa-times-circle text-lg' })
+                                ),
                                 React.createElement('i', {
                                     className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
                                 }),
@@ -7300,6 +7322,18 @@ app.get('/', (c) => {
                                         pointerEvents: 'auto'
                                     }
                                 },
+                                    // Bouton fermer en haut à droite du dropdown
+                                    React.createElement('button', {
+                                        onClick: (e) => {
+                                            e.stopPropagation();
+                                            setShowSearchResults(false);
+                                        },
+                                        className: 'sticky top-0 right-0 float-right bg-white hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full p-2 m-2 transition-colors shadow-md z-50',
+                                        title: 'Fermer les résultats (Esc)',
+                                        style: { marginLeft: 'auto' }
+                                    },
+                                        React.createElement('i', { className: 'fas fa-times text-sm' })
+                                    ),
                                     // Section 1: Résultats par mot-clé
                                     searchIsKeyword && searchKeywordResults.length > 0 && React.createElement('div', {},
                                         React.createElement('div', { className: 'bg-gradient-to-r from-red-50 to-orange-50 px-4 py-2 border-b-2 border-red-200 sticky top-0 z-10' },
