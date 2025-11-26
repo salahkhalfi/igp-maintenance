@@ -5,7 +5,7 @@
 **Département:** Technologies de l'Information
 
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.8.1-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
+[![Version](https://img.shields.io/badge/version-2.9.3-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
@@ -17,6 +17,32 @@
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
 ## 🆕 Dernières mises à jour
+
+### Version 2.9.3 (26 novembre 2025) - FORMAT ID TICKET SIMPLIFIÉ 🎫✨
+- **🎯 NOUVEAU FORMAT** : ID tickets simplifié de `IGP-TYPE-MODEL-YYYYMMDD-NNN` à `IGP-YYYY-NNNN`
+- **📏 RÉDUCTION 54%** : Longueur moyenne réduite de ~28 caractères à 13 caractères
+- **✨ EXEMPLES** :
+  - ❌ Ancien : `IGP-PDE-7500-20231025-001` (28 caractères, difficilement mémorisable)
+  - ✅ Nouveau : `IGP-2025-0001` (13 caractères, clair et concis)
+- **🔢 NUMÉROTATION SÉQUENTIELLE** : Compteur basé sur l'année courante (ex: 0001, 0002, 0003...)
+- **🚀 PERFORMANCE** : Index ajouté sur `ticket_id` pour requêtes rapides
+- **🔄 COMPATIBILITÉ** : Fonction `isValidTicketId()` supporte ancien et nouveau format
+- **💼 BRANDING IGP** : Préfixe IGP maintenu pour identité professionnelle
+- **📅 ANNÉE VISIBLE** : Format YYYY facilite identification temporelle
+- **✅ PRODUCTION** : Migration 0021 appliquée, build testé et déployé
+
+**Avantages :**
+- Plus facile à communiquer oralement ou par écrit
+- Plus lisible sur mobile et interfaces limitées
+- Plus mémorisable pour les techniciens
+- Plus professionnel et moderne
+- Élimine la redondance (TYPE/MODEL déjà dans les détails du ticket)
+
+**Commit:** 47f2e70  
+**Tag:** v2.9.3  
+**Déployé:** 2025-11-26  
+**URL:** https://3507bc75.webapp-7t8.pages.dev  
+**Domaine:** https://mecanique.igpglass.ca
 
 ### Version 2.9.1 (26 novembre 2025) - RECHERCHE INTELLIGENTE AVEC PLACEHOLDER ANIMÉ 🔍✨
 - **🔍 NOUVELLE FONCTIONNALITÉ** : Placeholder animé avec exemples de mots-clés
