@@ -7344,7 +7344,7 @@ app.get('/', (c) => {
                                         left: searchDropdownPosition.left + 'px',
                                         width: searchDropdownPosition.width + 'px',
                                         minWidth: '320px',
-                                        maxWidth: '32rem',
+                                        maxWidth: 'none',
                                         maxHeight: 'calc(100vh - ' + searchDropdownPosition.top + 'px - 2rem)',
                                         pointerEvents: 'auto'
                                     }
@@ -7380,7 +7380,7 @@ app.get('/', (c) => {
                                         searchKeywordResults.map((result) =>
                                             React.createElement('div', {
                                                 key: 'kw-' + result.id,
-                                                className: 'p-3 hover:bg-red-50 cursor-pointer border-b border-gray-100 transition-colors',
+                                                className: 'p-2 md:p-3 hover:bg-red-50 cursor-pointer border-b border-gray-100 transition-colors',
                                                 onClick: () => {
                                                     setSelectedTicketId(result.id);
                                                     setShowDetailsModal(true);
@@ -7388,27 +7388,27 @@ app.get('/', (c) => {
                                                     setShowSearchResults(false);
                                                 }
                                             },
-                                                React.createElement('div', { className: 'flex justify-between items-start mb-1' },
-                                                    React.createElement('div', { className: 'flex items-center gap-2 flex-1' },
-                                                        React.createElement('span', { className: 'px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white' },
+                                                React.createElement('div', { className: 'flex justify-between items-start mb-1 gap-2' },
+                                                    React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 flex-1 min-w-0' },
+                                                        React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white flex-shrink-0' },
                                                             searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
                                                             searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
                                                             searchKeywordType === 'haute' ? '🟠' : '💬'
                                                         ),
-                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title)
+                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-xs md:text-sm truncate' }, result.title)
                                                     ),
-                                                    React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                                    React.createElement('span', { className: 'text-xs text-gray-500 flex-shrink-0' }, result.ticket_id)
                                                 ),
-                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-8' },
+                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-6 md:ml-8 truncate' },
                                                     React.createElement('i', { className: 'fas fa-cog mr-1' }),
                                                     result.machine_type + ' - ' + result.model
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-2 mt-1 ml-8' },
-                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mt-1 ml-6 md:ml-8 flex-wrap' },
+                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate' },
                                                         React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
                                                         result.location
                                                     ),
-                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded-full font-semibold flex-shrink-0' },
                                                         React.createElement('i', { className: 'fas fa-comment mr-1' }),
                                                         result.comments_count
                                                     )
@@ -7431,7 +7431,7 @@ app.get('/', (c) => {
                                         searchTextResults.map((result) =>
                                             React.createElement('div', {
                                                 key: 'txt-' + result.id,
-                                                className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                                className: 'p-2 md:p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
                                                 onClick: () => {
                                                     setSelectedTicketId(result.id);
                                                     setShowDetailsModal(true);
@@ -7439,23 +7439,23 @@ app.get('/', (c) => {
                                                     setShowSearchResults(false);
                                                 }
                                             },
-                                                React.createElement('div', { className: 'flex justify-between items-start mb-1' },
-                                                    React.createElement('div', { className: 'flex items-center gap-2 flex-1' },
-                                                        React.createElement('span', { className: 'px-2 py-0.5 rounded text-xs font-bold bg-gray-400 text-white' }, '📝'),
-                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title)
+                                                React.createElement('div', { className: 'flex justify-between items-start mb-1 gap-2' },
+                                                    React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 flex-1 min-w-0' },
+                                                        React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-gray-400 text-white flex-shrink-0' }, '📝'),
+                                                        React.createElement('span', { className: 'font-bold text-gray-800 text-xs md:text-sm truncate' }, result.title)
                                                     ),
-                                                    React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                                    React.createElement('span', { className: 'text-xs text-gray-500 flex-shrink-0' }, result.ticket_id)
                                                 ),
-                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-8' },
+                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-6 md:ml-8 truncate' },
                                                     React.createElement('i', { className: 'fas fa-cog mr-1' }),
                                                     result.machine_type + ' - ' + result.model
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-2 mt-1 ml-8' },
-                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mt-1 ml-6 md:ml-8 flex-wrap' },
+                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate' },
                                                         React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
                                                         result.location
                                                     ),
-                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded-full font-semibold flex-shrink-0' },
                                                         React.createElement('i', { className: 'fas fa-comment mr-1' }),
                                                         result.comments_count
                                                     )
@@ -7467,7 +7467,7 @@ app.get('/', (c) => {
                                     !searchIsKeyword && searchKeywordResults.length > 0 && searchKeywordResults.map((result) =>
                                         React.createElement('div', {
                                             key: result.id,
-                                            className: 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                            className: 'p-2 md:p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
                                             onClick: () => {
                                                 setSelectedTicketId(result.id);
                                                 setShowDetailsModal(true);
@@ -7475,20 +7475,20 @@ app.get('/', (c) => {
                                                 setShowSearchResults(false);
                                             }
                                         },
-                                            React.createElement('div', { className: 'flex justify-between items-start mb-1' },
-                                                React.createElement('span', { className: 'font-bold text-gray-800 text-sm' }, result.title),
-                                                React.createElement('span', { className: 'text-xs text-gray-500' }, result.ticket_id)
+                                            React.createElement('div', { className: 'flex justify-between items-start mb-1 gap-2' },
+                                                React.createElement('span', { className: 'font-bold text-gray-800 text-xs md:text-sm truncate flex-1 min-w-0' }, result.title),
+                                                React.createElement('span', { className: 'text-xs text-gray-500 flex-shrink-0' }, result.ticket_id)
                                             ),
-                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                            React.createElement('div', { className: 'text-xs text-gray-600 truncate' },
                                                 React.createElement('i', { className: 'fas fa-cog mr-1' }),
                                                 result.machine_type + ' - ' + result.model
                                             ),
-                                            React.createElement('div', { className: 'flex items-center gap-2 mt-1' },
-                                                result.location && React.createElement('span', { className: 'text-xs text-gray-500' },
+                                            React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mt-1 flex-wrap' },
+                                                result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate' },
                                                     React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
                                                     result.location
                                                 ),
-                                                result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold' },
+                                                result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded-full font-semibold flex-shrink-0' },
                                                     React.createElement('i', { className: 'fas fa-comment mr-1' }),
                                                     result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : '')
                                                 )
@@ -7507,7 +7507,7 @@ app.get('/', (c) => {
                                         left: searchDropdownPosition.left + 'px',
                                         width: searchDropdownPosition.width + 'px',
                                         minWidth: '320px',
-                                        maxWidth: '28rem',
+                                        maxWidth: 'none',
                                         pointerEvents: 'auto'
                                     }
                                 },
