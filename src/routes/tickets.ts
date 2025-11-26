@@ -148,8 +148,8 @@ tickets.post('/', async (c) => {
       return c.json({ error: 'Machine non trouvée' }, 404);
     }
 
-    // Générer l'ID du ticket
-    const ticket_id = generateTicketId(machine.machine_type, machine.model);
+    // Générer l'ID du ticket (nouveau format simplifié: IGP-YYYY-NNNN)
+    const ticket_id = await generateTicketId(c.env.DB);
 
     // Utiliser le timestamp envoyé par le client (heure locale de son appareil)
     // Si non fourni, utiliser l'heure actuelle du serveur
