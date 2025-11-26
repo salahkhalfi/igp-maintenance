@@ -7380,7 +7380,7 @@ app.get('/', (c) => {
                                         searchKeywordResults.map((result) =>
                                             React.createElement('div', {
                                                 key: 'kw-' + result.id,
-                                                className: 'p-2 md:p-3 hover:bg-red-50 cursor-pointer border-b border-gray-100 transition-colors',
+                                                className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
                                                 onClick: () => {
                                                     setSelectedTicketId(result.id);
                                                     setShowDetailsModal(true);
@@ -7388,29 +7388,29 @@ app.get('/', (c) => {
                                                     setShowSearchResults(false);
                                                 }
                                             },
-                                                React.createElement('div', { className: 'flex justify-end mb-1' },
-                                                    React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, result.ticket_id)
+                                                React.createElement('div', { className: 'flex justify-end mb-2' },
+                                                    React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mb-1' },
-                                                    React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white flex-shrink-0' },
+                                                React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                                    React.createElement('span', { className: 'px-2 py-1 rounded-md text-xs font-bold bg-gradient-to-br from-red-600 to-red-700 text-white shadow-sm flex-shrink-0' },
                                                         searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
                                                         searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
                                                         searchKeywordType === 'haute' ? '🟠' : '💬'
                                                     ),
-                                                    React.createElement('span', { className: 'font-bold text-gray-800 text-sm md:text-base' }, result.title)
+                                                    React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
                                                 ),
-                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-6 md:ml-8 truncate' },
-                                                    React.createElement('i', { className: 'fas fa-cog mr-1' }),
-                                                    result.machine_type + ' - ' + result.model
+                                                React.createElement('div', { className: 'text-xs text-gray-500 ml-8 md:ml-10 truncate flex items-center gap-1' },
+                                                    React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
+                                                    React.createElement('span', {}, result.machine_type + ' - ' + result.model)
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mt-1 ml-6 md:ml-8 flex-wrap' },
-                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate' },
-                                                        React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
-                                                        result.location
+                                                React.createElement('div', { className: 'flex items-center gap-2 mt-2 ml-8 md:ml-10 flex-wrap' },
+                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                                        React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
+                                                        React.createElement('span', {}, result.location)
                                                     ),
-                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded-full font-semibold flex-shrink-0' },
-                                                        React.createElement('i', { className: 'fas fa-comment mr-1' }),
-                                                        result.comments_count
+                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
+                                                        React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
+                                                        React.createElement('span', {}, result.comments_count)
                                                     )
                                                 )
                                             )
@@ -7431,7 +7431,7 @@ app.get('/', (c) => {
                                         searchTextResults.map((result) =>
                                             React.createElement('div', {
                                                 key: 'txt-' + result.id,
-                                                className: 'p-2 md:p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                                className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
                                                 onClick: () => {
                                                     setSelectedTicketId(result.id);
                                                     setShowDetailsModal(true);
@@ -7439,25 +7439,25 @@ app.get('/', (c) => {
                                                     setShowSearchResults(false);
                                                 }
                                             },
-                                                React.createElement('div', { className: 'flex justify-end mb-1' },
-                                                    React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, result.ticket_id)
+                                                React.createElement('div', { className: 'flex justify-end mb-2' },
+                                                    React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mb-1' },
-                                                    React.createElement('span', { className: 'px-1.5 md:px-2 py-0.5 rounded text-xs font-bold bg-gray-400 text-white flex-shrink-0' }, '📝'),
-                                                    React.createElement('span', { className: 'font-bold text-gray-800 text-sm md:text-base' }, result.title)
+                                                React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                                    React.createElement('span', { className: 'px-2 py-1 rounded-md text-xs font-bold bg-gradient-to-br from-gray-500 to-gray-600 text-white shadow-sm flex-shrink-0' }, '📝'),
+                                                    React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
                                                 ),
-                                                React.createElement('div', { className: 'text-xs text-gray-600 ml-6 md:ml-8 truncate' },
-                                                    React.createElement('i', { className: 'fas fa-cog mr-1' }),
-                                                    result.machine_type + ' - ' + result.model
+                                                React.createElement('div', { className: 'text-xs text-gray-500 ml-8 md:ml-10 truncate flex items-center gap-1' },
+                                                    React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
+                                                    React.createElement('span', {}, result.machine_type + ' - ' + result.model)
                                                 ),
-                                                React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mt-1 ml-6 md:ml-8 flex-wrap' },
-                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate' },
-                                                        React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
-                                                        result.location
+                                                React.createElement('div', { className: 'flex items-center gap-2 mt-2 ml-8 md:ml-10 flex-wrap' },
+                                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                                        React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
+                                                        React.createElement('span', {}, result.location)
                                                     ),
-                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded-full font-semibold flex-shrink-0' },
-                                                        React.createElement('i', { className: 'fas fa-comment mr-1' }),
-                                                        result.comments_count
+                                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
+                                                        React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
+                                                        React.createElement('span', {}, result.comments_count)
                                                     )
                                                 )
                                             )
@@ -7467,7 +7467,7 @@ app.get('/', (c) => {
                                     !searchIsKeyword && searchKeywordResults.length > 0 && searchKeywordResults.map((result) =>
                                         React.createElement('div', {
                                             key: result.id,
-                                            className: 'p-2 md:p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100',
+                                            className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
                                             onClick: () => {
                                                 setSelectedTicketId(result.id);
                                                 setShowDetailsModal(true);
@@ -7475,24 +7475,24 @@ app.get('/', (c) => {
                                                 setShowSearchResults(false);
                                             }
                                         },
-                                            React.createElement('div', { className: 'flex justify-end mb-1' },
-                                                React.createElement('span', { className: 'text-xs text-gray-500 font-mono' }, result.ticket_id)
+                                            React.createElement('div', { className: 'flex justify-end mb-2' },
+                                                React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
                                             ),
-                                            React.createElement('div', { className: 'mb-1' },
-                                                React.createElement('span', { className: 'font-bold text-gray-800 text-sm md:text-base' }, result.title)
+                                            React.createElement('div', { className: 'mb-2' },
+                                                React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
                                             ),
-                                            React.createElement('div', { className: 'text-xs text-gray-600 truncate' },
-                                                React.createElement('i', { className: 'fas fa-cog mr-1' }),
-                                                result.machine_type + ' - ' + result.model
+                                            React.createElement('div', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                                React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
+                                                React.createElement('span', {}, result.machine_type + ' - ' + result.model)
                                             ),
-                                            React.createElement('div', { className: 'flex items-center gap-1 md:gap-2 mt-1 flex-wrap' },
-                                                result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate' },
-                                                    React.createElement('i', { className: 'fas fa-map-marker-alt mr-1' }),
-                                                    result.location
+                                            React.createElement('div', { className: 'flex items-center gap-2 mt-2 flex-wrap' },
+                                                result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                                    React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
+                                                    React.createElement('span', {}, result.location)
                                                 ),
-                                                result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded-full font-semibold flex-shrink-0' },
-                                                    React.createElement('i', { className: 'fas fa-comment mr-1' }),
-                                                    result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : '')
+                                                result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
+                                                    React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
+                                                    React.createElement('span', {}, result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : ''))
                                                 )
                                             )
                                         )
