@@ -22,39 +22,53 @@ search.get('/', authMiddleware, async (c) => {
     let statusFilter = null;
     let priorityFilter = null;
     let onlyWithComments = false;
+    let onlyOverdue = false;
+    let isKeywordSearch = false; // Nouvelle variable pour détecter recherche par mot-clé pur
     
-    // Détection recherche commentaires
+    // Détection recherche commentaires (mot-clé exact)
     if (queryLower === 'commentaire' || queryLower === 'commentaires' || 
         queryLower === 'note' || queryLower === 'notes' ||
         queryLower === 'comment' || queryLower === 'comments') {
       onlyWithComments = true;
+      isKeywordSearch = true;
     }
     
-    // Détection status
-    if (queryLower.includes('retard') || queryLower.includes('overdue')) {
-      // On cherchera les tickets en retard après
-    } else if (queryLower.includes('nouveau') || queryLower.includes('new')) {
+    // Détection retard (mot-clé exact ou contenu)
+    if (queryLower === 'retard' || queryLower === 'retards' || queryLower === 'overdue') {
+      onlyOverdue = true;
+      isKeywordSearch = true;
+    }
+    
+    // Détection status (seulement si mot-clé exact)
+    if (queryLower === 'nouveau' || queryLower === 'new') {
       statusFilter = 'new';
-    } else if (queryLower.includes('progress') || queryLower.includes('cours')) {
+      isKeywordSearch = true;
+    } else if (queryLower === 'progress' || queryLower === 'cours' || queryLower === 'en cours') {
       statusFilter = 'in_progress';
-    } else if (queryLower.includes('complet') || queryLower.includes('complete')) {
+      isKeywordSearch = true;
+    } else if (queryLower === 'complet' || queryLower === 'complete' || queryLower === 'terminé') {
       statusFilter = 'completed';
+      isKeywordSearch = true;
     }
     
-    // Détection priorité
-    if (queryLower.includes('urgent') || queryLower.includes('critique') || queryLower.includes('critical')) {
+    // Détection priorité (seulement si mot-clé exact)
+    if (queryLower === 'urgent' || queryLower === 'critique' || queryLower === 'critical') {
       priorityFilter = 'critical';
-    } else if (queryLower.includes('haute') || queryLower.includes('high')) {
+      isKeywordSearch = true;
+    } else if (queryLower === 'haute' || queryLower === 'high') {
       priorityFilter = 'high';
-    } else if (queryLower.includes('moyenne') || queryLower.includes('medium')) {
+      isKeywordSearch = true;
+    } else if (queryLower === 'moyenne' || queryLower === 'medium') {
       priorityFilter = 'medium';
-    } else if (queryLower.includes('basse') || queryLower.includes('low')) {
+      isKeywordSearch = true;
+    } else if (queryLower === 'basse' || queryLower === 'low' || queryLower === 'faible') {
       priorityFilter = 'low';
+      isKeywordSearch = true;
     }
 
-    // Si recherche spéciale "commentaire/note", requête simplifiée
+    // Construction de la requête selon le type de recherche
     let sqlQuery: string;
-    let params: string[];
+    let params: any[];
     
     if (onlyWithComments) {
       // Requête optimisée: tickets avec commentaires uniquement
@@ -73,11 +87,62 @@ search.get('/', authMiddleware, async (c) => {
           t.status != 'archived' AND
           EXISTS (SELECT 1 FROM ticket_comments tc WHERE tc.ticket_id = t.id)
         ORDER BY t.created_at DESC
-        LIMIT 20
+        LIMIT 50
       `;
       params = [];
+    } else if (onlyOverdue) {
+      // Requête spéciale: tickets en retard (scheduled_date < now AND status != completed/cancelled/archived)
+      sqlQuery = `
+        SELECT DISTINCT
+          t.*,
+          m.machine_type, m.model, m.serial_number, m.location,
+          u1.first_name as reporter_name,
+          u2.first_name as assignee_name,
+          (SELECT COUNT(*) FROM ticket_comments tc WHERE tc.ticket_id = t.id) as comments_count
+        FROM tickets t
+        LEFT JOIN machines m ON t.machine_id = m.id
+        LEFT JOIN users u1 ON t.reported_by = u1.id
+        LEFT JOIN users u2 ON t.assigned_to = u2.id
+        WHERE 
+          t.status NOT IN ('completed', 'cancelled', 'archived') AND
+          t.scheduled_date IS NOT NULL AND
+          t.scheduled_date != 'null' AND
+          t.scheduled_date < datetime('now')
+        ORDER BY t.scheduled_date ASC
+        LIMIT 50
+      `;
+      params = [];
+    } else if (isKeywordSearch && (statusFilter || priorityFilter)) {
+      // Recherche par mot-clé pur (status ou priorité)
+      sqlQuery = `
+        SELECT DISTINCT
+          t.*,
+          m.machine_type, m.model, m.serial_number, m.location,
+          u1.first_name as reporter_name,
+          u2.first_name as assignee_name,
+          (SELECT COUNT(*) FROM ticket_comments tc WHERE tc.ticket_id = t.id) as comments_count
+        FROM tickets t
+        LEFT JOIN machines m ON t.machine_id = m.id
+        LEFT JOIN users u1 ON t.reported_by = u1.id
+        LEFT JOIN users u2 ON t.assigned_to = u2.id
+        WHERE t.status != 'archived'
+      `;
+      
+      params = [];
+      
+      if (statusFilter) {
+        sqlQuery += ' AND t.status = ?';
+        params.push(statusFilter);
+      }
+      
+      if (priorityFilter) {
+        sqlQuery += ' AND t.priority = ?';
+        params.push(priorityFilter);
+      }
+      
+      sqlQuery += ' ORDER BY t.created_at DESC LIMIT 50';
     } else {
-      // Recherche normale dans tickets avec infos machine ET commentaires
+      // Recherche textuelle normale
       sqlQuery = `
         SELECT DISTINCT
           t.*,
@@ -102,6 +167,9 @@ search.get('/', authMiddleware, async (c) => {
             u2.first_name LIKE ? OR
             c.comment LIKE ? OR
             c.user_name LIKE ?
+          )
+        ORDER BY t.created_at DESC
+        LIMIT 50
       `;
       
       params = [
@@ -109,42 +177,9 @@ search.get('/', authMiddleware, async (c) => {
         searchTerm, searchTerm, searchTerm,
         searchTerm, searchTerm, searchTerm, searchTerm
       ];
-      
-      // Ajouter filtre status si détecté (sauf si recherche commentaires)
-      if (!onlyWithComments && statusFilter) {
-        sqlQuery += ' OR t.status = ?';
-        params.push(statusFilter);
-      }
-      
-      // Ajouter filtre priorité si détecté (sauf si recherche commentaires)
-      if (!onlyWithComments && priorityFilter) {
-        sqlQuery += ' OR t.priority = ?';
-        params.push(priorityFilter);
-      }
-      
-      // Fermer la requête (sauf si recherche commentaires, déjà fermée)
-      if (!onlyWithComments) {
-        sqlQuery += `) ORDER BY t.created_at DESC LIMIT 20`;
-      }
     }
 
-    let { results } = await c.env.DB.prepare(sqlQuery).bind(...params).all();
-    
-    // Si recherche "retard", filtrer tickets en retard
-    if (queryLower.includes('retard') || queryLower.includes('overdue')) {
-      const now = new Date();
-      results = results.filter((ticket: any) => {
-        if (ticket.status === 'completed' || ticket.status === 'cancelled' || ticket.status === 'archived') {
-          return false;
-        }
-        if (!ticket.scheduled_date || ticket.scheduled_date === 'null') {
-          return false;
-        }
-        const isoDate = ticket.scheduled_date.replace(' ', 'T') + 'Z';
-        const scheduledDate = new Date(isoDate);
-        return scheduledDate < now;
-      });
-    }
+    const { results } = await c.env.DB.prepare(sqlQuery).bind(...params).all();
 
     return c.json({ results });
   } catch (error) {
