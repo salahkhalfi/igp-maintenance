@@ -185,9 +185,14 @@ tickets.post('/', async (c) => {
             const { sendPushNotification } = await import('./push');
             const pushResult = await sendPushNotification(c.env, assigned_to, {
               title: `🔧 ${title}`,
-              body: `Nouveau ticket assigné`,
+              body: `Nouveau ticket assigné: ${ticket_id}`,
               icon: '/icon-192.png',
-              data: { ticketId: (newTicket as any).id, url: '/' }
+              data: { 
+                ticketId: (newTicket as any).id,
+                ticket_id: ticket_id,
+                action: 'view_ticket',
+                url: `/?ticket=${(newTicket as any).id}` 
+              }
             });
 
             // Logger le résultat
@@ -358,9 +363,14 @@ tickets.patch('/:id', async (c) => {
           try {
             const oldAssigneePush = await sendPushNotification(c.env, currentTicket.assigned_to, {
               title: `📤 ${currentTicket.title}`,
-              body: `Ticket retiré de votre liste (réassigné)`,
+              body: `Ticket ${currentTicket.ticket_id} retiré de votre liste (réassigné)`,
               icon: '/icon-192.png',
-              data: { ticketId: id, url: '/', action: 'unassigned' }
+              data: { 
+                ticketId: id,
+                ticket_id: currentTicket.ticket_id,
+                action: 'unassigned',
+                url: `/?ticket=${id}` 
+              }
             });
 
             // Logger
@@ -385,9 +395,14 @@ tickets.patch('/:id', async (c) => {
         // Notifier le nouvel assigné
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
           title: `🔧 ${currentTicket.title}`,
-          body: `Ticket réassigné`,
+          body: `Ticket ${currentTicket.ticket_id} réassigné à vous`,
           icon: '/icon-192.png',
-          data: { ticketId: id, url: '/' }
+          data: { 
+            ticketId: id,
+            ticket_id: currentTicket.ticket_id,
+            action: 'view_ticket',
+            url: `/?ticket=${id}` 
+          }
         });
 
         // Logger le résultat dans push_logs

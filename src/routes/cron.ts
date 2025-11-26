@@ -203,15 +203,16 @@ cron.post('/check-overdue', async (c) => {
             // Aucun push récent, on envoie
             const { sendPushNotification } = await import('./push');
             const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
-            title: `🔴 Ticket Expiré`,
-            body: `${ticket.title} - Retard ${overdueText}. Changez la date planifiée si nécessaire`,
+            title: `🔴 Ticket Expiré: ${ticket.ticket_id}`,
+            body: `${ticket.title} - Retard ${overdueText}. Changez la date planifiée`,
             icon: '/icon-192.png',
             badge: '/icon-192.png',
             data: { 
               ticketId: ticket.id, 
               ticket_id: ticket.ticket_id,
               type: 'overdue',
-              url: '/' 
+              action: 'view_ticket',
+              url: `/?ticket=${ticket.id}` 
             }
           });
 
@@ -265,13 +266,16 @@ cron.post('/check-overdue', async (c) => {
 
               try {
                 const adminPushResult = await sendPushNotification(c.env, admin.id as number, {
-                  title: `⚠️ TICKET EXPIRÉ`,
-                  body: `${ticket.ticket_id}: ${ticket.title} - Retard ${overdueText}`,
+                  title: `⚠️ TICKET EXPIRÉ: ${ticket.ticket_id}`,
+                  body: `${ticket.title} - Retard ${overdueText}`,
                   icon: '/icon-192.png',
                   badge: '/badge-72.png',
                   data: {
-                    url: '/',
-                    action: 'overdue_cron',
+                    ticketId: ticket.id,
+                    ticket_id: ticket.ticket_id,
+                    action: 'view_ticket',
+                    url: `/?ticket=${ticket.id}`,
+                    overdue_cron: true,
                     ticketId: ticket.id,
                     ticket_id: ticket.ticket_id,
                     priority: ticket.priority,

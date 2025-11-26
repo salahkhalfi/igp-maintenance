@@ -135,8 +135,12 @@ self.addEventListener('notificationclick', (event) => {
   // Construire l'URL appropriée selon le type de notification
   let urlToOpen = notificationData.url || '/';
   
+  // Pour les tickets: ouvrir le modal du ticket directement
+  if (action === 'view_ticket' && notificationData.ticketId) {
+    urlToOpen = `/?ticket=${notificationData.ticketId}`;
+  }
   // Pour les messages audio, ajouter paramètres pour auto-play
-  if (action === 'new_audio_message' && notificationData.messageId) {
+  else if (action === 'new_audio_message' && notificationData.messageId) {
     urlToOpen = `/?openAudioMessage=${notificationData.messageId}&sender=${notificationData.senderId}`;
   }
   // Pour les messages texte privés

@@ -6780,6 +6780,26 @@ app.get('/', (c) => {
                 return () => document.removeEventListener('click', handleClick);
             }, []);
 
+            // Gérer les paramètres URL pour ouvrir automatiquement un ticket
+            React.useEffect(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ticketIdFromUrl = urlParams.get('ticket');
+                
+                if (ticketIdFromUrl && tickets.length > 0) {
+                    const ticketId = parseInt(ticketIdFromUrl, 10);
+                    const ticket = tickets.find(t => t.id === ticketId);
+                    
+                    if (ticket) {
+                        console.log('[Push] Opening ticket from URL:', ticketId);
+                        setSelectedTicketId(ticketId);
+                        setShowDetailsModal(true);
+                        
+                        // Nettoyer l'URL sans recharger la page
+                        window.history.replaceState({}, '', window.location.pathname);
+                    }
+                }
+            }, [tickets]);
+
             const getTicketsByStatus = (status) => {
                 let filteredTickets = tickets.filter(t => t.status === status);
 
