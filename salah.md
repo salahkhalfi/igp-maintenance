@@ -1,6 +1,6 @@
 # salah.md - Guide de Travail Unique
-**Version:** 1.0.5  
-**Date:** 2025-11-24  
+**Version:** 1.0.8  
+**Date:** 2025-11-27  
 **Statut:** Guide opérationnel permanent
 
 ---
@@ -91,10 +91,14 @@ Commande: `hub_files_tool(action="read", file_name="salah.md", limit=800)`
 - `getCurrentLocalTime()` JAMAIS utilisée
 - UI utilise `parseUTCDate()` pour affichage (ajoute 'Z' suffix)
 
-**Push Notifications:**
+**Push Notifications (améliorations v2.9.7-v2.9.9):**
 - Queue: table `pending_notifications` (users offline)
 - Cleanup: CRON externe requis
 - Admin push: code dans `cron.ts` L188-296 (PAS dans scheduled.ts)
+- **v2.9.7:** Liens directs `/?ticket=123` dans notifications
+- **v2.9.8:** Titres personnalisés avec prénom (`Jean, nouveau ticket`)
+- **v2.9.9:** Fix postMessage pour app déjà ouverte (Service Worker → React)
+- **3 méthodes fermeture:** Click notification → URL params, postMessage, ou openWindow
 
 ---
 
@@ -437,6 +441,23 @@ pm2 logs --nostream
 
 **Mettre à jour après changements majeurs**
 
+### Documents Créés (2025-11-26 & 2025-11-27)
+**Valorisation application (26 novembre):**
+1. `VALEUR_MARCHE_APPLICATION.md` - Valorisation traditionnelle 40,000 $ CAD (15.3 KB)
+2. `VALEUR_REELLE_AVEC_AI.md` - Valorisation transparente AI 28,000 $ CAD (16.6 KB)
+3. `BREAKDOWN_FONCTIONS_28K.md` - Détail 25 fonctions/composants (25.2 KB)
+4. `PRIX_CLE_EN_MAIN_SANS_FORMATION.md` - Package sans formation 23,000 $ CAD (14.3 KB)
+
+**Push notifications (26 novembre):**
+5. `PUSH_NOTIFICATIONS_COMPLETE_SUMMARY.md` - Résumé v2.9.7-v2.9.9 (12.7 KB)
+6. `FIX_PUSH_NOTIFICATION_OPEN_TICKET_v2.9.9.md` - Fix app ouverte (11.6 KB)
+7. `PUSH_EXPIRATION_DESTINATAIRES.md` - Qui reçoit les push expiration (9.9 KB)
+
+**UX improvement (27 novembre):**
+8. `FIX_MACHINE_MODAL_CLOSE_BUTTON_v2.9.10.md` - Fix modal machines (11.3 KB)
+
+**Total valorisation:** 71.4 KB documentation + 87.6 KB valorisation = **159 KB créés 26-27 nov**
+
 ### Documents Créés (2025-11-24)
 **Audit et documentation Android PWA:**
 1. `AUDIT_LOGIQUE_GENERALE.md` - Audit complet 2,269 lignes code (100/100 score)
@@ -487,6 +508,38 @@ npm run check:version
 
 ## 🎯 STANDARDS CODE
 
+### Modal UX - Standards (v2.9.10)
+**Bouton fermeture:**
+```typescript
+// ✅ PATTERN STANDARD (40x40px touch target)
+React.createElement("button", {
+    onClick: onClose,
+    className: "min-w-[40px] min-h-[40px] flex items-center justify-center active:scale-95",
+    'aria-label': "Fermer"
+},
+    React.createElement("i", { className: "fas fa-times text-xl sm:text-2xl" })
+)
+```
+
+**Support Escape key:**
+```typescript
+// ✅ TOUJOURS ajouter dans modals
+React.useEffect(() => {
+    const handleEscape = (e) => {
+        if (e.key === 'Escape' && show) onClose();
+    };
+    if (show) {
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }
+}, [show, onClose]);
+```
+
+**3 méthodes fermeture obligatoires:**
+1. Bouton X (40x40px minimum)
+2. Clic fond sombre (overlay)
+3. Touche Escape (clavier)
+
 ### React - Échappement Auto
 **React.createElement() est SAFE:**
 ```javascript
@@ -528,11 +581,20 @@ db.query(`SELECT * WHERE id = ${id}`)  // SQL Injection!
 ### Versions
 - **Production:** mecanique.igpglass.ca
 - **Test:** webapp-test.pages.dev
-- **Version app:** v2.9.0
-- **Déploiements:** 355+ (normal, aucun problème)
+- **Version app:** v2.9.10 (27 novembre 2025)
+- **Déploiements:** 375+ (normal, aucun problème)
+
+### Versions Récentes (26-27 novembre)
+- **v2.9.4** - Format ticket TYPE-YYYY-NNNN (préfixe machine au lieu IGP)
+- **v2.9.5** - Format ticket TYPE-MMYY-NNNN (précision mensuelle)
+- **v2.9.6** - Prévention collisions ticket IDs + audit 100%
+- **v2.9.7** - Liens directs tickets dans push notifications
+- **v2.9.8** - Noms personnalisés dans push (`Jean, nouveau ticket`)
+- **v2.9.9** - Fix push quand app déjà ouverte (postMessage)
+- **v2.9.10** - Fix bouton fermeture modal machines (40x40px + Escape key)
 
 ### Ce Qui Fonctionne
-✅ Push notifications (admin + users)  
+✅ Push notifications (admin + users) - 3 versions améliorées (v2.9.7-9)  
 ✅ CRON externe (tickets expirés)  
 ✅ Timezone (dates locales DB)  
 ✅ Webhooks Pabbly (emails)  
@@ -541,9 +603,10 @@ db.query(`SELECT * WHERE id = ${id}`)  // SQL Injection!
 ✅ R2 Storage (maintenance-media)  
 ✅ Auth système (14 rôles)  
 ✅ Kanban + Tickets + Messagerie + Audio  
+✅ Modal UX - Escape key + touch targets 40x40px (v2.9.10)
 
 ### Non-Problèmes Confirmés
-- 348 déploiements Cloudflare → Aucun coût, aucun impact
+- 375+ déploiements Cloudflare → Aucun coût, aucun impact
 - Multiples branches preview → Normal Cloudflare Pages
 
 ---
@@ -813,10 +876,21 @@ app.use('*', async (c, next) => {
 
 **Fin du guide. Si contradiction trouvée entre ce fichier et autres docs → Ce fichier prime.**
 
-**Version:** 1.0.7  
+**Version:** 1.0.8  
 **Créé:** 2025-11-23  
-**Dernière MAJ:** 2025-11-25  
-**Changements v1.0.7:**
+**Dernière MAJ:** 2025-11-27  
+
+**Changements v1.0.8 (26-27 novembre 2025):**
+- ✅ Push notifications v2.9.7-9 (liens directs, noms perso, fix app ouverte)
+- ✅ Format ticket IDs v2.9.4-5 (TYPE-MMYY-NNNN)
+- ✅ Prévention collisions v2.9.6 (UNIQUE constraint + retry)
+- ✅ Modal UX v2.9.10 (40x40px touch + Escape key)
+- ✅ Documents valorisation créés (40k, 28k, 23k breakdown)
+- ✅ Version app → 2.9.10 (7 versions depuis v1.0.7)
+- ✅ 20+ commits 26 nov + commits 27 nov
+- ✅ Tags Git v2.9.4 à v2.9.10
+
+**Changements v1.0.7 (25 novembre 2025):**
 - ✅ Auto-refresh stats badges (60s interval)
 - ✅ Modals interactifs pour tous badges (performance, retards, push devices)
 - ✅ Design professionnel (slate/rose/teal theme)
@@ -825,9 +899,7 @@ app.use('*', async (c, next) => {
 **Changements v1.0.6:**
 - ✅ Dashboard statistiques en temps réel (v2.9.0)
 - ✅ 4 statistiques admin/supervisor (tickets actifs, retards, techniciens, push devices)
-- ✅ Version app → 2.9.0
-- ✅ 6 commits statistiques (b17c4f2 à 347928b)
 - ✅ API `/api/stats/active-tickets` avec auth middleware
 
-**Basé sur:** 210+ fichiers .md analysés  
+**Basé sur:** 220+ fichiers .md analysés  
 **Statut:** ✅ Opérationnel
