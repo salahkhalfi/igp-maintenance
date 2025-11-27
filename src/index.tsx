@@ -6959,19 +6959,23 @@ app.get('/', (c) => {
                     onTicketCreated(); // Refresh
                     
                     // 🎉 Confetti celebration when ticket is completed!
+                    // Launch asynchronously to not block UI thread
                     if (newStatus === 'completed') {
-                        // Visual: Confetti
-                        if (typeof confetti !== 'undefined') {
-                            confetti({
-                                particleCount: 100,
-                                spread: 70,
-                                origin: { y: 0.6 },
-                                colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B']
-                            });
-                        }
-                        
-                        // Audio: Pleasant "ding" sound
-                        playCelebrationSound();
+                        // Use requestAnimationFrame for smooth animation
+                        requestAnimationFrame(() => {
+                            // Visual: Confetti (non-blocking)
+                            if (typeof confetti !== 'undefined') {
+                                confetti({
+                                    particleCount: 100,
+                                    spread: 70,
+                                    origin: { y: 0.6 },
+                                    colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B']
+                                });
+                            }
+                            
+                            // Audio: Pleasant "ding" sound (non-blocking)
+                            setTimeout(() => playCelebrationSound(), 0);
+                        });
                     }
                 } catch (error) {
                     alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
