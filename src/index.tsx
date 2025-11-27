@@ -4671,23 +4671,27 @@ app.get('/', (c) => {
                     
                     setOverdueTickets(overdue);
                     
-                    // Load comments for all overdue tickets
+                    // Load comments for all overdue tickets IN PARALLEL (10x faster)
                     if (overdue.length > 0) {
-                        const commentsMap = {};
-                        for (const ticket of overdue) {
-                            try {
-                                const commentsResponse = await fetch('/api/comments/ticket/' + ticket.id, {
-                                    headers: {
-                                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-                                    }
-                                });
-                                const commentsData = await commentsResponse.json();
-                                commentsMap[ticket.id] = commentsData.comments || [];
-                            } catch (err) {
+                        const commentsPromises = overdue.map(ticket => 
+                            fetch('/api/comments/ticket/' + ticket.id, {
+                                headers: {
+                                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => ({ ticketId: ticket.id, comments: data.comments || [] }))
+                            .catch(err => {
                                 console.error('Erreur chargement commentaires ticket ' + ticket.id + ':', err);
-                                commentsMap[ticket.id] = [];
-                            }
-                        }
+                                return { ticketId: ticket.id, comments: [] };
+                            })
+                        );
+                        
+                        const commentsResults = await Promise.all(commentsPromises);
+                        const commentsMap = {};
+                        commentsResults.forEach(result => {
+                            commentsMap[result.ticketId] = result.comments;
+                        });
                         setTicketComments(commentsMap);
                     }
                 } catch (error) {
