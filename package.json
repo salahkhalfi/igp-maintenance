@@ -58,6 +58,7 @@
     "@hono/vite-dev-server": "^0.18.2",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
+    "autocannon": "^8.0.0",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
     "postcss": "^8.5.6",
