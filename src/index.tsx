@@ -2675,32 +2675,35 @@ app.get('/', (c) => {
                     onClick: (e) => e.stopPropagation(),
                     style: { marginTop: 'auto', marginBottom: 'auto', maxHeight: '90vh', overflowY: 'auto' }
                 },
-                    React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b-2 border-gradient-to-r from-blue-400 to-gray-400' },
+                    React.createElement('div', { className: 'flex justify-between items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b-2 border-gradient-to-r from-blue-400 to-gray-400' },
+                        // LEFT: Delete button (trash)
+                        (ticket && currentUser && (
+                            (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
+                            (currentUser.role === 'supervisor') ||
+                            (currentUser.role === 'admin') ||
+                            (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
+                        )) ? React.createElement('button', {
+                            onClick: handleDeleteTicket,
+                            className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
+                            title: 'Supprimer ce ticket',
+                            'aria-label': 'Supprimer ce ticket'
+                        },
+                            React.createElement('i', { className: 'fas fa-trash-alt text-xl sm:text-2xl' })
+                        ) : React.createElement('div', { className: 'w-[44px]' }), // Placeholder pour alignement
+                        
+                        // CENTER: Title
                         React.createElement('h2', { className: 'text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent' },
                             React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-blue-600 text-sm sm:text-base' }),
                             "Détails du Ticket"
                         ),
-                        React.createElement('div', { className: 'flex gap-4 sm:gap-5' },
-                            (ticket && currentUser && (
-                                (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
-                                (currentUser.role === 'supervisor') ||
-                                (currentUser.role === 'admin') ||
-                                (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
-                            )) ? React.createElement('button', {
-                                onClick: handleDeleteTicket,
-                                className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95 p-2 -m-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
-                                title: 'Supprimer ce ticket',
-                                'aria-label': 'Supprimer ce ticket'
-                            },
-                                React.createElement('i', { className: 'fas fa-trash-alt text-xl sm:text-2xl' })
-                            ) : null,
-                            React.createElement('button', {
-                                onClick: onClose,
-                                className: 'text-gray-500 hover:text-gray-700 p-2 -m-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
-                                'aria-label': 'Fermer'
-                            },
-                                React.createElement('i', { className: 'fas fa-times text-xl sm:text-2xl' })
-                            )
+                        
+                        // RIGHT: Close button (X)
+                        React.createElement('button', {
+                            onClick: onClose,
+                            className: 'text-gray-500 hover:text-gray-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
+                            'aria-label': 'Fermer'
+                        },
+                            React.createElement('i', { className: 'fas fa-times text-xl sm:text-2xl' })
                         )
                     ),
 
