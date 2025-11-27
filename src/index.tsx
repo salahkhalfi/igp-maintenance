@@ -6963,13 +6963,16 @@ app.get('/', (c) => {
                     if (newStatus === 'completed') {
                         // Use requestAnimationFrame for smooth animation
                         requestAnimationFrame(() => {
-                            // Visual: Confetti (non-blocking)
+                            // Visual: Confetti (non-blocking, fast animation)
                             if (typeof confetti !== 'undefined') {
                                 confetti({
                                     particleCount: 100,
                                     spread: 70,
                                     origin: { y: 0.6 },
-                                    colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B']
+                                    colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B'],
+                                    ticks: 120,      // Reduce lifetime (default: 200) - faster disappear
+                                    gravity: 1.5,    // Increase gravity (default: 1) - faster fall
+                                    scalar: 0.9      // Smaller particles - lighter, faster
                                 });
                             }
                             
