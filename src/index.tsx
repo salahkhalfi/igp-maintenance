@@ -1537,7 +1537,7 @@ app.get('/', (c) => {
 
                         React.createElement('div', { className: 'flex-1 p-8 overflow-y-auto bg-gradient-to-br from-white/50 to-gray-50/30 backdrop-blur-sm' },
                             React.createElement('div', { className: 'max-w-3xl mx-auto' },
-                                React.createElement('div', { className: 'bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/50' },
+                                React.createElement('div', { className: 'bg-white/95 rounded-2xl shadow-xl p-8 border border-white/50' },
                                     React.createElement('h3', {
                                         className: 'text-3xl font-bold mb-6 bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent flex items-center gap-3'
                                     },
@@ -2140,7 +2140,7 @@ app.get('/', (c) => {
                             ),
                             React.createElement('input', {
                                 type: 'text',
-                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl hover:scale-[1.01]',
+                                className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow hover:shadow-xl',
                                 style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: title,
                                 onChange: (e) => handleInputField(e, setTitle),
@@ -2155,7 +2155,7 @@ app.get('/', (c) => {
                                 'Description détaillée *'
                             ),
                             React.createElement('textarea', {
-                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
+                                className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
                                 style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: description,
                                 onChange: (e) => handleInputField(e, setDescription),
@@ -2171,7 +2171,7 @@ app.get('/', (c) => {
                                 'Machine concernée *'
                             ),
                             React.createElement('select', {
-                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer',
+                                className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer',
                                 style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                 value: machineId,
                                 onChange: (e) => handleInputField(e, setMachineId),
@@ -2308,7 +2308,7 @@ app.get('/', (c) => {
                                     React.createElement('select', {
                                         value: assignedTo,
                                         onChange: (e) => setAssignedTo(e.target.value),
-                                        className: "w-full px-4 py-3 bg-white/90 backdrop-blur-sm border-2 border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
+                                        className: "w-full px-4 py-3 bg-white/97 border-2 border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
                                         style: { boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
@@ -2769,21 +2769,21 @@ app.get('/', (c) => {
                             React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
                             React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 mb-4 sm:mb-5 leading-relaxed bg-white/60 p-3 sm:p-4 rounded-lg' }, ticket.description),
                             React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4' },
-                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'fas fa-cog text-blue-600 text-sm' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Machine:')
                                     ),
                                     React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, ticket.machine_type + ' ' + ticket.model)
                                 ),
-                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'fas fa-tasks text-slate-600 text-sm' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Statut:')
                                     ),
                                     React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, getStatusLabel(ticket.status))
                                 ),
-                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'far fa-calendar text-green-600 text-sm' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Créé le:")
@@ -2792,7 +2792,7 @@ app.get('/', (c) => {
                                         formatDateEST(ticket.created_at)
                                     )
                                 ),
-                                React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-3 rounded-lg shadow-sm' },
+                                React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'fas fa-user text-blue-700 text-sm' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Rapporté par:")
@@ -2870,7 +2870,7 @@ app.get('/', (c) => {
                                 !editingSchedule ? (
                                     // Affichage lecture seule
                                     React.createElement('div', { className: 'space-y-3' },
-                                        React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm' },
+                                        React.createElement('div', { className: 'bg-white/95 p-4 rounded-lg shadow-sm' },
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('i', { className: 'fas fa-user-cog text-slate-600' }),
                                                 React.createElement('span', { className: 'font-bold text-gray-700' }, "Assigné à:")
@@ -2881,7 +2881,7 @@ app.get('/', (c) => {
                                                     : '❌ Non assigné'
                                             )
                                         ),
-                                        React.createElement('div', { className: 'bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow-sm' },
+                                        React.createElement('div', { className: 'bg-white/95 p-4 rounded-lg shadow-sm' },
                                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                                 React.createElement('i', { className: 'far fa-clock text-slate-600' }),
                                                 React.createElement('span', { className: 'font-bold text-gray-700' }, "Date planifiée:")
@@ -2905,7 +2905,7 @@ app.get('/', (c) => {
                                             React.createElement('select', {
                                                 value: scheduledAssignedTo,
                                                 onChange: (e) => setScheduledAssignedTo(e.target.value),
-                                                className: 'w-full px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
+                                                className: 'w-full px-4 py-3 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                             },
                                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
                                                 React.createElement('option', { value: '0' }, '👥 À Équipe'),
@@ -2951,7 +2951,7 @@ app.get('/', (c) => {
                                                     type: 'datetime-local',
                                                     value: scheduledDate,
                                                     onChange: (e) => setScheduledDate(e.target.value),
-                                                    className: 'flex-1 px-4 py-3 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
+                                                    className: 'flex-1 px-4 py-3 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                                 }),
                                                 scheduledDate ? React.createElement('button', {
                                                     type: 'button',
@@ -5374,7 +5374,7 @@ app.get('/', (c) => {
                                 placeholder: 'Rechercher par nom ou email...',
                                 value: searchQuery,
                                 onChange: (e) => setSearchQuery(e.target.value),
-                                className: 'w-full px-4 py-2 pl-10 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all',
+                                className: 'w-full px-4 py-2 pl-10 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all',
                                 onKeyDown: (e) => {
                                     if (e.key === 'Escape') {
                                         setSearchQuery('');
@@ -5405,7 +5405,7 @@ app.get('/', (c) => {
                                         value: newEmail,
                                         onChange: (e) => handleInputAdminEmail(e, setNewEmail),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true,
                                         autoFocus: true
                                     })
@@ -5417,7 +5417,7 @@ app.get('/', (c) => {
                                         value: newFirstName,
                                         onChange: (e) => handleInputAdminEmail(e, setNewFirstName),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         placeholder: 'Jean',
                                         required: true
                                     })
@@ -5429,7 +5429,7 @@ app.get('/', (c) => {
                                         value: newLastName,
                                         onChange: (e) => handleInputAdminEmail(e, setNewLastName),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         placeholder: 'Dupont'
                                     })
                                 )
@@ -5442,7 +5442,7 @@ app.get('/', (c) => {
                                         value: newPassword,
                                         onChange: (e) => handleInputAdminEmail(e, setNewPassword),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                                         required: true,
                                         minLength: 6
                                     })
@@ -5489,7 +5489,7 @@ app.get('/', (c) => {
                                         value: editEmail,
                                         onChange: (e) => handleInputAdminEmail(e, setEditEmail),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         required: true,
                                         autoFocus: true
                                     })
@@ -5501,7 +5501,7 @@ app.get('/', (c) => {
                                         value: editFirstName,
                                         onChange: (e) => handleInputAdminEmail(e, setEditFirstName),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         placeholder: 'Jean',
                                         required: true
                                     })
@@ -5513,7 +5513,7 @@ app.get('/', (c) => {
                                         value: editLastName,
                                         onChange: (e) => handleInputAdminEmail(e, setEditLastName),
                                         onInvalid: handleInvalidAdminField,
-                                        className: 'w-full px-3 py-2 bg-white/80 backdrop-blur-sm border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
+                                        className: 'w-full px-3 py-2 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
                                         placeholder: 'Dupont'
                                     })
                                 )
@@ -5586,7 +5586,7 @@ app.get('/', (c) => {
                                         canSeeLastLogin(user) ? React.createElement('div', { className: "flex flex-col gap-1 mt-2 pt-2 border-t border-gray-200" },
                                             React.createElement('div', { className: "flex items-center gap-1.5" },
                                                 React.createElement('div', {
-                                                    className: "w-2 h-2 rounded-full animate-pulse " + getLastLoginStatus(user.last_login).dot
+                                                    className: "w-2 h-2 rounded-full " + getLastLoginStatus(user.last_login).dot
                                                 }),
                                                 React.createElement('span', {
                                                     className: "text-xs font-bold " + getLastLoginStatus(user.last_login).color
@@ -6271,7 +6271,7 @@ app.get('/', (c) => {
                                     React.createElement('p', { className: 'text-xs sm:text-sm text-gray-400 mt-2' }, 'Soyez le premier a envoyer un message!')
                                 ) : publicMessages.map(msg => React.createElement('div', {
                                     key: msg.id,
-                                    className: 'bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-all hover:scale-[1.02] border border-white/50 transform hover:-translate-y-1',
+                                    className: 'bg-white/95 rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-shadow border border-white/50 ',
                                     style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                 },
                                     React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
@@ -6389,7 +6389,7 @@ app.get('/', (c) => {
                                         onChange: (e) => setMessageContent(e.target.value),
                                         onKeyPress: handleKeyPress,
                                         placeholder: 'Ecrire un message public... (Enter pour envoyer)',
-                                        className: 'flex-1 bg-white/80 backdrop-blur-sm border-2 border-white/50 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all shadow-lg hover:shadow-xl',
+                                        className: 'flex-1 bg-white/95 border-2 border-white/50 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all shadow-lg hover:shadow-xl',
                                         style: { boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                                         rows: 2
                                     }),
@@ -6529,7 +6529,7 @@ app.get('/', (c) => {
                                         React.createElement('p', { className: 'text-xs text-gray-400 mt-2' }, 'Ecrivez votre premier message ci-dessous')
                                     ) : privateMessages.map(msg => React.createElement('div', {
                                         key: msg.id,
-                                        className: 'bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-all hover:scale-[1.02] border border-white/50 transform hover:-translate-y-1',
+                                        className: 'bg-white/95 rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-shadow border border-white/50 ',
                                         style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
                                     },
                                         React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
