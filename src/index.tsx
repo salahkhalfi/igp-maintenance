@@ -5035,7 +5035,7 @@ app.get('/', (c) => {
 
                     // Polling toutes les 2 minutes pour rafraichir les statuts last_login
                     const interval = setInterval(() => {
-                        loadUsers();
+                        loadUsers(true); // true = silent refresh (sans loading spinner)
                     }, 120000); // 2 minutes (au lieu de 30 secondes)
 
                     return () => clearInterval(interval);
@@ -5080,17 +5080,25 @@ app.get('/', (c) => {
                 }
             }, [show, promptDialog.show, confirmDialog.show, notification.show, editingUser, showCreateForm]);
 
-            const loadUsers = async () => {
+            const loadUsers = async (silent = false) => {
                 try {
-                    setLoading(true);
+                    // Ne pas afficher le spinner si refresh automatique (silent mode)
+                    if (!silent) {
+                        setLoading(true);
+                    }
                     // Tous les utilisateurs utilisent la route /api/users/team pour voir tous les utilisateurs
                     const endpoint = '/users/team';
                     const response = await axios.get(API_URL + endpoint);
                     setUsers(response.data.users);
                 } catch (error) {
-                    setNotification({ show: true, message: 'Erreur chargement: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                    // En mode silent, ne pas afficher les erreurs (éviter notifications spam)
+                    if (!silent) {
+                        setNotification({ show: true, message: 'Erreur chargement: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                    }
                 } finally {
-                    setLoading(false);
+                    if (!silent) {
+                        setLoading(false);
+                    }
                 }
             };
 
@@ -5557,7 +5565,7 @@ app.get('/', (c) => {
                             .map(user =>
                             React.createElement('div', {
                                 key: user.id,
-                                className: 'bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-blue-400 hover:shadow-lg transition-all'
+                                className: 'bg-white/95 rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-blue-400 hover:shadow-lg transition-shadow duration-200'
                             },
                                 React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
                                     React.createElement('div', { className: 'flex-1' },
