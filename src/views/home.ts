@@ -465,7 +465,7 @@ export const homeHTML = `
     </div>
 
     <script>
-        const API_URL = '/api';
+        // API_URL est défini dans utils.js
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 
