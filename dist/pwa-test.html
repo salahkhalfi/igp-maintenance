@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PWA - Maintenance IGP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow">
+        <h1 class="text-2xl font-bold mb-6 text-blue-900">🔍 Diagnostic PWA</h1>
+        
+        <div id="results" class="space-y-4"></div>
+        
+        <button onclick="testInstall()" class="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+            Tester Installation Manuelle
+        </button>
+    </div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(title, status, details) {
+            const div = document.createElement('div');
+            const icon = status ? '✅' : '❌';
+            const color = status ? 'text-green-600' : 'text-red-600';
+            div.className = 'border-l-4 ' + (status ? 'border-green-500' : 'border-red-500') + ' pl-4 py-2';
+            div.innerHTML = `
+                <div class="${color} font-bold">${icon} ${title}</div>
+                <div class="text-sm text-gray-600">${details}</div>
+            `;
+            results.appendChild(div);
+        }
+        
+        // Tests automatiques
+        window.addEventListener('load', async () => {
+            // Test 1: Manifest
+            try {
+                const response = await fetch('/manifest.json');
+                const manifest = await response.json();
+                addResult('Manifest.json', response.ok, 
+                    `Nom: ${manifest.name}, Theme: ${manifest.theme_color}`);
+            } catch (e) {
+                addResult('Manifest.json', false, 'Erreur: ' + e.message);
+            }
+            
+            // Test 2: Service Worker
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        addResult('Service Worker', true, 
+                            `Enregistré: ${registration.scope}`);
+                    } else {
+                        addResult('Service Worker', false, 
+                            'Pas encore enregistré (rechargez la page)');
+                    }
+                } catch (e) {
+                    addResult('Service Worker', false, 'Erreur: ' + e.message);
+                }
+            } else {
+                addResult('Service Worker', false, 'Non supporté par ce navigateur');
+            }
+            
+            // Test 3: HTTPS
+            const isHttps = location.protocol === 'https:';
+            addResult('HTTPS', isHttps, 
+                `Protocole: ${location.protocol}`);
+            
+            // Test 4: Installation possible
+            const canInstall = 'BeforeInstallPromptEvent' in window || 
+                              (navigator.standalone !== undefined);
+            addResult('Installation supportée', canInstall, 
+                canInstall ? 'Ce navigateur supporte l\'installation PWA' : 
+                            'Installation PWA non supportée sur ce navigateur');
+            
+            // Test 5: Display mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                               (window.navigator).standalone;
+            addResult('Mode App', isStandalone, 
+                isStandalone ? 'App déjà installée et ouverte en mode standalone' : 
+                              'Ouvert dans navigateur (pas encore installé)');
+        });
+        
+        // Test installation manuelle
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            addResult('Prompt Installation', true, 
+                'Navigateur prêt à installer! Cliquez le bouton ci-dessous.');
+        });
+        
+        async function testInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                addResult('Résultat Installation', outcome === 'accepted', 
+                    outcome === 'accepted' ? 'App installée!' : 'Installation annulée');
+                deferredPrompt = null;
+            } else {
+                alert('Installation manuelle:\n\n' +
+                      'Android: Menu ⋮ → "Installer l\'application"\n' +
+                      'iOS: Partager ⬆️ → "Sur l\'écran d\'accueil"');
+            }
+        }
+    </script>
+</body>
+</html>
