@@ -8615,6 +8615,9 @@ app.get('/', (c) => {
                     return () => {
                         clearInterval(messagesInterval);
                     };
+                } else {
+                    // CRITICAL FIX: If not logged in, stop loading immediately to show login form
+                    setLoading(false);
                 }
             }, [isLoggedIn]);
 
@@ -8669,9 +8672,12 @@ app.get('/', (c) => {
                         }
                     }, 600);
                 } catch (error) {
+                    console.error("Error in loadData:", error);
                     if (error.response?.status === 401) {
                         logout();
                     }
+                    // CRITICAL FIX: Force loading false on error to prevent infinite spinner
+                    setLoading(false);
                 }
             };
 
