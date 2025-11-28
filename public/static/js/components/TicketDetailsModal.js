@@ -144,7 +144,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             setNewComment('');
             loadComments();
         } catch (error) {
-            alert('Erreur lors de l\\'ajout du commentaire');
+            alert("Erreur lors de l'ajout du commentaire");
         } finally {
             setSubmittingComment(false);
         }
@@ -199,7 +199,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             setNewMediaPreviews([]);
             loadTicketDetails();
         } catch (error) {
-            alert('Erreur lors de l\\'upload des médias');
+            alert("Erreur lors de l'upload des médias");
         } finally {
             setUploadingMedia(false);
         }
