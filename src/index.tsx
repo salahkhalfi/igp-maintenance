@@ -4673,24 +4673,32 @@ app.get('/', (c) => {
                     
                     // Load comments for all overdue tickets IN PARALLEL (10x faster)
                     if (overdue.length > 0) {
-                        const commentsPromises = overdue.map(ticket => 
-                            fetch('/api/comments/ticket/' + ticket.id, {
-                                headers: {
-                                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-                                }
-                            })
-                            .then(res => res.json())
-                            .then(data => ({ ticketId: ticket.id, comments: data.comments || [] }))
-                            .catch(err => {
-                                console.error('Erreur chargement commentaires ticket ' + ticket.id + ':', err);
-                                return { ticketId: ticket.id, comments: [] };
-                            })
-                        );
-                        
-                        const commentsResults = await Promise.all(commentsPromises);
+                        // OPTIMIZATION v2.9.16: Load all comments in parallel with 5s timeout
+                        const commentPromises = overdue.map(async (ticket) => {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 5000);
+                            
+                            try {
+                                const commentsResponse = await fetch('/api/comments/ticket/' + ticket.id, {
+                                    headers: {
+                                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                    },
+                                    signal: controller.signal
+                                });
+                                clearTimeout(timeoutId);
+                                const commentsData = await commentsResponse.json();
+                                return { id: ticket.id, comments: commentsData.comments || [] };
+                            } catch (err) {
+                                clearTimeout(timeoutId);
+                                console.warn('Timeout/Error loading comments for ticket ' + ticket.id, err);
+                                return { id: ticket.id, comments: [] };
+                            }
+                        });
+
+                        const results = await Promise.all(commentPromises);
                         const commentsMap = {};
-                        commentsResults.forEach(result => {
-                            commentsMap[result.ticketId] = result.comments;
+                        results.forEach(result => {
+                            commentsMap[result.id] = result.comments;
                         });
                         setTicketComments(commentsMap);
                     }
