@@ -4671,7 +4671,9 @@ app.get('/', (c) => {
                     // Load comments for all overdue tickets
                     if (overdue.length > 0) {
                         const commentsMap = {};
-                        for (const ticket of overdue) {
+                        
+                        // OPTIMIZATION v2.9.15: Load all comments in parallel
+                        const commentPromises = overdue.map(async (ticket) => {
                             try {
                                 const commentsResponse = await fetch('/api/comments/ticket/' + ticket.id, {
                                     headers: {
@@ -4679,12 +4681,18 @@ app.get('/', (c) => {
                                     }
                                 });
                                 const commentsData = await commentsResponse.json();
-                                commentsMap[ticket.id] = commentsData.comments || [];
+                                return { id: ticket.id, comments: commentsData.comments || [] };
                             } catch (err) {
                                 console.error('Erreur chargement commentaires ticket ' + ticket.id + ':', err);
-                                commentsMap[ticket.id] = [];
+                                return { id: ticket.id, comments: [] };
                             }
-                        }
+                        });
+
+                        const results = await Promise.all(commentPromises);
+                        results.forEach(result => {
+                            commentsMap[result.id] = result.comments;
+                        });
+                        
                         setTicketComments(commentsMap);
                     }
                 } catch (error) {
