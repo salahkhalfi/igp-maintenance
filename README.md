@@ -18,6 +18,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.9.7 (28 novembre 2025) - REFACTORING MAJEUR FRONTEND 🏗️✨
+- **🏗️ ARCHITECTURE MODULAIRE** : Séparation complète du monolithe `src/index.tsx`
+- **📦 COMPOSANTS EXTRAITS** : 20+ composants React déplacés vers `/public/static/js/components/`
+- **⚡ CHARGEMENT OPTIMISÉ** : `MainApp` et `App` chargés comme scripts statiques
+- **📄 VUES SÉPARÉES** : Templates HTML (Home, Changelog) extraits dans `src/views/`
+- **📉 RÉDUCTION TAILE** : `src/index.tsx` réduit de 227KB à 16KB (-93%)
+- **🚀 PERFORMANCE** : Meilleure maintenabilité et chargement plus rapide
+- **✅ FONCTIONNALITÉS INCHANGÉES** : 100% iso-fonctionnel après refactoring
+
 ### Version 2.9.6 (26 novembre 2025) - FIX RACE CONDITION CRITIQUE 🔒✨
 - **🐛 FIX CRITIQUE** : Protection contre race condition lors de création simultanée de tickets
 - **🔐 UNIQUE CONSTRAINT** : Index unique ajouté sur `ticket_id` (migration 0022)
@@ -974,7 +983,8 @@ Pour tester l'application localement:
 ```
 webapp/
 ├── src/
-│   ├── index.tsx              # Point d'entrée Hono + Interface React
+│   ├── index.tsx              # Point d'entrée Hono (API + HTML serving)
+│   ├── views/                 # Templates HTML (Home, Guide, Changelog)
 │   ├── routes/                # Routes API
 │   │   ├── auth.ts           # Authentification
 │   │   ├── tickets.ts        # Gestion des tickets
@@ -994,6 +1004,8 @@ webapp/
 │   ├── 0003_add_reporter_name.sql  # Noms libres (v1.7.0)
 │   └── 0006_add_audio_messages.sql # Colonnes audio (v2.0.0)
 ├── public/                    # Fichiers statiques
+│   ├── static/js/components/  # Composants React (Frontend)
+│   ├── static/js/utils.js     # Utilitaires Frontend
 ├── seed.sql                   # Données de test
 ├── wrangler.jsonc             # Configuration Cloudflare
 ├── package.json               # Dépendances
