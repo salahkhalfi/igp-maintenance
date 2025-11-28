@@ -442,7 +442,7 @@ messages.get('/available-users', authMiddleware, async (c) => {
     const user = c.get('user');
 
     const { results } = await c.env.DB.prepare(`
-      SELECT id, first_name, role, email
+      SELECT id, first_name, full_name, role, email
       FROM users
       WHERE role IN ('operator', 'furnace_operator', 'technician', 'supervisor', 'admin')
         AND id != ?
