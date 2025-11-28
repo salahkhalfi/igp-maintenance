@@ -305,26 +305,40 @@ async function initPushNotifications() {
     console.log('🔔 [INIT] Permission actuelle:', Notification.permission);
     
     // Attendre que le Service Worker soit vraiment prêt (max 10 secondes)
+    // Protection Try/Catch pour Brave
     let swReady = false;
-    for (let i = 0; i < 20; i++) {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (registration && registration.active) {
-        swReady = true;
-        console.log('✅ [INIT] Service Worker est actif');
-        break;
-      }
-      console.log(`⏳ [INIT] Attente Service Worker... (${i + 1}/20)`);
-      await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+        for (let i = 0; i < 20; i++) {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration && registration.active) {
+            swReady = true;
+            console.log('✅ [INIT] Service Worker est actif');
+            break;
+          }
+          console.log(`⏳ [INIT] Attente Service Worker... (${i + 1}/20)`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    } catch (e) {
+        console.warn('⚠️ [INIT] Erreur accès Service Worker (Brave?):', e);
+        // Continue execution but expect failures in subscription check
     }
     
     if (!swReady) {
-      console.log('⚠️ [INIT] Service Worker pas prêt, on continue quand même');
+      console.log('⚠️ [INIT] Service Worker pas prêt ou inaccessible, on continue quand même');
     }
     
     // Si déjà autorisé, vérifier ownership AVANT de subscribe
     if (Notification.permission === 'granted') {
       console.log('✅ [INIT] Permission déjà accordée, vérification abonnement...');
-      const isSubscribed = await isPushSubscribed();
+      
+      let isSubscribed = false;
+      try {
+          isSubscribed = await isPushSubscribed();
+      } catch (e) {
+          console.warn('⚠️ [INIT] Impossible de vérifier abonnement:', e);
+          isSubscribed = false;
+      }
+
       console.log('🔔 [INIT] Déjà abonné?', isSubscribed);
       
       // IMPORTANT: Ne pas subscribe si appartient à un autre user
@@ -355,6 +369,12 @@ async function updatePushButtonColor() {
   try {
     console.log('[UPDATE-BTN] Checking subscription ownership...');
     
+    // Verify Service Worker support (Brave protection)
+    if (!('serviceWorker' in navigator)) {
+        console.log('[UPDATE-BTN] Service Worker not supported');
+        return; // Keep default orange button
+    }
+
     // Wait for button to exist in DOM - find button containing bell icon text
     let button = null;
     for (let i = 0; i < 10; i++) {
@@ -377,8 +397,17 @@ async function updatePushButtonColor() {
     
     console.log('[UPDATE-BTN] Button found:', button.textContent);
     
-    // Check if user is subscribed for THIS user
-    const isSubscribed = await isPushSubscribed();
+    // Check if user is subscribed for THIS user (with Brave protection)
+    let isSubscribed = false;
+    try {
+        // Check if SW is actually accessible
+        await navigator.serviceWorker.ready;
+        isSubscribed = await isPushSubscribed();
+    } catch (e) {
+        console.warn('[UPDATE-BTN] SW ready check failed (Brave?):', e);
+        isSubscribed = false;
+    }
+
     console.log('[UPDATE-BTN] Subscription status:', isSubscribed);
     
     // Find the icon element and text node inside the button
