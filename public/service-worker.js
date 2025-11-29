@@ -155,20 +155,14 @@ self.addEventListener('notificationclick', (event) => {
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Si une fenêtre est déjà ouverte, l'utiliser et envoyer un message
+      // Si une fenêtre est déjà ouverte, l'utiliser et naviguer vers l'URL
       for (const client of clientList) {
         if ('focus' in client) {
-          client.focus();
-          // Envoyer les données de notification au client pour action
-          client.postMessage({
-            type: 'NOTIFICATION_CLICK',
-            action: action,
-            data: { 
-                ...notificationData, 
-                auto_action: action === 'acknowledge' ? 'acknowledge' : null 
-            }
+          return client.focus().then(focusedClient => {
+            // Forcer la navigation pour garantir que les paramètres URL sont traités
+            // Cela résout le problème des boutons d'action qui ne déclenchent pas l'ouverture
+            return focusedClient.navigate(urlToOpen);
           });
-          return;
         }
       }
       // Sinon, ouvrir nouvelle fenêtre avec URL
