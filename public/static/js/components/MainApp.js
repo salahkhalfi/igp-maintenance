@@ -25,6 +25,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [searchTextResults, setSearchTextResults] = React.useState([]);
     const [searchIsKeyword, setSearchIsKeyword] = React.useState(false);
     const [searchKeywordType, setSearchKeywordType] = React.useState(null);
+    const [showMobileMenu, setShowMobileMenu] = React.useState(false);
     
     // Placeholder animé avec exemples de mots-clés (versions desktop et mobile)
     const searchPlaceholdersDesktop = [
@@ -862,7 +863,14 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             },
                                 React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
                                 unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
-                            ) : null
+                            ) : null,
+                            // BOUTON MENU MOBILE (Hamburger)
+                            React.createElement('button', {
+                                className: 'md:hidden ml-2 px-3 py-1.5 bg-white/50 border border-gray-200 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all shadow-sm active:scale-95',
+                                onClick: () => setShowMobileMenu(!showMobileMenu)
+                            },
+                                React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars text-lg') })
+                            )
                         )
                     )
                 ),
@@ -1054,7 +1062,12 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     ), document.body
                 ) : null,
 
-                React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center md:justify-center gap-2 mt-4 header-actions' },
+                React.createElement('div', { 
+                    className: 'header-actions md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + 
+                    (showMobileMenu 
+                        ? 'flex flex-col p-4 mx-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 ring-1 ring-black/5' 
+                        : 'hidden')
+                },
                     // 1. Nouvelle Demande (action primaire)
                     React.createElement('button', {
                         onClick: () => setShowCreateModal(true),
