@@ -389,10 +389,13 @@ tickets.patch('/:id', async (c) => {
               title: `📤 Affectation Annulée : ${currentTicket.machine_type}`,
               body: `Ticket #${currentTicket.ticket_id} ne vous est plus assigné`,
               icon: '/icon-192.png',
+              actions: [
+                { action: 'view', title: 'Voir' }
+              ],
               data: { 
                 ticketId: id,
                 ticket_id: currentTicket.ticket_id,
-                action: 'unassigned',
+                action: 'view_ticket',
                 url: `/?ticket=${id}` 
               }
             });

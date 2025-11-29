@@ -227,11 +227,16 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
               body: `${ticket.title} - En retard de ${overdueText}`,
               icon: '/icon-192.png',
               badge: '/icon-192.png',
+              actions: [
+                { action: 'view', title: 'Voir' },
+                { action: 'acknowledge', title: "J'y vais !" }
+              ],
               data: { 
                 ticketId: ticket.id, 
                 ticket_id: ticket.ticket_id,
+                action: 'view_ticket',
                 type: 'overdue',
-                url: '/' 
+                url: `/?ticket=${ticket.id}` 
               }
             });
 
@@ -287,9 +292,13 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
                   body: `${ticket.ticket_id}: ${ticket.title} - En retard de ${overdueText}`,
                   icon: '/icon-192.png',
                   badge: '/badge-72.png',
+                  actions: [
+                    { action: 'view', title: 'Voir' },
+                    { action: 'acknowledge', title: "J'y vais !" }
+                  ],
                   data: {
-                    url: '/',
-                    action: 'overdue_cron',
+                    url: `/?ticket=${ticket.id}`,
+                    action: 'view_ticket',
                     ticketId: ticket.id,
                     ticket_id: ticket.ticket_id,
                     priority: ticket.priority,

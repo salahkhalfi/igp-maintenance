@@ -198,6 +198,7 @@ export async function sendPushNotification(
     icon?: string;
     badge?: string;
     data?: any;
+    actions?: { action: string; title: string; icon?: string }[];
   },
   skipQueue: boolean = false,
   excludeEndpoints: string[] = []
@@ -326,7 +327,9 @@ export async function sendPushNotification(
           const message: PushMessage = {
             data: JSON.stringify(payload),
             options: {
-              ttl: 86400 // 24 heures
+              ttl: 86400, // 24 heures
+              // @ts-ignore - actions is not yet in the type definition but supported by browsers
+              actions: payload.actions
             }
           };
 
@@ -621,7 +624,9 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
           body: notif.body as string,
           icon: (notif.icon as string) || '/icon-192.png',
           badge: (notif.badge as string) || '/icon-192.png',
-          data: notif.data ? JSON.parse(notif.data as string) : {}
+          data: notif.data ? JSON.parse(notif.data as string) : {},
+          // Restaurer les actions si présentes dans data
+          actions: notif.data && JSON.parse(notif.data as string).actions ? JSON.parse(notif.data as string).actions : undefined
         };
         
         // Parser les endpoints déjà envoyés
