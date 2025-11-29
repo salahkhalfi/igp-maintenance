@@ -126,16 +126,20 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         return () => document.removeEventListener('click', handleClick);
     }, []);
 
-    // Gérer les paramètres URL pour ouvrir automatiquement un ticket
+    // Gérer les paramètres URL pour ouvrir automatiquement un ticket ou la messagerie
     React.useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const ticketIdFromUrl = urlParams.get('ticket');
         const autoAction = urlParams.get('auto_action');
+        const openMessagesSenderId = urlParams.get('openMessages');
+        const openAudioMessageId = urlParams.get('openAudioMessage');
+        const senderIdFromAudio = urlParams.get('sender');
         
+        // Cas 1: Ouvrir un ticket
         if (ticketIdFromUrl) {
             const ticketId = parseInt(ticketIdFromUrl, 10);
             
-            // ALWAYS open modal if ID exists, even if not in list yet (Modal fetches its own details)
+            // ALWAYS open modal if ID exists
             console.log('[Push] Opening ticket from URL:', ticketId);
             setSelectedTicketId(ticketId);
             setShowDetailsModal(true);
@@ -147,16 +151,34 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     // Quick Action: "J'y vais !"
                     if (autoAction === 'acknowledge' && ticket.status === 'received') {
                         console.log('[Push] Auto-acknowledging ticket:', ticketId);
-                        // Delay status update to ensure modal opens smoothly first
                         setTimeout(() => {
                             moveTicketToStatus(ticket, 'in_progress');
-                        }, 1500); // Increased delay to 1500ms for UI stability
+                        }, 1500);
                     }
                 }
             }
+        }
+        // Cas 2: Ouvrir la messagerie privée
+        else if (openMessagesSenderId) {
+            const senderId = parseInt(openMessagesSenderId, 10);
+            console.log('[Push] Opening messaging from URL for sender:', senderId);
+            setMessagingContact({ id: senderId, first_name: 'Chargement...', role: 'unknown' });
+            setMessagingTab('private');
+            setShowMessaging(true);
             
-            // REMOVED replaceState to prevent state loss during re-renders
-            // window.history.replaceState({}, '', window.location.pathname);
+            // Nettoyer l'URL
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+        // Cas 3: Ouvrir message audio spécifique
+        else if (openAudioMessageId && senderIdFromAudio) {
+            const senderId = parseInt(senderIdFromAudio, 10);
+            console.log('[Push] Opening audio message from URL:', openAudioMessageId);
+            setMessagingContact({ id: senderId, first_name: 'Chargement...', role: 'unknown' });
+            setMessagingTab('private');
+            setShowMessaging(true);
+            
+            // Nettoyer l'URL
+            window.history.replaceState({}, '', window.location.pathname);
         }
     }, [tickets]);
 
@@ -201,11 +223,19 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 }
                 // Ouvrir messagerie pour messages audio
                 else if (action === 'new_audio_message' && data.messageId) {
-                    setShowMessagesModal(true);
+                    console.log('[Push] Opening audio message from click');
+                    if (data.senderId) {
+                        setMessagingContact({ id: data.senderId, first_name: data.senderName || 'Utilisateur', role: 'unknown' });
+                        setMessagingTab('private');
+                    }
+                    setShowMessaging(true);
                 }
                 // Ouvrir conversation privée
                 else if (action === 'new_private_message' && data.senderId) {
-                    setShowMessagesModal(true);
+                    console.log('[Push] Opening private messaging from click:', data.senderId);
+                    setMessagingContact({ id: data.senderId, first_name: data.senderName || 'Utilisateur', role: 'unknown' });
+                    setMessagingTab('private');
+                    setShowMessaging(true);
                 }
             }
         };
