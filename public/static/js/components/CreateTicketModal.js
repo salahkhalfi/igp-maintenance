@@ -305,7 +305,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             required: true
                         },
                             React.createElement('option', { value: '' }, '-- Sélectionnez une machine --'),
-                            machines.map(m =>
+                            (machines || []).map(m =>
                                 React.createElement('option', { key: m.id, value: m.id },
                                     m.machine_type + ' ' + m.model + ' - ' + m.location
                                 )
