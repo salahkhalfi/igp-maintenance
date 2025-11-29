@@ -155,16 +155,34 @@ self.addEventListener('notificationclick', (event) => {
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Si une fenêtre est déjà ouverte, l'utiliser et naviguer vers l'URL
-      for (const client of clientList) {
+      // Chercher un client existant
+      // On priorise un client déjà visible, sinon le premier disponible
+      const client = clientList.find(c => c.visibilityState === 'visible') || clientList[0];
+
+      if (client) {
+        // 1. Naviguer vers l'URL (Action critique)
+        // Note: On ne chaîne PAS après focus() car focus() peut échouer pour les boutons d'action
+        // sur certaines versions d'Android, ce qui bloquerait la navigation.
+        const navigatePromise = client.navigate(urlToOpen);
+
+        // 2. Tenter de mettre la fenêtre au premier plan (Best effort)
         if ('focus' in client) {
-          return client.focus().then(focusedClient => {
-            // Forcer la navigation pour garantir que les paramètres URL sont traités
-            // Cela résout le problème des boutons d'action qui ne déclenchent pas l'ouverture
-            return focusedClient.navigate(urlToOpen);
-          });
+          client.focus().catch(err => console.log('[SW] Focus denied (non-critical):', err));
         }
+        
+        // 3. Envoyer un message (Support legacy/Reactivité immédiate)
+        client.postMessage({
+            type: 'NOTIFICATION_CLICK',
+            action: action,
+            data: { 
+                ...notificationData, 
+                auto_action: action === 'acknowledge' ? 'acknowledge' : null 
+            }
+        });
+
+        return navigatePromise;
       }
+
       // Sinon, ouvrir nouvelle fenêtre avec URL
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
