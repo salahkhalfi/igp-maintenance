@@ -357,13 +357,16 @@ export function validateFileUpload(file: File): ValidationResult {
   }
 
   // Type MIME
+  // On nettoie le type MIME pour supprimer les paramètres éventuels (ex: audio/webm;codecs=opus)
+  const mimeType = file.type.split(';')[0].trim();
+
   const allowedTypes = [
     'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
     'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
-    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg'
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg', 'audio/mp4'
   ];
 
-  if (!allowedTypes.includes(file.type)) {
+  if (!allowedTypes.includes(mimeType)) {
     return { valid: false, error: `Type de fichier non autorisé: ${file.type}. Acceptés: images, vidéos et audio` };
   }
 
