@@ -149,7 +149,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
             ),
             React.createElement("div", { className: "flex-1 overflow-y-auto p-3 sm:p-6", ref: scrollContainerRef },
                 React.createElement("div", { className: "mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3" },
-                    currentUser.role === "admin" ? React.createElement("button", {
+                    currentUser?.role === "admin" ? React.createElement("button", {
                         onClick: () => setShowCreateForm(!showCreateForm),
                         className: "px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm sm:text-base"
                     }, showCreateForm ? "Annuler" : "Nouvelle Machine") : null,
@@ -309,7 +309,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                         machine.location
                                     ) : null
                                 ),
-                                currentUser.role === "admin" || currentUser.role === "supervisor" ? React.createElement("div", { className: "flex gap-2 self-end sm:self-auto" },
+                                currentUser?.role === "admin" || currentUser?.role === "supervisor" ? React.createElement("div", { className: "flex gap-2 self-end sm:self-auto" },
                                     React.createElement("button", {
                                         onClick: () => handleEdit(machine),
                                         className: "px-3 sm:px-4 py-2 bg-igp-blue-light text-white rounded-lg font-bold hover:bg-igp-blue transition-all text-sm sm:text-base"
@@ -317,7 +317,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                         React.createElement("i", { className: "fas fa-edit" }),
                                         React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Modifier")
                                     ),
-                                    currentUser.role === "admin" ? React.createElement("button", {
+                                    currentUser?.role === "admin" ? React.createElement("button", {
                                         onClick: () => handleDelete(machine),
                                         className: "px-3 sm:px-4 py-2 bg-igp-red text-white rounded-lg font-bold hover:bg-red-700 transition-all text-sm sm:text-base"
                                     },

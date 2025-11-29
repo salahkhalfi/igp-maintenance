@@ -15,12 +15,12 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
 
     // Charger la liste des techniciens si superviseur ou admin
     React.useEffect(() => {
-        if (show && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) {
+        if (show && (currentUser?.role === 'admin' || currentUser?.role === 'supervisor')) {
             axios.get(API_URL + '/technicians')
                 .then(res => setTechnicians(res.data.technicians))
                 .catch(err => {});
         }
-    }, [show, currentUser.role]);
+    }, [show, currentUser?.role]);
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
@@ -92,7 +92,7 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
             };
 
             // Ajouter les champs de planification si superviseur/admin
-            if (currentUser.role === 'admin' || currentUser.role === 'supervisor') {
+            if (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') {
                 if (assignedTo) {
                     // CRITICAL FIX: Use 0 (integer) for team assignment (compatible with INTEGER column)
                     requestBody.assigned_to = parseInt(assignedTo);
@@ -334,7 +334,7 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                 ),
 
                 // Section planification (superviseur/admin seulement)
-                (currentUser.role === 'admin' || currentUser.role === 'supervisor') ?
+                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                     React.createElement('div', { className: 'mb-6 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg' },
                         React.createElement('h3', { className: 'text-lg font-bold text-slate-700 mb-4 flex items-center' },
                             React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),

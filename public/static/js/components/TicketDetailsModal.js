@@ -31,7 +31,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
     // Charger les techniciens et pré-remplir le formulaire de planification
     React.useEffect(() => {
-        if (show && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) {
+        if (show && (currentUser?.role === 'admin' || currentUser?.role === 'supervisor')) {
             axios.get(API_URL + '/technicians')
                 .then(res => setTechnicians(res.data.technicians))
                 .catch(err => {});
@@ -44,7 +44,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             // NOUVEAU: Conversion UTC SQL → datetime-local
             setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? utcToLocalDateTime(ticket.scheduled_date) : '');
         }
-    }, [show, currentUser.role, ticket]);
+    }, [show, currentUser?.role, ticket]);
 
     const loadTicketDetails = async () => {
         try {
@@ -69,7 +69,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
     const handleDeleteTicket = async () => {
         // Verification: technicien ne peut pas supprimer un ticket planifié (avec date) créé par quelqu'un d'autre
-        if (currentUser.role === 'technician' && ticket?.scheduled_date && ticket?.reported_by !== currentUser.id) {
+        if (currentUser?.role === 'technician' && ticket?.scheduled_date && ticket?.reported_by !== currentUser.id) {
             alert("Les techniciens ne peuvent pas supprimer les tickets planifiés créés par d'autres utilisateurs");
             return;
         }
@@ -129,9 +129,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
             // Convertir le rôle de l'utilisateur en français
             let userRoleFr = 'Opérateur';
-            if (currentUser.role === 'technician') userRoleFr = 'Technicien';
-            else if (currentUser.role === 'supervisor') userRoleFr = 'Superviseur';
-            else if (currentUser.role === 'admin') userRoleFr = 'Admin';
+            if (currentUser?.role === 'technician') userRoleFr = 'Technicien';
+            else if (currentUser?.role === 'supervisor') userRoleFr = 'Superviseur';
+            else if (currentUser?.role === 'admin') userRoleFr = 'Admin';
 
             await axios.post(API_URL + '/comments', {
                 ticket_id: ticketId,
@@ -289,10 +289,10 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
                 // DELETE BUTTON
                 (ticket && currentUser && (
-                    (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
-                    (currentUser.role === 'supervisor') ||
-                    (currentUser.role === 'admin') ||
-                    (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
+                    (currentUser?.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
+                    (currentUser?.role === 'supervisor') ||
+                    (currentUser?.role === 'admin') ||
+                    (currentUser?.role === 'operator' && ticket.reported_by === currentUser.id)
                 )) ? React.createElement('button', {
                     onClick: handleDeleteTicket,
                     className: 'text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors',
@@ -325,7 +325,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 ticket.priority === 'medium' ? '🟡 MOYENNE' :
                                 '🟢 FAIBLE'
                             ),
-                            (currentUser && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) ? React.createElement('button', {
+                            (currentUser && (currentUser?.role === 'admin' || currentUser?.role === 'supervisor')) ? React.createElement('button', {
                                 onClick: () => {
                                     setEditingPriority(true);
                                     setNewPriority(ticket.priority);
@@ -424,7 +424,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 React.createElement('p', { className: 'text-sm sm:text-base text-orange-800 mb-4' },
                                     'En attente de pièces, validation externe, ou autre blocage?'
                                 ),
-                                (currentUser.role === 'admin' || currentUser.role === 'supervisor') ?
+                                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                                     React.createElement('button', {
                                         onClick: () => {
                                             setEditingSchedule(true);
@@ -448,7 +448,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     ) : null,
 
                 // Section planification (superviseur/admin seulement)
-                (currentUser.role === 'admin' || currentUser.role === 'supervisor') ?
+                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                     React.createElement('div', { 
                         className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50',
                         'data-section': 'planning'
@@ -629,9 +629,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                     )
                                 ),
                                 (currentUser && (
-                                    currentUser.role === 'admin' ||
-                                    currentUser.role === 'supervisor' ||
-                                    currentUser.role === 'technician' ||
+                                    currentUser?.role === 'admin' ||
+                                    currentUser?.role === 'supervisor' ||
+                                    currentUser?.role === 'technician' ||
                                     (ticket.reported_by === currentUser.id)
                                 )) ? React.createElement('button', {
                                     onClick: (e) => {
@@ -850,6 +850,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 React.createElement('p', { className: 'text-red-600 font-semibold' }, 'Erreur lors du chargement du ticket'),
                 React.createElement('button', { onClick: onClose, className: 'mt-4 text-blue-600 hover:underline' }, 'Fermer')
             )
+        ),
         ),
 
 

@@ -370,9 +370,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
         // Utilisateur peut supprimer son propre message
         if (msg.sender_id === currentUser.id) return true;
         // Admin peut supprimer tous les messages
-        if (currentUser.role === 'admin') return true;
+        if (currentUser?.role === 'admin') return true;
         // Superviseur peut supprimer tous sauf ceux de admin
-        if (currentUser.role === 'supervisor' && msg.sender_role !== 'admin') return true;
+        if (currentUser?.role === 'supervisor' && msg.sender_role !== 'admin') return true;
         return false;
     };
 
