@@ -151,6 +151,123 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
         });
     };
 
+    const [audioBlob, setAudioBlob] = React.useState(null);
+    const [isRecordingAudio, setIsRecordingAudio] = React.useState(false);
+    const [recordingDuration, setRecordingDuration] = React.useState(0);
+    const mediaRecorderRef = React.useRef(null);
+    const audioChunksRef = React.useRef([]);
+    const recordingTimerRef = React.useRef(null);
+
+    React.useEffect(() => {
+        return () => {
+            if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+        };
+    }, []);
+
+    const startAudioRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+            });
+
+            let mimeType = '';
+            if (MediaRecorder.isTypeSupported('audio/mpeg')) mimeType = 'audio/mpeg';
+            else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+            else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+            else mimeType = 'audio/webm';
+
+            const mediaRecorder = new MediaRecorder(stream, { mimeType });
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunksRef.current, { type: mimeType });
+                setAudioBlob(blob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecordingAudio(true);
+            setRecordingDuration(0);
+
+            recordingTimerRef.current = setInterval(() => {
+                setRecordingDuration(prev => prev + 1);
+            }, 1000);
+
+        } catch (error) {
+            alert('Impossible d\'accéder au microphone');
+        }
+    };
+
+    const stopAudioRecording = () => {
+        if (mediaRecorderRef.current && isRecordingAudio) {
+            mediaRecorderRef.current.stop();
+            setIsRecordingAudio(false);
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+                recordingTimerRef.current = null;
+            }
+        }
+    };
+
+    const cancelAudioRecording = () => {
+        if (isRecordingAudio) stopAudioRecording();
+        setAudioBlob(null);
+        setRecordingDuration(0);
+        audioChunksRef.current = [];
+    };
+
+    const handleUploadAudio = async () => {
+        if (!audioBlob) return;
+        
+        setUploadingMedia(true);
+        try {
+            const formData = new FormData();
+            // Nom explicite pour l'audio
+            const filename = `message_vocal_${new Date().getTime()}.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
+            formData.append('file', audioBlob, filename);
+            formData.append('ticket_id', ticketId);
+
+            await axios.post(API_URL + '/media/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            // Ajouter aussi un commentaire texte pour notifier
+            const utcTime = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            let userRoleFr = 'Opérateur';
+            if (currentUser?.role === 'technician') userRoleFr = 'Technicien';
+            else if (currentUser?.role === 'supervisor') userRoleFr = 'Superviseur';
+            else if (currentUser?.role === 'admin') userRoleFr = 'Admin';
+
+            await axios.post(API_URL + '/comments', {
+                ticket_id: ticketId,
+                user_name: currentUser.first_name,
+                user_role: userRoleFr,
+                comment: '🎤 A ajouté un message vocal',
+                created_at: utcTime
+            });
+
+            alert('Message vocal envoyé !');
+            setAudioBlob(null);
+            loadTicketDetails();
+            loadComments();
+        } catch (error) {
+            alert("Erreur lors de l'envoi du message vocal");
+        } finally {
+            setUploadingMedia(false);
+        }
+    };
+
+    const formatDuration = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+
     const handleAddComment = async (e) => {
         e.preventDefault();
         if (!newComment.trim()) {
@@ -367,17 +484,6 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 ticket.priority === 'high' ? '🟠 HAUTE' :
                                 ticket.priority === 'medium' ? '🟡 MOYENNE' :
                                 '🟢 FAIBLE'
-                            ),
-                            // Bouton d'appel vidéo Jitsi
-                            React.createElement('a', {
-                                href: `https://meet.jit.si/IGP-Glass-Ticket-${ticket.ticket_id}`,
-                                target: '_blank',
-                                rel: 'noopener noreferrer',
-                                className: 'ml-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-md text-xs sm:text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2',
-                                title: 'Démarrer une assistance vidéo'
-                            },
-                                React.createElement('i', { className: 'fas fa-video' }),
-                                React.createElement('span', { className: 'hidden sm:inline' }, 'Visio')
                             ),
                             (currentUser && (currentUser?.role === 'admin' || currentUser?.role === 'supervisor')) ? React.createElement('button', {
                                 onClick: () => {
@@ -672,14 +778,19 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                             alt: media.file_name,
                                             className: 'w-full h-32 object-cover rounded border-2 border-gray-300 hover:border-igp-blue transition-all pointer-events-none sm:pointer-events-auto'
                                         })
-                                        : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center pointer-events-none sm:pointer-events-auto' },
-                                            React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
-                                        ),
+                                        : media.file_type.startsWith('audio/')
+                                            ? React.createElement('div', { className: 'w-full h-32 bg-slate-100 rounded border-2 border-slate-300 hover:border-igp-blue transition-all flex flex-col items-center justify-center pointer-events-none sm:pointer-events-auto p-2' },
+                                                React.createElement('i', { className: 'fas fa-microphone-alt fa-2x text-slate-500 mb-2' }),
+                                                React.createElement('span', { className: 'text-xs text-slate-600 font-semibold text-center truncate w-full' }, 'Message Vocal')
+                                            )
+                                            : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center pointer-events-none sm:pointer-events-auto' },
+                                                React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
+                                            ),
                                     React.createElement('div', { className: 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center pointer-events-none' },
-                                        React.createElement('i', { className: 'fas fa-search-plus text-white text-2xl opacity-0 group-hover:opacity-100 transition-all' })
+                                        React.createElement('i', { className: 'fas ' + (media.file_type.startsWith('audio/') ? 'fa-play-circle' : 'fa-search-plus') + ' text-white text-2xl opacity-0 group-hover:opacity-100 transition-all' })
                                     ),
                                     React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded pointer-events-none' },
-                                        media.file_type.startsWith('image/') ? '📷' : '🎥'
+                                        media.file_type.startsWith('image/') ? '📷' : media.file_type.startsWith('audio/') ? '🎤' : '🎥'
                                     )
                                 ),
                                 (currentUser && (
@@ -801,6 +912,63 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                     'Publier le commentaire'
                                 )
                         )
+                    ),
+
+                    // Zone Message Vocal
+                    React.createElement('div', { className: 'mb-4 sm:mb-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border-2 border-slate-200' },
+                        React.createElement('h5', { className: 'font-semibold text-gray-800 mb-3 flex items-center' },
+                            React.createElement('i', { className: 'fas fa-microphone-alt mr-2 text-slate-600' }),
+                            'Message Vocal Rapide'
+                        ),
+                        !audioBlob && !isRecordingAudio ? React.createElement('button', {
+                            type: 'button',
+                            onClick: startAudioRecording,
+                            className: 'w-full py-3 bg-white border-2 border-slate-300 hover:border-slate-500 text-slate-700 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md'
+                        },
+                            React.createElement('div', { className: 'w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600' },
+                                React.createElement('i', { className: 'fas fa-microphone' })
+                            ),
+                            'Enregistrer un message vocal'
+                        ) : null,
+
+                        isRecordingAudio ? React.createElement('div', { className: 'flex items-center justify-between bg-red-50 p-3 rounded-lg border border-red-200 animate-pulse' },
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                React.createElement('div', { className: 'w-3 h-3 bg-red-600 rounded-full' }),
+                                React.createElement('span', { className: 'font-mono font-bold text-red-700' }, formatDuration(recordingDuration)),
+                                React.createElement('span', { className: 'text-sm text-red-600' }, 'Enregistrement...')
+                            ),
+                            React.createElement('button', {
+                                onClick: stopAudioRecording,
+                                className: 'px-4 py-1 bg-red-600 text-white rounded-md font-bold text-sm hover:bg-red-700'
+                            }, 'Arrêter')
+                        ) : null,
+
+                        audioBlob ? React.createElement('div', { className: 'space-y-3' },
+                            React.createElement('div', { className: 'flex items-center gap-3 bg-white p-3 rounded-lg border border-green-200 shadow-sm' },
+                                React.createElement('i', { className: 'fas fa-check-circle text-green-500 text-xl' }),
+                                React.createElement('div', { className: 'flex-1' },
+                                    React.createElement('p', { className: 'text-sm font-bold text-gray-800' }, 'Message enregistré'),
+                                    React.createElement('p', { className: 'text-xs text-gray-500' }, formatDuration(recordingDuration))
+                                ),
+                                React.createElement('audio', {
+                                    controls: true,
+                                    src: URL.createObjectURL(audioBlob),
+                                    className: 'h-8 w-32'
+                                }),
+                                React.createElement('button', {
+                                    onClick: cancelAudioRecording,
+                                    className: 'text-gray-400 hover:text-red-500 p-2'
+                                }, React.createElement('i', { className: 'fas fa-trash' }))
+                            ),
+                            React.createElement('button', {
+                                onClick: handleUploadAudio,
+                                disabled: uploadingMedia,
+                                className: 'w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-md transition-all flex items-center justify-center gap-2'
+                            },
+                                uploadingMedia ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-paper-plane' }),
+                                uploadingMedia ? 'Envoi...' : 'Envoyer le vocal'
+                            )
+                        ) : null
                     )
                 ),
 
@@ -938,12 +1106,23 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         className: 'max-w-full max-h-screen object-contain',
                         onClick: (e) => e.stopPropagation()
                     })
-                    : React.createElement('video', {
-                        src: API_URL + '/media/' + selectedMedia.id,
-                        controls: true,
-                        className: 'max-w-full max-h-screen',
-                        onClick: (e) => e.stopPropagation()
-                    }),
+                    : selectedMedia.file_type.startsWith('audio/')
+                        ? React.createElement('div', { className: 'bg-white p-8 rounded-xl shadow-2xl flex flex-col items-center gap-4', onClick: (e) => e.stopPropagation() },
+                            React.createElement('i', { className: 'fas fa-microphone-alt text-6xl text-slate-700' }),
+                            React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, 'Lecture du message vocal'),
+                            React.createElement('audio', {
+                                src: API_URL + '/media/' + selectedMedia.id,
+                                controls: true,
+                                autoPlay: true,
+                                className: 'w-full min-w-[300px]'
+                            })
+                        )
+                        : React.createElement('video', {
+                            src: API_URL + '/media/' + selectedMedia.id,
+                            controls: true,
+                            className: 'max-w-full max-h-screen',
+                            onClick: (e) => e.stopPropagation()
+                        }),
                 React.createElement('div', { className: 'absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-3 py-2 rounded text-sm' },
                     selectedMedia.file_name + ' - ' + Math.round(selectedMedia.file_size / 1024) + ' KB'
                 )
