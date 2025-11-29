@@ -18,6 +18,14 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.10.5 (29 novembre 2025) - FIX MENU CONTEXTUEL MOBILE 📱✨
+- **🐛 FIX CRITIQUE** : Correction du menu contextuel mobile qui ne se fermait pas
+- **📱 Z-INDEX FIX** : Augmentation du z-index (`z-[100]`) pour passer au-dessus du header
+- **🛠️ INTERACTION** : Le backdrop (zone floutée) est maintenant cliquable même en haut de l'écran
+- **✅ UX AMÉLIORÉE** : Fermeture fiable lors de l'annulation d'un déplacement de ticket
+- **📋 IMPACT** : Résout le blocage rapporté où l'utilisateur ne pouvait pas quitter le menu
+
+
 ### Version 2.9.7 (28 novembre 2025) - REFACTORING MAJEUR FRONTEND 🏗️✨
 - **🏗️ ARCHITECTURE MODULAIRE** : Séparation complète du monolithe `src/index.tsx`
 - **📦 COMPOSANTS EXTRAITS** : 20+ composants React déplacés vers `/public/static/js/components/`
