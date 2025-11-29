@@ -644,74 +644,63 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                             React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-4 opacity-50' }),
                             React.createElement('p', { className: 'text-base sm:text-lg font-medium' }, 'Aucun message public'),
                             React.createElement('p', { className: 'text-xs sm:text-sm text-gray-400 mt-2' }, 'Soyez le premier a envoyer un message!')
-                        ) : publicMessages.map(msg => React.createElement('div', {
-                            key: msg.id,
-                            className: 'bg-white/95 rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-shadow border border-white/50 ',
-                            style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
-                        },
-                            React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
+                        ) : publicMessages.map(msg => {
+                            const isMe = msg.sender_id === currentUser.id;
+                            return React.createElement('div', {
+                                key: msg.id,
+                                className: 'flex w-full mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2'
+                            },
                                 selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
                                     type: 'checkbox',
                                     checked: selectedMessages.includes(msg.id),
                                     onChange: () => toggleMessageSelection(msg.id),
-                                    className: 'w-5 h-5 mt-1 cursor-pointer flex-shrink-0',
+                                    className: 'w-4 h-4 mt-2 mx-2 cursor-pointer',
                                     onClick: (e) => e.stopPropagation()
                                 }) : null,
                                 React.createElement('div', {
-                                    className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md cursor-pointer hover:scale-110 transition-transform',
-                                    onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
-                                    title: 'Envoyer un message prive a ' + msg.sender_name
-                                }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
-                                React.createElement('div', { className: 'flex-1 min-w-0' },
-                                    React.createElement('div', { className: 'flex flex-wrap items-center gap-1 sm:gap-2 mb-1' },
-                                        React.createElement('span', {
-                                            className: 'font-semibold text-gray-800 text-sm sm:text-base truncate cursor-pointer hover:text-indigo-600 transition-colors',
+                                    className: 'max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 shadow-sm border relative flex flex-col ' +
+                                        (isMe ? 'bg-blue-100 border-blue-200 rounded-tr-sm items-end' : 'bg-white border-gray-200 rounded-tl-sm items-start')
+                                },
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-1 flex-wrap ' + (isMe ? 'justify-end' : 'justify-start') },
+                                        !isMe ? React.createElement('div', {
+                                            className: 'w-5 h-5 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm cursor-pointer',
                                             onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
-                                            title: 'Envoyer un message prive a ' + msg.sender_name
-                                        }, msg.sender_name),
+                                            title: 'Message privé'
+                                        }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?') : null,
+                                        
                                         React.createElement('span', {
-                                            className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 ' + getRoleBadgeClass(msg.sender_role)
-                                        }, getRoleLabel(msg.sender_role)),
-                                        React.createElement('span', {
-                                            className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-blue-100 text-blue-700'
-                                        }, '🌐 Message public'),
-                                        React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
+                                            className: 'font-bold text-xs text-gray-700 cursor-pointer hover:text-blue-600',
+                                            onClick: !isMe ? () => openPrivateMessage(msg.sender_id, msg.sender_name) : undefined
+                                        }, isMe ? 'Moi' : msg.sender_name),
+                                        
+                                        !isMe ? React.createElement('span', {
+                                            className: 'text-[10px] px-1.5 py-0.5 rounded-full ' + getRoleBadgeClass(msg.sender_role)
+                                        }, getRoleLabel(msg.sender_role)) : null,
+
+                                        React.createElement('span', { className: 'text-[10px] text-gray-400' }, formatMessageTime(msg.created_at))
                                     ),
-                                    msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                        React.createElement('div', { className: 'bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-3 border border-gray-100' },
-                                            React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                                React.createElement('i', { className: 'fas fa-microphone text-indigo-600 text-lg' }),
-                                                React.createElement('span', { className: 'text-sm font-medium text-indigo-700' }, 'Message vocal')
-                                            ),
+                                    msg.audio_file_key ? React.createElement('div', { className: 'mt-1 w-full' },
+                                        React.createElement('div', { className: 'flex items-center gap-2 bg-white/50 rounded-lg p-2' },
+                                            React.createElement('i', { className: 'fas fa-microphone ' + (isMe ? 'text-blue-600' : 'text-gray-600') }),
                                             React.createElement('audio', {
                                                 controls: true,
-                                                preload: 'auto',
                                                 controlsList: 'nodownload',
-                                                className: 'w-full',
-                                                style: { height: '54px', minHeight: '54px' },
-                                                src: API_URL + '/audio/' + msg.audio_file_key,
-                                                onError: (e) => {
-                                                    // Erreur audio silencieuse
-                                                }
-                                            }),
-                                            msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
-                                                '⏱️ Durée: ' + formatRecordingDuration(msg.audio_duration)
-                                            ) : null
-                                        )
-                                    ) : React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
-                                ),
-                                canDeleteMessage(msg) ? React.createElement('button', {
-                                    onClick: (e) => {
-                                        e.stopPropagation();
-                                        deleteMessage(msg.id);
-                                    },
-                                    className: 'flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2 transition-all transform hover:scale-110 active:scale-95',
-                                    title: 'Supprimer le message'
-                                },
-                                    React.createElement('i', { className: 'fas fa-trash text-sm' })
-                                ) : null
-                            )
-                        )),
+                                                className: 'h-8 w-full max-w-[220px]',
+                                                src: API_URL + '/audio/' + msg.audio_file_key
+                                            })
+                                        ),
+                                        msg.audio_duration ? React.createElement('p', { className: 'text-[10px] text-gray-500 mt-1 text-right' }, formatRecordingDuration(msg.audio_duration)) : null
+                                    ) : React.createElement('p', { 
+                                        className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
+                                    }, msg.content),
+                                    canDeleteMessage(msg) && !selectionMode ? React.createElement('button', {
+                                        onClick: (e) => { e.stopPropagation(); deleteMessage(msg.id); },
+                                        className: 'absolute -top-2 ' + (isMe ? '-left-2' : '-right-2') + ' bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200 z-10',
+                                        title: 'Supprimer'
+                                    }, React.createElement('i', { className: 'fas fa-trash text-[10px]' })) : null
+                                )
+                            );
+                        }),
                         React.createElement('div', { ref: messagesEndRef })
                     ),
 
@@ -779,7 +768,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                             React.createElement('button', {
                                 onClick: sendMessage,
                                 disabled: !messageContent.trim(),
-                                className: 'px-3 sm:px-6 bg-gradient-to-br from-slate-700 to-gray-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
+                                className: 'px-3 sm:px-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
                                 style: { boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4), inset 0 -2px 8px rgba(0, 0, 0, 0.2)' }
                             },
                                 React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
@@ -902,65 +891,48 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-3 sm:mb-4 opacity-50' }),
                                 React.createElement('p', { className: 'text-sm sm:text-base' }, 'Commencez la conversation avec ' + selectedContact.first_name),
                                 React.createElement('p', { className: 'text-xs text-gray-400 mt-2' }, 'Ecrivez votre premier message ci-dessous')
-                            ) : privateMessages.map(msg => React.createElement('div', {
-                                key: msg.id,
-                                className: 'bg-white/95 rounded-xl shadow-lg p-3 sm:p-4 hover:shadow-2xl transition-shadow border border-white/50 ',
-                                style: { boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' }
-                            },
-                                React.createElement('div', { className: 'flex items-start gap-2 sm:gap-3' },
+                            ) : privateMessages.map(msg => {
+                                const isMe = msg.sender_id === currentUser.id;
+                                return React.createElement('div', {
+                                    key: msg.id,
+                                    className: 'flex w-full mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2'
+                                },
                                     selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
                                         type: 'checkbox',
                                         checked: selectedMessages.includes(msg.id),
                                         onChange: () => toggleMessageSelection(msg.id),
-                                        className: 'w-5 h-5 mt-1 cursor-pointer flex-shrink-0',
+                                        className: 'w-4 h-4 mt-2 mx-2 cursor-pointer',
                                         onClick: (e) => e.stopPropagation()
                                     }) : null,
                                     React.createElement('div', {
-                                        className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm sm:text-base shadow-md'
-                                    }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
-                                    React.createElement('div', { className: 'flex-1 min-w-0' },
-                                        React.createElement('div', { className: 'flex flex-wrap items-center gap-1 sm:gap-2 mb-1' },
-                                            React.createElement('span', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, msg.sender_name),
-                                            React.createElement('span', {
-                                                className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex-shrink-0 bg-slate-100 text-slate-700'
-                                            }, '🔒 Message privé'),
-                                            React.createElement('span', { className: 'text-xs text-gray-400 flex-shrink-0' }, formatMessageTime(msg.created_at))
+                                        className: 'max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 shadow-sm border relative flex flex-col ' +
+                                            (isMe ? 'bg-blue-100 border-blue-200 rounded-tr-sm items-end' : 'bg-white border-gray-200 rounded-tl-sm items-start')
+                                    },
+                                        React.createElement('div', { className: 'mb-1 ' + (isMe ? 'text-right' : 'text-left') },
+                                            React.createElement('span', { className: 'text-[10px] text-gray-400' }, formatMessageTime(msg.created_at))
                                         ),
-                                        msg.audio_file_key ? React.createElement('div', { className: 'mt-2' },
-                                            React.createElement('div', { className: 'bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg p-3 border border-gray-100' },
-                                                React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                                    React.createElement('i', { className: 'fas fa-microphone text-slate-600 text-lg' }),
-                                                    React.createElement('span', { className: 'text-sm font-medium text-slate-700' }, 'Message vocal')
-                                                ),
+                                        msg.audio_file_key ? React.createElement('div', { className: 'mt-1 w-full' },
+                                            React.createElement('div', { className: 'flex items-center gap-2 bg-white/50 rounded-lg p-2' },
+                                                React.createElement('i', { className: 'fas fa-microphone ' + (isMe ? 'text-blue-600' : 'text-gray-600') }),
                                                 React.createElement('audio', {
                                                     controls: true,
-                                                    preload: 'auto',
                                                     controlsList: 'nodownload',
-                                                    className: 'w-full',
-                                                    style: { height: '54px', minHeight: '54px' },
-                                                    src: API_URL + '/audio/' + msg.audio_file_key,
-                                                    onError: (e) => {
-                                                        // Erreur audio silencieuse
-                                                    }
-                                                }),
-                                                msg.audio_duration ? React.createElement('p', { className: 'text-xs text-gray-500 mt-2' },
-                                                    '⏱️ Durée: ' + formatRecordingDuration(msg.audio_duration)
-                                                ) : null
-                                            )
-                                        ) : React.createElement('p', { className: 'text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed' }, msg.content)
-                                    ),
-                                    canDeleteMessage(msg) ? React.createElement('button', {
-                                        onClick: (e) => {
-                                            e.stopPropagation();
-                                            deleteMessage(msg.id);
-                                        },
-                                        className: 'flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2 transition-all transform hover:scale-110 active:scale-95',
-                                        title: 'Supprimer le message'
-                                    },
-                                        React.createElement('i', { className: 'fas fa-trash text-sm' })
-                                    ) : null
-                                )
-                            )),
+                                                    className: 'h-8 w-full max-w-[220px]',
+                                                    src: API_URL + '/audio/' + msg.audio_file_key
+                                                })
+                                            ),
+                                            msg.audio_duration ? React.createElement('p', { className: 'text-[10px] text-gray-500 mt-1 text-right' }, formatRecordingDuration(msg.audio_duration)) : null
+                                        ) : React.createElement('p', { 
+                                            className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
+                                        }, msg.content),
+                                        canDeleteMessage(msg) && !selectionMode ? React.createElement('button', {
+                                            onClick: (e) => { e.stopPropagation(); deleteMessage(msg.id); },
+                                            className: 'absolute -top-2 ' + (isMe ? '-left-2' : '-right-2') + ' bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200 z-10',
+                                            title: 'Supprimer'
+                                        }, React.createElement('i', { className: 'fas fa-trash text-[10px]' })) : null
+                                    )
+                                );
+                            }),
                             React.createElement('div', { ref: messagesEndRef })
                         ),
 
@@ -1040,7 +1012,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 React.createElement('button', {
                                     onClick: sendMessage,
                                     disabled: !messageContent.trim(),
-                                    className: 'px-3 sm:px-6 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
+                                    className: 'px-3 sm:px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
                                 },
                                     React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
                                     React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
