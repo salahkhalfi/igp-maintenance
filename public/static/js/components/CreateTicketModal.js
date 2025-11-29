@@ -345,6 +345,14 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                                     m.machine_type + ' ' + m.model + ' - ' + m.location
                                 )
                             )
+                        ),
+                        React.createElement('button', {
+                            type: 'button',
+                            onClick: () => setShowScanner(true),
+                            className: 'px-4 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center',
+                            title: 'Scanner un code machine'
+                        },
+                            React.createElement('i', { className: 'fas fa-qrcode text-xl' })
                         )
                     )
                 ),

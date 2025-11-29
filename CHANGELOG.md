@@ -5,7 +5,7 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 ## [2.10.7] - 2025-11-29
 
 ### 🧹 Nettoyage UI
-- **Désactivation Scanner QR** : Masquage du bouton de scan de code machine (fonctionnalité non déployée sur site). Le code reste présent pour activation future.
+- **Scanner QR** : Réactivation du bouton de scan de code machine pour tests de permissions caméra.
 - **Menu Contextuel Mobile** : Vérification et validation du bouton "Annuler" et du comportement de fermeture (fix pour blocage UX signalé).
 
 ## [2.10.6] - 2025-11-29
