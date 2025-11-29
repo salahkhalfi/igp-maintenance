@@ -1105,9 +1105,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin' || currentUser?.role === 'operator' || currentUser?.role === 'furnace_operator') ?
                     React.createElement('button', {
                         onClick: () => setShowMessaging(true),
-                        className: 'px-3 py-1.5 bg-gradient-to-r from-slate-700 to-gray-700 text-white text-sm rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all flex items-center'
+                        className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-200 hover:bg-gray-50 hover:text-blue-600 font-semibold shadow-sm hover:shadow transition-all flex items-center'
                     },
-                        React.createElement('i', { className: 'fas fa-comments mr-2' }),
+                        React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }),
                         'Messagerie'
                     ) : null,
                     // 3. Archives (consultation fréquente)
@@ -1124,43 +1124,43 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 }, 100);
                             }
                         },
-                        className: 'px-3 py-1.5 text-sm rounded-md font-semibold shadow-md transition-all flex items-center gap-2 ' +
+                        className: 'px-3 py-1.5 text-sm rounded-md font-semibold shadow-sm hover:shadow transition-all flex items-center gap-2 border border-gray-200 ' +
                             (showArchived
-                                ? 'bg-gray-600 text-white hover:bg-gray-700'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-gray-300')
+                                ? 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-blue-600')
                     },
-                        React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }),
+                        React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') + (showArchived ? '' : ' text-gray-500') }),
                         React.createElement('span', {}, showArchived ? 'Masquer' : 'Archivés'),
                         React.createElement('span', {
                             className: 'px-2 py-0.5 rounded-full text-xs font-bold ' +
-                            (showArchived ? 'bg-gray-500' : 'bg-gray-300 text-gray-700')
+                            (showArchived ? 'bg-gray-300 text-gray-700' : 'bg-gray-100 text-gray-600')
                         }, getTicketsByStatus('archived').length)
                     ),
                     // 4. Utilisateurs (gestion admin - moins fréquent)
                     (currentUser?.role === 'technician' || currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                     React.createElement('button', {
                         onClick: () => setShowUserManagement(true),
-                        className: "px-3 py-1.5 bg-blue-700 text-white text-sm rounded-md hover:bg-blue-800 font-semibold shadow-md transition-all flex items-center"
+                        className: "px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-200 hover:bg-gray-50 hover:text-blue-600 font-semibold shadow-sm hover:shadow transition-all flex items-center"
                     },
-                        React.createElement('i', { className: "fas fa-users-cog mr-2" }),
+                        React.createElement('i', { className: "fas fa-users-cog mr-2 text-indigo-500" }),
                         "Utilisateurs"
                     ) : null,
                     // 5. Machines (gestion admin - moins fréquent)
                     (currentUser?.role === 'supervisor' || currentUser?.role === 'admin') ?
                     React.createElement('button', {
                         onClick: () => setShowMachineManagement(true),
-                        className: "px-3 py-1.5 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700 font-semibold shadow-md transition-all flex items-center"
+                        className: "px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-200 hover:bg-gray-50 hover:text-teal-600 font-semibold shadow-sm hover:shadow transition-all flex items-center"
                     },
-                        React.createElement('i', { className: "fas fa-cogs mr-2" }),
+                        React.createElement('i', { className: "fas fa-cogs mr-2 text-teal-500" }),
                         "Machines"
                     ) : null,
                     // 6. Parametres systeme (admin uniquement)
                     (currentUser?.role === 'admin') ?
                     React.createElement('button', {
                         onClick: () => setShowSystemSettings(true),
-                        className: "px-3 py-1.5 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 font-semibold shadow-md transition-all flex items-center"
+                        className: "px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-200 hover:bg-gray-50 hover:text-purple-600 font-semibold shadow-sm hover:shadow transition-all flex items-center"
                     },
-                        React.createElement('i', { className: "fas fa-sliders-h mr-2" }),
+                        React.createElement('i', { className: "fas fa-sliders-h mr-2 text-purple-500" }),
                         "Parametres"
                     ) : null,
                     // 7. Rôles (admin uniquement - rare)
@@ -1176,10 +1176,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 window.location.href = '/';
                             }
                         },
-                        className: "px-3 py-1.5 bg-gradient-to-r from-blue-700 to-blue-800 text-white text-sm rounded-md hover:from-blue-700 hover:to-blue-800 font-semibold shadow-md transition-all flex items-center",
+                        className: "px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-200 hover:bg-gray-50 hover:text-blue-700 font-semibold shadow-sm hover:shadow transition-all flex items-center",
                         title: 'Gestion des rôles et permissions (Admin)'
                     },
-                        React.createElement('i', { className: 'fas fa-shield-alt mr-2' }),
+                        React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }),
                         'Rôles'
                     ) : null,
                     // 7. Activer notifications push (PWA)
