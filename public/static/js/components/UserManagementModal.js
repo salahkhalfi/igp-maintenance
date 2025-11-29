@@ -330,7 +330,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4',
+        className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4',
         onClick: onClose
     },
         React.createElement('div', {

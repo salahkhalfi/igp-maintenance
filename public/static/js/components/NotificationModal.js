@@ -15,7 +15,7 @@ const NotificationModal = ({ show, message, type, onClose }) => {
     };
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50',
+        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[80]',
         onClick: onClose
     },
         React.createElement('div', {

@@ -148,7 +148,7 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fadeIn',
+        className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 animate-fadeIn',
         onClick: onClose
     },
         React.createElement('div', {
