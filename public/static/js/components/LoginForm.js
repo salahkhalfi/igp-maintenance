@@ -93,7 +93,7 @@ const LoginForm = ({ onLogin }) => {
                 }, loginTitle),
                 React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
                     React.createElement('i', { className: 'fas fa-tools mr-1' }),
-                    'ENVIRONNEMENT DE TEST'
+                    'PRÊT POUR TESTS'
                 ),
                 React.createElement('p', {
                     className: 'text-xs sm:text-sm px-4 break-words font-semibold',
