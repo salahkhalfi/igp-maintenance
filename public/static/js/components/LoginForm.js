@@ -5,6 +5,19 @@ const LoginForm = ({ onLogin }) => {
     const [rememberMe, setRememberMe] = React.useState(false);
     const [loginTitle, setLoginTitle] = React.useState(DEFAULT_COMPANY_TITLE);
     const [loginSubtitle, setLoginSubtitle] = React.useState(DEFAULT_COMPANY_SUBTITLE);
+    const [bannerIndex, setBannerIndex] = React.useState(0);
+
+    const bannerMessages = [
+        { text: "BONJOUR MARC", icon: "fa-hand-sparkles" },
+        { text: "APPLICATION PRÊTE POUR LES TESTS", icon: "fa-check-circle" }
+    ];
+
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setBannerIndex((prev) => (prev + 1) % bannerMessages.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Charger dynamiquement le titre et sous-titre à chaque affichage du login
     React.useEffect(() => {
@@ -92,8 +105,8 @@ const LoginForm = ({ onLogin }) => {
                     }
                 }, loginTitle),
                 React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
-                    React.createElement('i', { className: 'fas fa-tools mr-1' }),
-                    'PRÊT POUR TESTS'
+                    React.createElement('i', { className: `fas ${bannerMessages[bannerIndex].icon} mr-2` }),
+                    bannerMessages[bannerIndex].text
                 ),
                 React.createElement('p', {
                     className: 'text-xs sm:text-sm px-4 break-words font-semibold',
