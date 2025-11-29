@@ -863,6 +863,15 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
                                 unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
                             ) : null,
+                            // BOUTON CRÉATION TICKET MOBILE (Visible uniquement sur mobile, sorti du menu)
+                            React.createElement('button', {
+                                onClick: () => setShowCreateModal(true),
+                                className: 'md:hidden ml-1 px-3 py-1.5 bg-gradient-to-r from-blue-700 to-blue-600 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center active:scale-95 border border-blue-500/30',
+                            },
+                                React.createElement('i', { className: 'fas fa-plus mr-1.5' }),
+                                'Demande'
+                            ),
+
                             // BOUTON MENU MOBILE (Hamburger)
                             React.createElement('button', {
                                 className: 'md:hidden ml-2 px-3 py-1.5 bg-white/50 border border-gray-200 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all shadow-sm active:scale-95',
@@ -1067,10 +1076,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         ? 'flex flex-col p-4 mx-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 ring-1 ring-black/5' 
                         : 'hidden')
                 },
-                    // 1. Nouvelle Demande (action primaire)
+                    // 1. Nouvelle Demande (Desktop uniquement - caché sur mobile car présent en haut)
                     React.createElement('button', {
                         onClick: () => setShowCreateModal(true),
-                        className: 'px-3 py-1.5 bg-igp-blue text-white text-sm rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all flex items-center'
+                        className: 'hidden md:flex px-3 py-1.5 bg-igp-blue text-white text-sm rounded-md hover:bg-igp-blue-dark font-semibold shadow-md transition-all items-center'
                     },
                         React.createElement('i', { className: 'fas fa-plus mr-2' }),
                         'Demande'
