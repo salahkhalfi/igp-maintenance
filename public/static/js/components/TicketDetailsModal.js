@@ -259,17 +259,35 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
     if (!show) return null;
 
+    // PSEUDO-PAGE FULLSCREEN VIEW
     return React.createElement('div', {
-        className: 'modal active bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm',
-        onClick: onClose
+        className: 'fixed inset-0 bg-gray-100 overflow-y-auto',
+        style: { 
+            overscrollBehavior: 'contain',
+            zIndex: 99999 
+        }
     },
         React.createElement('div', {
-            className: 'modal-content bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-3 sm:p-6 md:p-8 max-w-5xl w-full mx-2 sm:mx-4 my-auto',
-            onClick: (e) => e.stopPropagation(),
-            style: { marginTop: 'auto', marginBottom: 'auto', maxHeight: '90vh', overflowY: 'auto' }
+            className: 'min-h-screen w-full max-w-5xl mx-auto bg-white shadow-2xl flex flex-col',
+            onClick: (e) => e.stopPropagation()
         },
-            React.createElement('div', { className: 'flex justify-between items-center gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b-2 border-gradient-to-r from-blue-400 to-gray-400' },
-                // LEFT: Delete button (trash)
+            // STICKY HEADER
+            React.createElement('div', { className: 'sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm' },
+                // BACK BUTTON
+                React.createElement('button', {
+                    onClick: onClose,
+                    className: 'flex items-center gap-2 text-gray-700 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all group'
+                },
+                    React.createElement('i', { className: 'fas fa-arrow-left text-lg group-hover:-translate-x-1 transition-transform' }),
+                    React.createElement('span', { className: 'font-bold hidden sm:inline' }, 'Retour')
+                ),
+
+                // TITLE
+                React.createElement('h2', { className: 'text-lg font-bold text-gray-800 truncate flex-1 text-center mx-2' },
+                     loading ? 'Chargement...' : (ticket ? `#${ticket.ticket_id} - ${ticket.title}` : 'Détails')
+                ),
+
+                // DELETE BUTTON
                 (ticket && currentUser && (
                     (currentUser.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
                     (currentUser.role === 'supervisor') ||
@@ -277,33 +295,19 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     (currentUser.role === 'operator' && ticket.reported_by === currentUser.id)
                 )) ? React.createElement('button', {
                     onClick: handleDeleteTicket,
-                    className: 'text-red-500 hover:text-red-700 transition-colors transform hover:scale-110 active:scale-95 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
-                    title: 'Supprimer ce ticket',
-                    'aria-label': 'Supprimer ce ticket'
+                    className: 'text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors',
+                    title: 'Supprimer'
                 },
-                    React.createElement('i', { className: 'fas fa-trash-alt text-xl sm:text-2xl' })
-                ) : React.createElement('div', { className: 'w-[44px]' }), // Placeholder pour alignement
-                
-                // CENTER: Title
-                React.createElement('h2', { className: 'text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-slate-700 to-gray-700 bg-clip-text text-transparent' },
-                    React.createElement('i', { className: 'fas fa-ticket-alt mr-2 text-blue-600 text-sm sm:text-base' }),
-                    "Détails du Ticket"
-                ),
-                
-                // RIGHT: Close button (X)
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'text-gray-500 hover:text-gray-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center',
-                    'aria-label': 'Fermer'
-                },
-                    React.createElement('i', { className: 'fas fa-times text-xl sm:text-2xl' })
-                )
+                    React.createElement('i', { className: 'fas fa-trash-alt text-lg' })
+                ) : React.createElement('div', { className: 'w-10' })
             ),
 
-            loading ? React.createElement('div', { className: 'text-center py-8' },
-                React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-igp-blue' }),
-                React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
-            ) : ticket ? React.createElement('div', {},
+            // MAIN CONTENT
+            React.createElement('div', { className: 'p-4 sm:p-6 md:p-8 flex-1' },
+                loading ? React.createElement('div', { className: 'text-center py-12' },
+                    React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-igp-blue' }),
+                    React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
+                ) : ticket ? React.createElement('div', {},
 
                 React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-200/50' },
                     React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
@@ -836,14 +840,15 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 React.createElement('div', { className: 'flex justify-end mt-6 pt-4 border-t-2 border-gray-200' },
                     React.createElement('button', {
                         onClick: onClose,
-                        className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-800 transition-all'
+                        className: 'w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-lg transition-all flex items-center justify-center gap-2'
                     },
-                        React.createElement('i', { className: 'fas fa-times mr-2' }),
-                        'Fermer'
+                        React.createElement('i', { className: 'fas fa-arrow-left' }),
+                        'Retour au tableau de bord'
                     )
                 )
-            ) : React.createElement('div', { className: 'text-center py-8' },
-                React.createElement('p', { className: 'text-red-600' }, 'Erreur lors du chargement du ticket')
+            ) : React.createElement('div', { className: 'text-center py-12' },
+                React.createElement('p', { className: 'text-red-600 font-semibold' }, 'Erreur lors du chargement du ticket'),
+                React.createElement('button', { onClick: onClose, className: 'mt-4 text-blue-600 hover:underline' }, 'Fermer')
             )
         ),
 

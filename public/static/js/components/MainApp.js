@@ -146,7 +146,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         // Delay status update to ensure modal opens smoothly first
                         setTimeout(() => {
                             moveTicketToStatus(ticket, 'in_progress');
-                        }, 800); // Increased delay to 800ms
+                        }, 1500); // Increased delay to 1500ms for UI stability
                     }
                 }
             }
@@ -181,7 +181,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             // Delay status update to ensure modal opens smoothly first
                             setTimeout(() => {
                                 moveTicketToStatus(ticket, 'in_progress');
-                            }, 800);
+                            }, 1500);
                         }
                     } else {
                         console.log('[Push] Ticket not found, reloading data...');
