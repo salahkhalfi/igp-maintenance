@@ -1,4 +1,4 @@
-const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUser }) => {
+const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser }) => {
     const [title, setTitle] = React.useState('');
     const [description, setDescription] = React.useState('');
     const [machineId, setMachineId] = React.useState('');
