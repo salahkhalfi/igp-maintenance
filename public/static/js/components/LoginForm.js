@@ -76,29 +76,37 @@ const LoginForm = ({ onLogin }) => {
     };
 
     return React.createElement('div', {
-        className: 'min-h-screen flex items-center justify-center',
+        className: 'min-h-screen flex items-center justify-center relative',
         style: {
+            // Image de fond (fixe)
             backgroundImage: 'url(/static/maintenance-bg-premium.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed'
         }
     },
+        // Overlay sombre pour améliorer le contraste et faire ressortir la carte
         React.createElement('div', {
-            className: 'p-8 rounded-2xl w-96 max-w-md mx-4',
+            className: 'absolute inset-0 bg-black/20 backdrop-blur-[3px]',
+            style: { zIndex: 0 }
+        }),
+
+        React.createElement('div', {
+            className: 'p-8 rounded-2xl w-96 max-w-md mx-4 relative',
             style: {
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-                border: '1px solid rgba(255, 255, 255, 0.18)'
+                zIndex: 1, // Au-dessus de l'overlay
+                background: 'rgba(255, 255, 255, 0.25)', // Plus opaque pour lisibilité
+                backdropFilter: 'blur(25px) saturate(180%)', // Flou plus intense type iOS
+                WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset', // Ombre portée + bordure interne subtile
+                border: '1px solid rgba(255, 255, 255, 0.2)'
             }
         },
             React.createElement('div', { className: 'text-center mb-8' },
                 React.createElement('img', {
                     src: '/api/settings/logo?t=' + Date.now(),
                     alt: 'IGP Logo',
-                    className: 'h-20 w-auto mx-auto mb-4',
+                    className: 'h-20 w-auto mx-auto mb-4 drop-shadow-md',
                     onError: (e) => {
                         e.target.src = '/static/logo-igp.png';
                     }
@@ -109,16 +117,16 @@ const LoginForm = ({ onLogin }) => {
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
                         color: '#003B73',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 8px rgba(255,255,255,0.8)'
+                        textShadow: '0 2px 4px rgba(255,255,255,0.5)' // Ombre blanche pour détacher le texte bleu
                     }
                 }, loginTitle),
                 
                 // BANNIÈRE PREMIUM ANIMÉE
                 React.createElement('div', { 
-                    className: 'relative overflow-hidden inline-flex items-center justify-center px-6 py-2 mb-4 rounded-full shadow-lg border border-white/20 backdrop-blur-md',
+                    className: 'relative overflow-hidden inline-flex items-center justify-center px-6 py-2 mb-4 rounded-full shadow-lg border border-white/40 backdrop-blur-md',
                     style: {
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))',
+                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
                         minWidth: '260px',
                         transition: 'all 0.5s ease'
                     }
@@ -130,12 +138,12 @@ const LoginForm = ({ onLogin }) => {
                     
                     // Texte animé
                     React.createElement('div', {
-                        className: `flex items-center font-bold text-xs sm:text-sm tracking-wide text-white transition-all duration-500 transform ${
+                        className: `flex items-center font-bold text-xs sm:text-sm tracking-wide text-gray-800 transition-all duration-500 transform ${
                             isAnimating 
                                 ? 'opacity-100 translate-y-0 scale-100 blur-none' 
                                 : 'opacity-0 translate-y-4 scale-95 blur-sm'
                         }`,
-                        style: { textShadow: '0 2px 4px rgba(0,0,0,0.3)' }
+                        style: { textShadow: '0 1px 2px rgba(255,255,255,0.8)' }
                     },
                         React.createElement('span', { className: 'mr-3 text-base' }, currentBanner.icon),
                         React.createElement('span', {}, currentBanner.text)
@@ -147,8 +155,8 @@ const LoginForm = ({ onLogin }) => {
                     style: {
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',
-                        color: '#1f2937',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.4), 0 0 8px rgba(255,255,255,0.9)'
+                        color: '#374151', // Gris plus foncé pour contraste
+                        textShadow: '0 1px 2px rgba(255,255,255,0.8)'
                     }
                 }, loginSubtitle)
             ),
@@ -157,15 +165,15 @@ const LoginForm = ({ onLogin }) => {
                 autoComplete: 'off'
             },
                 React.createElement('div', { className: 'mb-4' },
-                    React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                        React.createElement('i', { className: 'fas fa-envelope mr-2 text-igp-blue' }),
+                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-2 shadow-black/5 drop-shadow-sm' },
+                        React.createElement('i', { className: 'fas fa-envelope mr-2 text-blue-700' }),
                         'Email'
                     ),
                     React.createElement('input', {
                         type: 'email',
                         name: 'email',
                         autoComplete: 'off',
-                        className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                        className: 'w-full px-3 py-2.5 border border-white/50 bg-white/70 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner',
                         value: email,
                         onChange: handleInputEmail,
                         onInvalid: handleInvalidEmail,
@@ -174,8 +182,8 @@ const LoginForm = ({ onLogin }) => {
                     })
                 ),
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                        React.createElement('i', { className: 'fas fa-lock mr-2 text-igp-blue' }),
+                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-2 shadow-black/5 drop-shadow-sm' },
+                        React.createElement('i', { className: 'fas fa-lock mr-2 text-blue-700' }),
                         'Mot de passe'
                     ),
                     React.createElement('div', { className: 'relative' },
@@ -183,7 +191,7 @@ const LoginForm = ({ onLogin }) => {
                             type: showPassword ? 'text' : 'password',
                             name: 'password',
                             autoComplete: 'new-password',
-                            className: 'w-full px-3 py-2 pr-10 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent',
+                            className: 'w-full px-3 py-2.5 pr-10 border border-white/50 bg-white/70 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner',
                             value: password,
                             onChange: handleInputPassword,
                             onInvalid: handleInvalidPassword,
@@ -193,7 +201,7 @@ const LoginForm = ({ onLogin }) => {
                         React.createElement('button', {
                             type: 'button',
                             onClick: () => setShowPassword(!showPassword),
-                            className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-igp-blue transition-colors',
+                            className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-700 transition-colors',
                             'aria-label': showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'
                         },
                             React.createElement('i', {
@@ -203,32 +211,32 @@ const LoginForm = ({ onLogin }) => {
                     )
                 ),
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('label', { className: 'flex items-center cursor-pointer' },
+                    React.createElement('label', { className: 'flex items-center cursor-pointer group' },
                         React.createElement('input', {
                             type: 'checkbox',
                             checked: rememberMe,
                             onChange: (e) => setRememberMe(e.target.checked),
-                            className: 'mr-2 h-4 w-4 text-igp-blue border-gray-300 rounded focus:ring-2 focus:ring-igp-blue'
+                            className: 'mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer'
                         }),
-                        React.createElement('span', { className: 'text-sm text-white font-semibold drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]' },
-                            React.createElement('i', { className: 'fas fa-clock mr-1 text-blue-300' }),
+                        React.createElement('span', { className: 'text-sm text-gray-800 font-bold drop-shadow-sm group-hover:text-blue-800 transition-colors' },
+                            React.createElement('i', { className: 'fas fa-clock mr-1.5 text-blue-600' }),
                             'Se souvenir de moi (30 jours)'
                         )
                     )
                 ),
                 React.createElement('button', {
                     type: 'submit',
-                    className: 'w-full bg-igp-blue text-white font-bold py-3 px-4 rounded-md hover:bg-igp-blue-dark transition duration-200 shadow-lg'
+                    className: 'w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white font-bold py-3 px-4 rounded-xl hover:from-blue-800 hover:to-blue-950 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30'
                 },
                     React.createElement('i', { className: 'fas fa-sign-in-alt mr-2' }),
                     'Se connecter'
                 )
             ),
-            React.createElement('div', { className: 'mt-8 pt-6 border-t border-gray-200 text-center' },
-                React.createElement('p', { className: 'text-xs text-gray-500' },
-                    React.createElement('i', { className: 'fas fa-code mr-1' }),
+            React.createElement('div', { className: 'mt-8 pt-6 border-t border-gray-200/30 text-center' },
+                React.createElement('p', { className: 'text-xs text-gray-700 font-medium drop-shadow-sm' },
+                    React.createElement('i', { className: 'fas fa-code mr-1 opacity-70' }),
                     'Conçue par ',
-                    React.createElement('span', { className: 'font-bold text-igp-blue' }, "Le département des Technologies de l'Information des Produits Verriers International (IGP) Inc.")
+                    React.createElement('span', { className: 'font-bold text-blue-900' }, "Le département des Technologies de l'Information des Produits Verriers International (IGP) Inc.")
                 )
             )
         )
