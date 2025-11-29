@@ -190,9 +190,12 @@ tickets.post('/', async (c) => {
             const userName = assignedUser?.first_name || 'Technicien';
             
             const { sendPushNotification } = await import('./push');
+            // Troncature intelligente du titre
+            const safeTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+            
             const pushResult = await sendPushNotification(c.env, assigned_to, {
               title: `🔴 Nouveau : ${machine.machine_type} ${machine.model}`,
-              body: `[${priority.toUpperCase()}] ${title} - ${machine.location || 'Non spécifié'}`,
+              body: `[${priority.toUpperCase()}] ${safeTitle}`,
               icon: '/icon-192.png',
               actions: [
                 { action: 'view', title: 'Voir' },
