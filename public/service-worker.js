@@ -115,7 +115,8 @@ self.addEventListener('push', (event) => {
       : data.data?.messageId 
         ? `message-${data.data.messageId}` 
         : `notif-${Date.now()}`,
-    requireInteraction: false
+    requireInteraction: false,
+    actions: data.actions || []
   };
   
   event.waitUntil(
@@ -130,14 +131,18 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
   const notificationData = event.notification.data || {};
-  const action = notificationData.action;
+  const action = event.action || notificationData.action; // Handle button click (event.action) or data action
   
   // Construire l'URL appropriée selon le type de notification
   let urlToOpen = notificationData.url || '/';
   
   // Pour les tickets: ouvrir le modal du ticket directement
-  if (action === 'view_ticket' && notificationData.ticketId) {
+  if ((action === 'view_ticket' || action === 'view') && notificationData.ticketId) {
     urlToOpen = `/?ticket=${notificationData.ticketId}`;
+  }
+  // Action rapide "J'y vais" -> ouvre ticket et change statut auto
+  else if (action === 'acknowledge' && notificationData.ticketId) {
+    urlToOpen = `/?ticket=${notificationData.ticketId}&auto_action=acknowledge`;
   }
   // Pour les messages audio, ajouter paramètres pour auto-play
   else if (action === 'new_audio_message' && notificationData.messageId) {
@@ -158,7 +163,10 @@ self.addEventListener('notificationclick', (event) => {
           client.postMessage({
             type: 'NOTIFICATION_CLICK',
             action: action,
-            data: notificationData
+            data: { 
+                ...notificationData, 
+                auto_action: action === 'acknowledge' ? 'acknowledge' : null 
+            }
           });
           return;
         }

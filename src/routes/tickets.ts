@@ -194,6 +194,10 @@ tickets.post('/', async (c) => {
               title: `🔧 ${userName}, nouveau ticket`,
               body: `${ticket_id}: ${title}`,
               icon: '/icon-192.png',
+              actions: [
+                { action: 'view', title: 'Voir' },
+                { action: 'acknowledge', title: "J'y vais !" }
+              ],
               data: { 
                 ticketId: (newTicket as any).id,
                 ticket_id: ticket_id,
@@ -418,6 +422,10 @@ tickets.patch('/:id', async (c) => {
           title: `🔧 ${newUserName}, ticket réassigné`,
           body: `${currentTicket.ticket_id}: ${currentTicket.title}`,
           icon: '/icon-192.png',
+          actions: [
+            { action: 'view', title: 'Voir' },
+            { action: 'acknowledge', title: "J'y vais !" }
+          ],
           data: { 
             ticketId: id,
             ticket_id: currentTicket.ticket_id,
@@ -459,6 +467,38 @@ tickets.patch('/:id', async (c) => {
         }
         // Push échoue? Pas grave, l'assignation a réussi, le webhook Pabbly prendra le relais
         console.error('⚠️ Push notification failed (non-critical):', pushError);
+      }
+    }
+
+    // Notifier le rapporteur si le statut change (Intelligent Targeting)
+    if (body.status && body.status !== currentTicket.status && currentTicket.reported_by && currentTicket.reported_by !== user.userId) {
+      try {
+        const { sendPushNotification } = await import('./push');
+        
+        const statusLabels: Record<string, string> = {
+            'received': 'Reçu',
+            'diagnostic': 'Diagnostic',
+            'in_progress': 'En cours',
+            'waiting_parts': 'En attente pièces',
+            'completed': 'Terminé',
+            'archived': 'Archivé'
+        };
+        const newStatusLabel = statusLabels[body.status] || body.status;
+
+        await sendPushNotification(c.env, currentTicket.reported_by, {
+          title: `🎫 Statut: ${newStatusLabel}`,
+          body: `${currentTicket.ticket_id}: ${currentTicket.title}`,
+          icon: '/icon-192.png',
+          actions: [{ action: 'view', title: 'Voir' }],
+          data: { 
+            ticketId: id,
+            ticket_id: currentTicket.ticket_id,
+            action: 'view_ticket',
+            url: `/?ticket=${id}` 
+          }
+        });
+      } catch (e) {
+        console.error('Failed to notify reporter (non-critical):', e);
       }
     }
 

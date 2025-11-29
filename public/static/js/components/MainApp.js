@@ -126,6 +126,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     React.useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const ticketIdFromUrl = urlParams.get('ticket');
+        const autoAction = urlParams.get('auto_action');
         
         if (ticketIdFromUrl && tickets.length > 0) {
             const ticketId = parseInt(ticketIdFromUrl, 10);
@@ -135,6 +136,12 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 console.log('[Push] Opening ticket from URL:', ticketId);
                 setSelectedTicketId(ticketId);
                 setShowDetailsModal(true);
+                
+                // Quick Action: "J'y vais !"
+                if (autoAction === 'acknowledge' && ticket.status === 'received') {
+                    console.log('[Push] Auto-acknowledging ticket:', ticketId);
+                    moveTicketToStatus(ticket, 'in_progress');
+                }
                 
                 // Nettoyer l'URL sans recharger la page
                 window.history.replaceState({}, '', window.location.pathname);
@@ -149,9 +156,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             
             if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
                 const { action, data } = event.data;
+                const autoAction = data.auto_action;
                 
-                // Ouvrir le ticket si action view_ticket
-                if (action === 'view_ticket' && data.ticketId) {
+                // Ouvrir le ticket si action view_ticket ou actions rapides
+                if ((action === 'view_ticket' || action === 'view' || action === 'acknowledge') && data.ticketId) {
                     const ticketId = data.ticketId;
                     const ticket = tickets.find(t => t.id === ticketId);
                     
@@ -159,6 +167,12 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         console.log('[Push] Opening ticket from notification click:', ticketId);
                         setSelectedTicketId(ticketId);
                         setShowDetailsModal(true);
+                        
+                        // Quick Action: "J'y vais !"
+                        if (autoAction === 'acknowledge' && ticket.status === 'received') {
+                            console.log('[Push] Auto-acknowledging ticket from click:', ticketId);
+                            moveTicketToStatus(ticket, 'in_progress');
+                        }
                     } else {
                         console.log('[Push] Ticket not found, reloading data...');
                         // Ticket pas encore chargé, recharger les données
