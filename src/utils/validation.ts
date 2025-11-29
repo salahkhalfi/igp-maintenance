@@ -359,11 +359,12 @@ export function validateFileUpload(file: File): ValidationResult {
   // Type MIME
   const allowedTypes = [
     'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
-    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg'
   ];
 
   if (!allowedTypes.includes(file.type)) {
-    return { valid: false, error: `Type de fichier non autorisé: ${file.type}. Acceptés: images et vidéos` };
+    return { valid: false, error: `Type de fichier non autorisé: ${file.type}. Acceptés: images, vidéos et audio` };
   }
 
   return { valid: true };
