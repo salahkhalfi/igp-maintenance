@@ -79,10 +79,13 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             }
         };
 
+        // Ajouter event listener 'scroll' pour mettre à jour la position en temps réel
+        window.addEventListener('scroll', updateDropdownPosition);
         window.addEventListener('resize', updateDropdownPosition);
         window.addEventListener('orientationchange', updateDropdownPosition);
 
         return () => {
+            window.removeEventListener('scroll', updateDropdownPosition);
             window.removeEventListener('resize', updateDropdownPosition);
             window.removeEventListener('orientationchange', updateDropdownPosition);
         };
@@ -682,286 +685,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             }
         },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
-                React.createElement('div', { className: 'w-full max-w-md md:max-w-2xl mx-auto mb-4' },
-                    React.createElement('div', { className: 'relative w-full', style: { zIndex: 99999 } },
-                        React.createElement('input', {
-                            ref: searchInputRef,
-                            type: 'text',
-                            placeholder: searchPlaceholders[placeholderIndex],
-                            className: 'w-full px-3 md:px-4 py-2 pr-14 md:pr-20 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-xs md:text-sm placeholder-gray-400',
-                            value: searchQuery,
-                            onKeyDown: (e) => {
-                                if (e.key === 'Escape') {
-                                    setSearchQuery('');
-                                    setShowSearchResults(false);
-                                    e.target.blur();
-                                }
-                            },
-                            onFocus: () => {
-                                if (searchInputRef.current) {
-                                    const rect = searchInputRef.current.getBoundingClientRect();
-                                    setSearchDropdownPosition({
-                                        top: rect.bottom + window.scrollY,
-                                        left: rect.left + window.scrollX,
-                                        width: rect.width
-                                    });
-                                }
-                            },
-                            onChange: (e) => {
-                                const query = e.target.value;
-                                setSearchQuery(query);
-                                
-                                // Update dropdown position dynamically
-                                if (searchInputRef.current) {
-                                    const rect = searchInputRef.current.getBoundingClientRect();
-                                    setSearchDropdownPosition({
-                                        top: rect.bottom + window.scrollY,
-                                        left: rect.left + window.scrollX,
-                                        width: rect.width
-                                    });
-                                }
-                                
-                                if (searchTimeoutRef.current) {
-                                    clearTimeout(searchTimeoutRef.current);
-                                }
-                                if (query.trim().length >= 2) {
-                                    setSearchLoading(true);
-                                    searchTimeoutRef.current = setTimeout(async () => {
-                                        try {
-                                            const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
-                                                headers: {
-                                                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-                                                }
-                                            });
-                                            const data = await response.json();
-                                            setSearchResults(data.results || []);
-                                            setSearchKeywordResults(data.keywordResults || []);
-                                            setSearchTextResults(data.textResults || []);
-                                            setSearchIsKeyword(data.isKeywordSearch || false);
-                                            setSearchKeywordType(data.keyword || null);
-                                            setShowSearchResults(true);
-                                        } catch (err) {
-                                            console.error('Erreur recherche:', err);
-                                        } finally {
-                                            setSearchLoading(false);
-                                        }
-                                    }, 300);
-                                } else {
-                                    setSearchResults([]);
-                                    setShowSearchResults(false);
-                                    setSearchLoading(false);
-                                }
-                            },
-                            onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
-                        }),
-                        // Bouton effacer (visible si query non vide)
-                        searchQuery && React.createElement('button', {
-                            onClick: (e) => {
-                                e.stopPropagation();
-                                setSearchQuery('');
-                                setShowSearchResults(false);
-                                setSearchResults([]);
-                                setSearchKeywordResults([]);
-                                setSearchTextResults([]);
-                            },
-                            className: 'absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1',
-                            title: 'Effacer la recherche (Esc)'
-                        },
-                            React.createElement('i', { className: 'fas fa-times-circle text-lg' })
-                        ),
-                        React.createElement('i', {
-                            className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
-                        }),
-                        showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && React.createElement('div', {
-                            className: 'md:fixed left-0 right-0 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl overflow-y-auto mt-2 md:mt-0',
-                            style: window.innerWidth < 768 ? {
-                                position: 'relative',
-                                zIndex: 100,
-                                maxHeight: '400px'
-                            } : { 
-                                zIndex: 9999999,
-                                top: searchDropdownPosition.top + 'px',
-                                left: searchDropdownPosition.left + 'px',
-                                width: searchDropdownPosition.width + 'px',
-                                minWidth: '320px',
-                                maxWidth: 'none',
-                                maxHeight: 'calc(100vh - ' + searchDropdownPosition.top + 'px - 2rem)',
-                                pointerEvents: 'auto'
-                            }
-                        },
-                            // Bouton fermer en haut à droite du dropdown
-                            React.createElement('button', {
-                                onClick: (e) => {
-                                    e.stopPropagation();
-                                    setShowSearchResults(false);
-                                },
-                                className: 'sticky top-0 right-0 float-right bg-white hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full p-2 m-2 transition-colors shadow-md z-50',
-                                title: 'Fermer les résultats (Esc)',
-                                style: { marginLeft: 'auto' }
-                            },
-                                React.createElement('i', { className: 'fas fa-times text-sm' })
-                            ),
-                            // Section 1: Résultats par mot-clé
-                            searchIsKeyword && searchKeywordResults.length > 0 && React.createElement('div', {},
-                                React.createElement('div', { className: 'bg-gradient-to-r from-red-50 to-orange-50 px-4 py-2 border-b-2 border-red-200 sticky top-0 z-10' },
-                                    React.createElement('div', { className: 'flex items-center gap-2' },
-                                        React.createElement('span', { className: 'text-xs font-bold text-red-700 uppercase' },
-                                            searchKeywordType === 'retard' || searchKeywordType === 'retards' || searchKeywordType === 'overdue' ? '🔴 TICKETS EN RETARD' :
-                                            searchKeywordType === 'urgent' || searchKeywordType === 'critique' || searchKeywordType === 'critical' ? '🔴 TICKETS CRITIQUES' :
-                                            searchKeywordType === 'haute' || searchKeywordType === 'high' ? '🟠 HAUTE PRIORITÉ' :
-                                            searchKeywordType === 'commentaire' || searchKeywordType === 'commentaires' || searchKeywordType === 'note' ? '💬 AVEC COMMENTAIRES' :
-                                            '🎯 RÉSULTATS CIBLÉS'
-                                        ),
-                                        React.createElement('span', { className: 'text-xs font-semibold text-gray-600 bg-white px-2 py-0.5 rounded-full' },
-                                            searchKeywordResults.length
-                                        )
-                                    )
-                                ),
-                                searchKeywordResults.map((result) =>
-                                    React.createElement('div', {
-                                        key: 'kw-' + result.id,
-                                        className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
-                                        onClick: () => {
-                                            setSelectedTicketId(result.id);
-                                            setShowDetailsModal(true);
-                                            setSearchQuery('');
-                                            setShowSearchResults(false);
-                                        }
-                                    },
-                                        React.createElement('div', { className: 'flex justify-end mb-2' },
-                                            React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
-                                        ),
-                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                            React.createElement('span', { className: 'px-2 py-1 rounded-md text-xs font-bold bg-gradient-to-br from-red-600 to-red-700 text-white shadow-sm flex-shrink-0' },
-                                                searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
-                                                searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
-                                                searchKeywordType === 'haute' ? '🟠' : '💬'
-                                            ),
-                                            React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
-                                        ),
-                                        React.createElement('div', { className: 'text-xs text-gray-500 ml-8 md:ml-10 truncate flex items-center gap-1' },
-                                            React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
-                                            React.createElement('span', {}, result.machine_type + ' - ' + result.model)
-                                        ),
-                                        React.createElement('div', { className: 'flex items-center gap-2 mt-2 ml-8 md:ml-10 flex-wrap' },
-                                            result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
-                                                React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
-                                                React.createElement('span', {}, result.location)
-                                            ),
-                                            result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
-                                                React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
-                                                React.createElement('span', {}, result.comments_count)
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                            // Section 2: Résultats textuels
-                            searchIsKeyword && searchTextResults.length > 0 && React.createElement('div', {},
-                                React.createElement('div', { className: 'bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2 border-b border-gray-300 sticky top-0 z-10' },
-                                    React.createElement('div', { className: 'flex items-center gap-2' },
-                                        React.createElement('span', { className: 'text-xs font-bold text-gray-600 uppercase' },
-                                            '📄 AUTRES RÉSULTATS'
-                                        ),
-                                        React.createElement('span', { className: 'text-xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full' },
-                                            searchTextResults.length
-                                        )
-                                    )
-                                ),
-                                searchTextResults.map((result) =>
-                                    React.createElement('div', {
-                                        key: 'txt-' + result.id,
-                                        className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
-                                        onClick: () => {
-                                            setSelectedTicketId(result.id);
-                                            setShowDetailsModal(true);
-                                            setSearchQuery('');
-                                            setShowSearchResults(false);
-                                        }
-                                    },
-                                        React.createElement('div', { className: 'flex justify-end mb-2' },
-                                            React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
-                                        ),
-                                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                            React.createElement('span', { className: 'px-2 py-1 rounded-md text-xs font-bold bg-gradient-to-br from-gray-500 to-gray-600 text-white shadow-sm flex-shrink-0' }, '📝'),
-                                            React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
-                                        ),
-                                        React.createElement('div', { className: 'text-xs text-gray-500 ml-8 md:ml-10 truncate flex items-center gap-1' },
-                                            React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
-                                            React.createElement('span', {}, result.machine_type + ' - ' + result.model)
-                                        ),
-                                        React.createElement('div', { className: 'flex items-center gap-2 mt-2 ml-8 md:ml-10 flex-wrap' },
-                                            result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
-                                                React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
-                                                React.createElement('span', {}, result.location)
-                                            ),
-                                            result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
-                                                React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
-                                                React.createElement('span', {}, result.comments_count)
-                                            )
-                                        )
-                                    )
-                                )
-                            ),
-                            // Section unique: Recherche textuelle pure
-                            !searchIsKeyword && searchKeywordResults.length > 0 && searchKeywordResults.map((result) =>
-                                React.createElement('div', {
-                                    key: result.id,
-                                    className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
-                                    onClick: () => {
-                                        setSelectedTicketId(result.id);
-                                        setShowDetailsModal(true);
-                                        setSearchQuery('');
-                                        setShowSearchResults(false);
-                                    }
-                                },
-                                    React.createElement('div', { className: 'flex justify-end mb-2' },
-                                        React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
-                                    ),
-                                    React.createElement('div', { className: 'mb-2' },
-                                        React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
-                                    ),
-                                    React.createElement('div', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
-                                        React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
-                                        React.createElement('span', {}, result.machine_type + ' - ' + result.model)
-                                    ),
-                                    React.createElement('div', { className: 'flex items-center gap-2 mt-2 flex-wrap' },
-                                        result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
-                                            React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
-                                            React.createElement('span', {}, result.location)
-                                        ),
-                                        result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
-                                            React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
-                                            React.createElement('span', {}, result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : ''))
-                                        )
-                                    )
-                                )
-                            )
-                        ),
-                        showSearchResults && searchKeywordResults.length === 0 && searchTextResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && React.createElement('div', {
-                            className: 'md:fixed left-0 right-0 md:left-auto md:right-auto bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4 mt-2 md:mt-0',
-                            style: window.innerWidth < 768 ? {
-                                position: 'relative',
-                                zIndex: 100
-                            } : { 
-                                zIndex: 9999999,
-                                top: searchDropdownPosition.top + 'px',
-                                left: searchDropdownPosition.left + 'px',
-                                width: searchDropdownPosition.width + 'px',
-                                minWidth: '320px',
-                                maxWidth: 'none',
-                                pointerEvents: 'auto'
-                            }
-                        },
-                            React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
-                                'Aucun résultat trouvé'
-                            )
-                        )
-                    )
-                ),
-                React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-6' },
+                React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-4' },
                     React.createElement('div', {
-                        className: 'flex items-center space-x-2 md:space-x-3 flex-1 min-w-0',
+                        className: 'flex flex-wrap items-center justify-between md:justify-start space-x-0 md:space-x-3 flex-1 min-w-0',
                         style: {
                             background: 'linear-gradient(135deg, rgba(240, 249, 255, 0.85) 0%, rgba(224, 242, 254, 0.75) 50%, rgba(186, 230, 253, 0.8) 100%)',
                             backdropFilter: 'blur(20px) saturate(180%)',
@@ -974,7 +700,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             borderLeft: '2px solid rgba(255, 255, 255, 0.8)',
                             position: 'relative',
                             width: '100%',
-                            overflow: 'hidden'
+                            overflow: 'visible' // Allow search dropdown to calculate position correctly
                         }
                     },
                         React.createElement('div', {
@@ -989,109 +715,354 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 pointerEvents: 'none'
                             }
                         }),
-                        React.createElement('img', {
-                            src: '/api/settings/logo?t=' + Date.now(),
-                            alt: 'IGP Logo',
-                            className: 'h-10 md:h-12 lg:h-16 w-auto object-contain flex-shrink-0',
-                            onError: (e) => {
-                                e.target.src = '/static/logo-igp.png';
-                            }
-                        }),
-                        React.createElement('div', { 
-                            className: 'pl-2 md:pl-3 flex-1 min-w-0',
-                            style: {
-                                borderLeft: '2px solid rgba(147, 197, 253, 0.5)',
-                                position: 'relative'
-                            }
-                        },
-                            React.createElement('h1', {
-                                className: 'text-sm md:text-lg lg:text-xl font-bold break-words',
+                        React.createElement('div', { className: 'flex items-center mb-2 md:mb-0' },
+                            React.createElement('img', {
+                                src: '/api/settings/logo?t=' + Date.now(),
+                                alt: 'IGP Logo',
+                                className: 'h-10 md:h-12 lg:h-16 w-auto object-contain flex-shrink-0',
+                                onError: (e) => {
+                                    e.target.src = '/static/logo-igp.png';
+                                }
+                            }),
+                            React.createElement('div', { 
+                                className: 'pl-2 md:pl-3 min-w-0',
                                 style: {
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'break-word',
-                                    color: '#1e3a8a',
-                                    fontWeight: '900'
-                                },
-                                title: headerTitle
-                            }, headerTitle),
-                            React.createElement('p', {
-                                className: 'text-xs md:text-sm break-words',
-                                style: {
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'break-word',
-                                    color: '#1a1a1a',
-                                    fontWeight: '800',
-                                    textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
-                                },
-                                title: headerSubtitle
-                            },
-                                headerSubtitle
-                            ),
-                            React.createElement('p', {
-                                className: 'text-xs md:text-sm font-semibold mt-1',
-                                style: {
-                                    color: '#047857',
-                                    fontWeight: '900',
-                                    textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
+                                    borderLeft: '2px solid rgba(147, 197, 253, 0.5)',
+                                    position: 'relative'
                                 }
                             },
-                                '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
-                            ),
-                            React.createElement('div', { className: "flex items-center gap-3 flex-wrap" },
-                                React.createElement('p', {
-                                    className: "text-xs font-semibold",
+                                React.createElement('h1', {
+                                    className: 'text-sm md:text-lg lg:text-xl font-bold break-words',
                                     style: {
-                                        color: '#1e40af',
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        color: '#1e3a8a',
+                                        fontWeight: '900'
+                                    },
+                                    title: headerTitle
+                                }, headerTitle),
+                                React.createElement('p', {
+                                    className: 'text-xs md:text-sm font-semibold mt-1 hidden md:block',
+                                    style: {
+                                        color: '#047857',
                                         fontWeight: '900',
                                         textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
-                                    },
-                                    id: 'active-tickets-count'
+                                    }
                                 },
-                                    getActiveTicketsCount() + " tickets actifs"
-                                ),
-                                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
-                                React.createElement('span', {
-                                    className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
-                                    id: 'overdue-tickets-badge-wrapper',
-                                    title: 'Tickets en retard - Cliquer pour voir détails',
-                                    onClick: () => setShowOverdueModal(true)
-                                },
-                                    React.createElement('i', { className: 'fas fa-clock mr-1' }),
-                                    React.createElement('span', { id: 'overdue-tickets-badge' }, '0 retard')
-                                ) : null,
-                                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
-                                React.createElement('span', {
-                                    className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
-                                    id: 'technicians-count-badge-wrapper',
-                                    title: 'Techniciens actifs - Cliquer pour voir performance',
-                                    onClick: () => setShowPerformanceModal(true)
-                                },
-                                    React.createElement('i', { className: 'fas fa-users mr-1' }),
-                                    React.createElement('span', { id: 'technicians-count-badge' }, '0 techs')
-                                ) : null,
-                                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
-                                React.createElement('span', {
-                                    className: 'px-2 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300 cursor-pointer hover:bg-green-200 transition-colors',
-                                    id: 'push-devices-badge-wrapper',
-                                    title: 'Appareils avec notifications push - Cliquer pour voir liste',
-                                    onClick: () => setShowPushDevicesModal(true)
-                                },
-                                    React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }),
-                                    React.createElement('span', { id: 'push-devices-badge' }, '0 apps')
-                                ) : null,
-                                (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
-                                React.createElement('div', {
-                                    className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
-                                    onClick: () => setShowMessaging(true),
-                                    title: unreadMessagesCount > 0 ? (unreadMessagesCount + " messages non lus") : "Aucun message non lu"
-                                },
-                                    React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
-                                    unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
-                                ) : null
+                                    '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
+                                )
                             )
+                        ),
+
+                        // BARRE DE RECHERCHE INTEGRÉE
+                        React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-2 md:mt-0', style: { zIndex: 50 } },
+                            React.createElement('input', {
+                                ref: searchInputRef,
+                                type: 'text',
+                                placeholder: searchPlaceholders[placeholderIndex],
+                                className: 'w-full px-3 md:px-4 py-2 pr-14 md:pr-20 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white/80 backdrop-blur-sm transition-all shadow-inner',
+                                value: searchQuery,
+                                onKeyDown: (e) => {
+                                    if (e.key === 'Escape') {
+                                        setSearchQuery('');
+                                        setShowSearchResults(false);
+                                        e.target.blur();
+                                    }
+                                },
+                                onFocus: () => {
+                                    if (searchInputRef.current) {
+                                        const rect = searchInputRef.current.getBoundingClientRect();
+                                        setSearchDropdownPosition({
+                                            top: rect.bottom + window.scrollY,
+                                            left: rect.left + window.scrollX,
+                                            width: rect.width
+                                        });
+                                    }
+                                },
+                                onChange: (e) => {
+                                    const query = e.target.value;
+                                    setSearchQuery(query);
+                                    
+                                    if (searchInputRef.current) {
+                                        const rect = searchInputRef.current.getBoundingClientRect();
+                                        setSearchDropdownPosition({
+                                            top: rect.bottom + window.scrollY,
+                                            left: rect.left + window.scrollX,
+                                            width: rect.width
+                                        });
+                                    }
+                                    
+                                    if (searchTimeoutRef.current) {
+                                        clearTimeout(searchTimeoutRef.current);
+                                    }
+                                    if (query.trim().length >= 2) {
+                                        setSearchLoading(true);
+                                        searchTimeoutRef.current = setTimeout(async () => {
+                                            try {
+                                                const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
+                                                    headers: {
+                                                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                                    }
+                                                });
+                                                const data = await response.json();
+                                                setSearchResults(data.results || []);
+                                                setSearchKeywordResults(data.keywordResults || []);
+                                                setSearchTextResults(data.textResults || []);
+                                                setSearchIsKeyword(data.isKeywordSearch || false);
+                                                setSearchKeywordType(data.keyword || null);
+                                                setShowSearchResults(true);
+                                            } catch (err) {
+                                                console.error('Erreur recherche:', err);
+                                            } finally {
+                                                setSearchLoading(false);
+                                            }
+                                        }, 300);
+                                    } else {
+                                        setSearchResults([]);
+                                        setShowSearchResults(false);
+                                        setSearchLoading(false);
+                                    }
+                                },
+                                onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
+                            }),
+                            searchQuery && React.createElement('button', {
+                                onClick: (e) => {
+                                    e.stopPropagation();
+                                    setSearchQuery('');
+                                    setShowSearchResults(false);
+                                },
+                                className: 'absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1',
+                                title: 'Effacer'
+                            },
+                                React.createElement('i', { className: 'fas fa-times-circle text-lg' })
+                            ),
+                            React.createElement('i', {
+                                className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500'
+                            })
+                        ),
+
+                        React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-end md:justify-start mt-2 md:mt-0 flex-shrink-0" },
+                            React.createElement('p', {
+                                className: "text-xs font-semibold hidden lg:block",
+                                style: {
+                                    color: '#1e40af',
+                                    fontWeight: '900',
+                                    textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
+                                },
+                                id: 'active-tickets-count'
+                            },
+                                getActiveTicketsCount() + " actifs"
+                            ),
+                            (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
+                            React.createElement('span', {
+                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
+                                id: 'overdue-tickets-badge-wrapper',
+                                title: 'Tickets en retard',
+                                onClick: () => setShowOverdueModal(true)
+                            },
+                                React.createElement('i', { className: 'fas fa-clock mr-1' }),
+                                React.createElement('span', { id: 'overdue-tickets-badge' }, '0')
+                            ) : null,
+                            (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
+                            React.createElement('div', {
+                                className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
+                                onClick: () => setShowMessaging(true),
+                                title: unreadMessagesCount > 0 ? (unreadMessagesCount + " messages non lus") : "Messages"
+                            },
+                                React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
+                                unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
+                            ) : null
                         )
                     )
                 ),
+                
+                // PORTAL DES RÉSULTATS DE RECHERCHE (Rendu dans document.body pour z-index absolu)
+                showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal ? ReactDOM.createPortal(
+                    React.createElement('div', {
+                        className: 'search-results-portal bg-white border-2 border-gray-300 rounded-lg shadow-2xl overflow-y-auto',
+                        style: { 
+                            position: 'absolute',
+                            zIndex: 99999,
+                            top: (searchDropdownPosition.top + 2) + 'px',
+                            left: searchDropdownPosition.left + 'px',
+                            width: searchDropdownPosition.width + 'px',
+                            minWidth: '320px',
+                            maxHeight: '400px',
+                            pointerEvents: 'auto'
+                        },
+                        onMouseDown: (e) => e.stopPropagation() // Prevent blur when clicking inside
+                    },
+                        // Bouton fermer
+                        React.createElement('button', {
+                            onClick: (e) => {
+                                e.stopPropagation();
+                                setShowSearchResults(false);
+                            },
+                            className: 'sticky top-0 right-0 float-right bg-white hover:bg-gray-100 text-gray-500 hover:text-gray-700 rounded-full p-2 m-2 transition-colors shadow-md z-50',
+                            style: { marginLeft: 'auto' }
+                        },
+                            React.createElement('i', { className: 'fas fa-times text-sm' })
+                        ),
+                        // Section 1: Résultats par mot-clé
+                        searchIsKeyword && searchKeywordResults.length > 0 && React.createElement('div', {},
+                            React.createElement('div', { className: 'bg-gradient-to-r from-red-50 to-orange-50 px-4 py-2 border-b-2 border-red-200 sticky top-0 z-10' },
+                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement('span', { className: 'text-xs font-bold text-red-700 uppercase' },
+                                        searchKeywordType === 'retard' || searchKeywordType === 'retards' || searchKeywordType === 'overdue' ? '🔴 TICKETS EN RETARD' :
+                                        searchKeywordType === 'urgent' || searchKeywordType === 'critique' || searchKeywordType === 'critical' ? '🔴 TICKETS CRITIQUES' :
+                                        searchKeywordType === 'haute' || searchKeywordType === 'high' ? '🟠 HAUTE PRIORITÉ' :
+                                        searchKeywordType === 'commentaire' || searchKeywordType === 'commentaires' || searchKeywordType === 'note' ? '💬 AVEC COMMENTAIRES' :
+                                        '🎯 RÉSULTATS CIBLÉS'
+                                    ),
+                                    React.createElement('span', { className: 'text-xs font-semibold text-gray-600 bg-white px-2 py-0.5 rounded-full' },
+                                        searchKeywordResults.length
+                                    )
+                                )
+                            ),
+                            searchKeywordResults.map((result) =>
+                                React.createElement('div', {
+                                    key: 'kw-' + result.id,
+                                    className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
+                                    onClick: () => {
+                                        setSelectedTicketId(result.id);
+                                        setShowDetailsModal(true);
+                                        setSearchQuery('');
+                                        setShowSearchResults(false);
+                                    }
+                                },
+                                    React.createElement('div', { className: 'flex justify-end mb-2' },
+                                        React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
+                                    ),
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                        React.createElement('span', { className: 'px-2 py-1 rounded-md text-xs font-bold bg-gradient-to-br from-red-600 to-red-700 text-white shadow-sm flex-shrink-0' },
+                                            searchKeywordType === 'retard' || searchKeywordType === 'retards' ? '⏰' :
+                                            searchKeywordType === 'urgent' || searchKeywordType === 'critique' ? '🔴' :
+                                            searchKeywordType === 'haute' ? '🟠' : '💬'
+                                        ),
+                                        React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
+                                    ),
+                                    React.createElement('div', { className: 'text-xs text-gray-500 ml-8 md:ml-10 truncate flex items-center gap-1' },
+                                        React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
+                                        React.createElement('span', {}, result.machine_type + ' - ' + result.model)
+                                    ),
+                                    React.createElement('div', { className: 'flex items-center gap-2 mt-2 ml-8 md:ml-10 flex-wrap' },
+                                        result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                            React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
+                                            React.createElement('span', {}, result.location)
+                                        ),
+                                        result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
+                                            React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
+                                            React.createElement('span', {}, result.comments_count)
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        // Section 2: Résultats textuels
+                        searchIsKeyword && searchTextResults.length > 0 && React.createElement('div', {},
+                            React.createElement('div', { className: 'bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2 border-b border-gray-300 sticky top-0 z-10' },
+                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement('span', { className: 'text-xs font-bold text-gray-600 uppercase' },
+                                        '📄 AUTRES RÉSULTATS'
+                                    ),
+                                    React.createElement('span', { className: 'text-xs font-semibold text-gray-500 bg-white px-2 py-0.5 rounded-full' },
+                                        searchTextResults.length
+                                    )
+                                )
+                            ),
+                            searchTextResults.map((result) =>
+                                React.createElement('div', {
+                                    key: 'txt-' + result.id,
+                                    className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
+                                    onClick: () => {
+                                        setSelectedTicketId(result.id);
+                                        setShowDetailsModal(true);
+                                        setSearchQuery('');
+                                        setShowSearchResults(false);
+                                    }
+                                },
+                                    React.createElement('div', { className: 'flex justify-end mb-2' },
+                                        React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
+                                    ),
+                                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                        React.createElement('span', { className: 'px-2 py-1 rounded-md text-xs font-bold bg-gradient-to-br from-gray-500 to-gray-600 text-white shadow-sm flex-shrink-0' }, '📝'),
+                                        React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
+                                    ),
+                                    React.createElement('div', { className: 'text-xs text-gray-500 ml-8 md:ml-10 truncate flex items-center gap-1' },
+                                        React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
+                                        React.createElement('span', {}, result.machine_type + ' - ' + result.model)
+                                    ),
+                                    React.createElement('div', { className: 'flex items-center gap-2 mt-2 ml-8 md:ml-10 flex-wrap' },
+                                        result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                            React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
+                                            React.createElement('span', {}, result.location)
+                                        ),
+                                        result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
+                                            React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
+                                            React.createElement('span', {}, result.comments_count)
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        // Section unique: Recherche textuelle pure
+                        !searchIsKeyword && searchKeywordResults.length > 0 && searchKeywordResults.map((result) =>
+                            React.createElement('div', {
+                                key: result.id,
+                                className: 'p-3 md:p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 cursor-pointer border-b border-gray-200 last:border-b-0 transition-all duration-200 hover:shadow-sm',
+                                onClick: () => {
+                                    setSelectedTicketId(result.id);
+                                    setShowDetailsModal(true);
+                                    setSearchQuery('');
+                                    setShowSearchResults(false);
+                                }
+                            },
+                                React.createElement('div', { className: 'flex justify-end mb-2' },
+                                    React.createElement('span', { className: 'text-xs text-gray-400 font-mono tracking-wide' }, result.ticket_id)
+                                ),
+                                React.createElement('div', { className: 'mb-2' },
+                                    React.createElement('span', { className: 'font-semibold text-gray-900 text-sm md:text-base leading-tight' }, result.title)
+                                ),
+                                React.createElement('div', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                    React.createElement('i', { className: 'fas fa-cog text-gray-400' }),
+                                    React.createElement('span', {}, result.machine_type + ' - ' + result.model)
+                                ),
+                                React.createElement('div', { className: 'flex items-center gap-2 mt-2 flex-wrap' },
+                                    result.location && React.createElement('span', { className: 'text-xs text-gray-500 truncate flex items-center gap-1' },
+                                        React.createElement('i', { className: 'fas fa-map-marker-alt text-gray-400 text-[10px]' }),
+                                        React.createElement('span', {}, result.location)
+                                    ),
+                                    result.comments_count > 0 && React.createElement('span', { className: 'text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-medium flex items-center gap-1 shadow-sm flex-shrink-0' },
+                                        React.createElement('i', { className: 'fas fa-comment text-[10px]' }),
+                                        React.createElement('span', {}, result.comments_count + ' commentaire' + (result.comments_count > 1 ? 's' : ''))
+                                    )
+                                )
+                            )
+                        )
+                    ), document.body
+                ) : null,
+
+                // PORTAL POUR MESSAGE "AUCUN RÉSULTAT"
+                showSearchResults && searchKeywordResults.length === 0 && searchTextResults.length === 0 && searchQuery.trim().length >= 2 && !searchLoading && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal ? ReactDOM.createPortal(
+                    React.createElement('div', {
+                        className: 'search-no-results-portal bg-white border-2 border-gray-300 rounded-lg shadow-2xl p-4',
+                        style: {
+                            position: 'absolute',
+                            zIndex: 99999,
+                            top: (searchDropdownPosition.top + 2) + 'px',
+                            left: searchDropdownPosition.left + 'px',
+                            width: searchDropdownPosition.width + 'px',
+                            minWidth: '320px',
+                            pointerEvents: 'auto'
+                        },
+                        onMouseDown: (e) => e.stopPropagation()
+                    },
+                        React.createElement('p', { className: 'text-sm text-gray-500 text-center' },
+                            'Aucun résultat trouvé'
+                        )
+                    ), document.body
+                ) : null,
+
                 React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center md:justify-center gap-2 mt-4 header-actions' },
                     // 1. Nouvelle Demande (action primaire)
                     React.createElement('button', {
