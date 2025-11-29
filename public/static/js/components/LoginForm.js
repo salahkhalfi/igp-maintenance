@@ -6,18 +6,26 @@ const LoginForm = ({ onLogin }) => {
     const [loginTitle, setLoginTitle] = React.useState(DEFAULT_COMPANY_TITLE);
     const [loginSubtitle, setLoginSubtitle] = React.useState(DEFAULT_COMPANY_SUBTITLE);
     const [bannerIndex, setBannerIndex] = React.useState(0);
+    const [isAnimating, setIsAnimating] = React.useState(true);
 
     const bannerMessages = [
-        { text: "BONJOUR MARC", icon: "fa-hand-sparkles" },
-        { text: "APPLICATION PRÊTE POUR LES TESTS", icon: "fa-check-circle" }
+        { text: "BIENVENUE MARC", icon: "👋", color: "from-blue-500 to-indigo-600" },
+        { text: "VERSION STABILISÉE", icon: "💎", color: "from-emerald-500 to-teal-600" },
+        { text: "PRÊTE POUR VALIDATION", icon: "🚀", color: "from-violet-500 to-purple-600" }
     ];
 
     React.useEffect(() => {
         const interval = setInterval(() => {
-            setBannerIndex((prev) => (prev + 1) % bannerMessages.length);
-        }, 3000);
+            setIsAnimating(false);
+            setTimeout(() => {
+                setBannerIndex((prev) => (prev + 1) % bannerMessages.length);
+                setIsAnimating(true);
+            }, 500); // Temps de la sortie
+        }, 4000); // Temps d'affichage
         return () => clearInterval(interval);
     }, []);
+
+    const currentBanner = bannerMessages[bannerIndex];
 
     // Charger dynamiquement le titre et sous-titre à chaque affichage du login
     React.useEffect(() => {
@@ -104,10 +112,36 @@ const LoginForm = ({ onLogin }) => {
                         textShadow: '0 2px 4px rgba(0,0,0,0.3), 0 0 8px rgba(255,255,255,0.8)'
                     }
                 }, loginTitle),
-                React.createElement('div', { className: 'inline-block px-3 py-1 mb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full shadow-md animate-pulse' },
-                    React.createElement('i', { className: `fas ${bannerMessages[bannerIndex].icon} mr-2` }),
-                    bannerMessages[bannerIndex].text
+                
+                // BANNIÈRE PREMIUM ANIMÉE
+                React.createElement('div', { 
+                    className: 'relative overflow-hidden inline-flex items-center justify-center px-6 py-2 mb-4 rounded-full shadow-lg border border-white/20 backdrop-blur-md',
+                    style: {
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        minWidth: '260px',
+                        transition: 'all 0.5s ease'
+                    }
+                },
+                    // Fond coloré subtil qui change
+                    React.createElement('div', {
+                        className: `absolute inset-0 opacity-20 bg-gradient-to-r ${currentBanner.color} transition-all duration-1000`
+                    }),
+                    
+                    // Texte animé
+                    React.createElement('div', {
+                        className: `flex items-center font-bold text-xs sm:text-sm tracking-wide text-white transition-all duration-500 transform ${
+                            isAnimating 
+                                ? 'opacity-100 translate-y-0 scale-100 blur-none' 
+                                : 'opacity-0 translate-y-4 scale-95 blur-sm'
+                        }`,
+                        style: { textShadow: '0 2px 4px rgba(0,0,0,0.3)' }
+                    },
+                        React.createElement('span', { className: 'mr-3 text-base' }, currentBanner.icon),
+                        React.createElement('span', {}, currentBanner.text)
+                    )
                 ),
+
                 React.createElement('p', {
                     className: 'text-xs sm:text-sm px-4 break-words font-semibold',
                     style: {
