@@ -1107,9 +1107,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     ) : null,
 
 
-                    React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center' },
+                    React.createElement('div', { className: 'grid grid-cols-3 gap-2 sm:gap-3' },
                         React.createElement('label', {
-                            className: 'inline-block px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-100 border-2 border-dashed border-blue-400 rounded-lg cursor-pointer hover:bg-blue-200 hover:border-blue-600 transition-all text-center'
+                            className: 'flex flex-col items-center justify-center px-2 py-3 bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-100 hover:border-blue-500 transition-all text-center h-full'
                         },
                             React.createElement('input', {
                                 type: 'file',
@@ -1119,13 +1119,29 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 className: 'hidden',
                                 id: 'photo-upload-detail'
                             }),
-                            React.createElement('i', { className: 'fas fa-camera text-xl sm:text-2xl text-blue-600 mb-1 sm:mb-2 block' }),
-                            React.createElement('span', { className: 'text-xs sm:text-sm font-semibold text-blue-700 block' },
-                                'Prendre une photo'
+                            React.createElement('i', { className: 'fas fa-camera text-lg sm:text-xl text-blue-600 mb-1 block' }),
+                            React.createElement('span', { className: 'text-[10px] sm:text-xs font-bold text-blue-700 block leading-tight' },
+                                'Photo'
                             )
                         ),
                         React.createElement('label', {
-                            className: 'inline-block px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:bg-gray-200 hover:border-gray-600 transition-all text-center'
+                            className: 'flex flex-col items-center justify-center px-2 py-3 bg-red-50 border-2 border-dashed border-red-300 rounded-lg cursor-pointer hover:bg-red-100 hover:border-red-500 transition-all text-center h-full'
+                        },
+                            React.createElement('input', {
+                                type: 'file',
+                                accept: 'video/*',
+                                capture: 'environment',
+                                onChange: handleNewMediaChange,
+                                className: 'hidden',
+                                id: 'video-upload-detail'
+                            }),
+                            React.createElement('i', { className: 'fas fa-video text-lg sm:text-xl text-red-600 mb-1 block' }),
+                            React.createElement('span', { className: 'text-[10px] sm:text-xs font-bold text-red-700 block leading-tight' },
+                                'Vidéo'
+                            )
+                        ),
+                        React.createElement('label', {
+                            className: 'flex flex-col items-center justify-center px-2 py-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 hover:border-gray-500 transition-all text-center h-full'
                         },
                             React.createElement('input', {
                                 type: 'file',
@@ -1135,9 +1151,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 className: 'hidden',
                                 id: 'media-upload-detail'
                             }),
-                            React.createElement('i', { className: 'fas fa-images text-xl sm:text-2xl text-gray-600 mb-1 sm:mb-2 block' }),
-                            React.createElement('span', { className: 'text-xs sm:text-sm font-semibold text-gray-700 block' },
-                                'Choisir fichiers'
+                            React.createElement('i', { className: 'fas fa-images text-lg sm:text-xl text-gray-600 mb-1 block' }),
+                            React.createElement('span', { className: 'text-[10px] sm:text-xs font-bold text-gray-700 block leading-tight' },
+                                'Galerie'
                             )
                         )
                     )

@@ -2,8 +2,8 @@
 ## Système de Gestion de Maintenance IGP
 
 **Date de création:** 2025-01-16  
-**Dernière mise à jour:** 2025-01-16  
-**Version:** 1.0.0  
+**Dernière mise à jour:** 2025-11-29  
+**Version:** 1.1.0  
 **Objectif:** Document de référence permanent pour éviter la répétition d'erreurs  
 **Usage:** À consulter AVANT chaque modification de code  
 
@@ -341,6 +341,34 @@ React.createElement('div', {
 
 ---
 
+### 8. CAPTURE VIDÉO MOBILE - INPUT SPECIFIQUE
+
+#### ❌ Erreur UX Mobile
+```javascript
+// INCORRECT - Ne permet souvent que la photo sur mobile
+<input type="file" accept="image/*" capture="environment" />
+```
+**Problème:** L'attribut `capture="environment"` combiné à `accept="image/*"` force l'appareil photo en mode photo uniquement sur de nombreux appareils mobiles (iOS/Android). L'utilisateur ne peut pas passer en mode vidéo.
+
+#### ✅ Solution Validée
+```javascript
+// CORRECT - Input dédié pour la vidéo
+<input type="file" accept="video/*" capture="environment" />
+```
+**Solution:** Séparer explicitement les boutons "Photo" et "Vidéo".
+1. Un bouton pour `accept="image/*"` (Photo)
+2. Un bouton pour `accept="video/*"` (Vidéo)
+3. Un bouton pour `accept="image/*,video/*"` (Galerie/Fichiers existants)
+
+#### 🎯 Règle d'Or
+- **NE PAS supposer que l'utilisateur peut changer de mode photo/vidéo dans l'interface native**
+- **Fournir des points d'entrée explicites pour chaque type de média**
+
+#### 📋 Versions Qui Fonctionnent
+- ✅ v2.10.6 (Boutons séparés Photo/Vidéo/Galerie)
+
+---
+
 ## 🛠️ WORKFLOW SÉCURISÉ
 
 ### Avant Chaque Modification
@@ -590,6 +618,10 @@ pm2 logs webapp --nostream --lines 50 | grep -i "error\|fail"
 ---
 
 ## 📝 HISTORIQUE DES MODIFICATIONS
+
+### Version 1.1.0 (2025-11-29)
+- ✅ Ajout section 8: Capture Vidéo Mobile
+- ✅ Mise à jour version package.json (2.10.6)
 
 ### Version 1.0.0 (2025-01-16)
 - ✅ Création initiale du document

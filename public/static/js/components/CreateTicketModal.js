@@ -327,26 +327,41 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                     }),
                     React.createElement('input', {
                         type: 'file',
+                        accept: 'video/*',
+                        capture: 'environment',
+                        onChange: handleFileChange,
+                        className: 'hidden',
+                        id: 'video-upload'
+                    }),
+                    React.createElement('input', {
+                        type: 'file',
                         accept: 'image/*,video/*',
                         multiple: true,
                         onChange: handleFileChange,
                         className: 'hidden',
                         id: 'media-upload'
                     }),
-                    React.createElement('div', { className: 'flex gap-2' },
+                    React.createElement('div', { className: 'grid grid-cols-3 gap-2' },
                         React.createElement('label', {
                             htmlFor: 'photo-upload',
-                            className: 'flex-1 px-4 py-3 border-2 border-dashed border-igp-blue rounded-md text-center cursor-pointer hover:bg-blue-50 transition-all flex items-center justify-center text-igp-blue font-semibold'
+                            className: 'flex flex-col items-center justify-center px-2 py-3 border-2 border-dashed border-igp-blue rounded-md text-center cursor-pointer hover:bg-blue-50 transition-all text-igp-blue font-semibold h-full'
                         },
-                            React.createElement('i', { className: 'fas fa-camera mr-2' }),
-                            'Caméra'
+                            React.createElement('i', { className: 'fas fa-camera text-lg mb-1' }),
+                            React.createElement('span', { className: 'text-xs' }, 'Photo')
+                        ),
+                        React.createElement('label', {
+                            htmlFor: 'video-upload',
+                            className: 'flex flex-col items-center justify-center px-2 py-3 border-2 border-dashed border-red-400 rounded-md text-center cursor-pointer hover:bg-red-50 transition-all text-red-600 font-semibold h-full'
+                        },
+                            React.createElement('i', { className: 'fas fa-video text-lg mb-1' }),
+                            React.createElement('span', { className: 'text-xs' }, 'Vidéo')
                         ),
                         React.createElement('label', {
                             htmlFor: 'media-upload',
-                            className: 'flex-1 px-4 py-3 border-2 border-dashed border-gray-400 rounded-md text-center cursor-pointer hover:bg-gray-50 transition-all flex items-center justify-center text-gray-700 font-semibold'
+                            className: 'flex flex-col items-center justify-center px-2 py-3 border-2 border-dashed border-gray-400 rounded-md text-center cursor-pointer hover:bg-gray-50 transition-all text-gray-700 font-semibold h-full'
                         },
-                            React.createElement('i', { className: 'fas fa-images mr-2' }),
-                            'Galerie'
+                            React.createElement('i', { className: 'fas fa-images text-lg mb-1' }),
+                            React.createElement('span', { className: 'text-xs' }, 'Galerie')
                         )
                     ),
                     mediaPreviews.length > 0 ? React.createElement('div', { className: 'mt-3 grid grid-cols-3 gap-2' },

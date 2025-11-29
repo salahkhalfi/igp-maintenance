@@ -2,6 +2,12 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [2.10.6] - 2025-11-29
+
+### 📱 Expérience Mobile
+- **Bouton Vidéo dédié** : Ajout d'un bouton "Prendre une vidéo" distinct, utilisant `accept="video/*"` et `capture="environment"` pour ouvrir directement le mode vidéo de la caméra sur mobile.
+- **Interface de création/détails** : Séparation claire des actions "Photo", "Vidéo" et "Galerie" pour une meilleure ergonomie.
+
 ## [1.8.0] - 2025-11-02
 
 ### 🔒 Système de Permissions par Rôle
