@@ -189,10 +189,11 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             });
 
             let mimeType = '';
-            if (MediaRecorder.isTypeSupported('audio/mpeg')) mimeType = 'audio/mpeg';
-            else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
-            else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
-            else mimeType = 'audio/webm';
+            // Ordre de préférence pour compatibilité maximale (iPhone/Android/PC)
+            if (MediaRecorder.isTypeSupported('audio/mpeg')) mimeType = 'audio/mpeg'; // MP3
+            else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4'; // iOS
+            else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus'; // Chrome
+            else mimeType = 'audio/webm'; // Fallback
 
             const mediaRecorder = new MediaRecorder(stream, { mimeType });
             mediaRecorderRef.current = mediaRecorder;
@@ -249,12 +250,20 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             const textPart = commentText.replace(/\[audio:\d+\]/, '').trim();
             
             return React.createElement('div', {},
-                textPart ? React.createElement('p', { className: 'mb-2' }, textPart) : null,
-                React.createElement('div', { className: 'bg-white p-2 rounded border border-gray-200 shadow-sm inline-block' },
+                textPart ? React.createElement('p', { className: 'mb-2 text-gray-700 text-sm' }, textPart) : null,
+                React.createElement('div', { className: 'bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg p-3 border border-blue-100 shadow-sm inline-block min-w-[250px]' },
+                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                        React.createElement('div', { className: 'w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center' },
+                            React.createElement('i', { className: 'fas fa-microphone text-blue-600 text-xs' })
+                        ),
+                        React.createElement('span', { className: 'text-xs font-bold text-blue-700' }, 'Message vocal')
+                    ),
                     React.createElement('audio', {
                         controls: true,
+                        controlsList: "nodownload",
                         src: API_URL + '/media/' + mediaId,
-                        className: 'h-8 w-64'
+                        className: 'h-8 w-full max-w-[300px]',
+                        preload: "metadata"
                     })
                 )
             );
