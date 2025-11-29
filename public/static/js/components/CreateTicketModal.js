@@ -152,7 +152,7 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden transform hover:scale-[1.01] transition-all duration-300',
+            className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden transform hover:scale-[1.01] transition-all duration-300 flex flex-col',
             onClick: (e) => e.stopPropagation(),
             style: {
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
@@ -173,8 +173,8 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                     React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl' })
                 )
             ),
-            React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-80px)] sm:max-h-[calc(90vh-80px)] bg-gradient-to-br from-white/50 to-blue-50/30' },
-            React.createElement('form', { onSubmit: handleSubmit, className: 'space-y-4' },
+            React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-gradient-to-br from-white/50 to-blue-50/30' },
+            React.createElement('form', { id: 'create-ticket-form', onSubmit: handleSubmit, className: 'space-y-4' },
                 React.createElement('div', { className: 'mb-4' },
                     React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
                         React.createElement('i', { className: 'fas fa-heading mr-2' }),
@@ -418,29 +418,31 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                     )
                 : null,
 
-                React.createElement('div', { className: 'flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-6 pt-4 border-t-2 border-gray-200 sticky bottom-0 bg-white' },
-                    React.createElement('button', {
-                        type: 'button',
-                        onClick: onClose,
-                        className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-semibold'
-                    },
-                        React.createElement('i', { className: 'fas fa-times mr-2' }),
-                        'Annuler'
-                    ),
-                    React.createElement('button', {
-                        type: 'submit',
-                        disabled: submitting,
-                        className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 shadow-lg transition-all font-semibold'
-                    },
-                        submitting
-                            ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
-                            : React.createElement('i', { className: 'fas fa-check mr-2' }),
-                        submitting
-                            ? (uploadProgress > 0 ? 'Upload: ' + uploadProgress + '%' : 'Création...')
-                            : 'Créer le ticket' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s))' : '')
-                    )
-                )
+                null
             )
+            ),
+            React.createElement('div', { className: 'p-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row justify-end gap-2 sm:gap-4' },
+                React.createElement('button', {
+                    type: 'button',
+                    onClick: onClose,
+                    className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-semibold'
+                },
+                    React.createElement('i', { className: 'fas fa-times mr-2' }),
+                    'Annuler'
+                ),
+                React.createElement('button', {
+                    type: 'submit',
+                    form: 'create-ticket-form',
+                    disabled: submitting,
+                    className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 shadow-lg transition-all font-semibold'
+                },
+                    submitting
+                        ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
+                        : React.createElement('i', { className: 'fas fa-check mr-2' }),
+                    submitting
+                        ? (uploadProgress > 0 ? 'Upload: ' + uploadProgress + '%' : 'Création...')
+                        : 'Créer le ticket' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s))' : '')
+                )
             )
         )
     ));
