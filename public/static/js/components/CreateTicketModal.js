@@ -3,6 +3,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     const [description, setDescription] = React.useState('');
     const [machineId, setMachineId] = React.useState('');
     const [priority, setPriority] = React.useState('medium');
+    const [assignedTo, setAssignedTo] = React.useState('');
     const [mediaFiles, setMediaFiles] = React.useState([]);
     const [mediaPreviews, setMediaPreviews] = React.useState([]);
     const [submitting, setSubmitting] = React.useState(false);
