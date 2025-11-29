@@ -1248,7 +1248,6 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         '?'
                     )
                 )
-            )
         ),
 
 
