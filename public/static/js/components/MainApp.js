@@ -863,6 +863,24 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 React.createElement('i', { className: 'fas fa-clock mr-1' }),
                                 React.createElement('span', { id: 'overdue-tickets-badge' }, '0')
                             ) : null,
+                            (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
+                            React.createElement('span', {
+                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
+                                title: 'Techniciens actifs',
+                                onClick: () => setShowPerformanceModal(true)
+                            },
+                                React.createElement('i', { className: 'fas fa-users-cog mr-1' }),
+                                React.createElement('span', { id: 'technicians-count-badge' }, '0 techs')
+                            ) : null,
+                            (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
+                            React.createElement('span', {
+                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 cursor-pointer hover:bg-purple-200 transition-colors',
+                                title: 'Appareils Push Connectés',
+                                onClick: () => setShowPushDevicesModal(true)
+                            },
+                                React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }),
+                                React.createElement('span', { id: 'push-devices-badge' }, '0 apps')
+                            ) : null,
                             (currentUser?.role === "technician" || currentUser?.role === "supervisor" || currentUser?.role === "admin" || currentUser?.role === "operator" || currentUser?.role === "furnace_operator") ?
                             React.createElement('div', {
                                 className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer " + (unreadMessagesCount > 0 ? "bg-igp-red animate-pulse" : "bg-gradient-to-r from-igp-blue to-igp-blue-dark opacity-50"),
