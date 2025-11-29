@@ -155,8 +155,16 @@ self.addEventListener('notificationclick', (event) => {
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Pour les interactions boutons, on préfère TOUJOURS ouvrir une fenêtre
+      // C'est la SEULE méthode fiable pour fermer le panneau de notification sur Android
+      if (action === 'view_ticket' || action === 'view' || action === 'acknowledge' || action === 'new_audio_message' || action === 'new_private_message') {
+          if (clients.openWindow) {
+              return clients.openWindow(urlToOpen);
+          }
+      }
+
+      // Comportement standard pour le clic sur le corps (qui ferme déjà le shade nativement)
       // Chercher un client existant
-      // On priorise un client déjà visible, sinon le premier disponible
       const client = clientList.find(c => c.visibilityState === 'visible') || clientList[0];
 
       if (client) {
