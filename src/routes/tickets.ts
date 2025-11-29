@@ -141,7 +141,7 @@ tickets.post('/', async (c) => {
 
     // Récupérer les infos de la machine
     const machine = await c.env.DB.prepare(
-      'SELECT machine_type, model FROM machines WHERE id = ?'
+      'SELECT machine_type, model, location FROM machines WHERE id = ?'
     ).bind(machine_id).first() as any;
 
     if (!machine) {
@@ -191,8 +191,8 @@ tickets.post('/', async (c) => {
             
             const { sendPushNotification } = await import('./push');
             const pushResult = await sendPushNotification(c.env, assigned_to, {
-              title: `🔧 ${userName}, nouveau ticket`,
-              body: `${ticket_id}: ${title}`,
+              title: `🔴 Nouveau : ${machine.machine_type} ${machine.model}`,
+              body: `[${priority.toUpperCase()}] ${title} - ${machine.location || 'Non spécifié'}`,
               icon: '/icon-192.png',
               actions: [
                 { action: 'view', title: 'Voir' },
@@ -380,8 +380,8 @@ tickets.patch('/:id', async (c) => {
             const oldUserName = oldAssignedUser?.first_name || 'Technicien';
             
             const oldAssigneePush = await sendPushNotification(c.env, currentTicket.assigned_to, {
-              title: `📤 ${oldUserName}, ticket retiré`,
-              body: `${currentTicket.ticket_id} réassigné à quelqu'un d'autre`,
+              title: `📤 Affectation Annulée : ${currentTicket.machine_type}`,
+              body: `Ticket #${currentTicket.ticket_id} ne vous est plus assigné`,
               icon: '/icon-192.png',
               data: { 
                 ticketId: id,
@@ -419,8 +419,8 @@ tickets.patch('/:id', async (c) => {
         const newUserName = newAssignedUser?.first_name || 'Technicien';
         
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
-          title: `🔧 ${newUserName}, ticket réassigné`,
-          body: `${currentTicket.ticket_id}: ${currentTicket.title}`,
+          title: `🔄 Affectation : ${currentTicket.machine_type} ${currentTicket.model || ''}`,
+          body: `Ticket #${currentTicket.ticket_id} vous a été transféré`,
           icon: '/icon-192.png',
           actions: [
             { action: 'view', title: 'Voir' },
@@ -475,6 +475,9 @@ tickets.patch('/:id', async (c) => {
       try {
         const { sendPushNotification } = await import('./push');
         
+        // Récupérer le nom du technicien (l'utilisateur courant)
+        const techName = user.first_name || 'Un technicien';
+
         const statusLabels: Record<string, string> = {
             'received': 'Reçu',
             'diagnostic': 'Diagnostic',
@@ -485,9 +488,20 @@ tickets.patch('/:id', async (c) => {
         };
         const newStatusLabel = statusLabels[body.status] || body.status;
 
+        let notifTitle = `ℹ️ Statut : ${newStatusLabel} - ${currentTicket.machine_type}`;
+        let notifBody = `Votre ticket #${currentTicket.ticket_id} est maintenant ${newStatusLabel}.`;
+
+        if (body.status === 'in_progress') {
+            notifTitle = `✅ Pris en charge : ${currentTicket.machine_type}`;
+            notifBody = `${techName} travaille sur votre ticket #${currentTicket.ticket_id}.`;
+        } else if (body.status === 'completed') {
+            notifTitle = `✅ Terminé : ${currentTicket.machine_type}`;
+            notifBody = `Votre ticket #${currentTicket.ticket_id} a été résolu par ${techName}.`;
+        }
+
         await sendPushNotification(c.env, currentTicket.reported_by, {
-          title: `🎫 Statut: ${newStatusLabel}`,
-          body: `${currentTicket.ticket_id}: ${currentTicket.title}`,
+          title: notifTitle,
+          body: notifBody,
           icon: '/icon-192.png',
           actions: [{ action: 'view', title: 'Voir' }],
           data: { 
