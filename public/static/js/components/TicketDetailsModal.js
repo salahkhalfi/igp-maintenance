@@ -9,6 +9,49 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
     const [newMediaFiles, setNewMediaFiles] = React.useState([]);
     const [newMediaPreviews, setNewMediaPreviews] = React.useState([]);
     const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
+    
+    // Voice recognition setup
+    const [isRecording, setIsRecording] = React.useState(false);
+    const recognitionRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.interimResults = false;
+            recognitionRef.current.lang = 'fr-FR';
+
+            recognitionRef.current.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const capitalizedTranscript = transcript.charAt(0).toUpperCase() + transcript.slice(1);
+                
+                setNewComment(prev => {
+                    const prefix = prev ? prev + ' ' : '';
+                    return prefix + capitalizedTranscript;
+                });
+                setIsRecording(false);
+            };
+
+            recognitionRef.current.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                setIsRecording(false);
+            };
+
+            recognitionRef.current.onend = () => {
+                setIsRecording(false);
+            };
+        }
+    }, []);
+
+    const toggleRecording = () => {
+        if (isRecording) {
+            recognitionRef.current?.stop();
+        } else {
+            recognitionRef.current?.start();
+            setIsRecording(true);
+        }
+    };
 
     // États pour la planification (superviseur/admin seulement)
     const [editingSchedule, setEditingSchedule] = React.useState(false);
@@ -703,7 +746,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         ),
 
 
-                        React.createElement('div', { className: 'mb-3' },
+                        React.createElement('div', { className: 'mb-3 relative' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-1' },
                                 React.createElement('i', { className: 'fas fa-comment mr-1' }),
                                 'Commentaire *'
@@ -715,8 +758,20 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 placeholder: 'Ex: Pièce commandée, livraison prévue jeudi...',
                                 required: true,
                                 rows: 3,
-                                className: 'w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent resize-none'
-                            })
+                                className: 'w-full px-3 py-2 pr-10 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-igp-blue focus:border-transparent resize-none'
+                            }),
+                            // Voice input button inside textarea
+                            recognitionRef.current ? React.createElement('button', {
+                                type: 'button',
+                                onClick: toggleRecording,
+                                className: 'absolute right-2 bottom-2 p-1.5 rounded-full transition-colors ' + 
+                                    (isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'),
+                                title: "Dictée vocale"
+                            },
+                                isRecording 
+                                    ? React.createElement('i', { className: 'fas fa-stop-circle text-lg' }) 
+                                    : React.createElement('i', { className: 'fas fa-microphone text-lg' })
+                            ) : null
                         ),
 
 

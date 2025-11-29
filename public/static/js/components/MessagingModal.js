@@ -15,6 +15,50 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
 
     // États pour enregistrement audio
     const [isRecording, setIsRecording] = React.useState(false);
+    
+    // États pour la dictée vocale (Speech-to-Text)
+    const [isDictating, setIsDictating] = React.useState(false);
+    const dictationRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            dictationRef.current = new SpeechRecognition();
+            dictationRef.current.continuous = false;
+            dictationRef.current.interimResults = false;
+            dictationRef.current.lang = 'fr-FR';
+
+            dictationRef.current.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const capitalizedTranscript = transcript.charAt(0).toUpperCase() + transcript.slice(1);
+                
+                setMessageContent(prev => {
+                    const prefix = prev ? prev + ' ' : '';
+                    return prefix + capitalizedTranscript;
+                });
+                setIsDictating(false);
+            };
+
+            dictationRef.current.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                setIsDictating(false);
+            };
+
+            dictationRef.current.onend = () => {
+                setIsDictating(false);
+            };
+        }
+    }, []);
+
+    const toggleDictation = () => {
+        if (isDictating) {
+            dictationRef.current?.stop();
+        } else {
+            dictationRef.current?.start();
+            setIsDictating(true);
+        }
+    };
+
     const [audioBlob, setAudioBlob] = React.useState(null);
     const [recordingDuration, setRecordingDuration] = React.useState(0);
     const [audioURL, setAudioURL] = React.useState(null);
@@ -963,15 +1007,28 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                     )
                                 )
                             ) : null,
-                            !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2' },
-                                React.createElement('textarea', {
-                                    value: messageContent,
-                                    onChange: (e) => setMessageContent(e.target.value),
-                                    onKeyPress: handleKeyPress,
-                                    placeholder: 'Ecrire un message... (Enter pour envoyer)',
-                                    className: 'flex-1 border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all',
-                                    rows: 2
-                                }),
+                            !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2 items-end' },
+                                React.createElement('div', { className: 'flex-1 relative' },
+                                    React.createElement('textarea', {
+                                        value: messageContent,
+                                        onChange: (e) => setMessageContent(e.target.value),
+                                        onKeyPress: handleKeyPress,
+                                        placeholder: 'Ecrire un message... (Enter pour envoyer)',
+                                        className: 'w-full border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all',
+                                        rows: 2
+                                    }),
+                                    // Dictation button inside textarea
+                                    dictationRef.current ? React.createElement('button', {
+                                        onClick: toggleDictation,
+                                        className: 'absolute right-2 bottom-2 p-1.5 rounded-full transition-colors ' + 
+                                            (isDictating ? 'bg-red-100 text-red-600 animate-pulse' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'),
+                                        title: "Dictée vocale"
+                                    },
+                                        isDictating 
+                                            ? React.createElement('i', { className: 'fas fa-stop-circle' }) 
+                                            : React.createElement('i', { className: 'fas fa-microphone' })
+                                    ) : null
+                                ),
                                 React.createElement('button', {
                                     onClick: startRecording,
                                     className: 'px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
