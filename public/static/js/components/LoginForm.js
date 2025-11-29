@@ -92,7 +92,7 @@ const LoginForm = ({ onLogin }) => {
         }),
 
         React.createElement('div', {
-            className: 'p-8 rounded-2xl w-96 max-w-md mx-4 relative',
+            className: 'p-6 sm:p-8 rounded-2xl w-full max-w-md mx-4 relative', // Compact padding on mobile
             style: {
                 zIndex: 1, // Au-dessus de l'overlay
                 background: 'rgba(255, 255, 255, 0.25)', // Plus opaque pour lisibilité
@@ -102,11 +102,11 @@ const LoginForm = ({ onLogin }) => {
                 border: '1px solid rgba(255, 255, 255, 0.2)'
             }
         },
-            React.createElement('div', { className: 'text-center mb-8' },
+            React.createElement('div', { className: 'text-center mb-4 sm:mb-8' }, // Reduced margin on mobile
                 React.createElement('img', {
                     src: '/api/settings/logo?t=' + Date.now(),
                     alt: 'IGP Logo',
-                    className: 'h-20 w-auto mx-auto mb-4 drop-shadow-md',
+                    className: 'h-14 sm:h-20 w-auto mx-auto mb-2 sm:mb-4 drop-shadow-md', // Smaller logo and margin on mobile
                     onError: (e) => {
                         e.target.src = '/static/logo-igp.png';
                     }
@@ -123,7 +123,7 @@ const LoginForm = ({ onLogin }) => {
                 
                 // BANNIÈRE PREMIUM ANIMÉE
                 React.createElement('div', { 
-                    className: 'relative overflow-hidden inline-flex items-center justify-center px-6 py-2 mb-4 rounded-full shadow-lg border border-white/40 backdrop-blur-md',
+                    className: 'relative overflow-hidden inline-flex items-center justify-center px-4 sm:px-6 py-1.5 sm:py-2 mb-3 sm:mb-4 rounded-full shadow-lg border border-white/40 backdrop-blur-md', // Compact banner
                     style: {
                         background: 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))',
                         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)',
@@ -164,8 +164,8 @@ const LoginForm = ({ onLogin }) => {
                 onSubmit: handleSubmit,
                 autoComplete: 'off'
             },
-                React.createElement('div', { className: 'mb-4' },
-                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-2 shadow-black/5 drop-shadow-sm' },
+                React.createElement('div', { className: 'mb-3 sm:mb-4' }, // Reduced margin
+                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-1 sm:mb-2 shadow-black/5 drop-shadow-sm' },
                         React.createElement('i', { className: 'fas fa-envelope mr-2 text-blue-700' }),
                         'Email'
                     ),
@@ -181,8 +181,8 @@ const LoginForm = ({ onLogin }) => {
                         required: true
                     })
                 ),
-                React.createElement('div', { className: 'mb-6' },
-                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-2 shadow-black/5 drop-shadow-sm' },
+                React.createElement('div', { className: 'mb-4 sm:mb-6' }, // Reduced margin
+                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-1 sm:mb-2 shadow-black/5 drop-shadow-sm' },
                         React.createElement('i', { className: 'fas fa-lock mr-2 text-blue-700' }),
                         'Mot de passe'
                     ),
@@ -210,7 +210,7 @@ const LoginForm = ({ onLogin }) => {
                         )
                     )
                 ),
-                React.createElement('div', { className: 'mb-6' },
+                React.createElement('div', { className: 'mb-4 sm:mb-6' }, // Reduced margin
                     React.createElement('label', { className: 'flex items-center cursor-pointer group' },
                         React.createElement('input', {
                             type: 'checkbox',
@@ -232,8 +232,8 @@ const LoginForm = ({ onLogin }) => {
                     'Se connecter'
                 )
             ),
-            React.createElement('div', { className: 'mt-8 pt-6 border-t border-gray-200/30 text-center' },
-                React.createElement('p', { className: 'text-xs text-gray-700 font-medium drop-shadow-sm' },
+            React.createElement('div', { className: 'mt-4 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200/30 text-center' }, // Compact footer
+                React.createElement('p', { className: 'text-[10px] sm:text-xs text-gray-700 font-medium drop-shadow-sm' }, // Smaller text on mobile
                     React.createElement('i', { className: 'fas fa-code mr-1 opacity-70' }),
                     'Conçue par ',
                     React.createElement('span', { className: 'font-bold text-blue-900' }, "Le département des Technologies de l'Information des Produits Verriers International (IGP) Inc.")
