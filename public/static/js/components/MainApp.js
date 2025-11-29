@@ -712,10 +712,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                     title: headerTitle
                                 }, headerTitle),
                                 React.createElement('p', {
-                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5 hidden sm:block',
+                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5',
                                 }, headerSubtitle),
                                 React.createElement('p', {
-                                    className: 'text-[10px] font-semibold text-blue-600 mt-0.5 hidden sm:block md:hidden',
+                                    className: 'text-[10px] font-semibold text-blue-600 mt-0.5 block sm:hidden',
                                 }, '👋 ' + ((currentUser && currentUser.first_name) || 'Utilisateur'))
                             )
                         ),
@@ -830,7 +830,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             ),
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                             React.createElement('span', {
-                                className: 'hidden md:flex px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
+                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
                                 id: 'overdue-tickets-badge-wrapper',
                                 title: 'Tickets en retard',
                                 onClick: () => setShowOverdueModal(true)
@@ -840,7 +840,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             ) : null,
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                             React.createElement('span', {
-                                className: 'hidden md:flex px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
+                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
                                 title: 'Techniciens actifs',
                                 onClick: () => setShowPerformanceModal(true)
                             },
@@ -849,7 +849,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             ) : null,
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                             React.createElement('span', {
-                                className: 'hidden md:flex px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 cursor-pointer hover:bg-purple-200 transition-colors',
+                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 cursor-pointer hover:bg-purple-200 transition-colors',
                                 title: 'Appareils Push Connectés',
                                 onClick: () => setShowPushDevicesModal(true)
                             },
