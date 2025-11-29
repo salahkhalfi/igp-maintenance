@@ -865,14 +865,14 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
                                 unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
                             ) : null,
-                            // BOUTON CRÉATION TICKET MOBILE (Visible uniquement sur mobile, sorti du menu)
-                            React.createElement('button', {
+                            // BOUTON CRÉATION TICKET MOBILE (Supprimé du header pour être en FAB)
+                            /* React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
                                 className: 'md:hidden ml-1 px-3 py-1.5 bg-gradient-to-r from-blue-700 to-blue-600 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center active:scale-95 border border-blue-500/30',
                             },
                                 React.createElement('i', { className: 'fas fa-plus mr-1.5' }),
                                 'Demande'
-                            ),
+                            ), */
 
                             // BOUTON MENU MOBILE (Hamburger)
                             React.createElement('button', {
@@ -1726,7 +1726,33 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         })
                     )
                 )
-            ) : null
+            ) : null,
+
+            // NOUVEAU BOUTON FLOTTANT (FAB) POUR CRÉATION TICKET - MOBILE ONLY
+            React.createElement('button', {
+                onClick: () => setShowCreateModal(true),
+                className: 'md:hidden fixed bottom-6 right-6 z-50 group animate-bounce-subtle',
+                title: 'Nouvelle Demande'
+            },
+                React.createElement('div', {
+                    className: 'relative'
+                },
+                    // Glow effect
+                    React.createElement('div', {
+                        className: 'absolute inset-0 bg-blue-500 rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300',
+                    }),
+                    // Main button content (Pill shape)
+                    React.createElement('div', {
+                        className: 'relative bg-gradient-to-r from-blue-600 to-blue-700 text-white px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 border border-blue-400/30 backdrop-blur-sm',
+                        style: {
+                            boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.5), 0 8px 10px -6px rgba(37, 99, 235, 0.1)'
+                        }
+                    },
+                        React.createElement('i', { className: 'fas fa-plus text-lg' }),
+                        React.createElement('span', { className: 'font-bold text-sm tracking-wide' }, 'Nouvelle Demande')
+                    )
+                )
+            )
             )
         ),
 
