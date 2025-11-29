@@ -7,6 +7,60 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
     const [mediaPreviews, setMediaPreviews] = React.useState([]);
     const [submitting, setSubmitting] = React.useState(false);
     const [uploadProgress, setUploadProgress] = React.useState(0);
+    const [isListening, setIsListening] = React.useState(false); // État pour l'écoute vocale
+    const [listeningField, setListeningField] = React.useState(null); // Quel champ écoute ? (title ou description)
+
+    // Fonction de reconnaissance vocale (Web Speech API - Gratuite)
+    const startVoiceInput = (fieldSetter, currentVal, fieldName) => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert("La reconnaissance vocale n'est pas supportée par ce navigateur. Essayez Chrome ou Safari.");
+            return;
+        }
+
+        if (isListening) {
+            // Si déjà en train d'écouter, on arrête tout (toggle off)
+            setIsListening(false);
+            setListeningField(null);
+            return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+
+        recognition.lang = 'fr-FR'; // Français
+        recognition.continuous = false; // S'arrête dès qu'on fait une pause (mieux pour le bruit)
+        recognition.interimResults = false; // Attend le résultat final
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setListeningField(fieldName);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+            setListeningField(null);
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            // Ajoute le texte à la suite de l'existant (avec un espace si non vide)
+            const newValue = currentVal ? (currentVal + ' ' + transcript) : transcript;
+            // Capitalise la première lettre
+            const formattedValue = newValue.charAt(0).toUpperCase() + newValue.slice(1);
+            fieldSetter(formattedValue);
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Erreur vocale:", event.error);
+            setIsListening(false);
+            setListeningField(null);
+            if (event.error === 'not-allowed') {
+                alert("Veuillez autoriser l'accès au micro pour utiliser la dictée vocale.");
+            }
+        };
+
+        recognition.start();
+    };
 
     // États pour la planification (superviseur/admin seulement)
     const [assignedTo, setAssignedTo] = React.useState('');
@@ -176,9 +230,24 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
             React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-gradient-to-br from-white/50 to-blue-50/30' },
             React.createElement('form', { id: 'create-ticket-form', onSubmit: handleSubmit, className: 'space-y-4' },
                 React.createElement('div', { className: 'mb-4' },
-                    React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                        React.createElement('i', { className: 'fas fa-heading mr-2' }),
-                        'Titre du problème *'
+                    React.createElement('div', { className: 'flex justify-between items-center mb-2' },
+                        React.createElement('label', { className: 'block text-gray-700 text-sm font-bold' },
+                            React.createElement('i', { className: 'fas fa-heading mr-2' }),
+                            'Titre du problème *'
+                        ),
+                        // BOUTON MICRO TITRE
+                        React.createElement('button', {
+                            type: 'button',
+                            onClick: () => startVoiceInput(setTitle, title, 'title'),
+                            className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${
+                                isListening && listeningField === 'title'
+                                    ? 'bg-red-100 text-red-600 animate-pulse border border-red-200'
+                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'
+                            }`
+                        },
+                            React.createElement('i', { className: `fas ${isListening && listeningField === 'title' ? 'fa-stop-circle' : 'fa-microphone'}` }),
+                            React.createElement('span', {}, isListening && listeningField === 'title' ? 'Écoute...' : 'Dicter')
+                        )
                     ),
                     React.createElement('input', {
                         type: 'text',
@@ -192,9 +261,24 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                     })
                 ),
                 React.createElement('div', { className: 'mb-4' },
-                    React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
-                        React.createElement('i', { className: 'fas fa-align-left mr-2' }),
-                        'Description détaillée'
+                    React.createElement('div', { className: 'flex justify-between items-center mb-2' },
+                        React.createElement('label', { className: 'block text-gray-700 text-sm font-bold' },
+                            React.createElement('i', { className: 'fas fa-align-left mr-2' }),
+                            'Description détaillée'
+                        ),
+                        // BOUTON MICRO DESCRIPTION
+                        React.createElement('button', {
+                            type: 'button',
+                            onClick: () => startVoiceInput(setDescription, description, 'desc'),
+                            className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${
+                                isListening && listeningField === 'desc'
+                                    ? 'bg-red-100 text-red-600 animate-pulse border border-red-200'
+                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'
+                            }`
+                        },
+                            React.createElement('i', { className: `fas ${isListening && listeningField === 'desc' ? 'fa-stop-circle' : 'fa-microphone'}` }),
+                            React.createElement('span', {}, isListening && listeningField === 'desc' ? 'Écoute...' : 'Dicter')
+                        )
                     ),
                     React.createElement('textarea', {
                         className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
