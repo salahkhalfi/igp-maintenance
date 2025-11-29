@@ -277,7 +277,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden',
+            className: 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-hidden',
             onClick: (e) => e.stopPropagation()
         },
             React.createElement('div', { className: 'p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50' },

@@ -333,7 +333,7 @@ const UserGuideModal = ({ show, onClose, currentUser }) => {
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-6xl max-h-[90vh] flex flex-col',
+            className: 'bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-6xl max-h-[85vh] sm:max-h-[90vh] flex flex-col',
             onClick: (e) => e.stopPropagation()
         },
             React.createElement('div', { className: 'flex justify-between items-center p-6 border-b-2 border-gradient-to-r from-slate-400 to-gray-400 bg-gradient-to-r from-slate-50/50 to-gray-50/50 backdrop-blur-sm rounded-t-2xl' },

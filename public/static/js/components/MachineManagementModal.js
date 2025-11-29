@@ -131,7 +131,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
         onClick: onClose
     },
         React.createElement("div", {
-            className: "bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col",
+            className: "bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col",
             onClick: (e) => e.stopPropagation()
         },
             React.createElement("div", { className: "bg-gradient-to-r from-teal-600 to-cyan-600 text-white p-3 sm:p-5 flex justify-between items-center" },
