@@ -20,7 +20,7 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                 .then(res => setTechnicians(res.data.technicians))
                 .catch(err => {});
         }
-    }, [show, currentUser.role]);
+    }, [show, currentUser]);
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
