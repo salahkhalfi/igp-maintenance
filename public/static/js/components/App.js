@@ -9,6 +9,7 @@ const App = () => {
     const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
     const [headerTitle, setHeaderTitle] = React.useState(companyTitle);
     const [headerSubtitle, setHeaderSubtitle] = React.useState(companySubtitle);
+    const [error, setError] = React.useState(null);
 
     React.useEffect(() => {
         if (isLoggedIn) {
@@ -190,6 +191,33 @@ const App = () => {
             React.createElement('div', { className: 'text-center' },
                 React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-blue-500 mb-4' }),
                 React.createElement('p', { className: 'text-gray-600' }, 'Chargement...')
+            )
+        );
+    }
+
+    if (error) {
+        return React.createElement('div', { className: 'flex items-center justify-center h-screen' },
+            React.createElement('div', { className: 'text-center bg-white p-8 rounded-lg shadow-xl border-l-4 border-red-500' },
+                React.createElement('i', { className: 'fas fa-exclamation-circle fa-3x text-red-500 mb-4' }),
+                React.createElement('h2', { className: 'text-xl font-bold text-gray-800 mb-2' }, 'Oups ! Une erreur est survenue'),
+                React.createElement('p', { className: 'text-gray-600 mb-6' }, error),
+                React.createElement('button', {
+                    onClick: () => {
+                        setLoading(true);
+                        setError(null);
+                        loadData();
+                    },
+                    className: 'px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-md font-bold'
+                },
+                    React.createElement('i', { className: 'fas fa-sync-alt mr-2' }),
+                    'Réessayer'
+                ),
+                React.createElement('div', { className: 'mt-4' },
+                    React.createElement('button', {
+                        onClick: logout,
+                        className: 'text-sm text-gray-500 hover:text-gray-700 underline'
+                    }, 'Se déconnecter')
+                )
             )
         );
     }
