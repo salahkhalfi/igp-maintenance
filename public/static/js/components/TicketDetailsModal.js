@@ -221,6 +221,30 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
         audioChunksRef.current = [];
     };
 
+    // Fonction pour afficher le contenu d'un commentaire (texte ou lecteur audio)
+    const renderCommentContent = (commentText) => {
+        // Vérifier si le commentaire contient un tag audio [audio:ID]
+        const audioMatch = commentText.match(/\[audio:(\d+)\]/);
+        
+        if (audioMatch) {
+            const mediaId = audioMatch[1];
+            const textPart = commentText.replace(/\[audio:\d+\]/, '').trim();
+            
+            return React.createElement('div', {},
+                textPart ? React.createElement('p', { className: 'mb-2' }, textPart) : null,
+                React.createElement('div', { className: 'bg-white p-2 rounded border border-gray-200 shadow-sm inline-block' },
+                    React.createElement('audio', {
+                        controls: true,
+                        src: API_URL + '/media/' + mediaId,
+                        className: 'h-8 w-64'
+                    })
+                )
+            );
+        }
+        
+        return React.createElement('p', { className: 'text-gray-700 text-sm whitespace-pre-wrap' }, commentText);
+    };
+
     const handleUploadAudio = async () => {
         if (!audioBlob) return;
         
@@ -232,9 +256,12 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             formData.append('file', audioBlob, filename);
             formData.append('ticket_id', ticketId);
 
-            await axios.post(API_URL + '/media/upload', formData, {
+            const response = await axios.post(API_URL + '/media/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+            
+            // Récupérer l'ID du média créé pour l'intégrer au commentaire
+            const mediaId = response.data.media ? response.data.media.id : '';
 
             // Ajouter aussi un commentaire texte pour notifier
             const utcTime = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -242,12 +269,17 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             if (currentUser?.role === 'technician') userRoleFr = 'Technicien';
             else if (currentUser?.role === 'supervisor') userRoleFr = 'Superviseur';
             else if (currentUser?.role === 'admin') userRoleFr = 'Admin';
+            
+            // Format spécial pour le message vocal avec ID
+            const commentText = mediaId 
+                ? `🎤 A ajouté un message vocal\n[audio:${mediaId}]` 
+                : '🎤 A ajouté un message vocal';
 
             await axios.post(API_URL + '/comments', {
                 ticket_id: ticketId,
                 user_name: currentUser.first_name,
                 user_role: userRoleFr,
-                comment: '🎤 A ajouté un message vocal',
+                comment: commentText,
                 created_at: utcTime
             });
 
@@ -760,7 +792,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 (ticket.media && ticket.media.length > 0) ? React.createElement('div', { className: 'mb-4 sm:mb-6' },
                     React.createElement('h4', { className: 'text-base sm:text-lg font-bold text-gray-800 mb-3 flex items-center' },
                         React.createElement('i', { className: 'fas fa-images mr-2 text-blue-700 text-sm sm:text-base' }),
-                        'Photos et Vidéos (' + ticket.media.length + ')'
+                        'Galerie Médias (Photos, Vidéos, Vocaux) (' + ticket.media.length + ')'
                     ),
                     React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3' },
                         ticket.media.map((media, index) =>
@@ -849,7 +881,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                         formatDateEST(comment.created_at)
                                     )
                                 ),
-                                React.createElement('p', { className: 'text-gray-700 text-sm whitespace-pre-wrap' }, comment.comment)
+                                renderCommentContent(comment.comment)
                             )
                         )
                     ) : React.createElement('div', { className: 'text-center py-6 bg-gray-50 rounded mb-4' },
