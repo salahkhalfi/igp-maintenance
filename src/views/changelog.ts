@@ -140,7 +140,7 @@ export const changelogHTML = `
                     <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold text-blue-600">v2.8.1</div>
+                    <div class="text-2xl font-bold text-blue-600">v2.10.5</div>
                     <div class="text-sm text-gray-500">Version actuelle</div>
                 </div>
             </div>
@@ -192,7 +192,40 @@ export const changelogHTML = `
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.8.1 - ACTUELLE -->
+            <!-- Version 2.10.5 - ACTUELLE -->
+            <div class="timeline-item" data-version="2.10.5" data-types="fix">
+                <div class="timeline-dot bg-gradient-to-br from-red-600 to-red-700 text-white">
+                    <i class="fas fa-bug"></i>
+                </div>
+                <div class="version-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.10.5</h2>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Correction Critique Mobile
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Fix: Menu contextuel mobile ne se fermait pas</li>
+                                <li>• Z-Index corrigé pour superposition correcte sur le header</li>
+                                <li>• Interaction améliorée sur les zones tactiles</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-fix"><i class="fas fa-wrench"></i> Correction</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.8.1 -->
             <div class="timeline-item" data-version="2.8.1" data-types="feature design">
                 <div class="timeline-dot bg-gradient-to-br from-blue-600 to-purple-700 text-white">
                     <i class="fas fa-sparkles"></i>
@@ -202,7 +235,7 @@ export const changelogHTML = `
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800">Version 2.8.1</h2>
                         </div>
-                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">PRÉCÉDENTE</span>
                     </div>
 
                     <div class="space-y-4">
