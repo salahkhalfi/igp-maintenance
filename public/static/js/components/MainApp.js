@@ -702,8 +702,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 className: 'pl-3 flex flex-col justify-center',
                                 style: {
                                     borderLeft: '1px solid rgba(0, 0, 0, 0.1)',
-                                    marginLeft: '12px',
-                                    height: '36px'
+                                    marginLeft: '12px'
                                 }
                             },
                                 React.createElement('h1', {
@@ -711,7 +710,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                     title: headerTitle
                                 }, headerTitle),
                                 React.createElement('p', {
-                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5 hidden sm:block',
+                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5',
                                 }, headerSubtitle),
                                 React.createElement('p', {
                                     className: 'text-[10px] font-semibold text-blue-600 mt-0.5 block sm:hidden',
