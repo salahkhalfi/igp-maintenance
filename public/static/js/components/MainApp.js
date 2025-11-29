@@ -382,8 +382,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         // Si pas assez d'espace en bas mais plus d'espace en haut, ouvrir vers le haut
         if (spaceBelow < menuHeightEstimate && spaceAbove > spaceBelow) {
             openUpward = true;
-            // Positionner le menu au-dessus du curseur
-            y = Math.max(10, y - Math.min(menuHeightEstimate, spaceAbove - 10));
+            // Positionner le menu au-dessus du curseur en évitant le header
+            // Header height mobile ~110px (logo + search), desktop ~70px. Using safe margin.
+            const headerMargin = window.innerWidth < 768 ? 120 : 85;
+            y = Math.max(headerMargin, y - Math.min(menuHeightEstimate, spaceAbove - headerMargin));
         } else {
             // Ouvrir vers le bas normalement, mais limiter à l'espace disponible
             y = Math.min(y, window.innerHeight - 60); // Laisser 60px marge minimale
