@@ -92,4 +92,69 @@ comments.get('/ticket/:ticketId', authMiddleware, async (c) => {
   }
 });
 
+// DELETE /api/comments/:id - Supprimer un commentaire (protégé)
+comments.delete('/:id', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const id = c.req.param('id');
+
+    // Récupérer le commentaire
+    const comment = await c.env.DB.prepare(
+      'SELECT * FROM ticket_comments WHERE id = ?'
+    ).bind(id).first() as any;
+
+    if (!comment) {
+      return c.json({ error: 'Commentaire non trouvé' }, 404);
+    }
+
+    // Permissions: Admin, Supervisor, ou l'auteur du commentaire (si même nom)
+    // Note: Le système actuel stocke le nom, pas l'ID user dans comments, c'est une limitation héritée.
+    // On vérifie au moins le rôle admin/supervisor pour la modération.
+    const canDelete = 
+      user.role === 'admin' || 
+      user.role === 'supervisor' ||
+      (user.first_name && comment.user_name === user.first_name); // Vérification basique par nom
+
+    if (!canDelete) {
+      return c.json({ error: 'Permission refusée' }, 403);
+    }
+
+    // Suppression en cascade : Vérifier si c'est un message vocal [audio:ID]
+    const audioMatch = comment.comment.match(/\[audio:(\d+)\]/);
+    if (audioMatch) {
+      const mediaId = audioMatch[1];
+      
+      // Récupérer les infos du média
+      const mediaInfo = await c.env.DB.prepare(
+        'SELECT * FROM media WHERE id = ?'
+      ).bind(mediaId).first() as any;
+
+      if (mediaInfo) {
+        try {
+          // Supprimer de R2
+          await c.env.MEDIA_BUCKET.delete(mediaInfo.file_key);
+          console.log(`Média audio associé supprimé de R2: ${mediaInfo.file_key}`);
+          
+          // Supprimer de la table media
+          await c.env.DB.prepare(
+            'DELETE FROM media WHERE id = ?'
+          ).bind(mediaId).run();
+        } catch (mediaError) {
+          console.error('Erreur lors de la suppression du média audio associé', mediaError);
+        }
+      }
+    }
+
+    // Supprimer le commentaire
+    await c.env.DB.prepare(
+      'DELETE FROM ticket_comments WHERE id = ?'
+    ).bind(id).run();
+
+    return c.json({ success: true, message: 'Commentaire supprimé' });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    return c.json({ error: 'Erreur lors de la suppression du commentaire' }, 500);
+  }
+});
+
 export default comments;

@@ -151,6 +151,24 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
         });
     };
 
+    const handleDeleteComment = async (commentId) => {
+        setConfirmDialog({
+            show: true,
+            message: 'Supprimer ce commentaire ? (Si c\'est un message vocal, le fichier audio sera aussi supprimé)',
+            onConfirm: async () => {
+                setConfirmDialog({ show: false, message: '', onConfirm: null });
+                try {
+                    await axios.delete(API_URL + '/comments/' + commentId);
+                    alert('Commentaire supprimé');
+                    loadComments();
+                    loadTicketDetails(); // Recharger les détails (pour mettre à jour la galerie média si nécessaire)
+                } catch (error) {
+                    alert('Erreur lors de la suppression: ' + (error.response?.data?.error || 'Erreur inconnue'));
+                }
+            }
+        });
+    };
+
     const [audioBlob, setAudioBlob] = React.useState(null);
     const [isRecordingAudio, setIsRecordingAudio] = React.useState(false);
     const [recordingDuration, setRecordingDuration] = React.useState(0);
@@ -251,8 +269,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
         setUploadingMedia(true);
         try {
             const formData = new FormData();
-            // Nom explicite pour l'audio
-            const filename = `message_vocal_${new Date().getTime()}.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
+            // Nom explicite pour l'audio: vocal_Prenom_Timestamp
+            const safeName = currentUser.first_name.replace(/[^a-zA-Z0-9]/g, '_');
+            const filename = `vocal_${safeName}_${new Date().getTime()}.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
             formData.append('file', audioBlob, filename);
             formData.append('ticket_id', ticketId);
 
@@ -813,7 +832,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                         : media.file_type.startsWith('audio/')
                                             ? React.createElement('div', { className: 'w-full h-32 bg-slate-100 rounded border-2 border-slate-300 hover:border-igp-blue transition-all flex flex-col items-center justify-center pointer-events-none sm:pointer-events-auto p-2' },
                                                 React.createElement('i', { className: 'fas fa-microphone-alt fa-2x text-slate-500 mb-2' }),
-                                                React.createElement('span', { className: 'text-xs text-slate-600 font-semibold text-center truncate w-full' }, 'Message Vocal')
+                                                React.createElement('span', { className: 'text-xs text-slate-600 font-semibold text-center truncate w-full' }, 
+                                                    'Vocal du ' + new Date(media.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                                                )
                                             )
                                             : React.createElement('div', { className: 'w-full h-32 bg-gray-200 rounded border-2 border-gray-300 hover:border-igp-blue transition-all flex items-center justify-center pointer-events-none sm:pointer-events-auto' },
                                                 React.createElement('i', { className: 'fas fa-video fa-3x text-gray-500' })
@@ -877,8 +898,19 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                             comment.user_role || 'Opérateur'
                                         )
                                     ),
-                                    React.createElement('span', { className: 'text-xs text-gray-500' },
-                                        formatDateEST(comment.created_at)
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('span', { className: 'text-xs text-gray-500' },
+                                            formatDateEST(comment.created_at)
+                                        ),
+                                        (currentUser && (
+                                            currentUser?.role === 'admin' || 
+                                            currentUser?.role === 'supervisor' ||
+                                            (currentUser?.first_name && comment.user_name === currentUser.first_name)
+                                        )) ? React.createElement('button', {
+                                            onClick: () => handleDeleteComment(comment.id),
+                                            className: 'text-gray-400 hover:text-red-500 transition-colors p-1',
+                                            title: 'Supprimer'
+                                        }, React.createElement('i', { className: 'fas fa-trash-alt text-xs' })) : null
                                     )
                                 ),
                                 renderCommentContent(comment.comment)

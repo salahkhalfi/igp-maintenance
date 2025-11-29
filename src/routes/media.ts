@@ -185,6 +185,20 @@ media.delete('/:id', authMiddleware, async (c) => {
       'DELETE FROM media WHERE id = ?'
     ).bind(id).run();
 
+    // Suppression en cascade : Supprimer le commentaire associé si c'est un message vocal
+    if (mediaInfo.file_type.startsWith('audio/')) {
+      try {
+        // Chercher les commentaires contenant ce tag audio
+        const tag = `[audio:${id}]`;
+        await c.env.DB.prepare(
+          'DELETE FROM comments WHERE ticket_id = ? AND comment LIKE ?'
+        ).bind(mediaInfo.ticket_id, `%${tag}%`).run();
+        console.log(`Commentaire audio associé supprimé pour media ${id}`);
+      } catch (commentError) {
+        console.error('Erreur lors de la suppression du commentaire audio associé', commentError);
+      }
+    }
+
     return c.json({
       message: 'Media supprime avec succes',
       fileDeleted: true
