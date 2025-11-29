@@ -672,91 +672,61 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
 
         React.createElement('header', {
-            className: 'shadow-lg border-b-4 border-igp-blue',
+            className: 'sticky top-0 z-50',
             style: {
-                background: 'rgba(255, 255, 255, 0.40)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                borderBottom: '4px solid #003366',
-                position: 'relative',
-                zIndex: 10
+                background: 'rgba(255, 255, 255, 0.75)', // Plus clair, plus uniforme
+                backdropFilter: 'blur(25px) saturate(180%)', // Flou plus intense type iOS
+                WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', // Ombre très douce
+                borderBottom: '1px solid rgba(0, 0, 0, 0.05)', // Bordure ultra-fine
+                transition: 'all 0.3s ease'
             }
         },
-            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
-                React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-4' },
+            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
+                React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-3' },
+                    // BLOC LOGO ET TITRE (Nettoyé : plus de cadre, plus de dégradé de fond)
                     React.createElement('div', {
-                        className: 'flex flex-wrap items-center justify-between md:justify-start space-x-0 md:space-x-3 flex-1 min-w-0',
-                        style: {
-                            background: 'linear-gradient(135deg, rgba(240, 249, 255, 0.85) 0%, rgba(224, 242, 254, 0.75) 50%, rgba(186, 230, 253, 0.8) 100%)',
-                            backdropFilter: 'blur(20px) saturate(180%)',
-                            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                            padding: '14px',
-                            borderRadius: '16px',
-                            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37), 0 4px 16px rgba(0, 51, 102, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.8), inset 0 -2px 4px rgba(186, 230, 253, 0.3)',
-                            border: '2px solid rgba(255, 255, 255, 0.6)',
-                            borderTop: '2px solid rgba(255, 255, 255, 0.9)',
-                            borderLeft: '2px solid rgba(255, 255, 255, 0.8)',
-                            position: 'relative',
-                            width: '100%',
-                            overflow: 'visible' // Allow search dropdown to calculate position correctly
-                        }
+                        className: 'flex items-center min-w-0 group', // Group pour effet au survol
                     },
-                        React.createElement('div', {
-                            style: {
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: '50%',
-                                background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%)',
-                                borderRadius: '16px 16px 0 0',
-                                pointerEvents: 'none'
-                            }
-                        }),
-                        React.createElement('div', { className: 'flex items-center mb-2 md:mb-0' },
+                        React.createElement('div', { className: 'flex items-center' },
                             React.createElement('img', {
                                 src: '/api/settings/logo?t=' + Date.now(),
                                 alt: 'IGP Logo',
-                                className: 'h-10 md:h-12 lg:h-16 w-auto object-contain flex-shrink-0',
+                                className: 'h-9 md:h-10 w-auto object-contain flex-shrink-0 transition-transform duration-300 group-hover:scale-105',
                                 onError: (e) => {
                                     e.target.src = '/static/logo-igp.png';
                                 }
                             }),
                             React.createElement('div', { 
-                                className: 'pl-2 md:pl-3 min-w-0',
+                                className: 'pl-3 flex flex-col justify-center',
                                 style: {
-                                    borderLeft: '2px solid rgba(147, 197, 253, 0.5)',
-                                    position: 'relative'
+                                    borderLeft: '1px solid rgba(0, 0, 0, 0.1)',
+                                    marginLeft: '12px',
+                                    height: '36px' // Hauteur fixe pour alignement vertical
                                 }
                             },
                                 React.createElement('h1', {
-                                    className: 'text-sm md:text-lg lg:text-xl font-bold break-words',
-                                    style: {
-                                        wordBreak: 'break-word',
-                                        overflowWrap: 'break-word',
-                                        color: '#1e3a8a',
-                                        fontWeight: '900'
-                                    },
+                                    className: 'text-sm md:text-base font-bold leading-none tracking-tight text-slate-800',
                                     title: headerTitle
                                 }, headerTitle),
                                 React.createElement('p', {
-                                    className: 'text-xs text-blue-600/80 font-bold hidden lg:block',
-                                    style: { marginTop: '-2px', marginBottom: '2px' }
+                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5 hidden sm:block',
                                 }, headerSubtitle),
+                                // Le Bonjour déplacé ici pour être plus discret
                                 React.createElement('p', {
-                                    className: 'text-xs md:text-sm font-semibold mt-1 hidden md:block',
-                                    style: {
-                                        color: '#047857',
-                                        fontWeight: '900',
-                                        textShadow: '2px 2px 6px rgba(255, 255, 255, 1), -2px -2px 6px rgba(255, 255, 255, 1), 2px -2px 6px rgba(255, 255, 255, 1), -2px 2px 6px rgba(255, 255, 255, 1)'
-                                    }
-                                },
-                                    '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
-                                )
+                                    className: 'text-[10px] font-semibold text-blue-600 mt-0.5 block sm:hidden',
+                                }, '👋 ' + (currentUser?.first_name || 'Utilisateur'))
                             )
                         ),
+                        // Bonjour version Desktop (séparé pour équilibre)
+                        React.createElement('div', {
+                            className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50'
+                        },
+                            React.createElement('span', { className: 'text-xs font-medium text-blue-700' },
+                                '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
+                            )
+                        )
+                    ),
 
                         // BARRE DE RECHERCHE INTEGRÉE
                         React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-2 md:mt-0', style: { zIndex: 50 } },
