@@ -112,9 +112,9 @@ tickets.post('/', async (c) => {
     const body: CreateTicketRequest = await c.req.json();
     const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
 
-    // Validation des champs requis
-    if (!title || !description || !reporter_name || !machine_id || !priority) {
-      return c.json({ error: 'Tous les champs sont requis' }, 400);
+    // Validation des champs requis (description est maintenant optionnel)
+    if (!title || !reporter_name || !machine_id || !priority) {
+      return c.json({ error: 'Tous les champs sont requis (sauf description)' }, 400);
     }
 
     // Validation du titre
@@ -122,10 +122,13 @@ tickets.post('/', async (c) => {
       return c.json({ error: 'Titre invalide (3-200 caractères)' }, 400);
     }
 
-    // Validation de la description
-    if (description.trim().length < 5 || description.length > 2000) {
-      return c.json({ error: 'Description invalide (5-2000 caractères)' }, 400);
+    // Validation de la description (si fournie)
+    if (description && description.trim().length > 0 && description.length > 2000) {
+      return c.json({ error: 'Description trop longue (max 2000 caractères)' }, 400);
     }
+
+    // Si pas de description, mettre une chaîne vide par défaut
+    const safeDescription = description || '';
 
     // Validation de la priorité
     const validPriorities = ['low', 'medium', 'high', 'critical'];
@@ -162,7 +165,7 @@ tickets.post('/', async (c) => {
         const result = await c.env.DB.prepare(`
           INSERT INTO tickets (ticket_id, title, description, reporter_name, machine_id, priority, reported_by, assigned_to, scheduled_date, status, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'received', ?, ?)
-        `).bind(ticket_id, title, description, reporter_name, machine_id, priority, user.userId, assigned_to || null, scheduled_date || null, timestamp, timestamp).run();
+        `).bind(ticket_id, title, safeDescription, reporter_name, machine_id, priority, user.userId, assigned_to || null, scheduled_date || null, timestamp, timestamp).run();
 
         if (!result.success) {
           throw new Error('Insert failed');
@@ -177,7 +180,7 @@ tickets.post('/', async (c) => {
         await c.env.DB.prepare(`
           INSERT INTO ticket_timeline (ticket_id, user_id, action, new_status, comment)
           VALUES (?, ?, 'Ticket créé', 'received', ?)
-        `).bind((newTicket as any).id, user.userId, description).run();
+        `).bind((newTicket as any).id, user.userId, safeDescription).run();
 
         // Envoyer notification push si ticket assigné à un technicien dès la création
         if (assigned_to) {

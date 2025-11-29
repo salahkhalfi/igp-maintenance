@@ -194,7 +194,7 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                 React.createElement('div', { className: 'mb-4' },
                     React.createElement('label', { className: 'block text-gray-700 text-sm font-bold mb-2' },
                         React.createElement('i', { className: 'fas fa-align-left mr-2' }),
-                        'Description détaillée *'
+                        'Description détaillée'
                     ),
                     React.createElement('textarea', {
                         className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
@@ -202,9 +202,9 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                         value: description,
                         onChange: (e) => handleInputField(e, setDescription),
                         onInvalid: handleInvalidField,
-                        placeholder: 'Décrivez le problème en détail...',
+                        placeholder: 'Décrivez le problème (optionnel)...',
                         rows: 4,
-                        required: true
+                        required: false
                     })
                 ),
                 React.createElement('div', { className: 'mb-4' },
