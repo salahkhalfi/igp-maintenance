@@ -742,6 +742,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                     title: headerTitle
                                 }, headerTitle),
                                 React.createElement('p', {
+                                    className: 'text-xs text-blue-600/80 font-bold hidden lg:block',
+                                    style: { marginTop: '-2px', marginBottom: '2px' }
+                                }, headerSubtitle),
+                                React.createElement('p', {
                                     className: 'text-xs md:text-sm font-semibold mt-1 hidden md:block',
                                     style: {
                                         color: '#047857',
