@@ -29,7 +29,7 @@ const PerformanceModal = ({ show, onClose }) => {
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4',
+        className: 'fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4',
         onClick: onClose
     },
         React.createElement('div', {
