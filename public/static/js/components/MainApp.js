@@ -695,7 +695,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             React.createElement('img', {
                                 src: '/api/settings/logo?t=' + Date.now(),
                                 alt: 'IGP Logo',
-                                className: 'h-9 md:h-10 w-auto object-contain flex-shrink-0 transition-transform duration-300 group-hover:scale-105',
+                                className: 'h-8 md:h-10 w-auto object-contain flex-shrink-0 transition-transform duration-300 group-hover:scale-105',
                                 onError: (e) => {
                                     e.target.src = '/static/logo-igp.png';
                                 }
@@ -712,10 +712,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                     title: headerTitle
                                 }, headerTitle),
                                 React.createElement('p', {
-                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5',
+                                    className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5 hidden sm:block',
                                 }, headerSubtitle),
                                 React.createElement('p', {
-                                    className: 'text-[10px] font-semibold text-blue-600 mt-0.5 block sm:hidden',
+                                    className: 'text-[10px] font-semibold text-blue-600 mt-0.5 hidden sm:block md:hidden',
                                 }, '👋 ' + ((currentUser && currentUser.first_name) || 'Utilisateur'))
                             )
                         ),
@@ -730,12 +730,12 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     ),
 
                         // BARRE DE RECHERCHE INTEGRÉE
-                        React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-2 md:mt-0', style: { zIndex: 50 } },
+                        React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-1.5 md:mt-0', style: { zIndex: 50 } },
                             React.createElement('input', {
                                 ref: searchInputRef,
                                 type: 'text',
                                 placeholder: searchPlaceholders[placeholderIndex],
-                                className: 'w-full px-3 md:px-4 py-2 pr-14 md:pr-20 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white/80 backdrop-blur-sm transition-all shadow-inner',
+                                className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-14 md:pr-20 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white/80 backdrop-blur-sm transition-all shadow-inner',
                                 value: searchQuery,
                                 onKeyDown: (e) => {
                                     if (e.key === 'Escape') {
@@ -830,7 +830,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             ),
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                             React.createElement('span', {
-                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
+                                className: 'hidden md:flex px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors',
                                 id: 'overdue-tickets-badge-wrapper',
                                 title: 'Tickets en retard',
                                 onClick: () => setShowOverdueModal(true)
@@ -840,7 +840,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             ) : null,
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                             React.createElement('span', {
-                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
+                                className: 'hidden md:flex px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 cursor-pointer hover:bg-blue-200 transition-colors',
                                 title: 'Techniciens actifs',
                                 onClick: () => setShowPerformanceModal(true)
                             },
@@ -849,7 +849,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             ) : null,
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                             React.createElement('span', {
-                                className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 cursor-pointer hover:bg-purple-200 transition-colors',
+                                className: 'hidden md:flex px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 cursor-pointer hover:bg-purple-200 transition-colors',
                                 title: 'Appareils Push Connectés',
                                 onClick: () => setShowPushDevicesModal(true)
                             },
