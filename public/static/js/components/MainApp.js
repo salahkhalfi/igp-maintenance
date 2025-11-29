@@ -686,7 +686,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-3' },
                     // BLOC LOGO ET TITRE (Nettoyé : plus de cadre, plus de dégradé de fond)
                     React.createElement('div', {
-                        className: 'flex items-center min-w-0 group', // Group pour effet au survol
+                        className: 'flex items-center min-w-0 group'
                     },
                         React.createElement('div', { className: 'flex items-center' },
                             React.createElement('img', {
@@ -702,7 +702,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 style: {
                                     borderLeft: '1px solid rgba(0, 0, 0, 0.1)',
                                     marginLeft: '12px',
-                                    height: '36px' // Hauteur fixe pour alignement vertical
+                                    height: '36px'
                                 }
                             },
                                 React.createElement('h1', {
@@ -712,18 +712,17 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 React.createElement('p', {
                                     className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5 hidden sm:block',
                                 }, headerSubtitle),
-                                // Le Bonjour déplacé ici pour être plus discret
                                 React.createElement('p', {
                                     className: 'text-[10px] font-semibold text-blue-600 mt-0.5 block sm:hidden',
-                                }, '👋 ' + (currentUser?.first_name || 'Utilisateur'))
+                                }, '👋 ' + ((currentUser && currentUser.first_name) || 'Utilisateur'))
                             )
                         ),
-                        // Bonjour version Desktop (séparé pour équilibre)
+                        // Bonjour version Desktop
                         React.createElement('div', {
                             className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50'
                         },
                             React.createElement('span', { className: 'text-xs font-medium text-blue-700' },
-                                '👋 Bonjour ' + (currentUser?.first_name || currentUser?.email?.split('@')[0] || 'Utilisateur')
+                                '👋 Bonjour ' + ((currentUser && currentUser.first_name) || (currentUser && currentUser.email && currentUser.email.split('@')[0]) || 'Utilisateur')
                             )
                         )
                     ),
