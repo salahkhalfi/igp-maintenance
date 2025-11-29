@@ -31,7 +31,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
     // Charger les techniciens et pré-remplir le formulaire de planification
     React.useEffect(() => {
-        if (show && currentUser && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) {
+        if (show && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) {
             axios.get(API_URL + '/technicians')
                 .then(res => setTechnicians(res.data.technicians))
                 .catch(err => {});
@@ -44,7 +44,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             // NOUVEAU: Conversion UTC SQL → datetime-local
             setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? utcToLocalDateTime(ticket.scheduled_date) : '');
         }
-    }, [show, currentUser, ticket]);
+    }, [show, currentUser.role, ticket]);
 
     const loadTicketDetails = async () => {
         try {

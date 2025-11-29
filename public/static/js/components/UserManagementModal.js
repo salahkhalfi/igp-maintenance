@@ -255,7 +255,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
         if (currentUser.role === "supervisor" && targetUser.role === "technician") return true;
         // Autres cas: non visible
         return false;
-    }, [currentUser]);
+    }, [currentUser.role]);
 
     const handleDeleteUser = React.useCallback((userId, userName) => {
         setConfirmDialog({
