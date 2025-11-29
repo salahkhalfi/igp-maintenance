@@ -63,7 +63,37 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
     };
 
     // États pour la planification (superviseur/admin seulement)
-    const [assignedTo, setAssignedTo] = React.useState('');
+    const [showScanner, setShowScanner] = React.useState(false);
+
+    const handleScanSuccess = (decodedText) => {
+        setShowScanner(false);
+        // Assuming decodedText is Machine ID or Name
+        // Try to find matching machine
+        // decodedText could be "5" (ID) or "CNC-01" (Name)
+        
+        // 1. Try exact ID match
+        let foundMachine = machines.find(m => m.id.toString() === decodedText);
+        
+        // 2. Try name/type/model match (case insensitive)
+        if (!foundMachine) {
+            const lowerText = decodedText.toLowerCase();
+            foundMachine = machines.find(m => 
+                (m.machine_type && m.machine_type.toLowerCase().includes(lowerText)) ||
+                (m.model && m.model.toLowerCase().includes(lowerText)) ||
+                (m.location && m.location.toLowerCase().includes(lowerText))
+            );
+        }
+
+        if (foundMachine) {
+            setMachineId(foundMachine.id);
+            // Optional: Auto-fill title if empty
+            if (!title) {
+                setTitle('Problème sur ' + foundMachine.machine_type + ' ' + foundMachine.model);
+            }
+        } else {
+            alert('Aucune machine trouvée pour le code: ' + decodedText);
+        }
+    };
     const [scheduledDate, setScheduledDate] = React.useState('');
     const [technicians, setTechnicians] = React.useState([]);
 
@@ -205,6 +235,10 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
         className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 animate-fadeIn',
         onClick: onClose
     },
+        showScanner ? React.createElement(BarcodeScanner, {
+            onScanSuccess: handleScanSuccess,
+            onClose: () => setShowScanner(false)
+        }) : null,
         React.createElement('div', {
             className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden transform hover:scale-[1.01] transition-all duration-300 flex flex-col',
             onClick: (e) => e.stopPropagation(),
@@ -296,18 +330,20 @@ const CreateTicketModal = ({ show, onClose, machines, onTicketCreated, currentUs
                         React.createElement('i', { className: 'fas fa-cog mr-2' }),
                         'Machine concernée *'
                     ),
-                    React.createElement('select', {
-                        className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer',
-                        style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
-                        value: machineId,
-                        onChange: (e) => handleInputField(e, setMachineId),
-                        onInvalid: handleInvalidField,
-                        required: true
-                    },
-                        React.createElement('option', { value: '' }, '-- Sélectionnez une machine --'),
-                        machines.map(m =>
-                            React.createElement('option', { key: m.id, value: m.id },
-                                m.machine_type + ' ' + m.model + ' - ' + m.location
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement('select', {
+                            className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer flex-1',
+                            style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
+                            value: machineId,
+                            onChange: (e) => handleInputField(e, setMachineId),
+                            onInvalid: handleInvalidField,
+                            required: true
+                        },
+                            React.createElement('option', { value: '' }, '-- Sélectionnez une machine --'),
+                            machines.map(m =>
+                                React.createElement('option', { key: m.id, value: m.id },
+                                    m.machine_type + ' ' + m.model + ' - ' + m.location
+                                )
                             )
                         )
                     )

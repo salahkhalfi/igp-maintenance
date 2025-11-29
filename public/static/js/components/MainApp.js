@@ -26,8 +26,54 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [searchIsKeyword, setSearchIsKeyword] = React.useState(false);
     const [searchKeywordType, setSearchKeywordType] = React.useState(null);
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+    const [showScanner, setShowScanner] = React.useState(false);
     
-    // Placeholder animé avec exemples de mots-clés (versions desktop et mobile)
+    // Handle scan result from BarcodeScanner
+    const handleScanSuccess = (decodedText) => {
+        setShowScanner(false);
+        // If result is a number, assume it's a Ticket ID
+        if (!isNaN(decodedText)) {
+            setSearchQuery(decodedText);
+            // Trigger search logic
+            setSearchLoading(true);
+            // Simulate search delay then open
+            setTimeout(() => {
+                // If exact match found in loaded tickets
+                const ticketId = parseInt(decodedText);
+                const foundTicket = tickets.find(t => t.id === ticketId || t.ticket_id === decodedText);
+                
+                if (foundTicket) {
+                    setSelectedTicketId(foundTicket.id);
+                    setShowDetailsModal(true);
+                    setSearchLoading(false);
+                } else {
+                    // Try server search
+                    fetch('/api/search?q=' + encodeURIComponent(decodedText), {
+                        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.results && data.results.length > 0) {
+                            const result = data.results[0];
+                            setSelectedTicketId(result.id);
+                            setShowDetailsModal(true);
+                        } else {
+                            alert('Aucun ticket trouvé pour le code: ' + decodedText);
+                        }
+                    })
+                    .catch(err => {
+                        alert('Erreur de recherche');
+                    })
+                    .finally(() => setSearchLoading(false));
+                }
+            }, 500);
+        } else {
+            // If text, put in search box
+            setSearchQuery(decodedText);
+            // Trigger search manually?
+            // For now just fill the box
+        }
+    };
     const searchPlaceholdersDesktop = [
         'Essayez: "retard" pour voir les tickets en retard',
         'Essayez: "urgent" pour voir les priorités critiques',
@@ -679,6 +725,11 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             currentUser: currentUser
         }),
 
+        showScanner ? React.createElement(BarcodeScanner, {
+            onScanSuccess: handleScanSuccess,
+            onClose: () => setShowScanner(false)
+        }) : null,
+
         React.createElement(MoveTicketBottomSheet, {
             show: showMoveModal,
             onClose: () => {
@@ -761,89 +812,100 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
                         // BARRE DE RECHERCHE INTEGRÉE
                         React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-1.5 md:mt-0', style: { zIndex: 50 } },
-                            React.createElement('input', {
-                                ref: searchInputRef,
-                                type: 'text',
-                                placeholder: searchPlaceholders[placeholderIndex],
-                                className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-14 md:pr-20 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white/80 backdrop-blur-sm transition-all shadow-inner',
-                                value: searchQuery,
-                                onKeyDown: (e) => {
-                                    if (e.key === 'Escape') {
+                            React.createElement('div', { className: 'relative flex items-center w-full' },
+                                React.createElement('input', {
+                                    ref: searchInputRef,
+                                    type: 'text',
+                                    placeholder: searchPlaceholders[placeholderIndex],
+                                    className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-20 md:pr-24 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white/80 backdrop-blur-sm transition-all shadow-inner',
+                                    value: searchQuery,
+                                    // ... existing props ...
+                                    onKeyDown: (e) => {
+                                        if (e.key === 'Escape') {
+                                            setSearchQuery('');
+                                            setShowSearchResults(false);
+                                            e.target.blur();
+                                        }
+                                    },
+                                    onFocus: () => {
+                                        if (searchInputRef.current) {
+                                            const rect = searchInputRef.current.getBoundingClientRect();
+                                            setSearchDropdownPosition({
+                                                top: rect.bottom + window.scrollY,
+                                                left: rect.left + window.scrollX,
+                                                width: rect.width
+                                            });
+                                        }
+                                    },
+                                    onChange: (e) => {
+                                        const query = e.target.value;
+                                        setSearchQuery(query);
+                                        
+                                        if (searchInputRef.current) {
+                                            const rect = searchInputRef.current.getBoundingClientRect();
+                                            setSearchDropdownPosition({
+                                                top: rect.bottom + window.scrollY,
+                                                left: rect.left + window.scrollX,
+                                                width: rect.width
+                                            });
+                                        }
+                                        
+                                        if (searchTimeoutRef.current) {
+                                            clearTimeout(searchTimeoutRef.current);
+                                        }
+                                        if (query.trim().length >= 2) {
+                                            setSearchLoading(true);
+                                            searchTimeoutRef.current = setTimeout(async () => {
+                                                try {
+                                                    const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
+                                                        headers: {
+                                                            'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                                                        }
+                                                    });
+                                                    const data = await response.json();
+                                                    setSearchResults(data.results || []);
+                                                    setSearchKeywordResults(data.keywordResults || []);
+                                                    setSearchTextResults(data.textResults || []);
+                                                    setSearchIsKeyword(data.isKeywordSearch || false);
+                                                    setSearchKeywordType(data.keyword || null);
+                                                    setShowSearchResults(true);
+                                                } catch (err) {
+                                                    console.error('Erreur recherche:', err);
+                                                } finally {
+                                                    setSearchLoading(false);
+                                                }
+                                            }, 300);
+                                        } else {
+                                            setSearchResults([]);
+                                            setShowSearchResults(false);
+                                            setSearchLoading(false);
+                                        }
+                                    },
+                                    onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
+                                }),
+                                // BOUTON SCAN
+                                React.createElement('button', {
+                                    onClick: () => setShowScanner(true),
+                                    className: 'absolute right-8 md:right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors p-1.5 hover:bg-blue-50 rounded-full',
+                                    title: 'Scanner un code'
+                                },
+                                    React.createElement('i', { className: 'fas fa-qrcode text-lg' })
+                                ),
+                                searchQuery && React.createElement('button', {
+                                    onClick: (e) => {
+                                        e.stopPropagation();
                                         setSearchQuery('');
                                         setShowSearchResults(false);
-                                        e.target.blur();
-                                    }
+                                    },
+                                    className: 'absolute right-16 md:right-20 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1',
+                                    title: 'Effacer'
                                 },
-                                onFocus: () => {
-                                    if (searchInputRef.current) {
-                                        const rect = searchInputRef.current.getBoundingClientRect();
-                                        setSearchDropdownPosition({
-                                            top: rect.bottom + window.scrollY,
-                                            left: rect.left + window.scrollX,
-                                            width: rect.width
-                                        });
-                                    }
-                                },
-                                onChange: (e) => {
-                                    const query = e.target.value;
-                                    setSearchQuery(query);
-                                    
-                                    if (searchInputRef.current) {
-                                        const rect = searchInputRef.current.getBoundingClientRect();
-                                        setSearchDropdownPosition({
-                                            top: rect.bottom + window.scrollY,
-                                            left: rect.left + window.scrollX,
-                                            width: rect.width
-                                        });
-                                    }
-                                    
-                                    if (searchTimeoutRef.current) {
-                                        clearTimeout(searchTimeoutRef.current);
-                                    }
-                                    if (query.trim().length >= 2) {
-                                        setSearchLoading(true);
-                                        searchTimeoutRef.current = setTimeout(async () => {
-                                            try {
-                                                const response = await fetch('/api/search?q=' + encodeURIComponent(query), {
-                                                    headers: {
-                                                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-                                                    }
-                                                });
-                                                const data = await response.json();
-                                                setSearchResults(data.results || []);
-                                                setSearchKeywordResults(data.keywordResults || []);
-                                                setSearchTextResults(data.textResults || []);
-                                                setSearchIsKeyword(data.isKeywordSearch || false);
-                                                setSearchKeywordType(data.keyword || null);
-                                                setShowSearchResults(true);
-                                            } catch (err) {
-                                                console.error('Erreur recherche:', err);
-                                            } finally {
-                                                setSearchLoading(false);
-                                            }
-                                        }, 300);
-                                    } else {
-                                        setSearchResults([]);
-                                        setShowSearchResults(false);
-                                        setSearchLoading(false);
-                                    }
-                                },
-                                onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
-                            }),
-                            searchQuery && React.createElement('button', {
-                                onClick: (e) => {
-                                    e.stopPropagation();
-                                    setSearchQuery('');
-                                    setShowSearchResults(false);
-                                },
-                                className: 'absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1',
-                                title: 'Effacer'
-                            },
-                                React.createElement('i', { className: 'fas fa-times-circle text-lg' })
-                            ),
-                            React.createElement('i', {
-                                className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500'
-                            })
+                                    React.createElement('i', { className: 'fas fa-times-circle text-lg' })
+                                ),
+                                React.createElement('i', {
+                                    className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500'
+                                })
+                            )
                         ),
 
                         React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-between w-full md:w-auto md:justify-start mt-2 md:mt-0 flex-shrink-0" },

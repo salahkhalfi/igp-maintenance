@@ -2,9 +2,18 @@
 
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 
+## [2.10.7] - 2025-11-29
+
+### 🧹 Nettoyage UI
+- **Désactivation Scanner QR** : Masquage du bouton de scan de code machine (fonctionnalité non déployée sur site). Le code reste présent pour activation future.
+- **Menu Contextuel Mobile** : Vérification et validation du bouton "Annuler" et du comportement de fermeture (fix pour blocage UX signalé).
+
 ## [2.10.6] - 2025-11-29
 
 ### 📱 Expérience Mobile
+- **Lecteur de code-barres/QR** : Intégration d'un scanner universel (compatible QR + Code 128/39) pour :
+    - Rechercher rapidement un ticket en scannant son ID (Header).
+    - Sélectionner automatiquement une machine en scannant son étiquette lors de la création d'un ticket.
 - **Bouton Vidéo dédié** : Ajout d'un bouton "Prendre une vidéo" distinct, utilisant `accept="video/*"` et `capture="environment"` pour ouvrir directement le mode vidéo de la caméra sur mobile.
 - **Interface de création/détails** : Séparation claire des actions "Photo", "Vidéo" et "Galerie" pour une meilleure ergonomie.
 

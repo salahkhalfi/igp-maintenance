@@ -19,6 +19,7 @@ export const homeHTML = `
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/static/js/utils.js"></script>
     <script src="/static/js/components/MessagingModal.js"></script>
     <script src="/static/js/components/NotificationModal.js"></script>
@@ -29,6 +30,7 @@ export const homeHTML = `
     <script src="/static/js/components/UserGuideModal.js"></script>
     <script src="/static/js/components/PromptModal.js"></script>
     <script src="/static/js/components/LoginForm.js"></script>
+    <script src="/static/js/components/BarcodeScanner.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js"></script>
     <script src="/static/js/components/TicketDetailsModal.js"></script>
