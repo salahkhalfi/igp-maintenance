@@ -140,7 +140,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 // Quick Action: "J'y vais !"
                 if (autoAction === 'acknowledge' && ticket.status === 'received') {
                     console.log('[Push] Auto-acknowledging ticket:', ticketId);
-                    moveTicketToStatus(ticket, 'in_progress');
+                    // Delay status update to ensure modal opens smoothly first and prevents race conditions
+                    setTimeout(() => {
+                        moveTicketToStatus(ticket, 'in_progress');
+                    }, 500);
                 }
                 
                 // Nettoyer l'URL sans recharger la page
@@ -171,7 +174,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         // Quick Action: "J'y vais !"
                         if (autoAction === 'acknowledge' && ticket.status === 'received') {
                             console.log('[Push] Auto-acknowledging ticket from click:', ticketId);
-                            moveTicketToStatus(ticket, 'in_progress');
+                            // Delay status update to ensure modal opens smoothly first
+                            setTimeout(() => {
+                                moveTicketToStatus(ticket, 'in_progress');
+                            }, 500);
                         }
                     } else {
                         console.log('[Push] Ticket not found, reloading data...');
