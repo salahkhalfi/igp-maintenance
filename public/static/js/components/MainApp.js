@@ -876,10 +876,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
                             // BOUTON MENU MOBILE (Hamburger)
                             React.createElement('button', {
-                                className: 'md:hidden ml-2 px-3 py-1.5 bg-white/50 border border-gray-200 rounded-lg text-gray-700 hover:bg-white hover:text-blue-600 transition-all shadow-sm active:scale-95',
+                                className: 'md:hidden ml-2 px-3 py-2 bg-white text-blue-600 rounded-lg shadow-md hover:bg-blue-50 transition-all active:scale-95 border border-blue-100',
                                 onClick: () => setShowMobileMenu(!showMobileMenu)
                             },
-                                React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars text-lg') })
+                                React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-xl' })
                             )
                         )
                     )
