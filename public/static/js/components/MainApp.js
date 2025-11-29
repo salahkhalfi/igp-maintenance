@@ -816,7 +816,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             })
                         ),
 
-                        React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-end md:justify-start mt-2 md:mt-0 flex-shrink-0" },
+                        React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-between w-full md:w-auto md:justify-start mt-2 md:mt-0 flex-shrink-0" },
+                            React.createElement('div', { className: "flex items-center gap-2 flex-wrap" },
                             React.createElement('p', {
                                 className: "text-xs font-semibold hidden lg:block",
                                 style: {
@@ -865,22 +866,25 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 React.createElement('i', { className: "fas fa-envelope text-white text-xs" }),
                                 unreadMessagesCount > 0 ? React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount) : null
                             ) : null,
+                            ), // Fermeture du div des badges
+                            React.createElement('div', { className: "flex items-center gap-2 flex-1 md:flex-none justify-end" },
                             // BOUTON CRÉATION TICKET MOBILE (Supprimé du header pour être en FAB)
-                            /* React.createElement('button', {
+                            React.createElement('button', {
                                 onClick: () => setShowCreateModal(true),
-                                className: 'md:hidden ml-1 px-3 py-1.5 bg-gradient-to-r from-blue-700 to-blue-600 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center active:scale-95 border border-blue-500/30',
+                                className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center active:scale-95 border border-blue-500/30 mx-2',
                             },
-                                React.createElement('i', { className: 'fas fa-plus mr-1.5' }),
-                                'Demande'
-                            ), */
+                                React.createElement('i', { className: 'fas fa-plus mr-2' }),
+                                'Nouvelle Demande'
+                            ),
 
                             // BOUTON MENU MOBILE (Hamburger)
                             React.createElement('button', {
-                                className: 'md:hidden ml-2 px-3 py-2 bg-white text-blue-600 rounded-lg shadow-md hover:bg-blue-50 transition-all active:scale-95 border border-blue-100',
+                                className: 'md:hidden ml-0 px-3 py-2.5 bg-white text-blue-600 rounded-lg shadow-md hover:bg-blue-50 transition-all active:scale-95 border border-blue-100 flex-shrink-0',
                                 onClick: () => setShowMobileMenu(!showMobileMenu)
                             },
                                 React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-xl' })
                             )
+                            ) // Fermeture du div du bouton + menu
                         )
                     )
                 ),
@@ -1729,6 +1733,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             ) : null,
 
             // NOUVEAU BOUTON FLOTTANT (FAB) POUR CRÉATION TICKET - MOBILE ONLY
+            /*
             React.createElement('button', {
                 onClick: () => setShowCreateModal(true),
                 className: 'md:hidden fixed bottom-6 right-6 z-50 group animate-bounce-subtle',
@@ -1753,6 +1758,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     )
                 )
             )
+            */
+            null
             )
         ),
 
