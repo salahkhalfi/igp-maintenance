@@ -78,7 +78,7 @@ const LoginForm = ({ onLogin }) => {
     return React.createElement('div', {
         className: 'min-h-screen flex items-center justify-center',
         style: {
-            backgroundImage: 'url(/static/login-background.jpg)',
+            backgroundImage: 'url(/static/maintenance-bg-premium.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed'

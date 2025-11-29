@@ -44,7 +44,7 @@ export const homeHTML = `
     <style>
         /* Background avec photo d'atelier IGP pour toutes les pages */
         body {
-            background-image: url(/static/login-background.jpg);
+            background-image: url(/static/maintenance-bg-premium.jpg);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
