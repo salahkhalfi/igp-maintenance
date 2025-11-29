@@ -368,6 +368,17 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 ticket.priority === 'medium' ? '🟡 MOYENNE' :
                                 '🟢 FAIBLE'
                             ),
+                            // Bouton d'appel vidéo Jitsi
+                            React.createElement('a', {
+                                href: `https://meet.jit.si/IGP-Glass-Ticket-${ticket.ticket_id}`,
+                                target: '_blank',
+                                rel: 'noopener noreferrer',
+                                className: 'ml-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-md text-xs sm:text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2',
+                                title: 'Démarrer une assistance vidéo'
+                            },
+                                React.createElement('i', { className: 'fas fa-video' }),
+                                React.createElement('span', { className: 'hidden sm:inline' }, 'Visio')
+                            ),
                             (currentUser && (currentUser?.role === 'admin' || currentUser?.role === 'supervisor')) ? React.createElement('button', {
                                 onClick: () => {
                                     setEditingPriority(true);
