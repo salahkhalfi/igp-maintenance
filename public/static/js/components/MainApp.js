@@ -128,27 +128,31 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         const ticketIdFromUrl = urlParams.get('ticket');
         const autoAction = urlParams.get('auto_action');
         
-        if (ticketIdFromUrl && tickets.length > 0) {
+        if (ticketIdFromUrl) {
             const ticketId = parseInt(ticketIdFromUrl, 10);
-            const ticket = tickets.find(t => t.id === ticketId);
             
-            if (ticket) {
-                console.log('[Push] Opening ticket from URL:', ticketId);
-                setSelectedTicketId(ticketId);
-                setShowDetailsModal(true);
-                
-                // Quick Action: "J'y vais !"
-                if (autoAction === 'acknowledge' && ticket.status === 'received') {
-                    console.log('[Push] Auto-acknowledging ticket:', ticketId);
-                    // Delay status update to ensure modal opens smoothly first and prevents race conditions
-                    setTimeout(() => {
-                        moveTicketToStatus(ticket, 'in_progress');
-                    }, 500);
+            // ALWAYS open modal if ID exists, even if not in list yet (Modal fetches its own details)
+            console.log('[Push] Opening ticket from URL:', ticketId);
+            setSelectedTicketId(ticketId);
+            setShowDetailsModal(true);
+            
+            // Attempt auto-action if ticket is in loaded list
+            if (tickets.length > 0) {
+                const ticket = tickets.find(t => t.id === ticketId);
+                if (ticket) {
+                    // Quick Action: "J'y vais !"
+                    if (autoAction === 'acknowledge' && ticket.status === 'received') {
+                        console.log('[Push] Auto-acknowledging ticket:', ticketId);
+                        // Delay status update to ensure modal opens smoothly first
+                        setTimeout(() => {
+                            moveTicketToStatus(ticket, 'in_progress');
+                        }, 800); // Increased delay to 800ms
+                    }
                 }
-                
-                // Nettoyer l'URL sans recharger la page
-                window.history.replaceState({}, '', window.location.pathname);
             }
+            
+            // REMOVED replaceState to prevent state loss during re-renders
+            // window.history.replaceState({}, '', window.location.pathname);
         }
     }, [tickets]);
 
@@ -177,7 +181,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             // Delay status update to ensure modal opens smoothly first
                             setTimeout(() => {
                                 moveTicketToStatus(ticket, 'in_progress');
-                            }, 500);
+                            }, 800);
                         }
                     } else {
                         console.log('[Push] Ticket not found, reloading data...');
