@@ -30,7 +30,7 @@ const MoveTicketBottomSheet = ({ show, onClose, ticket, onMove, onDelete, curren
     };
 
     return React.createElement('div', {
-        className: 'fixed inset-0 z-50 flex items-end bottom-sheet-backdrop no-tap-highlight',
+        className: 'fixed inset-0 z-[100] flex items-end bottom-sheet-backdrop no-tap-highlight',
         style: {
             backgroundColor: 'rgba(0, 0, 0, 0.5)'
         },
