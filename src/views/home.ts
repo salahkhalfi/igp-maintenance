@@ -30,7 +30,6 @@ export const homeHTML = `
     <script src="/static/js/components/UserGuideModal.js"></script>
     <script src="/static/js/components/PromptModal.js"></script>
     <script src="/static/js/components/LoginForm.js"></script>
-    <script src="/static/js/components/BarcodeScanner.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js"></script>
     <script src="/static/js/components/TicketDetailsModal.js"></script>

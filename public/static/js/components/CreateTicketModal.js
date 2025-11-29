@@ -63,37 +63,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     };
 
     // États pour la planification (superviseur/admin seulement)
-    const [showScanner, setShowScanner] = React.useState(false);
-
-    const handleScanSuccess = (decodedText) => {
-        setShowScanner(false);
-        // Assuming decodedText is Machine ID or Name
-        // Try to find matching machine
-        // decodedText could be "5" (ID) or "CNC-01" (Name)
-        
-        // 1. Try exact ID match
-        let foundMachine = machines.find(m => m.id.toString() === decodedText);
-        
-        // 2. Try name/type/model match (case insensitive)
-        if (!foundMachine) {
-            const lowerText = decodedText.toLowerCase();
-            foundMachine = machines.find(m => 
-                (m.machine_type && m.machine_type.toLowerCase().includes(lowerText)) ||
-                (m.model && m.model.toLowerCase().includes(lowerText)) ||
-                (m.location && m.location.toLowerCase().includes(lowerText))
-            );
-        }
-
-        if (foundMachine) {
-            setMachineId(foundMachine.id);
-            // Optional: Auto-fill title if empty
-            if (!title) {
-                setTitle('Problème sur ' + foundMachine.machine_type + ' ' + foundMachine.model);
-            }
-        } else {
-            alert('Aucune machine trouvée pour le code: ' + decodedText);
-        }
-    };
     const [scheduledDate, setScheduledDate] = React.useState('');
     const [technicians, setTechnicians] = React.useState([]);
 
@@ -235,10 +204,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
         className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 animate-fadeIn',
         onClick: onClose
     },
-        showScanner ? React.createElement(BarcodeScanner, {
-            onScanSuccess: handleScanSuccess,
-            onClose: () => setShowScanner(false)
-        }) : null,
         React.createElement('div', {
             className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden transform hover:scale-[1.01] transition-all duration-300 flex flex-col',
             onClick: (e) => e.stopPropagation(),
@@ -345,14 +310,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                     m.machine_type + ' ' + m.model + ' - ' + m.location
                                 )
                             )
-                        ),
-                        React.createElement('button', {
-                            type: 'button',
-                            onClick: () => setShowScanner(true),
-                            className: 'px-4 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all flex items-center justify-center',
-                            title: 'Scanner un code machine'
-                        },
-                            React.createElement('i', { className: 'fas fa-qrcode text-xl' })
                         )
                     )
                 ),
