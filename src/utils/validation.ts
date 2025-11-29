@@ -363,7 +363,8 @@ export function validateFileUpload(file: File): ValidationResult {
   const allowedTypes = [
     'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
     'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
-    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg', 'audio/mp4'
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/webm', 'audio/ogg', 'audio/mp4',
+    'audio/aac', 'audio/x-m4a', 'audio/m4a', 'audio/x-aac'
   ];
 
   if (!allowedTypes.includes(mimeType)) {
