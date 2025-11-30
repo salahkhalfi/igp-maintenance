@@ -26,3 +26,36 @@ export interface User {
 }
 
 export type RoleVariant = 'blue' | 'green';
+
+// Modal Types
+export type NotificationType = 'success' | 'error' | 'info' | 'warning';
+
+export interface NotificationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  type?: NotificationType;
+  title?: string;
+  message: string;
+}
+
+export interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  isDestructive?: boolean;
+}
+
+export interface PromptModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (value: string) => void;
+  title?: string;
+  message?: string;
+  placeholder?: string;
+  inputType?: 'text' | 'password' | 'email';
+  defaultValue?: string;
+}
