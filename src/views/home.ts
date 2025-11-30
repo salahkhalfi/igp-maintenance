@@ -616,6 +616,9 @@ export const homeHTML = `
         }
     </script>
     <script src="/push-notifications.js"></script>
+    <!-- MODERN FRONTEND INTEGRATION -->
+    <div id="react-root"></div>
+    <script type="module" src="/static/client/main.js"></script>
 </body>
 </html>
 `;
