@@ -610,6 +610,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             await moveTicketToStatus(draggedTicket, dragOverColumn);
         }
 
+        touchDragStart.current = null;
         touchDragTicket.current = null;
         setDraggedTicket(null);
         setDragOverColumn(null);
