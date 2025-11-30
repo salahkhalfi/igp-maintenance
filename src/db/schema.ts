@@ -20,7 +20,7 @@ export const users = sqliteTable('users', {
 export const machines = sqliteTable('machines', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   machine_type: text('machine_type').notNull(),
-  model: text('model').notNull(),
+  model: text('model'),
   serial_number: text('serial_number').unique(),
   location: text('location'),
   status: text('status').default('operational'), // 'operational', 'maintenance', 'out_of_service'

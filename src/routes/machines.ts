@@ -82,8 +82,8 @@ machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), asyn
     
     const result = await db.insert(machines).values({
       machine_type: machine_type.trim(),
-      model: model.trim(),
-      serial_number: serial_number.trim(),
+      model: model ? model.trim() : null,
+      serial_number: serial_number ? serial_number.trim() : null,
       location: location ? location.trim() : null,
       status: 'operational'
     }).returning();

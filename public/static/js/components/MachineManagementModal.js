@@ -36,16 +36,16 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
 
     const handleCreate = async (e) => {
         e.preventDefault();
-        if (!newType || !newModel || !newSerial) {
-            alert("Type, modele et numero de serie requis");
+        if (!newType) {
+            alert("Type de machine requis");
             return;
         }
         try {
             await axios.post(API_URL + "/machines", {
                 machine_type: newType,
-                model: newModel,
-                serial_number: newSerial,
-                location: newLocation
+                model: newModel || null,
+                serial_number: newSerial || null,
+                location: newLocation || null
             });
             alert("Machine creee avec succes!");
             setNewType("");
@@ -179,7 +179,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                             })
                         ),
                         React.createElement("div", {},
-                            React.createElement("label", { className: "block font-semibold mb-2" }, "Modele *"),
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Modele"),
                             React.createElement("input", {
                                 type: "text",
                                 value: newModel,
@@ -189,7 +189,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                             })
                         ),
                         React.createElement("div", {},
-                            React.createElement("label", { className: "block font-semibold mb-2" }, "Numero de serie *"),
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Numero de serie"),
                             React.createElement("input", {
                                 type: "text",
                                 value: newSerial,
