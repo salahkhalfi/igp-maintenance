@@ -74,3 +74,9 @@ export const getLastLoginStatus = (lastLogin: string | undefined): LoginStatus =
   
   return { color: "text-red-600", status: "Inactif", time: "Il y a " + diffDays + " jours", dot: "bg-red-500" };
 };
+
+export const localDateTimeToUTC = (localDateTimeStr: string) => {
+  if (!localDateTimeStr) return null;
+  const date = new Date(localDateTimeStr);
+  return date.toISOString().replace('T', ' ').slice(0, 19);
+};

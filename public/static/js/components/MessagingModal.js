@@ -868,9 +868,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 ),
                                 React.createElement('div', {
                                     className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md flex-shrink-0'
-                                }, selectedContact.first_name.charAt(0).toUpperCase()),
+                                }, (selectedContact.first_name || selectedContact.full_name || '?').charAt(0).toUpperCase()),
                                 React.createElement('div', { className: 'flex-1 min-w-0' },
-                                    React.createElement('h3', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, selectedContact.first_name),
+                                    React.createElement('h3', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, selectedContact.first_name || selectedContact.full_name || 'Utilisateur'),
                                     React.createElement('span', {
                                         className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium inline-block ' + getRoleBadgeClass(selectedContact.role)
                                     }, getRoleLabel(selectedContact.role))
@@ -886,7 +886,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 className: 'text-center text-gray-400 py-8 sm:py-12 px-4'
                             },
                                 React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-3 sm:mb-4 opacity-50' }),
-                                React.createElement('p', { className: 'text-sm sm:text-base' }, 'Commencez la conversation avec ' + selectedContact.first_name),
+                                React.createElement('p', { className: 'text-sm sm:text-base' }, 'Commencez la conversation avec ' + (selectedContact.first_name || selectedContact.full_name || 'cet utilisateur')),
                                 React.createElement('p', { className: 'text-xs text-gray-400 mt-2' }, 'Écrivez votre premier message ci-dessous')
                             ) : privateMessages.map(msg => {
                                 const isMe = msg.sender_id === currentUser.id;
