@@ -1,78 +1,74 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-// Add Webkit types
-declare global {
-  interface Window {
-    webkitSpeechRecognition: any;
-    SpeechRecognition: any;
-  }
+interface UseSpeechRecognitionProps {
+  onResult?: (text: string) => void;
+  language?: string;
 }
 
-export const useSpeechRecognition = () => {
-  const [isDictating, setIsDictating] = useState(false);
+export const useSpeechRecognition = ({ onResult, language = 'fr-FR' }: UseSpeechRecognitionProps = {}) => {
+  const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [isSupported, setIsSupported] = useState(false);
+  const [hasRecognition, setHasRecognition] = useState(false);
   
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      setIsSupported(true);
+      setHasRecognition(true);
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = 'fr-FR';
+      recognition.lang = language;
 
       recognition.onresult = (event: any) => {
         const text = event.results[0][0].transcript;
         if (text) {
           const capitalized = text.charAt(0).toUpperCase() + text.slice(1);
           setTranscript(capitalized);
+          if (onResult) {
+            onResult(capitalized);
+          }
         }
-        setIsDictating(false);
+        setIsListening(false);
       };
 
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
-        setIsDictating(false);
+        setIsListening(false);
       };
 
       recognition.onend = () => {
-        setIsDictating(false);
+        setIsListening(false);
       };
 
       recognitionRef.current = recognition;
     }
-  }, []);
+  }, [language, onResult]);
 
-  const startDictation = useCallback(() => {
-    if (recognitionRef.current && !isDictating) {
-      setTranscript(''); // Clear previous
-      recognitionRef.current.start();
-      setIsDictating(true);
+  const startListening = useCallback(() => {
+    if (recognitionRef.current && !isListening) {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error("Failed to start recognition", e);
+      }
     }
-  }, [isDictating]);
+  }, [isListening]);
 
-  const stopDictation = useCallback(() => {
-    if (recognitionRef.current && isDictating) {
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
-      setIsDictating(false);
+      setIsListening(false);
     }
-  }, [isDictating]);
-
-  const toggleDictation = useCallback(() => {
-    if (isDictating) stopDictation();
-    else startDictation();
-  }, [isDictating, startDictation, stopDictation]);
+  }, [isListening]);
 
   return {
-    isDictating,
-    isSupported,
+    isListening,
+    hasRecognition,
     transcript,
-    setTranscript, // Allow manual clearing
-    startDictation,
-    stopDictation,
-    toggleDictation
+    startListening,
+    stopListening
   };
 };

@@ -1,70 +1,99 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Machine, TicketPriority } from '../types';
-import { ticketService } from '../services/ticketService';
-import { localDateTimeToUTC } from '../utils/dateUtils';
+import { X, Mic, MicOff, Image as ImageIcon, Loader2, AlertCircle, CheckCircle, Calendar, User as UserIcon } from 'lucide-react';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { createTicket, getMachines, getTechnicians, uploadTicketMedia } from '../services/ticketService';
+import { UserRole, TicketPriority } from '../types';
 
 interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentUser: User;
-  onTicketCreated?: () => void;
+  currentUserRole?: UserRole;
 }
 
-const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, currentUser, onTicketCreated }) => {
+export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, currentUserRole }) => {
   const queryClient = useQueryClient();
+  
+  // États du formulaire
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [machineId, setMachineId] = useState('');
+  const [machineId, setMachineId] = useState<number | ''>('');
   const [priority, setPriority] = useState<TicketPriority>('medium');
-  const [assignedTo, setAssignedTo] = useState('');
+  const [assignedTo, setAssignedTo] = useState<number | ''>('');
   const [scheduledDate, setScheduledDate] = useState('');
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [mediaPreviews, setMediaPreviews] = useState<{ url: string; type: string; name: string; size: number }[]>([]);
-  const [isListening, setIsListening] = useState(false);
-  const [listeningField, setListeningField] = useState<'title' | 'desc' | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Gestion des médias
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const recognitionRef = useRef<any>(null);
+  // Hooks personnalisés
+  const { 
+    isListening: isListeningTitle, 
+    startListening: startListeningTitle, 
+    stopListening: stopListeningTitle,
+    hasRecognition: hasRecognitionSupport
+  } = useSpeechRecognition({
+    onResult: (text) => setTitle(prev => prev + (prev ? ' ' : '') + text),
+    language: 'fr-FR'
+  });
 
-  // Data Fetching
+  const { 
+    isListening: isListeningDesc, 
+    startListening: startListeningDesc, 
+    stopListening: stopListeningDesc 
+  } = useSpeechRecognition({
+    onResult: (text) => setDescription(prev => prev + (prev ? ' ' : '') + text),
+    language: 'fr-FR'
+  });
+
+  // Récupération des données (Machines et Techniciens)
   const { data: machines = [] } = useQuery({
     queryKey: ['machines'],
-    queryFn: ticketService.getMachines,
+    queryFn: getMachines,
     enabled: isOpen,
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
   const { data: technicians = [] } = useQuery({
     queryKey: ['technicians'],
-    queryFn: ticketService.getTechnicians,
-    enabled: isOpen && (currentUser.role === 'admin' || currentUser.role === 'supervisor'),
+    queryFn: getTechnicians,
+    enabled: isOpen && (currentUserRole === 'admin' || currentUserRole === 'supervisor'),
     staleTime: 1000 * 60 * 5
   });
 
-  // Mutations
+  // Mutation pour la création
   const createTicketMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const result = await ticketService.createTicket(data);
-      const ticketId = result.ticket.id;
+    mutationFn: async () => {
+      // 1. Créer le ticket
+      const response = await createTicket({
+        title,
+        description,
+        machine_id: Number(machineId),
+        priority,
+        assigned_to: assignedTo ? Number(assignedTo) : undefined,
+        scheduled_date: scheduledDate || undefined
+      });
 
-      if (mediaFiles.length > 0) {
-        for (let i = 0; i < mediaFiles.length; i++) {
-          await ticketService.uploadMedia(ticketId, mediaFiles[i]);
-          setUploadProgress(Math.round(((i + 1) / mediaFiles.length) * 100));
-        }
+      // 2. Uploader les médias si nécessaire
+      if (selectedFiles.length > 0 && response.ticketId) {
+        await Promise.all(selectedFiles.map(file => 
+          uploadTicketMedia(file, response.ticketId)
+        ));
       }
-      return result;
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       resetForm();
       onClose();
-      if (onTicketCreated) onTicketCreated();
-      alert('Ticket créé avec succès !'); // Using alert for parity with legacy, can be upgraded to Toast later
+      // Idéalement remplacer par un Toast
+      alert('Ticket créé avec succès !'); 
     },
-    onError: (err: any) => {
-      alert('Erreur: ' + err.message);
+    onError: (error) => {
+      console.error('Erreur création ticket:', error);
+      alert("Une erreur est survenue lors de la création du ticket.");
     }
   });
 
@@ -75,339 +104,279 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
     setPriority('medium');
     setAssignedTo('');
     setScheduledDate('');
-    setMediaFiles([]);
-    setMediaPreviews([]);
-    setUploadProgress(0);
+    setSelectedFiles([]);
+    setUploadProgress({});
   };
 
-  // Voice Recognition
-  const startVoiceInput = (fieldSetter: React.Dispatch<React.SetStateAction<string>>, currentVal: string, fieldName: 'title' | 'desc') => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("La reconnaissance vocale n'est pas supportée par ce navigateur.");
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      setListeningField(null);
-      return;
-    }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-
-    recognition.lang = 'fr-FR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setListeningField(fieldName);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      setListeningField(null);
-    };
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      const newValue = currentVal ? (currentVal + ' ' + transcript) : transcript;
-      const formattedValue = newValue.charAt(0).toUpperCase() + newValue.slice(1);
-      fieldSetter(formattedValue);
-    };
-
-    recognition.start();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setMediaFiles(prev => [...prev, ...files]);
-
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setMediaPreviews(prev => [...prev, {
-            url: reader.result as string,
-            type: file.type,
-            name: file.name,
-            size: file.size
-          }]);
-        };
-        reader.readAsDataURL(file);
+      const newFiles = Array.from(e.target.files);
+      // Validation basique (taille/type)
+      const validFiles = newFiles.filter(file => {
+        const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB max
+        const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
+        return isValidSize && isValidType;
       });
+      
+      if (validFiles.length !== newFiles.length) {
+        alert("Certains fichiers ont été ignorés (trop volumineux ou format incorrect).");
+      }
+      
+      setSelectedFiles(prev => [...prev, ...validFiles]);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const utcTime = new Date();
-    const localTimestamp = utcTime.getFullYear() + '-' + 
-      String(utcTime.getMonth() + 1).padStart(2, '0') + '-' + 
-      String(utcTime.getDate()).padStart(2, '0') + ' ' + 
-      String(utcTime.getHours()).padStart(2, '0') + ':' + 
-      String(utcTime.getMinutes()).padStart(2, '0') + ':' + 
-      String(utcTime.getSeconds()).padStart(2, '0');
-
-    const requestData: any = {
-      title,
-      description,
-      reporter_name: currentUser.first_name || currentUser.full_name || currentUser.email?.split('@')[0] || 'Utilisateur',
-      machine_id: parseInt(machineId),
-      priority,
-      created_at: localTimestamp
-    };
-
-    if (currentUser.role === 'admin' || currentUser.role === 'supervisor') {
-      if (assignedTo) requestData.assigned_to = parseInt(assignedTo);
-      if (scheduledDate) requestData.scheduled_date = localDateTimeToUTC(scheduledDate);
-    }
-
-    createTicketMutation.mutate(requestData);
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
 
+  const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 font-sans animate-in fade-in duration-200">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}></div>
-      
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden transform-gpu translate-z-0 border border-white/20">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-blue-800 text-white p-4 flex justify-between items-center shadow-md z-10">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-plus-circle text-2xl text-blue-300"></i>
-            <h2 className="text-xl font-bold">Nouvelle Demande</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transform-gpu transition-all scale-100"
+        role="dialog"
+        aria-labelledby="modal-title"
+      >
+        {/* En-tête */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+          <div>
+            <h2 id="modal-title" className="text-2xl font-bold text-gray-800">Nouveau Ticket</h2>
+            <p className="text-sm text-gray-500 mt-1">Signaler un problème ou une demande de maintenance</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
-            <i className="fas fa-times text-lg"></i>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"
+            aria-label="Fermer"
+          >
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-white to-blue-50/30">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* Title */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-bold text-gray-700">
-                  <i className="fas fa-heading mr-2 text-blue-600"></i>Titre du problème *
-                </label>
-                <button
-                  type="button"
-                  onClick={() => startVoiceInput(setTitle, title, 'title')}
-                  className={`text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${
-                    isListening && listeningField === 'title'
-                      ? 'bg-red-100 text-red-600 animate-pulse border border-red-200'
-                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'
-                  }`}
-                >
-                  <i className={`fas ${isListening && listeningField === 'title' ? 'fa-stop-circle' : 'fa-microphone'}`}></i>
-                  {isListening && listeningField === 'title' ? 'Écoute...' : 'Dicter'}
-                </button>
-              </div>
+        {/* Corps du formulaire (défilable) */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          {/* Titre avec reconnaissance vocale */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Titre du problème <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
               <input
                 type="text"
-                required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Bruit anormal sur la machine"
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                placeholder="Ex: Fuite d'huile sur la presse hydraulique"
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                required
               />
-            </div>
-
-            {/* Description */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-bold text-gray-700">
-                  <i className="fas fa-align-left mr-2 text-blue-600"></i>Description détaillée
-                </label>
+              {hasRecognitionSupport && (
                 <button
                   type="button"
-                  onClick={() => startVoiceInput(setDescription, description, 'desc')}
-                  className={`text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${
-                    isListening && listeningField === 'desc'
-                      ? 'bg-red-100 text-red-600 animate-pulse border border-red-200'
-                      : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'
+                  onClick={isListeningTitle ? stopListeningTitle : startListeningTitle}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${
+                    isListeningTitle 
+                      ? 'bg-red-100 text-red-600 animate-pulse' 
+                      : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
                   }`}
+                  title="Dictée vocale"
                 >
-                  <i className={`fas ${isListening && listeningField === 'desc' ? 'fa-stop-circle' : 'fa-microphone'}`}></i>
-                  {isListening && listeningField === 'desc' ? 'Écoute...' : 'Dicter'}
+                  {isListeningTitle ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </button>
-              </div>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Décrivez le problème (optionnel)..."
-                rows={4}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"
-              />
+              )}
             </div>
+          </div>
 
-            {/* Machine */}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                <i className="fas fa-cog mr-2 text-blue-600"></i>Machine concernée *
+          {/* Machine et Priorité */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Machine concernée <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 value={machineId}
-                onChange={(e) => setMachineId(e.target.value)}
-                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all cursor-pointer appearance-none"
+                onChange={(e) => setMachineId(Number(e.target.value))}
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
-                <option value="">-- Sélectionnez une machine --</option>
+                <option value="">Sélectionner une machine...</option>
                 {machines.map(m => (
-                  <option key={m.id} value={m.id}>{m.machine_type} {m.model} - {m.location}</option>
+                  <option key={m.id} value={m.id}>{m.name} ({m.zone})</option>
                 ))}
               </select>
             </div>
 
-            {/* Media Upload */}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                <i className="fas fa-camera mr-2 text-blue-600"></i>Photos / Vidéos
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Priorité
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                <input type="file" id="photo-upload" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
-                <label htmlFor="photo-upload" className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors text-blue-600">
-                  <i className="fas fa-camera text-xl mb-1"></i>
-                  <span className="text-xs font-bold">Photo</span>
-                </label>
-
-                <input type="file" id="video-upload" accept="video/*" capture="environment" className="hidden" onChange={handleFileChange} />
-                <label htmlFor="video-upload" className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-red-300 rounded-xl bg-red-50 hover:bg-red-100 cursor-pointer transition-colors text-red-600">
-                  <i className="fas fa-video text-xl mb-1"></i>
-                  <span className="text-xs font-bold">Vidéo</span>
-                </label>
-
-                <input type="file" id="media-upload" accept="image/*,video/*" multiple className="hidden" onChange={handleFileChange} />
-                <label htmlFor="media-upload" className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-gray-600">
-                  <i className="fas fa-images text-xl mb-1"></i>
-                  <span className="text-xs font-bold">Galerie</span>
-                </label>
-              </div>
-
-              {/* Previews */}
-              {mediaPreviews.length > 0 && (
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {mediaPreviews.map((preview, index) => (
-                    <div key={index} className="relative group aspect-square">
-                      {preview.type.startsWith('image/') ? (
-                        <img src={preview.url} alt={preview.name} className="w-full h-full object-cover rounded-lg border border-gray-200" />
-                      ) : (
-                        <video src={preview.url} className="w-full h-full object-cover rounded-lg border border-gray-200" />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMediaFiles(prev => prev.filter((_, i) => i !== index));
-                          setMediaPreviews(prev => prev.filter((_, i) => i !== index));
-                        }}
-                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 shadow-md"
-                      >
-                        <i className="fas fa-times text-xs"></i>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Priority */}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                <i className="fas fa-exclamation-triangle mr-2 text-blue-600"></i>Priorité *
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {(['low', 'medium', 'high', 'critical'] as TicketPriority[]).map(p => (
+              <div className="flex gap-2">
+                {(['low', 'medium', 'high', 'critical'] as TicketPriority[]).map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setPriority(p)}
-                    className={`py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                      priority === p
-                        ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300 ring-offset-1'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`flex-1 py-2.5 px-2 rounded-lg text-sm font-medium transition-all border ${
+                      priority === p 
+                        ? p === 'critical' ? 'bg-red-100 border-red-500 text-red-700'
+                        : p === 'high' ? 'bg-orange-100 border-orange-500 text-orange-700'
+                        : p === 'medium' ? 'bg-blue-100 border-blue-500 text-blue-700'
+                        : 'bg-green-100 border-green-500 text-green-700'
+                        : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
-                    {p === 'low' ? '🟢 Faible' :
-                     p === 'medium' ? '🟡 Moy.' :
-                     p === 'high' ? '🟠 Haute' : '🔴 Crit.'}
+                    {p === 'low' ? 'Basse' : p === 'medium' ? 'Moyenne' : p === 'high' ? 'Haute' : 'Critique'}
                   </button>
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Admin/Supervisor Extra Fields */}
-            {(currentUser.role === 'admin' || currentUser.role === 'supervisor') && (
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <h3 className="font-bold text-gray-700 mb-4 flex items-center">
-                  <i className="fas fa-user-tie mr-2 text-purple-600"></i>Supervision
-                </h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">Assigner à</label>
-                    <select
-                      value={assignedTo}
-                      onChange={(e) => setAssignedTo(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                    >
-                      <option value="">-- Non assigné --</option>
-                      <option value="0">👥 Équipe</option>
-                      {technicians.filter(t => t.id !== 0).map(t => (
-                        <option key={t.id} value={t.id}>👤 {t.first_name}</option>
-                      ))}
-                    </select>
-                  </div>
+          {/* Description avec reconnaissance vocale */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Description détaillée
+            </label>
+            <div className="relative">
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Décrivez le problème, les bruits anormaux, ou les circonstances..."
+                rows={4}
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+              />
+              {hasRecognitionSupport && (
+                <button
+                  type="button"
+                  onClick={isListeningDesc ? stopListeningDesc : startListeningDesc}
+                  className={`absolute right-2 top-2 p-2 rounded-full transition-all ${
+                    isListeningDesc 
+                      ? 'bg-red-100 text-red-600 animate-pulse' 
+                      : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  {isListeningDesc ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+              )}
+            </div>
+          </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-600 mb-1">Planification</label>
-                    <input
-                      type="datetime-local"
-                      value={scheduledDate}
-                      onChange={(e) => setScheduledDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-sm"
-                    />
-                  </div>
+          {/* Zone Admin/Superviseur: Assignation */}
+          {canAssign && (
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+              <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <UserIcon className="w-4 h-4" />
+                Planification (Optionnel)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600">Assigner à</label>
+                  <select
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value ? Number(e.target.value) : '')}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                  >
+                    <option value="">Non assigné</option>
+                    {technicians.map(t => (
+                      <option key={t.id} value={t.id}>{t.first_name} {t.last_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-600">Date prévue</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                  />
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Actions */}
-            <div className="pt-4 border-t border-gray-100 flex gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                disabled={createTicketMutation.isPending}
-                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-70"
-              >
-                {createTicketMutation.isPending ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i>
-                    {uploadProgress > 0 ? `Envoi ${uploadProgress}%` : 'Création...'}
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-paper-plane"></i>
-                    Créer le ticket
-                  </>
-                )}
-              </button>
+          {/* Upload Photos/Vidéos */}
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-700">
+              Photos ou Vidéos
+            </label>
+            
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group"
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                multiple
+                accept="image/*,video/*"
+                className="hidden"
+              />
+              <div className="w-12 h-12 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <p className="text-sm text-gray-600 font-medium">Cliquez pour ajouter des fichiers</p>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG, MP4 (Max 10Mo)</p>
             </div>
 
-          </form>
+            {/* Liste des fichiers sélectionnés */}
+            {selectedFiles.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="relative group bg-gray-50 rounded-lg p-2 border border-gray-200 flex items-center gap-2 overflow-hidden">
+                    <div className="w-10 h-10 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center">
+                      {file.type.startsWith('image/') ? (
+                        <ImageIcon className="w-5 h-5 text-gray-500" />
+                      ) : (
+                        <span className="text-xs font-bold text-gray-500">VID</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-700 truncate">{file.name}</p>
+                      <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} Mo</p>
+                    </div>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="absolute top-1 right-1 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Pied de page (Actions) */}
+        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            disabled={createTicketMutation.isPending}
+            className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={() => createTicketMutation.mutate()}
+            disabled={createTicketMutation.isPending || !title || !machineId}
+            className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+          >
+            {createTicketMutation.isPending ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Création...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                Créer le ticket
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
