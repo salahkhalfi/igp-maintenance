@@ -555,7 +555,14 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                             ),
                             React.createElement('div', { className: "flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0" },
                                 user.id !== currentUser.id && onOpenMessage ? React.createElement('button', {
-                                    onClick: () => onOpenMessage({ id: user.id, full_name: user.full_name, role: user.role }),
+                                    onClick: () => onOpenMessage({ 
+                                        id: user.id, 
+                                        full_name: user.full_name, 
+                                        role: user.role,
+                                        first_name: user.first_name,
+                                        last_name: user.last_name,
+                                        email: user.email 
+                                    }),
                                     className: "w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-md border-t border-blue-300/50"
                                 },
                                     React.createElement('i', { className: "fas fa-comment mr-1" }),
