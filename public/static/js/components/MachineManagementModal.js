@@ -295,7 +295,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                             React.createElement("div", { className: "flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3" },
                                 React.createElement("div", { className: "flex-1" },
                                     React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2" },
-                                        React.createElement("h4", { className: "font-bold text-base sm:text-lg" }, machine.machine_type + " - " + machine.model),
+                                        React.createElement("h4", { className: "font-bold text-base sm:text-lg" }, machine.machine_type + (machine.model ? " - " + machine.model : "")),
                                         React.createElement("span", {
                                             className: "px-3 py-1 rounded-full text-xs font-semibold " + getStatusColor(machine.status)
                                         }, getStatusLabel(machine.status))

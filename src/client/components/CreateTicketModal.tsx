@@ -202,8 +202,10 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               >
                 <option value="">Sélectionner une machine...</option>
-                {machines.map(m => (
-                  <option key={m.id} value={m.id}>{m.name} ({m.zone})</option>
+                {machines.map((m: any) => (
+                  <option key={m.id} value={m.id}>
+                    {m.machine_type} {m.model ? `- ${m.model}` : ''} ({m.location || 'Non localisé'})
+                  </option>
                 ))}
               </select>
             </div>
