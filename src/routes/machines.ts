@@ -107,9 +107,9 @@ machinesRoute.patch('/:id', adminOnly, zValidator('param', machineIdParamSchema)
     };
 
     if (body.machine_type !== undefined) updates.machine_type = body.machine_type;
-    if (body.model !== undefined) updates.model = body.model;
-    if (body.serial_number !== undefined) updates.serial_number = body.serial_number;
-    if (body.location !== undefined) updates.location = body.location;
+    if (body.model !== undefined) updates.model = body.model ? body.model.trim() : null;
+    if (body.serial_number !== undefined) updates.serial_number = body.serial_number ? body.serial_number.trim() : null;
+    if (body.location !== undefined) updates.location = body.location ? body.location.trim() : null;
     if (body.status !== undefined) updates.status = body.status;
 
     const result = await db.update(machines)
