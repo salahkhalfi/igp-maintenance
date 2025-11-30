@@ -194,18 +194,20 @@ const App = () => {
         );
     }
 
-    return React.createElement(MainApp, {
-        tickets,
-        machines,
-        currentUser: currentUserState,
-        onLogout: logout,
-        onRefresh: loadData,
-        showCreateModal,
-        setShowCreateModal,
-        onTicketCreated: loadData,
-        unreadMessagesCount: unreadMessagesCount,
-        onRefreshMessages: loadUnreadMessagesCount,
-        headerTitle: headerTitle,
-        headerSubtitle: headerSubtitle
-    });
+    return React.createElement(ErrorBoundary, null,
+        React.createElement(MainApp, {
+            tickets,
+            machines,
+            currentUser: currentUserState,
+            onLogout: logout,
+            onRefresh: loadData,
+            showCreateModal,
+            setShowCreateModal,
+            onTicketCreated: loadData,
+            unreadMessagesCount: unreadMessagesCount,
+            onRefreshMessages: loadUnreadMessagesCount,
+            headerTitle: headerTitle,
+            headerSubtitle: headerSubtitle
+        })
+    );
 };
