@@ -645,7 +645,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                             const isMe = msg.sender_id === currentUser.id;
                             return React.createElement('div', {
                                 key: msg.id,
-                                className: 'flex w-full mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2'
+                                className: 'flex mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2'
                             },
                                 selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
                                     type: 'checkbox',
@@ -892,7 +892,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 const isMe = msg.sender_id === currentUser.id;
                                 return React.createElement('div', {
                                     key: msg.id,
-                                    className: 'flex w-full mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2 items-end'
+                                    className: 'flex mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2 items-end'
                                 },
                                     selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
                                         type: 'checkbox',
