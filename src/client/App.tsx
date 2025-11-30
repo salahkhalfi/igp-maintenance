@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import RoleDropdown from './components/RoleDropdown'
 import NotificationModal from './components/NotificationModal'
@@ -31,6 +31,7 @@ const AppContent = () => {
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [isTicketDetailsOpen, setIsTicketDetailsOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  const [initialContactId, setInitialContactId] = useState<number | null>(null);
   
   // Modal States
   const [notification, setNotification] = useState<{isOpen: boolean, type: 'success'|'error'|'info', message: string} | null>(null);
@@ -60,6 +61,58 @@ const AppContent = () => {
     setSelectedTicketId(id);
     setIsTicketDetailsOpen(true);
   };
+
+  // Handle URL parameters and Service Worker messages
+  useEffect(() => {
+    // 1. Handle URL parameters on load (e.g. from notification click)
+    const params = new URLSearchParams(window.location.search);
+    const ticketId = params.get('ticket');
+    const openMessages = params.get('openMessages');
+    const openAudio = params.get('openAudioMessage');
+    
+    if (ticketId) {
+      console.log('[App] Opening ticket from URL:', ticketId);
+      openTicketDetails(Number(ticketId));
+      window.history.replaceState({}, '', '/');
+    } 
+    else if (openMessages) {
+       console.log('[App] Opening messages from URL:', openMessages);
+       setInitialContactId(Number(openMessages));
+       setIsMsgModalOpen(true);
+       window.history.replaceState({}, '', '/');
+    }
+    else if (openAudio) {
+        // Similar to messages but might want to auto-play in future
+        console.log('[App] Opening audio message from URL:', openAudio);
+        const senderId = params.get('sender');
+        if (senderId) setInitialContactId(Number(senderId));
+        setIsMsgModalOpen(true);
+        window.history.replaceState({}, '', '/');
+    }
+
+    // 2. Listen for messages from Service Worker (when app is already open)
+    const handleSWMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
+            console.log('[App] Received SW message:', event.data);
+            const { action, data } = event.data;
+            
+            if ((action === 'view_ticket' || action === 'view') && (data.ticketId || data.ticket_id)) {
+                openTicketDetails(Number(data.ticketId || data.ticket_id));
+            }
+            else if (action === 'new_private_message' && data.senderId) {
+                setInitialContactId(Number(data.senderId));
+                setIsMsgModalOpen(true);
+            }
+            else if (action === 'new_audio_message' && data.senderId) {
+                setInitialContactId(Number(data.senderId));
+                setIsMsgModalOpen(true);
+            }
+        }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+    return () => navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+  }, []);
 
   return (
     <div className="fixed bottom-4 left-4 z-[9999] group font-sans">
@@ -140,6 +193,7 @@ const AppContent = () => {
             isOpen={isMsgModalOpen}
             onClose={() => setIsMsgModalOpen(false)}
             currentUser={currentUser}
+            initialContactId={initialContactId || undefined}
         />
 
         <UserManagementModal 

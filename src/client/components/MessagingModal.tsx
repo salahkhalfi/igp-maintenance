@@ -11,9 +11,10 @@ interface MessagingModalProps {
   onClose: () => void;
   currentUser: User;
   initialContact?: { id: number; full_name: string; role: string; first_name?: string; last_name?: string; email?: string };
+  initialContactId?: number;
 }
 
-const MessagingModal: React.FC<MessagingModalProps> = ({ isOpen, onClose, currentUser, initialContact }) => {
+const MessagingModal: React.FC<MessagingModalProps> = ({ isOpen, onClose, currentUser, initialContact, initialContactId }) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<MessageType>('public');
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
@@ -43,11 +44,16 @@ const MessagingModal: React.FC<MessagingModalProps> = ({ isOpen, onClose, curren
 
   // Handle initial contact
   useEffect(() => {
-    if (isOpen && initialContact) {
-      setActiveTab('private');
-      setSelectedContactId(initialContact.id);
+    if (isOpen) {
+        if (initialContact) {
+            setActiveTab('private');
+            setSelectedContactId(initialContact.id);
+        } else if (initialContactId) {
+            setActiveTab('private');
+            setSelectedContactId(initialContactId);
+        }
     }
-  }, [isOpen, initialContact]);
+  }, [isOpen, initialContact, initialContactId]);
 
   // Auto-scroll to bottom
   useEffect(() => {
