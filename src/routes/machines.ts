@@ -106,11 +106,11 @@ machinesRoute.patch('/:id', adminOnly, zValidator('param', machineIdParamSchema)
       updated_at: sql`CURRENT_TIMESTAMP`
     };
 
-    if (body.machine_type) updates.machine_type = body.machine_type;
-    if (body.model) updates.model = body.model;
-    if (body.serial_number) updates.serial_number = body.serial_number;
+    if (body.machine_type !== undefined) updates.machine_type = body.machine_type;
+    if (body.model !== undefined) updates.model = body.model;
+    if (body.serial_number !== undefined) updates.serial_number = body.serial_number;
     if (body.location !== undefined) updates.location = body.location;
-    if (body.status) updates.status = body.status;
+    if (body.status !== undefined) updates.status = body.status;
 
     const result = await db.update(machines)
       .set(updates)
