@@ -3,7 +3,7 @@
  * Gère le cache offline et les notifications push
  */
 
-const CACHE_VERSION = 'v1.0.2';
+const CACHE_VERSION = 'v1.0.3';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers à mettre en cache pour mode offline (optionnel - désactivé pour éviter erreurs)
@@ -133,12 +133,16 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification.data || {};
   const action = event.action || notificationData.action; // Handle button click (event.action) or data action
   
+  console.log('[SW] Notification clicked. Action:', action, 'Data:', notificationData);
+
   // Construire l'URL appropriée selon le type de notification
   let urlToOpen = notificationData.url || '/';
   
   // Pour les tickets: ouvrir le modal du ticket directement
-  if ((action === 'view_ticket' || action === 'view') && notificationData.ticketId) {
-    urlToOpen = `/?ticket=${notificationData.ticketId}`;
+  if ((action === 'view_ticket' || action === 'view') && (notificationData.ticketId || notificationData.ticket_id)) {
+    // Support both camelCase and snake_case, and force string conversion
+    const tid = notificationData.ticketId || notificationData.ticket_id;
+    urlToOpen = `/?ticket=${tid}`;
   }
   // Action rapide "J'y vais" -> ouvre ticket et change statut auto
   else if (action === 'acknowledge' && notificationData.ticketId) {

@@ -202,18 +202,17 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 animate-fadeIn',
+        className: 'fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[60] p-2 sm:p-4 animate-fadeIn',
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden transform hover:scale-[1.01] transition-all duration-300 flex flex-col',
+            className: 'bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
             onClick: (e) => e.stopPropagation(),
             style: {
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
                 transform: 'translateZ(0)'
             }
         },
-            React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-700 to-blue-800 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10 backdrop-blur-sm bg-opacity-95' },
+            React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-700 to-blue-800 text-white p-3 sm:p-5 flex justify-between items-center shadow-md z-10' },
                 React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                     React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-blue-300 flex-shrink-0' }),
                     React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },

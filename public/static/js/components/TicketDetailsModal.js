@@ -494,7 +494,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             onClick: (e) => e.stopPropagation()
         },
             // STICKY HEADER
-            React.createElement('div', { className: 'sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm' },
+            React.createElement('div', { className: 'sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm' },
                 // BACK BUTTON
                 React.createElement('button', {
                     onClick: onClose,
@@ -531,7 +531,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                 ) : ticket ? React.createElement('div', {},
 
-                React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-blue-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-200/50' },
+                React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-blue-50 to-gray-50 rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-200/50' },
                     React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
                         React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
                         !editingPriority ? React.createElement('div', { className: 'flex items-center gap-2' },
@@ -672,7 +672,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 // Section planification (superviseur/admin seulement)
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                     React.createElement('div', { 
-                        className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50/90 to-gray-50/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50',
+                        className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50',
                         'data-section': 'planning'
                     },
                         React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3 sm:mb-4' },

@@ -1,167 +1,151 @@
-import axios from 'axios';
-import { CreateTicketRequest, TicketPriority, TicketStatus } from '../types';
+import { client, getAuthHeaders, getAuthToken } from '../api';
+import { Ticket, CreateTicketRequest, TicketStatus, User } from '../types';
 
-// Types internes pour le service (si non définis dans types.ts)
-export interface Ticket {
-  id: number;
-  title: string;
-  description: string;
-  status: TicketStatus;
-  priority: TicketPriority;
-  machine_id: number;
-  machine_name?: string;
-  created_by: number;
-  created_by_name?: string;
-  assigned_to?: number;
-  assigned_to_name?: string;
-  created_at: string;
-  updated_at?: string;
-  scheduled_date?: string;
-}
+// --- Named Exports for Components ---
 
-export interface CreateTicketResponse {
-  success: boolean;
-  ticketId: number;
-  message: string;
-}
+export const getTicketDetails = async (id: number): Promise<Ticket> => {
+  const res = await client.api.tickets[':id'].$get(
+    { param: { id: id.toString() } },
+    { headers: getAuthHeaders() }
+  );
 
-export interface TicketStats {
-  total: number;
-  open: number;
-  critical: number;
-  avg_resolution_time?: string;
-}
+  if (!res.ok) {
+    throw new Error('Failed to fetch ticket details');
+  }
+  const data = await res.json();
+  return data.ticket;
+};
 
-/**
- * Service de gestion des tickets
- * Gère toutes les interactions API liées aux tickets de maintenance
- */
+export const getTickets = async (status?: TicketStatus, priority?: string): Promise<Ticket[]> => {
+  const query: any = {};
+  if (status) query.status = status;
+  if (priority) query.priority = priority;
 
-// Récupérer tous les tickets (avec filtres optionnels)
-export const getTickets = async (filters?: { 
-  status?: TicketStatus; 
-  priority?: TicketPriority;
-  assigned_to?: number;
-  machine_id?: number; 
-}): Promise<Ticket[]> => {
-  try {
-    // Construction de la query string
-    const params = new URLSearchParams();
-    if (filters) {
-      if (filters.status) params.append('status', filters.status);
-      if (filters.priority) params.append('priority', filters.priority);
-      if (filters.assigned_to) params.append('assigned_to', filters.assigned_to.toString());
-      if (filters.machine_id) params.append('machine_id', filters.machine_id.toString());
+  const res = await client.api.tickets.$get(
+    { query },
+    { headers: getAuthHeaders() }
+  );
+  
+  if (!res.ok) {
+    throw new Error('Failed to fetch tickets');
+  }
+  const data = await res.json();
+  return data.tickets;
+};
+
+export const createTicket = async (ticketData: CreateTicketRequest): Promise<Ticket> => {
+  const res = await client.api.tickets.$post(
+    { json: ticketData },
+    { headers: getAuthHeaders() }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error((error as any).error || 'Failed to create ticket');
+  }
+  const data = await res.json();
+  return data.ticket;
+};
+
+export const updateTicketStatus = async (id: number, status: TicketStatus): Promise<Ticket> => {
+  const res = await client.api.tickets[':id'].$patch(
+    { 
+      param: { id: id.toString() },
+      json: { status }
+    },
+    { headers: getAuthHeaders() }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error((error as any).error || 'Failed to update status');
+  }
+  const data = await res.json();
+  return data.ticket;
+};
+
+export const assignTicket = async (id: number, techId: number | null): Promise<Ticket> => {
+  const res = await client.api.tickets[':id'].$patch(
+    { 
+      param: { id: id.toString() },
+      json: { assigned_to: techId }
+    },
+    { headers: getAuthHeaders() }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error((error as any).error || 'Failed to assign ticket');
+  }
+  const data = await res.json();
+  return data.ticket;
+};
+
+export const getTechnicians = async (): Promise<User[]> => {
+  // We fetch all users and filter for technical roles
+  // Ideally this should be a specific endpoint or filter param in getUsers
+  const res = await client.api.users.team.$get(
+    undefined,
+    { headers: getAuthHeaders() }
+  );
+  
+  if (!res.ok) {
+    throw new Error('Failed to fetch users');
+  }
+  const data = await res.json();
+  const users = Array.isArray(data.users) ? data.users : [];
+  
+  // Filter for technicians, supervisors, admins
+  return users.filter(u => 
+    ['technician', 'senior_technician', 'supervisor', 'admin', 'team_leader'].includes(u.role)
+  );
+};
+
+export const getMachines = async (): Promise<any[]> => {
+  const token = getAuthToken();
+  const response = await fetch('/api/machines', {
+    headers: {
+      'Authorization': `Bearer ${token}`
     }
+  });
 
-    const response = await axios.get(`/api/tickets?${params.toString()}`);
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des tickets:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error('Failed to fetch machines');
   }
+  const data = await response.json();
+  return data.machines;
 };
 
-// Récupérer un ticket spécifique par ID
-export const getTicketDetails = async (ticketId: number): Promise<Ticket> => {
-  try {
-    const response = await axios.get(`/api/tickets/${ticketId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Erreur lors de la récupération du ticket ${ticketId}:`, error);
-    throw error;
+export const uploadTicketMedia = async (ticketId: number, file: Blob): Promise<{ media: any }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('ticket_id', ticketId.toString());
+
+  const token = getAuthToken();
+  // Using direct fetch for media upload as it's not yet migrated to RPC/Drizzle
+  const response = await fetch('/api/media/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error((error as any).error || 'Failed to upload media');
   }
+  return response.json();
 };
 
-// Créer un nouveau ticket
-export const createTicket = async (data: CreateTicketRequest): Promise<CreateTicketResponse> => {
-  try {
-    const response = await axios.post('/api/tickets', data);
-    return {
-      success: true,
-      ticketId: response.data.id,
-      message: 'Ticket créé avec succès'
-    };
-  } catch (error) {
-    console.error('Erreur lors de la création du ticket:', error);
-    throw error;
-  }
-};
-
-// Mettre à jour le statut d'un ticket
-export const updateTicketStatus = async (ticketId: number, status: TicketStatus): Promise<void> => {
-  try {
-    await axios.patch(`/api/tickets/${ticketId}/status`, { status });
-  } catch (error) {
-    console.error(`Erreur lors de la mise à jour du statut du ticket ${ticketId}:`, error);
-    throw error;
-  }
-};
-
-// Assigner un ticket à un technicien
-export const assignTicket = async (ticketId: number, technicianId: number | null, scheduledDate?: string): Promise<void> => {
-  try {
-    await axios.post(`/api/tickets/${ticketId}/assign`, { 
-      technician_id: technicianId,
-      scheduled_date: scheduledDate
-    });
-  } catch (error) {
-    console.error(`Erreur lors de l'assignation du ticket ${ticketId}:`, error);
-    throw error;
-  }
-};
-
-// Récupérer les statistiques globales
-export const getTicketStats = async (): Promise<TicketStats> => {
-  try {
-    const response = await axios.get('/api/tickets/stats');
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des statistiques:', error);
-    // Retourner des valeurs par défaut en cas d'erreur pour ne pas bloquer l'UI
-    return { total: 0, open: 0, critical: 0 };
-  }
-};
-
-// Téléverser un média pour un ticket
-export const uploadTicketMedia = async (file: File, ticketId?: number): Promise<{ id: number, url: string, type: string }> => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (ticketId) {
-      formData.append('ticket_id', ticketId.toString());
-    }
-
-    const response = await axios.post('/api/media/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors du téléversement du média:', error);
-    throw error;
-  }
-};
-
-// Récupérer les machines (pour le formulaire de création)
-export const getMachines = async (): Promise<Array<{ id: number; name: string; zone: string }>> => {
-  try {
-    const response = await axios.get('/api/machines');
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des machines:', error);
-    return [];
-  }
-};
-
-// Récupérer les techniciens (pour l'assignation)
-export const getTechnicians = async (): Promise<Array<{ id: number; first_name: string; last_name: string }>> => {
-  try {
-    const response = await axios.get('/api/users?role=technician'); // Ou endpoint spécifique
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des techniciens:', error);
-    return [];
-  }
+// Default export object for compatibility if needed elsewhere
+export const ticketService = {
+  getAll: getTickets,
+  getById: getTicketDetails,
+  create: createTicket,
+  updateStatus: updateTicketStatus,
+  assign: assignTicket,
+  getTechnicians,
+  getMachines,
+  uploadMedia: uploadTicketMedia
 };

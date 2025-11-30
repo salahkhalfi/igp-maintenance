@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as ReactWindow from 'react-window';
-const List = ReactWindow.FixedSizeList;
+import { List } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { User, UserRole } from '../types';
 import { userService } from '../services/userService';
@@ -199,12 +198,12 @@ const UserManagementModal: React.FC<UserManagementModalProps> = ({ isOpen, onClo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 font-sans">
-        <div className="absolute inset-0 bg-slate-900/80" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2 sm:p-4 font-sans">
+        <div className="absolute inset-0 bg-black/75" onClick={onClose}></div>
         
-        {/* MAIN CONTAINER - FORCE GPU LAYER */}
+        {/* MAIN CONTAINER - OPTIMIZED RENDERING (NO GPU TRANSFORM, NO SHADOW) */}
         <div 
-            className="relative bg-white rounded-xl shadow-lg w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden transform-gpu translate-z-0"
+            className="relative bg-white rounded-xl border border-gray-200 w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden"
             onClick={e => e.stopPropagation()}
         >
             {/* Header */}

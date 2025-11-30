@@ -26,6 +26,7 @@
  */
 
 import { Hono } from 'hono';
+import { formatUserName } from '../utils/userFormatter';
 import type { Bindings } from '../types';
 import { getTimezoneOffset, convertToLocalTime } from '../utils/timezone';
 
@@ -71,8 +72,12 @@ cron.post('/check-overdue', async (c) => {
         t.scheduled_date,
         t.assigned_to,
         t.created_at,
-        u.first_name as assignee_name,
-        reporter.first_name as reporter_name
+        u.first_name as assignee_first_name,
+        u.last_name as assignee_last_name,
+        u.full_name as assignee_full_name,
+        reporter.first_name as reporter_first_name,
+        reporter.last_name as reporter_last_name,
+        reporter.full_name as reporter_full_name
       FROM tickets t
       LEFT JOIN machines m ON t.machine_id = m.id
       LEFT JOIN users u ON t.assigned_to = u.id
@@ -133,9 +138,25 @@ cron.post('/check-overdue', async (c) => {
           ? `${delayHours}h ${delayMinutes}min`
           : `${delayMinutes}min`;
 
+        // Logique de nom d'assigné robuste
+        const assigneeName = formatUserName({
+          first_name: ticket.assignee_first_name,
+          last_name: ticket.assignee_last_name,
+          full_name: ticket.assignee_full_name
+        }, null);
+
+        // Logique de nom de rapporteur robuste
+        const reporterName = formatUserName({
+          first_name: ticket.reporter_first_name,
+          last_name: ticket.reporter_last_name,
+          full_name: ticket.reporter_full_name
+        }, 'Inconnu');
+
         const assigneeInfo = ticket.assigned_to === 0
           ? 'Toute l\'équipe'
-          : ticket.assignee_name || 'Non assigné';
+          : assigneeName
+            ? `👤 ${assigneeName}`
+            : 'Non assigné';
 
         // Préparer données webhook
         // CORRECTION 2025-11-23: Les dates dans la DB sont stockées en UTC (via localDateTimeToUTC() frontend).
@@ -151,7 +172,7 @@ cron.post('/check-overdue', async (c) => {
           model: ticket.model,
           scheduled_date: convertToLocalTime(ticket.scheduled_date, timezoneOffset),
           assigned_to: assigneeInfo,
-          reporter: ticket.reporter_name || 'Inconnu',
+          reporter: reporterName,
           overdue_text: overdueText,
           created_at: convertToLocalTime(ticket.created_at, timezoneOffset),
           notification_time: convertToLocalTime(now, timezoneOffset)
@@ -203,10 +224,10 @@ cron.post('/check-overdue', async (c) => {
             // Aucun push récent, on envoie
             // Récupérer le nom de l'utilisateur assigné
             const assignedUser = await c.env.DB.prepare(
-              'SELECT first_name FROM users WHERE id = ?'
-            ).bind(ticket.assigned_to).first() as { first_name: string } | null;
+              'SELECT first_name, last_name, full_name, email FROM users WHERE id = ?'
+            ).bind(ticket.assigned_to).first() as any;
             
-            const userName = assignedUser?.first_name || 'Technicien';
+            const userName = formatUserName(assignedUser, 'Technicien');
             
             const { sendPushNotification } = await import('./push');
             const pushResult = await sendPushNotification(c.env, ticket.assigned_to, {
@@ -272,7 +293,7 @@ cron.post('/check-overdue', async (c) => {
               }
 
               try {
-                const adminName = admin.first_name || 'Admin';
+                const adminName = formatUserName(admin, 'Admin');
                 
                 const adminPushResult = await sendPushNotification(c.env, admin.id as number, {
                   title: `⚠️ ${adminName}, ticket expiré`,

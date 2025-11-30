@@ -11,21 +11,8 @@ import { fr } from 'date-fns/locale';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { getTicketDetails, updateTicketStatus, assignTicket, uploadTicketMedia, getTechnicians } from '../services/ticketService';
+import { commentService } from '../services/commentService';
 import { Ticket, TicketStatus, TicketPriority, UserRole } from '../types';
-// Note: Assuming a comment service exists or will be added to ticketService.
-// For now we'll mock the comment submission part or add it to ticketService.
-import axios from 'axios';
-
-// Ajout temporaire pour les commentaires (à déplacer dans ticketService)
-const getTicketComments = async (ticketId: number) => {
-  const res = await axios.get(`/api/tickets/${ticketId}/comments`);
-  return res.data;
-};
-
-const addTicketComment = async (ticketId: number, content: string, type: 'text' | 'audio' = 'text', mediaUrl?: string) => {
-  const res = await axios.post(`/api/tickets/${ticketId}/comments`, { content, type, media_url: mediaUrl });
-  return res.data;
-};
 
 interface TicketDetailsModalProps {
   isOpen: boolean;
@@ -65,12 +52,13 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     refetchInterval: 30000 // Rafraîchissement auto toutes les 30s
   });
 
-  const { data: comments = [] } = useQuery({
+  const { data: commentsData } = useQuery({
     queryKey: ['ticket-comments', ticketId],
-    queryFn: () => getTicketComments(ticketId!),
+    queryFn: () => commentService.getAllByTicketId(ticketId!),
     enabled: !!ticketId && isOpen,
     refetchInterval: 10000 // Chat plus réactif
   });
+  const comments = commentsData?.comments || [];
 
   const { data: technicians = [] } = useQuery({
     queryKey: ['technicians'],
@@ -98,17 +86,22 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
 
   const commentMutation = useMutation({
     mutationFn: async () => {
+      // Note: Audio upload logic for comments is simplified here.
+      // In a real scenario, we'd upload the blob to media service first, then link it.
+      // For now, we'll just post text.
       if (audioUrl) {
-        // Upload audio blob first (simulation)
-        // const formData = new FormData();
-        // formData.append('file', await fetch(audioUrl).then(r => r.blob()), 'voice-note.mp3');
-        // const uploadRes = await uploadTicketMedia(...)
-        // return addTicketComment(ticketId!, "Note vocale", 'audio', uploadRes.url);
-        
-        // Pour simplifier sans backend d'upload audio complexe ici:
-        return addTicketComment(ticketId!, "Note vocale (Simulation)", 'audio'); 
+         // Fallback for audio if not fully implemented in comment service
+         return commentService.create({
+            ticket_id: ticketId!,
+            user_name: 'Moi', // Should use real name
+            comment: "Note vocale (Audio upload not linked yet)"
+         });
       }
-      return addTicketComment(ticketId!, commentText, 'text');
+      return commentService.create({
+        ticket_id: ticketId!,
+        user_name: 'Moi', // Should be dynamic based on user
+        comment: commentText
+      });
     },
     onSuccess: () => {
       setCommentText('');
@@ -150,8 +143,8 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
   const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col transform-gpu transition-all">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center p-12">

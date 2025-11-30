@@ -167,22 +167,35 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         if (ticketIdFromUrl) {
             const ticketId = parseInt(ticketIdFromUrl, 10);
             
-            // ALWAYS open modal if ID exists
-            console.log('[Push] Opening ticket from URL:', ticketId);
-            setSelectedTicketId(ticketId);
-            setShowDetailsModal(true);
-            
-            // Attempt auto-action if ticket is in loaded list
-            if (tickets.length > 0) {
-                const ticket = tickets.find(t => t.id === ticketId);
-                if (ticket) {
-                    // Quick Action: "J'y vais !"
-                    if (autoAction === 'acknowledge' && ticket.status === 'received') {
-                        console.log('[Push] Auto-acknowledging ticket:', ticketId);
-                        setTimeout(() => {
-                            moveTicketToStatus(ticket, 'in_progress');
-                        }, 1500);
+            // 1. Direct ID match (Standard case)
+            if (!isNaN(ticketId)) {
+                // ALWAYS open modal if ID exists and is valid
+                console.log('[Push] Opening ticket from URL:', ticketId);
+                setSelectedTicketId(ticketId);
+                setShowDetailsModal(true);
+                
+                // Attempt auto-action if ticket is in loaded list
+                if (tickets.length > 0) {
+                    const ticket = tickets.find(t => t.id === ticketId);
+                    if (ticket) {
+                        // Quick Action: "J'y vais !"
+                        if (autoAction === 'acknowledge' && ticket.status === 'received') {
+                            console.log('[Push] Auto-acknowledging ticket:', ticketId);
+                            setTimeout(() => {
+                                moveTicketToStatus(ticket, 'in_progress');
+                            }, 1500);
+                        }
                     }
+                }
+            } 
+            // 2. String ID match (Fallback case for "T-XXX" IDs)
+            else if (tickets.length > 0) {
+                // Try to find by ticket_id string (e.g. "T-2024-001")
+                const ticketByString = tickets.find(t => t.ticket_id === ticketIdFromUrl);
+                if (ticketByString) {
+                    console.log('[Push] Resolved string ID to numeric:', ticketIdFromUrl, '->', ticketByString.id);
+                    setSelectedTicketId(ticketByString.id);
+                    setShowDetailsModal(true);
                 }
             }
         }
@@ -221,14 +234,18 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 
                 // Ouvrir le ticket si action view_ticket ou actions rapides
                 if ((action === 'view_ticket' || action === 'view' || action === 'acknowledge') && data.ticketId) {
-                    const ticketId = data.ticketId;
+                    const ticketId = parseInt(data.ticketId, 10);
+                    console.log('[Push] Opening ticket from notification click:', ticketId);
+                    
+                    // ALWAYS open the modal first (TicketDetailsModal fetches its own data)
+                    // This ensures responsiveness even if the ticket isn't in the local list yet
+                    setSelectedTicketId(ticketId);
+                    setShowDetailsModal(true);
+                    
+                    // Try to find ticket locally for auto-actions
                     const ticket = tickets.find(t => t.id === ticketId);
                     
                     if (ticket) {
-                        console.log('[Push] Opening ticket from notification click:', ticketId);
-                        setSelectedTicketId(ticketId);
-                        setShowDetailsModal(true);
-                        
                         // Quick Action: "J'y vais !"
                         if (autoAction === 'acknowledge' && ticket.status === 'received') {
                             console.log('[Push] Auto-acknowledging ticket from click:', ticketId);
@@ -238,15 +255,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                             }, 1500);
                         }
                     } else {
-                        console.log('[Push] Ticket not found, reloading data...');
-                        // Ticket pas encore chargé, recharger les données
-                        loadData().then(() => {
-                            const foundTicket = tickets.find(t => t.id === ticketId);
-                            if (foundTicket) {
-                                setSelectedTicketId(ticketId);
-                                setShowDetailsModal(true);
-                            }
-                        });
+                        // If not found locally, refresh data in background to update the list
+                        console.log('[Push] Ticket not in local list, refreshing...');
+                        if (onRefresh) onRefresh();
                     }
                 }
                 // Ouvrir messagerie pour messages audio
@@ -657,7 +668,13 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     // PERFORMANCE CRITICAL: Disable heavy backdrop-blur on Kanban columns when modal is open
     // This prevents GPU crash/freeze on Chrome when stacking transparency layers
     const kanbanContainerStyle = isAnyModalOpen ? {
-        visibility: 'hidden', // NUCLEAR OPTION: Hide background entirely to save GPU
+        // MODIFIED NUCLEAR OPTION: Keep visible but remove heavy effects
+        // REMOVED OPACITY AND FILTER TO PREVENT "DISAPPEARANCE"
+        // JUST DISABLE INTERACTION TO FOCUS ON MODAL
+        pointerEvents: 'none', // Prevent interaction
+        // opacity: '1', // Keep opacity at 1 (default)
+        // filter: 'none', // No filters
+        transition: 'none' // No transition to avoid visual glitches
     } : {};
 
     const kanbanColumnStyle = isAnyModalOpen ? {

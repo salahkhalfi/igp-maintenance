@@ -2,6 +2,7 @@
 
 import { Hono } from 'hono';
 import { authMiddleware } from '../middlewares/auth';
+import { formatUserName } from '../utils/userFormatter';
 import type { Bindings } from '../types';
 
 const alerts = new Hono<{ Bindings: Bindings }>();
@@ -42,8 +43,12 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
         t.status,
         t.scheduled_date,
         t.assigned_to,
-        u.first_name as assigned_name,
-        r.first_name as reporter_name
+        u.first_name as assigned_first_name,
+        u.last_name as assigned_last_name,
+        u.full_name as assigned_full_name,
+        r.first_name as reporter_first_name,
+        r.last_name as reporter_last_name,
+        r.full_name as reporter_full_name
       FROM tickets t
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users r ON t.reported_by = r.id
@@ -99,10 +104,24 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
         ticket.priority === 'medium' ? '🟡 MOYENNE' :
         '🟢 FAIBLE';
 
+      // Logique de nom d'assigné robuste
+      const assignedName = formatUserName({
+        first_name: ticket.assigned_first_name,
+        last_name: ticket.assigned_last_name,
+        full_name: ticket.assigned_full_name
+      }, null);
+
+      // Logique de nom de rapporteur robuste
+      const reporterName = formatUserName({
+        first_name: ticket.reporter_first_name,
+        last_name: ticket.reporter_last_name,
+        full_name: ticket.reporter_full_name
+      }, 'N/A');
+
       const assignedInfo = ticket.assigned_to === 0
         ? '👥 Toute l\'équipe'
-        : ticket.assigned_name
-          ? `👤 ${ticket.assigned_name}`
+        : assignedName
+          ? `👤 ${assignedName}`
           : '❌ Non assigné';
 
       const messageContent = `
@@ -118,7 +137,7 @@ Statut: ${ticket.status === 'received' ? 'Requête' : 'Diagnostic'}
 ⏰ Retard: ${delayHours}h ${delayMinutes}min
 
 Assigné à: ${assignedInfo}
-Rapporté par: ${ticket.reporter_name || 'N/A'}
+Rapporté par: ${reporterName}
 
 ${ticket.description ? `Description: ${ticket.description.substring(0, 100)}${ticket.description.length > 100 ? '...' : ''}` : ''}
 
@@ -143,9 +162,11 @@ Action requise immédiatement !
           const delayText = delayHours > 0 
             ? `${delayHours}h ${delayMinutes}min` 
             : `${delayMinutes}min`;
+
+          const adminName = formatUserName(admin, 'Admin');
           
           const pushResult = await sendPushNotification(c.env, admin.id as number, {
-            title: `⚠️ ALERTE RETARD`,
+            title: `⚠️ ALERTE RETARD (${adminName})`,
             body: `${ticket.ticket_id}: ${ticket.title} - En retard de ${delayText}`,
             icon: '/icon-192.png',
             badge: '/badge-72.png',

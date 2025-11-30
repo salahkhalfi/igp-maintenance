@@ -1,35 +1,36 @@
 // Routes pour la messagerie (messages publics/privés, audio)
+// Refactored to use Drizzle ORM + Zod Validation
 
 import { Hono } from 'hono';
+import { eq, and, or, desc, asc, sql, getTableColumns, ne, inArray } from 'drizzle-orm';
+import { zValidator } from '@hono/zod-validator';
+import { getDb } from '../db';
+import { messages, users, pushLogs, pushSubscriptions } from '../db/schema';
 import { authMiddleware } from '../middlewares/auth';
+import { formatUserName } from '../utils/userFormatter';
+import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
 import type { Bindings } from '../types';
 
-const messages = new Hono<{ Bindings: Bindings }>();
+const messagesRoute = new Hono<{ Bindings: Bindings }>();
 
 // POST /api/messages - Envoyer un message (public ou privé)
-messages.post('/', authMiddleware, async (c) => {
+messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), async (c) => {
   try {
-    const user = c.get('user');
-    const { message_type, recipient_id, content } = await c.req.json();
-
-    // Validation
-    if (!message_type || !content || content.trim() === '') {
-      return c.json({ error: 'Type et contenu requis' }, 400);
-    }
-
-    if (message_type !== 'public' && message_type !== 'private') {
-      return c.json({ error: 'Type invalide' }, 400);
-    }
-
-    if (message_type === 'private' && !recipient_id) {
-      return c.json({ error: 'Destinataire requis pour message prive' }, 400);
-    }
+    const user = c.get('user') as any;
+    const currentUserId = Number(user.userId);
+    const { message_type, recipient_id, content } = c.req.valid('json');
+    const db = getDb(c.env);
 
     // Inserer le message
-    const result = await c.env.DB.prepare(`
-      INSERT INTO messages (sender_id, recipient_id, message_type, content)
-      VALUES (?, ?, ?, ?)
-    `).bind(user.userId, recipient_id || null, message_type, content).run();
+    const result = await db.insert(messages).values({
+      sender_id: currentUserId,
+      recipient_id: recipient_id || null,
+      message_type: message_type as 'public' | 'private',
+      content,
+      is_read: 0
+    }).returning();
+
+    const newMessage = result[0];
 
     // 🔔 Envoyer push notification si message privé
     if (message_type === 'private' && recipient_id) {
@@ -37,7 +38,7 @@ messages.post('/', authMiddleware, async (c) => {
         const { sendPushNotification } = await import('./push');
         
         // Obtenir le nom de l'expéditeur
-        const senderName = user.first_name || user.email || 'Un utilisateur';
+        const senderName = formatUserName(user, 'Un utilisateur');
         
         // Préparer le contenu pour la notification (max 100 caractères)
         const notificationBody = content.length > 100 
@@ -54,57 +55,52 @@ messages.post('/', authMiddleware, async (c) => {
             action: 'new_private_message',
             senderId: user.userId,
             senderName: senderName,
-            messageId: result.meta.last_row_id
+            messageId: newMessage.id
           }
         });
         
-        // Logger le résultat dans push_logs
-        await c.env.DB.prepare(`
-          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-          VALUES (?, ?, ?, ?)
-        `).bind(
-          recipient_id,
-          null,  // Pas de ticket_id pour messages privés
-          pushResult.success ? 'success' : 'failed',
-          pushResult.success ? null : JSON.stringify(pushResult)
-        ).run();
+        // Logger le résultat
+        await db.insert(pushLogs).values({
+          user_id: recipient_id,
+          ticket_id: null,
+          status: pushResult.success ? 'success' : 'failed',
+          error_message: pushResult.success ? null : JSON.stringify(pushResult)
+        });
         
         console.log(`✅ Push notification sent to user ${recipient_id} for message from ${user.userId}`);
-      } catch (pushError) {
+      } catch (pushError: any) {
         // Logger l'erreur
         try {
-          await c.env.DB.prepare(`
-            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-            VALUES (?, ?, ?, ?)
-          `).bind(
-            recipient_id,
-            null,
-            'error',
-            (pushError as Error).message || String(pushError)
-          ).run();
+          await db.insert(pushLogs).values({
+            user_id: recipient_id,
+            ticket_id: null,
+            status: 'error',
+            error_message: pushError.message || String(pushError)
+          });
         } catch (logError) {
           console.error('Failed to log push error:', logError);
         }
-        // Fail-safe: si push échoue, le message est quand même envoyé
         console.error('❌ Push notification failed (non-blocking):', pushError);
       }
     }
 
     return c.json({
-      message: 'Message envoye avec succes',
-      id: result.meta.last_row_id
+      message: 'Message envoyé avec succès',
+      id: newMessage.id
     }, 201);
   } catch (error) {
     console.error('Send message error:', error);
-    return c.json({ error: 'Erreur lors de envoi du message' }, 500);
+    return c.json({ error: 'Erreur lors de l\'envoi du message' }, 500);
   }
 });
 
 // POST /api/messages/audio - Envoyer un message audio
-messages.post('/audio', authMiddleware, async (c) => {
+messagesRoute.post('/audio', authMiddleware, async (c) => {
   try {
-    const user = c.get('user');
+    const user = c.get('user') as any;
+    const currentUserId = Number(user.userId);
     const formData = await c.req.formData();
+    const db = getDb(c.env);
 
     const audioFile = formData.get('audio') as File;
     const messageType = formData.get('message_type') as string;
@@ -124,7 +120,7 @@ messages.post('/audio', authMiddleware, async (c) => {
       }, 400);
     }
 
-    // Validation type MIME (formats légers et universels)
+    // Validation type MIME
     const allowedTypes = ['audio/webm', 'audio/mp4', 'audio/mpeg', 'audio/ogg', 'audio/wav'];
     const isAllowed = allowedTypes.some(type => audioFile.type.startsWith(type));
     if (!isAllowed) {
@@ -133,7 +129,7 @@ messages.post('/audio', authMiddleware, async (c) => {
       }, 400);
     }
 
-    // Validation durée (max 5 minutes = 300 secondes)
+    // Validation durée
     if (duration > 300) {
       return c.json({ error: 'Durée maximale: 5 minutes' }, 400);
     }
@@ -162,20 +158,18 @@ messages.post('/audio', authMiddleware, async (c) => {
     });
 
     // Sauvegarder en DB
-    const result = await c.env.DB.prepare(`
-      INSERT INTO messages (
-        sender_id, recipient_id, message_type, content,
-        audio_file_key, audio_duration, audio_size
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      user.userId,
-      recipientId || null,
-      messageType,
-      '🎤 Message vocal',
-      fileKey,
-      duration,
-      audioFile.size
-    ).run();
+    const result = await db.insert(messages).values({
+      sender_id: currentUserId,
+      recipient_id: recipientId ? parseInt(recipientId) : null,
+      message_type: messageType as 'public' | 'private',
+      content: '🎤 Message vocal',
+      audio_file_key: fileKey,
+      audio_duration: duration,
+      audio_size: audioFile.size,
+      is_read: 0
+    }).returning();
+
+    const newMessage = result[0];
 
     console.log(`✅ Audio message uploaded: ${fileKey} (${(audioFile.size / 1024).toFixed(1)} KB, ${duration}s)`);
 
@@ -183,18 +177,17 @@ messages.post('/audio', authMiddleware, async (c) => {
     if (messageType === 'private' && recipientId) {
       try {
         const { sendPushNotification } = await import('./push');
+        const recipientIdNum = parseInt(recipientId);
         
-        // Obtenir le nom de l'expéditeur
-        const senderName = user.first_name || user.email || 'Un utilisateur';
+        const senderName = formatUserName(user, 'Un utilisateur');
         
-        // Formatter la durée pour affichage (ex: "2:35")
         const durationMin = Math.floor(duration / 60);
         const durationSec = duration % 60;
         const durationText = durationSec > 0 
           ? `${durationMin}:${durationSec.toString().padStart(2, '0')}`
           : `${durationMin}min`;
         
-        const pushResult = await sendPushNotification(c.env, parseInt(recipientId), {
+        const pushResult = await sendPushNotification(c.env, recipientIdNum, {
           title: `🎤 ${senderName}`,
           body: `Message vocal (${durationText})`,
           icon: '/icon-192.png',
@@ -204,47 +197,38 @@ messages.post('/audio', authMiddleware, async (c) => {
             action: 'new_audio_message',
             senderId: user.userId,
             senderName: senderName,
-            messageId: result.meta.last_row_id,
+            messageId: newMessage.id,
             audioKey: fileKey,
             duration: duration
           }
         });
         
-        // Logger le résultat dans push_logs
-        await c.env.DB.prepare(`
-          INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-          VALUES (?, ?, ?, ?)
-        `).bind(
-          parseInt(recipientId),
-          null,  // Pas de ticket_id pour messages audio
-          pushResult.success ? 'success' : 'failed',
-          pushResult.success ? null : JSON.stringify(pushResult)
-        ).run();
+        await db.insert(pushLogs).values({
+          user_id: recipientIdNum,
+          ticket_id: null,
+          status: pushResult.success ? 'success' : 'failed',
+          error_message: pushResult.success ? null : JSON.stringify(pushResult)
+        });
         
         console.log(`✅ Push notification sent to user ${recipientId} for audio message from ${user.userId}`);
-      } catch (pushError) {
-        // Logger l'erreur
+      } catch (pushError: any) {
         try {
-          await c.env.DB.prepare(`
-            INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-            VALUES (?, ?, ?, ?)
-          `).bind(
-            parseInt(recipientId),
-            null,
-            'error',
-            (pushError as Error).message || String(pushError)
-          ).run();
+          await db.insert(pushLogs).values({
+            user_id: parseInt(recipientId),
+            ticket_id: null,
+            status: 'error',
+            error_message: pushError.message || String(pushError)
+          });
         } catch (logError) {
           console.error('Failed to log push error:', logError);
         }
-        // Fail-safe: si push échoue, le message est quand même envoyé
         console.error('❌ Push notification failed (non-blocking):', pushError);
       }
     }
 
     return c.json({
       message: 'Message vocal envoyé avec succès',
-      messageId: result.meta.last_row_id,
+      messageId: newMessage.id,
       audioKey: fileKey
     }, 201);
   } catch (error) {
@@ -254,43 +238,34 @@ messages.post('/audio', authMiddleware, async (c) => {
 });
 
 // GET /api/messages/public - Récupérer les messages publics avec pagination
-messages.get('/public', authMiddleware, async (c) => {
+messagesRoute.get('/public', authMiddleware, zValidator('query', getMessagesQuerySchema), async (c) => {
   try {
-    // Paramètres de pagination
-    const page = parseInt(c.req.query('page') || '1');
-    const limit = parseInt(c.req.query('limit') || '50');
+    const { page, limit } = c.req.valid('query');
     const offset = (page - 1) * limit;
+    const db = getDb(c.env);
 
-    // Valider les paramètres
-    if (page < 1 || limit < 1 || limit > 100) {
-      return c.json({ error: 'Paramètres de pagination invalides' }, 400);
-    }
+    // page, limit validation handled by Zod now
 
-    // Récupérer les messages avec pagination
-    const { results } = await c.env.DB.prepare(`
-      SELECT
-        m.id,
-        m.content,
-        m.created_at,
-        m.sender_id,
-        m.audio_file_key,
-        m.audio_duration,
-        m.audio_size,
-        u.full_name as sender_name,
-        u.role as sender_role
-      FROM messages m
-      LEFT JOIN users u ON m.sender_id = u.id
-      WHERE m.message_type = 'public'
-      ORDER BY m.created_at DESC
-      LIMIT ? OFFSET ?
-    `).bind(limit, offset).all();
+    const results = await db
+      .select({
+        ...getTableColumns(messages),
+        sender_name: users.full_name,
+        sender_role: users.role
+      })
+      .from(messages)
+      .leftJoin(users, eq(messages.sender_id, users.id))
+      .where(eq(messages.message_type, 'public'))
+      .orderBy(desc(messages.created_at))
+      .limit(limit)
+      .offset(offset);
 
-    // Compter le total de messages publics
-    const { count } = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM messages
-      WHERE message_type = 'public'
-    `).first() as { count: number };
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(messages)
+      .where(eq(messages.message_type, 'public'))
+      .get();
+    
+    const count = countResult?.count || 0;
 
     return c.json({
       messages: results,
@@ -304,64 +279,94 @@ messages.get('/public', authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error('Get public messages error:', error);
-    return c.json({ error: 'Erreur lors de la recuperation des messages' }, 500);
+    return c.json({ error: 'Erreur lors de la récupération des messages' }, 500);
   }
 });
 
-// GET /api/messages/conversations - Récupérer les conversations privées (liste des contacts)
-messages.get('/conversations', authMiddleware, async (c) => {
+// GET /api/messages/conversations - Récupérer les conversations privées
+messagesRoute.get('/conversations', authMiddleware, async (c) => {
   try {
-    const user = c.get('user');
+    const user = c.get('user') as any;
+    const db = getDb(c.env);
 
-    // D'abord recuperer tous les contacts uniques
-    const { results: contacts } = await c.env.DB.prepare(`
-      SELECT DISTINCT
-        CASE
-          WHEN m.sender_id = ? THEN m.recipient_id
-          ELSE m.sender_id
-        END as contact_id
-      FROM messages m
-      WHERE m.message_type = 'private'
-        AND (m.sender_id = ? OR m.recipient_id = ?)
-    `).bind(user.userId, user.userId, user.userId).all();
+    // Récupérer tous les messages privés de l'utilisateur pour extraire les contacts
+    const userMessages = await db
+      .select({
+        sender_id: messages.sender_id,
+        recipient_id: messages.recipient_id
+      })
+      .from(messages)
+      .where(and(
+        eq(messages.message_type, 'private'),
+        or(eq(messages.sender_id, user.userId), eq(messages.recipient_id, user.userId))
+      ));
 
-    // Pour chaque contact, recuperer les details
+    // Extraire les IDs uniques des contacts
+    const currentUserId = Number(user.userId);
+    const contactIdsSet = new Set<number>();
+    
+    userMessages.forEach(msg => {
+      if (msg.sender_id === currentUserId && msg.recipient_id !== null) {
+        contactIdsSet.add(msg.recipient_id);
+      } else if (msg.recipient_id === currentUserId) {
+        contactIdsSet.add(msg.sender_id);
+      }
+    });
+    
+    const contactIds = Array.from(contactIdsSet);
+
     const conversations = [];
-    for (const contact of contacts) {
-      const contactId = contact.contact_id;
-      if (!contactId) continue;
+    for (const contactId of contactIds) {
+      // Ignorer l'utilisateur lui-même s'il s'est envoyé un message (cas rare mais possible)
+      if (contactId === currentUserId) continue;
 
       // Info utilisateur
-      const userInfo = await c.env.DB.prepare(`
-        SELECT full_name, role FROM users WHERE id = ?
-      `).bind(contactId).first();
+      const userInfo = await db
+        .select({ full_name: users.full_name, role: users.role })
+        .from(users)
+        .where(eq(users.id, contactId))
+        .get();
+
+      // Si l'utilisateur n'existe plus, on ignore
+      if (!userInfo) continue;
 
       // Dernier message
-      const lastMsg = await c.env.DB.prepare(`
-        SELECT content, created_at
-        FROM messages
-        WHERE ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?))
-        ORDER BY created_at DESC LIMIT 1
-      `).bind(user.userId, contactId, contactId, user.userId).first();
+      const lastMsg = await db
+        .select({ content: messages.content, created_at: messages.created_at })
+        .from(messages)
+        .where(and(
+          eq(messages.message_type, 'private'),
+          or(
+            and(eq(messages.sender_id, currentUserId), eq(messages.recipient_id, contactId)),
+            and(eq(messages.sender_id, contactId), eq(messages.recipient_id, currentUserId))
+          )
+        ))
+        .orderBy(desc(messages.created_at))
+        .limit(1)
+        .get();
 
       // Messages non lus
-      const unreadResult = await c.env.DB.prepare(`
-        SELECT COUNT(*) as count
-        FROM messages
-        WHERE sender_id = ? AND recipient_id = ? AND is_read = 0
-      `).bind(contactId, user.userId).first();
+      const unreadCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(messages)
+        .where(and(
+          eq(messages.message_type, 'private'),
+          eq(messages.sender_id, contactId),
+          eq(messages.recipient_id, currentUserId),
+          eq(messages.is_read, 0)
+        ))
+        .get();
 
       conversations.push({
         contact_id: contactId,
-        contact_name: userInfo?.full_name || 'Inconnu',
-        contact_role: userInfo?.role || 'unknown',
+        contact_name: userInfo.full_name || 'Utilisateur inconnu',
+        contact_role: userInfo.role || 'unknown',
         last_message: lastMsg?.content || null,
         last_message_time: lastMsg?.created_at || null,
-        unread_count: unreadResult?.count || 0
+        unread_count: unreadCount?.count || 0
       });
     }
 
-    // Trier par date du dernier message
     conversations.sort((a, b) => {
       if (!a.last_message_time) return 1;
       if (!b.last_message_time) return -1;
@@ -371,63 +376,68 @@ messages.get('/conversations', authMiddleware, async (c) => {
     return c.json({ conversations });
   } catch (error) {
     console.error('Get conversations error:', error);
-    return c.json({ error: 'Erreur lors de la recuperation des conversations' }, 500);
+    return c.json({ error: 'Erreur lors de la récupération des conversations' }, 500);
   }
 });
 
-// GET /api/messages/private/:contactId - Récupérer les messages privés avec un contact spécifique
-messages.get('/private/:contactId', authMiddleware, async (c) => {
+// GET /api/messages/private/:contactId - Récupérer les messages privés avec un contact
+messagesRoute.get('/private/:contactId', authMiddleware, zValidator('param', contactIdParamSchema), async (c) => {
   try {
-    const user = c.get('user');
-    const contactId = parseInt(c.req.param('contactId'));
+    const user = c.get('user') as any;
+    const currentUserId = Number(user.userId);
+    const { contactId } = c.req.valid('param');
+    const db = getDb(c.env);
 
-    // Recuperer les messages
-    const { results } = await c.env.DB.prepare(`
-      SELECT
-        m.id,
-        m.content,
-        m.created_at,
-        m.sender_id,
-        m.recipient_id,
-        m.is_read,
-        m.audio_file_key,
-        m.audio_duration,
-        m.audio_size,
-        u.full_name as sender_name
-      FROM messages m
-      LEFT JOIN users u ON m.sender_id = u.id
-      WHERE m.message_type = 'private'
-        AND ((m.sender_id = ? AND m.recipient_id = ?)
-          OR (m.sender_id = ? AND m.recipient_id = ?))
-      ORDER BY m.created_at ASC
-    `).bind(user.userId, contactId, contactId, user.userId).all();
+    // isNaN check not needed due to Zod
 
-    // Marquer les messages recus comme lus
-    await c.env.DB.prepare(`
-      UPDATE messages
-      SET is_read = 1, read_at = CURRENT_TIMESTAMP
-      WHERE sender_id = ?
-        AND recipient_id = ?
-        AND is_read = 0
-    `).bind(contactId, user.userId).run();
+    const results = await db
+      .select({
+        ...getTableColumns(messages),
+        sender_name: users.full_name
+      })
+      .from(messages)
+      .leftJoin(users, eq(messages.sender_id, users.id))
+      .where(and(
+        eq(messages.message_type, 'private'),
+        or(
+          and(eq(messages.sender_id, currentUserId), eq(messages.recipient_id, contactId)),
+          and(eq(messages.sender_id, contactId), eq(messages.recipient_id, currentUserId))
+        )
+      ))
+      .orderBy(asc(messages.created_at));
+
+    // Marquer comme lus
+    await db
+      .update(messages)
+      .set({ is_read: 1, read_at: sql`CURRENT_TIMESTAMP` })
+      .where(and(
+        eq(messages.sender_id, contactId),
+        eq(messages.recipient_id, currentUserId),
+        eq(messages.is_read, 0)
+      ));
 
     return c.json({ messages: results });
   } catch (error) {
     console.error('Get private messages error:', error);
-    return c.json({ error: 'Erreur lors de la recuperation des messages' }, 500);
+    return c.json({ error: 'Erreur lors de la récupération des messages' }, 500);
   }
 });
 
-// GET /api/messages/unread-count - Compter les messages non lus
-messages.get('/unread-count', authMiddleware, async (c) => {
+// GET /api/messages/unread-count
+messagesRoute.get('/unread-count', authMiddleware, async (c) => {
   try {
-    const user = c.get('user');
+    const user = c.get('user') as any;
+    const currentUserId = Number(user.userId);
+    const db = getDb(c.env);
 
-    const result = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM messages
-      WHERE recipient_id = ? AND is_read = 0
-    `).bind(user.userId).first();
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(messages)
+      .where(and(
+        eq(messages.recipient_id, currentUserId),
+        eq(messages.is_read, 0)
+      ))
+      .get();
 
     return c.json({ count: result?.count || 0 });
   } catch (error) {
@@ -436,77 +446,82 @@ messages.get('/unread-count', authMiddleware, async (c) => {
   }
 });
 
-// GET /api/messages/available-users - Liste des utilisateurs disponibles pour messagerie
-messages.get('/available-users', authMiddleware, async (c) => {
+// GET /api/messages/available-users
+messagesRoute.get('/available-users', authMiddleware, async (c) => {
   try {
-    const user = c.get('user');
+    const user = c.get('user') as any;
+    const db = getDb(c.env);
 
-    const { results } = await c.env.DB.prepare(`
-      SELECT id, first_name, full_name, role, email
-      FROM users
-      WHERE role IN ('operator', 'furnace_operator', 'technician', 'supervisor', 'admin')
-        AND id != ?
-        AND id != 0
-      ORDER BY role DESC, first_name ASC
-    `).bind(user.userId).all();
+    const results = await db
+      .select({
+        id: users.id,
+        first_name: users.first_name,
+        full_name: users.full_name,
+        role: users.role,
+        email: users.email
+      })
+      .from(users)
+      .where(and(
+        inArray(users.role, ['operator', 'furnace_operator', 'technician', 'supervisor', 'admin']),
+        ne(users.id, user.userId),
+        ne(users.id, 0)
+      ))
+      .orderBy(desc(users.role), asc(users.first_name));
 
     return c.json({ users: results });
   } catch (error) {
     console.error('Get available users error:', error);
-    return c.json({ error: 'Erreur lors de la recuperation des utilisateurs' }, 500);
+    return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
   }
 });
 
-// DELETE /api/messages/:messageId - Supprimer un message avec contrôle de permissions
-messages.delete('/:messageId', authMiddleware, async (c) => {
+// DELETE /api/messages/:messageId
+messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageIdParamSchema), async (c) => {
   try {
-    const user = c.get('user');
-    const messageId = parseInt(c.req.param('messageId'));
+    const user = c.get('user') as any;
+    const currentUserId = Number(user.userId);
+    const { messageId } = c.req.valid('param');
+    const db = getDb(c.env);
 
-    // Recuperer le message avec audio_file_key
-    const message = await c.env.DB.prepare(`
-      SELECT m.*, u.role as sender_role
-      FROM messages m
-      LEFT JOIN users u ON m.sender_id = u.id
-      WHERE m.id = ?
-    `).bind(messageId).first();
+    // isNaN check not needed due to Zod
+
+    const message = await db
+      .select({
+        ...getTableColumns(messages),
+        sender_role: users.role
+      })
+      .from(messages)
+      .leftJoin(users, eq(messages.sender_id, users.id))
+      .where(eq(messages.id, messageId))
+      .get();
 
     if (!message) {
-      return c.json({ error: 'Message non trouve' }, 404);
+      return c.json({ error: 'Message non trouvé' }, 404);
     }
 
-    // Verification des permissions
     const canDelete =
-      // Utilisateur peut supprimer son propre message
-      message.sender_id === user.userId ||
-      // Admin peut supprimer tous les messages
+      message.sender_id === currentUserId ||
       user.role === 'admin' ||
-      // Superviseur peut supprimer tous sauf ceux de admin
       (user.role === 'supervisor' && message.sender_role !== 'admin');
 
     if (!canDelete) {
-      return c.json({ error: 'Vous n avez pas la permission de supprimer ce message' }, 403);
+      return c.json({ error: 'Vous n\'avez pas la permission de supprimer ce message' }, 403);
     }
 
-    // Supprimer le fichier audio du bucket R2 si existe
     if (message.audio_file_key) {
       try {
         await c.env.MEDIA_BUCKET.delete(message.audio_file_key);
-        console.log(`Audio supprime du R2: ${message.audio_file_key}`);
-      } catch (deleteError) {
-        console.error(`Erreur suppression audio R2 ${message.audio_file_key}:`, deleteError);
-        // Continue meme si la suppression du fichier echoue
+        console.log(`Audio supprimé du R2: ${message.audio_file_key}`);
+      } catch (e) {
+        console.error(`Erreur suppression audio R2:`, e);
       }
     }
 
-    // Supprimer le message de la base de donnees
-    await c.env.DB.prepare(`
-      DELETE FROM messages WHERE id = ?
-    `).bind(messageId).run();
+    await db.delete(messages).where(eq(messages.id, messageId));
 
     return c.json({
-      message: 'Message supprime avec succes',
-      audioDeleted: message.audio_file_key ? true : false
+      message: 'Message supprimé avec succès',
+      audioDeleted: !!message.audio_file_key
     });
   } catch (error) {
     console.error('Delete message error:', error);
@@ -514,67 +529,59 @@ messages.delete('/:messageId', authMiddleware, async (c) => {
   }
 });
 
-// POST /api/messages/bulk-delete - Suppression en masse de messages
-messages.post('/bulk-delete', authMiddleware, async (c) => {
+// POST /api/messages/bulk-delete
+messagesRoute.post('/bulk-delete', authMiddleware, zValidator('json', bulkDeleteMessagesSchema), async (c) => {
   try {
-    const user = c.get('user');
-    const { message_ids } = await c.req.json();
-
-    if (!message_ids || !Array.isArray(message_ids) || message_ids.length === 0) {
-      return c.json({ error: 'Liste de message_ids requise' }, 400);
-    }
-
-    // Limiter a 100 messages max par requete
-    if (message_ids.length > 100) {
-      return c.json({ error: 'Maximum 100 messages par suppression' }, 400);
-    }
+    const user = c.get('user') as any;
+    const currentUserId = Number(user.userId);
+    const { message_ids } = c.req.valid('json');
+    const db = getDb(c.env);
 
     let deletedCount = 0;
     let audioDeletedCount = 0;
-    const errors = [];
+    const errors: any[] = [];
+
+    // On ne peut pas facilement faire un "bulk delete" sécurisé en une requête SQL 
+    // car on doit vérifier les permissions pour chaque message individuellement
+    // ou faire une requête complexe. La boucle est acceptable pour < 100 items.
 
     for (const messageId of message_ids) {
       try {
-        // Recuperer le message avec audio_file_key et role
-        const message = await c.env.DB.prepare(`
-          SELECT m.*, u.role as sender_role
-          FROM messages m
-          LEFT JOIN users u ON m.sender_id = u.id
-          WHERE m.id = ?
-        `).bind(messageId).first();
+        const message = await db
+          .select({
+            ...getTableColumns(messages),
+            sender_role: users.role
+          })
+          .from(messages)
+          .leftJoin(users, eq(messages.sender_id, users.id))
+          .where(eq(messages.id, messageId))
+          .get();
 
         if (!message) {
-          errors.push({ messageId, error: 'Message non trouve' });
+          errors.push({ messageId, error: 'Message non trouvé' });
           continue;
         }
 
-        // Verification des permissions pour chaque message
         const canDelete =
-          message.sender_id === user.userId ||
+          message.sender_id === currentUserId ||
           user.role === 'admin' ||
           (user.role === 'supervisor' && message.sender_role !== 'admin');
 
         if (!canDelete) {
-          errors.push({ messageId, error: 'Permission refusee' });
+          errors.push({ messageId, error: 'Permission refusée' });
           continue;
         }
 
-        // Supprimer le fichier audio du bucket R2 si existe
         if (message.audio_file_key) {
           try {
             await c.env.MEDIA_BUCKET.delete(message.audio_file_key);
-            console.log(`Audio supprime du R2: ${message.audio_file_key}`);
             audioDeletedCount++;
-          } catch (deleteError) {
-            console.error(`Erreur suppression audio R2 ${message.audio_file_key}:`, deleteError);
+          } catch (e) {
+            console.error(`Erreur suppression audio R2:`, e);
           }
         }
 
-        // Supprimer le message de la base de donnees
-        await c.env.DB.prepare(`
-          DELETE FROM messages WHERE id = ?
-        `).bind(messageId).run();
-
+        await db.delete(messages).where(eq(messages.id, messageId));
         deletedCount++;
       } catch (error) {
         console.error(`Erreur suppression message ${messageId}:`, error);
@@ -583,7 +590,7 @@ messages.post('/bulk-delete', authMiddleware, async (c) => {
     }
 
     return c.json({
-      message: deletedCount + ' message(s) supprime(s) avec succes',
+      message: `${deletedCount} message(s) supprimé(s) avec succès`,
       deletedCount,
       audioDeletedCount,
       errors: errors.length > 0 ? errors : undefined
@@ -594,8 +601,8 @@ messages.post('/bulk-delete', authMiddleware, async (c) => {
   }
 });
 
-// GET /api/messages/test/r2 - Route de test R2
-messages.get('/test/r2', async (c) => {
+// GET /api/messages/test/r2
+messagesRoute.get('/test/r2', async (c) => {
   try {
     const list = await c.env.MEDIA_BUCKET.list({ limit: 10, prefix: 'messages/audio/' });
     return c.json({
@@ -619,10 +626,6 @@ messages.get('/test/r2', async (c) => {
 
 /**
  * 🔔 LOGIN SUMMARY NOTIFICATION (LAW #12)
- * Envoie UNE notification de résumé lors du login si messages non lus
- * - Throttling: Maximum 1 fois par 24h par utilisateur
- * - Non-bloquant: Ne doit jamais faire échouer le login
- * - Isolé: N'affecte pas les autres notifications push
  */
 export async function sendLoginSummaryNotification(
   env: Bindings,
@@ -630,16 +633,19 @@ export async function sendLoginSummaryNotification(
 ): Promise<void> {
   try {
     console.log(`[LOGIN-SUMMARY] Starting check for user ${userId}`);
+    const db = getDb(env);
     
     // 1️⃣ Vérifier le throttling (max 1 fois par 24h)
-    const lastSummary = await env.DB.prepare(`
-      SELECT created_at 
-      FROM push_logs 
-      WHERE user_id = ? 
-        AND status = 'login_summary_sent'
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `).bind(userId).first();
+    const lastSummary = await db
+      .select({ created_at: pushLogs.created_at })
+      .from(pushLogs)
+      .where(and(
+        eq(pushLogs.user_id, userId),
+        eq(pushLogs.status, 'login_summary_sent')
+      ))
+      .orderBy(desc(pushLogs.created_at))
+      .limit(1)
+      .get();
     
     if (lastSummary) {
       const lastSummaryTime = new Date(lastSummary.created_at as string);
@@ -648,38 +654,41 @@ export async function sendLoginSummaryNotification(
       
       if (hoursSinceLastSummary < 24) {
         console.log(`[LOGIN-SUMMARY] Throttled for user ${userId} (last summary: ${hoursSinceLastSummary.toFixed(1)}h ago)`);
-        return; // Sortir silencieusement
+        return;
       }
     }
     
     // 2️⃣ Compter les messages non lus
-    const unreadResult = await env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM messages
-      WHERE recipient_id = ? AND is_read = 0
-    `).bind(userId).first();
+    const unreadResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(messages)
+      .where(and(
+        eq(messages.recipient_id, userId),
+        eq(messages.is_read, 0)
+      ))
+      .get();
     
-    const unreadCount = (unreadResult?.count as number) || 0;
+    const unreadCount = unreadResult?.count || 0;
     
     if (unreadCount === 0) {
       console.log(`[LOGIN-SUMMARY] No unread messages for user ${userId}`);
-      return; // Pas de messages non lus, sortir silencieusement
+      return;
     }
     
     console.log(`[LOGIN-SUMMARY] User ${userId} has ${unreadCount} unread message(s)`);
     
     // 3️⃣ Vérifier que l'utilisateur a des push subscriptions actives
-    const subscriptions = await env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM push_subscriptions
-      WHERE user_id = ?
-    `).bind(userId).first();
+    const subscriptionResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.user_id, userId))
+      .get();
     
-    const subscriptionCount = (subscriptions?.count as number) || 0;
+    const subscriptionCount = subscriptionResult?.count || 0;
     
     if (subscriptionCount === 0) {
       console.log(`[LOGIN-SUMMARY] User ${userId} has no push subscriptions`);
-      return; // Pas d'abonnement push, sortir silencieusement
+      return;
     }
     
     // 4️⃣ Envoyer la notification de résumé
@@ -702,15 +711,12 @@ export async function sendLoginSummaryNotification(
     });
     
     // 5️⃣ Logger le résultat
-    await env.DB.prepare(`
-      INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-      VALUES (?, ?, ?, ?)
-    `).bind(
-      userId,
-      null,
-      pushResult.success ? 'login_summary_sent' : 'login_summary_failed',
-      pushResult.success ? null : JSON.stringify(pushResult)
-    ).run();
+    await db.insert(pushLogs).values({
+      user_id: userId,
+      ticket_id: null,
+      status: pushResult.success ? 'login_summary_sent' : 'login_summary_failed',
+      error_message: pushResult.success ? null : JSON.stringify(pushResult)
+    });
     
     if (pushResult.success) {
       console.log(`✅ [LOGIN-SUMMARY] Summary notification sent to user ${userId} (${unreadCount} unread)`);
@@ -718,25 +724,22 @@ export async function sendLoginSummaryNotification(
       console.log(`❌ [LOGIN-SUMMARY] Failed to send summary to user ${userId}`);
     }
     
-  } catch (error) {
-    // 🛡️ FAIL-SAFE: Toutes les erreurs sont silencieuses
+  } catch (error: any) {
     console.error(`❌ [LOGIN-SUMMARY] Error for user ${userId} (non-blocking):`, error);
     
     // Tenter de logger l'erreur (best-effort)
     try {
-      await env.DB.prepare(`
-        INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-        VALUES (?, ?, ?, ?)
-      `).bind(
-        userId,
-        null,
-        'login_summary_error',
-        (error as Error).message || String(error)
-      ).run();
+      const db = getDb(env);
+      await db.insert(pushLogs).values({
+        user_id: userId,
+        ticket_id: null,
+        status: 'login_summary_error',
+        error_message: error.message || String(error)
+      });
     } catch (logError) {
       console.error('[LOGIN-SUMMARY] Failed to log error:', logError);
     }
   }
 }
 
-export default messages;
+export default messagesRoute;

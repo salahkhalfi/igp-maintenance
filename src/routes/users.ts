@@ -1,26 +1,40 @@
 // Routes de gestion des utilisateurs (Admin et Superviseur)
+// Refactored to use Drizzle ORM + Zod Validation
 
 import { Hono } from 'hono';
-import { hashPassword, isLegacyHash } from '../utils/password';
+import { eq, ne, and, or, desc, sql, getTableColumns, like } from 'drizzle-orm';
+import { zValidator } from '@hono/zod-validator';
+import { getDb } from '../db';
+import { users, tickets, media, ticketTimeline } from '../db/schema';
+import { hashPassword } from '../utils/password';
 import { supervisorOrAdmin, technicianSupervisorOrAdmin } from '../middlewares/auth';
+import { createUserSchema, updateUserSchema, resetPasswordSchema, userIdParamSchema } from '../schemas/users';
 import type { Bindings, User } from '../types';
-import { LIMITS } from '../utils/validation';
 
-const users = new Hono<{ Bindings: Bindings }>();
+const usersRoute = new Hono<{ Bindings: Bindings }>();
 
 /**
  * GET /api/users/team - Liste toute l'équipe (pour tous les rôles)
  * Accès: Technicien, Superviseur, Admin
- * NOTE: Cette route doit être AVANT le middleware supervisorOrAdmin
  */
-users.get('/team', technicianSupervisorOrAdmin, async (c) => {
+usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
   try {
-    const { results } = await c.env.DB.prepare(`
-      SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login
-      FROM users
-      WHERE id != 0
-      ORDER BY role DESC, full_name ASC
-    `).all();
+    const db = getDb(c.env);
+    const results = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        full_name: users.full_name,
+        first_name: users.first_name,
+        last_name: users.last_name,
+        role: users.role,
+        created_at: users.created_at,
+        updated_at: users.updated_at,
+        last_login: users.last_login
+      })
+      .from(users)
+      .where(ne(users.id, 0))
+      .orderBy(desc(users.role), users.full_name);
 
     return c.json({ users: results });
   } catch (error) {
@@ -30,34 +44,29 @@ users.get('/team', technicianSupervisorOrAdmin, async (c) => {
 });
 
 // Toutes les AUTRES routes nécessitent les droits admin ou superviseur
-users.use('/*', supervisorOrAdmin);
+usersRoute.use('/*', supervisorOrAdmin);
 
 /**
  * GET /api/users - Liste tous les utilisateurs
  * Accès: Admin uniquement
  */
-users.get('/', async (c) => {
+usersRoute.get('/', async (c) => {
   try {
+    const db = getDb(c.env);
     // Filtrer le super admin ET l'utilisateur système team (id=0)
-    const { results } = await c.env.DB.prepare(`
-      SELECT
-        id,
-        email,
-        full_name,
-        first_name,
-        last_name,
-        role,
-        created_at,
-        updated_at,
-        last_login,
-        CASE
-          WHEN password_hash LIKE 'v2:%' THEN 'PBKDF2'
-          ELSE 'SHA-256 (Legacy)'
-        END as hash_type
-      FROM users
-      WHERE (is_super_admin = 0 OR is_super_admin IS NULL) AND id != 0
-      ORDER BY full_name ASC
-    `).all();
+    const results = await db
+      .select({
+        ...getTableColumns(users),
+        hash_type: sql<string>`CASE WHEN ${users.password_hash} LIKE 'v2:%' THEN 'PBKDF2' ELSE 'SHA-256 (Legacy)' END`
+      })
+      .from(users)
+      .where(
+        and(
+          or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`),
+          ne(users.id, 0)
+        )
+      )
+      .orderBy(users.full_name);
 
     return c.json({ users: results });
   } catch (error) {
@@ -70,28 +79,20 @@ users.get('/', async (c) => {
  * GET /api/users/:id - Détails d'un utilisateur
  * Accès: Admin uniquement
  */
-users.get('/:id', async (c) => {
+usersRoute.get('/:id', zValidator('param', userIdParamSchema), async (c) => {
   try {
-    const id = c.req.param('id');
+    const { id } = c.req.valid('param');
+    // isNaN check removed (handled by Zod)
 
-    const user = await c.env.DB.prepare(`
-      SELECT
-        id,
-        email,
-        full_name,
-        first_name,
-        last_name,
-        role,
-        created_at,
-        updated_at,
-        last_login,
-        CASE
-          WHEN password_hash LIKE 'v2:%' THEN 'PBKDF2'
-          ELSE 'SHA-256 (Legacy)'
-        END as hash_type
-      FROM users
-      WHERE id = ?
-    `).bind(id).first();
+    const db = getDb(c.env);
+    const user = await db
+      .select({
+        ...getTableColumns(users),
+        hash_type: sql<string>`CASE WHEN ${users.password_hash} LIKE 'v2:%' THEN 'PBKDF2' ELSE 'SHA-256 (Legacy)' END`
+      })
+      .from(users)
+      .where(eq(users.id, id))
+      .get();
 
     if (!user) {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
@@ -108,71 +109,30 @@ users.get('/:id', async (c) => {
  * POST /api/users - Créer un nouvel utilisateur
  * Accès: Admin uniquement
  */
-users.post('/', async (c) => {
+usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
-    const body = await c.req.json();
+    const body = c.req.valid('json');
     const { email, password, first_name, last_name, role } = body;
 
-    // Validation des champs requis
-    if (!email || !password || !first_name || !role) {
-      return c.json({ error: 'Email, mot de passe, prénom et rôle requis' }, 400);
-    }
-
-    // Construire full_name pour compatibilité
-    const full_name = last_name ? `${first_name} ${last_name}` : first_name;
-    const trimmedFullName = full_name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     const trimmedFirstName = first_name.trim();
     const trimmedLastName = last_name ? last_name.trim() : '';
-
-    // Validation du prénom
-    if (trimmedFirstName.length < LIMITS.NAME_MIN) {
-      return c.json({ error: `Prénom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
-    }
-    if (first_name.length > LIMITS.NAME_MAX) {
-      return c.json({ error: `Prénom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
-    }
-
-    // Validation de l'email
-    const trimmedEmail = email.trim().toLowerCase();
-    if (trimmedEmail.length === 0) {
-      return c.json({ error: 'Email requis' }, 400);
-    }
-    if (email.length > LIMITS.EMAIL_MAX) {
-      return c.json({ error: `Email trop long (max ${LIMITS.EMAIL_MAX} caractères)` }, 400);
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      return c.json({ error: 'Format email invalide' }, 400);
-    }
-
-    // Validation du rôle (14 rôles industriels)
-    const validRoles = [
-      'admin', 'director', 'supervisor', 'coordinator', 'planner',
-      'senior_technician', 'technician', 'team_leader', 'furnace_operator',
-      'operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'
-    ];
-    if (!validRoles.includes(role)) {
-      return c.json({ error: 'Rôle invalide' }, 400);
-    }
+    const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
 
     // RESTRICTION: Superviseur ne peut pas créer d'admin
     if (currentUser.role === 'supervisor' && role === 'admin') {
       return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
     }
 
-    // Validation du mot de passe
-    if (password.length < LIMITS.PASSWORD_MIN) {
-      return c.json({ error: `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères` }, 400);
-    }
-    if (password.length > LIMITS.PASSWORD_MAX) {
-      return c.json({ error: `Le mot de passe trop long (max ${LIMITS.PASSWORD_MAX} caractères)` }, 400);
-    }
+    const db = getDb(c.env);
 
     // Vérifier si l'email existe déjà
-    const existing = await c.env.DB.prepare(
-      'SELECT id FROM users WHERE email = ?'
-    ).bind(trimmedEmail).first();
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, trimmedEmail))
+      .get();
 
     if (existing) {
       return c.json({ error: 'Cet email est déjà utilisé' }, 409);
@@ -182,20 +142,16 @@ users.post('/', async (c) => {
     const password_hash = await hashPassword(password);
 
     // Créer l'utilisateur
-    const result = await c.env.DB.prepare(
-      'INSERT INTO users (email, password_hash, full_name, first_name, last_name, role) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(trimmedEmail, password_hash, trimmedFullName, trimmedFirstName, trimmedLastName, role).run();
+    const result = await db.insert(users).values({
+      email: trimmedEmail,
+      password_hash,
+      full_name,
+      first_name: trimmedFirstName,
+      last_name: trimmedLastName,
+      role
+    }).returning();
 
-    if (!result.success) {
-      return c.json({ error: 'Erreur lors de la création de l\'utilisateur' }, 500);
-    }
-
-    // Récupérer l'utilisateur créé
-    const newUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login FROM users WHERE email = ?'
-    ).bind(trimmedEmail).first() as User;
-
-    // Logger l'action
+    const newUser = result[0];
     console.log(`Admin ${currentUser.email} created user ${trimmedEmail} with role ${role}`);
 
     return c.json({
@@ -212,231 +168,107 @@ users.post('/', async (c) => {
  * PUT /api/users/:id - Modifier un utilisateur
  * Accès: Admin uniquement
  */
-users.put('/:id', async (c) => {
+usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json', updateUserSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
-    const id = c.req.param('id');
-    const body = await c.req.json();
+    const { id } = c.req.valid('param');
+    // isNaN check removed
+
+    const body = c.req.valid('json');
     const { email, first_name, last_name, role, password } = body;
 
-    console.log('🔍 UPDATE USER - Start:', {
-      currentUserId: currentUser.userId,
-      currentUserRole: currentUser.role,
-      targetUserId: id,
-      requestedRole: role
-    });
+    const db = getDb(c.env);
 
     // Vérifier que l'utilisateur existe
-    const existingUser = await c.env.DB.prepare(
-      'SELECT * FROM users WHERE id = ?'
-    ).bind(id).first() as any;
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .get();
 
     if (!existingUser) {
-      console.log('❌ User not found:', id);
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
     // PROTECTION: Bloquer toute modification du super admin
     if (existingUser.is_super_admin === 1) {
-      console.log('❌ Cannot modify super admin');
       return c.json({ error: 'Action non autorisée' }, 403);
     }
 
-    console.log('✅ Existing user:', {
-      id: existingUser.id,
-      email: existingUser.email,
-      role: existingUser.role
-    });
-
     // RESTRICTION: Superviseur ne peut pas modifier un admin
     if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
-      console.log('❌ Supervisor cannot modify admin');
       return c.json({ error: 'Les superviseurs ne peuvent pas modifier les administrateurs' }, 403);
     }
 
-    // RESTRICTION: Superviseur ne peut pas promouvoir quelqu\'un en admin
+    // RESTRICTION: Superviseur ne peut pas promouvoir quelqu'un en admin
     if (currentUser.role === 'supervisor' && role === 'admin') {
-      console.log('❌ Supervisor cannot promote to admin');
       return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
     }
 
     // Empêcher un admin de se retirer ses propres droits admin
-    const isSelfDemotionCheck = currentUser.userId === parseInt(id) && role && role !== 'admin' && currentUser.role === 'admin';
-    console.log('🔍 Self-demotion check:', {
-      currentUserId: currentUser.userId,
-      targetUserId: parseInt(id),
-      areEqual: currentUser.userId === parseInt(id),
-      requestedRole: role,
-      currentRole: currentUser.role,
-      wouldTrigger: isSelfDemotionCheck
-    });
-
-    if (isSelfDemotionCheck) {
-      console.log('❌ Admin cannot demote themselves');
-      return c.json({
-        error: 'Vous ne pouvez pas retirer vos propres droits administrateur'
-      }, 403);
+    if (currentUser.userId === id && role && role !== 'admin' && currentUser.role === 'admin') {
+      return c.json({ error: 'Vous ne pouvez pas retirer vos propres droits administrateur' }, 403);
     }
 
     // Empêcher un superviseur de se retirer ses propres droits superviseur
-    if (currentUser.userId === parseInt(id) && role && role !== 'supervisor' && currentUser.role === 'supervisor') {
-      console.log('❌ Supervisor cannot demote themselves');
-      return c.json({
-        error: 'Vous ne pouvez pas retirer vos propres droits de superviseur'
-      }, 403);
+    if (currentUser.userId === id && role && role !== 'supervisor' && currentUser.role === 'supervisor') {
+      return c.json({ error: 'Vous ne pouvez pas retirer vos propres droits de superviseur' }, 403);
     }
 
-    console.log('✅ All permission checks passed');
+    const updates: any = {
+      updated_at: sql`CURRENT_TIMESTAMP`
+    };
 
-    // Validation de l'email si fourni
     if (email) {
       const trimmedEmail = email.trim().toLowerCase();
-      if (trimmedEmail.length === 0) {
-        return c.json({ error: 'Email ne peut pas être vide' }, 400);
-      }
-      if (email.length > LIMITS.EMAIL_MAX) {
-        return c.json({ error: `Email trop long (max ${LIMITS.EMAIL_MAX} caractères)` }, 400);
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedEmail)) {
-        return c.json({ error: 'Format email invalide' }, 400);
-      }
-
-      // Vérifier si l'email est déjà utilisé par un autre utilisateur
-      const emailExists = await c.env.DB.prepare(
-        'SELECT id FROM users WHERE email = ? AND id != ?'
-      ).bind(trimmedEmail, id).first();
+      // Vérifier unicité
+      const emailExists = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.email, trimmedEmail), ne(users.id, id)))
+        .get();
 
       if (emailExists) {
         return c.json({ error: 'Cet email est déjà utilisé par un autre utilisateur' }, 409);
       }
+      updates.email = trimmedEmail;
     }
 
-    // Validation du rôle si fourni (14 rôles industriels)
-    if (role) {
-      const validRoles = [
-        'admin', 'director', 'supervisor', 'coordinator', 'planner',
-        'senior_technician', 'technician', 'team_leader', 'furnace_operator',
-        'operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'
-      ];
-      if (!validRoles.includes(role)) {
-        return c.json({ error: 'Rôle invalide' }, 400);
-      }
-    }
-
-    // Validation du prénom si fourni
     if (first_name !== undefined && first_name !== null) {
       const trimmedFirstName = first_name.trim();
-      if (trimmedFirstName.length > 0) {
-        if (trimmedFirstName.length < LIMITS.NAME_MIN) {
-          return c.json({ error: `Prénom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
-        }
-        if (first_name.length > LIMITS.NAME_MAX) {
-          return c.json({ error: `Prénom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
-        }
-      }
-    }
-
-    // Validation du nom si fourni (optionnel)
-    if (last_name && last_name.length > LIMITS.NAME_MAX) {
-      return c.json({ error: `Nom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
-    }
-
-    // Validation du mot de passe si fourni
-    if (password) {
-      if (password.length < LIMITS.PASSWORD_MIN) {
-        return c.json({ error: `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères` }, 400);
-      }
-      if (password.length > LIMITS.PASSWORD_MAX) {
-        return c.json({ error: `Le mot de passe trop long (max ${LIMITS.PASSWORD_MAX} caractères)` }, 400);
-      }
-    }
-
-    // Construire la requête de mise à jour
-    const updates: string[] = [];
-    const params: any[] = [];
-
-    if (email) {
-      updates.push('email = ?');
-      params.push(email.trim().toLowerCase());
-    }
-    if (first_name !== undefined && first_name !== null) {
-      const trimmedFirstName = first_name.trim();
-      const trimmedLastName = last_name ? last_name.trim() : '';
+      const trimmedLastName = last_name !== undefined && last_name !== null ? last_name.trim() : (existingUser.last_name || '');
       
-      // Ne mettre à jour que si first_name n'est pas vide
       if (trimmedFirstName.length > 0) {
         const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
-        
-        updates.push('first_name = ?');
-        params.push(trimmedFirstName);
-        updates.push('last_name = ?');
-        params.push(trimmedLastName);
-        updates.push('full_name = ?');
-        params.push(full_name);
+        updates.first_name = trimmedFirstName;
+        updates.last_name = trimmedLastName;
+        updates.full_name = full_name;
       }
     }
-    if (role) {
-      updates.push('role = ?');
-      params.push(role);
-    }
+
+    if (role) updates.role = role;
     if (password) {
-      const password_hash = await hashPassword(password);
-      updates.push('password_hash = ?');
-      params.push(password_hash);
+      updates.password_hash = await hashPassword(password);
     }
 
-    if (updates.length === 0) {
-      return c.json({ error: 'Aucune modification fournie' }, 400);
+    const result = await db.update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!result.length) {
+      return c.json({ error: 'Erreur lors de la mise à jour' }, 500);
     }
 
-    updates.push('updated_at = CURRENT_TIMESTAMP');
-    params.push(id);
-
-    // Exécuter la mise à jour
-    console.log('🔍 SQL Update:', {
-      query: `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
-      params: params
-    });
-
-    const result = await c.env.DB.prepare(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
-    ).bind(...params).run();
-
-    console.log('🔍 Update result:', result);
-
-    if (!result.success) {
-      console.log('❌ Update failed:', result);
-      return c.json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' }, 500);
-    }
-
-    // Récupérer l'utilisateur mis à jour
-    const updatedUser = await c.env.DB.prepare(
-      'SELECT id, email, full_name, first_name, last_name, role, created_at, updated_at, last_login FROM users WHERE id = ?'
-    ).bind(id).first() as User;
-
-    // Logger l'action
-    const changes = [];
-    if (email) changes.push(`email: ${existingUser.email} → ${email}`);
-    if (first_name !== undefined && first_name !== null && first_name.trim().length > 0) {
-      const newFullName = last_name ? `${first_name.trim()} ${last_name.trim()}` : first_name.trim();
-      changes.push(`name: ${existingUser.full_name} → ${newFullName}`);
-    }
-    if (role) changes.push(`role: ${existingUser.role} → ${role}`);
-    if (password) changes.push('password changed');
-
-    console.log(`Admin ${currentUser.email} updated user ${existingUser.email}: ${changes.join(', ')}`);
+    const updatedUser = result[0];
+    console.log(`Admin ${currentUser.email} updated user ${existingUser.email}`);
 
     return c.json({
       message: 'Utilisateur mis à jour avec succès',
       user: updatedUser
     });
   } catch (error) {
-    console.error('❌ Update user exception:', error);
-    console.error('❌ Error details:', {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    console.error('Update user error:', error);
     return c.json({ error: 'Erreur lors de la mise à jour de l\'utilisateur' }, 500);
   }
 });
@@ -445,94 +277,59 @@ users.put('/:id', async (c) => {
  * DELETE /api/users/:id - Supprimer un utilisateur
  * Accès: Admin uniquement
  */
-users.delete('/:id', async (c) => {
+usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
-    const id = c.req.param('id');
+    const { id } = c.req.valid('param');
+    // isNaN check removed
 
-    // Vérifier que l'utilisateur existe
-    const existingUser = await c.env.DB.prepare(
-      'SELECT * FROM users WHERE id = ?'
-    ).bind(id).first() as any;
+    const db = getDb(c.env);
+    const existingUser = await db.select().from(users).where(eq(users.id, id)).get();
 
     if (!existingUser) {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
-    // PROTECTION: Bloquer toute suppression du super admin
-    if (existingUser.is_super_admin === 1) {
-      return c.json({ error: 'Action non autorisée' }, 403);
+    if (existingUser.is_super_admin === 1) return c.json({ error: 'Action non autorisée' }, 403);
+    if (currentUser.role === 'supervisor' && existingUser.role === 'admin') return c.json({ error: 'Non autorisé' }, 403);
+    if (currentUser.userId === id) return c.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, 403);
+
+    // Vérifier si dernier admin
+    const adminCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'admin'))
+      .get();
+
+    if (existingUser.role === 'admin' && adminCount && adminCount.count <= 1) {
+      return c.json({ error: 'Impossible de supprimer le dernier administrateur' }, 403);
     }
 
-    // RESTRICTION: Superviseur ne peut pas supprimer un admin
-    if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
-      return c.json({ error: 'Les superviseurs ne peuvent pas supprimer les administrateurs' }, 403);
-    }
-
-    // Empêcher un utilisateur de se supprimer lui-même
-    if (currentUser.userId === parseInt(id)) {
-      return c.json({
-        error: 'Vous ne pouvez pas supprimer votre propre compte'
-      }, 403);
-    }
-
-    // Vérifier s'il reste au moins un autre admin
-    const adminCount = await c.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM users WHERE role = ?'
-    ).bind('admin').first() as any;
-
-    if (existingUser.role === 'admin' && adminCount.count <= 1) {
-      return c.json({
-        error: 'Impossible de supprimer le dernier administrateur du système'
-      }, 403);
-    }
-
-    // Vérifier si l'utilisateur a créé des tickets (reported_by)
-    const ticketCount = await c.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM tickets WHERE reported_by = ?'
-    ).bind(id).first() as any;
+    // Vérifier tickets
+    const ticketCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(tickets)
+      .where(eq(tickets.reported_by, id))
+      .get();
 
     if (ticketCount && ticketCount.count > 0) {
-      return c.json({
-        error: `Impossible de supprimer cet utilisateur car il a créé ${ticketCount.count} ticket(s). Supprimez d'abord ses tickets ou réassignez-les.`
-      }, 400);
+      return c.json({ error: `Impossible: l'utilisateur a ${ticketCount.count} tickets` }, 400);
     }
 
-    // Mettre à NULL les champs assigned_to pour les tickets assignés à cet utilisateur
-    await c.env.DB.prepare(
-      'UPDATE tickets SET assigned_to = NULL, updated_at = CURRENT_TIMESTAMP WHERE assigned_to = ?'
-    ).bind(id).run();
+    // Nettoyage
+    await db.update(tickets).set({ assigned_to: null, updated_at: sql`CURRENT_TIMESTAMP` }).where(eq(tickets.assigned_to, id));
+    
+    // Re-assign media to System User (0) to satisfy NOT NULL constraint
+    await db.update(media).set({ uploaded_by: 0 }).where(eq(media.uploaded_by, id));
+    
+    // Re-assign timeline to System User (0) to satisfy NOT NULL constraint
+    await db.update(ticketTimeline).set({ user_id: 0 }).where(eq(ticketTimeline.user_id, id));
 
-    // Mettre à NULL les champs uploaded_by pour les médias uploadés par cet utilisateur
-    await c.env.DB.prepare(
-      'UPDATE media SET uploaded_by = NULL WHERE uploaded_by = ?'
-    ).bind(id).run();
-
-    // Mettre à NULL les champs user_id dans la timeline pour les actions de cet utilisateur
-    await c.env.DB.prepare(
-      'UPDATE ticket_timeline SET user_id = NULL WHERE user_id = ?'
-    ).bind(id).run();
-
-    // Supprimer l'utilisateur
-    const result = await c.env.DB.prepare(
-      'DELETE FROM users WHERE id = ?'
-    ).bind(id).run();
-
-    if (!result.success) {
-      return c.json({ error: 'Erreur lors de la suppression de l\'utilisateur' }, 500);
-    }
-
-    // Logger l'action
-    console.log(`Admin ${currentUser.email} deleted user ${existingUser.email} (role: ${existingUser.role})`);
+    await db.delete(users).where(eq(users.id, id));
 
     return c.json({
       message: 'Utilisateur supprimé avec succès',
-      deleted_user: {
-        id: existingUser.id,
-        email: existingUser.email,
-        full_name: existingUser.full_name,
-        role: existingUser.role
-      }
+      deleted_user: existingUser
     });
   } catch (error) {
     console.error('Delete user error:', error);
@@ -541,63 +338,34 @@ users.delete('/:id', async (c) => {
 });
 
 /**
- * POST /api/users/:id/reset-password - Réinitialiser le mot de passe
- * Accès: Admin uniquement
+ * POST /api/users/:id/reset-password
  */
-users.post('/:id/reset-password', async (c) => {
+usersRoute.post('/:id/reset-password', zValidator('param', userIdParamSchema), zValidator('json', resetPasswordSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
-    const id = c.req.param('id');
-    const body = await c.req.json();
+    const { id } = c.req.valid('param');
+    
+    const body = c.req.valid('json');
     const { new_password } = body;
 
-    if (!new_password) {
-      return c.json({ error: 'Le nouveau mot de passe est requis' }, 400);
-    }
+    const db = getDb(c.env);
+    const existingUser = await db.select().from(users).where(eq(users.id, id)).get();
 
-    if (new_password.length < LIMITS.PASSWORD_MIN) {
-      return c.json({ error: `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères` }, 400);
-    }
-    if (new_password.length > LIMITS.PASSWORD_MAX) {
-      return c.json({ error: `Le mot de passe trop long (max ${LIMITS.PASSWORD_MAX} caractères)` }, 400);
-    }
+    if (!existingUser) return c.json({ error: 'Utilisateur non trouvé' }, 404);
+    if (existingUser.is_super_admin === 1) return c.json({ error: 'Action non autorisée' }, 403);
 
-    // Vérifier que l'utilisateur existe
-    const existingUser = await c.env.DB.prepare(
-      'SELECT email, is_super_admin FROM users WHERE id = ?'
-    ).bind(id).first() as any;
-
-    if (!existingUser) {
-      return c.json({ error: 'Utilisateur non trouvé' }, 404);
-    }
-
-    // PROTECTION: Bloquer la réinitialisation du mot de passe du super admin
-    if (existingUser.is_super_admin === 1) {
-      return c.json({ error: 'Action non autorisée' }, 403);
-    }
-
-    // Hasher le nouveau mot de passe
     const password_hash = await hashPassword(new_password);
 
-    // Mettre à jour le mot de passe
-    const result = await c.env.DB.prepare(
-      'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-    ).bind(password_hash, id).run();
+    await db.update(users)
+      .set({ password_hash, updated_at: sql`CURRENT_TIMESTAMP` })
+      .where(eq(users.id, id));
 
-    if (!result.success) {
-      return c.json({ error: 'Erreur lors de la réinitialisation du mot de passe' }, 500);
-    }
-
-    // Logger l'action (sans inclure le mot de passe)
     console.log(`Admin ${currentUser.email} reset password for user ${existingUser.email}`);
-
-    return c.json({
-      message: 'Mot de passe réinitialisé avec succès'
-    });
+    return c.json({ message: 'Mot de passe réinitialisé avec succès' });
   } catch (error) {
     console.error('Reset password error:', error);
     return c.json({ error: 'Erreur lors de la réinitialisation du mot de passe' }, 500);
   }
 });
 
-export default users;
+export default usersRoute;

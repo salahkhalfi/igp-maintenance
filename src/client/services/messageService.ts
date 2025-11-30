@@ -1,47 +1,78 @@
 import { Message, Conversation, User, SendMessageRequest } from '../types';
+import { client, getAuthHeaders, getAuthToken } from '../api';
 
 const API_URL = '/api';
 
 export const messageService = {
   getPublicMessages: async (): Promise<{ messages: Message[] }> => {
-    const response = await fetch(`${API_URL}/messages/public`);
-    if (!response.ok) throw new Error('Failed to fetch public messages');
-    return response.json();
+    const res = await client.api.messages.public.$get(
+      { query: { page: '1', limit: '50' } },
+      { headers: getAuthHeaders() }
+    );
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch public messages');
+    }
+    return res.json();
   },
 
   getConversations: async (): Promise<{ conversations: Conversation[] }> => {
-    const response = await fetch(`${API_URL}/messages/conversations`);
-    if (!response.ok) throw new Error('Failed to fetch conversations');
-    return response.json();
+    const res = await client.api.messages.conversations.$get(
+      undefined,
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch conversations');
+    }
+    return res.json();
   },
 
   getPrivateMessages: async (contactId: number): Promise<{ messages: Message[] }> => {
-    const response = await fetch(`${API_URL}/messages/private/${contactId}`);
-    if (!response.ok) throw new Error('Failed to fetch private messages');
-    return response.json();
+    const res = await client.api.messages.private[':contactId'].$get(
+      { param: { contactId: contactId.toString() } },
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch private messages');
+    }
+    return res.json();
   },
 
   getAvailableUsers: async (): Promise<{ users: User[] }> => {
-    const response = await fetch(`${API_URL}/messages/available-users`);
-    if (!response.ok) throw new Error('Failed to fetch available users');
-    return response.json();
+    const res = await client.api.messages['available-users'].$get(
+      undefined,
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch available users');
+    }
+    return res.json();
   },
 
   getUnreadCount: async (): Promise<{ count: number }> => {
-    const response = await fetch(`${API_URL}/messages/unread-count`);
-    if (!response.ok) throw new Error('Failed to fetch unread count');
-    return response.json();
+    const res = await client.api.messages['unread-count'].$get(
+      undefined,
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch unread count');
+    }
+    return res.json();
   },
 
   sendMessage: async (data: SendMessageRequest): Promise<void> => {
-    const response = await fetch(`${API_URL}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to send message');
+    const res = await client.api.messages.$post(
+      { json: data },
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error((error as any).error || 'Failed to send message');
     }
   },
 
@@ -55,10 +86,15 @@ export const messageService = {
       formData.append('recipient_id', data.recipient_id.toString());
     }
 
+    const authToken = getAuthToken();
     const response = await fetch(`${API_URL}/messages/audio`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      },
       body: formData,
     });
+
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to send audio message');
@@ -66,24 +102,26 @@ export const messageService = {
   },
 
   deleteMessage: async (messageId: number): Promise<void> => {
-    const response = await fetch(`${API_URL}/messages/${messageId}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete message');
+    const res = await client.api.messages[':messageId'].$delete(
+      { param: { messageId: messageId.toString() } },
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error((error as any).error || 'Failed to delete message');
     }
   },
 
   bulkDeleteMessages: async (messageIds: number[]): Promise<void> => {
-    const response = await fetch(`${API_URL}/messages/bulk-delete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message_ids: messageIds }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete messages');
+    const res = await client.api.messages['bulk-delete'].$post(
+      { json: { message_ids: messageIds } },
+      { headers: getAuthHeaders() }
+    );
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error((error as any).error || 'Failed to delete messages');
     }
   }
 };

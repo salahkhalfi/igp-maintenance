@@ -216,10 +216,10 @@ const MessagingModal: React.FC<MessagingModalProps> = ({ isOpen, onClose, curren
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 font-sans" onClick={onClose}>
-      <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-slate-900/80"></div>
       
       <div 
-        className="relative bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[85vh] sm:h-[90vh] flex flex-col overflow-hidden transform-gpu translate-z-0"
+        className="relative bg-white rounded-xl border border-gray-200 w-full max-w-6xl h-[85vh] sm:h-[90vh] flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

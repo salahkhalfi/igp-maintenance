@@ -1,51 +1,30 @@
 // Routes pour la gestion des commentaires sur les tickets
+// Refactored to use Drizzle ORM + Zod Validation
 
 import { Hono } from 'hono';
-import type { Bindings } from '../types';
+import { zValidator } from '@hono/zod-validator';
+import { eq, asc } from 'drizzle-orm';
+import { getDb } from '../db';
+import { ticketComments, tickets, media } from '../db/schema';
+import { createCommentSchema, ticketIdParamSchema, commentIdParamSchema } from '../schemas/comments';
 import { authMiddleware } from '../middlewares/auth';
-import { LIMITS } from '../utils/validation';
+import type { Bindings } from '../types';
 
 const comments = new Hono<{ Bindings: Bindings }>();
 
 // POST /api/comments - Ajouter un commentaire à un ticket
-comments.post('/', authMiddleware, async (c) => {
+comments.post('/', authMiddleware, zValidator('json', createCommentSchema), async (c) => {
   try {
-    const body = await c.req.json();
+    const body = c.req.valid('json');
     const { ticket_id, user_name, user_role, comment, created_at } = body;
-
-    // Validation des champs requis
-    if (!ticket_id || !user_name || !comment) {
-      return c.json({ error: 'Ticket ID, nom et commentaire requis' }, 400);
-    }
-
-    // Validation de l'ID du ticket
-    const ticketIdNum = parseInt(ticket_id);
-    if (isNaN(ticketIdNum) || ticketIdNum <= 0) {
-      return c.json({ error: 'ID de ticket invalide' }, 400);
-    }
-
-    // Validation du nom d'utilisateur
-    const trimmedUserName = user_name.trim();
-    if (trimmedUserName.length < LIMITS.NAME_MIN) {
-      return c.json({ error: `Nom d'utilisateur trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
-    }
-    if (user_name.length > LIMITS.NAME_MAX) {
-      return c.json({ error: `Nom d'utilisateur trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
-    }
-
-    // Validation du commentaire
-    const trimmedComment = comment.trim();
-    if (trimmedComment.length < 1) {
-      return c.json({ error: 'Commentaire ne peut pas être vide' }, 400);
-    }
-    if (comment.length > LIMITS.COMMENT_MAX) {
-      return c.json({ error: `Commentaire trop long (max ${LIMITS.COMMENT_MAX} caractères)` }, 400);
-    }
+    const db = getDb(c.env);
 
     // Vérifier que le ticket existe
-    const ticket = await c.env.DB.prepare(
-      'SELECT id FROM tickets WHERE id = ?'
-    ).bind(ticket_id).first();
+    const ticket = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, ticket_id))
+      .get();
 
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
@@ -54,22 +33,16 @@ comments.post('/', authMiddleware, async (c) => {
     // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
     const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-    // Insérer le commentaire avec timestamp de l'appareil et données nettoyées
-    const result = await c.env.DB.prepare(`
-      INSERT INTO ticket_comments (ticket_id, user_name, user_role, comment, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(ticketIdNum, trimmedUserName, user_role || null, trimmedComment, timestamp).run();
+    // Insérer le commentaire
+    const result = await db.insert(ticketComments).values({
+      ticket_id,
+      user_name,
+      user_role: user_role || null,
+      comment,
+      created_at: timestamp
+    }).returning();
 
-    if (!result.success) {
-      return c.json({ error: 'Erreur lors de l\'ajout du commentaire' }, 500);
-    }
-
-    // Récupérer le commentaire créé
-    const newComment = await c.env.DB.prepare(
-      'SELECT * FROM ticket_comments WHERE id = ?'
-    ).bind(result.meta.last_row_id).first();
-
-    return c.json({ comment: newComment }, 201);
+    return c.json({ comment: result[0] }, 201);
   } catch (error) {
     console.error('Add comment error:', error);
     return c.json({ error: 'Erreur lors de l\'ajout du commentaire' }, 500);
@@ -77,13 +50,17 @@ comments.post('/', authMiddleware, async (c) => {
 });
 
 // GET /api/comments/ticket/:ticketId - Liste les commentaires d'un ticket
-comments.get('/ticket/:ticketId', authMiddleware, async (c) => {
+comments.get('/ticket/:ticketId', authMiddleware, zValidator('param', ticketIdParamSchema), async (c) => {
   try {
-    const ticketId = c.req.param('ticketId');
+    const { ticketId } = c.req.valid('param');
+    // isNaN check handled by Zod
 
-    const { results } = await c.env.DB.prepare(
-      'SELECT * FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC'
-    ).bind(ticketId).all();
+    const db = getDb(c.env);
+    const results = await db
+      .select()
+      .from(ticketComments)
+      .where(eq(ticketComments.ticket_id, ticketId))
+      .orderBy(asc(ticketComments.created_at)); // Ordre chronologique pour les conversations
 
     return c.json({ comments: results });
   } catch (error) {
@@ -93,27 +70,30 @@ comments.get('/ticket/:ticketId', authMiddleware, async (c) => {
 });
 
 // DELETE /api/comments/:id - Supprimer un commentaire (protégé)
-comments.delete('/:id', authMiddleware, async (c) => {
+comments.delete('/:id', authMiddleware, zValidator('param', commentIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
-    const id = c.req.param('id');
+    const { id } = c.req.valid('param');
+    // isNaN check handled by Zod
+
+    const db = getDb(c.env);
 
     // Récupérer le commentaire
-    const comment = await c.env.DB.prepare(
-      'SELECT * FROM ticket_comments WHERE id = ?'
-    ).bind(id).first() as any;
+    const comment = await db
+      .select()
+      .from(ticketComments)
+      .where(eq(ticketComments.id, id))
+      .get();
 
     if (!comment) {
       return c.json({ error: 'Commentaire non trouvé' }, 404);
     }
 
-    // Permissions: Admin, Supervisor, ou l'auteur du commentaire (si même nom)
-    // Note: Le système actuel stocke le nom, pas l'ID user dans comments, c'est une limitation héritée.
-    // On vérifie au moins le rôle admin/supervisor pour la modération.
+    // Permissions
     const canDelete = 
       user.role === 'admin' || 
       user.role === 'supervisor' ||
-      (user.first_name && comment.user_name === user.first_name); // Vérification basique par nom
+      (user.first_name && comment.user_name === user.first_name);
 
     if (!canDelete) {
       return c.json({ error: 'Permission refusée' }, 403);
@@ -122,12 +102,14 @@ comments.delete('/:id', authMiddleware, async (c) => {
     // Suppression en cascade : Vérifier si c'est un message vocal [audio:ID]
     const audioMatch = comment.comment.match(/\[audio:(\d+)\]/);
     if (audioMatch) {
-      const mediaId = audioMatch[1];
+      const mediaId = Number(audioMatch[1]);
       
       // Récupérer les infos du média
-      const mediaInfo = await c.env.DB.prepare(
-        'SELECT * FROM media WHERE id = ?'
-      ).bind(mediaId).first() as any;
+      const mediaInfo = await db
+        .select()
+        .from(media)
+        .where(eq(media.id, mediaId))
+        .get();
 
       if (mediaInfo) {
         try {
@@ -136,9 +118,7 @@ comments.delete('/:id', authMiddleware, async (c) => {
           console.log(`Média audio associé supprimé de R2: ${mediaInfo.file_key}`);
           
           // Supprimer de la table media
-          await c.env.DB.prepare(
-            'DELETE FROM media WHERE id = ?'
-          ).bind(mediaId).run();
+          await db.delete(media).where(eq(media.id, mediaId));
         } catch (mediaError) {
           console.error('Erreur lors de la suppression du média audio associé', mediaError);
         }
@@ -146,9 +126,7 @@ comments.delete('/:id', authMiddleware, async (c) => {
     }
 
     // Supprimer le commentaire
-    await c.env.DB.prepare(
-      'DELETE FROM ticket_comments WHERE id = ?'
-    ).bind(id).run();
+    await db.delete(ticketComments).where(eq(ticketComments.id, id));
 
     return c.json({ success: true, message: 'Commentaire supprimé' });
   } catch (error) {

@@ -5,6 +5,7 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
+import { formatUserName } from '../utils/userFormatter';
 import {
   buildPushPayload,
   type PushSubscription,
@@ -546,7 +547,7 @@ push.post('/test-user/:userId', async (c) => {
 
     const result = await sendPushNotification(c.env, targetUserId, {
       title: '🔔 Test Push Notification',
-      body: `Notification de diagnostic envoyée par ${user.first_name || user.email}`,
+      body: `Notification de diagnostic envoyée par ${formatUserName(user, 'Admin')}`,
       icon: '/icon-192.png',
       data: { test: true, url: '/', sentBy: user.userId }
     });

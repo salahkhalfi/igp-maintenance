@@ -135,9 +135,9 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
   const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transform-gpu transition-all scale-100"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
         role="dialog"
         aria-labelledby="modal-title"
       >

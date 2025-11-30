@@ -110,7 +110,7 @@ export interface Conversation {
   contact_name: string;
   contact_role: UserRole;
   last_message: string;
-  last_message_at: string;
+  last_message_time: string;
   unread_count: number;
 }
 

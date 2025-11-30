@@ -30,6 +30,7 @@
     "db:migrate:local": "wrangler d1 migrations apply maintenance-db --local",
     "db:migrate:prod": "wrangler d1 migrations apply maintenance-db",
     "db:seed": "wrangler d1 execute maintenance-db --local --file=./seed.sql",
+    "db:generate": "drizzle-kit generate",
     "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local && npm run db:seed",
     "db:backup": "bash scripts/backup-db.sh",
     "db:restore": "bash scripts/restore-db.sh",
@@ -45,6 +46,7 @@
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "^1.0.2",
+    "@hono/zod-validator": "^0.7.5",
     "@tanstack/react-query": "^5.90.11",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
@@ -56,7 +58,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-virtualized-auto-sizer": "^1.0.26",
-    "react-window": "^2.2.3"
+    "react-window": "^2.2.3",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.5.25",
@@ -70,6 +73,8 @@
     "@vitejs/plugin-react": "^5.1.1",
     "autocannon": "^8.0.0",
     "autoprefixer": "^10.4.22",
+    "drizzle-kit": "^0.31.7",
+    "drizzle-orm": "^0.44.7",
     "eslint": "^9.39.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",

@@ -18,6 +18,16 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.12.0 (30 novembre 2025) - SYSTÈME MESSAGERIE & TICKETS MODERNISÉ 💬🎫✨
+- **🎤 RECONNAISSANCE VOCALE (FR)** : Dictée vocale intégrée pour création tickets et commentaires
+- **🎧 MESSAGERIE 2.0** : Refonte complète React/TypeScript, enregistrement audio natif, polling temps réel
+- **🎫 GESTION TICKETS AVANCÉE** : 
+  - **Nouveau Modal Création** : Upload média avec preview, dictée vocale titre/description
+  - **Nouveau Modal Détails** : Galerie médias, commentaires vocaux/texte, assignation fluide
+- **⚡ PERFORMANCE** : Migration vers React+Vite, suppression dépendances legacy, bundle optimisé
+- **📱 UX MOBILE** : Interface 100% responsive, interactions tactiles natives
+- **✅ QUALITÉ CODE** : Architecture "Poetic Code" (Clean, Solid, Optimized), typage TypeScript strict
+
 ### Version 2.10.5 (29 novembre 2025) - FIX MENU CONTEXTUEL MOBILE 📱✨
 - **🐛 FIX CRITIQUE** : Correction du menu contextuel mobile qui ne se fermait pas
 - **📱 Z-INDEX FIX** : Augmentation du z-index (`z-[100]`) pour passer au-dessus du header
@@ -363,7 +373,7 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 - **Système d'authentification** avec gestion des rôles
 
 ### Statut actuel
-✅ **Version 2.9.6 - Production Ready** (Race Condition Fix + UNIQUE Constraint + Retry Logic + Audit 100%)
+✅ **Version 2.12.0 - Production Ready** (Messagerie Modernisée + Tickets Vocaux + Architecture React/TS)
 
 - Backend API REST complet avec Hono
 - Interface utilisateur React avec Kanban drag-and-drop

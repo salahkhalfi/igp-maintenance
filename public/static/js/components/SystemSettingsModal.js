@@ -273,11 +273,11 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4',
+        className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[10000] p-4',
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-hidden',
+            className: 'bg-white rounded-lg border border-gray-300 max-w-2xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-hidden',
             onClick: (e) => e.stopPropagation()
         },
             React.createElement('div', { className: 'p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50' },
