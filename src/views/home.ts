@@ -39,9 +39,9 @@ export const homeHTML = `
     <script src="/static/js/components/PerformanceModal.js"></script>
     <script src="/static/js/components/OverdueTicketsModal.js"></script>
     <script src="/static/js/components/PushDevicesModal.js"></script>
-    <script src="/static/js/components/UserManagementModal.js?v=2.8.2"></script>
-    <script src="/static/js/components/MainApp.js?v=2.8.2"></script>
-    <script src="/static/js/components/App.js?v=2.8.2"></script>
+    <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
+    <script src="/static/js/components/MainApp.js?v=2.8.3"></script>
+    <script src="/static/js/components/App.js?v=2.8.3"></script>
     <style>
         /* Background avec photo d'atelier IGP pour toutes les pages */
         body {

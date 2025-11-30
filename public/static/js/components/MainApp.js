@@ -837,7 +837,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                     ref: searchInputRef,
                                     type: 'text',
                                     placeholder: searchPlaceholders[placeholderIndex],
-                                    className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-20 md:pr-24 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white/80 backdrop-blur-sm transition-all shadow-inner',
+                                    className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-20 md:pr-24 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm placeholder-gray-500 bg-white transition-all shadow-inner',
                                     value: searchQuery,
                                     // ... existing props ...
                                     onKeyDown: (e) => {

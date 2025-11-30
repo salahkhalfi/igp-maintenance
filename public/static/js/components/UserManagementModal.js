@@ -280,7 +280,9 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     },
         React.createElement('div', {
             // FIX PERFORMANCE CHROME: Retrait de backdrop-blur-xl sur le conteneur principal. Utilisation de bg-white opaque.
-            className: 'bg-white rounded-2xl shadow-2xl border border-white/20 w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
+            // FIX CRASH: Suppression de shadow-2xl et border-white/20 pour réduire charge GPU. Ajout translate-z-0.
+            className: 'bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col transform-gpu',
+            style: { transform: 'translateZ(0)' }, // Force new composite layer
             onClick: (e) => e.stopPropagation()
         },
             React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-slate-700 to-gray-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10' },
