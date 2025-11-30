@@ -3,6 +3,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
     const [loading, setLoading] = React.useState(true);
     const [selectedMedia, setSelectedMedia] = React.useState(null);
     const [comments, setComments] = React.useState([]);
+    const [visibleCommentsCount, setVisibleCommentsCount] = React.useState(50); // Limiter l'affichage initial
     const [newComment, setNewComment] = React.useState('');
     const [submittingComment, setSubmittingComment] = React.useState(false);
     const [uploadingMedia, setUploadingMedia] = React.useState(false);
@@ -105,6 +106,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
         try {
             const response = await axios.get(API_URL + '/comments/ticket/' + ticketId);
             setComments(response.data.comments || []);
+            setVisibleCommentsCount(50); // Réinitialiser la limite
         } catch (error) {
             // Erreur silencieuse
         }
@@ -891,7 +893,17 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
 
                     comments.length > 0 ? React.createElement('div', { className: 'space-y-3 mb-4 max-h-64 overflow-y-auto' },
-                        comments.map(comment =>
+                        // Bouton "Voir plus de commentaires" si nécessaire
+                        comments.length > visibleCommentsCount ? React.createElement('button', {
+                            onClick: () => setVisibleCommentsCount(prev => prev + 50),
+                            className: 'w-full py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mb-2 border border-blue-100'
+                        },
+                            React.createElement('i', { className: 'fas fa-history mr-2' }),
+                            'Voir les commentaires précédents (' + (comments.length - visibleCommentsCount) + ' restants)'
+                        ) : null,
+
+                        // Afficher seulement les derniers commentaires
+                        comments.slice(-visibleCommentsCount).map(comment =>
                             React.createElement('div', {
                                 key: comment.id,
                                 className: 'bg-gray-50 rounded-lg p-3 border-l-4 ' +
