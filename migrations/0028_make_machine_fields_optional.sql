@@ -1,3 +1,5 @@
+PRAGMA foreign_keys=OFF;
+
 CREATE TABLE machines_new (
   id integer PRIMARY KEY AUTOINCREMENT,
   machine_type text NOT NULL,
@@ -17,3 +19,5 @@ DROP TABLE machines;
 ALTER TABLE machines_new RENAME TO machines;
 
 CREATE UNIQUE INDEX IF NOT EXISTS machines_serial_number_unique ON machines (serial_number);
+
+PRAGMA foreign_keys=ON;
