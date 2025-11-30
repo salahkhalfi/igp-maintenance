@@ -251,6 +251,9 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                     ),
                     React.createElement('input', {
                         type: 'text',
+                        id: 'ticketTitle',
+                        name: 'ticketTitle',
+                        autoComplete: 'off',
                         className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow hover:shadow-xl',
                         style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                         value: title,
@@ -281,6 +284,9 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                         )
                     ),
                     React.createElement('textarea', {
+                        id: 'ticketDescription',
+                        name: 'ticketDescription',
+                        autoComplete: 'off',
                         className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
                         style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                         value: description,
@@ -298,6 +304,9 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                     ),
                     React.createElement('div', { className: 'flex gap-2' },
                         React.createElement('select', {
+                            id: 'ticketMachine',
+                            name: 'ticketMachine',
+                            autoComplete: 'off',
                             className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer flex-1',
                             style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
                             value: machineId,
@@ -449,6 +458,9 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                 'Assigner à'
                             ),
                             React.createElement('select', {
+                                id: 'ticketAssignedTo',
+                                name: 'ticketAssignedTo',
+                                autoComplete: 'off',
                                 value: assignedTo,
                                 onChange: (e) => setAssignedTo(e.target.value),
                                 className: "w-full px-4 py-3 bg-white/97 border-2 border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
@@ -502,6 +514,9 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             React.createElement('div', { className: 'flex gap-2' },
                                 React.createElement('input', {
                                     type: 'datetime-local',
+                                    id: 'ticketScheduledDate',
+                                    name: 'ticketScheduledDate',
+                                    autoComplete: 'off',
                                     value: scheduledDate,
                                     onChange: (e) => setScheduledDate(e.target.value),
                                     className: 'flex-1 px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
