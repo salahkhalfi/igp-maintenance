@@ -610,10 +610,47 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             await moveTicketToStatus(draggedTicket, dragOverColumn);
         }
 
-        touchDragStart.current = null;
         touchDragTicket.current = null;
         setDraggedTicket(null);
         setDragOverColumn(null);
+    };
+
+    // PERFORMANCE OPTIMIZATION: Disable heavy backdrop filters on Header/Footer when any modal is open
+    // to prevent Chrome rendering freeze/lag on Retina displays.
+    const isAnyModalOpen = showCreateModal || showDetailsModal || showPerformanceModal || 
+                          showOverdueModal || showPushDevicesModal || showUserManagement || 
+                          showSystemSettings || showMachineManagement || showMessaging || 
+                          showUserGuide || showMoveModal;
+
+    const headerStyle = isAnyModalOpen ? {
+        background: '#f8fafc', // Solid light color
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        boxShadow: 'none', 
+        borderBottom: '1px solid #e2e8f0',
+        transition: 'all 0.3s ease'
+    } : {
+        background: 'rgba(255, 255, 255, 0.75)',
+        backdropFilter: 'blur(25px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+        transition: 'all 0.3s ease'
+    };
+
+    const footerStyle = isAnyModalOpen ? {
+        background: '#f1f5f9', // Solid slate-100
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        boxShadow: 'none',
+        borderTop: '4px solid #003366'
+    } : {
+        background: 'rgba(255, 255, 255, 0.40)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: '0 -8px 32px 0 rgba(0, 0, 0, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
+        borderTop: '4px solid #003366'
     };
 
     return React.createElement('div', { className: 'min-h-screen' },
@@ -734,14 +771,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
         React.createElement('header', {
             className: 'sticky top-0 z-50',
-            style: {
-                background: 'rgba(255, 255, 255, 0.75)', // Plus clair, plus uniforme
-                backdropFilter: 'blur(25px) saturate(180%)', // Flou plus intense type iOS
-                WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', // Ombre très douce
-                borderBottom: '1px solid rgba(0, 0, 0, 0.05)', // Bordure ultra-fine
-                transition: 'all 0.3s ease'
-            }
+            style: headerStyle
         },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
                 React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-3' },
@@ -1825,14 +1855,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
         React.createElement('footer', {
             className: 'mt-12 py-6 text-center border-t-4 border-igp-blue',
-            style: {
-                background: 'rgba(255, 255, 255, 0.40)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                boxShadow: '0 -8px 32px 0 rgba(0, 0, 0, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                borderTop: '4px solid #003366'
-            }
+            style: footerStyle
         },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4' },
                 React.createElement('p', {

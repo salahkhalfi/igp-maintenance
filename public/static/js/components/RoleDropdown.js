@@ -183,7 +183,7 @@ const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'b
             type: 'button',
             onClick: () => !disabled && setIsOpen(!isOpen),
             disabled: disabled,
-            className: 'w-full px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base text-left bg-gradient-to-br ' + currentStyle.button + ' backdrop-blur-sm border-2 rounded-xl shadow-lg focus:outline-none focus:ring-2 transition-all hover:shadow-xl cursor-pointer font-medium sm:font-semibold ' + (disabled ? 'opacity-50 cursor-not-allowed' : '') + ' flex justify-between items-center',
+            className: 'w-full px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base text-left bg-gradient-to-br ' + currentStyle.button + ' border-2 rounded-xl shadow-lg focus:outline-none focus:ring-2 transition-all hover:shadow-xl cursor-pointer font-medium sm:font-semibold ' + (disabled ? 'opacity-50 cursor-not-allowed' : '') + ' flex justify-between items-center',
             style: { boxShadow: currentStyle.shadow }
         },
             React.createElement('span', { className: 'truncate pr-2' }, getSelectedLabel()),
