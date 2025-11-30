@@ -645,7 +645,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                             const isMe = msg.sender_id === currentUser.id;
                             return React.createElement('div', {
                                 key: msg.id,
-                                className: 'flex mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2'
+                                className: 'flex w-full mb-2 ' + (isMe ? 'justify-end pr-4' : 'justify-start pl-1') + ' group px-2'
                             },
                                 selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
                                     type: 'checkbox',
@@ -892,7 +892,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 const isMe = msg.sender_id === currentUser.id;
                                 return React.createElement('div', {
                                     key: msg.id,
-                                    className: 'flex mb-2 ' + (isMe ? 'justify-end' : 'justify-start') + ' group px-2 items-end'
+                                    className: 'flex w-full mb-2 ' + (isMe ? 'justify-end pr-4' : 'justify-start pl-1') + ' group px-2 items-end'
                                 },
                                     selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
                                         type: 'checkbox',
@@ -911,7 +911,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                                 React.createElement('audio', {
                                                     controls: true,
                                                     controlsList: 'nodownload',
-                                                    className: 'h-8 w-full max-w-[220px]',
+                                                    className: 'h-8 min-w-[200px] max-w-[220px]',
                                                     src: API_URL + '/audio/' + msg.audio_file_key
                                                 })
                                             ),
