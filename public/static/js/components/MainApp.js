@@ -654,6 +654,18 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         borderTop: '4px solid #003366'
     };
 
+    // PERFORMANCE CRITICAL: Disable heavy backdrop-blur on Kanban columns when modal is open
+    // This prevents GPU crash/freeze on Chrome when stacking transparency layers
+    const kanbanColumnStyle = isAnyModalOpen ? {
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        background: '#f1f5f9', // Opaque solid color
+        borderColor: '#cbd5e1',
+        boxShadow: 'none',
+        transform: 'none',
+        transition: 'none'
+    } : {};
+
     return React.createElement('div', { className: 'min-h-screen' },
 
         React.createElement(CreateTicketModal, {
@@ -1384,6 +1396,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     return React.createElement('div', {
                         key: status.key,
                         className: columnClass,
+                        style: kanbanColumnStyle,
                         'data-status': status.key,
                         onDragOver: (e) => handleDragOver(e, status.key),
                         onDragLeave: handleDragLeave,
