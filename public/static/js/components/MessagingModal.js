@@ -630,11 +630,11 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
             ),
 
             // Content
-            React.createElement('div', { className: 'flex-1 flex overflow-hidden' },
+            React.createElement('div', { className: 'flex-1 flex overflow-hidden relative' },
                 // PUBLIC TAB
-                activeTab === 'public' ? React.createElement('div', { className: 'flex-1 flex flex-col' },
+                activeTab === 'public' ? React.createElement('div', { className: 'flex-1 flex flex-col min-w-0' },
                     // Messages publics
-                    React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
+                    React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
                         publicMessages.length === 0 ? React.createElement('div', {
                             className: 'text-center text-gray-400 py-12'
                         },
@@ -776,9 +776,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                 ) : null,
 
                 // PRIVATE TAB
-                activeTab === 'private' ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col sm:flex-row' },
+                activeTab === 'private' ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col sm:flex-row min-w-0' },
                     // Liste des conversations - Mobile: collapsible, Desktop: sidebar
-                    React.createElement('div', { className: (selectedContact ? 'hidden sm:flex ' : 'flex ') + 'w-full sm:w-80 md:w-96 border-r border-gray-200 flex-col bg-gray-50' },
+                    React.createElement('div', { className: (selectedContact ? 'hidden sm:flex ' : 'flex ') + 'w-full sm:w-80 md:w-96 border-r border-gray-200 flex-col bg-gray-50 flex-shrink-0' },
                         React.createElement('div', { className: 'p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
                             React.createElement('h3', { className: 'font-semibold text-gray-700 text-sm sm:text-base mb-2 flex items-center gap-2' },
                                 React.createElement('i', { className: 'fas fa-address-book text-indigo-600' }),
@@ -855,7 +855,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                     ),
 
                     // Zone de conversation
-                    selectedContact ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col' },
+                    selectedContact ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col min-w-0' },
                         // Header contact with back button on mobile
                         React.createElement('div', { className: 'p-2 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
                             React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3' },
@@ -879,7 +879,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                         ),
 
                         // Messages
-                        React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
+                        React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
                             loading ? React.createElement('div', { className: 'text-center text-gray-400 py-12' },
                                 React.createElement('i', { className: 'fas fa-spinner fa-spin text-3xl sm:text-4xl text-indigo-500' })
                             ) : privateMessages.length === 0 ? React.createElement('div', {
