@@ -1003,7 +1003,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 ),
                                 React.createElement('button', {
                                     onClick: startRecording,
-                                    className: 'px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
+                                    className: 'flex-shrink-0 whitespace-nowrap px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95 h-[42px]',
                                     title: 'Enregistrer un message vocal'
                                 },
                                     React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
@@ -1012,7 +1012,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                 React.createElement('button', {
                                     onClick: sendMessage,
                                     disabled: !messageContent.trim(),
-                                    className: 'px-3 sm:px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center'
+                                    className: 'flex-shrink-0 whitespace-nowrap px-3 sm:px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center h-[42px]'
                                 },
                                     React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
                                     React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
