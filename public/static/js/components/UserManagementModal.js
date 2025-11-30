@@ -108,7 +108,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                 last_name: newLastName,
                 role: newRole
             });
-            setToast({ show: true, message: 'Utilisateur cree avec succes!', type: 'success' });
+            setToast({ show: true, message: 'Utilisateur créé avec succès!', type: 'success' });
             setNewEmail('');
             setNewPassword('');
             setNewFirstName('');
@@ -192,7 +192,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
         if (!lastLogin) return {
             color: "text-gray-500",
             icon: "fa-circle",
-            status: "Jamais connecte",
+            status: "Jamais connecté",
             time: "",
             dot: "bg-gray-400"
         };
@@ -221,7 +221,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             return {
                 color: "text-yellow-600",
                 icon: "fa-circle",
-                status: "Actif recemment",
+                status: "Actif récemment",
                 time: "Il y a " + diffMins + " min",
                 dot: "bg-yellow-500"
             };
@@ -264,13 +264,13 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     const handleDeleteUser = React.useCallback((userId, userName) => {
         setConfirmDialog({
             show: true,
-            message: 'Etes-vous sur de vouloir supprimer ' + userName + ' ?',
+            message: 'Êtes-vous sûr de vouloir supprimer ' + userName + ' ?',
             onConfirm: async () => {
                 setConfirmDialog({ show: false, message: '', onConfirm: null });
                 setButtonLoading('delete-' + userId);
                 try {
                     await axios.delete(API_URL + '/users/' + userId);
-                    setToast({ show: true, message: 'Utilisateur supprime avec succes!', type: 'success' });
+                    setToast({ show: true, message: 'Utilisateur supprimé avec succès!', type: 'success' });
                     loadUsers();
                 } catch (error) {
                     setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
@@ -299,7 +299,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                 last_name: editLastName,
                 role: editRole
             });
-            setToast({ show: true, message: 'Utilisateur modifie avec succes!', type: 'success' });
+            setToast({ show: true, message: 'Utilisateur modifié avec succès!', type: 'success' });
             setEditingUser(null);
             loadUsers();
         } catch (error) {
@@ -316,14 +316,14 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             onConfirm: async (newPass) => {
                 setPromptDialog({ show: false, message: '', onConfirm: null });
                 if (!newPass || newPass.length < 6) {
-                    setNotification({ show: true, message: 'Mot de passe invalide (minimum 6 caracteres)', type: 'error' });
+                    setNotification({ show: true, message: 'Mot de passe invalide (minimum 6 caractères)', type: 'error' });
                     return;
                 }
                 try {
                     await axios.post(API_URL + '/users/' + userId + '/reset-password', {
                         new_password: newPass
                     });
-                    setToast({ show: true, message: 'Mot de passe reinitialise avec succes!', type: 'success' });
+                    setToast({ show: true, message: 'Mot de passe réinitialisé avec succès!', type: 'success' });
                 } catch (error) {
                     setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
                 }
@@ -617,7 +617,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                                         }, " - " + getLastLoginStatus(user.last_login).time) : null
                                     ),
                                     user.last_login ? React.createElement('span', { className: "text-xs text-gray-400 ml-3.5" },
-                                        "Derniere connexion: " + formatDateEST(user.last_login, true)
+                                        "Dernière connexion: " + formatDateEST(user.last_login, true)
                                     ) : null
                                 ) : null
                             ),
@@ -655,7 +655,8 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                                 ) : null
                             ) : null)
                         )
-                    ),
+                    )
+                ),
                     filteredUsers.length > displayLimit ? React.createElement('button', {
                         onClick: () => setDisplayLimit(prev => prev + 20),
                         className: 'w-full py-3 mt-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors border-2 border-gray-200 dashed'
