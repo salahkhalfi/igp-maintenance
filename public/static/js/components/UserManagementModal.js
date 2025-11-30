@@ -80,11 +80,13 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             // Tous les utilisateurs utilisent la route /api/users/team pour voir tous les utilisateurs
             const endpoint = '/users/team';
             const response = await axios.get(API_URL + endpoint);
-            setUsers(response.data.users);
+            // CRITICAL FIX: Ensure users is always an array to prevent crash
+            setUsers(Array.isArray(response.data.users) ? response.data.users : []);
         } catch (error) {
             // En mode silent, ne pas afficher les erreurs (éviter notifications spam)
             if (!silent) {
-                setNotification({ show: true, message: 'Erreur chargement: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
+                console.error("Erreur chargement utilisateurs:", error);
+                setNotification({ show: true, message: 'Erreur chargement: ' + (error.response?.data?.error || error.message || 'Erreur'), type: 'error' });
             }
         } finally {
             if (!silent) {
@@ -327,7 +329,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
         });
     }, []);
 
-    if (!show) return null;
+    if (!show || !currentUser) return null;
 
     return React.createElement('div', {
         className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4',
@@ -541,17 +543,17 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             React.createElement('div', { className: 'space-y-4' },
                 React.createElement('p', { className: 'text-lg mb-4' },
                     (searchQuery ?
-                        users.filter(u =>
-                            u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            u.email.toLowerCase().includes(searchQuery.toLowerCase())
-                        ).length + ' résultat(s) sur ' + users.length :
-                        users.length + ' utilisateur(s)'
+                        (users || []).filter(u =>
+                            (u.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length + ' résultat(s) sur ' + (users || []).length :
+                        (users || []).length + ' utilisateur(s)'
                     )
                 ),
-                users
+                (users || [])
                     .filter(user => !searchQuery ||
-                        user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                        (user.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())
                     )
                     .map(user =>
                     React.createElement('div', {
