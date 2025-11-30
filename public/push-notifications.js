@@ -347,12 +347,12 @@ async function initPushNotifications() {
       }
       
       // Always update button color based on ACTUAL ownership
-      await updatePushButtonColor();
+      window.dispatchEvent(new CustomEvent('push-notification-changed'));
       return;
     }
     
     // Update button color for denied/default states
-    await updatePushButtonColor();
+    window.dispatchEvent(new CustomEvent('push-notification-changed'));
     
     // NE JAMAIS demander automatiquement la permission
     // L'utilisateur doit cliquer manuellement sur le bouton "Notifications"
@@ -364,104 +364,10 @@ async function initPushNotifications() {
   }
 }
 
-// Update push button color based on subscription ownership
-async function updatePushButtonColor() {
-  try {
-    console.log('[UPDATE-BTN] Checking subscription ownership...');
-    
-    // Verify Service Worker support (Brave protection)
-    if (!('serviceWorker' in navigator)) {
-        console.log('[UPDATE-BTN] Service Worker not supported');
-        return; // Keep default orange button
-    }
-
-    // Wait for button to exist in DOM - find button containing bell icon text
-    let button = null;
-    for (let i = 0; i < 10; i++) {
-      const buttons = document.querySelectorAll('button');
-      for (const btn of buttons) {
-        const text = btn.textContent || '';
-        if (text.includes('Notifications')) {
-          button = btn;
-          break;
-        }
-      }
-      if (button) break;
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
-    if (!button) {
-      console.log('[UPDATE-BTN] Push button not found in DOM');
-      return;
-    }
-    
-    console.log('[UPDATE-BTN] Button found:', button.textContent);
-    
-    // Check if user is subscribed for THIS user (with Brave protection)
-    let isSubscribed = false;
-    try {
-        // Check if SW is actually accessible
-        await navigator.serviceWorker.ready;
-        isSubscribed = await isPushSubscribed();
-    } catch (e) {
-        console.warn('[UPDATE-BTN] SW ready check failed (Brave?):', e);
-        isSubscribed = false;
-    }
-
-    console.log('[UPDATE-BTN] Subscription status:', isSubscribed);
-    
-    // Find the icon element and text node inside the button
-    const icon = button.querySelector('i');
-    const textNode = Array.from(button.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
-    
-    // Clear any existing text alternation interval
-    if (window.pushButtonTextInterval) {
-      clearInterval(window.pushButtonTextInterval);
-      window.pushButtonTextInterval = null;
-    }
-    
-    // Update button classes, icon, and text based on ownership
-    if (Notification.permission === 'granted' && isSubscribed) {
-      // GREEN - subscribed for this user
-      button.className = 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all flex items-center';
-      button.style.minWidth = '155px'; // Fixed width to prevent size changes
-      if (icon) icon.className = 'fas fa-bell mr-2'; // Bell icon (subscribed)
-      if (textNode) textNode.textContent = 'Activé'; // Fixed text for subscribed
-      console.log('[UPDATE-BTN] Button set to GREEN (subscribed) - Text: Activé');
-    } else if (Notification.permission === 'denied') {
-      // RED - denied
-      button.className = 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center';
-      button.style.minWidth = '155px'; // Fixed width to prevent size changes
-      if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (denied)
-      if (textNode) textNode.textContent = 'Notifications';
-      console.log('[UPDATE-BTN] Button set to RED (denied)');
-    } else {
-      // ORANGE - not subscribed or belongs to another user
-      button.className = 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse-orange-red flex items-center';
-      button.style.minWidth = '155px'; // Fixed width to prevent size changes during text alternation
-      if (icon) icon.className = 'fas fa-bell-slash mr-2'; // Bell-slash icon (not subscribed)
-      
-      // Alternate text between "Notifications" and "Non activées" every 2 seconds
-      // Button has fixed min-width so text length doesn't matter
-      if (textNode) {
-        let isAlternate = false;
-        textNode.textContent = 'Notifications';
-        window.pushButtonTextInterval = setInterval(() => {
-          isAlternate = !isAlternate;
-          textNode.textContent = isAlternate ? 'Non activées' : 'Notifications';
-        }, 2000);
-      }
-      console.log('[UPDATE-BTN] Button set to ORANGE (not subscribed) - Text alternating');
-    }
-    
-  } catch (error) {
-    console.error('[UPDATE-BTN] Error updating button:', error);
-  }
-}
-
 // Exposer les fonctions pour l'app React
 window.initPushNotifications = initPushNotifications;
 window.requestPushPermission = requestPushPermission;
 window.isPushSubscribed = isPushSubscribed;
 window.subscribeToPush = subscribeToPush;
-window.updatePushButtonColor = updatePushButtonColor;
+// updatePushButtonColor removed - handled by React component now
+

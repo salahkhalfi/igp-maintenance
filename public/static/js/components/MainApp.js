@@ -27,6 +27,35 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [searchKeywordType, setSearchKeywordType] = React.useState(null);
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
     
+    // Push Notification State
+    const [pushSubscribed, setPushSubscribed] = React.useState(false);
+    const [pushPermission, setPushPermission] = React.useState(Notification.permission);
+    
+    React.useEffect(() => {
+        const checkPushStatus = async () => {
+            if (typeof Notification !== 'undefined') {
+                setPushPermission(Notification.permission);
+            }
+            if (window.isPushSubscribed) {
+                try {
+                    const sub = await window.isPushSubscribed();
+                    setPushSubscribed(sub);
+                } catch (e) {
+                    console.error('Error checking push status:', e);
+                }
+            }
+        };
+        
+        checkPushStatus();
+        
+        const handlePushChange = () => checkPushStatus();
+        window.addEventListener('push-notification-changed', handlePushChange);
+        
+        return () => {
+            window.removeEventListener('push-notification-changed', handlePushChange);
+        };
+    }, []);
+
     const searchPlaceholdersDesktop = [
         'Essayez: "retard" pour voir les tickets en retard',
         'Essayez: "urgent" pour voir les priorités critiques',
@@ -1225,10 +1254,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                     const isAlreadySubscribed = await window.isPushSubscribed();
                                     if (isAlreadySubscribed) {
                                         alert('Vous etes deja abonne aux notifications push!');
-                                        // Update button color to green since user is subscribed
-                                        if (window.updatePushButtonColor) {
-                                            setTimeout(() => window.updatePushButtonColor(), 100);
-                                        }
+                                        window.dispatchEvent(new CustomEvent('push-notification-changed'));
                                         return;
                                     }
 
@@ -1239,10 +1265,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                         } else {
                                             alert('Abonnement push enregistre avec succes!');
                                         }
-                                        // Update button color after successful subscribe
-                                        if (window.updatePushButtonColor) {
-                                            setTimeout(() => window.updatePushButtonColor(), 500);
-                                        }
+                                        window.dispatchEvent(new CustomEvent('push-notification-changed'));
                                     } else {
                                         alert('Erreur: ' + result.error);
                                     }
@@ -1270,15 +1293,17 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 alert('Erreur: ' + e.message);
                             }
                         },
-                        className: (typeof Notification !== 'undefined' && Notification.permission === 'denied')
-                            ? 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center'
-                            : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse-orange-red flex items-center',
+                        className: (pushPermission === 'granted' && pushSubscribed)
+                            ? 'px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 shadow-md transition-all flex items-center'
+                            : (pushPermission === 'denied')
+                                ? 'px-3 py-1.5 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 shadow-md transition-all animate-pulse flex items-center'
+                                : 'px-3 py-1.5 bg-orange-500 text-white text-sm rounded-md hover:bg-orange-600 shadow-md transition-all animate-pulse-orange-red flex items-center',
                         style: { minWidth: '155px' }
                     },
                         React.createElement('i', {
-                            className: 'fas fa-bell-slash mr-2'
+                            className: 'fas ' + ((pushPermission === 'granted' && pushSubscribed) ? 'fa-bell' : 'fa-bell-slash') + ' mr-2'
                         }),
-                        'Notifications'
+                        (pushPermission === 'granted' && pushSubscribed) ? 'Activé' : 'Notifications'
                     ),
                     // 8. Actualiser (utile mais auto-refresh disponible)
                     React.createElement('button', {
@@ -1473,6 +1498,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         const status = completedStatus;
                         const isDragOver = dragOverColumn === status.key;
                         const ticketsInColumn = getTicketsByStatus(status.key);
+                        // Limit completed tickets to prevent browser freezing
+                        const isCompleted = status.key === 'completed';
+                        const displayTickets = isCompleted ? ticketsInColumn.slice(0, 20) : ticketsInColumn;
                         const hasTickets = ticketsInColumn.length > 0;
                         const columnClass = 'kanban-column' +
                             (isDragOver ? ' drag-over' : '') +
@@ -1493,7 +1521,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 ),
                                 React.createElement('span', {
                                     className: 'bg-' + status.color + '-100 text-' + status.color + '-800 text-xs font-semibold px-1.5 py-0.5 rounded-full ml-2 flex-shrink-0'
-                                }, getTicketsByStatus(status.key).length)
+                                }, ticketsInColumn.length)
                             ),
                             // Dropdown de tri (visible uniquement si plus de 2 tickets)
                             ticketsInColumn.length > 2 ? React.createElement('div', { className: 'mb-2 flex items-center gap-2' },
@@ -1518,7 +1546,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                                 )
                             ) : null,
                             React.createElement('div', { className: 'space-y-2' },
-                                getTicketsByStatus(status.key).map(ticket => {
+                                displayTickets.map(ticket => {
                                     return React.createElement('div', {
                                         key: ticket.id,
                                         className: 'ticket-card priority-' + ticket.priority + (draggedTicket?.id === ticket.id ? ' dragging' : ''),
