@@ -102,17 +102,15 @@ export const getTechnicians = async (): Promise<User[]> => {
 };
 
 export const getMachines = async (): Promise<any[]> => {
-  const token = getAuthToken();
-  const response = await fetch('/api/machines', {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
+  const res = await client.api.machines.$get(
+    { query: {} },
+    { headers: getAuthHeaders() }
+  );
 
-  if (!response.ok) {
+  if (!res.ok) {
     throw new Error('Failed to fetch machines');
   }
-  const data = await response.json();
+  const data = await res.json();
   return data.machines;
 };
 
