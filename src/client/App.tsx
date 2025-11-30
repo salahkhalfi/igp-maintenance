@@ -5,6 +5,7 @@ import NotificationModal from './components/NotificationModal'
 import ConfirmModal from './components/ConfirmModal'
 import PromptModal from './components/PromptModal'
 import UserManagementModal from './components/UserManagementModal'
+import MessagingModal from './components/MessagingModal'
 import { User } from './types'
 
 // Create a client
@@ -22,6 +23,7 @@ const MOCK_USER: User = {
 const App = () => {
   const [role, setRole] = useState('operator');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isMsgModalOpen, setIsMsgModalOpen] = useState(false);
   
   // Modal States
   const [notification, setNotification] = useState<{isOpen: boolean, type: 'success'|'error'|'info', message: string} | null>(null);
@@ -51,6 +53,20 @@ const App = () => {
                     </button>
                     <p className="text-[10px] text-center text-slate-400 mt-2">
                         Powered by React Window (Virtualization) & TanStack Query
+                    </p>
+                </div>
+
+                {/* Messaging Test */}
+                <div className="mb-4">
+                    <button 
+                        onClick={() => setIsMsgModalOpen(true)}
+                        className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-lg font-bold shadow-lg hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                        <i className="fas fa-comments mr-2"></i>
+                        Open Messaging
+                    </button>
+                    <p className="text-[10px] text-center text-slate-400 mt-2">
+                        Real-time Chat & Audio
                     </p>
                 </div>
 
@@ -84,6 +100,12 @@ const App = () => {
             </div>
 
             {/* Render Modals */}
+            <MessagingModal 
+                isOpen={isMsgModalOpen}
+                onClose={() => setIsMsgModalOpen(false)}
+                currentUser={MOCK_USER}
+            />
+
             <UserManagementModal 
                 isOpen={isUserModalOpen}
                 onClose={() => setIsUserModalOpen(false)}
