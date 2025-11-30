@@ -19,10 +19,12 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     const [toast, setToast] = React.useState({ show: false, message: '', type: 'success' });
     const [searchQuery, setSearchQuery] = React.useState('');
     const [buttonLoading, setButtonLoading] = React.useState(null);
+    const [displayLimit, setDisplayLimit] = React.useState(20); // Initial limit to prevent freeze
 
     React.useEffect(() => {
         if (show) {
             loadUsers(); // Chargement initial
+            setDisplayLimit(20); // Reset limit on open
 
             // Polling toutes les 2 minutes pour rafraichir les statuts last_login
             const interval = setInterval(() => {
@@ -567,21 +569,21 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
 
             loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
             React.createElement('div', { className: 'space-y-4' },
-                React.createElement('p', { className: 'text-lg mb-4' },
-                    (searchQuery ?
-                        (users || []).filter(u =>
-                            (u.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            (u.email || '').toLowerCase().includes(searchQuery.toLowerCase())
-                        ).length + ' résultat(s) sur ' + (users || []).length :
-                        (users || []).length + ' utilisateur(s)'
-                    )
-                ),
-                (users || [])
-                    .filter(user => !searchQuery ||
+                (() => {
+                    const filteredUsers = (users || []).filter(user => !searchQuery ||
                         (user.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                         (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map(user =>
+                    );
+                    const displayedUsers = filteredUsers.slice(0, displayLimit);
+
+                    return React.createElement(React.Fragment, null,
+                        React.createElement('p', { className: 'text-lg mb-4' },
+                            (searchQuery ?
+                                filteredUsers.length + ' résultat(s) sur ' + (users || []).length :
+                                (users || []).length + ' utilisateur(s)'
+                            )
+                        ),
+                        displayedUsers.map(user =>
                     React.createElement('div', {
                         key: user.id,
                         className: 'bg-white/95 rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-blue-400 hover:shadow-lg transition-shadow duration-200'
@@ -653,8 +655,12 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                                 ) : null
                             ) : null)
                         )
-                    )
-                )
+                    ),
+                    filteredUsers.length > displayLimit ? React.createElement('button', {
+                        onClick: () => setDisplayLimit(prev => prev + 20),
+                        className: 'w-full py-3 mt-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors border-2 border-gray-200 dashed'
+                    }, 'Charger plus (' + (filteredUsers.length - displayLimit) + ' restants)') : null
+                ); })()
             ),
             React.createElement(NotificationModal, {
                 show: notification.show,
