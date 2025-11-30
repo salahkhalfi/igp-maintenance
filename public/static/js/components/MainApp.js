@@ -656,6 +656,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
     // PERFORMANCE CRITICAL: Disable heavy backdrop-blur on Kanban columns when modal is open
     // This prevents GPU crash/freeze on Chrome when stacking transparency layers
+    const kanbanContainerStyle = isAnyModalOpen ? {
+        visibility: 'hidden', // NUCLEAR OPTION: Hide background entirely to save GPU
+    } : {};
+
     const kanbanColumnStyle = isAnyModalOpen ? {
         backdropFilter: 'none',
         WebkitBackdropFilter: 'none',
@@ -1379,7 +1383,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
 
         React.createElement('div', {
-            className: 'max-w-[1600px] mx-auto px-4 py-6'
+            className: 'max-w-[1600px] mx-auto px-4 py-6',
+            style: kanbanContainerStyle
         },
             React.createElement('div', { className: 'space-y-4' },
                 // Première ligne: colonnes de workflow (Reçue, Diagnostic, En cours, Attente pièces)

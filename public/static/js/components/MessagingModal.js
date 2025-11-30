@@ -531,17 +531,17 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-gradient-to-br from-slate-900/40 via-gray-900/40 to-slate-800/40 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4 animate-fadeIn',
+        className: 'fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[60] p-2 sm:p-4',
         onClick: onClose
     },
         React.createElement('div', {
             // FIX PERFORMANCE & STYLE: Nettoyage styles conflictuels (transform) et suppression backdrop-blur interne
-            className: 'bg-white rounded-2xl shadow-2xl border border-white/20 w-full max-w-6xl h-[85vh] sm:h-[90vh] flex flex-col overflow-hidden',
+            className: 'bg-white rounded-xl shadow-lg w-full max-w-6xl h-[85vh] sm:h-[90vh] flex flex-col overflow-hidden',
             onClick: (e) => e.stopPropagation()
         },
             // Header
             React.createElement('div', {
-                className: 'bg-gradient-to-r from-slate-700 to-gray-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-lg'
+                className: 'bg-slate-800 text-white p-3 sm:p-5 flex justify-between items-center'
             },
                 React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                     React.createElement('i', { className: 'fas fa-comments text-xl sm:text-2xl flex-shrink-0' }),

@@ -275,17 +275,16 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     if (!show || !currentUser) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-slate-900/60 flex items-center justify-center z-[60] p-2 sm:p-4',
+        className: 'fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[60] p-2 sm:p-4',
         onClick: onClose
     },
         React.createElement('div', {
             // FIX PERFORMANCE CHROME: Retrait de backdrop-blur-xl sur le conteneur principal. Utilisation de bg-white opaque.
             // FIX CRASH: Suppression de shadow-2xl et border-white/20 pour réduire charge GPU. Ajout translate-z-0.
-            className: 'bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col transform-gpu',
-            style: { transform: 'translateZ(0)' }, // Force new composite layer
+            className: 'bg-white rounded-xl shadow-lg w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
             onClick: (e) => e.stopPropagation()
         },
-            React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-slate-700 to-gray-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-xl z-10' },
+            React.createElement('div', { className: 'sticky top-0 bg-slate-800 text-white p-3 sm:p-5 flex justify-between items-center z-10' },
                 React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                     React.createElement('i', { className: 'fas fa-users-cog text-xl sm:text-2xl flex-shrink-0' }),
                     React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
@@ -519,7 +518,7 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                     
                     return React.createElement('div', {
                         key: user.id,
-                        className: 'bg-white rounded-xl p-4 shadow-md border-2 border-gray-200/50 hover:border-blue-400 hover:shadow-lg transition-shadow duration-200'
+                        className: 'bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-50 transition-colors'
                     },
                         React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
                             React.createElement('div', { className: 'flex-1' },
