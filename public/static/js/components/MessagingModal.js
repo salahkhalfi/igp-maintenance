@@ -682,7 +682,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                                             React.createElement('audio', {
                                                 controls: true,
                                                 controlsList: 'nodownload',
-                                                className: 'h-8 w-full max-w-[220px]',
+                                                className: 'h-8 min-w-[200px] max-w-[220px]',
                                                 src: API_URL + '/audio/' + msg.audio_file_key
                                             })
                                         ),
