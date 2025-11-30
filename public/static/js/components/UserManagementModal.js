@@ -399,8 +399,9 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                             React.createElement('input', {
                                 type: 'email',
                                 id: 'newEmail',
-                                name: 'newEmail',
+                                name: 'new_user_email',
                                 autoComplete: 'off',
+                                'data-lpignore': 'true',
                                 value: newEmail,
                                 onChange: (e) => handleInputAdminEmail(e, setNewEmail),
                                 onInvalid: handleInvalidAdminField,
@@ -445,8 +446,9 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                             React.createElement('input', {
                                 type: 'password',
                                 id: 'newPassword',
-                                name: 'newPassword',
+                                name: 'new_user_password',
                                 autoComplete: 'new-password',
+                                'data-lpignore': 'true',
                                 value: newPassword,
                                 onChange: (e) => handleInputAdminEmail(e, setNewPassword),
                                 onInvalid: handleInvalidAdminField,
