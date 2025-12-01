@@ -2,6 +2,20 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
     const [localColumns, setLocalColumns] = React.useState([]);
     const [newColumnName, setNewColumnName] = React.useState('');
 
+    // Labels en français pour les couleurs
+    const COLOR_LABELS = {
+        'blue': 'Bleu',
+        'green': 'Vert',
+        'red': 'Rouge',
+        'yellow': 'Jaune',
+        'orange': 'Orange',
+        'purple': 'Violet',
+        'gray': 'Gris',
+        'indigo': 'Indigo',
+        'pink': 'Rose',
+        'teal': 'Turquoise'
+    };
+
     React.useEffect(() => {
         if (show && columns) {
             setLocalColumns(JSON.parse(JSON.stringify(columns))); // Deep copy
@@ -68,7 +82,7 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
 
     if (!show) return null;
 
-    return React.createElement('div', { className: 'fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4' },
+    return React.createElement('div', { className: 'fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-2 sm:p-4' },
         React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col' },
             // Header
             React.createElement('div', { className: 'p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl' },
@@ -77,67 +91,71 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
             ),
             
             // Body
-            React.createElement('div', { className: 'p-4 overflow-y-auto flex-1' },
+            React.createElement('div', { className: 'p-2 sm:p-4 overflow-y-auto flex-1' },
                 // List
-                React.createElement('div', { className: 'space-y-2' },
+                React.createElement('div', { className: 'space-y-3 sm:space-y-2' },
                     localColumns.map((col, index) => 
-                        React.createElement('div', { key: col.key, className: 'flex items-center gap-2 p-2 bg-gray-50 border rounded-lg' },
-                            // Drag/Move handles
-                            React.createElement('div', { className: 'flex flex-col gap-1' },
-                                React.createElement('button', { 
-                                    disabled: index === 0,
-                                    onClick: () => handleMove(index, 'up'),
-                                    className: 'text-gray-400 hover:text-blue-600 disabled:opacity-30'
-                                }, React.createElement('i', { className: 'fas fa-chevron-up text-xs' })),
-                                React.createElement('button', { 
-                                    disabled: index === localColumns.length - 1,
-                                    onClick: () => handleMove(index, 'down'),
-                                    className: 'text-gray-400 hover:text-blue-600 disabled:opacity-30'
-                                }, React.createElement('i', { className: 'fas fa-chevron-down text-xs' }))
-                            ),
-                            
-                            // Icon input
-                            React.createElement('div', { className: 'w-32' },
-                                React.createElement('input', {
-                                    type: 'text',
-                                    value: col.icon,
-                                    onChange: (e) => handleChange(index, 'icon', e.target.value),
-                                    className: 'w-full px-2 py-1 text-sm border rounded',
-                                    placeholder: 'fa-icon'
-                                }),
-                                React.createElement('div', { className: 'text-[10px] text-gray-500 text-center mt-0.5' }, 
-                                    React.createElement('i', { className: 'fas fa-' + col.icon })
-                                )
-                            ),
-
-                            // Color input
-                            React.createElement('select', {
-                                value: col.color,
-                                onChange: (e) => handleChange(index, 'color', e.target.value),
-                                className: 'px-2 py-1 text-sm border rounded font-bold text-' + col.color + '-800 bg-' + col.color + '-100'
-                            },
-                                ['blue', 'green', 'red', 'yellow', 'orange', 'purple', 'gray', 'indigo', 'pink', 'teal'].map(c => 
-                                    React.createElement('option', { key: c, value: c }, c)
-                                )
-                            ),
-
-                            // Label input
+                        React.createElement('div', { 
+                            key: col.key, 
+                            className: 'flex flex-wrap sm:flex-nowrap items-center gap-2 p-3 bg-gray-50 border rounded-lg shadow-sm sm:shadow-none' 
+                        },
+                            // Label input (Full width on mobile, flex on desktop) - ORDER 1 (Mobile Top) / 3 (Desktop Middle)
                             React.createElement('input', {
                                 type: 'text',
                                 value: col.label,
                                 onChange: (e) => handleChange(index, 'label', e.target.value),
-                                className: 'flex-1 px-2 py-1 text-sm border rounded font-bold'
+                                className: 'w-full sm:w-auto sm:flex-1 px-2 py-1.5 text-base sm:text-sm border rounded font-bold order-1 sm:order-3 bg-white',
+                                placeholder: 'Nom de la colonne'
                             }),
 
-                            // Key (readonly)
-                            React.createElement('span', { className: 'text-xs text-gray-400 font-mono w-24 truncate', title: col.key }, col.key),
+                            // Drag/Move handles - ORDER 2 (Mobile Left) / 1 (Desktop Left)
+                            React.createElement('div', { className: 'flex sm:flex-col gap-2 sm:gap-1 order-2 sm:order-1 mr-2 sm:mr-0' },
+                                React.createElement('button', { 
+                                    disabled: index === 0,
+                                    onClick: () => handleMove(index, 'up'),
+                                    className: 'p-1 bg-white border rounded sm:border-none sm:bg-transparent text-gray-400 hover:text-blue-600 disabled:opacity-30'
+                                }, React.createElement('i', { className: 'fas fa-chevron-up text-sm sm:text-xs' })),
+                                React.createElement('button', { 
+                                    disabled: index === localColumns.length - 1,
+                                    onClick: () => handleMove(index, 'down'),
+                                    className: 'p-1 bg-white border rounded sm:border-none sm:bg-transparent text-gray-400 hover:text-blue-600 disabled:opacity-30'
+                                }, React.createElement('i', { className: 'fas fa-chevron-down text-sm sm:text-xs' }))
+                            ),
+                            
+                            // Icon input - ORDER 3 (Mobile Middle) / 2 (Desktop Left)
+                            React.createElement('div', { className: 'w-[40%] sm:w-32 order-3 sm:order-2' },
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: col.icon,
+                                    onChange: (e) => handleChange(index, 'icon', e.target.value),
+                                    className: 'w-full px-2 py-1.5 text-sm border rounded bg-white',
+                                    placeholder: 'fa-icon'
+                                }),
+                                React.createElement('div', { className: 'text-[10px] text-gray-500 text-center mt-0.5 hidden sm:block' }, 
+                                    React.createElement('i', { className: 'fas fa-' + col.icon })
+                                )
+                            ),
 
-                            // Delete action
+                            // Color input - ORDER 4 (Mobile Middle) / 2 (Desktop Left)
+                            React.createElement('select', {
+                                value: col.color,
+                                onChange: (e) => handleChange(index, 'color', e.target.value),
+                                className: 'w-[40%] sm:w-auto px-2 py-1.5 text-sm border rounded font-bold text-' + col.color + '-800 bg-' + col.color + '-100 order-4 sm:order-2'
+                            },
+                                Object.entries(COLOR_LABELS).map(([key, label]) => 
+                                    React.createElement('option', { key: key, value: key }, label)
+                                )
+                            ),
+
+                            // Delete action - ORDER 5 (Mobile Right) / 4 (Desktop Right)
                             React.createElement('button', {
                                 onClick: () => handleDelete(col.key),
                                 disabled: ['received', 'completed', 'archived'].includes(col.key),
-                                className: 'p-2 text-red-500 hover:bg-red-100 rounded disabled:opacity-30 disabled:cursor-not-allowed'
-                            }, React.createElement('i', { className: 'fas fa-trash' }))
+                                className: 'p-2 ml-auto sm:ml-0 text-red-500 hover:bg-red-100 rounded disabled:opacity-30 disabled:cursor-not-allowed order-5 sm:order-4'
+                            }, React.createElement('i', { className: 'fas fa-trash' })),
+
+                            // Key (hidden on mobile, visible on desktop tooltip)
+                            React.createElement('span', { className: 'hidden sm:block text-xs text-gray-400 font-mono w-24 truncate order-last', title: col.key }, col.key)
                         )
                     )
                 ),
@@ -145,7 +163,7 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
                 // Add new
                 React.createElement('form', { onSubmit: handleAddColumn, className: 'mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100' },
                     React.createElement('h4', { className: 'font-bold text-sm text-blue-800 mb-2' }, 'Ajouter une colonne'),
-                    React.createElement('div', { className: 'flex gap-2' },
+                    React.createElement('div', { className: 'flex flex-col sm:flex-row gap-2' },
                         React.createElement('input', {
                             type: 'text',
                             value: newColumnName,
@@ -155,7 +173,7 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
                         }),
                         React.createElement('button', {
                             type: 'submit',
-                            className: 'px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700'
+                            className: 'px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 w-full sm:w-auto'
                         }, 'Ajouter')
                     )
                 )
