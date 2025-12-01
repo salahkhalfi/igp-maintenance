@@ -41,6 +41,7 @@ export const homeHTML = `
     <script src="/static/js/components/OverdueTicketsModal.js"></script>
     <script src="/static/js/components/PushDevicesModal.js"></script>
     <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
+    <script src="/static/js/components/AppHeader.js?v=2.8.3"></script>
     <script src="/static/js/components/AdminRoles.js?v=2.8.3"></script>
     <script src="/static/js/hooks/useTickets.js?v=2.8.3"></script>
     <script src="/static/js/hooks/useMachines.js?v=2.8.3"></script>
