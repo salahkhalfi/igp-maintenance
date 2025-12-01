@@ -103,20 +103,23 @@ const AppHeader = ({
                         }),
                         React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-black/10' },
                             React.createElement('h1', { className: 'text-sm md:text-base font-bold leading-none text-slate-800', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5' }, headerSubtitle)
+                            React.createElement('p', { className: 'hidden md:block text-xs font-medium text-slate-500 mt-0.5' }, headerSubtitle),
+                            React.createElement('div', { className: 'md:hidden flex flex-col mt-0.5' },
+                                React.createElement('p', { className: 'text-[10px] font-medium text-slate-500' }, headerSubtitle),
+                                React.createElement('p', { className: 'text-[10px] font-bold text-blue-700' }, '👋 ' + (currentUser?.first_name || 'User'))
+                            )
                         )
                     ),
                     // Desktop Greeting
                     React.createElement('div', { className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50' },
                         React.createElement('span', { className: 'text-xs font-medium text-blue-700' }, '👋 ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
                     ),
-                    // Mobile Greeting & Badge
+                    // Mobile Badge (Next to hamburger, Greeting removed from here)
                     React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2' },
                         (unreadMessagesCount > 0) && React.createElement('div', {
                             className: 'flex items-center justify-center w-7 h-7 bg-red-600 rounded-full shadow-md animate-pulse cursor-pointer',
                             onClick: onOpenMessaging
-                        }, React.createElement('span', { className: 'text-white text-[10px] font-bold' }, unreadMessagesCount)),
-                        React.createElement('span', { className: 'text-xs font-bold text-blue-800 whitespace-nowrap' }, '👋 ' + (currentUser?.first_name || 'User'))
+                        }, React.createElement('span', { className: 'text-white text-[10px] font-bold' }, unreadMessagesCount))
                     )
                 ),
 
