@@ -151,8 +151,8 @@ function createRoleCard(role, isSystem) {
         'operator': 'from-green-500 to-green-600'
     };
     
-    const icon = iconMap[role.name] || 'fa-user-cog';
-    const color = isSystem ? (colorMap[role.name] || 'from-gray-500 to-gray-600') : 'from-indigo-500 to-indigo-600';
+    const icon = iconMap[role.slug] || 'fa-user-cog';
+    const color = isSystem ? (colorMap[role.slug] || 'from-gray-500 to-gray-600') : 'from-indigo-500 to-indigo-600';
     
     return `
         <div class="role-card bg-white rounded-xl shadow-md overflow-hidden">
@@ -167,8 +167,8 @@ function createRoleCard(role, isSystem) {
                         '<span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-semibold"><i class="fas fa-star mr-1"></i>Personnalisé</span>'
                     }
                 </div>
-                <h3 class="text-xl font-bold mb-1">${role.display_name}</h3>
-                <p class="text-xs text-white text-opacity-80">@${role.name}</p>
+                <h3 class="text-xl font-bold mb-1">${role.name}</h3>
+                <p class="text-xs text-white text-opacity-80">@${role.slug}</p>
             </div>
             
             <!-- Body -->
@@ -197,7 +197,7 @@ function createRoleCard(role, isSystem) {
                         <button onclick="editRole(${role.id})" class="flex-1 bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition text-sm font-medium">
                             <i class="fas fa-edit mr-2"></i>Modifier
                         </button>
-                        <button onclick="deleteRole(${role.id}, '${role.display_name}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition text-sm">
+                        <button onclick="deleteRole(${role.id}, '${role.name}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition text-sm">
                             <i class="fas fa-trash"></i>
                         </button>
                     ` : `
@@ -241,9 +241,9 @@ async function editRole(roleId) {
         currentEditingRoleId = roleId;
         
         document.getElementById('modalTitle').textContent = 'Modifier le Rôle';
-        document.getElementById('roleName').value = role.name;
+        document.getElementById('roleName').value = role.slug;
         document.getElementById('roleName').disabled = true; // Ne pas modifier le nom technique
-        document.getElementById('roleDisplayName').value = role.display_name;
+        document.getElementById('roleDisplayName').value = role.name;
         document.getElementById('roleDescription').value = role.description;
         
         renderPermissionsSelection();
@@ -276,7 +276,7 @@ async function viewRole(roleId) {
         const data = await response.json();
         const role = data.role;
         
-        document.getElementById('viewModalTitle').textContent = role.display_name;
+        document.getElementById('viewModalTitle').textContent = role.name;
         
         // Grouper permissions par ressource
         const grouped = {};
@@ -289,8 +289,8 @@ async function viewRole(roleId) {
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-4">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-800">${role.display_name}</h3>
-                        <p class="text-sm text-gray-500">@${role.name}</p>
+                        <h3 class="text-lg font-bold text-gray-800">${role.name}</h3>
+                        <p class="text-sm text-gray-500">@${role.slug}</p>
                     </div>
                     ${role.is_system === 1 ? 
                         '<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold"><i class="fas fa-lock mr-1"></i>Rôle Système</span>' :
@@ -488,8 +488,8 @@ async function saveRole() {
     }
     
     const roleData = {
-        name,
-        display_name: displayName,
+        slug: name,
+        name: displayName,
         description,
         permission_ids: permissionIds
     };
