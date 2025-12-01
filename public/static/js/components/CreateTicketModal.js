@@ -564,5 +564,5 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                 )
             )
         )
-    );
+    ));
 };
