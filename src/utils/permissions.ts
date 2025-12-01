@@ -32,7 +32,7 @@ export async function loadRolePermissions(DB: D1Database, roleName: string): Pro
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       INNER JOIN roles r ON rp.role_id = r.id
-      WHERE r.name = ?
+      WHERE r.slug = ?
     `).bind(roleName).all() as any;
 
     const permissions = new Set<string>();
