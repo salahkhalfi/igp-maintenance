@@ -17,6 +17,25 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
     const [showAdminRoles, setShowAdminRoles] = React.useState(false);
 
+    // Gestion des colonnes dynamiques (Levé depuis KanbanBoard)
+    const [columns, setColumns] = React.useState(() => {
+        const saved = localStorage.getItem('kanban_columns');
+        return saved ? JSON.parse(saved) : [
+            { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
+            { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
+            { key: 'in_progress', label: 'En Cours', icon: 'wrench', color: 'orange' },
+            { key: 'waiting_parts', label: 'En Attente Pièces', icon: 'clock', color: 'purple' },
+            { key: 'completed', label: 'Terminé', icon: 'check-circle', color: 'green' },
+            { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
+        ];
+    });
+    const [showManageColumns, setShowManageColumns] = React.useState(false);
+
+    const handleSaveColumns = (newCols) => {
+        setColumns(newCols);
+        localStorage.setItem('kanban_columns', JSON.stringify(newCols));
+    };
+
     // --- EFFETS (Listeners & Initialisation) ---
 
     React.useEffect(() => {
@@ -186,6 +205,13 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             show: showUserManagement, onClose: () => setShowUserManagement(false), currentUser: currentUser,
             onOpenMessage: (user) => { setShowUserManagement(false); setMessagingContact(user); setMessagingTab("private"); setShowMessaging(true); }
         }),
+        React.createElement(ManageColumnsModal, {
+            show: showManageColumns,
+            onClose: () => setShowManageColumns(false),
+            columns: columns,
+            onSave: handleSaveColumns,
+            currentUser: currentUser
+        }),
         React.createElement(SystemSettingsModal, { show: showSystemSettings, onClose: () => setShowSystemSettings(false), currentUser: currentUser }),
         React.createElement(MachineManagementModal, { show: showMachineManagement, onClose: () => setShowMachineManagement(false), currentUser: currentUser, machines: machines, onRefresh: onRefresh }),
         React.createElement(MessagingModal, {
@@ -218,6 +244,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
             onOpenPushDevices: () => { setShowPushDevicesModal(true); setShowMobileMenu(false); },
             onOpenUserManagement: () => { setShowUserManagement(true); setShowMobileMenu(false); },
+            onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
             onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
@@ -230,6 +257,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 React.createElement(KanbanBoard, {
                     tickets: tickets,
                     currentUser: currentUser,
+                    columns: columns,
                     showArchived: showArchived,
                     onTicketClick: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); },
                     onTicketMove: moveTicketToStatus,
