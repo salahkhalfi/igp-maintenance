@@ -94,7 +94,7 @@ const AppHeader = ({
             React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-3' },
                 
                 // LOGO & TITLE
-                React.createElement('div', { className: 'flex items-center min-w-0 group' },
+                React.createElement('div', { className: 'flex justify-between items-center w-full md:w-auto md:min-w-0 group' },
                     React.createElement('div', { className: 'flex items-center' },
                         React.createElement('img', {
                             src: '/api/settings/logo?t=' + Date.now(), alt: 'Logo',
@@ -106,8 +106,17 @@ const AppHeader = ({
                             React.createElement('p', { className: 'text-[10px] md:text-xs font-medium text-slate-500 mt-0.5' }, headerSubtitle)
                         )
                     ),
+                    // Desktop Greeting
                     React.createElement('div', { className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50' },
                         React.createElement('span', { className: 'text-xs font-medium text-blue-700' }, '👋 ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
+                    ),
+                    // Mobile Greeting & Badge
+                    React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2' },
+                        (unreadMessagesCount > 0) && React.createElement('div', {
+                            className: 'flex items-center justify-center w-7 h-7 bg-red-600 rounded-full shadow-md animate-pulse cursor-pointer',
+                            onClick: onOpenMessaging
+                        }, React.createElement('span', { className: 'text-white text-[10px] font-bold' }, unreadMessagesCount)),
+                        React.createElement('span', { className: 'text-xs font-bold text-blue-800 whitespace-nowrap' }, '👋 ' + (currentUser?.first_name || 'User'))
                     )
                 ),
 
@@ -154,19 +163,6 @@ const AppHeader = ({
                     ),
                     React.createElement('div', { className: "flex items-center gap-2 flex-1 md:flex-none justify-end" },
                         
-                        // MOBILE: Compact Greeting
-                        React.createElement('div', { className: 'md:hidden flex items-center mr-1' },
-                            React.createElement('span', { className: 'text-xs font-bold text-blue-800' }, '👋 ' + (currentUser?.first_name || 'User'))
-                        ),
-
-                        // MOBILE: Unread Badge (Outside Hamburger)
-                        (unreadMessagesCount > 0) && React.createElement('button', {
-                            onClick: onOpenMessaging,
-                            className: 'md:hidden flex items-center justify-center w-8 h-8 bg-red-600 rounded-full shadow-md animate-pulse mr-1'
-                        }, 
-                            React.createElement('span', { className: 'text-white text-xs font-bold' }, unreadMessagesCount)
-                        ),
-
                         React.createElement('button', {
                             onClick: onOpenCreateModal,
                             className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center justify-center border border-blue-500/30 mx-2'
@@ -196,11 +192,6 @@ const AppHeader = ({
             React.createElement('div', { 
                 className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100' : 'hidden')
             },
-                // Mobile only greeting
-                React.createElement('div', { className: 'md:hidden flex items-center justify-center p-2 mb-2 bg-blue-50 rounded-lg border border-blue-100' },
-                    React.createElement('span', { className: 'text-sm font-medium text-blue-800' }, '👋 Bonjour ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
-                ),
-
                 React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
                 React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
                     React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
