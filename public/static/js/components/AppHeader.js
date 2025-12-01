@@ -351,7 +351,7 @@ const AppHeader = ({
                 onClick: () => setShowMobileMenu(false)
             },
                 React.createElement('div', {
-                    className: 'absolute top-0 right-0 w-[85%] max-w-[320px] h-full min-h-[100dvh] bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
+                    className: 'absolute top-0 right-0 w-[85%] max-w-[320px] h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
                     onClick: (e) => e.stopPropagation()
                 },
                     // Mobile User Info
@@ -435,7 +435,7 @@ const AppHeader = ({
                     ),
 
                     // Footer Actions
-                    React.createElement('div', { className: 'p-4 border-t border-slate-100 bg-slate-50 shrink-0 pb-8' },
+                    React.createElement('div', { className: 'p-4 border-t border-slate-100 bg-slate-50 shrink-0 pb-safe' },
                         React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
                             React.createElement('button', { onClick: () => { onRefresh(); setShowMobileMenu(false); }, className: 'p-3 flex items-center justify-center gap-2 text-blue-700 font-bold bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors' },
                                 React.createElement('i', { className: 'fas fa-sync-alt' }), 'Actualiser'
@@ -444,7 +444,7 @@ const AppHeader = ({
                                 React.createElement('i', { className: 'fas fa-sign-out-alt' }), 'Déconnexion'
                             )
                         ),
-                        React.createElement('p', { className: 'text-[10px] text-slate-400 text-center mt-3' }, 'Maintenance IGP v2.1 - ' + (isAdmin ? 'Admin Mode' : 'User Mode'))
+                        React.createElement('p', { className: 'text-[10px] text-slate-400 text-center mt-3 mb-4' }, 'Maintenance IGP v2.1 - ' + (isAdmin ? 'Admin Mode' : 'User Mode'))
                     )
                 )
             )
