@@ -114,12 +114,16 @@ const AppHeader = ({
                     React.createElement('div', { className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50' },
                         React.createElement('span', { className: 'text-xs font-medium text-blue-700' }, '👋 ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
                     ),
-                    // Mobile Badge (Next to hamburger, Greeting removed from here)
-                    React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2' },
+                    // Mobile Messaging Icon & Badge (Always visible)
+                    React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2 relative' },
+                        React.createElement('button', {
+                            onClick: onOpenMessaging,
+                            className: 'w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100 shadow-sm active:scale-95 transition'
+                        }, React.createElement('i', { className: 'fas fa-envelope' })),
                         (unreadMessagesCount > 0) && React.createElement('div', {
-                            className: 'flex items-center justify-center w-7 h-7 bg-red-600 rounded-full shadow-md animate-pulse cursor-pointer',
-                            onClick: onOpenMessaging
-                        }, React.createElement('span', { className: 'text-white text-[10px] font-bold' }, unreadMessagesCount))
+                            className: 'absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-600 rounded-full shadow-md animate-pulse pointer-events-none',
+                            onClick: onOpenMessaging // Propagate click
+                        }, React.createElement('span', { className: 'text-white text-[9px] font-bold' }, unreadMessagesCount))
                     )
                 ),
 
