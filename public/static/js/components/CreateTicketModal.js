@@ -390,11 +390,16 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                         alt: preview.name,
                                         className: 'w-full h-24 object-cover rounded border-2 border-gray-300 pointer-events-none'
                                     })
-                                    : React.createElement('video', {
-                                        src: preview.url,
-                                        className: 'w-full h-24 object-cover rounded border-2 border-gray-300 pointer-events-none',
-                                        controls: false
-                                    }),
+                                    : React.createElement('div', { className: 'flex flex-col' },
+                                        React.createElement('video', {
+                                            src: preview.url,
+                                            className: 'w-full h-32 bg-black object-contain rounded-t border-2 border-gray-300 pointer-events-none',
+                                            controls: false
+                                        }),
+                                        React.createElement('div', { className: 'p-1 text-[10px] text-center font-mono truncate bg-gray-100 border-2 border-t-0 border-gray-300 rounded-b text-gray-700' },
+                                            preview.name
+                                        )
+                                    ),
                                 React.createElement('button', {
                                     type: 'button',
                                     onClick: (e) => {
@@ -406,9 +411,11 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                 },
                                     React.createElement('i', { className: 'fas fa-times text-sm' })
                                 ),
-                                React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded' },
-                                    preview.type.startsWith('image/') ? '📷' : '🎥',
-                                    ' ' + Math.round(preview.size / 1024) + ' KB'
+                                preview.type.startsWith('image/') && React.createElement('div', { className: 'absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded' },
+                                    '📷 ' + Math.round(preview.size / 1024) + ' KB'
+                                ),
+                                !preview.type.startsWith('image/') && React.createElement('div', { className: 'absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded' },
+                                    '🎥 Vidéo'
                                 )
                             )
                         )
