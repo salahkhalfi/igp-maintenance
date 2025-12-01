@@ -49,6 +49,28 @@ const AdminRoles = ({ onBack }) => {
         }
     };
 
+    const handleEditClick = async (roleId) => {
+        try {
+            const response = await axios.get(API_URL + '/roles/' + roleId);
+            setEditingRole(response.data.role);
+            setShowEditModal(true);
+        } catch (err) {
+            console.error("Error details:", err);
+            alert('Impossible de charger les détails du rôle');
+        }
+    };
+
+    const handleViewClick = async (roleId) => {
+        try {
+            const response = await axios.get(API_URL + '/roles/' + roleId);
+            setViewingRole(response.data.role);
+            setShowViewModal(true);
+        } catch (err) {
+            console.error("Error details:", err);
+            alert('Impossible de charger les détails du rôle');
+        }
+    };
+
     const handleSaveRole = async (roleData) => {
         try {
             if (editingRole && editingRole.id) {
@@ -118,8 +140,8 @@ const AdminRoles = ({ onBack }) => {
             roles.map(role => React.createElement(RoleCard, {
                 key: role.id,
                 role: role,
-                onEdit: () => { setEditingRole(role); setShowEditModal(true); },
-                onView: () => { setViewingRole(role); setShowViewModal(true); },
+                onEdit: () => handleEditClick(role.id),
+                onView: () => handleViewClick(role.id),
                 onDelete: () => handleDeleteRole(role)
             }))
         ),
@@ -240,11 +262,12 @@ const RoleCard = ({ role, onEdit, onView, onDelete }) => {
 
 const RoleEditModal = ({ role, allPermissions, onClose, onSave }) => {
     const isSystem = role?.is_system === 1;
+    // Initial state only - useEffect handles updates from role prop changes
     const [formData, setFormData] = React.useState({
         slug: role?.slug || '',
         name: role?.name || '',
         description: role?.description || '',
-        permission_ids: role?.permissions?.map(p => p.id) || []
+        permission_ids: role?.permissions ? role.permissions.map(p => p.id) : []
     });
 
     const groupedPermissions = React.useMemo(() => {
@@ -273,6 +296,25 @@ const RoleEditModal = ({ role, allPermissions, onClose, onSave }) => {
         e.preventDefault();
         onSave(formData);
     };
+
+    // Reset form data when role changes (crucial for switching between create/edit)
+    React.useEffect(() => {
+        if (role) {
+            setFormData({
+                slug: role.slug,
+                name: role.name,
+                description: role.description,
+                permission_ids: role.permissions.map(p => p.id)
+            });
+        } else {
+            setFormData({
+                slug: '',
+                name: '',
+                description: '',
+                permission_ids: []
+            });
+        }
+    }, [role]);
 
     return React.createElement('div', { className: 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn' },
         React.createElement('div', { className: 'bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-slideUp' },
