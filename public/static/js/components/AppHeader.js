@@ -43,7 +43,8 @@ const AppHeader = ({
     const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
 
     const isMobile = window.innerWidth < 768;
-    const normalizeRole = (r) => r ? r.toLowerCase() : '';
+    // Ensure role check is robust
+    const normalizeRole = (r) => r ? r.toString().toLowerCase() : '';
     const isAdmin = normalizeRole(currentUser?.role) === 'admin';
     const isAdminOrSup = ['admin', 'supervisor'].includes(normalizeRole(currentUser?.role));
     
@@ -351,7 +352,7 @@ const AppHeader = ({
                 onClick: () => setShowMobileMenu(false)
             },
                 React.createElement('div', {
-                    className: 'absolute top-0 right-0 w-[85%] max-w-[320px] h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
+                    className: 'absolute top-0 right-0 w-[85%] max-w-[320px] h-[100dvh] bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
                     onClick: (e) => e.stopPropagation()
                 },
                     // Mobile User Info
@@ -381,7 +382,7 @@ const AppHeader = ({
                     ),
 
                     // Mobile Links (Scrollable)
-                    React.createElement('div', { className: 'flex-1 overflow-y-auto overflow-x-hidden py-2 scroll-smooth' },
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto overflow-x-hidden py-2 scroll-smooth min-h-0' },
                         // Main Actions
                         React.createElement('div', { className: 'px-4 py-2' },
                             React.createElement('div', { className: 'text-xs font-bold text-slate-400 uppercase mb-3 ml-1' }, 'Navigation'),
