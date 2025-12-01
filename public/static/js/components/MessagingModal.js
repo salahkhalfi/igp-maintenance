@@ -1,6 +1,3 @@
-// ========================================
-// COMPOSANT MESSAGERIE
-// ========================================
 const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab }) => {
     const [activeTab, setActiveTab] = React.useState(initialTab || "public");
     const [publicMessages, setPublicMessages] = React.useState([]);
@@ -8,78 +5,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
     const [selectedContact, setSelectedContact] = React.useState(initialContact || null);
     const [privateMessages, setPrivateMessages] = React.useState([]);
     const [availableUsers, setAvailableUsers] = React.useState([]);
-    const [messageContent, setMessageContent] = React.useState('');
     const [unreadCount, setUnreadCount] = React.useState(0);
     const [loading, setLoading] = React.useState(false);
-    const messagesEndRef = React.useRef(null);
-
-    // États pour enregistrement audio
-    const [isRecording, setIsRecording] = React.useState(false);
-    
-    // États pour la dictée vocale (Speech-to-Text)
-    const [isDictating, setIsDictating] = React.useState(false);
-    const dictationRef = React.useRef(null);
-
-    React.useEffect(() => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            dictationRef.current = new SpeechRecognition();
-            dictationRef.current.continuous = false;
-            dictationRef.current.interimResults = false;
-            dictationRef.current.lang = 'fr-FR';
-
-            dictationRef.current.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                const capitalizedTranscript = transcript.charAt(0).toUpperCase() + transcript.slice(1);
-                
-                setMessageContent(prev => {
-                    const prefix = prev ? prev + ' ' : '';
-                    return prefix + capitalizedTranscript;
-                });
-                setIsDictating(false);
-            };
-
-            dictationRef.current.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                setIsDictating(false);
-            };
-
-            dictationRef.current.onend = () => {
-                setIsDictating(false);
-            };
-        }
-    }, []);
-
-    const toggleDictation = () => {
-        if (isDictating) {
-            dictationRef.current?.stop();
-        } else {
-            dictationRef.current?.start();
-            setIsDictating(true);
-        }
-    };
-
-    const [audioBlob, setAudioBlob] = React.useState(null);
-    const [recordingDuration, setRecordingDuration] = React.useState(0);
-    const [audioURL, setAudioURL] = React.useState(null);
-    const mediaRecorderRef = React.useRef(null);
-    const audioChunksRef = React.useRef([]);
-    const recordingTimerRef = React.useRef(null);
-
-    // États pour lecteur audio personnalisé
-    const [playingAudio, setPlayingAudio] = React.useState({});
-    const audioRefs = React.useRef({});
-
-    // États pour selection multiple et suppression en masse
-    const [selectionMode, setSelectionMode] = React.useState(false);
-    const [selectedMessages, setSelectedMessages] = React.useState([]);
-
-    // État pour forcer le re-render des timestamps (pas besoin de valeur, juste un toggle)
     const [timestampTick, setTimestampTick] = React.useState(0);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
 
     React.useEffect(() => {
         if (show) {
@@ -88,55 +16,40 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
             loadAvailableUsers();
             loadUnreadCount();
 
-            // Si un contact initial est fourni, basculer vers prive et charger ses messages
             if (initialContact) {
                 setActiveTab("private");
                 setSelectedContact(initialContact);
                 loadPrivateMessages(initialContact.id);
             }
 
-            // Rafraichir les timestamps, le compteur ET les messages toutes les 30 secondes
             const timestampInterval = setInterval(() => {
                 setTimestampTick(prev => prev + 1);
                 loadUnreadCount();
 
-                // Recharger les messages pour voir les nouveaux messages des autres utilisateurs
                 if (activeTab === 'public') {
                     loadPublicMessages();
                 } else if (activeTab === 'private' && selectedContact) {
                     loadPrivateMessages(selectedContact.id);
                     loadConversations();
                 }
-            }, 30000); // 30 secondes
+            }, 30000);
 
             return () => clearInterval(timestampInterval);
         }
     }, [show, activeTab, selectedContact]);
 
-    React.useEffect(() => {
-        // Scroller automatiquement seulement pour messages privés (ordre chronologique)
-        // Messages publics: pas de scroll auto car ordre anti-chronologique (nouveaux en haut)
-        if (activeTab === 'private' && selectedContact) {
-            scrollToBottom();
-        }
-    }, [privateMessages, activeTab, selectedContact]);
-
     const loadPublicMessages = async () => {
         try {
             const response = await axios.get(API_URL + '/messages/public');
             setPublicMessages(response.data.messages);
-        } catch (error) {
-            // Erreur silencieuse
-        }
+        } catch (error) {}
     };
 
     const loadConversations = async () => {
         try {
             const response = await axios.get(API_URL + '/messages/conversations');
             setConversations(response.data.conversations);
-        } catch (error) {
-            // Erreur silencieuse
-        }
+        } catch (error) {}
     };
 
     const loadPrivateMessages = async (contactId) => {
@@ -144,9 +57,8 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
             setLoading(true);
             const response = await axios.get(API_URL + '/messages/private/' + contactId);
             setPrivateMessages(response.data.messages);
-            loadConversations(); // Rafraichir pour mettre a jour unread_count
+            loadConversations();
         } catch (error) {
-            // Erreur silencieuse
         } finally {
             setLoading(false);
         }
@@ -156,376 +68,93 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
         try {
             const response = await axios.get(API_URL + '/messages/available-users');
             setAvailableUsers(response.data.users);
-        } catch (error) {
-            // Erreur silencieuse
-        }
+        } catch (error) {}
     };
 
     const loadUnreadCount = async () => {
         try {
             const response = await axios.get(API_URL + '/messages/unread-count');
             setUnreadCount(response.data.count);
-        } catch (error) {
-            // Erreur silencieuse
-        }
+        } catch (error) {}
     };
 
-    // Fonction pour ouvrir message prive avec un utilisateur
     const openPrivateMessage = (senderId, senderName) => {
-        // Verifier si ce n est pas soi-meme
         if (senderId === currentUser.userId) {
             alert('Vous ne pouvez pas vous envoyer un message privé à vous-même.');
             return;
         }
-
-        // Verifier si utilisateur est dans la liste des contacts disponibles
         const user = availableUsers.find(u => u.id === senderId);
-
         if (!user) {
-            // Utilisateur n existe plus dans la liste
             alert(senderName + ' ne fait plus partie de la liste des utilisateurs.');
             return;
         }
-
-        // Switcher vers onglet Messages Prives
         setActiveTab('private');
-
-        // Selectionner automatiquement l utilisateur
         setSelectedContact(user);
-
-        // Charger les messages prives avec cette personne
         loadPrivateMessages(senderId);
     };
 
-    // Fonctions audio
-    const startRecording = async () => {
+    const handleSendMessage = async (content) => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-            });
-
-            // SOLUTION SIMPLE: Essayer MP3 en premier (universel sur TOUS les appareils)
-            let mimeType = '';
-            let extension = 'mp3';
-
-            // 1. Essayer audio/mpeg (MP3) - UNIVERSEL
-            if (MediaRecorder.isTypeSupported('audio/mpeg')) {
-                mimeType = 'audio/mpeg';
-                extension = 'mp3';
-            }
-            // 2. Essayer MP4/AAC - iOS et Chrome moderne
-            else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                mimeType = 'audio/mp4';
-                extension = 'mp4';
-            }
-            // 3. Fallback WebM - Chrome Android uniquement
-            else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                mimeType = 'audio/webm;codecs=opus';
-                extension = 'webm';
-            }
-            // 4. Fallback WebM basique
-            else if (MediaRecorder.isTypeSupported('audio/webm')) {
-                mimeType = 'audio/webm';
-                extension = 'webm';
-            }
-            // 5. Dernier recours
-            else {
-                mimeType = '';
-                extension = 'mp3';
-            }
-
-            const mediaRecorder = new MediaRecorder(stream, { mimeType });
-            mediaRecorderRef.current = mediaRecorder;
-            audioChunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunksRef.current.push(event.data);
-                }
+            const payload = {
+                message_type: activeTab,
+                content: content,
+                recipient_id: activeTab === 'private' && selectedContact ? selectedContact.id : null
             };
-
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-                setAudioBlob(audioBlob);
-                setAudioURL(URL.createObjectURL(audioBlob));
-                stream.getTracks().forEach(track => track.stop());
-            };
-
-            mediaRecorder.start();
-            setIsRecording(true);
-            setRecordingDuration(0);
-
-            recordingTimerRef.current = setInterval(() => {
-                setRecordingDuration(prev => {
-                    if (prev >= 300) {
-                        stopRecording();
-                        return 300;
-                    }
-                    return prev + 1;
-                });
-            }, 1000);
-
+            await axios.post(API_URL + '/messages', payload);
+            refreshCurrentView();
         } catch (error) {
-            alert('Impossible acceder au microphone. Verifiez les permissions.');
+            alert('Erreur envoi message: ' + (error.response?.data?.error || 'Erreur'));
         }
     };
 
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-                recordingTimerRef.current = null;
-            }
-        }
-    };
-
-    const cancelRecording = () => {
-        if (isRecording) {
-            stopRecording();
-        }
-        setAudioBlob(null);
-        setAudioURL(null);
-        setRecordingDuration(0);
-        audioChunksRef.current = [];
-        if (audioURL) {
-            URL.revokeObjectURL(audioURL);
-        }
-    };
-
-    const sendAudioMessage = async () => {
-        if (!audioBlob) return;
+    const handleSendAudio = async (audioBlob, duration) => {
         try {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'audio-message.' + (audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm'));
             formData.append('message_type', activeTab);
-            formData.append('duration', recordingDuration.toString());
+            formData.append('duration', duration.toString());
             if (activeTab === 'private' && selectedContact) {
                 formData.append('recipient_id', selectedContact.id.toString());
             }
             await axios.post(API_URL + '/messages/audio', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            cancelRecording();
-            if (activeTab === 'public') {
-                loadPublicMessages();
-            } else if (selectedContact) {
-                loadPrivateMessages(selectedContact.id);
-                loadConversations();
-            }
-
-            // Rafraichir compteur immediatement apres envoi audio
-            loadUnreadCount();
+            refreshCurrentView();
         } catch (error) {
             alert('Erreur envoi audio: ' + (error.response?.data?.error || 'Erreur'));
         }
     };
 
-    const formatRecordingDuration = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return mins + ':' + (secs < 10 ? '0' : '') + secs;
-    };
-
-    // Fonctions lecteur audio personnalisé
-    const toggleAudio = async (messageId) => {
-        const audio = audioRefs.current[messageId];
-
-        if (!audio) {
-            return;
-        }
-
-        if (playingAudio[messageId]) {
-            audio.pause();
-            setPlayingAudio(prev => ({ ...prev, [messageId]: false }));
-        } else {
-            // Arrêter tous les autres audios
-            Object.keys(audioRefs.current).forEach(id => {
-                if (id !== messageId && audioRefs.current[id]) {
-                    audioRefs.current[id].pause();
-                    setPlayingAudio(prev => ({ ...prev, [id]: false }));
-                }
-            });
-
-            // Charger l'audio d'abord si nécessaire
-            if (audio.readyState < 2) {
-                audio.load();
-            }
-
-            try {
-                await audio.play();
-                setPlayingAudio(prev => ({ ...prev, [messageId]: true }));
-            } catch (err) {
-                setPlayingAudio(prev => ({ ...prev, [messageId]: false }));
-                alert('Impossible de lire audio: ' + err.message);
-            }
-        }
-    };
-
-    const sendMessage = async () => {
-        if (!messageContent.trim()) return;
-
-        try {
-            const payload = {
-                message_type: activeTab,
-                content: messageContent,
-                recipient_id: activeTab === 'private' && selectedContact ? selectedContact.id : null
-            };
-
-            await axios.post(API_URL + '/messages', payload);
-            setMessageContent('');
-
-            if (activeTab === 'public') {
-                loadPublicMessages();
-            } else if (selectedContact) {
-                loadPrivateMessages(selectedContact.id);
-                loadConversations();
-            }
-
-            // Rafraichir compteur immediatement apres envoi
-            loadUnreadCount();
-        } catch (error) {
-            alert('Erreur envoi message: ' + (error.response?.data?.error || 'Erreur'));
-        }
-    };
-
-    const deleteMessage = async (messageId) => {
+    const handleDeleteMessage = async (messageId) => {
         if (!confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) return;
-
         try {
             await axios.delete(API_URL + '/messages/' + messageId);
-
-            if (activeTab === 'public') {
-                loadPublicMessages();
-            } else if (selectedContact) {
-                loadPrivateMessages(selectedContact.id);
-                loadConversations();
-            }
-
-            // Rafraichir compteur immediatement apres suppression
-            loadUnreadCount();
+            refreshCurrentView();
         } catch (error) {
             alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
         }
     };
 
-    const canDeleteMessage = (msg) => {
-        // Utilisateur peut supprimer son propre message
-        if (msg.sender_id === currentUser.id) return true;
-        // Admin peut supprimer tous les messages
-        if (currentUser?.role === 'admin') return true;
-        // Superviseur peut supprimer tous sauf ceux de admin
-        if (currentUser?.role === 'supervisor' && msg.sender_role !== 'admin') return true;
-        return false;
-    };
-
-    // Fonctions pour selection multiple
-    const toggleSelectionMode = () => {
-        setSelectionMode(!selectionMode);
-        setSelectedMessages([]);
-    };
-
-    const toggleMessageSelection = (messageId) => {
-        if (selectedMessages.includes(messageId)) {
-            setSelectedMessages(selectedMessages.filter(id => id !== messageId));
-        } else {
-            setSelectedMessages([...selectedMessages, messageId]);
-        }
-    };
-
-    const selectAllMessages = () => {
-        const currentMessages = activeTab === 'public' ? publicMessages : privateMessages;
-        const selectableIds = currentMessages
-            .filter(msg => canDeleteMessage(msg))
-            .map(msg => msg.id);
-        setSelectedMessages(selectableIds);
-    };
-
-    const deselectAllMessages = () => {
-        setSelectedMessages([]);
-    };
-
-    const deleteSelectedMessages = async () => {
-        if (selectedMessages.length === 0) return;
-
+    const handleBulkDelete = async (selectedMessages) => {
         const count = selectedMessages.length;
-        const confirmText = 'Supprimer ' + count + ' message' + (count > 1 ? 's' : '') + ' ?';
-
-        if (!confirm(confirmText)) return;
-
+        if (!confirm('Supprimer ' + count + ' message' + (count > 1 ? 's' : '') + ' ?')) return;
         try {
-            await axios.post(API_URL + '/messages/bulk-delete', {
-                message_ids: selectedMessages
-            });
-
-            setSelectedMessages([]);
-            setSelectionMode(false);
-
-            if (activeTab === 'public') {
-                loadPublicMessages();
-            } else if (selectedContact) {
-                loadPrivateMessages(selectedContact.id);
-                loadConversations();
-            }
-
-            // Rafraichir compteur immediatement apres suppression masse
-            loadUnreadCount();
-
+            await axios.post(API_URL + '/messages/bulk-delete', { message_ids: selectedMessages });
             alert(count + ' message' + (count > 1 ? 's' : '') + ' supprimé' + (count > 1 ? 's' : ''));
+            refreshCurrentView();
         } catch (error) {
             alert('Erreur suppression: ' + (error.response?.data?.error || 'Erreur'));
         }
     };
 
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
+    const refreshCurrentView = () => {
+        if (activeTab === 'public') {
+            loadPublicMessages();
+        } else if (selectedContact) {
+            loadPrivateMessages(selectedContact.id);
+            loadConversations();
         }
-    };
-
-    const formatMessageTime = (timestamp) => {
-        // Convertir le format SQL "YYYY-MM-DD HH:MM:SS" en format ISO avec T et Z (UTC)
-        const isoTimestamp = timestamp.replace(' ', 'T') + (timestamp.includes('Z') ? '' : 'Z');
-        const dateUTC = new Date(isoTimestamp);
-        // Appliquer l'offset EST/EDT
-        const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
-        const date = new Date(dateUTC.getTime() + (offset * 60 * 60 * 1000));
-        const now = getNowEST();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-
-        // Format français/québécois (jj mois aaaa) avec heure locale de l'appareil
-        const frenchOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-
-        if (diffMins < 1) return "À l'instant";
-        if (diffMins < 60) return "Il y a " + diffMins + " min";
-        if (diffHours < 24) return "Il y a " + diffHours + " h";
-        if (diffHours < 48) return "Hier " + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        return date.toLocaleDateString('fr-FR', frenchOptions);
-    };
-
-    const getRoleBadgeClass = (role) => {
-        const colors = {
-            'admin': 'bg-red-100 text-red-700', 'director': 'bg-red-50 text-red-600',
-            'supervisor': 'bg-yellow-100 text-yellow-700', 'coordinator': 'bg-amber-100 text-amber-700', 'planner': 'bg-amber-100 text-amber-700',
-            'senior_technician': 'bg-blue-100 text-blue-700', 'technician': 'bg-blue-50 text-blue-600',
-            'team_leader': 'bg-emerald-100 text-emerald-700', 'furnace_operator': 'bg-green-100 text-green-700', 'operator': 'bg-green-50 text-green-600',
-            'safety_officer': 'bg-blue-100 text-blue-700', 'quality_inspector': 'bg-slate-100 text-slate-700', 'storekeeper': 'bg-violet-100 text-violet-700',
-            'viewer': 'bg-gray-100 text-gray-700'
-        };
-        return colors[role] || 'bg-gray-100 text-gray-700';
-    };
-
-    const getRoleLabel = (role) => {
-        const labels = {
-            'admin': 'Admin', 'director': 'Directeur', 'supervisor': 'Superviseur', 'coordinator': 'Coordonnateur', 'planner': 'Planificateur',
-            'senior_technician': 'Tech. Senior', 'technician': 'Technicien', 'team_leader': 'Chef Équipe', 'furnace_operator': 'Op. Four', 'operator': 'Opérateur',
-            'safety_officer': 'Agent SST', 'quality_inspector': 'Insp. Qualité', 'storekeeper': 'Magasinier', 'viewer': 'Lecture Seule'
-        };
-        return labels[role] || role;
+        loadUnreadCount();
     };
 
     if (!show) return null;
@@ -535,7 +164,6 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
         onClick: onClose
     },
         React.createElement('div', {
-            // FIX PERFORMANCE & STYLE: Nettoyage styles conflictuels (transform) et suppression backdrop-blur interne
             className: 'bg-white rounded-xl shadow-lg w-full max-w-6xl h-[85vh] sm:h-[90vh] flex flex-col overflow-hidden',
             onClick: (e) => e.stopPropagation()
         },
@@ -589,450 +217,77 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                 )
             ),
 
-            // Barre outils selection
-            React.createElement('div', { className: 'bg-white border-b border-gray-200 px-3 py-2 flex items-center flex-wrap gap-2' },
-                React.createElement('div', { className: 'flex gap-2' },
-                    React.createElement('button', {
-                        onClick: toggleSelectionMode,
-                        className: 'px-3 py-1.5 text-sm font-medium rounded-lg transition-all ' +
-                            (selectionMode
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-                    },
-                        React.createElement('i', { className: 'fas ' + (selectionMode ? 'fa-times' : 'fa-check-square') + ' mr-1.5' }),
-                        selectionMode ? 'Annuler' : 'Sélectionner'
-                    ),
-                    selectionMode ? React.createElement('button', {
-                        onClick: selectAllMessages,
-                        className: 'px-3 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all'
-                    },
-                        React.createElement('i', { className: 'fas fa-check-double mr-1.5' }),
-                        'Tout'
-                    ) : null,
-                    selectionMode && selectedMessages.length > 0 ? React.createElement('button', {
-                        onClick: deselectAllMessages,
-                        className: 'px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all'
-                    },
-                        React.createElement('i', { className: 'fas fa-times-circle mr-1.5' }),
-                        'Aucun'
-                    ) : null
-                ),
-                selectionMode && selectedMessages.length > 0 ? React.createElement('button', {
-                    onClick: deleteSelectedMessages,
-                    className: 'px-3 py-1.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all'
-                },
-                    React.createElement('i', { className: 'fas fa-trash mr-1.5' }),
-                    'Supprimer (' + selectedMessages.length + ')'
-                ) : null,
-                selectionMode ? React.createElement('span', { className: 'text-xs text-gray-500 ml-auto' },
-                    selectedMessages.length + ' sélectionné' + (selectedMessages.length > 1 ? 's' : '')
-                ) : null
-            ),
-
-            // Content
+            // Content Area
             React.createElement('div', { className: 'flex-1 flex overflow-hidden relative' },
-                // PUBLIC TAB
-                activeTab === 'public' ? React.createElement('div', { className: 'flex-1 flex flex-col min-w-0' },
-                    // Messages publics
-                    React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
-                        publicMessages.length === 0 ? React.createElement('div', {
-                            className: 'text-center text-gray-400 py-12'
-                        },
-                            React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-4 opacity-50' }),
-                            React.createElement('p', { className: 'text-base sm:text-lg font-medium' }, 'Aucun message public'),
-                            React.createElement('p', { className: 'text-xs sm:text-sm text-gray-400 mt-2' }, 'Soyez le premier à envoyer un message!')
-                        ) : publicMessages.map(msg => {
-                            const isMe = msg.sender_id === currentUser.id;
-                            return React.createElement('div', {
-                                key: msg.id,
-                                className: 'flex w-full mb-2 ' + (isMe ? 'justify-end pr-4' : 'justify-start pl-1') + ' group px-2'
-                            },
-                                selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
-                                    type: 'checkbox',
-                                    checked: selectedMessages.includes(msg.id),
-                                    onChange: () => toggleMessageSelection(msg.id),
-                                    className: 'w-4 h-4 mt-2 mx-2 cursor-pointer',
-                                    onClick: (e) => e.stopPropagation()
-                                }) : null,
-                                React.createElement('div', {
-                                    className: 'max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 shadow-sm border relative flex flex-col ' +
-                                        (isMe ? 'bg-blue-100 border-blue-200 rounded-tr-sm items-end' : 'bg-white border-gray-200 rounded-tl-sm items-start')
-                                },
-                                    React.createElement('div', { className: 'flex items-center gap-2 mb-1 flex-wrap ' + (isMe ? 'justify-end' : 'justify-start') },
-                                        !isMe ? React.createElement('div', {
-                                            className: 'w-5 h-5 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm cursor-pointer',
-                                            onClick: () => openPrivateMessage(msg.sender_id, msg.sender_name),
-                                            title: 'Message privé'
-                                        }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?') : null,
-                                        
-                                        React.createElement('span', {
-                                            className: 'font-bold text-xs text-gray-700 cursor-pointer hover:text-blue-600',
-                                            onClick: !isMe ? () => openPrivateMessage(msg.sender_id, msg.sender_name) : undefined
-                                        }, isMe ? 'Moi' : msg.sender_name),
-                                        
-                                        !isMe ? React.createElement('span', {
-                                            className: 'text-[10px] px-1.5 py-0.5 rounded-full ' + getRoleBadgeClass(msg.sender_role)
-                                        }, getRoleLabel(msg.sender_role)) : null,
+                
+                // Sidebar (Only for Private tab)
+                activeTab === 'private' ? React.createElement(MessagingSidebar, {
+                    conversations: conversations,
+                    availableUsers: availableUsers,
+                    selectedContact: selectedContact,
+                    onSelectContact: (contact) => {
+                        setSelectedContact(contact);
+                        loadPrivateMessages(contact.id);
+                    }
+                }) : null,
 
-                                        React.createElement('span', { className: 'text-[10px] text-gray-400' }, formatMessageTime(msg.created_at))
-                                    ),
-                                    msg.audio_file_key ? React.createElement('div', { className: 'mt-1 w-full' },
-                                        React.createElement('div', { className: 'flex items-center gap-2 bg-white/50 rounded-lg p-2' },
-                                            React.createElement('i', { className: 'fas fa-microphone ' + (isMe ? 'text-blue-600' : 'text-gray-600') }),
-                                            React.createElement('audio', {
-                                                controls: true,
-                                                controlsList: 'nodownload',
-                                                className: 'h-8 min-w-[200px] max-w-[220px]',
-                                                src: API_URL + '/audio/' + msg.audio_file_key
-                                            })
-                                        ),
-                                        msg.audio_duration ? React.createElement('p', { className: 'text-[10px] text-gray-500 mt-1 text-right' }, formatRecordingDuration(msg.audio_duration)) : null
-                                    ) : React.createElement('p', { 
-                                        className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
-                                    }, msg.content),
-                                    canDeleteMessage(msg) && !selectionMode ? React.createElement('button', {
-                                        onClick: (e) => { e.stopPropagation(); deleteMessage(msg.id); },
-                                        className: 'absolute -top-2 ' + (isMe ? '-left-2' : '-right-2') + ' bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200 z-10',
-                                        title: 'Supprimer'
-                                    }, React.createElement('i', { className: 'fas fa-trash text-[10px]' })) : null
-                                )
-                            );
-                        }),
-                        React.createElement('div', { ref: messagesEndRef })
-                    ),
-
-                    // Input zone
-                    React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
-                        (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border-2 border-red-200' },
-                            React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                                React.createElement('div', { className: 'flex items-center gap-3' },
-                                    React.createElement('div', { className: 'w-3 h-3 bg-red-500 rounded-full animate-pulse' }),
-                                    React.createElement('span', { className: 'font-semibold text-red-700' },
-                                        isRecording ? 'Enregistrement en cours...' : 'Prévisualisation audio'
-                                    ),
-                                    React.createElement('span', { className: 'text-sm text-gray-600 font-mono' },
-                                        formatRecordingDuration(recordingDuration)
-                                    )
-                                ),
-                                React.createElement('button', {
-                                    onClick: cancelRecording,
-                                    className: 'text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg p-2 transition-all',
-                                    title: 'Annuler'
-                                }, React.createElement('i', { className: 'fas fa-times' }))
-                            ),
-                            audioBlob ? React.createElement('div', { className: 'flex items-center gap-3 mb-3' },
-                                React.createElement('audio', {
-                                    controls: true,
-                                    src: audioURL,
-                                    className: 'flex-1 h-10'
-                                })
-                            ) : null,
-                            React.createElement('div', { className: 'flex gap-2' },
-                                isRecording ? React.createElement('button', {
-                                    onClick: stopRecording,
-                                    className: 'flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2'
-                                },
-                                    React.createElement('i', { className: 'fas fa-stop' }),
-                                    'Arrêter'
-                                ) : React.createElement('button', {
-                                    onClick: sendAudioMessage,
-                                    disabled: !audioBlob,
-                                    className: 'flex-1 bg-gradient-to-br from-slate-700 to-gray-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
-                                },
-                                    React.createElement('i', { className: 'fas fa-paper-plane' }),
-                                    'Envoyer le message vocal'
-                                )
-                            )
-                        ) : null,
-                        !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2' },
-                            React.createElement('textarea', {
-                                value: messageContent,
-                                onChange: (e) => setMessageContent(e.target.value),
-                                onKeyPress: handleKeyPress,
-                                placeholder: 'Écrire un message public... (Enter pour envoyer)',
-                                className: 'flex-1 bg-white/95 border-2 border-white/50 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all shadow-lg hover:shadow-xl',
-                                style: { boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
-                                rows: 2
-                            }),
-                            React.createElement('button', {
-                                onClick: startRecording,
-                                className: 'px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',
-                                title: 'Enregistrer un message vocal'
-                            },
-                                React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
-                                React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Audio')
-                            ),
-                            React.createElement('button', {
-                                onClick: sendMessage,
-                                disabled: !messageContent.trim(),
-                                className: 'px-3 sm:px-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95',
-                                style: { boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4), inset 0 -2px 8px rgba(0, 0, 0, 0.2)' }
-                            },
-                                React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
-                                React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
-                            )
-                        ) : null
-                    )
-                ) : null,
-
-                // PRIVATE TAB
-                activeTab === 'private' ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col sm:flex-row min-w-0' },
-                    // Liste des conversations - Mobile: collapsible, Desktop: sidebar
-                    React.createElement('div', { className: (selectedContact ? 'hidden sm:flex ' : 'flex ') + 'w-full sm:w-80 md:w-96 border-r border-gray-200 flex-col bg-gray-50 flex-shrink-0' },
-                        React.createElement('div', { className: 'p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
-                            React.createElement('h3', { className: 'font-semibold text-gray-700 text-sm sm:text-base mb-2 flex items-center gap-2' },
-                                React.createElement('i', { className: 'fas fa-address-book text-indigo-600' }),
-                                'Contacts'
-                            ),
-                            React.createElement('select', {
-                                onChange: (e) => {
-                                    const userId = parseInt(e.target.value);
-                                    if (!userId) {
-                                        // Reset le select à la valeur par défaut
-                                        e.target.value = '';
-                                        return;
-                                    }
-                                    const user = availableUsers.find(u => u.id === userId);
-                                    if (user) {
-                                        setSelectedContact(user);
-                                        loadPrivateMessages(user.id);
-                                    }
-                                    // Reset le select après sélection
-                                    e.target.value = '';
-                                },
-                                className: "w-full px-3 sm:px-4 py-2 sm:py-3 bg-white border-2 border-blue-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold text-xs sm:text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236366f1%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[position:right_0.5rem_center] bg-[size:1.5em_1.5em] bg-no-repeat pr-10",
-                                style: { boxShadow: '0 6px 20px rgba(99, 102, 241, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
-                                value: ''
-                            },
-                                React.createElement('option', { value: '', disabled: true }, '📝 Nouvelle conversation...'),
-                                React.createElement('option', { value: '0' }, '❌ Fermer ce menu'),
-                                availableUsers.map(user => React.createElement('option', {
-                                    key: user.id,
-                                    value: user.id
-                                }, user.full_name + ' (' + getRoleLabel(user.role) + ')'))
-                            )
-                        ),
-                        React.createElement('div', { className: 'flex-1 overflow-y-auto' },
-                            conversations.length === 0 ? React.createElement('div', {
-                                className: 'text-center text-gray-500 py-8 px-4'
-                            },
-                                React.createElement('i', { className: 'fas fa-comments text-5xl mb-3 text-gray-300' }),
-                                React.createElement('p', { className: 'text-sm font-semibold mb-2' }, 'Aucune conversation'),
-                                React.createElement('p', { className: 'text-xs text-gray-400' },
-                                    'Utilisez le menu ci-dessus pour démarrer une nouvelle conversation'
-                                ),
-                                React.createElement('div', { className: 'mt-3 text-indigo-600' },
-                                    React.createElement('i', { className: 'fas fa-arrow-up mr-1' }),
-                                    React.createElement('span', { className: 'text-xs font-semibold' }, 'Nouvelle conversation...')
-                                )
-                            ) : conversations.map(conv => React.createElement('div', {
-                                key: conv.contact_id,
-                                onClick: () => {
-                                    setSelectedContact({ id: conv.contact_id, first_name: conv.contact_name, role: conv.contact_role });
-                                    loadPrivateMessages(conv.contact_id);
-                                },
-                                className: 'p-2 sm:p-3 border-b border-gray-200 cursor-pointer hover:bg-indigo-50 transition-all active:scale-95 ' +
-                                    (selectedContact?.id === conv.contact_id ? 'bg-indigo-100 border-l-4 border-l-indigo-600 shadow-sm' : 'bg-white hover:border-l-4 hover:border-l-indigo-300')
-                            },
-                                React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                                    React.createElement('div', {
-                                        className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0 shadow-md'
-                                    }, conv.contact_name ? conv.contact_name.charAt(0).toUpperCase() : '?'),
-                                    React.createElement('div', { className: 'flex-1 min-w-0' },
-                                        React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2' },
-                                            React.createElement('span', { className: 'font-semibold text-xs sm:text-sm text-gray-800 truncate' }, conv.contact_name),
-                                            conv.unread_count > 0 ? React.createElement('span', {
-                                                className: 'bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 animate-pulse'
-                                            }, conv.unread_count) : null
-                                        ),
-                                        React.createElement('p', {
-                                            className: 'text-xs text-gray-500 truncate'
-                                        }, conv.last_message || 'Commencer la conversation')
-                                    )
-                                )
-                            ))
-                        )
-                    ),
-
-                    // Zone de conversation
-                    selectedContact ? React.createElement('div', { className: 'flex-1 min-h-0 flex flex-col min-w-0' },
-                        // Header contact with back button on mobile
-                        React.createElement('div', { className: 'p-2 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-gray-50 shadow-sm' },
-                            React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3' },
-                                // Back button for mobile only
-                                React.createElement('button', {
-                                    onClick: () => setSelectedContact(null),
-                                    className: 'sm:hidden p-2 hover:bg-indigo-100 rounded-full transition-colors'
-                                },
-                                    React.createElement('i', { className: 'fas fa-arrow-left text-indigo-600' })
-                                ),
-                                React.createElement('div', {
-                                    className: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md flex-shrink-0'
-                                }, (selectedContact.first_name || selectedContact.full_name || '?').charAt(0).toUpperCase()),
-                                React.createElement('div', { className: 'flex-1 min-w-0' },
-                                    React.createElement('h3', { className: 'font-semibold text-gray-800 text-sm sm:text-base truncate' }, selectedContact.first_name || selectedContact.full_name || 'Utilisateur'),
-                                    React.createElement('span', {
-                                        className: 'text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium inline-block ' + getRoleBadgeClass(selectedContact.role)
-                                    }, getRoleLabel(selectedContact.role))
-                                )
-                            )
-                        ),
-
-                        // Messages
-                        React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-gray-50 to-gray-100' },
-                            loading ? React.createElement('div', { className: 'text-center text-gray-400 py-12' },
-                                React.createElement('i', { className: 'fas fa-spinner fa-spin text-3xl sm:text-4xl text-indigo-500' })
-                            ) : privateMessages.length === 0 ? React.createElement('div', {
-                                className: 'text-center text-gray-400 py-8 sm:py-12 px-4'
-                            },
-                                React.createElement('i', { className: 'fas fa-comments text-5xl sm:text-6xl mb-3 sm:mb-4 opacity-50' }),
-                                React.createElement('p', { className: 'text-sm sm:text-base' }, 'Commencez la conversation avec ' + (selectedContact.first_name || selectedContact.full_name || 'cet utilisateur')),
-                                React.createElement('p', { className: 'text-xs text-gray-400 mt-2' }, 'Écrivez votre premier message ci-dessous')
-                            ) : privateMessages.map(msg => {
-                                const isMe = msg.sender_id === currentUser.id;
-                                return React.createElement('div', {
-                                    key: msg.id,
-                                    className: 'flex w-full mb-2 ' + (isMe ? 'justify-end pr-4' : 'justify-start pl-1') + ' group px-2 items-end'
-                                },
-                                    selectionMode && canDeleteMessage(msg) ? React.createElement('input', {
-                                        type: 'checkbox',
-                                        checked: selectedMessages.includes(msg.id),
-                                        onChange: () => toggleMessageSelection(msg.id),
-                                        className: 'w-4 h-4 mx-2 cursor-pointer self-center',
-                                        onClick: (e) => e.stopPropagation()
-                                    }) : null,
-                                    React.createElement('div', {
-                                        className: 'max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 shadow-sm border relative flex flex-col ' +
-                                            (isMe ? 'bg-blue-100 border-blue-200 rounded-tr-sm items-end' : 'bg-white border-gray-200 rounded-tl-sm items-start')
-                                    },
-                                        msg.audio_file_key ? React.createElement('div', { className: 'mt-1 w-full' },
-                                            React.createElement('div', { className: 'flex items-center gap-2 bg-white/50 rounded-lg p-2' },
-                                                React.createElement('i', { className: 'fas fa-microphone ' + (isMe ? 'text-blue-600' : 'text-gray-600') }),
-                                                React.createElement('audio', {
-                                                    controls: true,
-                                                    controlsList: 'nodownload',
-                                                    className: 'h-8 min-w-[200px] max-w-[220px]',
-                                                    src: API_URL + '/audio/' + msg.audio_file_key
-                                                })
-                                            ),
-                                            React.createElement('div', { className: 'flex justify-between items-center mt-1 px-1' },
-                                                msg.audio_duration ? React.createElement('span', { className: 'text-[10px] text-gray-500' }, formatRecordingDuration(msg.audio_duration)) : React.createElement('span', {}),
-                                                React.createElement('span', { className: 'text-[10px] text-gray-400 ml-2' }, formatMessageTime(msg.created_at))
-                                            )
-                                        ) : React.createElement('div', { className: 'flex flex-col ' + (isMe ? 'items-end' : 'items-start') },
-                                            React.createElement('p', { 
-                                                className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
-                                            }, msg.content),
-                                            React.createElement('span', { className: 'text-[10px] text-gray-400 mt-1 opacity-70' }, formatMessageTime(msg.created_at))
-                                        ),
-                                        canDeleteMessage(msg) && !selectionMode ? React.createElement('button', {
-                                            onClick: (e) => { e.stopPropagation(); deleteMessage(msg.id); },
-                                            className: 'absolute -top-2 ' + (isMe ? '-left-2' : '-right-2') + ' bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200 z-10',
-                                            title: 'Supprimer'
-                                        }, React.createElement('i', { className: 'fas fa-trash text-[10px]' })) : null
-                                    )
-                                );
-                            }),
-                            React.createElement('div', { ref: messagesEndRef })
-                        ),
-
-                        // Input
-                        React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
-                            (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border-2 border-red-200' },
-                                React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                                    React.createElement('div', { className: 'flex items-center gap-3' },
-                                        React.createElement('div', { className: 'w-3 h-3 bg-red-500 rounded-full animate-pulse' }),
-                                        React.createElement('span', { className: 'font-semibold text-red-700' },
-                                            isRecording ? 'Enregistrement en cours...' : 'Prévisualisation audio'
-                                        ),
-                                        React.createElement('span', { className: 'text-sm text-gray-600 font-mono' },
-                                            formatRecordingDuration(recordingDuration)
-                                        )
-                                    ),
-                                    React.createElement('button', {
-                                        onClick: cancelRecording,
-                                        className: 'text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg p-2 transition-all',
-                                        title: 'Annuler'
-                                    }, React.createElement('i', { className: 'fas fa-times' }))
-                                ),
-                                audioBlob ? React.createElement('div', { className: 'flex items-center gap-3 mb-3' },
-                                    React.createElement('audio', {
-                                        controls: true,
-                                        src: audioURL,
-                                        className: 'flex-1 h-10'
-                                    })
-                                ) : null,
-                                React.createElement('div', { className: 'flex gap-2' },
-                                    isRecording ? React.createElement('button', {
-                                        onClick: stopRecording,
-                                        className: 'flex-1 bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2'
-                                    },
-                                        React.createElement('i', { className: 'fas fa-stop' }),
-                                        'Arrêter'
-                                    ) : React.createElement('button', {
-                                        onClick: sendAudioMessage,
-                                        disabled: !audioBlob,
-                                        className: 'flex-1 bg-gradient-to-br from-slate-700 to-gray-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg px-4 py-2 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50'
-                                    },
-                                        React.createElement('i', { className: 'fas fa-paper-plane' }),
-                                        'Envoyer le message vocal'
-                                    )
-                                )
-                            ) : null,
-                            !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2 items-end' },
-                                React.createElement('div', { className: 'flex-1 relative' },
-                                    React.createElement('textarea', {
-                                        value: messageContent,
-                                        onChange: (e) => setMessageContent(e.target.value),
-                                        onKeyPress: handleKeyPress,
-                                        placeholder: 'Écrire un message... (Enter pour envoyer)',
-                                        className: 'w-full border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all',
-                                        rows: 2
-                                    }),
-                                    // Dictation button inside textarea
-                                    dictationRef.current ? React.createElement('button', {
-                                        onClick: toggleDictation,
-                                        className: 'absolute right-2 bottom-2 p-1.5 rounded-full transition-colors ' + 
-                                            (isDictating ? 'bg-red-100 text-red-600 animate-pulse' : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'),
-                                        title: "Dictée vocale"
-                                    },
-                                        isDictating 
-                                            ? React.createElement('i', { className: 'fas fa-stop-circle' }) 
-                                            : React.createElement('i', { className: 'fas fa-microphone' })
-                                    ) : null
-                                ),
-                                React.createElement('button', {
-                                    onClick: startRecording,
-                                    className: 'flex-shrink-0 whitespace-nowrap px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95 h-[42px]',
-                                    title: 'Enregistrer un message vocal'
-                                },
-                                    React.createElement('i', { className: 'fas fa-microphone text-sm sm:text-base' }),
-                                    React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Audio')
-                                ),
-                                React.createElement('button', {
-                                    onClick: sendMessage,
-                                    disabled: !messageContent.trim(),
-                                    className: 'flex-shrink-0 whitespace-nowrap px-3 sm:px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-md hover:shadow-lg disabled:hover:shadow-md flex items-center justify-center h-[42px]'
-                                },
-                                    React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
-                                    React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
-                                )
-                            ) : null
-                        )
-                    ) : React.createElement('div', { className: 'flex-1 flex items-center justify-center bg-gray-50' },
-                        React.createElement('div', { className: 'text-center text-gray-400' },
-                            React.createElement('i', { className: 'fas fa-arrow-left text-6xl mb-4' }),
-                            React.createElement('p', { className: 'text-lg mb-6' }, 'Sélectionnez un contact'),
-                            React.createElement('button', {
-                                onClick: onClose,
-                                className: 'mt-4 px-6 py-3 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-lg hover:from-slate-800 hover:to-gray-800 font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto'
-                            },
-                                React.createElement('i', { className: 'fas fa-times' }),
-                                React.createElement('span', {}, 'Fermer')
-                            )
-                        )
-                    )
-                ) : null
+                // Chat Window (For both Public and Private)
+                (activeTab === 'public' || (activeTab === 'private' && selectedContact)) ? React.createElement(MessagingChatWindow, {
+                    messages: activeTab === 'public' ? publicMessages : privateMessages,
+                    currentUser: currentUser,
+                    loading: loading,
+                    activeTab: activeTab,
+                    selectedContact: selectedContact,
+                    onSendMessage: handleSendMessage,
+                    onSendAudio: handleSendAudio,
+                    onDeleteMessage: handleDeleteMessage,
+                    onBulkDelete: handleBulkDelete,
+                    onOpenPrivateMessage: openPrivateMessage,
+                    onBack: () => setSelectedContact(null)
+                }) : 
+                
+                // Empty State for Private tab when no contact selected (Handled inside ChatWindow now or here)
+                // Actually MessagingChatWindow handles the "no selected contact" case?
+                // Wait, in my implementation of MessagingChatWindow, I added a check:
+                // if (activeTab === 'private' && !selectedContact) return placeholder...
+                // So I can just render it.
+                // BUT, if I render it alongside Sidebar on mobile, it might be tricky.
+                // Let's look at the previous implementation layout.
+                // Desktop: Sidebar | Chat
+                // Mobile: Sidebar (if !selectedContact) OR Chat (if selectedContact)
+                
+                // In my new MessagingModal:
+                // Sidebar component handles: "hidden sm:flex" if selectedContact.
+                // So on mobile, if selectedContact is present, Sidebar is hidden.
+                // ChatWindow should be visible.
+                
+                // So:
+                // 1. Sidebar is rendered always (but hides itself on mobile via CSS if selectedContact is true).
+                // 2. ChatWindow is rendered.
+                
+                // If activeTab == 'private' AND !selectedContact:
+                // Sidebar is visible on mobile.
+                // ChatWindow should render the "Select a contact" placeholder (on Desktop) or nothing (on Mobile)?
+                // In previous code:
+                // If !selectedContact:
+                //   Render Placeholder div (flex-1 flex items-center...)
+                
+                // My MessagingChatWindow implementation handles `if (activeTab === 'private' && !selectedContact)` by returning that placeholder.
+                // So I can just render MessagingChatWindow always.
+                
+                React.createElement(MessagingChatWindow, {
+                    messages: activeTab === 'public' ? publicMessages : privateMessages,
+                    currentUser: currentUser,
+                    loading: loading,
+                    activeTab: activeTab,
+                    selectedContact: selectedContact,
+                    onSendMessage: handleSendMessage,
+                    onSendAudio: handleSendAudio,
+                    onDeleteMessage: handleDeleteMessage,
+                    onBulkDelete: handleBulkDelete,
+                    onOpenPrivateMessage: openPrivateMessage,
+                    onBack: () => setSelectedContact(null)
+                })
             )
         )
     );

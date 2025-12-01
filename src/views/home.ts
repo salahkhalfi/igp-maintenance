@@ -21,6 +21,8 @@ export const homeHTML = `
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/static/js/utils.js"></script>
+    <script src="/static/js/components/MessagingSidebar.js"></script>
+    <script src="/static/js/components/MessagingChatWindow.js"></script>
     <script src="/static/js/components/MessagingModal.js"></script>
     <script src="/static/js/components/NotificationModal.js"></script>
     <script src="/static/js/components/ConfirmModal.js"></script>
