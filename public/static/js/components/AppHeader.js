@@ -129,25 +129,39 @@ const AppHeader = ({
                         }),
                         React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-slate-200' },
                             React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 hidden md:block' }, headerTitle),
-                            React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 md:hidden' }, 'Maintenance IGP'),
+                            React.createElement('h1', { className: 'text-xs font-bold leading-none text-slate-800 md:hidden' }, 'Maint. IGP'),
                             React.createElement('p', { className: 'text-[10px] font-medium text-slate-500 mt-0.5 hidden md:block' }, headerSubtitle)
                         )
                     ),
                     
                     // Mobile Actions (Messaging + Hamburger)
-                    React.createElement('div', { className: 'md:hidden flex items-center gap-3' },
+                    React.createElement('div', { className: 'md:hidden flex items-center gap-1' },
+                        // Active Tickets Badge
+                        React.createElement('div', { className: 'flex items-center justify-center bg-blue-50 rounded-full px-2 py-1 mr-1 border border-blue-100' },
+                            React.createElement('span', { className: 'text-[10px] font-bold text-blue-700' }, activeTicketsCount)
+                        ),
+                        
+                        // Overdue Badge
+                        isAdminOrSup && React.createElement('button', {
+                            onClick: onOpenOverdue,
+                            className: 'relative p-2 text-orange-600 hover:bg-orange-50 rounded-full transition-colors'
+                        }, React.createElement('i', { className: 'fas fa-clock text-sm' })),
+
+                        // Messaging
                         React.createElement('button', {
                             onClick: onOpenMessaging,
                             className: 'relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors'
                         },
                             React.createElement('i', { className: 'fas fa-envelope text-lg' }),
                             (unreadMessagesCount > 0) && React.createElement('span', {
-                                className: 'absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-600 text-white text-[9px] font-bold rounded-full ring-2 ring-white animate-pulse'
+                                className: 'absolute top-0 right-0 flex items-center justify-center w-3.5 h-3.5 bg-red-600 text-white text-[8px] font-bold rounded-full ring-2 ring-white animate-pulse'
                             }, unreadMessagesCount)
                         ),
+
+                        // Menu Toggle
                         React.createElement('button', {
                             onClick: () => setShowMobileMenu(!showMobileMenu),
-                            className: 'p-2 text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors'
+                            className: 'p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors ml-1'
                         }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-lg' }))
                     )
                 ),
