@@ -218,6 +218,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
             onOpenPushDevices: () => { setShowPushDevicesModal(true); setShowMobileMenu(false); },
             onOpenUserManagement: () => { setShowUserManagement(true); setShowMobileMenu(false); },
+            onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
             onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
         }),
