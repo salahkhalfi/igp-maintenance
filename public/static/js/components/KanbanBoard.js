@@ -19,19 +19,28 @@ const KanbanBoard = ({
     const touchDragStart = React.useRef(null);
     const touchDragTicket = React.useRef(null);
 
-    // Définition des statuts
-    const allStatuses = [
-        { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
-        { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
-        { key: 'in_progress', label: 'En Cours', icon: 'wrench', color: 'orange' },
-        { key: 'waiting_parts', label: 'En Attente Pièces', icon: 'clock', color: 'purple' },
-        { key: 'completed', label: 'Terminé', icon: 'check-circle', color: 'green' },
-        { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
-    ];
+    // Gestion des colonnes dynamiques
+    const [columns, setColumns] = React.useState(() => {
+        const saved = localStorage.getItem('kanban_columns');
+        return saved ? JSON.parse(saved) : [
+            { key: 'received', label: 'Requête Reçue', icon: 'inbox', color: 'blue' },
+            { key: 'diagnostic', label: 'Diagnostic', icon: 'search', color: 'yellow' },
+            { key: 'in_progress', label: 'En Cours', icon: 'wrench', color: 'orange' },
+            { key: 'waiting_parts', label: 'En Attente Pièces', icon: 'clock', color: 'purple' },
+            { key: 'completed', label: 'Terminé', icon: 'check-circle', color: 'green' },
+            { key: 'archived', label: 'Archivé', icon: 'archive', color: 'gray' }
+        ];
+    });
+    const [showManageColumns, setShowManageColumns] = React.useState(false);
 
-    const workflowStatuses = allStatuses.filter(s => s.key !== 'archived' && s.key !== 'completed');
-    const completedStatus = allStatuses.find(s => s.key === 'completed');
-    const archivedStatus = allStatuses.find(s => s.key === 'archived');
+    const handleSaveColumns = (newCols) => {
+        setColumns(newCols);
+        localStorage.setItem('kanban_columns', JSON.stringify(newCols));
+    };
+
+    const workflowStatuses = columns.filter(s => s.key !== 'archived' && s.key !== 'completed');
+    const completedStatus = columns.find(s => s.key === 'completed');
+    const archivedStatus = columns.find(s => s.key === 'archived');
 
     // Nettoyage du menu contextuel au clic global
     React.useEffect(() => {
@@ -353,7 +362,26 @@ const KanbanBoard = ({
 
     // --- RENDU PRINCIPAL ---
     return React.createElement('div', {},
-        // MODAL DE DÉPLACEMENT MOBILE
+        // Bouton Gérer Colonnes (Visible pour Admin/Supervisor)
+        (currentUser && (currentUser.role === 'admin' || currentUser.role === 'supervisor')) ? React.createElement('div', { className: 'flex justify-end px-4 mb-2' },
+            React.createElement('button', {
+                onClick: () => setShowManageColumns(true),
+                className: 'text-xs flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors'
+            }, 
+                React.createElement('i', { className: 'fas fa-columns' }),
+                'Gérer les colonnes'
+            )
+        ) : null,
+
+        // MODALS
+        React.createElement(ManageColumnsModal, {
+            show: showManageColumns,
+            onClose: () => setShowManageColumns(false),
+            columns: columns,
+            onSave: handleSaveColumns,
+            currentUser: currentUser
+        }),
+
         React.createElement(MoveTicketBottomSheet, {
             show: showMoveModal,
             onClose: () => { setShowMoveModal(false); setTicketToMove(null); },
@@ -375,7 +403,7 @@ const KanbanBoard = ({
                     onClick: (e) => e.stopPropagation()
                 },
                     React.createElement('div', { className: 'font-bold text-xs text-gray-500 px-3 py-2 border-b' }, 'Déplacer vers:'),
-                    allStatuses.map(status => {
+                    columns.map(status => {
                         const isCurrent = status.key === contextMenu.ticket.status;
                         return React.createElement('div', {
                             key: status.key,

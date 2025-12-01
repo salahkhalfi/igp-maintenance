@@ -40,6 +40,7 @@ export const homeHTML = `
     <script src="/static/js/components/TicketDetailsModal.js"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
     <script src="/static/js/components/MachineManagementModal.js"></script>
+    <script src="/static/js/components/ManageColumnsModal.js"></script>
     <script src="/static/js/components/RoleDropdown.js"></script>
     <script src="/static/js/components/SystemSettingsModal.js"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
