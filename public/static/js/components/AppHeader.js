@@ -181,8 +181,16 @@ const AppHeader = ({
             React.createElement('div', { 
                 className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100' : 'hidden')
             },
+                // Mobile only greeting
+                React.createElement('div', { className: 'md:hidden flex items-center justify-center p-2 mb-2 bg-blue-50 rounded-lg border border-blue-100' },
+                    React.createElement('span', { className: 'text-sm font-medium text-blue-800' }, '👋 Bonjour ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
+                ),
+
                 React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
-                React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
+                React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
+                    React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
+                    (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
+                ),
                 React.createElement('button', {
                     onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
                     className: 'px-3 py-1.5 text-sm rounded-md shadow-sm flex items-center gap-2 border ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
