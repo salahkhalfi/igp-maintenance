@@ -208,17 +208,17 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 setShowArchived(val); 
                 if(!val) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100);
             },
-            onRefresh,
-            onLogout,
+            onRefresh: () => { onRefresh(); setShowMobileMenu(false); },
+            onLogout: () => { onLogout(); setShowMobileMenu(false); },
             onSearch: () => {}, // Search géré en interne dans AppHeader
-            onOpenCreateModal: () => setShowCreateModal(true),
-            onOpenMessaging: () => setShowMessaging(true),
-            onOpenMachineManagement: () => setShowMachineManagement(true),
-            onOpenPerformance: () => setShowPerformanceModal(true),
-            onOpenOverdue: () => setShowOverdueModal(true),
-            onOpenPushDevices: () => setShowPushDevicesModal(true),
-            onOpenAdminRoles: () => setShowAdminRoles(true),
-            onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); }
+            onOpenCreateModal: () => { setShowCreateModal(true); setShowMobileMenu(false); },
+            onOpenMessaging: () => { setShowMessaging(true); setShowMobileMenu(false); },
+            onOpenMachineManagement: () => { setShowMachineManagement(true); setShowMobileMenu(false); },
+            onOpenPerformance: () => { setShowPerformanceModal(true); setShowMobileMenu(false); },
+            onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
+            onOpenPushDevices: () => { setShowPushDevicesModal(true); setShowMobileMenu(false); },
+            onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
+            onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
         }),
 
         // --- KANBAN BOARD OU ADMIN ROLES ---
