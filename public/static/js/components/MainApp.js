@@ -15,6 +15,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showOverdueModal, setShowOverdueModal] = React.useState(false);
     const [showPushDevicesModal, setShowPushDevicesModal] = React.useState(false);
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+    const [showAdminRoles, setShowAdminRoles] = React.useState(false);
 
     // États de recherche
     const [searchQuery, setSearchQuery] = React.useState('');
@@ -411,24 +412,26 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         className: 'px-3 py-1.5 text-sm rounded-md shadow-sm flex items-center gap-2 border ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700')
                     }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }), showArchived ? 'Masquer' : 'Archivés'),
                     (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ? React.createElement('button', { onClick: () => setShowMachineManagement(true), className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines') : null,
-                    (currentUser?.role === 'admin') ? React.createElement('button', { onClick: () => window.location.href = '/admin/roles', className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles') : null,
+                    (currentUser?.role === 'admin') ? React.createElement('button', { onClick: () => setShowAdminRoles(true), className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles') : null,
                     React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-igp-blue text-white text-sm rounded-md shadow-md flex items-center' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),
                     React.createElement('button', { onClick: onLogout, className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md shadow-md flex items-center' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Déconnexion')
                 )
             )
         ),
 
-        // --- KANBAN BOARD (LE COEUR DE L'APP) ---
-        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: kanbanContainerStyle },
-            React.createElement(KanbanBoard, {
-                tickets: tickets,
-                currentUser: currentUser,
-                showArchived: showArchived,
-                onTicketClick: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); },
-                onTicketMove: moveTicketToStatus,
-                onTicketDelete: handleDeleteTicket
-            })
-        ),
+        // --- KANBAN BOARD OU ADMIN ROLES ---
+        showAdminRoles ? 
+            React.createElement(AdminRoles, { onBack: () => setShowAdminRoles(false) }) :
+            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: kanbanContainerStyle },
+                React.createElement(KanbanBoard, {
+                    tickets: tickets,
+                    currentUser: currentUser,
+                    showArchived: showArchived,
+                    onTicketClick: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); },
+                    onTicketMove: moveTicketToStatus,
+                    onTicketDelete: handleDeleteTicket
+                })
+            ),
 
         // --- FOOTER ---
         React.createElement('footer', { className: 'mt-12 py-6 text-center border-t-4 border-igp-blue', style: footerStyle },
