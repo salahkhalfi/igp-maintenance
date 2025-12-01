@@ -33,6 +33,8 @@ export const homeHTML = `
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js"></script>
     <script src="/static/js/components/TicketAttachments.js?v=2.8.3"></script>
+    <script src="/static/js/components/TicketHistory.js?v=2.8.3"></script>
+    <script src="/static/js/components/TicketComments.js?v=2.8.3"></script>
     <script src="/static/js/components/TicketDetailsModal.js"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
     <script src="/static/js/components/MachineManagementModal.js"></script>
