@@ -1,4 +1,4 @@
-const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle }) => {
+const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket }) => {
     // États globaux de l'interface
     const [selectedTicketId, setSelectedTicketId] = React.useState(null);
     const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -196,10 +196,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const moveTicketToStatus = async (ticket, newStatus) => {
         if (ticket.status === newStatus) return;
         try {
-            await axios.patch(API_URL + '/tickets/' + ticket.id, {
-                status: newStatus,
-                comment: 'Changement de statut: ' + ticket.status + ' → ' + newStatus
-            });
+            await moveTicket(ticket.id, newStatus, 'Changement de statut: ' + ticket.status + ' → ' + newStatus);
             onTicketCreated(); 
             
             if (newStatus === 'completed') {
@@ -223,7 +220,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         const confirmed = window.confirm('Supprimer ce ticket définitivement ? Cette action est irréversible.');
         if (!confirmed) return;
         try {
-            await axios.delete(API_URL + '/tickets/' + ticketId);
+            await deleteTicket(ticketId);
             await onRefresh();
             alert('Ticket supprimé avec succès');
         } catch (error) {

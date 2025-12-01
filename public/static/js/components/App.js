@@ -1,9 +1,9 @@
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
     const [currentUserState, setCurrentUserState] = React.useState(currentUser);
-    const [tickets, setTickets] = React.useState([]);
-    const [machines, setMachines] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
+    const { tickets, loading: ticketsLoading, fetchTickets, moveTicket, deleteTicket } = useTickets();
+    const { machines, loading: machinesLoading, fetchMachines } = useMachines();
+    const [loading, setLoading] = React.useState(true); // Global loading for initial load
     const [showCreateModal, setShowCreateModal] = React.useState(false);
     const [contextMenu, setContextMenu] = React.useState(null);
     const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
@@ -45,13 +45,16 @@ const App = () => {
 
     const loadData = async () => {
         try {
-            const [ticketsRes, machinesRes, userRes] = await Promise.all([
-                axios.get(API_URL + '/tickets'),
-                axios.get(API_URL + '/machines'),
+            // Use hooks to fetch data, but keep global loading management here for now
+            // Note: fetchTickets and fetchMachines will update their own internal state
+            // but return the data so we can use it here if needed (though we use the hooks state for props)
+            const [ticketsData, machinesData, userRes] = await Promise.all([
+                fetchTickets(),
+                fetchMachines(),
                 axios.get(API_URL + '/auth/me')
             ]);
-            setTickets(ticketsRes.data.tickets);
-            setMachines(machinesRes.data.machines);
+            
+            // currentUser global assignment (legacy compatibility)
             currentUser = userRes.data.user;
             setCurrentUserState(userRes.data.user);
 
@@ -207,7 +210,10 @@ const App = () => {
             unreadMessagesCount: unreadMessagesCount,
             onRefreshMessages: loadUnreadMessagesCount,
             headerTitle: headerTitle,
-            headerSubtitle: headerSubtitle
+            headerSubtitle: headerSubtitle,
+            // Pass actions down
+            moveTicket: moveTicket,
+            deleteTicket: deleteTicket
         })
     );
 };
