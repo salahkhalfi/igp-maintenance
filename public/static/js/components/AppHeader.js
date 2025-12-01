@@ -32,7 +32,7 @@ const AppHeader = ({
     const [searchTextResults, setSearchTextResults] = React.useState([]);
     const [searchDropdownPosition, setSearchDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
     
-    // Dropdown states (for Desktop)
+    // Dropdown states
     const [showAdminMenu, setShowAdminMenu] = React.useState(false);
     const [showUserMenu, setShowUserMenu] = React.useState(false);
     const adminMenuRef = React.useRef(null);
@@ -49,7 +49,8 @@ const AppHeader = ({
     const isAdminOrSup = ['admin', 'supervisor'].includes(normalizeRole(currentUser?.role));
     
     const searchPlaceholders = isMobile ? [
-        'Ex: "retard"', 'Ex: "urgent"', 'Ex: "note"', 'Machine...'
+        'Ex: "retard" tickets en retard', 'Ex: "urgent" tickets critiques', 
+        'Ex: "commentaire" avec notes', 'Machine, lieu, ticket...'
     ] : [
         'Essayez: "retard" pour voir les tickets en retard', 'Essayez: "urgent" pour voir les priorités critiques',
         'Essayez: "commentaire" pour voir les tickets avec notes', 'Ou cherchez par machine, lieu, ticket...'
@@ -135,7 +136,7 @@ const AppHeader = ({
                         )
                     ),
                     
-                    // Mobile Header Buttons (Visible & Accessible)
+                    // Mobile Header Buttons (Visible)
                     React.createElement('div', { className: 'md:hidden flex items-center gap-2' },
                         // Active Badge
                         React.createElement('div', { className: 'bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-bold border border-blue-100' },
@@ -186,7 +187,7 @@ const AppHeader = ({
                     )
                 ),
 
-                // 3. DESKTOP ACTIONS (Modern Dropdowns)
+                // 3. DESKTOP ACTIONS
                 React.createElement('div', { className: 'hidden md:flex items-center gap-2 lg:gap-3 justify-end' },
                     // Badges
                     React.createElement('div', { className: 'flex items-center gap-2 mr-2' },
@@ -298,13 +299,13 @@ const AppHeader = ({
                 ), document.body
             ),
 
-            // 4. MOBILE MENU DRAWER (Modern Grid + Robust Structure)
+            // 4. MOBILE MENU DRAWER (Simplified & Robust)
             React.createElement('div', { 
-                className: 'md:hidden fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ' + (showMobileMenu ? 'opacity-100' : 'opacity-0 pointer-events-none'),
+                className: 'md:hidden fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ' + (showMobileMenu ? 'opacity-100' : 'opacity-0 pointer-events-none'),
                 onClick: () => setShowMobileMenu(false)
             },
                 React.createElement('div', {
-                    className: 'absolute top-0 right-0 w-80 h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
+                    className: 'absolute top-0 right-0 w-72 h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
                     onClick: (e) => e.stopPropagation()
                 },
                     // Menu Header
@@ -319,12 +320,12 @@ const AppHeader = ({
                         ),
                         React.createElement('button', {
                             onClick: onOpenCreateModal,
-                            className: 'w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-transform'
+                            className: 'w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-transform'
                         }, React.createElement('i', { className: 'fas fa-plus' }), 'Nouvelle Demande')
                     ),
 
-                    // Menu Content (Scrollable & Buttons Grid)
-                    React.createElement('div', { className: 'flex-1 overflow-y-auto py-4' },
+                    // Menu Content (Scrollable)
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto py-2' },
                         React.createElement('div', { className: 'px-4 py-2 text-xs font-bold text-slate-400 uppercase' }, 'Navigation'),
                         React.createElement('div', { className: 'grid grid-cols-2 gap-3 px-4 mb-4' },
                             React.createElement('button', { onClick: () => { onOpenMessaging(); setShowMobileMenu(false); }, className: 'p-3 flex flex-col items-center justify-center bg-slate-50 rounded-xl border border-slate-100 active:scale-95 transition-transform' },
