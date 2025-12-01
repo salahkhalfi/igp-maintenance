@@ -88,6 +88,9 @@ const App = () => {
                 }
             }, 500);
 
+            // Force reload unread messages after user data is confirmed loaded
+            loadUnreadMessagesCount();
+
             // Update stats badges immediately after data refresh
             // This ensures all badges (overdue, technicians, push devices) are instantly updated
             // when tickets/machines/users change, maintaining consistency with active tickets count
@@ -109,12 +112,12 @@ const App = () => {
     const loadUnreadMessagesCount = async () => {
         try {
             // Charger pour tous les utilisateurs connectés - le backend gère la sécurité
-            if (currentUser) {
-                const response = await axios.get(API_URL + "/messages/unread-count");
-                setUnreadMessagesCount(response.data.count || 0);
-            }
+            // Retrait de la vérification currentUser qui causait une race condition au chargement
+            const response = await axios.get(API_URL + "/messages/unread-count");
+            setUnreadMessagesCount(response.data.count || 0);
         } catch (error) {
-            // Erreur silencieuse
+            // Erreur silencieuse mais loguée pour debug
+            console.warn("Erreur chargement messages:", error);
         }
     };
 
