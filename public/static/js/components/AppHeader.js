@@ -136,14 +136,6 @@ const AppHeader = ({
                     
                     // Mobile Actions (Messaging + Hamburger)
                     React.createElement('div', { className: 'md:hidden flex items-center gap-3' },
-                        React.createElement('div', { className: 'flex items-center gap-2' },
-                            React.createElement('span', { className: 'text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md' }, activeTicketsCount + ' actifs'),
-                            isAdminOrSup && React.createElement('button', {
-                                onClick: onOpenOverdue,
-                                className: 'text-[10px] font-bold text-orange-700 bg-orange-50 px-2 py-1 rounded-md border border-orange-100 hover:bg-orange-100 transition-colors flex items-center gap-1',
-                                title: 'Tickets en retard'
-                            }, React.createElement('i', { className: 'fas fa-clock' }), React.createElement('span', { id: 'overdue-tickets-badge-mobile' }, '0'))
-                        ),
                         React.createElement('button', {
                             onClick: onOpenMessaging,
                             className: 'relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors'
@@ -349,16 +341,27 @@ const AppHeader = ({
                 },
                     // Mobile User Info
                     React.createElement('div', { className: 'p-5 bg-gradient-to-br from-blue-600 to-indigo-700 text-white' },
-                        React.createElement('div', { className: 'flex items-center gap-3 mb-3' },
+                        React.createElement('div', { className: 'flex items-center gap-3 mb-4' },
                             React.createElement('div', { className: 'w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg border border-white/30' }, (currentUser?.first_name || 'U')[0].toUpperCase()),
-                            React.createElement('div', {},
+                            React.createElement('div', { className: 'flex-1' },
                                 React.createElement('p', { className: 'font-bold text-lg leading-tight' }, currentUser?.first_name),
                                 React.createElement('p', { className: 'text-xs text-blue-100' }, currentUser?.role)
                             )
                         ),
+                        // Mobile Badges (Inside Menu)
+                        React.createElement('div', { className: 'flex gap-2 mb-4' },
+                            React.createElement('span', { className: 'text-xs font-bold text-blue-800 bg-white/90 px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1' },
+                                React.createElement('i', { className: 'fas fa-ticket-alt text-[10px]' }),
+                                activeTicketsCount + ' actifs'
+                            ),
+                            isAdminOrSup && React.createElement('button', {
+                                onClick: () => { onOpenOverdue(); setShowMobileMenu(false); },
+                                className: 'text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-md shadow-sm flex items-center gap-1 hover:bg-orange-100'
+                            }, React.createElement('i', { className: 'fas fa-clock' }), React.createElement('span', { id: 'overdue-tickets-badge-mobile' }, '0'))
+                        ),
                         React.createElement('button', {
                             onClick: onOpenCreateModal,
-                            className: 'w-full py-2 bg-white text-blue-700 font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-transform'
+                            className: 'w-full py-2 bg-white text-blue-700 font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-transform hover:bg-blue-50'
                         }, React.createElement('i', { className: 'fas fa-plus' }), 'Nouvelle Demande')
                     ),
 
