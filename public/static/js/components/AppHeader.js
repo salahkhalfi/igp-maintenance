@@ -32,11 +32,20 @@ const AppHeader = ({
     const [searchTextResults, setSearchTextResults] = React.useState([]);
     const [searchDropdownPosition, setSearchDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
     
+    // Dropdown states
+    const [showAdminMenu, setShowAdminMenu] = React.useState(false);
+    const [showUserMenu, setShowUserMenu] = React.useState(false);
+    const adminMenuRef = React.useRef(null);
+    const userMenuRef = React.useRef(null);
+    
     const searchTimeoutRef = React.useRef(null);
     const searchInputRef = React.useRef(null);
     const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
 
     const isMobile = window.innerWidth < 768;
+    const isAdmin = currentUser?.role === 'admin';
+    const isAdminOrSup = currentUser?.role === 'admin' || currentUser?.role === 'supervisor';
+    
     const searchPlaceholders = isMobile ? [
         'Ex: "retard" tickets en retard', 'Ex: "urgent" tickets critiques', 
         'Ex: "commentaire" avec notes', 'Machine, lieu, ticket...'
@@ -49,6 +58,20 @@ const AppHeader = ({
         const interval = setInterval(() => setPlaceholderIndex(prev => (prev + 1) % searchPlaceholders.length), 4000);
         return () => clearInterval(interval);
     }, [searchPlaceholders.length]);
+
+    // Close menus on click outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (adminMenuRef.current && !adminMenuRef.current.contains(event.target)) {
+                setShowAdminMenu(false);
+            }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     React.useEffect(() => {
         const updatePos = () => {
@@ -92,95 +115,189 @@ const AppHeader = ({
         }
     };
 
-    return React.createElement('header', { className: 'sticky top-0 z-50 bg-white/75 backdrop-blur-md shadow-sm border-b border-slate-100 transition-all duration-300' },
+    return React.createElement('header', { className: 'sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-100' },
         React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
-            React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-3' },
+            React.createElement('div', { className: 'flex flex-col md:flex-row md:items-center gap-3' },
                 
-                // LOGO & TITLE
-                React.createElement('div', { className: 'flex justify-between items-center w-full md:w-auto md:min-w-0 group' },
-                    React.createElement('div', { className: 'flex items-center' },
+                // 1. LOGO & TITLE & MOBILE MENU TOGGLE
+                React.createElement('div', { className: 'flex justify-between items-center md:w-auto w-full' },
+                    React.createElement('div', { className: 'flex items-center group' },
                         React.createElement('img', {
                             src: '/api/settings/logo?t=' + Date.now(), alt: 'Logo',
-                            className: 'h-8 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
+                            className: 'h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
                             onError: (e) => { e.target.src = '/static/logo-igp.png'; }
                         }),
-                        React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-black/10' },
-                            React.createElement('h1', { className: 'text-sm md:text-base font-bold leading-none text-slate-800', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'hidden md:block text-xs font-medium text-slate-500 mt-0.5' }, headerSubtitle),
-                            React.createElement('div', { className: 'md:hidden flex flex-col mt-0.5' },
-                                React.createElement('p', { className: 'text-[10px] font-medium text-slate-500' }, headerSubtitle),
-                                React.createElement('p', { className: 'text-[10px] font-bold text-blue-700' }, '👋 ' + (currentUser?.first_name || 'User'))
-                            )
+                        React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-slate-200' },
+                            React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 hidden md:block' }, headerTitle),
+                            React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 md:hidden' }, 'Maintenance IGP'),
+                            React.createElement('p', { className: 'text-[10px] font-medium text-slate-500 mt-0.5 hidden md:block' }, headerSubtitle)
                         )
                     ),
-                    // Desktop Greeting
-                    React.createElement('div', { className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50' },
-                        React.createElement('span', { className: 'text-xs font-medium text-blue-700' }, '👋 ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
-                    ),
-                    // Mobile Messaging Icon & Badge (Always visible)
-                    React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2 relative' },
+                    
+                    // Mobile Actions (Messaging + Hamburger)
+                    React.createElement('div', { className: 'md:hidden flex items-center gap-3' },
                         React.createElement('button', {
                             onClick: onOpenMessaging,
-                            className: 'w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100 shadow-sm active:scale-95 transition'
-                        }, React.createElement('i', { className: 'fas fa-envelope' })),
-                        (unreadMessagesCount > 0) && React.createElement('div', {
-                            className: 'absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-600 rounded-full shadow-md animate-pulse pointer-events-none',
-                            onClick: onOpenMessaging // Propagate click
-                        }, React.createElement('span', { className: 'text-white text-[9px] font-bold' }, unreadMessagesCount))
+                            className: 'relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors'
+                        },
+                            React.createElement('i', { className: 'fas fa-envelope text-lg' }),
+                            (unreadMessagesCount > 0) && React.createElement('span', {
+                                className: 'absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-600 text-white text-[9px] font-bold rounded-full ring-2 ring-white animate-pulse'
+                            }, unreadMessagesCount)
+                        ),
+                        React.createElement('button', {
+                            onClick: () => setShowMobileMenu(!showMobileMenu),
+                            className: 'p-2 text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors'
+                        }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-lg' }))
                     )
                 ),
 
-                // SEARCH BAR
-                React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-1.5 md:mt-0 z-50' },
-                    React.createElement('div', { className: 'relative flex items-center w-full' },
+                // 2. SEARCH BAR (Centered)
+                React.createElement('div', { className: 'relative flex-1 order-3 md:order-none w-full md:max-w-xl md:mx-auto' },
+                    React.createElement('div', { className: 'relative flex items-center w-full group' },
                         React.createElement('input', {
                             ref: searchInputRef, type: 'text', placeholder: searchPlaceholders[placeholderIndex],
-                            className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-10 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm bg-white transition-all shadow-inner',
+                            className: 'w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all',
                             value: searchQuery,
                             onChange: handleSearchChange,
                             onFocus: () => setShowSearchResults(searchQuery.length >= 2),
                             onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
                         }),
+                        React.createElement('i', { className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute left-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors' }),
                         searchQuery && React.createElement('button', {
                             onClick: (e) => { e.stopPropagation(); setSearchQuery(''); setShowSearchResults(false); },
-                            className: 'absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
-                        }, React.createElement('i', { className: 'fas fa-times-circle' })),
-                        React.createElement('i', { className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 -translate-y-1/2 text-blue-500' })
+                            className: 'absolute right-3 text-slate-400 hover:text-slate-600',
+                        }, React.createElement('i', { className: 'fas fa-times-circle' }))
                     )
                 ),
 
-                // ACTIONS & BADGES
-                React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-between w-full md:w-auto md:justify-start mt-2 md:mt-0 flex-shrink-0" },
-                    React.createElement('div', { className: "flex items-center gap-2 flex-wrap" },
-                        React.createElement('p', { className: "text-xs font-extrabold text-blue-800 hidden lg:block" }, activeTicketsCount + " actifs"),
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200',
-                            onClick: onOpenOverdue, title: 'Tickets en retard'
-                        }, React.createElement('i', { className: 'fas fa-clock mr-1' }), 'Retard'),
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200',
-                            onClick: onOpenPerformance, title: 'Performance'
-                        }, React.createElement('i', { className: 'fas fa-users-cog mr-1' }), React.createElement('span', { id: 'technicians-count-badge' }, 'Techs')),
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200',
-                            onClick: onOpenPushDevices, title: 'Appareils'
-                        }, React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }), React.createElement('span', { id: 'push-devices-badge' }, 'Apps')),
-                        // Desktop Only Badge
-                        (unreadMessagesCount > 0) && React.createElement('div', {
-                            className: "hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg cursor-pointer bg-red-600 animate-pulse hover:bg-red-700",
-                            onClick: onOpenMessaging, title: unreadMessagesCount + " messages"
-                        }, React.createElement('i', { className: "fas fa-envelope text-white text-xs" }), React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount))
+                // 3. DESKTOP ACTIONS
+                React.createElement('div', { className: 'hidden md:flex items-center gap-2 lg:gap-3 justify-end' },
+                    // Info Badges (Simplified)
+                    React.createElement('div', { className: 'flex items-center gap-2 mr-2' },
+                        React.createElement('span', { className: 'text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md' }, activeTicketsCount + ' actifs'),
+                        isAdminOrSup && React.createElement('button', {
+                            onClick: onOpenOverdue,
+                            className: 'text-xs font-bold text-orange-700 bg-orange-50 px-2 py-1 rounded-md border border-orange-100 hover:bg-orange-100 transition-colors flex items-center gap-1',
+                            title: 'Tickets en retard'
+                        }, React.createElement('i', { className: 'fas fa-clock' }), React.createElement('span', { id: 'overdue-tickets-badge' }, '0'))
                     ),
-                    React.createElement('div', { className: "flex items-center gap-2 flex-1 md:flex-none justify-end" },
+
+                    // Archived Toggle
+                    React.createElement('button', {
+                        onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
+                        className: 'p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors',
+                        title: showArchived ? 'Masquer les archives' : 'Voir les archives'
+                    }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'box-open' : 'archive') + ' text-lg' })),
+
+                    // Messaging
+                    React.createElement('button', {
+                        onClick: onOpenMessaging,
+                        className: 'relative p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors mr-2',
+                        title: 'Messagerie'
+                    },
+                        React.createElement('i', { className: 'fas fa-envelope text-lg' }),
+                        (unreadMessagesCount > 0) && React.createElement('span', {
+                            className: 'absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-600 text-white text-[9px] font-bold rounded-full ring-2 ring-white animate-pulse'
+                        }, unreadMessagesCount)
+                    ),
+
+                    // New Ticket (Primary)
+                    React.createElement('button', {
+                        onClick: onOpenCreateModal,
+                        className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2'
+                    }, React.createElement('i', { className: 'fas fa-plus' }), 'Demande'),
+
+                    // Administration Dropdown
+                    isAdminOrSup && React.createElement('div', { className: 'relative', ref: adminMenuRef },
+                        React.createElement('button', {
+                            onClick: () => setShowAdminMenu(!showAdminMenu),
+                            className: 'px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg transition-colors flex items-center gap-2 font-medium text-sm' + (showAdminMenu ? ' bg-slate-100 text-slate-900' : '')
+                        }, 
+                            React.createElement('i', { className: 'fas fa-cog text-lg' }), 
+                            React.createElement('span', { className: 'hidden lg:inline' }, 'Administration'),
+                            React.createElement('i', { className: 'fas fa-chevron-down text-xs opacity-50' })
+                        ),
                         
+                        showAdminMenu && React.createElement('div', {
+                            className: 'absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in duration-200 origin-top-right'
+                        },
+                            React.createElement('div', { className: 'px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2' }, 
+                                React.createElement('i', { className: 'fas fa-tools' }), 'Gestion'
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenUserManagement(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-100 transition-colors' }, React.createElement('i', { className: 'fas fa-users' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Utilisateurs')
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenMachineManagement(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center group-hover:bg-teal-100 transition-colors' }, React.createElement('i', { className: 'fas fa-cogs' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Machines')
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenManageColumns(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors' }, React.createElement('i', { className: 'fas fa-columns' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Colonnes')
+                            ),
+                            isAdmin && React.createElement('button', { onClick: () => { onOpenAdminRoles(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors' }, React.createElement('i', { className: 'fas fa-shield-alt' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Rôles & Permissions')
+                            ),
+                            
+                            React.createElement('div', { className: 'my-1 border-t border-slate-100' }),
+                            React.createElement('div', { className: 'px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2' }, 
+                                React.createElement('i', { className: 'fas fa-chart-pie' }), 'Système'
+                            ),
+
+                            React.createElement('button', { onClick: () => { onOpenPerformance(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors' }, React.createElement('i', { className: 'fas fa-chart-line' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Performance')
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenPushDevices(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-200 transition-colors' }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Appareils Connectés')
+                            ),
+                            isAdmin && React.createElement('button', { onClick: () => { onOpenSystemSettings(); setShowAdminMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center group-hover:bg-gray-200 transition-colors' }, React.createElement('i', { className: 'fas fa-sliders-h' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Paramètres Généraux')
+                            )
+                        )
+                    ),
+
+                    // User Profile Dropdown
+                    React.createElement('div', { className: 'relative pl-2 border-l border-slate-200', ref: userMenuRef },
                         React.createElement('button', {
-                            onClick: onOpenCreateModal,
-                            className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center justify-center border border-blue-500/30 mx-2'
-                        }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Nouvelle Demande'),
-                        React.createElement('button', {
-                            className: 'md:hidden ml-0 px-3 py-2.5 bg-white text-blue-600 rounded-lg shadow-md border border-blue-100 flex-shrink-0',
-                            onClick: () => setShowMobileMenu(!showMobileMenu)
-                        }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-xl' }))
+                            onClick: () => setShowUserMenu(!showUserMenu),
+                            className: 'flex items-center gap-2 hover:bg-slate-50 rounded-lg p-1 pr-2 transition-colors'
+                        },
+                            React.createElement('div', { className: 'w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-sm' },
+                                (currentUser?.first_name || 'U')[0].toUpperCase()
+                            ),
+                            React.createElement('div', { className: 'flex flex-col items-start' },
+                                React.createElement('span', { className: 'text-xs font-bold text-slate-700 leading-tight' }, currentUser?.first_name || 'Utilisateur'),
+                                React.createElement('span', { className: 'text-[10px] text-slate-500 leading-tight' }, 'En ligne')
+                            ),
+                            React.createElement('i', { className: 'fas fa-chevron-down text-[10px] text-slate-400 ml-1' })
+                        ),
+
+                        showUserMenu && React.createElement('div', {
+                            className: 'absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in duration-200 origin-top-right'
+                        },
+                            React.createElement('div', { className: 'px-4 py-3 border-b border-slate-50 mb-1 bg-slate-50/50' },
+                                React.createElement('p', { className: 'text-sm font-bold text-slate-800' }, currentUser?.full_name),
+                                React.createElement('p', { className: 'text-xs text-slate-500 font-mono' }, currentUser?.email)
+                            ),
+                            React.createElement('div', { className: 'px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2' }, 
+                                React.createElement('i', { className: 'fas fa-user-circle' }), 'Mon Profil'
+                            ),
+                            React.createElement('button', { onClick: () => { onRefresh(); setShowUserMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors' }, React.createElement('i', { className: 'fas fa-sync-alt' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Actualiser les données')
+                            ),
+                            React.createElement('div', { className: 'my-1 border-t border-slate-100' }),
+                            React.createElement('button', { onClick: () => { onLogout(); setShowUserMenu(false); }, className: 'w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 group' }, 
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center group-hover:bg-red-100 transition-colors' }, React.createElement('i', { className: 'fas fa-sign-out-alt' })),
+                                React.createElement('span', { className: 'font-medium' }, 'Déconnexion')
+                            )
+                        )
                     )
                 )
             ),
@@ -188,36 +305,108 @@ const AppHeader = ({
             // SEARCH PORTAL
             showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
                 React.createElement('div', {
-                    className: 'bg-white border-2 border-gray-300 rounded-lg shadow-2xl overflow-y-auto',
-                    style: { position: 'absolute', zIndex: 99999, top: (searchDropdownPosition.top + 2) + 'px', left: searchDropdownPosition.left + 'px', width: searchDropdownPosition.width + 'px', minWidth: '320px', maxHeight: '400px' },
+                    className: 'bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden max-h-[60vh] flex flex-col',
+                    style: { position: 'absolute', zIndex: 99999, top: (searchDropdownPosition.top + 8) + 'px', left: searchDropdownPosition.left + 'px', width: searchDropdownPosition.width + 'px', minWidth: '300px' },
                     onMouseDown: (e) => e.stopPropagation()
                 },
-                    React.createElement('button', { onClick: (e) => { e.stopPropagation(); setShowSearchResults(false); }, className: 'sticky top-0 right-0 float-right bg-white p-2 m-2 rounded-full shadow-md' }, React.createElement('i', { className: 'fas fa-times text-sm' })),
-                    searchKeywordResults.map(r => React.createElement('div', { key: 'kw-'+r.id, className: 'p-3 border-b hover:bg-red-50 cursor-pointer', onClick: () => { onOpenDetails(r.id); setShowSearchResults(false); } }, r.title)),
-                    searchTextResults.map(r => React.createElement('div', { key: 'txt-'+r.id, className: 'p-3 border-b hover:bg-gray-50 cursor-pointer', onClick: () => { onOpenDetails(r.id); setShowSearchResults(false); } }, r.title))
+                    React.createElement('div', { className: 'bg-slate-50 px-3 py-2 border-b border-slate-100 flex justify-between items-center' },
+                        React.createElement('span', { className: 'text-xs font-bold text-slate-500 uppercase' }, 'Résultats'),
+                        React.createElement('button', { onClick: (e) => { e.stopPropagation(); setShowSearchResults(false); }, className: 'text-slate-400 hover:text-slate-600' }, React.createElement('i', { className: 'fas fa-times' }))
+                    ),
+                    React.createElement('div', { className: 'overflow-y-auto' },
+                        searchKeywordResults.map(r => React.createElement('div', { key: 'kw-'+r.id, className: 'p-3 border-b border-slate-50 hover:bg-blue-50 cursor-pointer group', onClick: () => { onOpenDetails(r.id); setShowSearchResults(false); } },
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('span', { className: 'text-xs font-bold bg-white border border-slate-200 px-1.5 rounded text-slate-600' }, '#' + r.id),
+                                React.createElement('span', { className: 'text-sm font-medium text-slate-700 group-hover:text-blue-700' }, r.title)
+                            )
+                        )),
+                        searchTextResults.map(r => React.createElement('div', { key: 'txt-'+r.id, className: 'p-3 border-b border-slate-50 hover:bg-slate-50 cursor-pointer', onClick: () => { onOpenDetails(r.id); setShowSearchResults(false); } },
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('span', { className: 'text-xs font-mono text-slate-400' }, '#' + r.id),
+                                React.createElement('span', { className: 'text-sm text-slate-600' }, r.title)
+                            )
+                        ))
+                    )
                 ), document.body
             ),
 
-            // MOBILE MENU & DESKTOP ACTIONS
+            // 4. MOBILE MENU (Full Overlay)
             React.createElement('div', { 
-                className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100' : 'hidden')
+                className: 'md:hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ' + (showMobileMenu ? 'opacity-100' : 'opacity-0 pointer-events-none'),
+                onClick: () => setShowMobileMenu(false)
             },
-                React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
-                React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
-                    React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
-                    (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
-                ),
-                React.createElement('button', {
-                    onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
-                    className: 'px-3 py-1.5 text-sm rounded-md shadow-sm flex items-center gap-2 border ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
-                }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }), showArchived ? 'Masquer' : 'Archivés'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-users mr-2 text-indigo-600' }), currentUser?.role === 'technician' ? 'Équipe' : 'Utilisateurs'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-columns mr-2 text-gray-500' }), 'Colonnes'),
-                (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
-                (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
-                React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-blue-700 transition' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),
-                React.createElement('button', { onClick: onLogout, className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-gray-700 transition' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Déconnexion')
+                React.createElement('div', {
+                    className: 'absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white shadow-2xl transform transition-transform duration-300 flex flex-col ' + (showMobileMenu ? 'translate-x-0' : 'translate-x-full'),
+                    onClick: (e) => e.stopPropagation()
+                },
+                    // Mobile User Info
+                    React.createElement('div', { className: 'p-5 bg-gradient-to-br from-blue-600 to-indigo-700 text-white' },
+                        React.createElement('div', { className: 'flex items-center gap-3 mb-3' },
+                            React.createElement('div', { className: 'w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg border border-white/30' }, (currentUser?.first_name || 'U')[0].toUpperCase()),
+                            React.createElement('div', {},
+                                React.createElement('p', { className: 'font-bold text-lg leading-tight' }, currentUser?.first_name),
+                                React.createElement('p', { className: 'text-xs text-blue-100' }, currentUser?.role)
+                            )
+                        ),
+                        React.createElement('button', {
+                            onClick: onOpenCreateModal,
+                            className: 'w-full py-2 bg-white text-blue-700 font-bold rounded-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-transform'
+                        }, React.createElement('i', { className: 'fas fa-plus' }), 'Nouvelle Demande')
+                    ),
+
+                    // Mobile Links
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto py-2' },
+                        // Main Actions
+                        React.createElement('div', { className: 'px-4 py-2' },
+                            React.createElement('div', { className: 'text-xs font-bold text-slate-400 uppercase mb-2' }, 'Principal'),
+                            React.createElement('button', { onClick: () => { onOpenMessaging(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center' }, React.createElement('i', { className: 'fas fa-envelope' })),
+                                'Messagerie',
+                                (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full' }, unreadMessagesCount)
+                            ),
+                            React.createElement('button', { onClick: () => { setShowArchived(!showArchived); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center' }, React.createElement('i', { className: 'fas fa-archive' })),
+                                showArchived ? 'Masquer les archives' : 'Voir les archives'
+                            )
+                        ),
+
+                        // Administration Section
+                        isAdminOrSup && React.createElement('div', { className: 'px-4 py-2 border-t border-slate-100' },
+                            React.createElement('div', { className: 'text-xs font-bold text-slate-400 uppercase mb-2' }, 'Administration'),
+                            React.createElement('button', { onClick: () => { onOpenUserManagement(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-users w-5 text-center text-indigo-500' }), 'Utilisateurs'
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenMachineManagement(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-cogs w-5 text-center text-teal-500' }), 'Machines'
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenManageColumns(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-columns w-5 text-center text-blue-500' }), 'Colonnes'
+                            ),
+                            isAdmin && React.createElement('button', { onClick: () => { onOpenAdminRoles(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-shield-alt w-5 text-center text-purple-500' }), 'Rôles'
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenPerformance(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-chart-line w-5 text-center text-green-500' }), 'Performance'
+                            ),
+                            React.createElement('button', { onClick: () => { onOpenPushDevices(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-mobile-alt w-5 text-center text-slate-500' }), 'Appareils'
+                            ),
+                            isAdmin && React.createElement('button', { onClick: () => { onOpenSystemSettings(); setShowMobileMenu(false); }, className: 'w-full p-3 flex items-center gap-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium' },
+                                React.createElement('i', { className: 'fas fa-sliders-h w-5 text-center text-slate-500' }), 'Paramètres'
+                            )
+                        )
+                    ),
+
+                    // Footer Actions
+                    React.createElement('div', { className: 'p-4 border-t border-slate-100 bg-slate-50' },
+                        React.createElement('button', { onClick: () => { onRefresh(); setShowMobileMenu(false); }, className: 'w-full p-2 flex items-center justify-center gap-2 text-blue-600 font-bold mb-2' },
+                            React.createElement('i', { className: 'fas fa-sync-alt' }), 'Actualiser'
+                        ),
+                        React.createElement('button', { onClick: () => { onLogout(); setShowMobileMenu(false); }, className: 'w-full p-2 flex items-center justify-center gap-2 text-red-600 font-bold bg-white border border-red-100 rounded-lg shadow-sm' },
+                            React.createElement('i', { className: 'fas fa-sign-out-alt' }), 'Déconnexion'
+                        )
+                    )
+                )
             )
         )
     );
