@@ -146,12 +146,27 @@ const AppHeader = ({
                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200',
                             onClick: onOpenPushDevices, title: 'Appareils'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }), React.createElement('span', { id: 'push-devices-badge' }, 'Apps')),
+                        // Desktop Only Badge
                         (unreadMessagesCount > 0) && React.createElement('div', {
-                            className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg cursor-pointer bg-red-600 animate-pulse hover:bg-red-700",
+                            className: "hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg cursor-pointer bg-red-600 animate-pulse hover:bg-red-700",
                             onClick: onOpenMessaging, title: unreadMessagesCount + " messages"
                         }, React.createElement('i', { className: "fas fa-envelope text-white text-xs" }), React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount))
                     ),
                     React.createElement('div', { className: "flex items-center gap-2 flex-1 md:flex-none justify-end" },
+                        
+                        // MOBILE: Compact Greeting
+                        React.createElement('div', { className: 'md:hidden flex items-center mr-1' },
+                            React.createElement('span', { className: 'text-xs font-bold text-blue-800' }, '👋 ' + (currentUser?.first_name || 'User'))
+                        ),
+
+                        // MOBILE: Unread Badge (Outside Hamburger)
+                        (unreadMessagesCount > 0) && React.createElement('button', {
+                            onClick: onOpenMessaging,
+                            className: 'md:hidden flex items-center justify-center w-8 h-8 bg-red-600 rounded-full shadow-md animate-pulse mr-1'
+                        }, 
+                            React.createElement('span', { className: 'text-white text-xs font-bold' }, unreadMessagesCount)
+                        ),
+
                         React.createElement('button', {
                             onClick: onOpenCreateModal,
                             className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center justify-center border border-blue-500/30 mx-2'
