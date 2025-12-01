@@ -1,17 +1,28 @@
 // Routes pour la gestion des rôles et permissions (Admin uniquement)
 
 import { Hono } from 'hono';
+import { authMiddleware, adminOnly } from '../middlewares/auth';
 import { clearPermissionsCache } from '../utils/permissions';
 import type { Bindings } from '../types';
 import { LIMITS } from '../utils/validation';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+// 🔒 SÉCURITÉ RENFORCÉE: Appliquer le middleware sur TOUTES les routes de ce fichier
+// Cela garantit que /api/roles (GET /) et /api/roles/* sont protégés
+app.use('*', authMiddleware, adminOnly);
+
 /**
  * GET /api/roles - Liste tous les rôles
  */
 app.get('/', async (c) => {
   try {
+    console.log('[ROLES] GET / - Request received');
+    
+    // Log user info for debugging
+    const user = c.get('user') as any;
+    console.log('[ROLES] GET / - User:', user?.email, user?.role);
+    
     const { results } = await c.env.DB.prepare(`
       SELECT
         r.id,

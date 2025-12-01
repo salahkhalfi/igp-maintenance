@@ -74,7 +74,17 @@ async function loadRoles() {
             headers: { 'Authorization': 'Bearer ' + getToken() }
         });
         
-        if (!response.ok) throw new Error('Erreur chargement rôles');
+        if (!response.ok) {
+            // Tenter de récupérer le message d'erreur du serveur
+            let errorDetails = 'Erreur inconnue';
+            try {
+                const errorJson = await response.json();
+                errorDetails = errorJson.error || JSON.stringify(errorJson);
+            } catch (e) {
+                errorDetails = `Status ${response.status} ${response.statusText}`;
+            }
+            throw new Error(`Erreur chargement rôles: ${errorDetails}`);
+        }
         
         const data = await response.json();
         allRoles = data.roles;
