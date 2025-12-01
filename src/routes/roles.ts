@@ -1,7 +1,16 @@
+// Routes pour la gestion des rôles et permissions (Admin uniquement)
+
+import { Hono } from 'hono';
+import { clearPermissionsCache } from '../utils/permissions';
+import type { Bindings } from '../types';
+import { LIMITS } from '../utils/validation';
+
+const app = new Hono<{ Bindings: Bindings }>();
+
 /**
  * GET /api/roles - Liste tous les rôles
  */
-roles.get('/', async (c) => {
+app.get('/', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT
@@ -28,7 +37,7 @@ roles.get('/', async (c) => {
 /**
  * GET /api/roles/:id - Détails d'un rôle avec ses permissions
  */
-roles.get('/:id', async (c) => {
+app.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
 
@@ -71,7 +80,7 @@ roles.get('/:id', async (c) => {
 /**
  * GET /api/roles/permissions/all - Liste toutes les permissions disponibles
  */
-roles.get('/permissions/all', async (c) => {
+app.get('/permissions/all', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT
@@ -108,7 +117,7 @@ roles.get('/permissions/all', async (c) => {
 /**
  * POST /api/roles - Créer un nouveau rôle personnalisé
  */
-roles.post('/', async (c) => {
+app.post('/', async (c) => {
   try {
     const body = await c.req.json();
     const { slug, name, description, permission_ids } = body;
@@ -224,7 +233,7 @@ roles.post('/', async (c) => {
 /**
  * PUT /api/roles/:id - Modifier un rôle
  */
-roles.put('/:id', async (c) => {
+app.put('/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const body = await c.req.json();
@@ -320,7 +329,7 @@ roles.put('/:id', async (c) => {
 /**
  * DELETE /api/roles/:id - Supprimer un rôle personnalisé
  */
-roles.delete('/:id', async (c) => {
+app.delete('/:id', async (c) => {
   try {
     const id = c.req.param('id');
 
@@ -369,4 +378,4 @@ roles.delete('/:id', async (c) => {
   }
 });
 
-export default roles;
+export default app;

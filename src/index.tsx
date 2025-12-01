@@ -59,7 +59,7 @@ import media from './routes/media';
 import comments from './routes/comments';
 import search from './routes/search';
 import users from './routes/users';
-import roles from './routes/roles';
+import rolesRoute from './routes/roles';
 import settings from './routes/settings';
 import webhooks from './routes/webhooks';
 import push from './routes/push';
@@ -163,7 +163,7 @@ app.route('/api/rbac', rbac);
 
 // API de gestion des rôles (admin uniquement)
 app.use('/api/roles/*', authMiddleware, adminOnly);
-app.route('/api/roles', roles);
+app.route('/api/roles', rolesRoute);
 
 
 app.use('/api/tickets/*', authMiddleware);
