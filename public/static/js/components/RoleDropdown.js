@@ -25,52 +25,59 @@ const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'b
     const currentStyle = styles[variant];
 
     // Définition des rôles organisés par catégorie - mémorisés
-    const roleGroups = React.useMemo(() => [
-        {
-            label: '📊 Direction',
-            roles: [
-                { value: 'director', label: 'Directeur Général' },
-                ...(currentUserRole === 'admin' ? [{ value: 'admin', label: 'Administrateur' }] : [])
-            ]
-        },
-        {
-            label: '⚙️ Management Maintenance',
-            roles: [
-                { value: 'supervisor', label: 'Superviseur' },
-                { value: 'coordinator', label: 'Coordonnateur Maintenance' },
-                { value: 'planner', label: 'Planificateur Maintenance' }
-            ]
-        },
-        {
-            label: '🔧 Technique',
-            roles: [
-                { value: 'senior_technician', label: 'Technicien Senior' },
-                { value: 'technician', label: 'Technicien' }
-            ]
-        },
-        {
-            label: '🏭 Production',
-            roles: [
-                { value: 'team_leader', label: 'Chef Équipe Production' },
-                { value: 'furnace_operator', label: 'Opérateur Four' },
-                { value: 'operator', label: 'Opérateur' }
-            ]
-        },
-        {
-            label: '🛡️ Support',
-            roles: [
-                { value: 'safety_officer', label: 'Agent Santé & Sécurité' },
-                { value: 'quality_inspector', label: 'Inspecteur Qualité' },
-                { value: 'storekeeper', label: 'Magasinier' }
-            ]
-        },
-        {
-            label: '👁️ Transversal',
-            roles: [
-                { value: 'viewer', label: 'Lecture Seule' }
-            ]
+    const roleGroups = React.useMemo(() => {
+        const baseGroups = [
+            {
+                label: '📊 Direction',
+                roles: [
+                    { value: 'director', label: 'Directeur Général' }
+                ]
+            },
+            {
+                label: '⚙️ Management Maintenance',
+                roles: [
+                    { value: 'supervisor', label: 'Superviseur' },
+                    { value: 'coordinator', label: 'Coordonnateur Maintenance' },
+                    { value: 'planner', label: 'Planificateur Maintenance' }
+                ]
+            },
+            {
+                label: '🔧 Technique',
+                roles: [
+                    { value: 'senior_technician', label: 'Technicien Senior' },
+                    { value: 'technician', label: 'Technicien' }
+                ]
+            },
+            {
+                label: '🏭 Production',
+                roles: [
+                    { value: 'team_leader', label: 'Chef Équipe Production' },
+                    { value: 'furnace_operator', label: 'Opérateur Four' },
+                    { value: 'operator', label: 'Opérateur' }
+                ]
+            },
+            {
+                label: '🛡️ Support',
+                roles: [
+                    { value: 'safety_officer', label: 'Agent Santé & Sécurité' },
+                    { value: 'quality_inspector', label: 'Inspecteur Qualité' },
+                    { value: 'storekeeper', label: 'Magasinier' }
+                ]
+            },
+            {
+                label: '👁️ Transversal',
+                roles: [
+                    { value: 'viewer', label: 'Lecture Seule' }
+                ]
+            }
+        ];
+
+        if (currentUserRole === 'admin') {
+            baseGroups[0].roles.push({ value: 'admin', label: 'Administrateur' });
         }
-    ], [currentUserRole]);
+
+        return baseGroups;
+    }, [currentUserRole]);
 
     // Trouver le label du rôle sélectionné - mémorisé
     const getSelectedLabel = React.useCallback(() => {
