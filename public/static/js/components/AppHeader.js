@@ -332,7 +332,7 @@ const AppHeader = ({
 
             // 4. MOBILE MENU (Full Overlay)
             React.createElement('div', { 
-                className: 'md:hidden fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ' + (showMobileMenu ? 'opacity-100' : 'opacity-0 pointer-events-none'),
+                className: 'md:hidden fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm transition-opacity duration-300 ' + (showMobileMenu ? 'opacity-100' : 'opacity-0 pointer-events-none'),
                 onClick: () => setShowMobileMenu(false)
             },
                 React.createElement('div', {
