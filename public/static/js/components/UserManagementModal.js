@@ -3,31 +3,16 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     const [users, setUsers] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [showCreateForm, setShowCreateForm] = React.useState(false);
-    const [newEmail, setNewEmail] = React.useState('');
-    const [newPassword, setNewPassword] = React.useState('');
-    const [newFirstName, setNewFirstName] = React.useState('');
-    const [newLastName, setNewLastName] = React.useState('');
-    const [newRole, setNewRole] = React.useState('operator');
     const [editingUser, setEditingUser] = React.useState(null);
-    const [editEmail, setEditEmail] = React.useState('');
-    const [editFirstName, setEditFirstName] = React.useState('');
-    const [editLastName, setEditLastName] = React.useState('');
-    const [editRole, setEditRole] = React.useState('operator');
+    
     const [notification, setNotification] = React.useState({ show: false, message: '', type: 'info' });
     const [confirmDialog, setConfirmDialog] = React.useState({ show: false, message: '', onConfirm: null });
     const [promptDialog, setPromptDialog] = React.useState({ show: false, message: '', onConfirm: null });
     const [toast, setToast] = React.useState({ show: false, message: '', type: 'success' });
-    const [searchQuery, setSearchQuery] = React.useState('');
-    const [buttonLoading, setButtonLoading] = React.useState(null);
-    const [displayLimit, setDisplayLimit] = React.useState(20); 
-
-    // OPTIMISATION 1: Mémoriser l'offset timezone au montage pour éviter de lire le localStorage 60 fois par render
-    const tzOffset = React.useMemo(() => parseInt(localStorage.getItem('timezone_offset_hours') || '-5'), []);
 
     React.useEffect(() => {
         if (show) {
             loadUsers(); 
-            setDisplayLimit(20);
             // Polling toutes les 2 minutes
             const interval = setInterval(() => {
                 loadUsers(true); 
@@ -41,10 +26,6 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
     React.useEffect(() => {
         if (!show) {
             setEditingUser(null);
-            setEditEmail('');
-            setEditFirstName('');
-            setEditLastName('');
-            setEditRole('operator');
             setShowCreateForm(false);
         }
     }, [show]);
@@ -72,7 +53,6 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             if (!silent) setLoading(true);
             const endpoint = '/users/team';
             const response = await axios.get(API_URL + endpoint);
-            // Ensure users is always an array
             setUsers(Array.isArray(response.data.users) ? response.data.users : []);
         } catch (error) {
             if (!silent) {
@@ -84,107 +64,17 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
         }
     };
 
-    const handleCreateUser = React.useCallback(async (e) => {
-        e.preventDefault();
-        setButtonLoading('create');
-        try {
-            await axios.post(API_URL + '/users', {
-                email: newEmail,
-                password: newPassword,
-                first_name: newFirstName,
-                last_name: newLastName,
-                role: newRole
-            });
-            setToast({ show: true, message: 'Utilisateur créé avec succès!', type: 'success' });
-            setNewEmail('');
-            setNewPassword('');
-            setNewFirstName('');
-            setNewLastName('');
-            setNewRole('operator');
-            setShowCreateForm(false);
-            loadUsers();
-        } catch (error) {
-            setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
-        } finally {
-            setButtonLoading(null);
-        }
-    }, [newEmail, newPassword, newFirstName, newLastName, newRole, loadUsers]);
-
-    const handleInvalidAdminField = (e) => e.target.setCustomValidity("Veuillez remplir ce champ.");
-    
-    const handleInputAdminEmail = (e, setter) => {
-        e.target.setCustomValidity("");
-        setter(e.target.value);
+    const handleCreateSuccess = () => {
+        setToast({ show: true, message: 'Utilisateur créé avec succès!', type: 'success' });
+        setShowCreateForm(false);
+        loadUsers();
     };
 
-    // Fonctions utilitaires mémorisées
-    const ROLE_LABELS = React.useMemo(() => ({
-        'admin': '👑 Administrateur',
-        'director': '📊 Directeur Général',
-        'supervisor': '⭐ Superviseur',
-        'coordinator': '🎯 Coordonnateur Maintenance',
-        'planner': '📅 Planificateur Maintenance',
-        'senior_technician': '🔧 Technicien Senior',
-        'technician': '🔧 Technicien',
-        'team_leader': '👔 Chef Équipe Production',
-        'furnace_operator': '🔥 Opérateur Four',
-        'operator': '👷 Opérateur',
-        'safety_officer': '🛡️ Agent Santé & Sécurité',
-        'quality_inspector': '✓ Inspecteur Qualité',
-        'storekeeper': '📦 Magasinier',
-        'viewer': '👁️ Lecture Seule'
-    }), []);
-
-    const ROLE_BADGE_COLORS = React.useMemo(() => ({
-        'admin': 'bg-red-100 text-red-800',
-        'director': 'bg-red-50 text-red-700',
-        'supervisor': 'bg-yellow-100 text-yellow-800',
-        'coordinator': 'bg-amber-100 text-amber-800',
-        'planner': 'bg-amber-100 text-amber-800',
-        'senior_technician': 'bg-blue-100 text-blue-800',
-        'technician': 'bg-blue-50 text-blue-700',
-        'team_leader': 'bg-emerald-100 text-emerald-800',
-        'furnace_operator': 'bg-green-100 text-green-800',
-        'operator': 'bg-green-50 text-green-700',
-        'safety_officer': 'bg-indigo-100 text-indigo-800',
-        'quality_inspector': 'bg-slate-100 text-slate-700',
-        'storekeeper': 'bg-violet-100 text-violet-800',
-        'viewer': 'bg-gray-100 text-gray-800'
-    }), []);
-
-    const getRoleLabel = React.useCallback((role) => ROLE_LABELS[role] || '👤 ' + role, [ROLE_LABELS]);
-    const getRoleBadgeClass = React.useCallback((role) => ROLE_BADGE_COLORS[role] || 'bg-gray-100 text-gray-800', [ROLE_BADGE_COLORS]);
-
-    // OPTIMISATION 2: Simplification majeure de la logique de statut
-    const getLastLoginStatus = React.useCallback((lastLogin) => {
-        if (!lastLogin) return { color: "text-gray-500", status: "Jamais connecté", time: "", dot: "bg-gray-400" };
-
-        const now = getNowEST();
-        // Optimisation parsing date
-        const loginDate = new Date((lastLogin.includes('T') ? lastLogin : lastLogin.replace(' ', 'T')) + (lastLogin.includes('Z') ? '' : 'Z'));
-        // Utilisation de l'offset mémorisé (tzOffset) au lieu de lire localStorage
-        const adjustedLoginDate = new Date(loginDate.getTime() + (tzOffset * 3600000));
-        
-        const diffMs = now - adjustedLoginDate;
-        const diffMins = Math.floor(diffMs / 60000);
-
-        if (diffMins < 5) return { color: "text-green-600", status: "En ligne", time: "Actif maintenant", dot: "bg-green-500" };
-        if (diffMins < 60) return { color: "text-yellow-600", status: "Actif récemment", time: "Il y a " + diffMins + " min", dot: "bg-yellow-500" };
-        
-        const diffHours = Math.floor(diffMs / 3600000);
-        if (diffHours < 24) return { color: "text-blue-700", status: "Actif aujourd'hui", time: "Il y a " + diffHours + "h", dot: "bg-amber-600" };
-        
-        const diffDays = Math.floor(diffMs / 86400000);
-        if (diffDays === 1) return { color: "text-red-600", status: "Inactif", time: "Hier", dot: "bg-red-500" };
-        
-        return { color: "text-red-600", status: "Inactif", time: "Il y a " + diffDays + " jours", dot: "bg-red-500" };
-    }, [tzOffset]);
-
-    const canSeeLastLogin = React.useCallback((targetUser) => {
-        if (currentUser.role === "admin") return true;
-        if (currentUser.role === "supervisor" && targetUser.role === "technician") return true;
-        return false;
-    }, [currentUser.role]);
+    const handleUpdateSuccess = () => {
+        setToast({ show: true, message: 'Utilisateur modifié avec succès!', type: 'success' });
+        setEditingUser(null);
+        loadUsers();
+    };
 
     const handleDeleteUser = React.useCallback((userId, userName) => {
         setConfirmDialog({
@@ -192,47 +82,16 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
             message: 'Êtes-vous sûr de vouloir supprimer ' + userName + ' ?',
             onConfirm: async () => {
                 setConfirmDialog({ show: false, message: '', onConfirm: null });
-                setButtonLoading('delete-' + userId);
                 try {
                     await axios.delete(API_URL + '/users/' + userId);
                     setToast({ show: true, message: 'Utilisateur supprimé avec succès!', type: 'success' });
                     loadUsers();
                 } catch (error) {
                     setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
-                } finally {
-                    setButtonLoading(null);
                 }
             }
         });
     }, [loadUsers]);
-
-    const handleEditUser = React.useCallback((user) => {
-        setEditingUser(user);
-        setEditEmail(user.email);
-        setEditFirstName(user.first_name || '');
-        setEditLastName(user.last_name || '');
-        setEditRole(user.role);
-    }, []);
-
-    const handleUpdateUser = React.useCallback(async (e) => {
-        e.preventDefault();
-        setButtonLoading('update');
-        try {
-            await axios.put(API_URL + '/users/' + editingUser.id, {
-                email: editEmail,
-                first_name: editFirstName,
-                last_name: editLastName,
-                role: editRole
-            });
-            setToast({ show: true, message: 'Utilisateur modifié avec succès!', type: 'success' });
-            setEditingUser(null);
-            loadUsers();
-        } catch (error) {
-            setNotification({ show: true, message: 'Erreur: ' + (error.response?.data?.error || 'Erreur'), type: 'error' });
-        } finally {
-            setButtonLoading(null);
-        }
-    }, [editingUser, editEmail, editFirstName, editLastName, editRole, loadUsers]);
 
     const handleResetPassword = React.useCallback((userId, userName) => {
         setPromptDialog({
@@ -256,22 +115,6 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
         });
     }, []);
 
-    // OPTIMISATION 3: Calculer la liste filtrée hors du rendu JSX (useMemo)
-    const filteredUsers = React.useMemo(() => {
-        if (!users) return [];
-        if (!searchQuery) return users;
-        const lowerQuery = searchQuery.toLowerCase();
-        return users.filter(user => 
-            (user.full_name || '').toLowerCase().includes(lowerQuery) ||
-            (user.email || '').toLowerCase().includes(lowerQuery)
-        );
-    }, [users, searchQuery]);
-
-    // OPTIMISATION 4: Calculer la liste affichée (paginée) hors du rendu JSX
-    const displayedUsers = React.useMemo(() => {
-        return filteredUsers.slice(0, displayLimit);
-    }, [filteredUsers, displayLimit]);
-
     if (!show || !currentUser) return null;
 
     return React.createElement('div', {
@@ -279,8 +122,6 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
         onClick: onClose
     },
         React.createElement('div', {
-            // FIX PERFORMANCE CHROME: Retrait de backdrop-blur-xl sur le conteneur principal. Utilisation de bg-white opaque.
-            // FIX CRASH: Suppression de shadow-2xl et border-white/20 pour réduire charge GPU. Ajout translate-z-0.
             className: 'bg-white rounded-xl shadow-lg w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
             onClick: (e) => e.stopPropagation()
         },
@@ -299,306 +140,30 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                 )
             ),
             React.createElement('div', { className: 'flex-1 overflow-y-auto p-3 sm:p-6' },
+                showCreateForm ? React.createElement(CreateUserForm, {
+                    onCancel: () => setShowCreateForm(false),
+                    onSuccess: handleCreateSuccess,
+                    currentUserRole: currentUser.role
+                }) : null,
 
-            React.createElement('div', { className: 'mb-4 flex flex-col sm:flex-row gap-3' },
-                (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement('button', {
-                    onClick: () => setShowCreateForm(true),
-                    className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-blue-300/50'
-                }, "Créer un utilisateur") : null,
-                React.createElement('div', { className: 'flex-1 relative' },
-                    React.createElement('input', {
-                        type: 'text',
-                        autoComplete: 'off',
-                        placeholder: 'Rechercher par nom ou email...',
-                        value: searchQuery,
-                        onChange: (e) => setSearchQuery(e.target.value),
-                        className: 'w-full px-4 py-2 pl-10 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all',
-                        onKeyDown: (e) => { if (e.key === 'Escape') setSearchQuery(''); }
-                    }),
-                    React.createElement('i', {
-                        className: 'fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
-                    }),
-                    searchQuery && React.createElement('button', {
-                        onClick: () => setSearchQuery(''),
-                        className: 'absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
-                    }, React.createElement('i', { className: 'fas fa-times' }))
-                )
-            ),
+                editingUser ? React.createElement(EditUserForm, {
+                    user: editingUser,
+                    onCancel: () => setEditingUser(null),
+                    onSuccess: handleUpdateSuccess,
+                    currentUserRole: currentUser.role,
+                    currentUserId: currentUser.id
+                }) : null,
 
-            showCreateForm ? React.createElement('div', {
-                className: 'mb-6 p-6 bg-gradient-to-br from-blue-50 to-gray-50 rounded-xl shadow-lg border-2 border-blue-200/50 scroll-mt-4',
-                ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-            },
-                React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Nouvel utilisateur'),
-                React.createElement('form', { onSubmit: handleCreateUser },
-                    React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4' },
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'newEmail' }, 'Email'),
-                            React.createElement('input', {
-                                type: 'email',
-                                id: 'newEmail',
-                                name: 'new_user_email',
-                                autoComplete: 'off',
-                                'data-lpignore': 'true',
-                                value: newEmail,
-                                onChange: (e) => handleInputAdminEmail(e, setNewEmail),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
-                                required: true,
-                                autoFocus: true
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'newFirstName' }, 'Prénom'),
-                            React.createElement('input', {
-                                type: 'text',
-                                id: 'newFirstName',
-                                name: 'newFirstName',
-                                autoComplete: 'off',
-                                value: newFirstName,
-                                onChange: (e) => handleInputAdminEmail(e, setNewFirstName),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
-                                placeholder: 'Jean',
-                                required: true
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'newLastName' }, 'Nom (optionnel)'),
-                            React.createElement('input', {
-                                type: 'text',
-                                id: 'newLastName',
-                                name: 'newLastName',
-                                autoComplete: 'off',
-                                value: newLastName,
-                                onChange: (e) => handleInputAdminEmail(e, setNewLastName),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
-                                placeholder: 'Dupont'
-                            })
-                        )
-                    ),
-                    React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4' },
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'newPassword' }, 'Mot de passe'),
-                            React.createElement('input', {
-                                type: 'password',
-                                id: 'newPassword',
-                                name: 'new_user_password',
-                                autoComplete: 'new-password',
-                                'data-lpignore': 'true',
-                                value: newPassword,
-                                onChange: (e) => handleInputAdminEmail(e, setNewPassword),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
-                                required: true,
-                                minLength: 6
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2' }, "Rôle"),
-                            React.createElement(RoleDropdown, {
-                                value: newRole,
-                                onChange: (e) => setNewRole(e.target.value),
-                                disabled: false,
-                                currentUserRole: currentUser.role
-                            })
-                        )
-                    ),
-                    React.createElement('div', { className: 'flex gap-4' },
-                        React.createElement('button', {
-                            type: 'button',
-                            onClick: () => setShowCreateForm(false),
-                            className: 'px-6 py-3 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-xl font-bold transition-all shadow-md border-t border-white/60'
-                        }, 'Annuler'),
-                        React.createElement('button', {
-                            type: 'submit',
-                            disabled: buttonLoading === 'create',
-                            className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-md border-t border-blue-300/50 flex items-center gap-2 justify-center'
-                        },
-                            buttonLoading === 'create' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
-                            "Créer"
-                        )
-                    )
-                )
-            ) : null,
-
-            editingUser ? React.createElement('div', {
-                className: 'mb-6 p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg border-2 border-green-200/50 scroll-mt-4',
-                ref: (el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-            },
-                React.createElement('h3', { className: 'text-xl font-bold mb-4' }, 'Modifier: ' + editingUser.full_name),
-                React.createElement('form', { onSubmit: handleUpdateUser },
-                    React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4' },
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'editEmail' }, 'Email'),
-                            React.createElement('input', {
-                                type: 'email',
-                                id: 'editEmail',
-                                name: 'editEmail',
-                                autoComplete: 'off',
-                                value: editEmail,
-                                onChange: (e) => handleInputAdminEmail(e, setEditEmail),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
-                                required: true,
-                                autoFocus: true
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'editFirstName' }, 'Prénom'),
-                            React.createElement('input', {
-                                type: 'text',
-                                id: 'editFirstName',
-                                name: 'editFirstName',
-                                autoComplete: 'off',
-                                value: editFirstName,
-                                onChange: (e) => handleInputAdminEmail(e, setEditFirstName),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
-                                placeholder: 'Jean',
-                                required: true
-                            })
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'editLastName' }, 'Nom (optionnel)'),
-                            React.createElement('input', {
-                                type: 'text',
-                                id: 'editLastName',
-                                name: 'editLastName',
-                                autoComplete: 'off',
-                                value: editLastName,
-                                onChange: (e) => handleInputAdminEmail(e, setEditLastName),
-                                onInvalid: handleInvalidAdminField,
-                                className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all',
-                                placeholder: 'Dupont'
-                            })
-                        )
-                    ),
-                    React.createElement('div', { className: 'mb-4' },
-                        React.createElement('label', { className: 'block font-bold mb-2' }, "Rôle"),
-                        React.createElement(RoleDropdown, {
-                            value: editRole,
-                            onChange: (e) => setEditRole(e.target.value),
-                            disabled: editingUser?.id === currentUser.id || (currentUser.role === 'supervisor' && editingUser?.role === 'admin'),
-                            currentUserRole: currentUser.role,
-                            variant: 'green'
-                        })
-                    ),
-                    React.createElement('div', { className: 'flex gap-4' },
-                        React.createElement('button', {
-                            type: 'button',
-                            onClick: () => setEditingUser(null),
-                            className: 'px-6 py-3 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-xl font-bold transition-all shadow-md border-t border-white/60'
-                        }, 'Annuler'),
-                        React.createElement('button', {
-                            type: 'submit',
-                            disabled: buttonLoading === 'update',
-                            className: 'px-6 py-3 bg-gradient-to-br from-green-400 via-green-500 to-green-600 text-white rounded-xl font-bold transition-all shadow-md border-t border-green-300/50 flex items-center gap-2 justify-center'
-                        },
-                            buttonLoading === 'update' && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
-                            'Enregistrer'
-                        )
-                    )
-                )
-            ) : null,
-
-            loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
-            React.createElement('div', { className: 'space-y-4' },
-                React.createElement('p', { className: 'text-lg mb-4' },
-                    (searchQuery ?
-                        filteredUsers.length + ' résultat(s) sur ' + (users || []).length :
-                        (users || []).length + ' utilisateur(s)'
-                    )
-                ),
-                displayedUsers.map(user => {
-                    // OPTIMISATION 5: Calcul des status une seule fois par user
-                    const loginStatus = getLastLoginStatus(user.last_login);
-                    const showLogin = canSeeLastLogin(user);
-                    
-                    return React.createElement('div', {
-                        key: user.id,
-                        className: 'bg-white rounded-lg p-4 border border-gray-200 hover:bg-gray-50 transition-colors'
-                    },
-                        React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
-                            React.createElement('div', { className: 'flex-1' },
-                                React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
-                                    React.createElement('h4', { className: 'font-bold text-lg' }, user.full_name),
-                                    React.createElement('span', {
-                                        className: 'px-3 py-1 rounded-full text-xs font-semibold ' + getRoleBadgeClass(user.role)
-                                    }, getRoleLabel(user.role))
-                                ),
-                                React.createElement('p', { className: 'text-sm text-gray-600' },
-                                    React.createElement('i', { className: 'fas fa-envelope mr-2' }),
-                                    user.email
-                                ),
-                                React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
-                                    React.createElement('i', { className: 'far fa-clock mr-2' }),
-                                    'Créé le: ' + formatDateEST(user.created_at, false)
-                                ),
-                                showLogin ? React.createElement('div', { className: "flex flex-col gap-1 mt-2 pt-2 border-t border-gray-200" },
-                                    React.createElement('div', { className: "flex items-center gap-1.5" },
-                                        React.createElement('div', {
-                                            className: "w-2 h-2 rounded-full " + loginStatus.dot
-                                        }),
-                                        React.createElement('span', {
-                                            className: "text-xs font-bold " + loginStatus.color
-                                        }, loginStatus.status),
-                                        loginStatus.time ? React.createElement('span', {
-                                            className: "text-xs " + loginStatus.color
-                                        }, " - " + loginStatus.time) : null
-                                    ),
-                                    user.last_login ? React.createElement('span', { className: "text-xs text-gray-400 ml-3.5" },
-                                        "Dernière connexion: " + formatDateEST(user.last_login, true)
-                                    ) : null
-                                ) : null
-                            ),
-                            React.createElement('div', { className: "flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0" },
-                                user.id !== currentUser.id && onOpenMessage ? React.createElement('button', {
-                                    onClick: () => onOpenMessage({ 
-                                        id: user.id, 
-                                        full_name: user.full_name, 
-                                        role: user.role,
-                                        first_name: user.first_name,
-                                        last_name: user.last_name,
-                                        email: user.email 
-                                    }),
-                                    className: "w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-md border-t border-blue-300/50"
-                                },
-                                    React.createElement('i', { className: "fas fa-comment mr-1" }),
-                                    "Message"
-                                ) : null,
-                                ((user.id === currentUser.id) || (user.id !== currentUser.id && !(currentUser.role === 'supervisor' && user.role === 'admin') && currentUser.role !== 'technician')) ? React.createElement(React.Fragment, null,
-                                    React.createElement('button', {
-                                        onClick: () => handleEditUser(user),
-                                    className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 text-white rounded-lg font-bold text-sm transition-all shadow-md border-t border-blue-300/50'
-                                },
-                                    React.createElement('i', { className: 'fas fa-edit mr-1' }),
-                                    'Modifier'
-                                ),
-                                React.createElement('button', {
-                                    onClick: () => handleResetPassword(user.id, user.full_name),
-                                    className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 text-white rounded-lg font-bold text-sm transition-all shadow-md border-t border-yellow-300/50'
-                                },
-                                    React.createElement('i', { className: 'fas fa-key mr-1' }),
-                                    'MdP'
-                                ),
-                                user.id !== currentUser.id ? React.createElement('button', {
-                                    onClick: () => handleDeleteUser(user.id, user.full_name),
-                                    className: 'w-full sm:w-auto px-4 py-2.5 bg-gradient-to-br from-red-400 via-red-500 to-red-600 text-white rounded-lg font-bold text-sm transition-all shadow-md border-t border-red-300/50'
-                                },
-                                    React.createElement('i', { className: 'fas fa-trash mr-1' }),
-                                    'Supprimer'
-                                ) : null
-                            ) : null)
-                        )
-                    );
-                }),
-                
-                filteredUsers.length > displayLimit ? React.createElement('button', {
-                    onClick: () => setDisplayLimit(prev => prev + 20),
-                    className: 'w-full py-3 mt-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-colors border-2 border-gray-200 dashed'
-                }, 'Charger plus (' + (filteredUsers.length - displayLimit) + ' restants)') : null
+                loading ? React.createElement('p', { className: 'text-center py-8' }, 'Chargement...') :
+                React.createElement(UserList, {
+                    users: users,
+                    currentUser: currentUser,
+                    onEdit: setEditingUser,
+                    onDelete: handleDeleteUser,
+                    onResetPassword: handleResetPassword,
+                    onOpenMessage: onOpenMessage,
+                    onCreate: () => setShowCreateForm(true)
+                })
             ),
             React.createElement(NotificationModal, {
                 show: notification.show,
@@ -624,7 +189,6 @@ const UserManagementModal = ({ show, onClose, currentUser, onOpenMessage }) => {
                 type: toast.type,
                 onClose: () => setToast({ show: false, message: '', type: 'success' })
             })
-            )
         )
     );
 };
