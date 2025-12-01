@@ -1,3 +1,12 @@
+// Routes pour la gestion des rôles et permissions (Admin uniquement)
+
+import { Hono } from 'hono';
+import { clearPermissionsCache } from '../utils/permissions';
+import type { Bindings } from '../types';
+import { LIMITS } from '../utils/validation';
+
+const roles = new Hono<{ Bindings: Bindings }>();
+
 /**
  * GET /api/roles - Liste tous les rôles
  */
@@ -6,11 +15,12 @@ roles.get('/', async (c) => {
     const { results } = await c.env.DB.prepare(`
       SELECT
         r.id,
-        r.slug,
         r.name,
+        r.display_name,
         r.description,
         r.is_system,
         r.created_at,
+        r.updated_at,
         COUNT(rp.permission_id) as permissions_count
       FROM roles r
       LEFT JOIN role_permissions rp ON r.id = rp.role_id
@@ -111,17 +121,26 @@ roles.get('/permissions/all', async (c) => {
 roles.post('/', async (c) => {
   try {
     const body = await c.req.json();
-    const { slug, name, description, permission_ids } = body;
+    const { name, display_name, description, permission_ids } = body;
 
     // Validation des champs requis
-    if (!slug || !name) {
-      return c.json({ error: 'Slug (identifiant) et Nom requis' }, 400);
+    if (!name || !display_name) {
+      return c.json({ error: 'Nom et nom d affichage requis' }, 400);
     }
 
-    // Validation du slug (identifiant technique)
-    const trimmedSlug = slug.trim();
+    // Validation du nom (identifiant technique)
+    const trimmedName = name.trim();
 
     // 🔒 BLOCAGE CRÉATION RÔLES: Seuls les rôles système prédéfinis sont autorisés
+    // L'application supporte 14 rôles système spécialement conçus pour l'industrie.
+    // Ces rôles ont des permissions prédéfinies et testées.
+    //
+    // Raison du blocage:
+    // - Le frontend contient 63 vérifications hardcodées sur les rôles
+    // - Créer des rôles personnalisés causerait des dysfonctionnements UI
+    // - Les 14 rôles système couvrent tous les besoins typiques industrie
+    //
+    // Voir: ROLES_INDUSTRIE_RECOMMANDES.md pour la liste complète
     const SYSTEM_ROLES = [
       'admin', 'supervisor', 'technician', 'operator',           // Rôles originaux
       'director', 'coordinator', 'planner', 'senior_technician',  // Management & Technique
@@ -130,33 +149,34 @@ roles.post('/', async (c) => {
       'viewer'                                                     // Lecture seule
     ];
 
-    if (!SYSTEM_ROLES.includes(trimmedSlug)) {
+    if (!SYSTEM_ROLES.includes(trimmedName)) {
       return c.json({
         error: 'Seuls les rôles système prédéfinis peuvent être créés',
         reason: 'Application avec rôles système spécialisés pour l\'industrie',
-        details: 'Les 14 rôles système couvrent tous les besoins typiques.',
+        details: 'Les 14 rôles système couvrent tous les besoins typiques. Les rôles personnalisés ne sont pas supportés pour éviter des dysfonctionnements UI.',
+        documentation: 'Voir ROLES_INDUSTRIE_RECOMMANDES.md pour détails des rôles',
         system_roles: SYSTEM_ROLES,
         status: 'system_roles_only'
       }, 403);
     }
-    if (trimmedSlug.length < LIMITS.NAME_MIN) {
-      return c.json({ error: `Slug trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
-    }
-    if (slug.length > LIMITS.NAME_MAX) {
-      return c.json({ error: `Slug trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
-    }
-    // Le slug doit être un identifiant valide (lettres, chiffres, underscore, tiret)
-    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedSlug)) {
-      return c.json({ error: 'Slug invalide. Utilisez uniquement des lettres, chiffres, tirets et underscores' }, 400);
-    }
-
-    // Validation du nom d'affichage
-    const trimmedName = name.trim();
     if (trimmedName.length < LIMITS.NAME_MIN) {
       return c.json({ error: `Nom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
     }
     if (name.length > LIMITS.NAME_MAX) {
       return c.json({ error: `Nom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+    }
+    // Le nom doit être un identifiant valide (lettres, chiffres, underscore, tiret)
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
+      return c.json({ error: 'Nom invalide. Utilisez uniquement des lettres, chiffres, tirets et underscores' }, 400);
+    }
+
+    // Validation du nom d'affichage
+    const trimmedDisplayName = display_name.trim();
+    if (trimmedDisplayName.length < LIMITS.NAME_MIN) {
+      return c.json({ error: `Nom d'affichage trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    }
+    if (display_name.length > LIMITS.NAME_MAX) {
+      return c.json({ error: `Nom d'affichage trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
     }
 
     // Validation de la description si fournie
@@ -172,20 +192,20 @@ roles.post('/', async (c) => {
       return c.json({ error: 'IDs de permissions invalides' }, 400);
     }
 
-    // Vérifier que le slug n'existe pas déjà
+    // Vérifier que le nom n'existe pas déjà
     const existing = await c.env.DB.prepare(
-      'SELECT id FROM roles WHERE slug = ?'
-    ).bind(trimmedSlug).first();
+      'SELECT id FROM roles WHERE name = ?'
+    ).bind(trimmedName).first();
 
     if (existing) {
-      return c.json({ error: 'Ce slug de rôle existe déjà' }, 409);
+      return c.json({ error: 'Ce nom de rôle existe déjà' }, 409);
     }
 
     // Créer le rôle avec données nettoyées
     const result = await c.env.DB.prepare(`
-      INSERT INTO roles (slug, name, description, is_system)
+      INSERT INTO roles (name, display_name, description, is_system)
       VALUES (?, ?, ?, 0)
-    `).bind(trimmedSlug, trimmedName, description ? description.trim() : null).run();
+    `).bind(trimmedName, trimmedDisplayName, description ? description.trim() : null).run();
 
     if (!result.success) {
       return c.json({ error: 'Erreur lors de la création du rôle' }, 500);
@@ -228,16 +248,16 @@ roles.put('/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const body = await c.req.json();
-    const { name, description, permission_ids } = body;
+    const { display_name, description, permission_ids } = body;
 
     // Validation du nom d'affichage si fourni
-    if (name) {
-      const trimmedName = name.trim();
-      if (trimmedName.length < LIMITS.NAME_MIN) {
-        return c.json({ error: `Nom trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
+    if (display_name) {
+      const trimmedDisplayName = display_name.trim();
+      if (trimmedDisplayName.length < LIMITS.NAME_MIN) {
+        return c.json({ error: `Nom d'affichage trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
       }
-      if (name.length > LIMITS.NAME_MAX) {
-        return c.json({ error: `Nom trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
+      if (display_name.length > LIMITS.NAME_MAX) {
+        return c.json({ error: `Nom d'affichage trop long (max ${LIMITS.NAME_MAX} caractères)` }, 400);
       }
     }
 
@@ -264,23 +284,23 @@ roles.put('/:id', async (c) => {
     }
 
     // Empêcher la modification des rôles système (nom et description seulement)
-    const trimmedName = name ? name.trim() : role.name;
+    const trimmedDisplayName = display_name ? display_name.trim() : role.display_name;
     const trimmedDescription = description ? description.trim() : role.description;
 
     if (role.is_system === 1) {
-      // Seul name et description peuvent être modifiés pour les rôles système
+      // Seul display_name et description peuvent être modifiés pour les rôles système
       await c.env.DB.prepare(`
         UPDATE roles
-        SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+        SET display_name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).bind(trimmedName, trimmedDescription, id).run();
+      `).bind(trimmedDisplayName, trimmedDescription, id).run();
     } else {
       // Rôle personnalisé: tout peut être modifié
       await c.env.DB.prepare(`
         UPDATE roles
-        SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+        SET display_name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).bind(trimmedName, trimmedDescription, id).run();
+      `).bind(trimmedDisplayName, trimmedDescription, id).run();
     }
 
     // Mettre à jour les permissions
@@ -342,8 +362,8 @@ roles.delete('/:id', async (c) => {
 
     // Vérifier si des utilisateurs utilisent ce rôle
     const { results } = await c.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM users WHERE role_id = ?'
-    ).bind(id).all() as any;
+      'SELECT COUNT(*) as count FROM users WHERE role = ?'
+    ).bind(role.name).all() as any;
 
     if (results[0] && results[0].count > 0) {
       return c.json({

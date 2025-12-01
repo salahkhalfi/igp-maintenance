@@ -24,69 +24,124 @@ const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'b
 
     const currentStyle = styles[variant];
 
-    // Définition des rôles organisés par catégorie - mémorisés
-    const roleGroups = React.useMemo(() => {
-        const baseGroups = [
-            {
-                label: '📊 Direction',
-                roles: [
-                    { value: 'director', label: 'Directeur Général' }
-                ]
-            },
-            {
-                label: '⚙️ Management Maintenance',
-                roles: [
-                    { value: 'supervisor', label: 'Superviseur' },
-                    { value: 'coordinator', label: 'Coordonnateur Maintenance' },
-                    { value: 'planner', label: 'Planificateur Maintenance' }
-                ]
-            },
-            {
-                label: '🔧 Technique',
-                roles: [
-                    { value: 'senior_technician', label: 'Technicien Senior' },
-                    { value: 'technician', label: 'Technicien' }
-                ]
-            },
-            {
-                label: '🏭 Production',
-                roles: [
-                    { value: 'team_leader', label: 'Chef Équipe Production' },
-                    { value: 'furnace_operator', label: 'Opérateur Four' },
-                    { value: 'operator', label: 'Opérateur' }
-                ]
-            },
-            {
-                label: '🛡️ Support',
-                roles: [
-                    { value: 'safety_officer', label: 'Agent Santé & Sécurité' },
-                    { value: 'quality_inspector', label: 'Inspecteur Qualité' },
-                    { value: 'storekeeper', label: 'Magasinier' }
-                ]
-            },
-            {
-                label: '👁️ Transversal',
-                roles: [
-                    { value: 'viewer', label: 'Lecture Seule' }
-                ]
+    // State pour les rôles dynamiques
+    const [roleGroups, setRoleGroups] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    // Mapping des catégories (hardcodé pour l'instant pour matcher l'UI)
+    const CATEGORY_MAPPING = React.useMemo(() => ({
+        'director': '📊 Direction',
+        'admin': '📊 Direction',
+        'supervisor': '⚙️ Management Maintenance',
+        'coordinator': '⚙️ Management Maintenance',
+        'planner': '⚙️ Management Maintenance',
+        'senior_technician': '🔧 Technique',
+        'technician': '🔧 Technique',
+        'team_leader': '🏭 Production',
+        'furnace_operator': '🏭 Production',
+        'operator': '🏭 Production',
+        'safety_officer': '🛡️ Support',
+        'quality_inspector': '🛡️ Support',
+        'storekeeper': '🛡️ Support',
+        'viewer': '👁️ Transversal'
+    }), []);
+
+    // Charger les rôles depuis l'API
+    React.useEffect(() => {
+        const fetchRoles = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/roles', {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch roles');
+                }
+
+                const data = await response.json();
+                const apiRoles = data.roles || [];
+
+                // Grouper les rôles
+                const groups = {
+                    '📊 Direction': [],
+                    '⚙️ Management Maintenance': [],
+                    '🔧 Technique': [],
+                    '🏭 Production': [],
+                    '🛡️ Support': [],
+                    '👁️ Transversal': [],
+                    'Autres': []
+                };
+
+                apiRoles.forEach(role => {
+                    if (role.slug === 'admin' && currentUserRole !== 'admin') {
+                        return;
+                    }
+
+                    const category = CATEGORY_MAPPING[role.slug] || 'Autres';
+                    if (!groups[category]) groups[category] = [];
+                    
+                    groups[category].push({
+                        value: role.slug,
+                        label: role.name || role.slug
+                    });
+                });
+
+                const formattedGroups = Object.entries(groups)
+                    .filter(([_, roles]) => roles.length > 0)
+                    .map(([label, roles]) => ({ label, roles }));
+
+                const ORDER = [
+                    '📊 Direction',
+                    '⚙️ Management Maintenance',
+                    '🔧 Technique',
+                    '🏭 Production',
+                    '🛡️ Support',
+                    '👁️ Transversal',
+                    'Autres'
+                ];
+                
+                formattedGroups.sort((a, b) => {
+                    const indexA = ORDER.indexOf(a.label);
+                    const indexB = ORDER.indexOf(b.label);
+                    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+                });
+
+                setRoleGroups(formattedGroups);
+            } catch (error) {
+                console.error('Error loading roles:', error);
+                // Fallback minimal en cas d'erreur
+                setRoleGroups([
+                    {
+                        label: '📊 Direction',
+                        roles: [
+                            { value: 'director', label: 'Directeur Général' }
+                        ]
+                    },
+                    {
+                        label: '🔧 Technique',
+                        roles: [
+                            { value: 'technician', label: 'Technicien' }
+                        ]
+                    }
+                ]);
+            } finally {
+                setLoading(false);
             }
-        ];
+        };
 
-        if (currentUserRole === 'admin') {
-            baseGroups[0].roles.push({ value: 'admin', label: 'Administrateur' });
-        }
-
-        return baseGroups;
-    }, [currentUserRole]);
+        fetchRoles();
+    }, [currentUserRole, CATEGORY_MAPPING]);
 
     // Trouver le label du rôle sélectionné - mémorisé
     const getSelectedLabel = React.useCallback(() => {
+        if (loading) return 'Chargement...';
         for (const group of roleGroups) {
             const role = group.roles.find(r => r.value === value);
             if (role) return role.label;
         }
-        return 'Sélectionner un rôle';
-    }, [roleGroups, value]);
+        return value || 'Sélectionner un rôle';
+    }, [roleGroups, value, loading]);
 
     // Calculer la position du dropdown quand il s'ouvre ou lors du resize/scroll
     const updatePosition = React.useCallback(() => {
