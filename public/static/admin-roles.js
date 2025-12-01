@@ -55,7 +55,17 @@ async function loadPermissions() {
             headers: { 'Authorization': 'Bearer ' + getToken() }
         });
         
-        if (!response.ok) throw new Error('Erreur chargement permissions');
+        if (!response.ok) {
+            // Tenter de récupérer le message d'erreur du serveur
+            let errorDetails = 'Erreur inconnue';
+            try {
+                const errorJson = await response.json();
+                errorDetails = errorJson.error || JSON.stringify(errorJson);
+            } catch (e) {
+                errorDetails = `Status ${response.status} ${response.statusText}`;
+            }
+            throw new Error(`Erreur chargement permissions: ${errorDetails}`);
+        }
         
         const data = await response.json();
         allPermissions = data.permissions;
@@ -200,19 +210,19 @@ function createRoleCard(role, isSystem) {
                 
                 <!-- Actions -->
                 <div class="flex items-center gap-2">
-                    <button onclick="viewRole(${role.id})" class="flex-1 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition text-sm font-medium">
-                        <i class="fas fa-eye mr-2"></i>Voir
+                    <button onclick="viewRole(${role.id})" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition text-sm font-medium">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="editRole(${role.id})" class="flex-1 bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition text-sm font-medium">
+                        <i class="fas fa-edit mr-2"></i>Modifier
                     </button>
                     ${!isSystem ? `
-                        <button onclick="editRole(${role.id})" class="flex-1 bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition text-sm font-medium">
-                            <i class="fas fa-edit mr-2"></i>Modifier
-                        </button>
                         <button onclick="deleteRole(${role.id}, '${role.name}')" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition text-sm">
                             <i class="fas fa-trash"></i>
                         </button>
                     ` : `
-                        <button disabled class="flex-1 bg-gray-100 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed text-sm font-medium">
-                            <i class="fas fa-lock mr-2"></i>Protégé
+                        <button disabled class="bg-gray-100 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed text-sm" title="Suppression impossible pour les rôles système">
+                            <i class="fas fa-lock"></i>
                         </button>
                     `}
                 </div>

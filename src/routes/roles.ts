@@ -62,19 +62,39 @@ app.get('/:id', async (c) => {
     }
 
     // Récupérer les permissions du rôle
-    const { results: permissions } = await c.env.DB.prepare(`
+    const { results: permissionsRaw } = await c.env.DB.prepare(`
       SELECT
         p.id,
-        p.resource,
-        p.action,
-        p.scope,
-        p.display_name,
+        p.slug,
+        p.name as display_name,
+        p.module as resource,
         p.description
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       WHERE rp.role_id = ?
-      ORDER BY p.resource, p.action, p.scope
+      ORDER BY p.module, p.slug
     `).bind(id).all();
+
+    // Transformer les permissions pour le frontend
+    const permissions = (permissionsRaw as any[]).map(p => {
+      const parts = p.slug.split('.');
+      // resource.action ou resource.action.scope
+      return {
+        id: p.id,
+        resource: p.resource || parts[0], // Utiliser module ou 1ère partie du slug
+        action: parts[1] || 'unknown',
+        scope: parts[2] || 'all',
+        display_name: p.display_name,
+        description: p.description
+      };
+    });
+
+    // Trier par resource, action, scope
+    permissions.sort((a, b) => {
+      if (a.resource !== b.resource) return a.resource.localeCompare(b.resource);
+      if (a.action !== b.action) return a.action.localeCompare(b.action);
+      return a.scope.localeCompare(b.scope);
+    });
 
     return c.json({
       role: {
@@ -96,27 +116,35 @@ app.get('/permissions/all', async (c) => {
     const { results } = await c.env.DB.prepare(`
       SELECT
         id,
-        resource,
-        action,
-        scope,
-        display_name,
+        slug,
+        module as resource,
+        name as display_name,
         description
       FROM permissions
-      ORDER BY resource, action, scope
+      ORDER BY module, slug
     `).all();
+
+    // Transformer les résultats pour le frontend
+    const permissions = results.map((p: any) => {
+      const parts = p.slug.split('.');
+      return {
+        ...p,
+        action: parts.length > 1 ? parts[1] : p.slug,
+        scope: parts.length > 2 ? parts[2] : 'all'
+      };
+    });
 
     // Grouper par ressource pour une meilleure organisation
     const grouped: any = {};
-    for (const perm of results) {
-      const p = perm as any;
-      if (!grouped[p.resource]) {
-        grouped[p.resource] = [];
+    for (const perm of permissions) {
+      if (!grouped[perm.resource]) {
+        grouped[perm.resource] = [];
       }
-      grouped[p.resource].push(p);
+      grouped[perm.resource].push(perm);
     }
 
     return c.json({
-      permissions: results,
+      permissions: permissions,
       grouped
     });
   } catch (error) {

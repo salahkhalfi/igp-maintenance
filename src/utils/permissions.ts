@@ -28,7 +28,7 @@ let lastCacheUpdate = 0;
 export async function loadRolePermissions(DB: D1Database, roleName: string): Promise<Set<string>> {
   try {
     const { results } = await DB.prepare(`
-      SELECT p.resource, p.action, p.scope
+      SELECT p.slug
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       INNER JOIN roles r ON rp.role_id = r.id
@@ -37,7 +37,14 @@ export async function loadRolePermissions(DB: D1Database, roleName: string): Pro
 
     const permissions = new Set<string>();
     for (const perm of results) {
-      permissions.add(`${perm.resource}.${perm.action}.${perm.scope}`);
+      // Le slug est déjà au format "resource.action" ou "resource.action.scope"
+      // Si le scope est manquant, on suppose "all" par défaut pour la compatibilité
+      const parts = perm.slug.split('.');
+      if (parts.length === 2) {
+        permissions.add(`${perm.slug}.all`);
+      } else {
+        permissions.add(perm.slug);
+      }
     }
 
     return permissions;
