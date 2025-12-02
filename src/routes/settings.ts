@@ -564,7 +564,7 @@ settings.put('/modules/status', authMiddleware, adminOnly, async (c) => {
  *
  * Utilisé pour: timezone_offset_hours, etc.
  */
-settings.put('/:key', adminOnly, async (c) => {
+settings.put('/:key', authMiddleware, adminOnly, async (c) => {
   try {
     const key = c.req.param('key');
     const body = await c.req.json();
