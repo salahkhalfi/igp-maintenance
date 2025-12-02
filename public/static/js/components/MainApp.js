@@ -250,20 +250,23 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
         }),
 
-        // --- KANBAN BOARD OU ADMIN ROLES ---
-        showAdminRoles ? 
-            React.createElement(AdminRoles, { onBack: () => setShowAdminRoles(false) }) :
-            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: kanbanContainerStyle },
-                React.createElement(KanbanBoard, {
-                    tickets: tickets,
-                    currentUser: currentUser,
-                    columns: columns,
-                    showArchived: showArchived,
-                    onTicketClick: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); },
-                    onTicketMove: moveTicketToStatus,
-                    onTicketDelete: handleDeleteTicket
-                })
-            ),
+        // --- KANBAN BOARD ---
+        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: showAdminRoles ? 'none' : 'block' } },
+            React.createElement(KanbanBoard, {
+                tickets: tickets,
+                currentUser: currentUser,
+                columns: columns,
+                showArchived: showArchived,
+                onTicketClick: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); },
+                onTicketMove: moveTicketToStatus,
+                onTicketDelete: handleDeleteTicket
+            })
+        ),
+
+        // --- ADMIN ROLES (FULL SCREEN MODAL) ---
+        showAdminRoles && React.createElement('div', { className: 'fixed inset-0 z-[100] overflow-y-auto bg-gray-50 animate-fadeIn' },
+            React.createElement(AdminRoles, { onBack: () => setShowAdminRoles(false) })
+        ),
 
         // --- FOOTER ---
         React.createElement('footer', { className: 'mt-12 py-6 text-center border-t-4 border-igp-blue', style: footerStyle },
