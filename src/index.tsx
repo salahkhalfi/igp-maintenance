@@ -256,7 +256,7 @@ app.get('/api/health', (c) => {
   return c.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    version: '2.13.2'
+    version: '2.13.4'
   });
 });
 

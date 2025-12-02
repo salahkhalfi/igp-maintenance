@@ -13,7 +13,7 @@ import {
   type VapidKeys
 } from '@block65/webcrypto-web-push';
 import { checkModule } from '../utils/modules';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, requirePermission } from '../middlewares/auth';
 
 const push = new Hono<{ Bindings: Bindings }>();
 
@@ -196,16 +196,9 @@ push.get('/vapid-public-key', async (c) => {
 });
 
 // API: Push subscriptions list (Admin/Supervisor only)
-push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), async (c) => {
+push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), requirePermission('notifications', 'manage'), async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // Only admins and supervisors can see subscriptions list
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
-    }
-
-    // Get all push subscriptions with user info
     const subscriptions = await c.env.DB.prepare(`
       SELECT 
         ps.id,
@@ -562,17 +555,9 @@ push.post('/test', async (c) => {
  * POST /api/push/test-user/:userId - Envoyer une notification de test à un utilisateur spécifique (ADMIN ONLY)
  * Permet de tester l'envoi de notifications push à n'importe quel utilisateur
  */
-push.post('/test-user/:userId', async (c) => {
+push.post('/test-user/:userId', authMiddleware, checkModule('notifications'), requirePermission('notifications', 'manage'), async (c) => {
   try {
     const user = c.get('user') as any;
-    if (!user || !user.userId) {
-      return c.json({ error: 'Non authentifié' }, 401);
-    }
-
-    // Vérifier si l'utilisateur est admin
-    if (user.role !== 'admin' && user.role !== 'supervisor') {
-      return c.json({ error: 'Accès refusé - Admin ou Superviseur requis' }, 403);
-    }
 
     const targetUserId = parseInt(c.req.param('userId'));
     if (isNaN(targetUserId)) {

@@ -7,7 +7,7 @@ import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { users, tickets, media, ticketTimeline } from '../db/schema';
 import { hashPassword } from '../utils/password';
-import { supervisorOrAdmin, technicianSupervisorOrAdmin } from '../middlewares/auth';
+import { requirePermission } from '../middlewares/auth';
 import { createUserSchema, updateUserSchema, resetPasswordSchema, userIdParamSchema } from '../schemas/users';
 import type { Bindings, User } from '../types';
 
@@ -15,9 +15,9 @@ const usersRoute = new Hono<{ Bindings: Bindings }>();
 
 /**
  * GET /api/users/team - Liste toute l'équipe (pour tous les rôles)
- * Accès: Technicien, Superviseur, Admin
+ * Accès: Technicien, Superviseur, Admin -> Maintenant via permission users.read
  */
-usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
+usersRoute.get('/team', requirePermission('users', 'read'), async (c) => {
   try {
     const db = getDb(c.env);
     const results = await db
@@ -44,13 +44,13 @@ usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
 });
 
 // Toutes les AUTRES routes nécessitent les droits admin ou superviseur
-usersRoute.use('/*', supervisorOrAdmin);
+// usersRoute.use('/*', supervisorOrAdmin); // REPLACED BY GRANULAR PERMISSIONS
 
 /**
  * GET /api/users - Liste tous les utilisateurs
- * Accès: Admin uniquement
+ * Accès: Admin uniquement (ou avec permission users.read)
  */
-usersRoute.get('/', async (c) => {
+usersRoute.get('/', requirePermission('users', 'read'), async (c) => {
   try {
     const db = getDb(c.env);
     // Filtrer le super admin ET l'utilisateur système team (id=0)
@@ -79,7 +79,7 @@ usersRoute.get('/', async (c) => {
  * GET /api/users/:id - Détails d'un utilisateur
  * Accès: Admin uniquement
  */
-usersRoute.get('/:id', zValidator('param', userIdParamSchema), async (c) => {
+usersRoute.get('/:id', requirePermission('users', 'read'), zValidator('param', userIdParamSchema), async (c) => {
   try {
     const { id } = c.req.valid('param');
     // isNaN check removed (handled by Zod)
@@ -109,7 +109,7 @@ usersRoute.get('/:id', zValidator('param', userIdParamSchema), async (c) => {
  * POST /api/users - Créer un nouvel utilisateur
  * Accès: Admin uniquement
  */
-usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
+usersRoute.post('/', requirePermission('users', 'create'), zValidator('json', createUserSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const body = c.req.valid('json');
@@ -168,7 +168,7 @@ usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
  * PUT /api/users/:id - Modifier un utilisateur
  * Accès: Admin uniquement
  */
-usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json', updateUserSchema), async (c) => {
+usersRoute.put('/:id', requirePermission('users', 'update'), zValidator('param', userIdParamSchema), zValidator('json', updateUserSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const { id } = c.req.valid('param');
@@ -277,7 +277,7 @@ usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json'
  * DELETE /api/users/:id - Supprimer un utilisateur
  * Accès: Admin uniquement
  */
-usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
+usersRoute.delete('/:id', requirePermission('users', 'delete'), zValidator('param', userIdParamSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const { id } = c.req.valid('param');
@@ -340,7 +340,7 @@ usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
 /**
  * POST /api/users/:id/reset-password
  */
-usersRoute.post('/:id/reset-password', zValidator('param', userIdParamSchema), zValidator('json', resetPasswordSchema), async (c) => {
+usersRoute.post('/:id/reset-password', requirePermission('users', 'update'), zValidator('param', userIdParamSchema), zValidator('json', resetPasswordSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const { id } = c.req.valid('param');

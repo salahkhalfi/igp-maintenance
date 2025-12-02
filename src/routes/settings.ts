@@ -1,7 +1,7 @@
 // Routes de gestion des paramètres système
 
 import { Hono } from 'hono';
-import { adminOnly, authMiddleware, superAdminOnly } from '../middlewares/auth';
+import { adminOnly, authMiddleware, superAdminOnly, requirePermission } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const settings = new Hono<{ Bindings: Bindings }>();
@@ -21,7 +21,7 @@ const RECOMMENDED_HEIGHT = 80;
  * Accès: Administrateurs (admin role) uniquement
  * Proxy vers la logique de nettoyage (Janitor)
  */
-settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
+settings.post('/trigger-cleanup', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const now = new Date();
     console.log('🧹 MANUAL Janitor Triggered by Admin:', now.toISOString());
@@ -68,7 +68,7 @@ settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
  * Formats acceptés: PNG, JPEG, WEBP
  * Taille max: 500 KB
  */
-settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
+settings.post('/upload-logo', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -197,7 +197,7 @@ settings.get('/logo', async (c) => {
  * DELETE /api/settings/logo - Supprimer le logo personnalisé et revenir au logo par défaut
  * Accès: Administrateurs (admin role)
  */
-settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
+settings.delete('/logo', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -236,7 +236,7 @@ settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
  * Accès: Administrateurs (admin role)
  * Validation: Max 100 caractères, échappement HTML, UTF-8
  */
-settings.put('/title', authMiddleware, adminOnly, async (c) => {
+settings.put('/title', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -288,7 +288,7 @@ settings.put('/title', authMiddleware, adminOnly, async (c) => {
  * Accès: Administrateurs (admin role)
  * Validation: Max 150 caractères, échappement HTML, UTF-8
  */
-settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
+settings.put('/subtitle', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -407,7 +407,7 @@ settings.get('/modules/preferences', authMiddleware, async (c) => {
  * PUT /api/settings/modules/preferences - Mettre à jour les préférences d'affichage du client
  * Accès: Admin (Client)
  */
-settings.put('/modules/preferences', authMiddleware, adminOnly, async (c) => {
+settings.put('/modules/preferences', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
     const value = JSON.stringify(body);
@@ -532,7 +532,7 @@ settings.get('/modules/status', async (c) => {
  * PUT /api/settings/modules/status - Mettre à jour les licences (Feature Flipping)
  * Accès: Admin Only
  */
-settings.put('/modules/status', authMiddleware, adminOnly, async (c) => {
+settings.put('/modules/status', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
     const value = JSON.stringify(body); // Stockage JSON string
@@ -564,7 +564,7 @@ settings.put('/modules/status', authMiddleware, adminOnly, async (c) => {
  *
  * Utilisé pour: timezone_offset_hours, etc.
  */
-settings.put('/:key', authMiddleware, adminOnly, async (c) => {
+settings.put('/:key', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
   try {
     const key = c.req.param('key');
     const body = await c.req.json();

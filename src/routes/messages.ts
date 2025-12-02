@@ -10,12 +10,16 @@ import { authMiddleware } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
 import { formatUserName } from '../utils/userFormatter';
 import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
+import { requirePermission } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const messagesRoute = new Hono<{ Bindings: Bindings }>();
 
 // Middleware: Check if Messaging Module is enabled
 messagesRoute.use('*', checkModule('messaging'));
+
+// Check permissions for all routes
+messagesRoute.use('*', requirePermission('messages', 'use'));
 
 // POST /api/messages - Envoyer un message (public ou privé)
 messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), async (c) => {
