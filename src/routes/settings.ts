@@ -1,7 +1,7 @@
 // Routes de gestion des paramètres système
 
 import { Hono } from 'hono';
-import { adminOnly, authMiddleware } from '../middlewares/auth';
+import { adminOnly, authMiddleware, superAdminOnly } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const settings = new Hono<{ Bindings: Bindings }>();
@@ -369,9 +369,9 @@ settings.get('/modules', authMiddleware, async (c) => {
 
 /**
  * PUT /api/settings/modules - Mettre à jour les licences (Feature Flipping)
- * Accès: Admin Only
+ * Accès: Super Admin Only (Propriétaire SaaS)
  */
-settings.put('/modules', authMiddleware, adminOnly, async (c) => {
+settings.put('/modules', authMiddleware, superAdminOnly, async (c) => {
   try {
     const body = await c.req.json();
     const value = JSON.stringify(body); // Stockage JSON string

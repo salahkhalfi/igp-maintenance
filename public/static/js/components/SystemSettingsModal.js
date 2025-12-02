@@ -438,14 +438,20 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         ),
 
                         // Section Gestion des Modules (Licensing)
-                        isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
-                            React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4' },
+                        // Visible pour Admin (Lecture Seule) et Super Admin (Modifiable)
+                        (isSuperAdmin || currentUser?.role === 'admin') && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                            React.createElement('div', { className: isSuperAdmin ? 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' : 'bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4' },
                                 React.createElement('div', { className: 'flex items-start gap-3' },
-                                    React.createElement('i', { className: 'fas fa-cubes text-green-600 text-xl mt-1' }),
+                                    React.createElement('i', { className: `fas fa-cubes ${isSuperAdmin ? 'text-purple-600' : 'text-gray-600'} text-xl mt-1` }),
                                     React.createElement('div', {},
-                                        React.createElement('h3', { className: 'font-bold text-green-900 mb-2' }, "Gestion des Modules (Licences)"),
-                                        React.createElement('p', { className: 'text-sm text-green-800 mb-2' },
-                                            "Activez ou désactivez les fonctionnalités selon votre abonnement."
+                                        React.createElement('h3', { className: `font-bold ${isSuperAdmin ? 'text-purple-900' : 'text-gray-900'} mb-2 flex items-center gap-2` }, 
+                                            "Gestion des Modules (Licences)",
+                                            isSuperAdmin && React.createElement('span', { className: 'text-xs bg-purple-600 text-white px-2 py-1 rounded uppercase' }, 'Super Admin')
+                                        ),
+                                        React.createElement('p', { className: `text-sm ${isSuperAdmin ? 'text-purple-800' : 'text-gray-600'} mb-2` },
+                                            isSuperAdmin 
+                                                ? "Activez ou désactivez les fonctionnalités pour ce client."
+                                                : "Consultez les fonctionnalités incluses dans votre abonnement."
                                         )
                                     )
                                 )
@@ -463,14 +469,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                             React.createElement('p', { className: 'text-xs text-gray-500' }, "Calendrier multi-mois, événements, drag & drop.")
                                         )
                                     ),
-                                    React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
+                                    isSuperAdmin ? React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
                                         React.createElement('input', {
                                             type: 'checkbox',
                                             className: 'sr-only peer',
                                             checked: modules.planning || false,
                                             onChange: () => toggleModule('planning')
                                         }),
-                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" })
+                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600" })
+                                    ) : React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-bold ${modules.planning ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}` },
+                                        modules.planning ? 'ACTIVÉ' : 'NON INCLUS'
                                     )
                                 ),
                                 // Module Statistiques
@@ -484,14 +492,39 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                             React.createElement('p', { className: 'text-xs text-gray-500' }, "Dashboards de performance et KPI.")
                                         )
                                     ),
-                                    React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
+                                    isSuperAdmin ? React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
                                         React.createElement('input', {
                                             type: 'checkbox',
                                             className: 'sr-only peer',
                                             checked: modules.statistics || false,
                                             onChange: () => toggleModule('statistics')
                                         }),
-                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" })
+                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600" })
+                                    ) : React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-bold ${modules.statistics ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}` },
+                                        modules.statistics ? 'ACTIVÉ' : 'NON INCLUS'
+                                    )
+                                ),
+                                // Module Notifications
+                                React.createElement('div', { className: 'flex items-center justify-between p-3 bg-white border rounded-lg' },
+                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                        React.createElement('div', { className: `w-10 h-10 rounded-full flex items-center justify-center ${modules.notifications ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-400'}` },
+                                            React.createElement('i', { className: 'fas fa-bell' })
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('h4', { className: 'font-bold text-gray-800' }, "Notifications Push"),
+                                            React.createElement('p', { className: 'text-xs text-gray-500' }, "Alertes temps réel sur mobile.")
+                                        )
+                                    ),
+                                    isSuperAdmin ? React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
+                                        React.createElement('input', {
+                                            type: 'checkbox',
+                                            className: 'sr-only peer',
+                                            checked: modules.notifications || false,
+                                            onChange: () => toggleModule('notifications')
+                                        }),
+                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600" })
+                                    ) : React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-bold ${modules.notifications ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}` },
+                                        modules.notifications ? 'ACTIVÉ' : 'NON INCLUS'
                                     )
                                 )
                             )

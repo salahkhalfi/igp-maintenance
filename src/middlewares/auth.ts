@@ -64,6 +64,16 @@ export async function adminOnly(c: Context<{ Bindings: Bindings }>, next: Next) 
   await next();
 }
 
+// Middleware pour Super Admin uniquement (Propriétaire SaaS)
+export async function superAdminOnly(c: Context<{ Bindings: Bindings }>, next: Next) {
+    const user = c.get('user') as any;
+    // Vérifie si user.is_super_admin est 1 (true)
+    if (!user || !user.is_super_admin) {
+        return c.json({ error: 'Accès réservé au Super Administrateur (Propriétaire)' }, 403);
+    }
+    await next();
+}
+
 export async function technicianOrAdmin(c: Context<{ Bindings: Bindings }>, next: Next) {
   const user = c.get('user') as any;
 
