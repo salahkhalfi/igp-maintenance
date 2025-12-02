@@ -9,7 +9,8 @@ import { tickets, machines, users, media, ticketTimeline, pushLogs } from '../db
 import { generateTicketId } from '../utils/ticket-id';
 import { formatUserName } from '../utils/userFormatter';
 import { createTicketSchema, updateTicketSchema, ticketIdParamSchema, getTicketsQuerySchema } from '../schemas/tickets';
-import { requirePermission } from '../middlewares/auth';
+import { requirePermission, requireAnyPermission } from '../middlewares/auth';
+import { hasPermission } from '../utils/permissions';
 import type { Bindings } from '../types';
 
 const ticketsRoute = new Hono<{ Bindings: Bindings }>();
@@ -426,26 +427,22 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
 });
 
 // DELETE /api/tickets/:id - Supprimer un ticket
-// Note: Generally only Admins should delete tickets, but maybe Supervisors too?
-// We don't have tickets.delete permission in previous list, only close.
-// Let's check if it exists. If not, keep logic or use update? 
-// Actually users.delete exists. tickets.delete?
-// Let's assume adminOnly logic inside or use a permission if available. 
-// Wait, previous code didn't restrict to adminOnly explicitly?
-// It checked if user is operator.
-// I'll use requirePermission('tickets', 'delete') if I added it? I didn't add tickets.delete.
-// I added tickets.update.
-// Let's stick to tickets.update + internal check OR add tickets.delete.
-// Audit said tickets.delete was NOT in list.
-// I will use authMiddleware and keep internal logic + maybe admin check?
-// The previous code allowed deletion!
 ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const { id } = c.req.valid('param');
-    // isNaN check handled by Zod
-
     const db = getDb(c.env);
+
+    // Vérification des permissions
+    const canDeleteAll = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'all');
+    const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'own');
+
+    if (!canDeleteAll && !canDeleteOwn) {
+      return c.json({ 
+        error: 'Permission refusée: tickets.delete',
+        required_permission: 'tickets.delete.own ou tickets.delete.all'
+      }, 403);
+    }
 
     const ticket = await db
       .select()
@@ -457,7 +454,8 @@ ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) 
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
 
-    if (user.role === 'operator' && ticket.reported_by !== user.userId) {
+    // Si pas de permission "delete all", on vérifie la propriété
+    if (!canDeleteAll && ticket.reported_by !== user.userId) {
       return c.json({ error: 'Vous ne pouvez supprimer que vos propres tickets' }, 403);
     }
 

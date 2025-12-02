@@ -150,7 +150,7 @@ app.delete('/categories/:id', requirePermission('planning', 'categories'), async
 // --- NOTES ---
 
 // CREATE NOTE
-app.post('/notes', async (c) => {
+app.post('/notes', requirePermission('planning', 'read'), async (c) => {
     const user = c.get('user');
     const body = await c.req.json();
     const { text, time, done, priority, notified } = body;
@@ -171,7 +171,7 @@ app.post('/notes', async (c) => {
 });
 
 // UPDATE NOTE
-app.put('/notes/:id', async (c) => {
+app.put('/notes/:id', requirePermission('planning', 'read'), async (c) => {
     const user = c.get('user');
     const id = c.req.param('id');
     const body = await c.req.json();
@@ -219,7 +219,7 @@ app.put('/notes/:id', async (c) => {
 });
 
 // DELETE NOTE
-app.delete('/notes/:id', async (c) => {
+app.delete('/notes/:id', requirePermission('planning', 'read'), async (c) => {
     const user = c.get('user');
     const id = c.req.param('id');
     

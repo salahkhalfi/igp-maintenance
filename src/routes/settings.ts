@@ -530,9 +530,9 @@ settings.get('/modules/status', async (c) => {
 
 /**
  * PUT /api/settings/modules/status - Mettre à jour les licences (Feature Flipping)
- * Accès: Admin Only
+ * Accès: Super Admin Only
  */
-settings.put('/modules/status', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
+settings.put('/modules/status', authMiddleware, superAdminOnly, async (c) => {
   try {
     const body = await c.req.json();
     const value = JSON.stringify(body); // Stockage JSON string
