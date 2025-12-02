@@ -21,6 +21,7 @@ const AppHeader = ({
     onOpenManageColumns,
     onOpenSystemSettings,
     onOpenAdminRoles,
+    onOpenPlanning,
     onOpenDetails
 }) => {
     // Search state
@@ -214,6 +215,7 @@ const AppHeader = ({
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-users mr-2 text-indigo-600' }), currentUser?.role === 'technician' ? 'Équipe' : 'Utilisateurs'),
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-columns mr-2 text-gray-500' }), 'Colonnes'),
+                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-500' }), 'Planning'),
                 (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
                 (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
                 React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-blue-700 transition' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),

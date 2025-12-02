@@ -16,6 +16,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showPushDevicesModal, setShowPushDevicesModal] = React.useState(false);
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
     const [showAdminRoles, setShowAdminRoles] = React.useState(false);
+    const [showProductionPlanning, setShowProductionPlanning] = React.useState(false);
 
     // Gestion des colonnes dynamiques (Levé depuis KanbanBoard)
     const [columns, setColumns] = React.useState(() => {
@@ -247,11 +248,15 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
+            onOpenPlanning: () => { setShowProductionPlanning(true); setShowMobileMenu(false); },
             onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
         }),
 
+        // --- PRODUCTION PLANNING (FULL SCREEN MODAL) ---
+        showProductionPlanning && React.createElement(ProductionPlanning, { onClose: () => setShowProductionPlanning(false) }),
+
         // --- KANBAN BOARD ---
-        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: showAdminRoles ? 'none' : 'block' } },
+        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
             React.createElement(KanbanBoard, {
                 tickets: tickets,
                 currentUser: currentUser,
