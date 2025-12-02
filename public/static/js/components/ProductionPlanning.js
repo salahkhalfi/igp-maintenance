@@ -25,6 +25,7 @@ const ProductionPlanning = ({ onClose }) => {
         { id: 'blocked', label: 'Bloqué', icon: 'fa-ban', color: 'red' } // Added default blocked category
     ]);
     const [showCategoryModal, setShowCategoryModal] = React.useState(false);
+    const [editingCategory, setEditingCategory] = React.useState(null);
 
     // HELPERS FOR STYLES & ICONS
     const getCategoryStyle = (type, status) => {
@@ -51,24 +52,52 @@ const ProductionPlanning = ({ onClose }) => {
         return cat ? cat.icon : 'fa-circle';
     };
 
-    // Handle Add Category
-    const handleAddCategory = (e) => {
+    // Handle Save Category (Add or Update)
+    const handleSaveCategory = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const newCat = {
-            id: 'cat_' + Date.now(),
-            label: formData.get('label'),
-            color: formData.get('color'),
-            icon: formData.get('icon')
-        };
-        setCategories([...categories, newCat]);
+        
+        if (editingCategory) {
+            // UPDATE EXISTING
+            setCategories(categories.map(c => 
+                c.id === editingCategory.id ? {
+                    ...c,
+                    label: formData.get('label'),
+                    color: formData.get('color'),
+                    icon: formData.get('icon')
+                } : c
+            ));
+            setEditingCategory(null);
+        } else {
+            // CREATE NEW
+            const newCat = {
+                id: 'cat_' + Date.now(),
+                label: formData.get('label'),
+                color: formData.get('color'),
+                icon: formData.get('icon')
+            };
+            setCategories([...categories, newCat]);
+        }
         e.target.reset();
+    };
+
+    // Handle Edit Click
+    const handleEditCategoryClick = (cat) => {
+        setEditingCategory(cat);
+    };
+
+    // Handle Cancel Edit
+    const handleCancelEdit = () => {
+        setEditingCategory(null);
     };
 
     // Handle Delete Category
     const handleDeleteCategory = (id) => {
         if (confirm('Supprimer cette catégorie ? Les événements existants perdront leur style.')) {
             setCategories(categories.filter(c => c.id !== id));
+            if (editingCategory && editingCategory.id === id) {
+                setEditingCategory(null);
+            }
         }
     };
     // Format date: "YYYY-MM-DD"
@@ -553,33 +582,58 @@ const ProductionPlanning = ({ onClose }) => {
                             React.createElement('div', { className: 'space-y-2 mb-6' },
                                 React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-2' }, 'Catégories Existantes'),
                                 categories.map(cat => 
-                                    React.createElement('div', { key: cat.id, className: 'flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200' },
+                                    React.createElement('div', { key: cat.id, className: `flex items-center justify-between p-3 rounded-lg border transition ${editingCategory && editingCategory.id === cat.id ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-300' : 'bg-slate-50 border-slate-200'}` },
                                         React.createElement('div', { className: 'flex items-center gap-3' },
                                             React.createElement('div', { className: `w-8 h-8 rounded-full flex items-center justify-center bg-${cat.color === 'blue' ? 'blue' : cat.color === 'green' ? 'green' : cat.color === 'red' ? 'red' : cat.color === 'purple' ? 'purple' : cat.color === 'orange' ? 'orange' : 'yellow'}-100 text-${cat.color === 'blue' ? 'blue' : cat.color === 'green' ? 'green' : cat.color === 'red' ? 'red' : cat.color === 'purple' ? 'purple' : cat.color === 'orange' ? 'orange' : 'yellow'}-600` },
                                                 React.createElement('i', { className: `fas ${cat.icon}` })
                                             ),
                                             React.createElement('span', { className: 'font-medium text-slate-700' }, cat.label)
                                         ),
-                                        React.createElement('button', {
-                                            onClick: () => handleDeleteCategory(cat.id),
-                                            className: 'text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition'
-                                        }, React.createElement('i', { className: 'fas fa-trash-alt' }))
+                                        React.createElement('div', { className: 'flex items-center gap-1' },
+                                            React.createElement('button', {
+                                                onClick: () => handleEditCategoryClick(cat),
+                                                className: 'text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition'
+                                            }, React.createElement('i', { className: 'fas fa-pen' })),
+                                            React.createElement('button', {
+                                                onClick: () => handleDeleteCategory(cat.id),
+                                                className: 'text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition'
+                                            }, React.createElement('i', { className: 'fas fa-trash-alt' }))
+                                        )
                                     )
                                 )
                             ),
 
-                            // Add Form
-                            React.createElement('form', { onSubmit: handleAddCategory, className: 'bg-blue-50 p-4 rounded-xl border border-blue-100' },
-                                React.createElement('label', { className: 'block text-xs font-bold text-blue-800 uppercase mb-3' }, 'Ajouter une nouvelle catégorie'),
+                            // Add/Edit Form
+                            React.createElement('form', { 
+                                key: editingCategory ? editingCategory.id : 'new', // Re-mount to reset default values
+                                onSubmit: handleSaveCategory, 
+                                className: `p-4 rounded-xl border transition ${editingCategory ? 'bg-blue-50 border-blue-200 shadow-md' : 'bg-slate-50 border-slate-200'}` 
+                            },
+                                React.createElement('div', { className: 'flex justify-between items-center mb-3' },
+                                    React.createElement('label', { className: `block text-xs font-bold uppercase ${editingCategory ? 'text-blue-800' : 'text-slate-500'}` }, 
+                                        editingCategory ? 'Modifier la catégorie' : 'Ajouter une nouvelle catégorie'
+                                    ),
+                                    editingCategory && React.createElement('button', {
+                                        type: 'button',
+                                        onClick: handleCancelEdit,
+                                        className: 'text-xs text-blue-600 hover:underline'
+                                    }, 'Annuler')
+                                ),
+                                
                                 React.createElement('div', { className: 'space-y-3' },
                                     React.createElement('input', { 
                                         name: 'label', 
+                                        defaultValue: editingCategory ? editingCategory.label : '',
                                         placeholder: 'Nom (ex: Réunion)', 
                                         required: true, 
-                                        className: 'w-full p-2 border border-blue-200 rounded-lg text-sm'
+                                        className: 'w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                     }),
                                     React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
-                                        React.createElement('select', { name: 'icon', className: 'w-full p-2 border border-blue-200 rounded-lg text-sm' },
+                                        React.createElement('select', { 
+                                            name: 'icon', 
+                                            defaultValue: editingCategory ? editingCategory.icon : 'fa-circle',
+                                            className: 'w-full p-2 border border-slate-300 rounded-lg text-sm' 
+                                        },
                                             React.createElement('option', { value: 'fa-circle' }, '⚫ Cercle'),
                                             React.createElement('option', { value: 'fa-star' }, '⭐ Étoile'),
                                             React.createElement('option', { value: 'fa-user' }, '👤 Utilisateur'),
@@ -588,9 +642,16 @@ const ProductionPlanning = ({ onClose }) => {
                                             React.createElement('option', { value: 'fa-bolt' }, '⚡ Éclair'),
                                             React.createElement('option', { value: 'fa-file-alt' }, '📄 Document'),
                                             React.createElement('option', { value: 'fa-exclamation-triangle' }, '⚠️ Attention'),
-                                            React.createElement('option', { value: 'fa-ban' }, '🚫 Interdit')
+                                            React.createElement('option', { value: 'fa-ban' }, '🚫 Interdit'),
+                                            React.createElement('option', { value: 'fa-info-circle' }, 'ℹ️ Info'),
+                                            React.createElement('option', { value: 'fa-check-circle' }, '✅ Valide'),
+                                            React.createElement('option', { value: 'fa-clock' }, '🕒 Horloge')
                                         ),
-                                        React.createElement('select', { name: 'color', className: 'w-full p-2 border border-blue-200 rounded-lg text-sm' },
+                                        React.createElement('select', { 
+                                            name: 'color', 
+                                            defaultValue: editingCategory ? editingCategory.color : 'blue',
+                                            className: 'w-full p-2 border border-slate-300 rounded-lg text-sm' 
+                                        },
                                             React.createElement('option', { value: 'blue' }, '🔵 Bleu'),
                                             React.createElement('option', { value: 'green' }, '🟢 Vert'),
                                             React.createElement('option', { value: 'red' }, '🔴 Rouge'),
@@ -602,8 +663,15 @@ const ProductionPlanning = ({ onClose }) => {
                                     ),
                                     React.createElement('button', { 
                                         type: 'submit',
-                                        className: 'w-full py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-sm'
-                                    }, 'Ajouter')
+                                        className: `w-full py-2 rounded-lg font-bold text-sm transition shadow-sm flex items-center justify-center gap-2 ${
+                                            editingCategory 
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                                : 'bg-slate-800 text-white hover:bg-slate-900'
+                                        }`
+                                    }, 
+                                        React.createElement('i', { className: editingCategory ? 'fas fa-save' : 'fas fa-plus' }),
+                                        editingCategory ? 'Enregistrer les modifications' : 'Ajouter'
+                                    )
                                 )
                             )
                         )
