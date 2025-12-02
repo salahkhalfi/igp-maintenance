@@ -370,6 +370,71 @@ settings.get('/modules', authMiddleware, async (c) => {
 });
 
 /**
+ * GET /api/settings/modules/preferences - Récupérer les préférences d'affichage du client
+ * Accès: Authentifié (Admin)
+ */
+settings.get('/modules/preferences', authMiddleware, async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'client_module_preferences'
+    `).first();
+
+    // Par défaut, tout est activé (null = true)
+    const defaultPrefs = {
+      planning: true,
+      statistics: true,
+      notifications: true,
+      messaging: true,
+      machines: true
+    };
+
+    if (!result || !result.setting_value) {
+      return c.json(defaultPrefs);
+    }
+
+    try {
+      return c.json({ ...defaultPrefs, ...JSON.parse(result.setting_value as string) });
+    } catch (e) {
+      return c.json(defaultPrefs);
+    }
+  } catch (error) {
+    console.error('Get module preferences error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/modules/preferences - Mettre à jour les préférences d'affichage du client
+ * Accès: Admin (Client)
+ */
+settings.put('/modules/preferences', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const value = JSON.stringify(body);
+
+    // Upsert logic
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'client_module_preferences'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'client_module_preferences'
+      `).bind(value).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value) VALUES ('client_module_preferences', ?)
+      `).bind(value).run();
+    }
+
+    return c.json({ success: true, preferences: body });
+  } catch (error) {
+    console.error('Update module preferences error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
  * PUT /api/settings/modules - Mettre à jour les licences (Feature Flipping)
  * Accès: Super Admin Only (Propriétaire SaaS)
  */
