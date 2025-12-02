@@ -29,9 +29,9 @@ const ProductionPlanning = ({ onClose }) => {
 
     // LOAD DATA FROM API
     React.useEffect(() => {
-        fetch('/api/planning')
-            .then(res => res.json())
-            .then(data => {
+        axios.get('/api/planning')
+            .then(res => {
+                const data = res.data;
                 if (data.categories) setCategories(data.categories);
                 if (data.events) setEvents(data.events);
                 if (data.notes) setPlannerNotes(data.notes);
@@ -83,11 +83,8 @@ const ProductionPlanning = ({ onClose }) => {
             ));
             setEditingCategory(null);
 
-            fetch(`/api/planning/categories/${editingCategory.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedCat)
-            }).catch(err => console.error('Error updating category:', err));
+            axios.put(`/api/planning/categories/${editingCategory.id}`, updatedCat)
+                .catch(err => console.error('Error updating category:', err));
 
         } else {
             // CREATE NEW
@@ -101,11 +98,8 @@ const ProductionPlanning = ({ onClose }) => {
             // Optimistic UI Update
             setCategories([...categories, newCat]);
 
-            fetch('/api/planning/categories', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newCat)
-            }).catch(err => console.error('Error creating category:', err));
+            axios.post('/api/planning/categories', newCat)
+                .catch(err => console.error('Error creating category:', err));
         }
         e.target.reset();
     };
@@ -128,9 +122,8 @@ const ProductionPlanning = ({ onClose }) => {
                 setEditingCategory(null);
             }
             
-            fetch(`/api/planning/categories/${id}`, {
-                method: 'DELETE'
-            }).catch(err => console.error('Error deleting category:', err));
+            axios.delete(`/api/planning/categories/${id}`)
+                .catch(err => console.error('Error deleting category:', err));
         }
     };
     // Format date: "YYYY-MM-DD"
@@ -219,13 +212,9 @@ const ProductionPlanning = ({ onClose }) => {
         
         setPlannerNotes([...plannerNotes, newNote]);
         
-        fetch('/api/planning/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newNote)
-        })
-        .then(res => res.json())
-        .then(savedNote => {
+        axios.post('/api/planning/notes', newNote)
+        .then(res => {
+             const savedNote = res.data;
              setPlannerNotes(current => current.map(n => n.id === newNote.id ? savedNote : n));
         })
         .catch(err => console.error('Error adding note:', err));
@@ -241,20 +230,16 @@ const ProductionPlanning = ({ onClose }) => {
         const newDone = !note.done;
         setPlannerNotes(plannerNotes.map(n => n.id === id ? { ...n, done: newDone } : n));
         
-        fetch(`/api/planning/notes/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ done: newDone })
-        }).catch(err => console.error('Error toggling note:', err));
+        axios.put(`/api/planning/notes/${id}`, { done: newDone })
+            .catch(err => console.error('Error toggling note:', err));
     };
 
     // Delete Note
     const deleteNote = (id) => {
         setPlannerNotes(plannerNotes.filter(n => n.id !== id));
         
-        fetch(`/api/planning/notes/${id}`, {
-            method: 'DELETE'
-        }).catch(err => console.error('Error deleting note:', err));
+        axios.delete(`/api/planning/notes/${id}`)
+            .catch(err => console.error('Error deleting note:', err));
     };
 
     // Génération de la grille dynamique
@@ -295,11 +280,8 @@ const ProductionPlanning = ({ onClose }) => {
                 return evt;
             }));
             
-            fetch(`/api/planning/events/${selectedEvent.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedEvent)
-            }).catch(err => console.error('Error updating event:', err));
+            axios.put(`/api/planning/events/${selectedEvent.id}`, updatedEvent)
+                .catch(err => console.error('Error updating event:', err));
 
         } else {
             // MODE CRÉATION
@@ -315,13 +297,9 @@ const ProductionPlanning = ({ onClose }) => {
             // Optimistic UI update (temporary ID)
             setEvents([...events, newEvent]);
 
-            fetch('/api/planning/events', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newEvent)
-            })
-            .then(res => res.json())
-            .then(savedEvent => {
+            axios.post('/api/planning/events', newEvent)
+            .then(res => {
+                const savedEvent = res.data;
                 // Replace temporary ID with real DB ID
                 setEvents(currentEvents => currentEvents.map(evt => 
                     evt.id === newEvent.id ? savedEvent : evt
@@ -339,9 +317,8 @@ const ProductionPlanning = ({ onClose }) => {
             // Optimistic
             setEvents(prevEvents => prevEvents.filter(evt => evt.id !== selectedEvent.id));
             
-            fetch(`/api/planning/events/${selectedEvent.id}`, {
-                method: 'DELETE'
-            }).catch(err => console.error('Error deleting event:', err));
+            axios.delete(`/api/planning/events/${selectedEvent.id}`)
+                .catch(err => console.error('Error deleting event:', err));
             
             setShowAddModal(false);
             setSelectedEvent(null);
@@ -379,11 +356,8 @@ const ProductionPlanning = ({ onClose }) => {
         }));
 
         // API Call
-        fetch(`/api/planning/events/${draggedEventId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: targetDate })
-        }).catch(err => console.error('Error moving event:', err));
+        axios.put(`/api/planning/events/${draggedEventId}`, { date: targetDate })
+            .catch(err => console.error('Error moving event:', err));
     };
 
     // Liste "Aide-Mémoire"

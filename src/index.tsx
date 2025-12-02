@@ -236,7 +236,8 @@ app.route('/api/audio', audio);
 // Routes CRON - Tâches planifiées (sécurisées par CRON_SECRET)
 app.route('/api/cron', cron);
 
-// Routes Planning (Production) - Phase 1 (Public pour l'instant, à sécuriser Phase 2)
+// Routes Planning (Production) - Phase 1 (Sécurisé)
+app.use('/api/planning/*', authMiddleware);
 app.route('/api/planning', planning);
 
 // Routes Alerts - Alertes tickets en retard (authentifiées)
