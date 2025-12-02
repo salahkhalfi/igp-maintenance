@@ -16,6 +16,25 @@
 
 Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
 
+## 🏗️ Architecture SaaS & Modules (Nouveau v2.13+)
+
+L'application a évolué vers une architecture **SaaS Multi-Tenant Modulaire**, conçue pour simplifier la maintenance et maximiser la monétisation.
+
+### 📦 Modules Monétisables
+Le système intègre désormais 5 modules distincts activables à la carte :
+1.  **Planning de Production** (`planning`) : Calendrier, événements, maintenance préventive.
+2.  **Statistiques & Rapports** (`statistics`) : KPI, performance techniciens, analyse des pannes.
+3.  **Notifications Push** (`notifications`) : Alertes temps réel sur mobile/desktop.
+4.  **Collaboration Pro** (`messaging`) : Messagerie instantanée privée/groupe, messages vocaux.
+5.  **Gestion Machines** (`machines`) : Inventaire détaillé, historique par machine, QR codes.
+
+### 🔐 Sécurité & Gestion
+-   **Feature Flipping** : Activation instantanée sans redéploiement.
+-   **Protection Backend** : Middleware `checkModule` bloquant physiquement l'accès API aux modules désactivés.
+-   **Rôles Hiérarchiques** :
+    -   **Super Admin** (`salah@khalfi.com`) : Gestion globale des licences clients.
+    -   **Admin Client** : Gestion de son instance (dans les limites de sa licence).
+
 ## 🆕 Dernières mises à jour
 
 ### Version 2.13.0 (2 Décembre 2025) - GESTION DES MODULES & LICENCES 📦✨

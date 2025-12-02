@@ -12,8 +12,16 @@ import {
   type PushMessage,
   type VapidKeys
 } from '@block65/webcrypto-web-push';
+import { checkModule } from '../utils/modules';
 
 const push = new Hono<{ Bindings: Bindings }>();
+
+// Middleware: Check if Notifications Module is enabled for critical routes
+// We exempt vapid-public-key to allow frontend to at least check availability gracefully
+push.use('/subscribe', checkModule('notifications'));
+push.use('/unsubscribe', checkModule('notifications'));
+push.use('/test', checkModule('notifications'));
+push.use('/test-user/*', checkModule('notifications'));
 
 /**
  * POST /api/push/subscribe
@@ -182,6 +190,42 @@ push.get('/vapid-public-key', async (c) => {
     return c.json({ publicKey });
   } catch (error) {
     console.error('❌ VAPID key error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+// API: Push subscriptions list (Admin/Supervisor only)
+push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Only admins and supervisors can see subscriptions list
+    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
+      return c.json({ error: 'Accès refusé' }, 403);
+    }
+
+    // Get all push subscriptions with user info
+    const subscriptions = await c.env.DB.prepare(`
+      SELECT 
+        ps.id,
+        ps.user_id,
+        ps.endpoint,
+        ps.device_type,
+        ps.device_name,
+        ps.created_at,
+        u.full_name as user_full_name,
+        u.email as user_email,
+        u.role as user_role
+      FROM push_subscriptions ps
+      LEFT JOIN users u ON ps.user_id = u.id
+      ORDER BY ps.created_at DESC
+    `).all();
+
+    return c.json({
+      subscriptions: subscriptions.results || []
+    });
+  } catch (error) {
+    console.error('[Push Subscriptions List API] Error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });

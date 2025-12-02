@@ -22,6 +22,14 @@ export interface Machine {
   updated_at: string;
 }
 
+export interface Modules {
+  planning: boolean;
+  statistics: boolean; // Also known as analytics in some contexts
+  notifications: boolean;
+  messaging: boolean;
+  machines: boolean;
+}
+
 export interface Ticket {
   id: number;
   ticket_id: string;

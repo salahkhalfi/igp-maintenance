@@ -1,38 +1,11 @@
 import { Hono } from 'hono';
 import { Bindings } from '../types';
+import { checkModule } from '../utils/modules';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Middleware: Check if Planning Module is enabled (Feature Flipping)
-app.use('*', async (c, next) => {
-    try {
-        const result = await c.env.DB.prepare(`
-            SELECT setting_value FROM system_settings WHERE setting_key = 'active_modules'
-        `).first();
-
-        // Default to true if setting not found (legacy support)
-        let modules = { planning: true };
-        if (result && result.setting_value) {
-            try {
-                modules = { ...modules, ...JSON.parse(result.setting_value as string) };
-            } catch (e) {
-                // keep defaults
-            }
-        }
-
-        if (modules.planning === false) {
-            return c.json({ 
-                error: 'Module "Planning de Production" non activé. Veuillez contacter l\'administrateur pour souscrire à ce module.',
-                code: 'MODULE_DISABLED' 
-            }, 403);
-        }
-
-        await next();
-    } catch (error) {
-        console.error('Module check error:', error);
-        await next(); // Fail safe: allow access if DB check fails
-    }
-});
+// Middleware: Check if Planning Module is enabled
+app.use('*', checkModule('planning'));
 
 // GET ALL DATA (Events, Categories, Notes)
 app.get('/', async (c) => {

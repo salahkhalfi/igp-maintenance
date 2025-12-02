@@ -7,11 +7,15 @@ import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { messages, users, pushLogs, pushSubscriptions } from '../db/schema';
 import { authMiddleware } from '../middlewares/auth';
+import { checkModule } from '../utils/modules';
 import { formatUserName } from '../utils/userFormatter';
 import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
 import type { Bindings } from '../types';
 
 const messagesRoute = new Hono<{ Bindings: Bindings }>();
+
+// Middleware: Check if Messaging Module is enabled
+messagesRoute.use('*', checkModule('messaging'));
 
 // POST /api/messages - Envoyer un message (public ou privé)
 messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), async (c) => {

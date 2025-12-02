@@ -70,6 +70,7 @@ import messages from './routes/messages';
 import audio from './routes/audio';
 import cron from './routes/cron';
 import alerts from './routes/alerts';
+import stats from './routes/stats';
 import scheduledHandler from './scheduled';
 import type { Bindings } from './types';
 
@@ -474,4 +475,6 @@ export default app;
 // Tâches:
 //   1. Cleanup subscriptions push inactives >30 jours
 //   2. Vérification tickets expirés (scheduled_date dépassée)
+export const scheduled = scheduledHandler.scheduled;
+�passée)
 export const scheduled = scheduledHandler.scheduled;

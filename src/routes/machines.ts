@@ -7,10 +7,14 @@ import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { machines, tickets } from '../db/schema';
 import { adminOnly } from '../middlewares/auth';
+import { checkModule } from '../utils/modules';
 import { machineIdParamSchema, getMachinesQuerySchema, createMachineSchema, updateMachineSchema } from '../schemas/machines';
 import type { Bindings } from '../types';
 
 const machinesRoute = new Hono<{ Bindings: Bindings }>();
+
+// Middleware: Check if Machines Module is enabled
+machinesRoute.use('*', checkModule('machines'));
 
 // GET /api/machines - Liste toutes les machines
 machinesRoute.get('/', zValidator('query', getMachinesQuerySchema), async (c) => {
