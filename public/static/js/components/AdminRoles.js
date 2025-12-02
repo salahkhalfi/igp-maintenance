@@ -119,9 +119,9 @@ const AdminRoles = ({ onBack }) => {
         React.createElement('div', { className: 'bg-blue-50 text-blue-800 px-4 py-3 rounded-lg mb-8 flex items-start text-sm border border-blue-100' },
             React.createElement('i', { className: 'fas fa-info-circle mt-0.5 mr-3 text-blue-500' }),
             React.createElement('p', null, 
-                'Les 14 rôles système sont fixes (structure de base), mais ',
-                React.createElement('span', { className: 'font-semibold' }, 'leurs permissions sont modifiables'),
-                '.'
+                'Les rôles système sont fixes, mais ',
+                React.createElement('span', { className: 'font-semibold' }, 'vous pouvez créer des rôles personnalisés'),
+                ' avec leurs propres permissions pour répondre à des besoins spécifiques.'
             )
         ),
 

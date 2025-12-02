@@ -169,24 +169,7 @@ app.post('/', async (c) => {
     // Validation du slug (identifiant technique)
     const trimmedSlug = slug.trim();
 
-    // 🔒 BLOCAGE CRÉATION RÔLES: Seuls les rôles système prédéfinis sont autorisés
-    const SYSTEM_ROLES = [
-      'admin', 'supervisor', 'technician', 'operator',           // Rôles originaux
-      'director', 'coordinator', 'planner', 'senior_technician',  // Management & Technique
-      'team_leader', 'furnace_operator',                          // Production
-      'safety_officer', 'quality_inspector', 'storekeeper',       // Support
-      'viewer'                                                     // Lecture seule
-    ];
-
-    if (!SYSTEM_ROLES.includes(trimmedSlug)) {
-      return c.json({
-        error: 'Seuls les rôles système prédéfinis peuvent être créés',
-        reason: 'Application avec rôles système spécialisés pour l\'industrie',
-        details: 'Les 14 rôles système couvrent tous les besoins typiques.',
-        system_roles: SYSTEM_ROLES,
-        status: 'system_roles_only'
-      }, 403);
-    }
+    // Validation de base du slug
     if (trimmedSlug.length < LIMITS.NAME_MIN) {
       return c.json({ error: `Slug trop court (min ${LIMITS.NAME_MIN} caractères)` }, 400);
     }
