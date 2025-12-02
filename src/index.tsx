@@ -476,5 +476,3 @@ export default app;
 //   1. Cleanup subscriptions push inactives >30 jours
 //   2. Vérification tickets expirés (scheduled_date dépassée)
 export const scheduled = scheduledHandler.scheduled;
-�passée)
-export const scheduled = scheduledHandler.scheduled;
