@@ -6,7 +6,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { machines, tickets } from '../db/schema';
-import { adminOnly, technicianSupervisorOrAdmin } from '../middlewares/auth';
+import { adminOnly, requirePermission } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
 import { machineIdParamSchema, getMachinesQuerySchema, createMachineSchema, updateMachineSchema } from '../schemas/machines';
 import type { Bindings } from '../types';
@@ -77,7 +77,7 @@ machinesRoute.get('/:id', zValidator('param', machineIdParamSchema), async (c) =
 });
 
 // POST /api/machines - Créer une nouvelle machine (admin seulement)
-machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), async (c) => {
+machinesRoute.post('/', requirePermission('machines', 'create'), zValidator('json', createMachineSchema), async (c) => {
   try {
     const body = c.req.valid('json');
     const { machine_type, model, serial_number, location } = body;
@@ -100,7 +100,7 @@ machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), asyn
 });
 
 // PATCH /api/machines/:id - Mettre à jour une machine (admin seulement)
-machinesRoute.patch('/:id', technicianSupervisorOrAdmin, zValidator('param', machineIdParamSchema), zValidator('json', updateMachineSchema), async (c) => {
+machinesRoute.patch('/:id', requirePermission('machines', 'update'), zValidator('param', machineIdParamSchema), zValidator('json', updateMachineSchema), async (c) => {
   try {
     const { id } = c.req.valid('param');
     const body = c.req.valid('json');
@@ -133,7 +133,7 @@ machinesRoute.patch('/:id', technicianSupervisorOrAdmin, zValidator('param', mac
 });
 
 // DELETE /api/machines/:id - Supprimer une machine (admin seulement)
-machinesRoute.delete('/:id', adminOnly, zValidator('param', machineIdParamSchema), async (c) => {
+machinesRoute.delete('/:id', requirePermission('machines', 'delete'), zValidator('param', machineIdParamSchema), async (c) => {
   try {
     const { id } = c.req.valid('param');
     

@@ -1,6 +1,6 @@
 
 import { Hono } from 'hono';
-import { authMiddleware, supervisorOrAdmin } from '../middlewares/auth';
+import { authMiddleware, requirePermission } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
 import type { Bindings } from '../types';
 
@@ -12,7 +12,7 @@ stats.use('*', checkModule('statistics'));
 // ========================================
 // STATS API - Simple active tickets count
 // ========================================
-stats.get('/active-tickets', authMiddleware, supervisorOrAdmin, async (c) => {
+stats.get('/active-tickets', authMiddleware, requirePermission('stats', 'read'), async (c) => {
   try {
     // Count active tickets (not completed, not cancelled, not archived)
     const activeResult = await c.env.DB.prepare(`
@@ -59,7 +59,7 @@ stats.get('/active-tickets', authMiddleware, supervisorOrAdmin, async (c) => {
 // ========================================
 // STATS API - Technicians Performance
 // ========================================
-stats.get('/technicians-performance', authMiddleware, supervisorOrAdmin, async (c) => {
+stats.get('/technicians-performance', authMiddleware, requirePermission('stats', 'read'), async (c) => {
   try {
     // Get top 3 technicians by completed tickets (last 30 days)
     const topTechnicians = await c.env.DB.prepare(`
