@@ -43,6 +43,7 @@ export const homeHTML = `
     <script src="/static/js/components/ManageColumnsModal.js"></script>
     <script src="/static/js/components/RoleDropdown.js"></script>
     <script src="/static/js/components/SystemSettingsModal.js"></script>
+    <script src="/static/js/components/ProductionPlanning.js"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
     <script src="/static/js/components/OverdueTicketsModal.js"></script>
     <script src="/static/js/components/PushDevicesModal.js"></script>
