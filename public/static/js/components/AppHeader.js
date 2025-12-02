@@ -155,15 +155,15 @@ const AppHeader = ({
                 React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-between w-full md:w-auto md:justify-start mt-2 md:mt-0 flex-shrink-0" },
                     React.createElement('div', { className: "flex items-center gap-2 flex-wrap" },
                         React.createElement('p', { className: "text-xs font-extrabold text-blue-800 hidden lg:block" }, activeTicketsCount + " actifs"),
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
+                        hasPermission('tickets.read') && React.createElement('button', {
                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200',
                             onClick: onOpenOverdue, title: 'Tickets en retard'
                         }, React.createElement('i', { className: 'fas fa-clock mr-1' }), 'Retard'),
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
+                        hasPermission('stats.read') && React.createElement('button', {
                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200',
                             onClick: onOpenPerformance, title: 'Performance'
                         }, React.createElement('i', { className: 'fas fa-users-cog mr-1' }), React.createElement('span', { id: 'technicians-count-badge' }, 'Techs')),
-                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
+                        hasPermission('notifications.manage') && React.createElement('button', {
                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200',
                             onClick: onOpenPushDevices, title: 'Appareils'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }), React.createElement('span', { id: 'push-devices-badge' }, 'Apps')),
@@ -175,7 +175,7 @@ const AppHeader = ({
                     ),
                     React.createElement('div', { className: "flex items-center gap-2 flex-1 md:flex-none justify-end" },
                         
-                        React.createElement('button', {
+                        hasPermission('tickets.create') && React.createElement('button', {
                             onClick: onOpenCreateModal,
                             className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center justify-center border border-blue-500/30 mx-2'
                         }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Nouvelle Demande'),
@@ -204,7 +204,7 @@ const AppHeader = ({
             React.createElement('div', { 
                 className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100' : 'hidden')
             },
-                React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
+                hasPermission('tickets.create') && React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
                 activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
                     React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
                     (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
@@ -213,12 +213,12 @@ const AppHeader = ({
                     onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
                     className: 'px-3 py-1.5 text-sm rounded-md shadow-sm flex items-center gap-2 border ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
                 }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }), showArchived ? 'Masquer' : 'Archivés'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-users mr-2 text-indigo-600' }), currentUser?.role === 'technician' ? 'Équipe' : 'Utilisateurs'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-columns mr-2 text-gray-500' }), 'Colonnes'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-500' }), 'Planning'),
-                (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
-                (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
+                hasPermission('users.read') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-users mr-2 text-indigo-600' }), currentUser?.role === 'technician' ? 'Équipe' : 'Utilisateurs'),
+                hasPermission('machines.read') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
+                hasPermission('settings.manage') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-columns mr-2 text-gray-500' }), 'Colonnes'),
+                hasPermission('planning.read') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-500' }), 'Planning'),
+                hasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
+                hasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
                 React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-blue-700 transition' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),
                 React.createElement('button', { onClick: onLogout, className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-gray-700 transition' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Déconnexion')
             )

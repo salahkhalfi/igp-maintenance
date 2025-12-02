@@ -21,6 +21,13 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     // Gestion des modules (Feature Flipping)
     const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
 
+    // Helper pour vérifier les permissions
+    const hasPermission = (permission) => {
+        if (!currentUser) return false;
+        if (currentUser.role === 'admin' || currentUser.is_super_admin || currentUser.isSuperAdmin) return true;
+        return currentUser.permissions && currentUser.permissions.includes(permission);
+    };
+
     React.useEffect(() => {
         if (currentUser) {
             // Charger la configuration des modules
@@ -265,6 +272,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         React.createElement(AppHeader, {
             currentUser,
             activeModules, // Pass modules to Header
+            hasPermission, // Pass permission helper
             activeTicketsCount: getActiveTicketsCount(),
             unreadMessagesCount,
             headerTitle,
@@ -350,6 +358,11 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         // Bouton Scroll Top
         showScrollTop ? React.createElement('button', {
             onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+            className: 'fixed bottom-8 right-8 z-50 bg-blue-600 text-white rounded-full p-4 shadow-2xl hover:bg-blue-700 transition-all'
+        }, React.createElement('i', { className: 'fas fa-arrow-up' })) : null
+    );
+};
+op: 0, behavior: 'smooth' }),
             className: 'fixed bottom-8 right-8 z-50 bg-blue-600 text-white rounded-full p-4 shadow-2xl hover:bg-blue-700 transition-all'
         }, React.createElement('i', { className: 'fas fa-arrow-up' })) : null
     );

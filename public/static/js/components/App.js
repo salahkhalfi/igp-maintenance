@@ -125,8 +125,15 @@ const App = () => {
         try {
             const response = await axios.post(API_URL + '/auth/login', { email, password, rememberMe });
             authToken = response.data.token;
-            currentUser = response.data.user;
-            setCurrentUserState(response.data.user);
+            
+            // Merge user and permissions
+            const userData = {
+                ...response.data.user,
+                permissions: response.data.permissions || []
+            };
+            
+            currentUser = userData;
+            setCurrentUserState(userData);
             
             // ✅ Pour backward compatibility: garder le token en localStorage pour API calls
             localStorage.setItem('auth_token', authToken);
