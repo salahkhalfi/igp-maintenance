@@ -8,6 +8,9 @@ app.get('/', async (c) => {
     const user = c.get('user');
     // console.log('Planning User:', user); // Debug log
 
+    // Disable caching for this critical data
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+
     try {
         const { results: events } = await c.env.DB.prepare('SELECT * FROM planning_events ORDER BY date ASC').all();
         const { results: categories } = await c.env.DB.prepare('SELECT * FROM planning_categories').all();

@@ -29,14 +29,21 @@ const ProductionPlanning = ({ onClose }) => {
 
     // LOAD DATA FROM API
     React.useEffect(() => {
-        axios.get('/api/planning')
+        // Ajouter un timestamp pour éviter le cache navigateur/proxy
+        axios.get('/api/planning?t=' + Date.now())
             .then(res => {
                 const data = res.data;
-                if (data.categories) setCategories(data.categories);
+                if (data.categories && Array.isArray(data.categories)) {
+                    setCategories(data.categories);
+                }
                 if (data.events) setEvents(data.events);
                 if (data.notes) setPlannerNotes(data.notes);
             })
-            .catch(err => console.error('Error loading planning data:', err));
+            .catch(err => {
+                console.error('Error loading planning data:', err);
+                // Fallback visuel en cas d'erreur (optionnel, mais utile pour debug mobile)
+                // alert("Erreur de chargement des données planning"); 
+            });
     }, []);
 
     // HELPERS FOR STYLES & ICONS
