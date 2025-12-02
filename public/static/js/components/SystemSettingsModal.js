@@ -26,7 +26,9 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [modules, setModules] = React.useState({
         planning: true,
         analytics: true,
-        notifications: true
+        notifications: true,
+        messaging: true,
+        machines: true
     });
 
     React.useEffect(() => {
@@ -525,6 +527,52 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600" })
                                     ) : React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-bold ${modules.notifications ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}` },
                                         modules.notifications ? 'ACTIVÉ' : 'NON INCLUS'
+                                    )
+                                ),
+                                // Module Messagerie & Collaboration
+                                React.createElement('div', { className: 'flex items-center justify-between p-3 bg-white border rounded-lg' },
+                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                        React.createElement('div', { className: `w-10 h-10 rounded-full flex items-center justify-center ${modules.messaging ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-400'}` },
+                                            React.createElement('i', { className: 'fas fa-comments' })
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('h4', { className: 'font-bold text-gray-800' }, "Collaboration Pro"),
+                                            React.createElement('p', { className: 'text-xs text-gray-500' }, "Messagerie privée, Audio, Chat.")
+                                        )
+                                    ),
+                                    isSuperAdmin ? React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
+                                        React.createElement('input', {
+                                            type: 'checkbox',
+                                            className: 'sr-only peer',
+                                            checked: modules.messaging || false,
+                                            onChange: () => toggleModule('messaging')
+                                        }),
+                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600" })
+                                    ) : React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-bold ${modules.messaging ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}` },
+                                        modules.messaging ? 'ACTIVÉ' : 'NON INCLUS'
+                                    )
+                                ),
+                                // Module Parc Machines
+                                React.createElement('div', { className: 'flex items-center justify-between p-3 bg-white border rounded-lg' },
+                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                        React.createElement('div', { className: `w-10 h-10 rounded-full flex items-center justify-center ${modules.machines ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}` },
+                                            React.createElement('i', { className: 'fas fa-industry' })
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('h4', { className: 'font-bold text-gray-800' }, "Gestion Machines"),
+                                            React.createElement('p', { className: 'text-xs text-gray-500' }, "Parc équipements, historique, QR.")
+                                        )
+                                    ),
+                                    isSuperAdmin ? React.createElement('label', { className: 'relative inline-flex items-center cursor-pointer' },
+                                        React.createElement('input', {
+                                            type: 'checkbox',
+                                            className: 'sr-only peer',
+                                            checked: modules.machines || false,
+                                            onChange: () => toggleModule('machines')
+                                        }),
+                                        React.createElement('div', { className: "w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600" })
+                                    ) : React.createElement('span', { className: `px-3 py-1 rounded-full text-xs font-bold ${modules.machines ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}` },
+                                        modules.machines ? 'ACTIVÉ' : 'NON INCLUS'
                                     )
                                 )
                             )

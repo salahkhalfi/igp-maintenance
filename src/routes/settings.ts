@@ -349,7 +349,9 @@ settings.get('/modules', authMiddleware, async (c) => {
     const defaultModules = {
       planning: true,
       statistics: true,
-      notifications: true
+      notifications: true,
+      messaging: true,
+      machines: true
     };
 
     if (!result || !result.setting_value) {

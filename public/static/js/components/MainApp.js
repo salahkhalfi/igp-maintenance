@@ -19,7 +19,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showProductionPlanning, setShowProductionPlanning] = React.useState(false);
 
     // Gestion des modules (Feature Flipping)
-    const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true });
+    const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
 
     React.useEffect(() => {
         if (currentUser) {
@@ -280,8 +280,22 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onLogout: () => { onLogout(); setShowMobileMenu(false); },
             onSearch: () => {}, // Search géré en interne dans AppHeader
             onOpenCreateModal: () => { setShowCreateModal(true); setShowMobileMenu(false); },
-            onOpenMessaging: () => { setShowMessaging(true); setShowMobileMenu(false); },
-            onOpenMachineManagement: () => { setShowMachineManagement(true); setShowMobileMenu(false); },
+            onOpenMessaging: () => { 
+                if (activeModules.messaging) {
+                    setShowMessaging(true); 
+                } else {
+                    alert("Le module 'Collaboration Pro' (Messagerie) n'est pas activé.");
+                }
+                setShowMobileMenu(false); 
+            },
+            onOpenMachineManagement: () => { 
+                if (activeModules.machines) {
+                    setShowMachineManagement(true); 
+                } else {
+                    alert("Le module 'Gestion Machines' n'est pas activé.");
+                }
+                setShowMobileMenu(false); 
+            },
             onOpenPerformance: () => { setShowPerformanceModal(true); setShowMobileMenu(false); },
             onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
             onOpenPushDevices: () => { setShowPushDevicesModal(true); setShowMobileMenu(false); },

@@ -23,7 +23,7 @@ const AppHeader = ({
     onOpenAdminRoles,
     onOpenPlanning,
     onOpenDetails,
-    activeModules = { planning: true } // Default
+    activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true } // Default
 }) => {
     // Search state
     const [searchQuery, setSearchQuery] = React.useState('');
@@ -119,8 +119,8 @@ const AppHeader = ({
                     React.createElement('div', { className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50' },
                         React.createElement('span', { className: 'text-xs font-medium text-blue-700' }, '👋 ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
                     ),
-                    // Mobile Messaging Icon & Badge (Always visible)
-                    React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2 relative' },
+                    // Mobile Messaging Icon & Badge (Always visible IF enabled)
+                    activeModules.messaging && React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2 relative' },
                         React.createElement('button', {
                             onClick: onOpenMessaging,
                             className: 'w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100 shadow-sm active:scale-95 transition'
@@ -167,8 +167,8 @@ const AppHeader = ({
                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200',
                             onClick: onOpenPushDevices, title: 'Appareils'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }), React.createElement('span', { id: 'push-devices-badge' }, 'Apps')),
-                        // Desktop Only Badge
-                        (unreadMessagesCount > 0) && React.createElement('div', {
+                        // Desktop Only Badge IF enabled
+                        (activeModules.messaging && unreadMessagesCount > 0) && React.createElement('div', {
                             className: "hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg cursor-pointer bg-red-600 animate-pulse hover:bg-red-700",
                             onClick: onOpenMessaging, title: unreadMessagesCount + " messages"
                         }, React.createElement('i', { className: "fas fa-envelope text-white text-xs" }), React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount))
@@ -205,7 +205,7 @@ const AppHeader = ({
                 className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100' : 'hidden')
             },
                 React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
-                React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
+                activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
                     React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
                     (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
                 ),
@@ -214,7 +214,7 @@ const AppHeader = ({
                     className: 'px-3 py-1.5 text-sm rounded-md shadow-sm flex items-center gap-2 border ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
                 }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }), showArchived ? 'Masquer' : 'Archivés'),
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor' || currentUser?.role === 'technician') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-users mr-2 text-indigo-600' }), currentUser?.role === 'technician' ? 'Équipe' : 'Utilisateurs'),
-                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
+                (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-columns mr-2 text-gray-500' }), 'Colonnes'),
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-500' }), 'Planning'),
                 (currentUser?.role === 'admin') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
