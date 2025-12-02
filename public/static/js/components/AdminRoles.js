@@ -168,8 +168,8 @@ const StatsCard = ({ title, value, icon }) => {
 const RoleCard = ({ role, onEdit, onView, onDelete }) => {
     const isSystem = role.is_system === 1;
     
-    // Subtle color coding border
-    const colorBorderClass = isSystem ? 'border-l-4 border-purple-500' : 'border-l-4 border-blue-500';
+    // Subtle color coding border - System is now Slate (Dark Gray) instead of Purple
+    const colorBorderClass = isSystem ? 'border-l-4 border-slate-600' : 'border-l-4 border-blue-500';
 
     return React.createElement('div', { className: `bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col ${colorBorderClass}` },
         // Header
@@ -178,7 +178,7 @@ const RoleCard = ({ role, onEdit, onView, onDelete }) => {
                 React.createElement('h3', { className: 'text-lg font-bold text-gray-900' }, role.name),
                 React.createElement('p', { className: 'text-xs text-gray-400 font-mono mt-1' }, role.slug)
             ),
-            isSystem && React.createElement('span', { className: 'bg-purple-50 text-purple-700 text-[10px] px-2 py-1 rounded font-semibold uppercase tracking-wide' }, 'Système')
+            isSystem && React.createElement('span', { className: 'bg-slate-100 text-slate-700 text-[10px] px-2 py-1 rounded font-semibold uppercase tracking-wide border border-slate-200' }, 'Système')
         ),
         
         // Body
