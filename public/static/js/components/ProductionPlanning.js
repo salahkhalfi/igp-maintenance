@@ -16,8 +16,16 @@ const ProductionPlanning = ({ onClose }) => {
     
     const [activeFilter, setActiveFilter] = React.useState('all');
     
-    // CATEGORIES STATE
-    const [categories, setCategories] = React.useState([]);
+    // CATEGORIES STATE - Init with defaults to prevent "empty screen" syndrome
+    const DEFAULT_CATEGORIES = [
+        { id: 'cut', label: 'Mise en Prod', icon: 'fa-layer-group', color: 'blue' },
+        { id: 'ship', label: 'Expéditions', icon: 'fa-truck', color: 'green' },
+        { id: 'maintenance', label: 'Maintenance', icon: 'fa-tools', color: 'red' },
+        { id: 'reminder', label: 'Rappel / Note', icon: 'fa-info-circle', color: 'yellow' },
+        { id: 'blocked', label: 'Bloqué', icon: 'fa-ban', color: 'red' }
+    ];
+
+    const [categories, setCategories] = React.useState(DEFAULT_CATEGORIES);
     const [showCategoryModal, setShowCategoryModal] = React.useState(false);
     const [editingCategory, setEditingCategory] = React.useState(null);
 
@@ -33,9 +41,11 @@ const ProductionPlanning = ({ onClose }) => {
         axios.get('/api/planning?t=' + Date.now())
             .then(res => {
                 const data = res.data;
-                if (data.categories && Array.isArray(data.categories)) {
+                if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
                     setCategories(data.categories);
                 }
+                // If empty from API, we keep the defaults (fail-safe)
+                
                 if (data.events) setEvents(data.events);
                 if (data.notes) setPlannerNotes(data.notes);
             })
