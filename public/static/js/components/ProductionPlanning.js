@@ -1,136 +1,182 @@
 const ProductionPlanning = ({ onClose }) => {
-    // Données simulées pour l'Industrie du Verre (IGP Glass)
-    const machines = [
-        { id: 1, name: 'Table de Coupe (Jumbo)', category: 'cut' },
-        { id: 2, name: 'Façonnage Rectiligne', category: 'edge' },
-        { id: 3, name: 'Centre Usinage (CNC)', category: 'cnc' },
-        { id: 4, name: 'Four de Trempe', category: 'temp' },
-        { id: 5, name: 'Ligne Thermos (IGU)', category: 'igu' },
-        { id: 6, name: 'Quai Expédition', category: 'ship' },
+    // État pour le mois affiché (Simulé pour Décembre 2025)
+    const currentMonthName = "Décembre 2025";
+    
+    // Données du Calendrier (Les "Post-it" virtuels du planificateur)
+    const calendarEvents = [
+        // SEMAINE 1
+        { date: 1, type: 'cut', title: 'Lancer Coupe: Vitrerie MTL (PO#4402)', client: 'Vitrerie MTL' },
+        { date: 3, type: 'ship', title: 'LIVRAISON: Projet Tour Condo', client: 'Groupe Mach', details: '2 Chevalets - Camion A' },
+        { date: 4, type: 'reminder', title: 'Commander: 19mm Extra-Clair', details: 'Pour projet Lobby' },
+        
+        // SEMAINE 2
+        { date: 8, type: 'cut', title: 'Lancer Coupe: Douches Bain Dépôt', client: 'Bain Dépôt' },
+        { date: 9, type: 'maintenance', title: 'ARRÊT FOUR PRÉVU (8h-12h)', details: 'Technicien Externe' },
+        { date: 10, type: 'ship', title: 'LIVRAISON: Vitrerie MTL', client: 'Vitrerie MTL' },
+        { date: 12, type: 'ship', title: 'LIVRAISON: Bain Dépôt (Lot 1)', client: 'Bain Dépôt' },
+
+        // SEMAINE 3
+        { date: 15, type: 'cut', title: 'Lancer Coupe: Garde-corps Stade', client: 'Const. B' },
+        { date: 18, type: 'reminder', title: 'Inventaire Fin d\'année', details: 'Préparer feuilles comptage' },
+        { date: 19, type: 'ship', title: 'LIVRAISON: Garde-corps Stade', client: 'Const. B' },
     ];
 
-    const hours = Array.from({ length: 13 }, (_, i) => i + 6); // 06:00 à 18:00
-
-    // Simulation de Planning de Production + Impact Maintenance
-    const events = [
-        // --- MAINTENANCE (Le bloquant) ---
-        { machineId: 4, start: 8, duration: 3, type: 'maintenance', title: 'Arrêt : Remplacement Rouleaux Céramique', color: 'bg-red-600 border-red-800 pattern-diagonal' },
-        
-        // --- PRODUCTION (Le flux) ---
-        
-        // COUPE
-        { machineId: 1, start: 6, duration: 4, type: 'prod', title: 'PO#4402 - Vitrerie MTL - 6mm Clair (50 feuilles)', color: 'bg-blue-600', client: 'Vitrerie MTL' },
-        { machineId: 1, start: 11, duration: 5, type: 'prod', title: 'PO#4405 - Construction B - 10mm Low-E', color: 'bg-blue-500', client: 'Const. B' },
-
-        // FAÇONNAGE
-        { machineId: 2, start: 7, duration: 6, type: 'prod', title: 'PO#4402 - Polissage Joint Plat', color: 'bg-indigo-500', client: 'Vitrerie MTL' },
-
-        // CNC (Usinage)
-        { machineId: 3, start: 9, duration: 4, type: 'prod', title: 'PO#4399 - Douches (Encoches Charnières)', color: 'bg-purple-600', client: 'Bain Dépôt' },
-
-        // TREMPE (Bloqué partiellement par maintenance)
-        { machineId: 4, start: 6, duration: 2, type: 'prod', title: 'PO#4390 - Garde-corps 12mm', color: 'bg-orange-600', client: 'Rampes Express' },
-        // ... trou de 8h à 11h à cause de la maintenance ...
-        { machineId: 4, start: 11.5, duration: 4, type: 'prod', title: 'PO#4399 - Portes de Douche (Suite)', color: 'bg-orange-500', client: 'Bain Dépôt' },
-
-        // LIGNE THERMOS (IGU)
-        { machineId: 5, start: 7, duration: 8, type: 'prod', title: 'PO#4400 - Projet Tour Condo (Argon/Intercalaire Noir)', color: 'bg-teal-600', client: 'Groupe Mach' },
-
-        // EXPÉDITION
-        { machineId: 6, start: 10, duration: 1, type: 'ship', title: 'Chargement Camion A - Tour Condo', color: 'bg-green-600', client: 'Groupe Mach' },
-        { machineId: 6, start: 14, duration: 1, type: 'ship', title: 'Ramassage Client - Vitrerie MTL', color: 'bg-green-700', client: 'Vitrerie MTL' },
+    // Liste "Aide-Mémoire" (To-Do List du Planificateur)
+    const plannerNotes = [
+        { id: 1, text: 'Vérifier disponibilité chevalets L pour mardi', done: false },
+        { id: 2, text: 'Confirmer rdv transporteur Projet Mach', done: true },
+        { id: 3, text: 'Relancer fournisseur pour délai intercalaire noir', done: false },
+        { id: 4, text: 'Valider séquence trempe avec Superviseur', done: false },
     ];
 
-    return React.createElement('div', { className: 'fixed inset-0 z-[150] bg-gray-50 flex flex-col animate-fadeIn' },
-        // Header
-        React.createElement('div', { className: 'bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm' },
+    // Génération de la grille du calendrier (Mois fictif commençant un Lundi)
+    const daysInMonth = 31;
+    const startDayOffset = 0; // Lundi = 0
+    const days = Array.from({ length: daysInMonth + startDayOffset }, (_, i) => {
+        const dayNum = i - startDayOffset + 1;
+        return dayNum > 0 ? dayNum : null;
+    });
+
+    const getEventsForDay = (day) => calendarEvents.filter(e => e.date === day);
+
+    const getTypeStyle = (type) => {
+        switch(type) {
+            case 'ship': return 'bg-green-100 text-green-800 border-l-4 border-green-600'; // L'argent rentre
+            case 'cut': return 'bg-blue-100 text-blue-800 border-l-4 border-blue-600'; // L'action commence
+            case 'maintenance': return 'bg-red-100 text-red-800 border-l-4 border-red-600'; // Blocage
+            case 'reminder': return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500'; // Note
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getIcon = (type) => {
+        switch(type) {
+            case 'ship': return 'fa-truck-loading';
+            case 'cut': return 'fa-layer-group';
+            case 'maintenance': return 'fa-tools';
+            case 'reminder': return 'fa-sticky-note';
+            default: return 'fa-circle';
+        }
+    };
+
+    return React.createElement('div', { className: 'fixed inset-0 z-[150] bg-gray-100 flex flex-col animate-fadeIn' },
+        // HEADER
+        React.createElement('div', { className: 'bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm flex-shrink-0' },
             React.createElement('div', null,
-                React.createElement('div', { className: 'flex items-center gap-3' },
-                    React.createElement('div', { className: 'bg-blue-600 text-white p-2 rounded-lg' },
-                        React.createElement('i', { className: 'fas fa-industry' })
-                    ),
-                    React.createElement('div', null,
-                        React.createElement('h1', { className: 'text-xl font-bold text-slate-800' }, 'Planning Maître de Production'),
-                        React.createElement('p', { className: 'text-xs text-slate-500' }, 'Vue consolidée : Commandes Clients vs Capacité Machine')
-                    )
-                )
+                React.createElement('h1', { className: 'text-2xl font-bold text-slate-800 flex items-center gap-3' },
+                    React.createElement('i', { className: 'far fa-calendar-alt text-blue-600' }),
+                    'Planning & Échéancier'
+                ),
+                React.createElement('p', { className: 'text-sm text-slate-500 mt-1' }, 'Vue globale des mises en production et expéditions')
             ),
-            React.createElement('button', {
-                onClick: onClose,
-                className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition shadow-sm text-sm'
-            }, 'Fermer')
-        ),
-
-        // KPIs / Légende
-        React.createElement('div', { className: 'bg-white border-b px-6 py-3 flex gap-6 items-center text-sm overflow-x-auto' },
-            React.createElement('div', { className: 'flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full' },
-                React.createElement('i', { className: 'fas fa-cut text-blue-600' }),
-                React.createElement('span', { className: 'font-bold text-blue-900' }, 'Coupe : 850m²')
-            ),
-            React.createElement('div', { className: 'flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-100 rounded-full' },
-                React.createElement('i', { className: 'fas fa-fire text-orange-600' }),
-                React.createElement('span', { className: 'font-bold text-orange-900' }, 'Trempe : 320 pcs')
-            ),
-            React.createElement('div', { className: 'h-6 w-px bg-gray-200' }),
-            React.createElement('div', { className: 'flex items-center gap-2' },
-                React.createElement('div', { className: 'w-3 h-3 bg-red-600 rounded-sm' }),
-                React.createElement('span', { className: 'text-gray-600' }, 'Arrêt Maintenance')
-            ),
-            React.createElement('div', { className: 'flex items-center gap-2' },
-                React.createElement('div', { className: 'w-3 h-3 bg-green-600 rounded-sm' }),
-                React.createElement('span', { className: 'text-gray-600' }, 'Expédition')
+            React.createElement('div', { className: 'flex items-center gap-4' },
+                React.createElement('div', { className: 'flex bg-gray-100 rounded-lg p-1' },
+                    React.createElement('button', { className: 'px-4 py-1.5 bg-white shadow-sm rounded-md text-sm font-bold text-slate-700' }, 'Mois'),
+                    React.createElement('button', { className: 'px-4 py-1.5 text-slate-500 text-sm font-medium hover:bg-gray-200 rounded-md transition' }, 'Semaine')
+                ),
+                React.createElement('button', {
+                    onClick: onClose,
+                    className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition shadow-sm text-sm'
+                }, 'Fermer')
             )
         ),
 
-        // Main Gantt Area
-        React.createElement('div', { className: 'flex-1 overflow-auto p-6' },
-            React.createElement('div', { className: 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-w-[1200px]' },
+        // MAIN CONTENT (GRID + SIDEBAR)
+        React.createElement('div', { className: 'flex-1 flex overflow-hidden' },
+            
+            // CALENDAR GRID (Left - 75%)
+            React.createElement('div', { className: 'flex-1 flex flex-col bg-white border-r border-gray-200' },
+                // Month Navigation
+                React.createElement('div', { className: 'p-4 flex justify-between items-center border-b' },
+                    React.createElement('button', { className: 'text-slate-400 hover:text-slate-700' }, React.createElement('i', { className: 'fas fa-chevron-left text-xl' })),
+                    React.createElement('h2', { className: 'text-xl font-bold text-slate-800' }, currentMonthName),
+                    React.createElement('button', { className: 'text-slate-400 hover:text-slate-700' }, React.createElement('i', { className: 'fas fa-chevron-right text-xl' }))
+                ),
                 
-                // Timeline Header
-                React.createElement('div', { className: 'grid grid-cols-[250px_repeat(13,1fr)] border-b bg-slate-50 text-slate-600' },
-                    React.createElement('div', { className: 'p-3 font-bold text-xs uppercase tracking-wide border-r flex items-center' }, 'Poste de Charge'),
-                    hours.map(h => 
-                        React.createElement('div', { key: h, className: 'p-3 text-center text-xs font-mono border-r last:border-r-0' }, `${h}:00`)
+                // Days Header
+                React.createElement('div', { className: 'grid grid-cols-7 border-b bg-slate-50' },
+                    ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(day => 
+                        React.createElement('div', { key: day, className: 'p-2 text-center text-xs font-bold text-slate-500 uppercase tracking-wide' }, day)
                     )
                 ),
 
-                // Rows
-                machines.map((machine, mIdx) => 
-                    React.createElement('div', { key: machine.id, className: `grid grid-cols-[250px_repeat(13,1fr)] border-b last:border-b-0 hover:bg-slate-50 transition ${mIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}` },
-                        // Machine Name
-                        React.createElement('div', { className: 'p-4 border-r flex flex-col justify-center' },
-                            React.createElement('span', { className: 'font-bold text-slate-700 text-sm' }, machine.name),
-                            React.createElement('span', { className: 'text-xs text-slate-400' }, `Capacité: 100%`)
-                        ),
-                        
-                        // Grid Cells
-                        React.createElement('div', { className: 'col-span-13 grid grid-cols-13 relative h-20' },
-                            // Vertical Lines (Heures)
-                            Array.from({ length: 13 }).map((_, i) => 
-                                React.createElement('div', { key: i, className: 'border-r border-slate-100 h-full pointer-events-none' })
-                            ),
-
-                            // Events
-                            events.filter(e => e.machineId === machine.id).map((evt, idx) => 
-                                React.createElement('div', {
-                                    key: idx,
-                                    className: `absolute top-2 bottom-2 rounded-md shadow-sm flex flex-col justify-center px-3 text-white text-xs cursor-pointer hover:brightness-110 transition overflow-hidden ${evt.color}`,
-                                    style: {
-                                        left: `${(evt.start - 6) * (100/13)}%`,
-                                        width: `${evt.duration * (100/13)}%`,
-                                        opacity: evt.type === 'maintenance' ? 1 : 0.9
-                                    },
-                                    title: evt.title
-                                }, 
-                                    evt.type === 'maintenance' && React.createElement('div', { className: 'flex items-center gap-1 font-bold text-yellow-200 mb-0.5' },
-                                        React.createElement('i', { className: 'fas fa-exclamation-triangle' }),
-                                        'MAINTENANCE'
+                // Calendar Cells
+                React.createElement('div', { className: 'grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto' },
+                    days.map((day, idx) => {
+                        const dayEvents = day ? getEventsForDay(day) : [];
+                        return React.createElement('div', { 
+                            key: idx, 
+                            className: `min-h-[120px] border-b border-r p-2 hover:bg-slate-50 transition flex flex-col gap-1 ${!day ? 'bg-slate-50/50' : ''}` 
+                        },
+                            day && React.createElement('span', { className: `text-sm font-bold mb-1 ${[6,7,13,14,20,21,27,28].includes(idx+1) ? 'text-red-400' : 'text-slate-700'}` }, day),
+                            dayEvents.map((evt, eIdx) => 
+                                React.createElement('div', { 
+                                    key: eIdx, 
+                                    className: `text-xs p-1.5 rounded shadow-sm mb-1 cursor-pointer hover:brightness-95 ${getTypeStyle(evt.type)}`,
+                                    title: evt.details || evt.title
+                                },
+                                    React.createElement('div', { className: 'flex items-center gap-1.5 font-bold' },
+                                        React.createElement('i', { className: `fas ${getIcon(evt.type)} text-[10px] opacity-70` }),
+                                        React.createElement('span', { className: 'truncate' }, evt.type === 'ship' ? 'EXP:' : evt.type === 'cut' ? 'PROD:' : '')
                                     ),
-                                    React.createElement('span', { className: 'font-bold truncate' }, evt.title),
-                                    evt.client && React.createElement('span', { className: 'text-[10px] opacity-90 truncate' }, evt.client)
+                                    React.createElement('div', { className: 'truncate mt-0.5' }, evt.title),
+                                    evt.client && React.createElement('div', { className: 'text-[10px] opacity-80 truncate' }, evt.client)
                                 )
                             )
+                        );
+                    })
+                )
+            ),
+
+            // SIDEBAR "AIDE-MÉMOIRE" (Right - 25%)
+            React.createElement('div', { className: 'w-80 bg-slate-50 border-l border-gray-200 flex flex-col shadow-inner z-10' },
+                React.createElement('div', { className: 'p-5 bg-white border-b' },
+                    React.createElement('h3', { className: 'font-bold text-slate-800 flex items-center gap-2' },
+                        React.createElement('i', { className: 'fas fa-clipboard-list text-yellow-500' }),
+                        'Aide-Mémoire'
+                    ),
+                    React.createElement('p', { className: 'text-xs text-slate-500 mt-1' }, 'Notes rapides et tâches planning')
+                ),
+                
+                React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3' },
+                    plannerNotes.map(note => 
+                        React.createElement('div', { key: note.id, className: 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-blue-300 transition' },
+                            React.createElement('div', { 
+                                className: `mt-1 w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${note.done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`,
+                            }, note.done && React.createElement('i', { className: 'fas fa-check text-white text-xs' })),
+                            React.createElement('span', { className: `text-sm leading-snug ${note.done ? 'text-gray-400 line-through' : 'text-gray-700'}` }, note.text)
                         )
+                    ),
+                    
+                    // Add Note Input
+                    React.createElement('div', { className: 'mt-4 pt-4 border-t border-gray-200' },
+                        React.createElement('div', { className: 'relative' },
+                            React.createElement('input', { 
+                                type: 'text', 
+                                placeholder: 'Ajouter une note...',
+                                className: 'w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500'
+                            }),
+                            React.createElement('button', { className: 'absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700' },
+                                React.createElement('i', { className: 'fas fa-plus-circle' })
+                            )
+                        )
+                    )
+                ),
+
+                // Legend
+                React.createElement('div', { className: 'p-4 border-t bg-white text-xs text-gray-500 space-y-2' },
+                    React.createElement('p', { className: 'font-bold mb-2 text-gray-700' }, 'Légende :'),
+                    React.createElement('div', { className: 'flex items-center gap-2' },
+                        React.createElement('div', { className: 'w-3 h-3 bg-green-100 border border-green-600 rounded' }),
+                        'Livraison / Expédition ($)'
+                    ),
+                    React.createElement('div', { className: 'flex items-center gap-2' },
+                        React.createElement('div', { className: 'w-3 h-3 bg-blue-100 border border-blue-600 rounded' }),
+                        'Mise en Production'
+                    ),
+                    React.createElement('div', { className: 'flex items-center gap-2' },
+                        React.createElement('div', { className: 'w-3 h-3 bg-red-100 border border-red-600 rounded' }),
+                        'Arrêt Maintenance'
                     )
                 )
             )
