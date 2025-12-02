@@ -17,6 +17,51 @@ const RECOMMENDED_HEIGHT = 80;
 // ============================================================================
 
 /**
+ * POST /api/settings/trigger-cleanup - Déclenchement manuel du "Concierge"
+ * Accès: Administrateurs (admin role) uniquement
+ * Proxy vers la logique de nettoyage (Janitor)
+ */
+settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
+  try {
+    const now = new Date();
+    console.log('🧹 MANUAL Janitor Triggered by Admin:', now.toISOString());
+
+    // Note: Idéalement, on factoriserait la logique de nettoyage dans un service partagé (utils/cleanup.ts)
+    // pour éviter la duplication avec cron.ts. Pour l'instant, on duplique pour la rapidité du fix.
+    
+    // 1. Nettoyer les événements de planning passés (> 3 mois)
+    const planningResult = await c.env.DB.prepare(`
+      DELETE FROM planning_events 
+      WHERE date < date('now', '-3 months')
+    `).run();
+    
+    // 2. Nettoyer les notes personnelles terminées (> 30 jours)
+    const notesResult = await c.env.DB.prepare(`
+      DELETE FROM planner_notes 
+      WHERE done = 1 
+      AND created_at < datetime('now', '-30 days')
+    `).run();
+
+    // 3. Optimisation de la base de données (VACUUM)
+    await c.env.DB.prepare('PRAGMA optimize').run();
+
+    return c.json({
+        success: true,
+        message: "Nettoyage manuel terminé avec succès",
+        deleted: {
+            planning_events: planningResult.meta.changes,
+            notes: notesResult.meta.changes
+        },
+        timestamp: now.toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Manual Janitor Error:', error);
+    return c.json({ error: 'Erreur lors du nettoyage manuel', details: error instanceof Error ? error.message : 'Unknown' }, 500);
+  }
+});
+
+/**
  * POST /api/settings/upload-logo - Upload du logo de l'entreprise
  * Accès: Administrateurs (admin role)
  * Dimensions recommandées: 200x80 pixels (ratio 2.5:1)

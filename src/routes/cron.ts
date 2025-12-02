@@ -118,8 +118,8 @@ cron.post('/check-overdue', async (c) => {
           SELECT id, sent_at, scheduled_date_notified
           FROM webhook_notifications
           WHERE ticket_id = ?
-            AND scheduled_date_notified = ?
-            AND notification_type = 'overdue_scheduled'
+          AND scheduled_date_notified = ?
+          AND notification_type = 'overdue_scheduled'
           ORDER BY sent_at DESC
           LIMIT 1
         `).bind(ticket.id, ticket.scheduled_date).first();
@@ -479,6 +479,52 @@ cron.post('/cleanup-push-tokens', async (c) => {
       error: 'Erreur lors du nettoyage des subscriptions', 
       details: error instanceof Error ? error.message : 'Erreur inconnue'
     }, 500);
+  }
+});
+
+// POST /api/cron/cleanup-old-data - Nettoyage Général ("Janitor")
+// Route publique CRON sécurisée par CRON_SECRET token
+cron.post('/cleanup-old-data', async (c) => {
+  try {
+    const authHeader = c.req.header('Authorization');
+    const expectedToken = c.env.CRON_SECRET;
+
+    if (authHeader !== expectedToken) {
+      return c.json({ error: 'Unauthorized - Invalid CRON token' }, 401);
+    }
+
+    const now = new Date();
+    console.log('🧹 CRON Janitor démarré:', now.toISOString());
+
+    // 1. Nettoyer les événements de planning passés (> 3 mois)
+    const planningResult = await c.env.DB.prepare(`
+      DELETE FROM planning_events 
+      WHERE date < date('now', '-3 months')
+    `).run();
+    
+    // 2. Nettoyer les notes personnelles terminées (> 30 jours)
+    const notesResult = await c.env.DB.prepare(`
+      DELETE FROM planner_notes 
+      WHERE done = 1 
+      AND created_at < datetime('now', '-30 days')
+    `).run();
+
+    // 3. Optimisation de la base de données (VACUUM)
+    await c.env.DB.prepare('PRAGMA optimize').run();
+
+    return c.json({
+        success: true,
+        message: "Nettoyage et optimisation effectués",
+        deleted: {
+            planning_events: planningResult.meta.changes,
+            notes: notesResult.meta.changes
+        },
+        timestamp: now.toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ CRON Janitor Error:', error);
+    return c.json({ error: 'Erreur Janitor', details: error instanceof Error ? error.message : 'Unknown' }, 500);
   }
 });
 

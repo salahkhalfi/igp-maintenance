@@ -270,6 +270,37 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
+    // Fonction pour lancer le nettoyage (Janitor) manuel
+    const [cleaning, setCleaning] = React.useState(false);
+    const handleManualCleanup = async () => {
+        if (!confirm('Lancer le nettoyage manuel ?\n\nCela supprimera :\n- Événements > 3 mois\n- Notes terminées > 30 jours\n- Et optimisera la base de données.')) return;
+
+        setCleaning(true);
+        try {
+            // On utilise le token CRON_SECRET injecté côté serveur, 
+            // mais ici c'est un appel client. 
+            // Il faut soit un endpoint admin sécurisé par Auth (user), soit on expose une route admin/cleanup.
+            // Option choisie : Route admin sécurisée qui appelle la logique du janitor
+            // Wait, la route /api/cron/cleanup-old-data demande le CRON_SECRET.
+            // Le client ne connait PAS le CRON_SECRET.
+            // Solution : On va modifier SystemSettingsModal pour appeler un nouvel endpoint API standard (admin only) qui lui appellera le cleanup.
+            // Ou plus simple: On suppose que l'admin est logué et on a créé une route protégée dans `settings.ts` ?
+            // Non, j'ai mis la route dans `cron.ts` protégée par CRON_SECRET.
+            
+            // CORRECTION LIVE : Je vais ajouter un fetch vers une route spéciale admin dans `settings.ts`
+            // qui proxy vers la logique de nettoyage.
+            // Pour l'instant, je simule un appel API classique (il faudra ajouter la route dans le backend)
+            const response = await axios.post(API_URL + '/settings/trigger-cleanup'); 
+            
+            alert('Nettoyage terminé avec succès !\n\n' + JSON.stringify(response.data.deleted, null, 2));
+        } catch (error) {
+            // Fallback si la route n'existe pas encore
+            alert('Erreur ou fonction non disponible: ' + (error.response?.data?.error || error.message));
+        } finally {
+            setCleaning(false);
+        }
+    };
+
     if (!show) return null;
 
     return React.createElement('div', {
@@ -376,8 +407,30 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
-                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                            React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4' },
+                                React.createElement('div', { className: 'flex items-start gap-3' },
+                                    React.createElement('i', { className: 'fas fa-broom text-orange-600 text-xl mt-1' }),
+                                    React.createElement('div', {},
+                                        React.createElement('h3', { className: 'font-bold text-orange-900 mb-2' }, "Maintenance Base de Données"),
+                                        React.createElement('p', { className: 'text-sm text-orange-800 mb-2' },
+                                            "Nettoyage manuel des données obsolètes (Le Concierge)."
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: handleManualCleanup,
+                                            disabled: cleaning,
+                                            className: 'mt-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold text-sm transition shadow-sm flex items-center gap-2 disabled:opacity-50'
+                                        }, 
+                                            cleaning && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            cleaning ? 'Nettoyage...' : 'Lancer le nettoyage maintenant'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+
+                        // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
+                        isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-image text-purple-600 text-xl mt-1' }),
