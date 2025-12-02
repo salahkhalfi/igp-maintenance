@@ -67,8 +67,8 @@ export async function adminOnly(c: Context<{ Bindings: Bindings }>, next: Next) 
 // Middleware pour Super Admin uniquement (Propriétaire SaaS)
 export async function superAdminOnly(c: Context<{ Bindings: Bindings }>, next: Next) {
     const user = c.get('user') as any;
-    // Vérifie si user.is_super_admin est 1 (true)
-    if (!user || !user.is_super_admin) {
+    // Vérifie si user.is_super_admin (DB) ou user.isSuperAdmin (JWT) est true
+    if (!user || (!user.is_super_admin && !user.isSuperAdmin)) {
         return c.json({ error: 'Accès réservé au Super Administrateur (Propriétaire)' }, 403);
     }
     await next();
