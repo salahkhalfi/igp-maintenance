@@ -468,22 +468,33 @@ const ProductionPlanning = ({ onClose }) => {
                 },
                     React.createElement('button', {
                         onClick: () => setActiveFilter('all'),
-                        className: `px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition border whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`
+                        className: `px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 border whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-slate-800 text-white border-slate-900 shadow-md transform scale-105' : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400 shadow-sm'}`
                     }, 'Tout Voir'),
                     
                     categories.length === 0 ? React.createElement('span', { className: 'text-xs text-gray-400 italic whitespace-nowrap px-2' }, 'Aucune catégorie') : null,
 
-                    categories.map(cat => 
-                        React.createElement('button', {
+                    categories.map(cat => {
+                        // Style dynamique basé sur la couleur de la catégorie
+                        const colorStyles = {
+                            blue:   activeFilter === cat.id ? 'bg-blue-600 text-white border-blue-700 shadow-md transform scale-105'   : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+                            green:  activeFilter === cat.id ? 'bg-green-600 text-white border-green-700 shadow-md transform scale-105' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+                            red:    activeFilter === cat.id ? 'bg-red-600 text-white border-red-700 shadow-md transform scale-105'   : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100',
+                            yellow: activeFilter === cat.id ? 'bg-yellow-500 text-white border-yellow-600 shadow-md transform scale-105' : 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+                            purple: activeFilter === cat.id ? 'bg-purple-600 text-white border-purple-700 shadow-md transform scale-105' : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+                            orange: activeFilter === cat.id ? 'bg-orange-600 text-white border-orange-700 shadow-md transform scale-105' : 'bg-orange-50 text-orange-800 border-orange-200 hover:bg-orange-100',
+                            gray:   activeFilter === cat.id ? 'bg-gray-600 text-white border-gray-700 shadow-md transform scale-105'   : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200',
+                        };
+                        const style = colorStyles[cat.color] || colorStyles.gray;
+
+                        return React.createElement('button', {
                             key: cat.id,
                             onClick: () => setActiveFilter(cat.id),
-                            className: `px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition flex items-center gap-2 border whitespace-nowrap flex-shrink-0 ${
-                                activeFilter === cat.id 
-                                    ? 'bg-slate-100 border-slate-400 text-slate-800 shadow-inner' 
-                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                            }`
-                        }, React.createElement('i', { className: `fas ${cat.icon} text-xs opacity-70` }), cat.label)
-                    )
+                            className: `px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 flex items-center gap-2 border whitespace-nowrap flex-shrink-0 ${style}`
+                        }, 
+                            React.createElement('i', { className: `fas ${cat.icon} ${activeFilter === cat.id ? 'text-white' : ''} text-sm` }), 
+                            cat.label
+                        );
+                    })
                 )
             ),
 
