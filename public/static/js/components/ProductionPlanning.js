@@ -439,40 +439,52 @@ const ProductionPlanning = ({ onClose }) => {
         ),
 
         // FILTERS & TOOLBAR
-        React.createElement('div', { className: 'bg-white border-b px-2 lg:px-6 py-2 flex flex-wrap lg:flex-nowrap gap-2 lg:gap-4 items-center shadow-sm z-10 shrink-0' },
-            React.createElement('span', { className: 'text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 lg:mr-2 shrink-0' }, 'Filtres :'),
+        React.createElement('div', { className: 'bg-white border-b py-2 px-2 lg:px-6 flex flex-col lg:flex-row gap-3 lg:gap-4 items-stretch lg:items-center shadow-sm z-10 shrink-0' },
             
-            React.createElement('div', { className: 'flex flex-wrap gap-2 items-center pr-4' },
-                React.createElement('button', {
-                    onClick: () => setActiveFilter('all'),
-                    className: `px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition border whitespace-nowrap ${activeFilter === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`
-                }, 'Tout Voir'),
+            // 1. FILTERS CONTAINER (Scrollable on Mobile)
+            React.createElement('div', { className: 'flex items-center overflow-hidden' },
+                React.createElement('span', { className: 'text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0 hidden lg:inline' }, 'Filtres :'),
                 
-                categories.map(cat => 
+                React.createElement('div', { 
+                    className: 'flex overflow-x-auto gap-2 items-center pb-1 lg:pb-0 w-full no-scrollbar',
+                    style: { scrollbarWidth: 'none', msOverflowStyle: 'none' } // Hide scrollbar
+                },
                     React.createElement('button', {
-                        key: cat.id,
-                        onClick: () => setActiveFilter(cat.id),
-                        className: `px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition flex items-center gap-2 border whitespace-nowrap ${
-                            activeFilter === cat.id 
-                                ? 'bg-slate-100 border-slate-400 text-slate-800 shadow-inner' 
-                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                        }`
-                    }, React.createElement('i', { className: `fas ${cat.icon} text-xs opacity-70` }), cat.label)
+                        onClick: () => setActiveFilter('all'),
+                        className: `px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition border whitespace-nowrap flex-shrink-0 ${activeFilter === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`
+                    }, 'Tout Voir'),
+                    
+                    categories.length === 0 ? React.createElement('span', { className: 'text-xs text-gray-400 italic whitespace-nowrap px-2' }, 'Aucune catégorie') : null,
+
+                    categories.map(cat => 
+                        React.createElement('button', {
+                            key: cat.id,
+                            onClick: () => setActiveFilter(cat.id),
+                            className: `px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition flex items-center gap-2 border whitespace-nowrap flex-shrink-0 ${
+                                activeFilter === cat.id 
+                                    ? 'bg-slate-100 border-slate-400 text-slate-800 shadow-inner' 
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            }`
+                        }, React.createElement('i', { className: `fas ${cat.icon} text-xs opacity-70` }), cat.label)
+                    )
                 )
             ),
 
-            React.createElement('div', { className: 'flex-1 min-w-[20px]' }), // Spacer
-            
-            React.createElement('div', { className: 'flex bg-gray-100 rounded-lg p-1 shrink-0' },
-                React.createElement('button', { 
-                    onClick: handlePrevMonth,
-                    className: 'w-8 h-8 flex items-center justify-center bg-white shadow-sm rounded text-slate-700 hover:bg-slate-50' 
-                }, React.createElement('i', { className: 'fas fa-chevron-left' })),
-                React.createElement('span', { className: 'px-2 lg:px-4 flex items-center font-bold text-slate-700 text-xs lg:text-sm whitespace-nowrap capitalize w-32 justify-center' }, getMonthName(currentDate)),
-                React.createElement('button', { 
-                    onClick: handleNextMonth,
-                    className: 'w-8 h-8 flex items-center justify-center bg-white shadow-sm rounded text-slate-700 hover:bg-slate-50' 
-                }, React.createElement('i', { className: 'fas fa-chevron-right' }))
+            // 2. NAVIGATION (Month)
+            React.createElement('div', { className: 'flex justify-center lg:justify-end lg:ml-auto shrink-0' },
+                React.createElement('div', { className: 'flex bg-gray-100 rounded-lg p-1 shadow-inner' },
+                    React.createElement('button', { 
+                        onClick: handlePrevMonth,
+                        className: 'w-10 h-8 flex items-center justify-center bg-white shadow-sm rounded text-slate-700 hover:bg-slate-50 active:scale-95 transition' 
+                    }, React.createElement('i', { className: 'fas fa-chevron-left' })),
+                    
+                    React.createElement('span', { className: 'px-4 flex items-center justify-center font-bold text-slate-700 text-sm whitespace-nowrap capitalize w-36' }, getMonthName(currentDate)),
+                    
+                    React.createElement('button', { 
+                        onClick: handleNextMonth,
+                        className: 'w-10 h-8 flex items-center justify-center bg-white shadow-sm rounded text-slate-700 hover:bg-slate-50 active:scale-95 transition' 
+                    }, React.createElement('i', { className: 'fas fa-chevron-right' }))
+                )
             )
         ),
 
