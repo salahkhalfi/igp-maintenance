@@ -129,6 +129,93 @@ const ProductionPlanning = ({ onClose }) => {
     const [draggedEventId, setDraggedEventId] = React.useState(null);
     // Toggle Sidebar Mobile
     const [showMobileNotes, setShowMobileNotes] = React.useState(false);
+    
+    // NOTIFICATIONS SYSTEM
+    const [notificationPerm, setNotificationPerm] = React.useState(
+        typeof Notification !== 'undefined' ? Notification.permission : 'default'
+    );
+
+    const requestNotificationPermission = () => {
+        if (!('Notification' in window)) {
+            alert("Ce navigateur ne supporte pas les notifications desktop");
+            return;
+        }
+        Notification.requestPermission().then(permission => {
+            setNotificationPerm(permission);
+            if (permission === 'granted') {
+                new Notification("Notifications activées", {
+                    body: "Vous recevrez désormais des alertes pour vos tâches.",
+                    icon: "/favicon.ico"
+                });
+            }
+        });
+    };
+
+    // Liste "Aide-Mémoire"
+    const [plannerNotes, setPlannerNotes] = React.useState([
+        { id: 1, text: 'Vérifier dispo chevalets L', time: '10:00', done: false, priority: 'high', notified: false },
+        { id: 2, text: 'Confirmer rdv transporteur', time: '14:30', done: true, priority: 'medium', notified: true },
+        { id: 3, text: 'Relancer fournisseur', time: '', done: false, priority: 'high', notified: false },
+    ]);
+
+    // Vérification périodique des rappels (toutes les 30 secondes)
+    React.useEffect(() => {
+        if (notificationPerm !== 'granted') return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const currentHours = String(now.getHours()).padStart(2, '0');
+            const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+            const currentTime = `${currentHours}:${currentMinutes}`;
+
+            setPlannerNotes(prevNotes => prevNotes.map(note => {
+                if (!note.done && !note.notified && note.time === currentTime) {
+                    // TRIGGER NOTIFICATION
+                    new Notification("Rappel IGP Production", {
+                        body: note.text,
+                        icon: "https://cdn-icons-png.flaticon.com/512/1028/1028918.png" // Generic warning icon
+                    });
+                    // Jouer un petit son (optionnel)
+                    // const audio = new Audio('/static/alert.mp3'); audio.play().catch(e => {});
+                    
+                    return { ...note, notified: true };
+                }
+                return note;
+            }));
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, [notificationPerm]);
+
+    // Add Note Handler
+    const handleAddNote = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const text = formData.get('text');
+        const time = formData.get('time');
+        if (!text) return;
+
+        const newNote = {
+            id: Date.now(),
+            text: text,
+            time: time, // "HH:MM"
+            done: false,
+            priority: 'medium',
+            notified: false
+        };
+        setPlannerNotes([...plannerNotes, newNote]);
+        e.target.reset();
+    };
+
+    // Toggle Note Done
+    const toggleNote = (id) => {
+        setPlannerNotes(plannerNotes.map(n => n.id === id ? { ...n, done: !n.done } : n));
+    };
+
+    // Delete Note
+    const deleteNote = (id) => {
+        setPlannerNotes(plannerNotes.filter(n => n.id !== id));
+    };
 
     // Add/Edit Modal State
     const [showAddModal, setShowAddModal] = React.useState(false);
@@ -219,13 +306,8 @@ const ProductionPlanning = ({ onClose }) => {
     };
 
     // Liste "Aide-Mémoire"
-    const plannerNotes = [
-        { id: 1, text: 'Vérifier dispo chevalets L pour mardi', done: false, priority: 'high' },
-        { id: 2, text: 'Confirmer rdv transporteur Projet Mach', done: true, priority: 'medium' },
-        { id: 3, text: 'Relancer fournisseur intercalaire noir', done: false, priority: 'high' },
-        { id: 4, text: 'Valider séquence trempe avec Superviseur', done: false, priority: 'low' },
-    ];
-
+    // (Déplacé dans le state plus haut pour être mutable)
+    
     // Génération de la grille dynamique
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth(); // 0-11
@@ -424,32 +506,53 @@ const ProductionPlanning = ({ onClose }) => {
                         ),
                         'Notes & Rappels'
                     ),
+                    // Notification Toggle
+                    React.createElement('button', {
+                        onClick: requestNotificationPermission,
+                        title: notificationPerm === 'granted' ? 'Notifications actives' : 'Activer les notifications',
+                        className: `w-8 h-8 rounded-full flex items-center justify-center transition ${
+                            notificationPerm === 'granted' 
+                                ? 'bg-blue-100 text-blue-600' 
+                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200 animate-pulse'
+                        }`
+                    }, React.createElement('i', { className: `fas ${notificationPerm === 'granted' ? 'fa-bell' : 'fa-bell-slash'}` })),
+
                     // Close Button Mobile Only
                     React.createElement('button', { 
                         onClick: () => setShowMobileNotes(false),
-                        className: 'lg:hidden text-slate-400 hover:text-slate-600'
+                        className: 'lg:hidden text-slate-400 hover:text-slate-600 ml-2'
                     }, React.createElement('i', { className: 'fas fa-times text-lg' }))
                 ),
                 React.createElement('p', { className: 'text-xs text-slate-500 px-5 pb-2 border-b border-slate-100 lg:border-none lg:pb-0 lg:px-0 lg:pl-14 lg:-mt-4' }, 'Votre To-Do list personnelle'),
                 
                 React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3' },
                     plannerNotes.map(note => 
-                        React.createElement('div', { key: note.id, className: 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition group animate-slideIn' },
+                        React.createElement('div', { key: note.id, className: 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition group animate-slideIn relative' },
+                            // Delete button (visible on hover)
+                            React.createElement('button', {
+                                onClick: () => deleteNote(note.id),
+                                className: 'absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition'
+                            }, React.createElement('i', { className: 'fas fa-times' })),
+
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('div', { 
+                                    onClick: () => toggleNote(note.id),
                                     className: `mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition ${
                                         note.done 
                                             ? 'bg-green-500 border-green-500 text-white' 
                                             : 'border-gray-300 hover:border-blue-400 text-transparent'
                                     }`,
                                 }, React.createElement('i', { className: 'fas fa-check text-xs' })),
-                                React.createElement('div', { className: 'flex-1' },
+                                React.createElement('div', { className: 'flex-1 pr-4' },
                                     React.createElement('p', { className: `text-sm leading-snug font-medium ${note.done ? 'text-gray-400 line-through' : 'text-slate-700'}` }, note.text),
                                     
-                                    // Priority Tag
-                                    !note.done && React.createElement('div', { className: 'mt-2 flex' },
-                                        note.priority === 'high' && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-red-50 text-red-600 rounded-full font-bold uppercase tracking-wide' }, 'Urgent'),
-                                        note.priority === 'medium' && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full font-bold uppercase tracking-wide' }, 'Normal')
+                                    // Meta info (Time & Priority)
+                                    React.createElement('div', { className: 'mt-2 flex items-center gap-2' },
+                                        note.time && React.createElement('span', { className: `text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${note.notified ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'}` },
+                                            React.createElement('i', { className: 'far fa-clock' }),
+                                            note.time
+                                        ),
+                                        note.priority === 'high' && !note.done && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-red-50 text-red-600 rounded-full font-bold uppercase tracking-wide' }, 'Urgent')
                                     )
                                 )
                             )
@@ -458,15 +561,28 @@ const ProductionPlanning = ({ onClose }) => {
                 ),
 
                 // Add Input
-                React.createElement('div', { className: 'p-4 border-t' },
-                    React.createElement('div', { className: 'relative' },
+                React.createElement('div', { className: 'p-4 border-t bg-gray-50' },
+                    React.createElement('form', { onSubmit: handleAddNote, className: 'relative flex flex-col gap-2' },
                         React.createElement('input', { 
+                            name: 'text',
                             type: 'text', 
+                            required: true,
                             placeholder: 'Ajouter une tâche...',
-                            className: 'w-full pl-4 pr-10 py-3 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition'
+                            className: 'w-full pl-4 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition'
                         }),
-                        React.createElement('button', { className: 'absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700' },
-                            React.createElement('i', { className: 'fas fa-arrow-up' })
+                        React.createElement('div', { className: 'flex gap-2' },
+                            React.createElement('input', { 
+                                name: 'time',
+                                type: 'time',
+                                className: 'w-24 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                            }),
+                            React.createElement('button', { 
+                                type: 'submit',
+                                className: 'flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-xs font-bold transition shadow-sm flex items-center justify-center gap-2' 
+                            },
+                                'Ajouter',
+                                React.createElement('i', { className: 'fas fa-plus' })
+                            )
                         )
                     )
                 )
