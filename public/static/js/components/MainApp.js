@@ -32,9 +32,35 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     });
     const [showManageColumns, setShowManageColumns] = React.useState(false);
 
+    React.useEffect(() => {
+        if (currentUser) {
+             // Try loading from API first
+             axios.get(API_URL + '/preferences/kanban_columns')
+                .then(res => {
+                    if (res.data.value) {
+                        setColumns(res.data.value);
+                        localStorage.setItem('kanban_columns', JSON.stringify(res.data.value));
+                    } else {
+                        const saved = localStorage.getItem('kanban_columns');
+                        if (saved) setColumns(JSON.parse(saved));
+                    }
+                })
+                .catch(err => {
+                    console.warn('Failed to load preferences', err);
+                    const saved = localStorage.getItem('kanban_columns');
+                    if (saved) setColumns(JSON.parse(saved));
+                });
+        }
+    }, [currentUser]);
+
     const handleSaveColumns = (newCols) => {
         setColumns(newCols);
         localStorage.setItem('kanban_columns', JSON.stringify(newCols));
+        
+        if (currentUser) {
+             axios.put(API_URL + '/preferences/kanban_columns', { value: newCols })
+                .catch(err => console.error('Failed to save columns preference', err));
+        }
     };
 
     // --- EFFETS (Listeners & Initialisation) ---

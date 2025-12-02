@@ -59,6 +59,7 @@ import media from './routes/media';
 import comments from './routes/comments';
 import search from './routes/search';
 import users from './routes/users';
+import preferences from './routes/preferences';
 import rolesRoute from './routes/roles';
 import settings from './routes/settings';
 import webhooks from './routes/webhooks';
@@ -182,6 +183,10 @@ app.route('/api/technicians', technicians);
 // Routes des utilisateurs
 app.use('/api/users/*', authMiddleware);
 app.route('/api/users', users);
+
+// Routes des préférences utilisateur
+app.use('/api/preferences/*', authMiddleware);
+app.route('/api/preferences', preferences);
 
 app.route('/api/media', media);
 
