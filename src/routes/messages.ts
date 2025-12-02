@@ -6,8 +6,9 @@ import { eq, and, or, desc, asc, sql, getTableColumns, ne, inArray } from 'drizz
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { messages, users, pushLogs, pushSubscriptions } from '../db/schema';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, requirePermission } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
+import { hasPermission } from '../utils/permissions';
 import { formatUserName } from '../utils/userFormatter';
 import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
 import { requirePermission } from '../middlewares/auth';
@@ -507,13 +508,23 @@ messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageI
       return c.json({ error: 'Message non trouvé' }, 404);
     }
 
-    const canDelete =
-      message.sender_id === currentUserId ||
-      user.role === 'admin' ||
-      (user.role === 'supervisor' && message.sender_role !== 'admin');
+    // RBAC Check
+    const canDeleteAll = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'all');
+    const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'own');
+
+    let canDelete = false;
+
+    if (canDeleteAll) {
+        canDelete = true;
+    } else if (canDeleteOwn && message.sender_id === currentUserId) {
+        canDelete = true;
+    }
 
     if (!canDelete) {
-      return c.json({ error: 'Vous n\'avez pas la permission de supprimer ce message' }, 403);
+      return c.json({ 
+          error: 'Permission refusée',
+          details: 'Nécessite messages.delete.all ou messages.delete.own (si expéditeur)'
+      }, 403);
     }
 
     if (message.audio_file_key) {
@@ -570,10 +581,15 @@ messagesRoute.post('/bulk-delete', authMiddleware, zValidator('json', bulkDelete
           continue;
         }
 
-        const canDelete =
-          message.sender_id === currentUserId ||
-          user.role === 'admin' ||
-          (user.role === 'supervisor' && message.sender_role !== 'admin');
+        const canDeleteAll = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'all');
+        const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'own');
+
+        let canDelete = false;
+        if (canDeleteAll) {
+            canDelete = true;
+        } else if (canDeleteOwn && message.sender_id === currentUserId) {
+            canDelete = true;
+        }
 
         if (!canDelete) {
           errors.push({ messageId, error: 'Permission refusée' });
