@@ -40,12 +40,27 @@ const ProductionPlanning = ({ onClose }) => {
         { id: 4, text: 'Valider séquence trempe avec Superviseur', done: false, priority: 'low' },
     ];
 
-    // Génération de la grille
+    // Génération de la grille (Semaine de 5 jours - Lundi à Vendredi)
+    // On filtre simplement les jours pour ne garder que 1 à 5 (Lundi-Vendredi)
+    // Samedi (6) et Dimanche (0) sont exclus de l'affichage
     const daysInMonth = 31;
     const startDayOffset = 0; // Lundi = 0
     const days = Array.from({ length: daysInMonth + startDayOffset }, (_, i) => {
         const dayNum = i - startDayOffset + 1;
         return dayNum > 0 ? dayNum : null;
+    });
+
+    // Fonction pour déterminer le jour de la semaine (0=Lundi, 4=Vendredi pour l'affichage)
+    // On suppose que le 1er du mois est un Lundi pour la maquette simplifiée
+    const getDayOfWeek = (dayNum) => {
+        if (!dayNum) return -1;
+        return (dayNum - 1) % 7;
+    };
+
+    // Filtrer pour n'avoir que les jours de la semaine (0 à 4)
+    const workDays = days.filter(d => {
+        const dow = getDayOfWeek(d);
+        return dow >= 0 && dow <= 4;
     });
 
     const getEventsForDay = (day) => {
@@ -156,35 +171,33 @@ const ProductionPlanning = ({ onClose }) => {
             
             // CALENDAR GRID
             React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 border-r border-gray-200' },
-                // Days Header
-                React.createElement('div', { className: 'grid grid-cols-7 border-b bg-white shadow-sm' },
-                    ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(day => 
+                // Days Header (5 jours)
+                React.createElement('div', { className: 'grid grid-cols-5 border-b bg-white shadow-sm' },
+                    ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'].map(day => 
                         React.createElement('div', { key: day, className: 'py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider' }, day)
                     )
                 ),
 
                 // Calendar Cells
-                React.createElement('div', { className: 'grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto p-2 gap-2' },
-                    days.map((day, idx) => {
+                React.createElement('div', { className: 'grid grid-cols-5 flex-1 auto-rows-fr overflow-y-auto p-4 gap-4' },
+                    workDays.map((day, idx) => {
                         const dayEvents = day ? getEventsForDay(day) : [];
                         const load = day ? dailyLoad[day] : 0;
                         
                         return React.createElement('div', { 
                             key: idx, 
-                            className: `rounded-xl border p-2 flex flex-col gap-1 relative transition-all group ${
-                                !day ? 'bg-transparent border-transparent' : 'bg-white border-slate-200 hover:shadow-md hover:border-blue-300'
-                            }` 
+                            className: `rounded-xl border bg-white border-slate-200 hover:shadow-md hover:border-blue-300 p-3 flex flex-col gap-2 relative transition-all group min-h-[140px]` 
                         },
                             day && React.createElement('div', { className: 'flex justify-between items-start mb-1' },
                                 React.createElement('span', { 
-                                    className: `text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${
+                                    className: `text-lg font-bold w-8 h-8 flex items-center justify-center rounded-full ${
                                         day === 3 ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 bg-slate-100'
                                     }` 
                                 }, day),
                                 // Add Button (Visible on Hover)
                                 React.createElement('button', { 
-                                    className: 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition' 
-                                }, React.createElement('i', { className: 'fas fa-plus-circle' }))
+                                    className: 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
+                                }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
                             ),
                             
                             // Events List
