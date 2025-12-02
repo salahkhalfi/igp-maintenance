@@ -18,6 +18,20 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showAdminRoles, setShowAdminRoles] = React.useState(false);
     const [showProductionPlanning, setShowProductionPlanning] = React.useState(false);
 
+    // Gestion des modules (Feature Flipping)
+    const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true });
+
+    React.useEffect(() => {
+        if (currentUser) {
+            // Charger la configuration des modules
+            axios.get('/api/settings/modules')
+                .then(res => {
+                    if (res.data) setActiveModules(res.data);
+                })
+                .catch(err => console.warn('Failed to load modules config', err));
+        }
+    }, [currentUser]);
+
     // Gestion des colonnes dynamiques (Levé depuis KanbanBoard)
     const [columns, setColumns] = React.useState(() => {
         const saved = localStorage.getItem('kanban_columns');
@@ -250,6 +264,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         // --- HEADER (NOUVEAU COMPOSANT) ---
         React.createElement(AppHeader, {
             currentUser,
+            activeModules, // Pass modules to Header
             activeTicketsCount: getActiveTicketsCount(),
             unreadMessagesCount,
             headerTitle,
@@ -274,7 +289,14 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
-            onOpenPlanning: () => { setShowProductionPlanning(true); setShowMobileMenu(false); },
+            onOpenPlanning: () => { 
+                if (activeModules.planning) {
+                    setShowProductionPlanning(true); 
+                } else {
+                    alert("Le module Planning n'est pas activé.");
+                }
+                setShowMobileMenu(false); 
+            },
             onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
         }),
 

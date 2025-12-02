@@ -335,6 +335,69 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+/**
+ * GET /api/settings/modules - Récupérer l'état des modules (Licence)
+ * Accès: Authentifié
+ */
+settings.get('/modules', authMiddleware, async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'active_modules'
+    `).first();
+
+    // Valeurs par défaut (Tout activé pour commencer)
+    const defaultModules = {
+      planning: true,
+      statistics: true,
+      notifications: true
+    };
+
+    if (!result || !result.setting_value) {
+      return c.json(defaultModules);
+    }
+
+    try {
+      return c.json({ ...defaultModules, ...JSON.parse(result.setting_value as string) });
+    } catch (e) {
+      return c.json(defaultModules);
+    }
+  } catch (error) {
+    console.error('Get modules error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/modules - Mettre à jour les licences (Feature Flipping)
+ * Accès: Admin Only
+ */
+settings.put('/modules', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const value = JSON.stringify(body); // Stockage JSON string
+
+    // Upsert logic
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'active_modules'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'active_modules'
+      `).bind(value).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value) VALUES ('active_modules', ?)
+      `).bind(value).run();
+    }
+
+    return c.json({ success: true, modules: body });
+  } catch (error) {
+    console.error('Update modules error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
 // ============================================================================
 // ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
 // ============================================================================
@@ -362,6 +425,68 @@ settings.get('/:key', async (c) => {
     return c.json({ setting_value: result.setting_value });
   } catch (error) {
     console.error('Get setting error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/modules/status - Récupérer l'état des modules (Licence)
+ * Accès: Authentifié
+ */
+settings.get('/modules/status', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'active_modules'
+    `).first();
+
+    // Valeurs par défaut (Tout activé pour commencer)
+    const defaultModules = {
+      planning: true,
+      analytics: true,
+      notifications: true
+    };
+
+    if (!result || !result.setting_value) {
+      return c.json(defaultModules);
+    }
+
+    try {
+      return c.json({ ...defaultModules, ...JSON.parse(result.setting_value as string) });
+    } catch (e) {
+      return c.json(defaultModules);
+    }
+  } catch (error) {
+    console.error('Get modules error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/modules/status - Mettre à jour les licences (Feature Flipping)
+ * Accès: Admin Only
+ */
+settings.put('/modules/status', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const value = JSON.stringify(body); // Stockage JSON string
+
+    // Upsert logic
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'active_modules'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'active_modules'
+      `).bind(value).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value) VALUES ('active_modules', ?)
+      `).bind(value).run();
+    }
+
+    return c.json({ success: true, modules: body });
+  } catch (error) {
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });

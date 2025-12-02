@@ -18,6 +18,15 @@ Application web complète pour la gestion de la maintenance industrielle avec ta
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.13.0 (2 Décembre 2025) - GESTION DES MODULES & LICENCES 📦✨
+- **📦 FEATURE FLIPPING** : Système complet d'activation/désactivation de modules (Planning, Stats, Notifications)
+- **💼 MONÉTISATION** : Architecture prête pour le SaaS avec gestion des licences par entreprise
+- **🔧 ADMIN PANEL** : Nouvel onglet "Licences / Modules" dans les paramètres système
+- **🔒 SÉCURITÉ BACKEND** : Middleware Hono bloquant l'accès API aux modules désactivés (403 Forbidden)
+- **👁️ UI ADAPTATIVE** : Masquage automatique des boutons et menus selon les modules actifs
+- **🧹 MAINTENANCE AUTO** : CRON Job "Concierge" pour nettoyage automatique BDD (Planning > 3 mois, Notes > 30j)
+- **🚀 SCALABILITÉ** : Optimisation BDD automatique via VACUUM
+
 ### Version 2.12.0 (30 novembre 2025) - SYSTÈME MESSAGERIE & TICKETS MODERNISÉ 💬🎫✨
 - **🎤 RECONNAISSANCE VOCALE (FR)** : Dictée vocale intégrée pour création tickets et commentaires
 - **🎧 MESSAGERIE 2.0** : Refonte complète React/TypeScript, enregistrement audio natif, polling temps réel
