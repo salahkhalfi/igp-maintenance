@@ -17,15 +17,27 @@ const ProductionPlanning = ({ onClose }) => {
     const [activeFilter, setActiveFilter] = React.useState('all');
     
     // CATEGORIES STATE
-    const [categories, setCategories] = React.useState([
-        { id: 'cut', label: 'Mise en Prod', icon: 'fa-layer-group', color: 'blue' },
-        { id: 'ship', label: 'Expéditions', icon: 'fa-truck', color: 'green' },
-        { id: 'maintenance', label: 'Maintenance', icon: 'fa-tools', color: 'red' },
-        { id: 'reminder', label: 'Rappel / Note', icon: 'fa-info-circle', color: 'yellow' },
-        { id: 'blocked', label: 'Bloqué', icon: 'fa-ban', color: 'red' } // Added default blocked category
-    ]);
+    const [categories, setCategories] = React.useState([]);
     const [showCategoryModal, setShowCategoryModal] = React.useState(false);
     const [editingCategory, setEditingCategory] = React.useState(null);
+
+    // EVENTS STATE
+    const [events, setEvents] = React.useState([]);
+
+    // NOTES STATE
+    const [plannerNotes, setPlannerNotes] = React.useState([]);
+
+    // LOAD DATA FROM API
+    React.useEffect(() => {
+        fetch('/api/planning')
+            .then(res => res.json())
+            .then(data => {
+                if (data.categories) setCategories(data.categories);
+                if (data.events) setEvents(data.events);
+                if (data.notes) setPlannerNotes(data.notes);
+            })
+            .catch(err => console.error('Error loading planning data:', err));
+    }, []);
 
     // HELPERS FOR STYLES & ICONS
     const getCategoryStyle = (type, status) => {
@@ -59,15 +71,24 @@ const ProductionPlanning = ({ onClose }) => {
         
         if (editingCategory) {
             // UPDATE EXISTING
+            const updatedCat = {
+                label: formData.get('label'),
+                color: formData.get('color'),
+                icon: formData.get('icon')
+            };
+            
+            // Optimistic UI Update
             setCategories(categories.map(c => 
-                c.id === editingCategory.id ? {
-                    ...c,
-                    label: formData.get('label'),
-                    color: formData.get('color'),
-                    icon: formData.get('icon')
-                } : c
+                c.id === editingCategory.id ? { ...c, ...updatedCat } : c
             ));
             setEditingCategory(null);
+
+            fetch(`/api/planning/categories/${editingCategory.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedCat)
+            }).catch(err => console.error('Error updating category:', err));
+
         } else {
             // CREATE NEW
             const newCat = {
@@ -76,7 +97,15 @@ const ProductionPlanning = ({ onClose }) => {
                 color: formData.get('color'),
                 icon: formData.get('icon')
             };
+            
+            // Optimistic UI Update
             setCategories([...categories, newCat]);
+
+            fetch('/api/planning/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCat)
+            }).catch(err => console.error('Error creating category:', err));
         }
         e.target.reset();
     };
@@ -98,32 +127,13 @@ const ProductionPlanning = ({ onClose }) => {
             if (editingCategory && editingCategory.id === id) {
                 setEditingCategory(null);
             }
+            
+            fetch(`/api/planning/categories/${id}`, {
+                method: 'DELETE'
+            }).catch(err => console.error('Error deleting category:', err));
         }
     };
     // Format date: "YYYY-MM-DD"
-    const [events, setEvents] = React.useState([
-        // DÉCEMBRE 2025 (SEMAINE 1)
-        { id: 101, date: '2025-12-01', type: 'cut', status: 'confirmed', title: 'Coupe: Vitrerie MTL (#4402)', details: '6mm Clair - 50 feuilles' },
-        { id: 102, date: '2025-12-02', type: 'cut', status: 'confirmed', title: 'Coupe: Projet Gym', details: 'Miroir 6mm - Joint poli' },
-        { id: 103, date: '2025-12-03', type: 'ship', status: 'confirmed', title: 'LIVRAISON: Tour Condo', details: '2 Chevalets - Camion A' },
-        { id: 104, date: '2025-12-03', type: 'cut', status: 'tentative', title: 'Coupe: Douches B.Dépôt', details: 'En attente verre 10mm' },
-        
-        // DÉCEMBRE 2025 (SEMAINE 2)
-        { id: 105, date: '2025-12-08', type: 'cut', status: 'confirmed', title: 'Coupe: Lot Douches', details: 'Bain Dépôt - Urgent' },
-        { id: 106, date: '2025-12-09', type: 'maintenance', status: 'confirmed', title: 'ARRÊT FOUR (8h-12h)', details: 'Maint. Préventive' },
-        { id: 107, date: '2025-12-10', type: 'ship', status: 'confirmed', title: 'LIVRAISON: Vitrerie MTL', details: 'Commande #4402' },
-        { id: 108, date: '2025-12-11', type: 'reminder', status: 'info', title: 'Arrivage: Caisse Jumbo', details: 'Verre Low-E - Quai 2' },
-        { id: 109, date: '2025-12-12', type: 'ship', status: 'tentative', title: 'LIVRAISON: Bain Dépôt', details: 'À confirmer avec client' },
-
-        // DÉCEMBRE 2025 (SEMAINE 3)
-        { id: 110, date: '2025-12-15', type: 'cut', status: 'confirmed', title: 'Coupe: Garde-corps Stade', details: '12mm Trempé - 200mc' },
-        { id: 111, date: '2025-12-16', type: 'cut', status: 'confirmed', title: 'Coupe: Projet Bureau', details: 'Cloisons verre' },
-        { id: 112, date: '2025-12-18', type: 'reminder', status: 'info', title: 'Inventaire Fin d\'année', details: 'Préparer feuilles comptage' },
-        { id: 113, date: '2025-12-19', type: 'ship', status: 'confirmed', title: 'LIVRAISON: Garde-corps', details: 'Chantier Stade Olympique' },
-
-        // JANVIER 2026 (Exemple)
-        { id: 201, date: '2026-01-05', type: 'cut', status: 'confirmed', title: 'Reprise Production', details: 'Retour congés' }
-    ]);
 
     // État pour le Drag & Drop
     const [draggedEventId, setDraggedEventId] = React.useState(null);
@@ -152,11 +162,7 @@ const ProductionPlanning = ({ onClose }) => {
     };
 
     // Liste "Aide-Mémoire"
-    const [plannerNotes, setPlannerNotes] = React.useState([
-        { id: 1, text: 'Vérifier dispo chevalets L', time: '10:00', done: false, priority: 'high', notified: false },
-        { id: 2, text: 'Confirmer rdv transporteur', time: '14:30', done: true, priority: 'medium', notified: true },
-        { id: 3, text: 'Relancer fournisseur', time: '', done: false, priority: 'high', notified: false },
-    ]);
+    // (Déplacé dans le state plus haut pour être mutable)
 
     // Vérification périodique des rappels (toutes les 30 secondes)
     React.useEffect(() => {
@@ -168,20 +174,27 @@ const ProductionPlanning = ({ onClose }) => {
             const currentMinutes = String(now.getMinutes()).padStart(2, '0');
             const currentTime = `${currentHours}:${currentMinutes}`;
 
-            setPlannerNotes(prevNotes => prevNotes.map(note => {
-                if (!note.done && !note.notified && note.time === currentTime) {
-                    // TRIGGER NOTIFICATION
-                    new Notification("Rappel IGP Production", {
-                        body: note.text,
-                        icon: "https://cdn-icons-png.flaticon.com/512/1028/1028918.png" // Generic warning icon
-                    });
-                    // Jouer un petit son (optionnel)
-                    // const audio = new Audio('/static/alert.mp3'); audio.play().catch(e => {});
-                    
-                    return { ...note, notified: true };
-                }
-                return note;
-            }));
+            setPlannerNotes(prevNotes => {
+                let hasChanges = false;
+                const nextNotes = prevNotes.map(note => {
+                    if (!note.done && !note.notified && note.time === currentTime) {
+                        // TRIGGER NOTIFICATION
+                        new Notification("Rappel IGP Production", {
+                            body: note.text,
+                            icon: "https://cdn-icons-png.flaticon.com/512/1028/1028918.png" // Generic warning icon
+                        });
+                        
+                        hasChanges = true;
+                        return { ...note, notified: true };
+                    }
+                    return note;
+                });
+                
+                // Only update state if needed to avoid loops/re-renders, 
+                // and maybe sync 'notified' status to DB? 
+                // For now, just local state update to avoid repeated alerts.
+                return hasChanges ? nextNotes : prevNotes;
+            });
         }, 30000);
 
         return () => clearInterval(interval);
@@ -196,26 +209,55 @@ const ProductionPlanning = ({ onClose }) => {
         if (!text) return;
 
         const newNote = {
-            id: Date.now(),
+            id: Date.now(), // Temp ID
             text: text,
-            time: time, // "HH:MM"
+            time: time,
             done: false,
             priority: 'medium',
             notified: false
         };
+        
         setPlannerNotes([...plannerNotes, newNote]);
+        
+        fetch('/api/planning/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newNote)
+        })
+        .then(res => res.json())
+        .then(savedNote => {
+             setPlannerNotes(current => current.map(n => n.id === newNote.id ? savedNote : n));
+        })
+        .catch(err => console.error('Error adding note:', err));
+        
         e.target.reset();
     };
 
     // Toggle Note Done
     const toggleNote = (id) => {
-        setPlannerNotes(plannerNotes.map(n => n.id === id ? { ...n, done: !n.done } : n));
+        const note = plannerNotes.find(n => n.id === id);
+        if (!note) return;
+        
+        const newDone = !note.done;
+        setPlannerNotes(plannerNotes.map(n => n.id === id ? { ...n, done: newDone } : n));
+        
+        fetch(`/api/planning/notes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ done: newDone })
+        }).catch(err => console.error('Error toggling note:', err));
     };
 
     // Delete Note
     const deleteNote = (id) => {
         setPlannerNotes(plannerNotes.filter(n => n.id !== id));
+        
+        fetch(`/api/planning/notes/${id}`, {
+            method: 'DELETE'
+        }).catch(err => console.error('Error deleting note:', err));
     };
+
+    // Génération de la grille dynamique
 
     // Add/Edit Modal State
     const [showAddModal, setShowAddModal] = React.useState(false);
@@ -238,29 +280,54 @@ const ProductionPlanning = ({ onClose }) => {
         
         if (selectedEvent) {
             // MODE MODIFICATION
+            const updatedEvent = {
+                date: dateVal,
+                type: formData.get('type'),
+                title: formData.get('title'),
+                details: formData.get('details')
+            };
+
+            // Optimistic
             setEvents(prevEvents => prevEvents.map(evt => {
                 if (evt.id === selectedEvent.id) {
-                    return {
-                        ...evt,
-                        date: dateVal,
-                        type: formData.get('type'),
-                        title: formData.get('title'),
-                        details: formData.get('details')
-                    };
+                    return { ...evt, ...updatedEvent };
                 }
                 return evt;
             }));
+            
+            fetch(`/api/planning/events/${selectedEvent.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedEvent)
+            }).catch(err => console.error('Error updating event:', err));
+
         } else {
             // MODE CRÉATION
             const newEvent = {
-                id: Date.now(),
+                id: Date.now(), // Temporary ID for UI
                 date: dateVal,
                 type: formData.get('type'),
                 status: 'confirmed',
                 title: formData.get('title'),
                 details: formData.get('details')
             };
+            
+            // Optimistic UI update (temporary ID)
             setEvents([...events, newEvent]);
+
+            fetch('/api/planning/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newEvent)
+            })
+            .then(res => res.json())
+            .then(savedEvent => {
+                // Replace temporary ID with real DB ID
+                setEvents(currentEvents => currentEvents.map(evt => 
+                    evt.id === newEvent.id ? savedEvent : evt
+                ));
+            })
+            .catch(err => console.error('Error creating event:', err));
         }
         setShowAddModal(false);
         setSelectedEvent(null);
@@ -269,7 +336,13 @@ const ProductionPlanning = ({ onClose }) => {
     // Handle Delete Event
     const handleDeleteEvent = () => {
         if (selectedEvent) {
+            // Optimistic
             setEvents(prevEvents => prevEvents.filter(evt => evt.id !== selectedEvent.id));
+            
+            fetch(`/api/planning/events/${selectedEvent.id}`, {
+                method: 'DELETE'
+            }).catch(err => console.error('Error deleting event:', err));
+            
             setShowAddModal(false);
             setSelectedEvent(null);
         }
@@ -297,18 +370,24 @@ const ProductionPlanning = ({ onClose }) => {
         e.preventDefault();
         if (!draggedEventId || !targetDate) return;
 
+        // Optimistic UI Update
         setEvents(prevEvents => prevEvents.map(evt => {
             if (evt.id === draggedEventId) {
                 return { ...evt, date: targetDate };
             }
             return evt;
         }));
+
+        // API Call
+        fetch(`/api/planning/events/${draggedEventId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: targetDate })
+        }).catch(err => console.error('Error moving event:', err));
     };
 
     // Liste "Aide-Mémoire"
     // (Déplacé dans le state plus haut pour être mutable)
-    
-    // Génération de la grille dynamique
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth(); // 0-11
     const daysInMonth = new Date(year, month + 1, 0).getDate(); // Nombre de jours

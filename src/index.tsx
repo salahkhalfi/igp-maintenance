@@ -72,6 +72,8 @@ import alerts from './routes/alerts';
 import scheduledHandler from './scheduled';
 import type { Bindings } from './types';
 
+import planning from './routes/planning';
+
 const app = new Hono<{ Bindings: Bindings }>();
 
 /**
@@ -233,6 +235,9 @@ app.route('/api/audio', audio);
 
 // Routes CRON - Tâches planifiées (sécurisées par CRON_SECRET)
 app.route('/api/cron', cron);
+
+// Routes Planning (Production) - Phase 1 (Public pour l'instant, à sécuriser Phase 2)
+app.route('/api/planning', planning);
 
 // Routes Alerts - Alertes tickets en retard (authentifiées)
 app.route('/api/alerts', alerts);
