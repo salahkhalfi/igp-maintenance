@@ -1,35 +1,46 @@
 const ProductionPlanning = ({ onClose }) => {
     // État pour le mois affiché (Simulé pour Décembre 2025)
     const currentMonthName = "Décembre 2025";
+    const [activeFilter, setActiveFilter] = React.useState('all'); // 'all', 'ship', 'cut', 'maintenance'
     
-    // Données du Calendrier (Les "Post-it" virtuels du planificateur)
+    // Données du Calendrier
     const calendarEvents = [
         // SEMAINE 1
-        { date: 1, type: 'cut', title: 'Lancer Coupe: Vitrerie MTL (PO#4402)', client: 'Vitrerie MTL' },
-        { date: 3, type: 'ship', title: 'LIVRAISON: Projet Tour Condo', client: 'Groupe Mach', details: '2 Chevalets - Camion A' },
-        { date: 4, type: 'reminder', title: 'Commander: 19mm Extra-Clair', details: 'Pour projet Lobby' },
+        { date: 1, type: 'cut', status: 'confirmed', title: 'Coupe: Vitrerie MTL (#4402)', details: '6mm Clair - 50 feuilles' },
+        { date: 2, type: 'cut', status: 'confirmed', title: 'Coupe: Projet Gym', details: 'Miroir 6mm - Joint poli' },
+        { date: 3, type: 'ship', status: 'confirmed', title: 'LIVRAISON: Tour Condo', details: '2 Chevalets - Camion A' },
+        { date: 3, type: 'cut', status: 'tentative', title: 'Coupe: Douches B.Dépôt', details: 'En attente verre 10mm' },
         
         // SEMAINE 2
-        { date: 8, type: 'cut', title: 'Lancer Coupe: Douches Bain Dépôt', client: 'Bain Dépôt' },
-        { date: 9, type: 'maintenance', title: 'ARRÊT FOUR PRÉVU (8h-12h)', details: 'Technicien Externe' },
-        { date: 10, type: 'ship', title: 'LIVRAISON: Vitrerie MTL', client: 'Vitrerie MTL' },
-        { date: 12, type: 'ship', title: 'LIVRAISON: Bain Dépôt (Lot 1)', client: 'Bain Dépôt' },
+        { date: 8, type: 'cut', status: 'confirmed', title: 'Coupe: Lot Douches', details: 'Bain Dépôt - Urgent' },
+        { date: 9, type: 'maintenance', status: 'confirmed', title: 'ARRÊT FOUR (8h-12h)', details: 'Maint. Préventive' },
+        { date: 10, type: 'ship', status: 'confirmed', title: 'LIVRAISON: Vitrerie MTL', details: 'Commande #4402' },
+        { date: 11, type: 'reminder', status: 'info', title: 'Arrivage: Caisse Jumbo', details: 'Verre Low-E - Quai 2' },
+        { date: 12, type: 'ship', status: 'tentative', title: 'LIVRAISON: Bain Dépôt', details: 'À confirmer avec client' },
 
         // SEMAINE 3
-        { date: 15, type: 'cut', title: 'Lancer Coupe: Garde-corps Stade', client: 'Const. B' },
-        { date: 18, type: 'reminder', title: 'Inventaire Fin d\'année', details: 'Préparer feuilles comptage' },
-        { date: 19, type: 'ship', title: 'LIVRAISON: Garde-corps Stade', client: 'Const. B' },
+        { date: 15, type: 'cut', status: 'confirmed', title: 'Coupe: Garde-corps Stade', details: '12mm Trempé - 200mc' },
+        { date: 16, type: 'cut', status: 'confirmed', title: 'Coupe: Projet Bureau', details: 'Cloisons verre' },
+        { date: 18, type: 'reminder', status: 'info', title: 'Inventaire Fin d\'année', details: 'Préparer feuilles comptage' },
+        { date: 19, type: 'ship', status: 'confirmed', title: 'LIVRAISON: Garde-corps', details: 'Chantier Stade Olympique' },
     ];
 
-    // Liste "Aide-Mémoire" (To-Do List du Planificateur)
+    // Simulation de charge journalière (0-100%)
+    const dailyLoad = {
+        1: 85, 2: 90, 3: 110, 4: 40, 5: 60,
+        8: 95, 9: 20, 10: 75, 11: 80, 12: 60,
+        15: 100, 16: 85, 17: 50, 18: 30, 19: 90
+    };
+
+    // Liste "Aide-Mémoire"
     const plannerNotes = [
-        { id: 1, text: 'Vérifier disponibilité chevalets L pour mardi', done: false },
-        { id: 2, text: 'Confirmer rdv transporteur Projet Mach', done: true },
-        { id: 3, text: 'Relancer fournisseur pour délai intercalaire noir', done: false },
-        { id: 4, text: 'Valider séquence trempe avec Superviseur', done: false },
+        { id: 1, text: 'Vérifier dispo chevalets L pour mardi', done: false, priority: 'high' },
+        { id: 2, text: 'Confirmer rdv transporteur Projet Mach', done: true, priority: 'medium' },
+        { id: 3, text: 'Relancer fournisseur intercalaire noir', done: false, priority: 'high' },
+        { id: 4, text: 'Valider séquence trempe avec Superviseur', done: false, priority: 'low' },
     ];
 
-    // Génération de la grille du calendrier (Mois fictif commençant un Lundi)
+    // Génération de la grille
     const daysInMonth = 31;
     const startDayOffset = 0; // Lundi = 0
     const days = Array.from({ length: daysInMonth + startDayOffset }, (_, i) => {
@@ -37,90 +48,177 @@ const ProductionPlanning = ({ onClose }) => {
         return dayNum > 0 ? dayNum : null;
     });
 
-    const getEventsForDay = (day) => calendarEvents.filter(e => e.date === day);
+    const getEventsForDay = (day) => {
+        return calendarEvents.filter(e => {
+            if (e.date !== day) return false;
+            if (activeFilter === 'all') return true;
+            if (activeFilter === 'ship' && e.type === 'ship') return true;
+            if (activeFilter === 'cut' && e.type === 'cut') return true;
+            if (activeFilter === 'maintenance' && e.type === 'maintenance') return true;
+            return false;
+        });
+    };
 
-    const getTypeStyle = (type) => {
+    const getTypeStyle = (type, status) => {
+        const isTentative = status === 'tentative';
+        const baseClass = isTentative ? 'border-dashed opacity-80' : 'border-solid';
+        
         switch(type) {
-            case 'ship': return 'bg-green-100 text-green-800 border-l-4 border-green-600'; // L'argent rentre
-            case 'cut': return 'bg-blue-100 text-blue-800 border-l-4 border-blue-600'; // L'action commence
-            case 'maintenance': return 'bg-red-100 text-red-800 border-l-4 border-red-600'; // Blocage
-            case 'reminder': return 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500'; // Note
+            case 'ship': return `bg-green-50 text-green-900 border-l-4 border-green-600 ${baseClass}`; 
+            case 'cut': return `bg-blue-50 text-blue-900 border-l-4 border-blue-600 ${baseClass}`; 
+            case 'maintenance': return `bg-red-50 text-red-900 border-l-4 border-red-600 ${baseClass}`; 
+            case 'reminder': return `bg-yellow-50 text-yellow-900 border-l-4 border-yellow-500 ${baseClass}`; 
             default: return 'bg-gray-100 text-gray-800';
         }
     };
 
     const getIcon = (type) => {
         switch(type) {
-            case 'ship': return 'fa-truck-loading';
+            case 'ship': return 'fa-truck';
             case 'cut': return 'fa-layer-group';
             case 'maintenance': return 'fa-tools';
-            case 'reminder': return 'fa-sticky-note';
+            case 'reminder': return 'fa-info-circle';
             default: return 'fa-circle';
         }
     };
 
+    const getLoadColor = (load) => {
+        if (!load) return 'bg-gray-100';
+        if (load > 100) return 'bg-red-500'; // Surcharge
+        if (load > 80) return 'bg-orange-400'; // Chargé
+        return 'bg-green-500'; // OK
+    };
+
     return React.createElement('div', { className: 'fixed inset-0 z-[150] bg-gray-100 flex flex-col animate-fadeIn' },
         // HEADER
-        React.createElement('div', { className: 'bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm flex-shrink-0' },
+        React.createElement('div', { className: 'bg-white border-b px-6 py-3 flex justify-between items-center shadow-sm z-20' },
             React.createElement('div', null,
                 React.createElement('h1', { className: 'text-2xl font-bold text-slate-800 flex items-center gap-3' },
-                    React.createElement('i', { className: 'far fa-calendar-alt text-blue-600' }),
-                    'Planning & Échéancier'
+                    React.createElement('div', { className: 'bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-sm' },
+                        React.createElement('i', { className: 'far fa-calendar-alt text-lg' })
+                    ),
+                    'Planning & Production'
                 ),
-                React.createElement('p', { className: 'text-sm text-slate-500 mt-1' }, 'Vue globale des mises en production et expéditions')
+                React.createElement('div', { className: 'flex items-center gap-2 text-xs text-slate-500 mt-1' },
+                    React.createElement('span', null, 'IGP Glass'),
+                    React.createElement('i', { className: 'fas fa-circle text-[4px] text-slate-300' }),
+                    React.createElement('span', null, 'Vue Directeur')
+                )
             ),
-            React.createElement('div', { className: 'flex items-center gap-4' },
-                React.createElement('div', { className: 'flex bg-gray-100 rounded-lg p-1' },
-                    React.createElement('button', { className: 'px-4 py-1.5 bg-white shadow-sm rounded-md text-sm font-bold text-slate-700' }, 'Mois'),
-                    React.createElement('button', { className: 'px-4 py-1.5 text-slate-500 text-sm font-medium hover:bg-gray-200 rounded-md transition' }, 'Semaine')
+            React.createElement('div', { className: 'flex items-center gap-3' },
+                React.createElement('button', { className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition font-semibold flex items-center gap-2' },
+                    React.createElement('i', { className: 'fas fa-plus' }),
+                    'Nouvel Événement'
                 ),
+                React.createElement('div', { className: 'h-8 w-px bg-gray-200 mx-1' }),
                 React.createElement('button', {
                     onClick: onClose,
-                    className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition shadow-sm text-sm'
+                    className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition shadow-sm'
                 }, 'Fermer')
+            )
+        ),
+
+        // FILTERS & TOOLBAR
+        React.createElement('div', { className: 'bg-white border-b px-6 py-2 flex gap-4 items-center shadow-sm z-10' },
+            React.createElement('span', { className: 'text-xs font-bold text-slate-400 uppercase tracking-wider mr-2' }, 'Filtres :'),
+            
+            React.createElement('button', {
+                onClick: () => setActiveFilter('all'),
+                className: `px-3 py-1.5 rounded-full text-sm font-medium transition border ${activeFilter === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`
+            }, 'Tout Voir'),
+            
+            React.createElement('button', {
+                onClick: () => setActiveFilter('ship'),
+                className: `px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-2 border ${activeFilter === 'ship' ? 'bg-green-100 text-green-800 border-green-300 shadow-inner' : 'bg-white text-slate-600 border-slate-200 hover:bg-green-50'}`
+            }, React.createElement('i', { className: 'fas fa-truck text-xs' }), 'Expéditions'),
+            
+            React.createElement('button', {
+                onClick: () => setActiveFilter('cut'),
+                className: `px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-2 border ${activeFilter === 'cut' ? 'bg-blue-100 text-blue-800 border-blue-300 shadow-inner' : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50'}`
+            }, React.createElement('i', { className: 'fas fa-layer-group text-xs' }), 'Mise en Prod'),
+
+            React.createElement('button', {
+                onClick: () => setActiveFilter('maintenance'),
+                className: `px-3 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-2 border ${activeFilter === 'maintenance' ? 'bg-red-100 text-red-800 border-red-300 shadow-inner' : 'bg-white text-slate-600 border-slate-200 hover:bg-red-50'}`
+            }, React.createElement('i', { className: 'fas fa-tools text-xs' }), 'Maintenance'),
+
+            React.createElement('div', { className: 'flex-1' }), // Spacer
+            
+            React.createElement('div', { className: 'flex bg-gray-100 rounded-lg p-1' },
+                React.createElement('button', { className: 'w-8 h-8 flex items-center justify-center bg-white shadow-sm rounded text-slate-700' }, React.createElement('i', { className: 'fas fa-chevron-left' })),
+                React.createElement('span', { className: 'px-4 flex items-center font-bold text-slate-700 text-sm' }, currentMonthName),
+                React.createElement('button', { className: 'w-8 h-8 flex items-center justify-center bg-white shadow-sm rounded text-slate-700' }, React.createElement('i', { className: 'fas fa-chevron-right' }))
             )
         ),
 
         // MAIN CONTENT (GRID + SIDEBAR)
         React.createElement('div', { className: 'flex-1 flex overflow-hidden' },
             
-            // CALENDAR GRID (Left - 75%)
-            React.createElement('div', { className: 'flex-1 flex flex-col bg-white border-r border-gray-200' },
-                // Month Navigation
-                React.createElement('div', { className: 'p-4 flex justify-between items-center border-b' },
-                    React.createElement('button', { className: 'text-slate-400 hover:text-slate-700' }, React.createElement('i', { className: 'fas fa-chevron-left text-xl' })),
-                    React.createElement('h2', { className: 'text-xl font-bold text-slate-800' }, currentMonthName),
-                    React.createElement('button', { className: 'text-slate-400 hover:text-slate-700' }, React.createElement('i', { className: 'fas fa-chevron-right text-xl' }))
-                ),
-                
+            // CALENDAR GRID
+            React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 border-r border-gray-200' },
                 // Days Header
-                React.createElement('div', { className: 'grid grid-cols-7 border-b bg-slate-50' },
+                React.createElement('div', { className: 'grid grid-cols-7 border-b bg-white shadow-sm' },
                     ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(day => 
-                        React.createElement('div', { key: day, className: 'p-2 text-center text-xs font-bold text-slate-500 uppercase tracking-wide' }, day)
+                        React.createElement('div', { key: day, className: 'py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider' }, day)
                     )
                 ),
 
                 // Calendar Cells
-                React.createElement('div', { className: 'grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto' },
+                React.createElement('div', { className: 'grid grid-cols-7 flex-1 auto-rows-fr overflow-y-auto p-2 gap-2' },
                     days.map((day, idx) => {
                         const dayEvents = day ? getEventsForDay(day) : [];
+                        const load = day ? dailyLoad[day] : 0;
+                        
                         return React.createElement('div', { 
                             key: idx, 
-                            className: `min-h-[120px] border-b border-r p-2 hover:bg-slate-50 transition flex flex-col gap-1 ${!day ? 'bg-slate-50/50' : ''}` 
+                            className: `rounded-xl border p-2 flex flex-col gap-1 relative transition-all group ${
+                                !day ? 'bg-transparent border-transparent' : 'bg-white border-slate-200 hover:shadow-md hover:border-blue-300'
+                            }` 
                         },
-                            day && React.createElement('span', { className: `text-sm font-bold mb-1 ${[6,7,13,14,20,21,27,28].includes(idx+1) ? 'text-red-400' : 'text-slate-700'}` }, day),
-                            dayEvents.map((evt, eIdx) => 
-                                React.createElement('div', { 
-                                    key: eIdx, 
-                                    className: `text-xs p-1.5 rounded shadow-sm mb-1 cursor-pointer hover:brightness-95 ${getTypeStyle(evt.type)}`,
-                                    title: evt.details || evt.title
-                                },
-                                    React.createElement('div', { className: 'flex items-center gap-1.5 font-bold' },
-                                        React.createElement('i', { className: `fas ${getIcon(evt.type)} text-[10px] opacity-70` }),
-                                        React.createElement('span', { className: 'truncate' }, evt.type === 'ship' ? 'EXP:' : evt.type === 'cut' ? 'PROD:' : '')
-                                    ),
-                                    React.createElement('div', { className: 'truncate mt-0.5' }, evt.title),
-                                    evt.client && React.createElement('div', { className: 'text-[10px] opacity-80 truncate' }, evt.client)
+                            day && React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                                React.createElement('span', { 
+                                    className: `text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${
+                                        day === 3 ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 bg-slate-100'
+                                    }` 
+                                }, day),
+                                // Add Button (Visible on Hover)
+                                React.createElement('button', { 
+                                    className: 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition' 
+                                }, React.createElement('i', { className: 'fas fa-plus-circle' }))
+                            ),
+                            
+                            // Events List
+                            day && React.createElement('div', { className: 'flex-1 overflow-y-auto space-y-1 custom-scrollbar' },
+                                dayEvents.map((evt, eIdx) => 
+                                    React.createElement('div', { 
+                                        key: eIdx, 
+                                        className: `text-xs p-2 rounded-lg shadow-sm cursor-pointer hover:scale-[1.02] transition-transform border border-transparent ${getTypeStyle(evt.type, evt.status)}`,
+                                        title: evt.details
+                                    },
+                                        React.createElement('div', { className: 'flex items-center justify-between mb-0.5' },
+                                            React.createElement('div', { className: 'flex items-center gap-1.5' },
+                                                React.createElement('i', { className: `fas ${getIcon(evt.type)}` }),
+                                                React.createElement('span', { className: 'font-bold truncate max-w-[80px]' }, evt.type === 'ship' ? 'EXPÉ.' : evt.type === 'cut' ? 'PROD' : '')
+                                            ),
+                                            evt.status === 'tentative' && React.createElement('i', { className: 'fas fa-question-circle opacity-50' })
+                                        ),
+                                        React.createElement('div', { className: 'truncate font-medium leading-tight' }, evt.title),
+                                        evt.details && React.createElement('div', { className: 'text-[10px] opacity-75 truncate mt-0.5' }, evt.details)
+                                    )
+                                )
+                            ),
+
+                            // Capacity Bar (Load Balancer)
+                            day && load > 0 && React.createElement('div', { className: 'mt-auto pt-2' },
+                                React.createElement('div', { className: 'flex justify-between text-[10px] text-slate-400 mb-0.5 font-medium' },
+                                    React.createElement('span', null, 'Charge'),
+                                    React.createElement('span', { className: load > 100 ? 'text-red-500 font-bold' : '' }, `${load}%`)
+                                ),
+                                React.createElement('div', { className: 'h-1.5 w-full bg-slate-100 rounded-full overflow-hidden' },
+                                    React.createElement('div', { 
+                                        className: `h-full rounded-full ${getLoadColor(load)}`, 
+                                        style: { width: `${Math.min(load, 100)}%` } 
+                                    })
                                 )
                             )
                         );
@@ -128,55 +226,54 @@ const ProductionPlanning = ({ onClose }) => {
                 )
             ),
 
-            // SIDEBAR "AIDE-MÉMOIRE" (Right - 25%)
-            React.createElement('div', { className: 'w-80 bg-slate-50 border-l border-gray-200 flex flex-col shadow-inner z-10' },
-                React.createElement('div', { className: 'p-5 bg-white border-b' },
+            // SIDEBAR "AIDE-MÉMOIRE"
+            React.createElement('div', { className: 'w-80 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20' },
+                React.createElement('div', { className: 'p-5 border-b bg-slate-50' },
                     React.createElement('h3', { className: 'font-bold text-slate-800 flex items-center gap-2' },
-                        React.createElement('i', { className: 'fas fa-clipboard-list text-yellow-500' }),
-                        'Aide-Mémoire'
+                        React.createElement('div', { className: 'w-6 h-6 rounded bg-yellow-100 text-yellow-600 flex items-center justify-center' },
+                            React.createElement('i', { className: 'fas fa-sticky-note text-xs' })
+                        ),
+                        'Notes & Rappels'
                     ),
-                    React.createElement('p', { className: 'text-xs text-slate-500 mt-1' }, 'Notes rapides et tâches planning')
+                    React.createElement('p', { className: 'text-xs text-slate-500 mt-1 pl-8' }, 'Votre To-Do list personnelle')
                 ),
                 
                 React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3' },
                     plannerNotes.map(note => 
-                        React.createElement('div', { key: note.id, className: 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex gap-3 items-start group hover:border-blue-300 transition' },
-                            React.createElement('div', { 
-                                className: `mt-1 w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${note.done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`,
-                            }, note.done && React.createElement('i', { className: 'fas fa-check text-white text-xs' })),
-                            React.createElement('span', { className: `text-sm leading-snug ${note.done ? 'text-gray-400 line-through' : 'text-gray-700'}` }, note.text)
-                        )
-                    ),
-                    
-                    // Add Note Input
-                    React.createElement('div', { className: 'mt-4 pt-4 border-t border-gray-200' },
-                        React.createElement('div', { className: 'relative' },
-                            React.createElement('input', { 
-                                type: 'text', 
-                                placeholder: 'Ajouter une note...',
-                                className: 'w-full pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500'
-                            }),
-                            React.createElement('button', { className: 'absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700' },
-                                React.createElement('i', { className: 'fas fa-plus-circle' })
+                        React.createElement('div', { key: note.id, className: 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition group animate-slideIn' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('div', { 
+                                    className: `mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition ${
+                                        note.done 
+                                            ? 'bg-green-500 border-green-500 text-white' 
+                                            : 'border-gray-300 hover:border-blue-400 text-transparent'
+                                    }`,
+                                }, React.createElement('i', { className: 'fas fa-check text-xs' })),
+                                React.createElement('div', { className: 'flex-1' },
+                                    React.createElement('p', { className: `text-sm leading-snug font-medium ${note.done ? 'text-gray-400 line-through' : 'text-slate-700'}` }, note.text),
+                                    
+                                    // Priority Tag
+                                    !note.done && React.createElement('div', { className: 'mt-2 flex' },
+                                        note.priority === 'high' && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-red-50 text-red-600 rounded-full font-bold uppercase tracking-wide' }, 'Urgent'),
+                                        note.priority === 'medium' && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full font-bold uppercase tracking-wide' }, 'Normal')
+                                    )
+                                )
                             )
                         )
                     )
                 ),
 
-                // Legend
-                React.createElement('div', { className: 'p-4 border-t bg-white text-xs text-gray-500 space-y-2' },
-                    React.createElement('p', { className: 'font-bold mb-2 text-gray-700' }, 'Légende :'),
-                    React.createElement('div', { className: 'flex items-center gap-2' },
-                        React.createElement('div', { className: 'w-3 h-3 bg-green-100 border border-green-600 rounded' }),
-                        'Livraison / Expédition ($)'
-                    ),
-                    React.createElement('div', { className: 'flex items-center gap-2' },
-                        React.createElement('div', { className: 'w-3 h-3 bg-blue-100 border border-blue-600 rounded' }),
-                        'Mise en Production'
-                    ),
-                    React.createElement('div', { className: 'flex items-center gap-2' },
-                        React.createElement('div', { className: 'w-3 h-3 bg-red-100 border border-red-600 rounded' }),
-                        'Arrêt Maintenance'
+                // Add Input
+                React.createElement('div', { className: 'p-4 border-t' },
+                    React.createElement('div', { className: 'relative' },
+                        React.createElement('input', { 
+                            type: 'text', 
+                            placeholder: 'Ajouter une tâche...',
+                            className: 'w-full pl-4 pr-10 py-3 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition'
+                        }),
+                        React.createElement('button', { className: 'absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700' },
+                            React.createElement('i', { className: 'fas fa-arrow-up' })
+                        )
                     )
                 )
             )
