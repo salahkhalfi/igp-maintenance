@@ -1,6 +1,7 @@
 const AdminRoles = ({ onBack }) => {
     const [roles, setRoles] = React.useState([]);
     const [permissions, setPermissions] = React.useState([]);
+    const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true }); // Default all true
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(null);
     
@@ -22,12 +23,14 @@ const AdminRoles = ({ onBack }) => {
         setLoading(true);
         setError(null);
         try {
-            const [rolesRes, permsRes] = await Promise.all([
+            const [rolesRes, permsRes, modulesRes] = await Promise.all([
                 axios.get(API_URL + '/roles'),
-                axios.get(API_URL + '/roles/permissions/all')
+                axios.get(API_URL + '/roles/permissions/all'),
+                axios.get(API_URL + '/settings/modules')
             ]);
             setRoles(rolesRes.data.roles);
             setPermissions(permsRes.data.permissions);
+            if (modulesRes.data) setActiveModules(modulesRes.data);
         } catch (err) {
             console.error("Erreur chargement rôles/permissions:", err);
             setError(err.response?.data?.error || err.message);
@@ -140,12 +143,14 @@ const AdminRoles = ({ onBack }) => {
         showEditModal && React.createElement(RoleEditModal, {
             role: editingRole,
             allPermissions: permissions,
+            activeModules: activeModules,
             onClose: () => { setShowEditModal(false); setEditingRole(null); },
             onSave: handleSaveRole
         }),
 
         showViewModal && React.createElement(RoleViewModal, {
             role: viewingRole,
+            activeModules: activeModules,
             onClose: () => { setShowViewModal(false); setViewingRole(null); }
         })
     );
@@ -209,7 +214,7 @@ const RoleCard = ({ role, onEdit, onView, onDelete }) => {
     );
 };
 
-const RoleEditModal = ({ role, allPermissions, onClose, onSave }) => {
+const RoleEditModal = ({ role, allPermissions, activeModules, onClose, onSave }) => {
     const isSystem = role?.is_system === 1;
     // Initial state only - useEffect handles updates from role prop changes
     const [formData, setFormData] = React.useState({
@@ -334,9 +339,25 @@ const RoleEditModal = ({ role, allPermissions, onClose, onSave }) => {
                         ),
 
                         React.createElement('div', { className: 'p-6 space-y-6' },
-                            Object.entries(groupedPermissions).map(([resource, perms]) => 
-                                React.createElement('div', { key: resource },
-                                    React.createElement('h4', { className: 'text-xs font-bold text-blue-600 mb-3 uppercase tracking-wider border-b border-blue-100 pb-1' }, resource),
+                            Object.entries(groupedPermissions).map(([resource, perms]) => {
+                                // Determine if module is inactive (loose matching for different naming conventions)
+                                // Standard keys: planning, machines, notifications, statistics, messaging
+                                // Permissions resources: planning, machines, notifications, stats, messaging/messages, etc.
+                                let isInactive = false;
+                                if (activeModules) {
+                                    // Check common mappings
+                                    if (resource === 'planning' && activeModules.planning === false) isInactive = true;
+                                    if (resource === 'machines' && activeModules.machines === false) isInactive = true;
+                                    if (resource === 'notifications' && activeModules.notifications === false) isInactive = true;
+                                    if ((resource === 'stats' || resource === 'statistics') && activeModules.statistics === false) isInactive = true;
+                                    if ((resource === 'messaging' || resource === 'messages') && activeModules.messaging === false) isInactive = true;
+                                }
+
+                                return React.createElement('div', { key: resource, className: isInactive ? 'opacity-60 grayscale' : '' },
+                                    React.createElement('div', { className: 'flex items-center justify-between border-b border-blue-100 pb-1 mb-3' },
+                                        React.createElement('h4', { className: 'text-xs font-bold text-blue-600 uppercase tracking-wider' }, resource),
+                                        isInactive && React.createElement('span', { className: 'text-[10px] font-bold text-white bg-gray-400 px-2 py-0.5 rounded-full' }, 'INACTIF')
+                                    ),
                                     React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' },
                                         perms.map(perm => 
                                             React.createElement('label', { 
@@ -360,8 +381,8 @@ const RoleEditModal = ({ role, allPermissions, onClose, onSave }) => {
                                             )
                                         )
                                     )
-                                )
-                            )
+                                );
+                            })
                         )
                     )
                 )
@@ -382,7 +403,7 @@ const RoleEditModal = ({ role, allPermissions, onClose, onSave }) => {
     );
 };
 
-const RoleViewModal = ({ role, onClose }) => {
+const RoleViewModal = ({ role, activeModules, onClose }) => {
     if (!role) return null;
 
     const groupedPermissions = React.useMemo(() => {
@@ -417,9 +438,22 @@ const RoleViewModal = ({ role, onClose }) => {
                 React.createElement('h3', { className: 'text-xs font-bold text-gray-500 uppercase tracking-wide mb-4 pb-2 border-b' }, 'Permissions Actives'),
                 
                 React.createElement('div', { className: 'space-y-6' },
-                    Object.entries(groupedPermissions).map(([resource, perms]) => 
-                        React.createElement('div', { key: resource },
-                            React.createElement('h4', { className: 'text-sm font-bold text-gray-800 mb-3' }, resource),
+                    Object.entries(groupedPermissions).map(([resource, perms]) => {
+                        // Determine if module is inactive (same logic as Edit)
+                        let isInactive = false;
+                        if (activeModules) {
+                            if (resource === 'planning' && activeModules.planning === false) isInactive = true;
+                            if (resource === 'machines' && activeModules.machines === false) isInactive = true;
+                            if (resource === 'notifications' && activeModules.notifications === false) isInactive = true;
+                            if ((resource === 'stats' || resource === 'statistics') && activeModules.statistics === false) isInactive = true;
+                            if ((resource === 'messaging' || resource === 'messages') && activeModules.messaging === false) isInactive = true;
+                        }
+
+                        return React.createElement('div', { key: resource, className: isInactive ? 'opacity-60 grayscale' : '' },
+                            React.createElement('div', { className: 'flex items-center justify-between mb-3' },
+                                React.createElement('h4', { className: 'text-sm font-bold text-gray-800' }, resource),
+                                isInactive && React.createElement('span', { className: 'text-[10px] font-bold text-white bg-gray-400 px-2 py-0.5 rounded-full' }, 'INACTIF')
+                            ),
                             React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2' },
                                 perms.map(perm => 
                                     React.createElement('div', { key: perm.id, className: 'flex items-center p-2 rounded bg-gray-50' },
@@ -428,8 +462,8 @@ const RoleViewModal = ({ role, onClose }) => {
                                     )
                                 )
                             )
-                        )
-                    )
+                        );
+                    })
                 )
             ),
             React.createElement('div', { className: 'p-4 border-t bg-gray-50 rounded-b-lg text-right' },
