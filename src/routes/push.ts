@@ -13,6 +13,7 @@ import {
   type VapidKeys
 } from '@block65/webcrypto-web-push';
 import { checkModule } from '../utils/modules';
+import { authMiddleware } from '../middlewares/auth';
 
 const push = new Hono<{ Bindings: Bindings }>();
 
