@@ -6,7 +6,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { machines, tickets } from '../db/schema';
-import { adminOnly } from '../middlewares/auth';
+import { adminOnly, technicianSupervisorOrAdmin } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
 import { machineIdParamSchema, getMachinesQuerySchema, createMachineSchema, updateMachineSchema } from '../schemas/machines';
 import type { Bindings } from '../types';
@@ -100,7 +100,7 @@ machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), asyn
 });
 
 // PATCH /api/machines/:id - Mettre à jour une machine (admin seulement)
-machinesRoute.patch('/:id', adminOnly, zValidator('param', machineIdParamSchema), zValidator('json', updateMachineSchema), async (c) => {
+machinesRoute.patch('/:id', technicianSupervisorOrAdmin, zValidator('param', machineIdParamSchema), zValidator('json', updateMachineSchema), async (c) => {
   try {
     const { id } = c.req.valid('param');
     const body = c.req.valid('json');

@@ -249,6 +249,17 @@ app.route('/api/planning', planning);
 // Routes Alerts - Alertes tickets en retard (authentifiées)
 app.route('/api/alerts', alerts);
 
+// Routes Stats - Statistiques (authentifiées + module check)
+app.route('/api/stats', stats);
+
+app.get('/api/health', (c) => {
+  return c.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: '2.13.1'
+  });
+});
+
 // Page d'administration des rôles (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/roles', async (c) => {
   // Servir la page telle quelle - l'authentification sera vérifiée par le JS client
@@ -322,144 +333,6 @@ app.get('/test', (c) => {
 </body>
 </html>
   `);
-});
-
-// ========================================
-// STATS API - Simple active tickets count
-// ========================================
-app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    
-    // Only admins and supervisors can see stats
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
-    }
-
-    // Count active tickets (not completed, not cancelled, not archived)
-    const activeResult = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM tickets
-      WHERE status NOT IN ('completed', 'cancelled', 'archived')
-    `).first();
-
-    // Count overdue tickets (scheduled_date in the past)
-    const overdueResult = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM tickets
-      WHERE status NOT IN ('completed', 'cancelled', 'archived')
-        AND scheduled_date IS NOT NULL
-        AND datetime(scheduled_date) < datetime('now')
-    `).first();
-
-    // Count active technicians (only real technicians, exclude system team account)
-    const techniciansResult = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM users
-      WHERE role = 'technician'
-        AND id != 0
-    `).first();
-
-    // Count registered push notification devices
-    const pushDevicesResult = await c.env.DB.prepare(`
-      SELECT COUNT(*) as count
-      FROM push_subscriptions
-    `).first();
-
-    return c.json({
-      activeTickets: (activeResult as any)?.count || 0,
-      overdueTickets: (overdueResult as any)?.count || 0,
-      activeTechnicians: (techniciansResult as any)?.count || 0,
-      pushDevices: (pushDevicesResult as any)?.count || 0
-    });
-  } catch (error) {
-    console.error('[Stats API] Error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-// ========================================
-// STATS API - Technicians Performance
-// ========================================
-app.get('/api/stats/technicians-performance', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    
-    // Only admins and supervisors can see performance stats
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
-    }
-
-    // Get top 3 technicians by completed tickets (last 30 days)
-    const topTechnicians = await c.env.DB.prepare(`
-      SELECT 
-        u.id,
-        u.first_name,
-        u.last_name,
-        u.full_name,
-        COUNT(t.id) as completed_count
-      FROM users u
-      LEFT JOIN tickets t ON t.assigned_to = u.id 
-        AND t.status = 'completed'
-        AND t.completed_at >= datetime('now', '-30 days')
-      WHERE u.role = 'technician' 
-        AND u.id != 0
-      GROUP BY u.id
-      ORDER BY completed_count DESC
-      LIMIT 3
-    `).all();
-
-    return c.json({
-      topTechnicians: topTechnicians.results || []
-    });
-  } catch (error) {
-    console.error('[Performance Stats API] Error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-// API: Push subscriptions list
-app.get('/api/push/subscriptions-list', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    
-    // Only admins and supervisors can see subscriptions list
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
-    }
-
-    // Get all push subscriptions with user info
-    const subscriptions = await c.env.DB.prepare(`
-      SELECT 
-        ps.id,
-        ps.user_id,
-        ps.endpoint,
-        ps.device_type,
-        ps.device_name,
-        ps.created_at,
-        u.full_name as user_full_name,
-        u.email as user_email,
-        u.role as user_role
-      FROM push_subscriptions ps
-      LEFT JOIN users u ON ps.user_id = u.id
-      ORDER BY ps.created_at DESC
-    `).all();
-
-    return c.json({
-      subscriptions: subscriptions.results || []
-    });
-  } catch (error) {
-    console.error('[Push Subscriptions List API] Error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-app.get('/api/health', (c) => {
-  return c.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: '1.8.0'
-  });
 });
 
 // ========================================

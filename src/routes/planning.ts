@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { Bindings } from '../types';
 import { checkModule } from '../utils/modules';
+import { technicianSupervisorOrAdmin, supervisorOrAdmin } from '../middlewares/auth';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -41,7 +42,7 @@ app.get('/', async (c) => {
 // --- EVENTS ---
 
 // CREATE EVENT
-app.post('/events', async (c) => {
+app.post('/events', technicianSupervisorOrAdmin, async (c) => {
     const body = await c.req.json();
     const { date, type, status, title, details } = body;
 
@@ -57,7 +58,7 @@ app.post('/events', async (c) => {
 });
 
 // UPDATE EVENT
-app.put('/events/:id', async (c) => {
+app.put('/events/:id', technicianSupervisorOrAdmin, async (c) => {
     const id = c.req.param('id');
     const body = await c.req.json();
     const { date, type, status, title, details } = body;
@@ -86,7 +87,7 @@ app.put('/events/:id', async (c) => {
 });
 
 // DELETE EVENT
-app.delete('/events/:id', async (c) => {
+app.delete('/events/:id', technicianSupervisorOrAdmin, async (c) => {
     const id = c.req.param('id');
     try {
         await c.env.DB.prepare('DELETE FROM planning_events WHERE id = ?').bind(id).run();
@@ -99,7 +100,7 @@ app.delete('/events/:id', async (c) => {
 // --- CATEGORIES ---
 
 // CREATE CATEGORY
-app.post('/categories', async (c) => {
+app.post('/categories', supervisorOrAdmin, async (c) => {
     const body = await c.req.json();
     const { id, label, icon, color } = body;
 
@@ -119,7 +120,7 @@ app.post('/categories', async (c) => {
 });
 
 // UPDATE CATEGORY
-app.put('/categories/:id', async (c) => {
+app.put('/categories/:id', supervisorOrAdmin, async (c) => {
     const id = c.req.param('id');
     const body = await c.req.json();
     const { label, icon, color } = body;
@@ -136,7 +137,7 @@ app.put('/categories/:id', async (c) => {
 });
 
 // DELETE CATEGORY
-app.delete('/categories/:id', async (c) => {
+app.delete('/categories/:id', supervisorOrAdmin, async (c) => {
     const id = c.req.param('id');
     try {
         await c.env.DB.prepare('DELETE FROM planning_categories WHERE id = ?').bind(id).run();

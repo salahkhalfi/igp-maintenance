@@ -1,6 +1,6 @@
 
 import { Hono } from 'hono';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, supervisorOrAdmin } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
 import type { Bindings } from '../types';
 
@@ -12,15 +12,8 @@ stats.use('*', checkModule('statistics'));
 // ========================================
 // STATS API - Simple active tickets count
 // ========================================
-stats.get('/active-tickets', authMiddleware, async (c) => {
+stats.get('/active-tickets', authMiddleware, supervisorOrAdmin, async (c) => {
   try {
-    const user = c.get('user') as any;
-    
-    // Only admins and supervisors can see stats
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
-    }
-
     // Count active tickets (not completed, not cancelled, not archived)
     const activeResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
@@ -66,15 +59,8 @@ stats.get('/active-tickets', authMiddleware, async (c) => {
 // ========================================
 // STATS API - Technicians Performance
 // ========================================
-stats.get('/technicians-performance', authMiddleware, async (c) => {
+stats.get('/technicians-performance', authMiddleware, supervisorOrAdmin, async (c) => {
   try {
-    const user = c.get('user') as any;
-    
-    // Only admins and supervisors can see performance stats
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
-    }
-
     // Get top 3 technicians by completed tickets (last 30 days)
     const topTechnicians = await c.env.DB.prepare(`
       SELECT 
