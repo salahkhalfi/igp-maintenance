@@ -57,10 +57,14 @@ comments.post('/', async (c) => {
     const commentText = String(body.comment || '').trim();
     const submittedUserName = String(body.user_name || userName);
 
+    console.log(`[COMMENTS] Validating: ticketId=${ticketId}, comment="${commentText}"`);
+
     if (!ticketId || isNaN(ticketId)) {
+        console.warn('[COMMENTS] Invalid ticket_id');
         return c.json({ error: 'Invalid ticket_id' }, 400);
     }
     if (!commentText) {
+        console.warn('[COMMENTS] Empty comment');
         return c.json({ error: 'Empty comment' }, 400);
     }
 

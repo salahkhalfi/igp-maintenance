@@ -138,30 +138,22 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     }
   }, [comments, activeTab]);
 
+  // SAFE DATA PREPARATION
+  // Ensure all rendered fields are strictly strings or numbers
+  const safeTicket = ticket ? {
+    id: ticket.id,
+    priority: String(ticket.priority || 'low').toUpperCase(),
+    status: String(ticket.status || 'open').toUpperCase(),
+    title: String(ticket.title || 'Sans titre'),
+    created_by_name: String(ticket.created_by_name || 'Inconnu'),
+    created_at: ticket.created_at ? new Date(ticket.created_at) : new Date(),
+    machine_name: String(ticket.machine_name || ticket.machine_type || 'Machine inconnue'),
+    description: String(ticket.description || 'Aucune description.'),
+    assigned_to_name: ticket.assigned_to_name ? String(ticket.assigned_to_name) : null,
+    assigned_to: ticket.assigned_to
+  } : null;
+
   if (!isOpen || !ticketId) return null;
-
-  // Helpers pour l'UI
-  const getStatusColor = (status: TicketStatus) => {
-    switch (status) {
-      case 'open': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'in_progress': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'resolved': return 'bg-green-100 text-green-700 border-green-200';
-      case 'closed': return 'bg-gray-100 text-gray-700 border-gray-200';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
-  const getPriorityColor = (p: TicketPriority) => {
-    switch (p) {
-      case 'critical': return 'text-red-600 bg-red-50 border-red-100';
-      case 'high': return 'text-orange-600 bg-orange-50 border-orange-100';
-      case 'medium': return 'text-blue-600 bg-blue-50 border-blue-100';
-      case 'low': return 'text-green-600 bg-green-50 border-green-100';
-    }
-  };
-
-  const canEdit = currentUserRole === 'admin' || currentUserRole === 'supervisor' || ticket?.created_by === currentUserId;
-  const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-200">
@@ -171,7 +163,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
           <div className="flex-1 flex items-center justify-center p-12">
             <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
           </div>
-        ) : !ticket ? (
+        ) : !safeTicket ? (
           <div className="p-8 text-center">
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-bold">Ticket introuvable</h3>
@@ -183,19 +175,19 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
             <div className="flex items-start justify-between p-6 border-b border-gray-100 bg-white z-10">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-mono text-gray-400">#{ticket.id}</span>
+                  <span className="text-sm font-mono text-gray-400">#{safeTicket.id}</span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getPriorityColor(ticket.priority)}`}>
-                    {ticket.priority.toUpperCase()}
+                    {safeTicket.priority}
                   </span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(ticket.status)}`}>
-                    {ticket.status === 'in_progress' ? 'EN COURS' : ticket.status === 'resolved' ? 'RÉSOLU' : ticket.status.toUpperCase()}
+                    {safeTicket.status === 'IN_PROGRESS' ? 'EN COURS' : safeTicket.status === 'RESOLVED' ? 'RÉSOLU' : safeTicket.status}
                   </span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 line-clamp-1">{ticket.title}</h2>
+                <h2 className="text-2xl font-bold text-gray-800 line-clamp-1">{safeTicket.title}</h2>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span className="flex items-center gap-1"><User className="w-4 h-4" /> {ticket.created_by_name || 'Inconnu'}</span>
-                  <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {format(new Date(ticket.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr })}</span>
-                  <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {ticket.machine_name}</span>
+                  <span className="flex items-center gap-1"><User className="w-4 h-4" /> {safeTicket.created_by_name}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {format(safeTicket.created_at, "d MMM yyyy 'à' HH:mm", { locale: fr })}</span>
+                  <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {safeTicket.machine_name}</span>
                 </div>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -296,6 +288,17 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                             }`}
                           >
                             {s === 'in_progress' ? 'EN COURS' : s === 'resolved' ? 'RÉSOLU' : 'OUVERT'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: MEDIA */}
+              {activeTab === 'media' && (
+  solved' ? 'RÉSOLU' : 'OUVERT'}
                           </button>
                         ))}
                       </div>
