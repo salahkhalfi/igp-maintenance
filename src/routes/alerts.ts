@@ -8,15 +8,10 @@ import type { Bindings } from '../types';
 const alerts = new Hono<{ Bindings: Bindings }>();
 
 // POST /api/alerts/check-overdue - Envoyer des alertes automatiques pour tickets en retard
-// Route authentifiée (admin/superviseur uniquement)
-alerts.post('/check-overdue', authMiddleware, async (c) => {
+// Route authentifiée (admin/superviseur ou permission notifications.manage)
+alerts.post('/check-overdue', authMiddleware, requirePermission('notifications', 'manage'), async (c) => {
   try {
     const user = c.get('user');
-
-    // Seuls admin et superviseur peuvent déclencher cette vérification
-    if (user.role !== 'admin' && user.role !== 'supervisor') {
-      return c.json({ error: 'Permission refusée' }, 403);
-    }
 
     // Obtenir le decalage horaire depuis les parametres systeme
     const { results: settingResults } = await c.env.DB.prepare(`

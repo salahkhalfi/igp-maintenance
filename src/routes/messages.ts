@@ -487,7 +487,7 @@ messagesRoute.get('/unread-count', authMiddleware, requirePermission('messages',
 // messagesRoute.get('/available-users', authMiddleware, async (c) => { ... });
 
 // DELETE /api/messages/:messageId
-messagesRoute.delete('/:messageId', authMiddleware, requirePermission('messages', 'use'), zValidator('param', messageIdParamSchema), async (c) => {
+messagesRoute.delete('/:messageId', authMiddleware, requireAnyPermission(['messages.delete.all', 'messages.delete.own']), zValidator('param', messageIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -551,7 +551,7 @@ messagesRoute.delete('/:messageId', authMiddleware, requirePermission('messages'
 });
 
 // POST /api/messages/bulk-delete
-messagesRoute.post('/bulk-delete', authMiddleware, requirePermission('messages', 'use'), zValidator('json', bulkDeleteMessagesSchema), async (c) => {
+messagesRoute.post('/bulk-delete', authMiddleware, requireAnyPermission(['messages.delete.all', 'messages.delete.own']), zValidator('json', bulkDeleteMessagesSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);

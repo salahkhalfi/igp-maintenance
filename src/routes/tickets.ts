@@ -431,7 +431,7 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
 });
 
 // DELETE /api/tickets/:id - Supprimer un ticket
-ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) => {
+ticketsRoute.delete('/:id', requireAnyPermission(['tickets.delete.all', 'tickets.delete.own']), zValidator('param', ticketIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const { id } = c.req.valid('param');
