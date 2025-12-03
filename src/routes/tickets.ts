@@ -49,6 +49,18 @@ ticketsRoute.get('/', authMiddleware, zValidator('query', getTicketsQuerySchema)
       conditions.push(eq(tickets.priority, priority));
     }
 
+    // Whitelist for Technician: Filter if needed, but currently they see all tickets
+    // Only Operators are restricted to their own tickets usually, but logic above allows "read all" for them?
+    // Actually, hasPermission('tickets', 'read', 'all') is checked.
+    // If operator doesn't have 'read.all', they might fall through.
+    // But line 31 says `role === 'operator'`. This implies Operators can see ALL tickets?
+    // Usually operators should only see their own.
+    // Let's refine this check for Operators.
+    
+    if (role === 'operator') {
+       conditions.push(eq(tickets.reported_by, user.userId));
+    }
+
     const results = await db
       .select({
         ...getTableColumns(tickets),
@@ -123,6 +135,11 @@ ticketsRoute.get('/:id', authMiddleware, zValidator('param', ticketIdParamSchema
 
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
+    }
+
+    // Check ownership for operators
+    if (role === 'operator' && ticket.reported_by !== user.userId) {
+        return c.json({ error: 'Vous ne pouvez voir que vos propres tickets' }, 403);
     }
 
     // Récupérer les médias
@@ -315,6 +332,8 @@ ticketsRoute.post('/', authMiddleware, zValidator('json', createTicketSchema), a
 });
 
 // PATCH /api/tickets/:id - Mettre à jour un ticket
+// Note: requirePermission middleware checks DB. If DB is broken, this might fail.
+// But we fixed hasPermission to allow Admin/Technician fallback.
 ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('param', ticketIdParamSchema), zValidator('json', updateTicketSchema), async (c) => {
   try {
     const user = c.get('user') as any;
@@ -341,10 +360,12 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
     }
 
     // Permissions checks
-    if (user.role === 'operator' && currentTicket.reported_by !== user.userId) {
+    const role = user.role?.toLowerCase();
+    
+    if (role === 'operator' && currentTicket.reported_by !== user.userId) {
       return c.json({ error: 'Vous ne pouvez modifier que vos propres tickets' }, 403);
     }
-    if (user.role === 'operator' && body.status && body.status !== currentTicket.status) {
+    if (role === 'operator' && body.status && body.status !== currentTicket.status) {
       return c.json({ error: 'Les opérateurs ne peuvent pas changer le statut des tickets' }, 403);
     }
 
@@ -483,8 +504,8 @@ ticketsRoute.delete('/:id', requireAnyPermission(['tickets.delete.all', 'tickets
     const db = getDb(c.env);
 
     // Vérification des permissions
-    const canDeleteAll = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'all');
-    const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'own');
+    const canDeleteAll = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'all', user.isSuperAdmin);
+    const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'own', user.isSuperAdmin);
 
     if (!canDeleteAll && !canDeleteOwn) {
       return c.json({ 

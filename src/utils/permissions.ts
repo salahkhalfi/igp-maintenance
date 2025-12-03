@@ -30,7 +30,7 @@ export async function loadRolePermissions(DB: D1Database, roleName: string, isSu
   try {
     // 👑 SUPER ADMIN & ADMIN BYPASS: Le Super Admin ET l'Admin ont toujours TOUTES les permissions
     // Cela évite les problèmes de synchronisation de DB pour l'administrateur principal
-    if (isSuperAdmin || roleName === 'admin') {
+    if (isSuperAdmin || roleName?.toLowerCase() === 'admin') {
       try {
         const { results } = await DB.prepare('SELECT slug FROM permissions').all() as any;
         const permissions = new Set<string>();
@@ -131,7 +131,8 @@ export async function hasPermission(
   try {
     // 👑 SUPER ADMIN & ADMIN BYPASS: L'Admin a toujours accès (comme le Super Admin)
     // Cela garantit que l'Admin ne peut jamais se "bloquer" lui-même
-    if (isSuperAdmin || userRole === 'admin') {
+    // Case-insensitive check for robustness
+    if (isSuperAdmin || userRole?.toLowerCase() === 'admin') {
       return true;
     }
 
@@ -180,7 +181,7 @@ export async function hasAnyPermission(
   permissions: PermissionString[],
   isSuperAdmin: boolean = false
 ): Promise<boolean> {
-  if (isSuperAdmin || userRole === 'admin') return true;
+  if (isSuperAdmin || userRole?.toLowerCase() === 'admin') return true;
   
   for (const perm of permissions) {
     const [resource, action, scope] = perm.split('.');
@@ -200,7 +201,7 @@ export async function hasAllPermissions(
   permissions: PermissionString[],
   isSuperAdmin: boolean = false
 ): Promise<boolean> {
-  if (isSuperAdmin || userRole === 'admin') return true;
+  if (isSuperAdmin || userRole?.toLowerCase() === 'admin') return true;
 
   for (const perm of permissions) {
     const [resource, action, scope] = perm.split('.');
