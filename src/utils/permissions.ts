@@ -225,11 +225,16 @@ export async function syncAdminPermissions(DB: D1Database, activeModules: string
     console.log(`[RBAC] Found ${results.length} permissions to grant to Admin`);
 
     // 3. Insérer les permissions pour l'admin (INSERT OR IGNORE pour éviter les doublons)
-    for (const perm of results) {
-      await DB.prepare(`
-        INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
-        VALUES (?, ?)
-      `).bind(adminRole.id, perm.id).run();
+    // Utilisation de DB.batch pour la performance et la robustesse
+    if (results.length > 0) {
+      const statements = results.map((perm: any) => 
+        DB.prepare(`
+          INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
+          VALUES (?, ?)
+        `).bind(adminRole.id, perm.id)
+      );
+      
+      await DB.batch(statements);
     }
 
     // 4. Vider le cache pour que les changements soient immédiats
