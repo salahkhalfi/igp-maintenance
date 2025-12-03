@@ -71,6 +71,11 @@ export async function hasPermission(
   scope: string = 'all'
 ): Promise<boolean> {
   try {
+    // 👑 ADMIN BYPASS: Les administrateurs et super-administrateurs ont toujours TOUTES les permissions
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      return true;
+    }
+
     // Vérifier le cache
     const now = Date.now();
     if (now - lastCacheUpdate > CACHE_TTL) {
