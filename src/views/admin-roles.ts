@@ -198,7 +198,7 @@ export const adminRolesHTML = `<!DOCTYPE html>
             window.location.href = '/';
         } else {
             console.log('✅ Token trouvé:', token.substring(0, 30) + '...');
-            // S'assurer que les deux clés existent
+            // S'assurer que les deux clés existent pour compatibilité
             localStorage.setItem('auth_token', token);
             localStorage.setItem('token', token);
         }

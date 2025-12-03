@@ -200,7 +200,7 @@ const TicketComments = ({ ticketId, currentUser, onRefresh }) => {
         setUploadingMedia(true);
         try {
             const formData = new FormData();
-            const safeName = currentUser.first_name.replace(/[^a-zA-Z0-9]/g, '_');
+            const safeName = (currentUser.first_name || 'user').replace(/[^a-zA-Z0-9]/g, '_');
             const filename = `vocal_${safeName}_${new Date().getTime()}.${audioBlob.type.includes('mp4') ? 'mp4' : 'webm'}`;
             formData.append('file', audioBlob, filename);
             formData.append('ticket_id', ticketId);
@@ -222,7 +222,7 @@ const TicketComments = ({ ticketId, currentUser, onRefresh }) => {
 
             await axios.post(API_URL + '/comments', {
                 ticket_id: ticketId,
-                user_name: currentUser.first_name,
+                user_name: currentUser.first_name || currentUser.email || 'Utilisateur', // Fallback
                 user_role: userRoleFr,
                 comment: commentText,
                 created_at: utcTime
@@ -270,7 +270,7 @@ const TicketComments = ({ ticketId, currentUser, onRefresh }) => {
 
             await axios.post(API_URL + '/comments', {
                 ticket_id: ticketId,
-                user_name: currentUser.first_name,
+                user_name: currentUser.first_name || currentUser.email || 'Utilisateur', // Fallback
                 user_role: userRoleFr,
                 comment: newComment,
                 created_at: localTimestamp
