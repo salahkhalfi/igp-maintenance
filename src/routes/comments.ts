@@ -32,7 +32,9 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
        return c.json({ 
          error: 'Permission refusée: Vous ne pouvez pas commenter ce ticket',
          debug_role: user.role,
-         debug_email: user.email
+         debug_email: user.email,
+         debug_is_super_admin: user.isSuperAdmin,
+         debug_role_normalized: role
        }, 403);
     }
 
@@ -48,7 +50,8 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
       .get();
 
     if (!ticket) {
-      return c.json({ error: 'Ticket non trouvé' }, 404);
+      console.error(`[COMMENTS] Ticket ${ticket_id} not found in DB`);
+      return c.json({ error: 'Ticket non trouvé', debug_ticket_id: ticket_id }, 404);
     }
 
     // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
