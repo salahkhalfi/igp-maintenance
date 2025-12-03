@@ -28,8 +28,9 @@ let lastCacheUpdate = 0;
  */
 export async function loadRolePermissions(DB: D1Database, roleName: string, isSuperAdmin: boolean = false): Promise<Set<string>> {
   try {
-    // 👑 SUPER ADMIN BYPASS: Le Super Admin (propriétaire) a toujours TOUTES les permissions
-    if (isSuperAdmin) {
+    // 👑 SUPER ADMIN & ADMIN BYPASS: Le Super Admin ET l'Admin ont toujours TOUTES les permissions
+    // Cela évite les problèmes de synchronisation de DB pour l'administrateur principal
+    if (isSuperAdmin || roleName === 'admin') {
       try {
         const { results } = await DB.prepare('SELECT slug FROM permissions').all() as any;
         const permissions = new Set<string>();
@@ -40,10 +41,10 @@ export async function loadRolePermissions(DB: D1Database, roleName: string, isSu
             permissions.add(`${perm.slug}.all`);
           }
         }
-        console.log(`[RBAC] Super Admin Bypass: Loaded ALL ${permissions.size} permissions for super admin (role: '${roleName}')`);
+        console.log(`[RBAC] Admin Bypass: Loaded ALL ${permissions.size} permissions for ${roleName}`);
         return permissions;
       } catch (e) {
-        console.error('[RBAC] Super Admin Bypass failed to load permissions:', e);
+        console.error('[RBAC] Admin Bypass failed to load permissions:', e);
         // Fallback
       }
     }
@@ -100,8 +101,9 @@ export async function hasPermission(
   isSuperAdmin: boolean = false
 ): Promise<boolean> {
   try {
-    // 👑 SUPER ADMIN BYPASS: Le Super Admin a toujours accès
-    if (isSuperAdmin) {
+    // 👑 SUPER ADMIN & ADMIN BYPASS: L'Admin a toujours accès (comme le Super Admin)
+    // Cela garantit que l'Admin ne peut jamais se "bloquer" lui-même
+    if (isSuperAdmin || userRole === 'admin') {
       return true;
     }
 
@@ -113,7 +115,7 @@ export async function hasPermission(
     }
 
     // Charger depuis le cache ou la DB
-    // Note: On utilise userRole comme clé de cache. Le Super Admin ne passe pas par ici.
+    // Note: On utilise userRole comme clé de cache.
     let rolePermissions = permissionsCache.get(userRole);
     if (!rolePermissions) {
       rolePermissions = await loadRolePermissions(DB, userRole, false);
@@ -150,7 +152,7 @@ export async function hasAnyPermission(
   permissions: PermissionString[],
   isSuperAdmin: boolean = false
 ): Promise<boolean> {
-  if (isSuperAdmin) return true;
+  if (isSuperAdmin || userRole === 'admin') return true;
   
   for (const perm of permissions) {
     const [resource, action, scope] = perm.split('.');
@@ -170,7 +172,7 @@ export async function hasAllPermissions(
   permissions: PermissionString[],
   isSuperAdmin: boolean = false
 ): Promise<boolean> {
-  if (isSuperAdmin) return true;
+  if (isSuperAdmin || userRole === 'admin') return true;
 
   for (const perm of permissions) {
     const [resource, action, scope] = perm.split('.');
