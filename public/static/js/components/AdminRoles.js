@@ -24,17 +24,29 @@ const AdminRoles = ({ onBack }) => {
         setLoading(true);
         setError(null);
         try {
+            // Parallel fetch with fallback for modules
             const [rolesRes, permsRes, modulesRes] = await Promise.all([
-                axios.get(API_URL + '/roles'),
-                axios.get(API_URL + '/roles/permissions/all'),
-                axios.get(API_URL + '/settings/modules')
+                axios.get(API_URL + '/roles').catch(e => { throw new Error("Impossible de charger les rôles: " + (e.response?.data?.error || e.message)); }),
+                axios.get(API_URL + '/roles/permissions/all').catch(e => { throw new Error("Impossible de charger les permissions: " + (e.response?.data?.error || e.message)); }),
+                axios.get(API_URL + '/settings/modules').catch(() => ({ data: { planning: true, statistics: true, notifications: true, messaging: true, machines: true } }))
             ]);
+            
             setRoles(rolesRes.data.roles || []);
-            setPermissions(permsRes.data.permissions || []);
+            
+            // Handle permissions structure (array or grouped)
+            if (permsRes.data.permissions) {
+                setPermissions(permsRes.data.permissions);
+            } else if (permsRes.data.grouped) {
+                const flat = Object.values(permsRes.data.grouped).flat();
+                setPermissions(flat);
+            } else {
+                setPermissions([]);
+            }
+
             if (modulesRes.data) setActiveModules(modulesRes.data);
         } catch (err) {
             console.error("Erreur chargement rôles/permissions:", err);
-            setError(err.response?.data?.error || err.message);
+            setError(err.message || "Une erreur inconnue est survenue");
         } finally {
             setLoading(false);
         }
@@ -95,6 +107,30 @@ const AdminRoles = ({ onBack }) => {
         return React.createElement('div', { className: 'flex justify-center items-center h-64' },
             React.createElement('i', { className: 'fas fa-spinner fa-spin fa-3x text-blue-500' }),
             React.createElement('span', { className: 'ml-3 text-gray-600' }, 'Chargement des rôles...')
+        );
+    }
+
+    if (error) {
+        return React.createElement('div', { className: 'min-h-screen bg-white p-8 flex flex-col items-center justify-center' },
+            React.createElement('div', { className: 'text-red-500 text-5xl mb-4' }, React.createElement('i', { className: 'fas fa-exclamation-circle' })),
+            React.createElement('h2', { className: 'text-2xl font-bold text-gray-800 mb-2' }, 'Erreur de chargement'),
+            React.createElement('p', { className: 'text-gray-600 mb-6 text-center max-w-md' }, error),
+            React.createElement('button', {
+                onClick: onBack,
+                className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md'
+            }, 'Retour au menu')
+        );
+    }
+
+    if (error) {
+        return React.createElement('div', { className: 'min-h-screen bg-white p-8 flex flex-col items-center justify-center' },
+            React.createElement('div', { className: 'text-red-500 text-5xl mb-4' }, React.createElement('i', { className: 'fas fa-exclamation-circle' })),
+            React.createElement('h2', { className: 'text-2xl font-bold text-gray-800 mb-2' }, 'Erreur de chargement'),
+            React.createElement('p', { className: 'text-gray-600 mb-6 text-center max-w-md' }, error),
+            React.createElement('button', {
+                onClick: onBack,
+                className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md'
+            }, 'Retour au menu')
         );
     }
 
@@ -508,7 +544,7 @@ const RoleViewModal = ({ role, activeModules, onClose }) => {
                 React.createElement('div', null,
                     React.createElement('h2', { className: 'text-xl font-bold text-gray-900' }, role.name),
                     React.createElement('div', { className: 'flex items-center mt-2 gap-2' },
-                        React.createElement('span', { className: 'px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-mono' }, `@${role.slug}`),
+                        React.createElement('span', { className: 'px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-mono' }, `rounded text-xs font-mono' }, `@${role.slug}`),
                         role.is_system === 1 && React.createElement('span', { className: 'px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-bold uppercase' }, 'Système')
                     )
                 ),

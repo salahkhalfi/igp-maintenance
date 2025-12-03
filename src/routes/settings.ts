@@ -290,6 +290,47 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+/**
+ * GET /api/settings/modules - Obtenir la configuration des modules
+ * Accès: Tous les utilisateurs authentifiés
+ */
+settings.get('/modules', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'modules_config'
+    `).first();
+
+    const defaults = { 
+      planning: true, 
+      statistics: true, 
+      notifications: true, 
+      messaging: true, 
+      machines: true 
+    };
+
+    if (!result || !(result as any).setting_value) {
+      return c.json(defaults);
+    }
+
+    try {
+      const config = JSON.parse((result as any).setting_value);
+      return c.json({ ...defaults, ...config });
+    } catch (e) {
+      return c.json(defaults);
+    }
+  } catch (error) {
+    console.error('Get modules error:', error);
+    // Return defaults on error to prevent UI blocking
+    return c.json({ 
+      planning: true, 
+      statistics: true, 
+      notifications: true, 
+      messaging: true, 
+      machines: true 
+    });
+  }
+});
+
 // ============================================================================
 // ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
 // ============================================================================
