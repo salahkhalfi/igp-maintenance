@@ -503,3 +503,6 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
         })
     );
 };
+
+// Make it available globally
+window.TicketDetailsModal = TicketDetailsModal;

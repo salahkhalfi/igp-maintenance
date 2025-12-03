@@ -371,3 +371,6 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }, React.createElement('i', { className: 'fas fa-arrow-up' })) : null
     );
 };
+
+// Make it available globally
+window.MainApp = MainApp;

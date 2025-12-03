@@ -618,3 +618,6 @@ const ProductionPlanning = ({ onClose }) => {
         })
     );
 };
+
+// Make it available globally
+window.ProductionPlanning = ProductionPlanning;

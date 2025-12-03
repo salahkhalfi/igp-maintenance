@@ -566,3 +566,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
         )
     ));
 };
+
+// Make it available globally
+window.CreateTicketModal = CreateTicketModal;

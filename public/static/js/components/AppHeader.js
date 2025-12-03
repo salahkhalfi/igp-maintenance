@@ -290,3 +290,6 @@ const AppHeader = ({
         )
     );
 };
+
+// Make it available globally
+window.AppHeader = AppHeader;

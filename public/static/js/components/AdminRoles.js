@@ -475,3 +475,6 @@ const RoleViewModal = ({ role, activeModules, onClose }) => {
         )
     );
 };
+
+// Make it available globally
+window.AdminRoles = AdminRoles;
