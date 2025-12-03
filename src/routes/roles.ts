@@ -351,53 +351,54 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       
       // Validation: Vérifier que tous les IDs de permissions existent vraiment
       if (uniquePermissionIds.length > 0) {
-        // On vérifie par lots pour éviter les limites de paramètres SQL
+        // Validation et Filtrage: Ne garder que les IDs qui existent vraiment
+        // Cela évite les erreurs 400 si le frontend envoie des IDs obsolètes
+        const validIdsFromDb: number[] = [];
         const VERIFY_CHUNK_SIZE = 50;
+        
         for (let i = 0; i < uniquePermissionIds.length; i += VERIFY_CHUNK_SIZE) {
           const chunk = uniquePermissionIds.slice(i, i + VERIFY_CHUNK_SIZE);
           if (chunk.length === 0) continue;
           
           const placeholders = chunk.map(() => '?').join(',');
-          // Use explicit query to verify IDs exist
-          const query = `SELECT COUNT(*) as count FROM permissions WHERE id IN (${placeholders})`;
+          const query = `SELECT id FROM permissions WHERE id IN (${placeholders})`;
           
           try {
-            const result = await c.env.DB.prepare(query).bind(...chunk).first() as any;
-            if (!result || result.count !== chunk.length) {
-               console.error(`Permission verification failed. Expected ${chunk.length}, got ${result?.count}`);
-               return c.json({ error: 'Certains IDs de permissions fournis n\'existent pas dans la base de données' }, 400);
+            const { results } = await c.env.DB.prepare(query).bind(...chunk).all() as any;
+            if (results && Array.isArray(results)) {
+              validIdsFromDb.push(...results.map((r: any) => r.id));
             }
           } catch (dbError) {
              console.error('DB Error during verification:', dbError);
-             throw dbError;
+             // En cas d'erreur de lecture, on continue avec les autres chunks pour ne pas tout bloquer
+             // Mais c'est critique si on ne peut pas vérifier
+             throw dbError; 
           }
         }
-      }
-
-      const statements = [];
-
-      // 1. Supprimer toutes les permissions actuelles
-      statements.push(c.env.DB.prepare(`
-        DELETE FROM role_permissions WHERE role_id = ?
-      `).bind(roleId));
-
-      // 2. Ajouter les nouvelles permissions
-      if (uniquePermissionIds.length > 0) {
-        // D1 Binding Limit Safety: Reduce chunk size to 40 (80 params) to be well under 100 limit if it exists
-        const CHUNK_SIZE = 40;
         
-        for (let i = 0; i < uniquePermissionIds.length; i += CHUNK_SIZE) {
-            const chunk = uniquePermissionIds.slice(i, i + CHUNK_SIZE);
-            const placeholders = chunk.map(() => '(?, ?)').join(',');
-            const values = [];
-            for (const permId of chunk) {
-              values.push(roleId, permId);
-            }
+        // On utilise UNIQUEMENT les IDs validés pour l'insertion
+        const idsToInsert = validIdsFromDb;
+        
+        console.log(`[ROLES] Update: Received ${uniquePermissionIds.length} IDs, Validated ${idsToInsert.length} IDs`);
+
+        // 2. Ajouter les nouvelles permissions (uniquement les valides)
+        if (idsToInsert.length > 0) {
+            // D1 Binding Limit Safety: Reduce chunk size to 40 (80 params)
+            const CHUNK_SIZE = 40;
             
-            statements.push(c.env.DB.prepare(`
-              INSERT INTO role_permissions (role_id, permission_id)
-              VALUES ${placeholders}
-            `).bind(...values));
+            for (let i = 0; i < idsToInsert.length; i += CHUNK_SIZE) {
+                const chunk = idsToInsert.slice(i, i + CHUNK_SIZE);
+                const placeholders = chunk.map(() => '(?, ?)').join(',');
+                const values = [];
+                for (const permId of chunk) {
+                  values.push(roleId, permId);
+                }
+                
+                statements.push(c.env.DB.prepare(`
+                  INSERT INTO role_permissions (role_id, permission_id)
+                  VALUES ${placeholders}
+                `).bind(...values));
+            }
         }
       }
       
