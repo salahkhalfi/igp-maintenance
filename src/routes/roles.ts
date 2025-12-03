@@ -423,4 +423,4 @@ app.delete('/:id', requirePermission('roles', 'write'), async (c) => {
   }
 });
 
-export default app;p;
+export default app;
