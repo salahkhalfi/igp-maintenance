@@ -35,12 +35,16 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
     React.useEffect(() => {
         if (currentUser) {
+            // Modules are forced ON in legacy mode
+            setActiveModules({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
+            /*
             // Charger la configuration des modules
             axios.get('/api/settings/modules')
                 .then(res => {
                     if (res.data) setActiveModules(res.data);
                 })
                 .catch(err => console.warn('Failed to load modules config', err));
+            */
         }
     }, [currentUser]);
 
