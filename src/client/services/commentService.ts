@@ -12,25 +12,26 @@ interface CreateCommentRequest {
 export const commentService = {
   
   getAllByTicketId: async (ticketId: number): Promise<{ comments: any[] }> => {
-    // Utilisation standard pour GET
-    const res = await client.api.comments.ticket[':ticketId'].$get(
-      { param: { ticketId: ticketId.toString() } },
-      { headers: getAuthHeaders() }
-    );
+    const token = getAuthToken() || '';
+    // Use FETCH DIRECTLY to avoid RPC issues
+    const response = await fetch(`/api/comments/ticket/${ticketId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
-    if (!res.ok) {
+    if (!response.ok) {
+      console.error('[CLIENT] Failed to fetch comments:', response.status);
       throw new Error('Failed to fetch comments');
     }
-    return res.json();
+    return response.json();
   },
 
   create: async (data: CreateCommentRequest): Promise<{ comment: any }> => {
     console.log('[CLIENT] Sending comment via FETCH:', data);
     
     const token = getAuthToken() || '';
-    console.log('[CLIENT] Using token length:', token.length);
 
-    // Utilisation FETCH DIRECT pour contourner les potentiels bugs RPC/Typage
     const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
@@ -46,7 +47,7 @@ export const commentService = {
         result = text ? JSON.parse(text) : {};
     } catch (e) {
         console.error('[CLIENT] Failed to parse response:', text);
-        throw new Error('Server returned invalid JSON: ' + text.substring(0, 50));
+        throw new Error('Server returned invalid JSON');
     }
 
     if (!response.ok) {
@@ -59,13 +60,16 @@ export const commentService = {
   },
 
   delete: async (id: number): Promise<void> => {
-    const res = await client.api.comments[':id'].$delete(
-      { param: { id: id.toString() } },
-      { headers: getAuthHeaders() }
-    );
+    const token = getAuthToken() || '';
+    const response = await fetch(`/api/comments/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
 
-    if (!res.ok) {
-      const error = await res.json();
+    if (!response.ok) {
+      const error = await response.json();
       throw new Error((error as any).error || 'Failed to delete comment');
     }
   }
