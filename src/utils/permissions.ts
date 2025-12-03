@@ -190,6 +190,58 @@ export async function getRolePermissions(DB: D1Database, roleName: string, isSup
 }
 
 /**
+ * Synchroniser les permissions de l'administrateur avec les modules actifs
+ * Cette fonction est appelée lorsqu'un Super Admin active des modules
+ * @param DB - Instance D1 Database
+ * @param activeModules - Liste des modules actifs (ex: ['planning', 'notifications'])
+ */
+export async function syncAdminPermissions(DB: D1Database, activeModules: string[]): Promise<void> {
+  try {
+    console.log('[RBAC] Syncing Admin permissions with active modules:', activeModules);
+
+    // 1. Trouver l'ID du rôle 'admin'
+    const adminRole = await DB.prepare('SELECT id FROM roles WHERE slug = ?').bind('admin').first() as any;
+    
+    if (!adminRole) {
+      console.error('[RBAC] Admin role not found!');
+      return;
+    }
+
+    // 2. Récupérer les IDs de toutes les permissions liées aux modules actifs
+    // Note: La colonne 'module' dans la table permissions correspond au nom du module
+    if (activeModules.length === 0) return;
+
+    // Construire la clause IN dynamiquement
+    const placeholders = activeModules.map(() => '?').join(',');
+    const query = `SELECT id FROM permissions WHERE module IN (${placeholders})`;
+    
+    const { results } = await DB.prepare(query).bind(...activeModules).all() as any;
+    
+    if (!results || results.length === 0) {
+      console.log('[RBAC] No permissions found for active modules');
+      return;
+    }
+
+    console.log(`[RBAC] Found ${results.length} permissions to grant to Admin`);
+
+    // 3. Insérer les permissions pour l'admin (INSERT OR IGNORE pour éviter les doublons)
+    for (const perm of results) {
+      await DB.prepare(`
+        INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
+        VALUES (?, ?)
+      `).bind(adminRole.id, perm.id).run();
+    }
+
+    // 4. Vider le cache pour que les changements soient immédiats
+    clearPermissionsCache();
+    
+    console.log('[RBAC] Admin permissions synchronized successfully');
+  } catch (error) {
+    console.error('[RBAC] Error syncing admin permissions:', error);
+  }
+}
+
+/**
  * Vider le cache des permissions (utile après modification des rôles)
  */
 export function clearPermissionsCache(): void {

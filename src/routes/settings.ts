@@ -2,6 +2,7 @@
 
 import { Hono } from 'hono';
 import { adminOnly, authMiddleware, superAdminOnly, requirePermission } from '../middlewares/auth';
+import { syncAdminPermissions } from '../utils/permissions';
 import type { Bindings } from '../types';
 
 const settings = new Hono<{ Bindings: Bindings }>();
@@ -456,6 +457,18 @@ settings.put('/modules', authMiddleware, superAdminOnly, async (c) => {
       await c.env.DB.prepare(`
         INSERT INTO system_settings (setting_key, setting_value) VALUES ('active_modules', ?)
       `).bind(value).run();
+    }
+
+    // 🔄 SYNC AUTOMATIQUE: Activer les permissions pour l'Admin selon les modules actifs
+    try {
+      const activeModulesList = Object.keys(body).filter(key => body[key] === true);
+      if (c.executionCtx?.waitUntil) {
+        c.executionCtx.waitUntil(syncAdminPermissions(c.env.DB, activeModulesList));
+      } else {
+        await syncAdminPermissions(c.env.DB, activeModulesList);
+      }
+    } catch (e) {
+      console.error('Failed to sync admin permissions:', e);
     }
 
     return c.json({ success: true, modules: body });
