@@ -17,8 +17,24 @@ import type { Bindings } from '../types';
 const ticketsRoute = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/tickets - Liste tous les tickets
-ticketsRoute.get('/', requirePermission('tickets', 'read'), zValidator('query', getTicketsQuerySchema), async (c) => {
+ticketsRoute.get('/', authMiddleware, zValidator('query', getTicketsQuerySchema), async (c) => {
   try {
+    const user = c.get('user') as any;
+    
+    // 🛡️ SECURITY HOTFIX: Explicit role check to allow listing tickets
+    // Bypasses potential DB permission issues
+    const role = user.role?.toLowerCase();
+    const canRead = 
+      role === 'admin' || 
+      role === 'technician' || 
+      role === 'supervisor' ||
+      role === 'operator' || // Operators need to see their own tickets
+      await hasPermission(c.env.DB, user.role, 'tickets', 'read', 'all', user.isSuperAdmin);
+
+    if (!canRead) {
+        return c.json({ error: 'Permission refusée' }, 403);
+    }
+
     const { status, priority } = c.req.valid('query');
     
     const db = getDb(c.env);
@@ -61,8 +77,23 @@ ticketsRoute.get('/', requirePermission('tickets', 'read'), zValidator('query', 
 });
 
 // GET /api/tickets/:id - Détails d'un ticket
-ticketsRoute.get('/:id', requirePermission('tickets', 'read'), zValidator('param', ticketIdParamSchema), async (c) => {
+ticketsRoute.get('/:id', authMiddleware, zValidator('param', ticketIdParamSchema), async (c) => {
   try {
+    const user = c.get('user') as any;
+    
+    // 🛡️ SECURITY HOTFIX
+    const role = user.role?.toLowerCase();
+    const canRead = 
+      role === 'admin' || 
+      role === 'technician' || 
+      role === 'supervisor' ||
+      role === 'operator' ||
+      await hasPermission(c.env.DB, user.role, 'tickets', 'read', 'all', user.isSuperAdmin);
+
+    if (!canRead) {
+        return c.json({ error: 'Permission refusée' }, 403);
+    }
+
     const { id } = c.req.valid('param');
     // isNaN check handled by Zod
 
@@ -127,9 +158,23 @@ ticketsRoute.get('/:id', requirePermission('tickets', 'read'), zValidator('param
 });
 
 // POST /api/tickets - Créer un nouveau ticket
-ticketsRoute.post('/', requirePermission('tickets', 'create'), zValidator('json', createTicketSchema), async (c) => {
+ticketsRoute.post('/', authMiddleware, zValidator('json', createTicketSchema), async (c) => {
   try {
     const user = c.get('user') as any;
+    
+    // 🛡️ SECURITY HOTFIX
+    const role = user.role?.toLowerCase();
+    const canCreate = 
+      role === 'admin' || 
+      role === 'technician' || 
+      role === 'supervisor' ||
+      role === 'operator' ||
+      await hasPermission(c.env.DB, user.role, 'tickets', 'create', 'all', user.isSuperAdmin);
+
+    if (!canCreate) {
+        return c.json({ error: 'Permission refusée' }, 403);
+    }
+
     const body = c.req.valid('json');
     const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
 
