@@ -9,7 +9,7 @@ import { tickets, machines, users, media, ticketTimeline, pushLogs } from '../db
 import { generateTicketId } from '../utils/ticket-id';
 import { formatUserName } from '../utils/userFormatter';
 import { createTicketSchema, updateTicketSchema, ticketIdParamSchema, getTicketsQuerySchema } from '../schemas/tickets';
-import { requirePermission, requireAnyPermission } from '../middlewares/auth';
+import { requirePermission, requireAnyPermission, authMiddleware } from '../middlewares/auth';
 import { hasPermission } from '../utils/permissions';
 import { sendPushNotification } from './push';
 import type { Bindings } from '../types';
