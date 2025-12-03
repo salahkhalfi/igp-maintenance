@@ -200,11 +200,16 @@ app.post('/', requirePermission('roles', 'write'), async (c) => {
     }
 
     // Validation des IDs de permissions
-    if (permission_ids && !Array.isArray(permission_ids)) {
-      return c.json({ error: 'permission_ids doit être un tableau' }, 400);
-    }
-    if (permission_ids && permission_ids.some((id: any) => typeof id !== 'number' || id <= 0)) {
-      return c.json({ error: 'IDs de permissions invalides' }, 400);
+    let validPermissionIds: number[] = [];
+    if (permission_ids) {
+      if (!Array.isArray(permission_ids)) {
+        return c.json({ error: 'permission_ids doit être un tableau' }, 400);
+      }
+      // Convertir en nombres et valider
+      validPermissionIds = permission_ids.map((id: any) => Number(id));
+      if (validPermissionIds.some((id) => isNaN(id) || id <= 0)) {
+        return c.json({ error: 'IDs de permissions invalides' }, 400);
+      }
     }
 
     // Vérifier que le slug n'existe pas déjà
@@ -229,8 +234,8 @@ app.post('/', requirePermission('roles', 'write'), async (c) => {
     const roleId = result.meta.last_row_id;
 
     // Attribuer les permissions
-    if (permission_ids && Array.isArray(permission_ids) && permission_ids.length > 0) {
-      const uniquePermissionIds = [...new Set(permission_ids)];
+    if (validPermissionIds.length > 0) {
+      const uniquePermissionIds = [...new Set(validPermissionIds)];
       const CHUNK_SIZE = 100;
       
       for (let i = 0; i < uniquePermissionIds.length; i += CHUNK_SIZE) {
@@ -298,11 +303,16 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
     }
 
     // Validation des IDs de permissions si fournis
-    if (permission_ids && !Array.isArray(permission_ids)) {
-      return c.json({ error: 'permission_ids doit être un tableau' }, 400);
-    }
-    if (permission_ids && permission_ids.some((id: any) => typeof id !== 'number' || id <= 0)) {
-      return c.json({ error: 'IDs de permissions invalides' }, 400);
+    let validPermissionIds: number[] | undefined;
+    if (permission_ids) {
+      if (!Array.isArray(permission_ids)) {
+        return c.json({ error: 'permission_ids doit être un tableau' }, 400);
+      }
+      // Convertir en nombres et valider
+      validPermissionIds = permission_ids.map((id: any) => Number(id));
+      if (validPermissionIds.some((id) => isNaN(id) || id <= 0)) {
+        return c.json({ error: 'IDs de permissions invalides' }, 400);
+      }
     }
 
     // Vérifier que le rôle existe
@@ -335,9 +345,9 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
     }
 
     // Mettre à jour les permissions
-    if (permission_ids && Array.isArray(permission_ids)) {
+    if (validPermissionIds) {
       // Deduplicate permission IDs
-      const uniquePermissionIds = [...new Set(permission_ids)];
+      const uniquePermissionIds = [...new Set(validPermissionIds)];
       
       const statements = [];
 
