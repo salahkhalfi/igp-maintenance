@@ -11,10 +11,16 @@ export default defineConfig({
     manifest: true, // Useful for later
     rollupOptions: {
       input: 'src/client/main.tsx',
+      // Externalize React to use the global CDN version (avoids dual instance issues with legacy scripts)
+      external: ['react', 'react-dom'],
       output: {
         // Fixed name for easy inclusion in legacy HTML for now
         entryFileNames: 'main.js',
         assetFileNames: 'assets/[name].[ext]',
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM'
+        }
       }
     }
   },
