@@ -474,7 +474,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
                 // --- NEW TICKET COMMENTS COMPONENT ---
                 React.createElement(TicketComments, {
-                    ticketId: ticket.ticket_id, 
+                    ticketId: ticket.id, // FIXED: Pass Integer ID instead of String ticket_id
                     currentUser: currentUser,
                     onRefresh: loadTicketDetails
                 }),

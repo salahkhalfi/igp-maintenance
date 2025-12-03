@@ -196,6 +196,8 @@ app.route('/api/search', search);
 // - DELETE /logo : authMiddleware + super admin check
 // - PUT /:key : adminOnly middleware
 app.route('/api/settings', settings);
+// Legacy alias for preferences (fixes 404 on /api/preferences/kanban_columns)
+app.route('/api/preferences', settings);
 
 // Routes des webhooks pour notifications
 app.use('/api/webhooks/*', authMiddleware);
