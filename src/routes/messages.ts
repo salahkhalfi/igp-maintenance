@@ -471,7 +471,6 @@ messagesRoute.get('/available-users', authMiddleware, async (c) => {
       })
       .from(users)
       .where(and(
-        inArray(users.role, ['operator', 'furnace_operator', 'technician', 'supervisor', 'admin']),
         ne(users.id, user.userId),
         ne(users.id, 0)
       ))

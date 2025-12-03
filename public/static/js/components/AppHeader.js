@@ -23,7 +23,8 @@ const AppHeader = ({
     onOpenAdminRoles,
     onOpenPlanning,
     onOpenDetails,
-    activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true } // Default
+    activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true }, // Default
+    hasPermission = () => false // Safety fallback
 }) => {
     // Search state
     const [searchQuery, setSearchQuery] = React.useState('');
