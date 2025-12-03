@@ -352,56 +352,37 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       const statements = [];
 
       // 1. TOUJOURS Supprimer toutes les permissions actuelles d'abord
-      // C'est crucial pour que les désélections (unchecked) fonctionnent
       statements.push(c.env.DB.prepare(`
         DELETE FROM role_permissions WHERE role_id = ?
       `).bind(roleId));
       
-      // Validation: Vérifier que tous les IDs de permissions existent vraiment
-      if (uniquePermissionIds.length > 0) {
-        // Validation et Filtrage: Ne garder que les IDs qui existent vraiment
-        const validIdsFromDb: number[] = [];
-        const VERIFY_CHUNK_SIZE = 50;
-        
-        for (let i = 0; i < uniquePermissionIds.length; i += VERIFY_CHUNK_SIZE) {
-          const chunk = uniquePermissionIds.slice(i, i + VERIFY_CHUNK_SIZE);
-          if (chunk.length === 0) continue;
-          
-          const placeholders = chunk.map(() => '?').join(',');
-          const query = `SELECT id FROM permissions WHERE id IN (${placeholders})`;
-          
-          try {
-            const { results } = await c.env.DB.prepare(query).bind(...chunk).all() as any;
-            if (results && Array.isArray(results)) {
-              validIdsFromDb.push(...results.map((r: any) => r.id));
-            }
-          } catch (dbError) {
-             console.error('DB Error during verification:', dbError);
-             throw dbError; 
-          }
-        }
-        
-        const idsToInsert = validIdsFromDb;
-        console.log(`[ROLES] Update: Received ${uniquePermissionIds.length} IDs, Validated ${idsToInsert.length} IDs`);
+      // 2. SIMPLIFICATION RADICALE: Récupérer TOUTES les permissions valides d'un coup
+      // Il y en a peu (<100), c'est beaucoup plus fiable que des chunks
+      const allPermissions = await c.env.DB.prepare('SELECT id FROM permissions').all() as any;
+      const validDbIds = new Set<number>(allPermissions.results.map((p: any) => p.id));
 
-        // 2. Ajouter les nouvelles permissions (uniquement les valides)
-        if (idsToInsert.length > 0) {
-            const CHUNK_SIZE = 40;
-            
-            for (let i = 0; i < idsToInsert.length; i += CHUNK_SIZE) {
-                const chunk = idsToInsert.slice(i, i + CHUNK_SIZE);
-                const placeholders = chunk.map(() => '(?, ?)').join(',');
-                const values = [];
-                for (const permId of chunk) {
-                  values.push(roleId, permId);
-                }
-                
-                statements.push(c.env.DB.prepare(`
-                  INSERT INTO role_permissions (role_id, permission_id)
-                  VALUES ${placeholders}
-                `).bind(...values));
-            }
-        }
+      // Filtrer les IDs fournis par le client
+      const idsToInsert = uniquePermissionIds.filter(id => validDbIds.has(id));
+      
+      console.log(`[ROLES] Update Simplifié: Reçu ${uniquePermissionIds.length} IDs, Validés ${idsToInsert.length} IDs`);
+
+      // 3. Insérer les nouvelles permissions (uniquement les valides)
+      if (idsToInsert.length > 0) {
+          const CHUNK_SIZE = 40; // Toujours utiliser des chunks pour l'insertion (limite SQL)
+          
+          for (let i = 0; i < idsToInsert.length; i += CHUNK_SIZE) {
+              const chunk = idsToInsert.slice(i, i + CHUNK_SIZE);
+              const placeholders = chunk.map(() => '(?, ?)').join(',');
+              const values = [];
+              for (const permId of chunk) {
+                values.push(roleId, permId);
+              }
+              
+              statements.push(c.env.DB.prepare(`
+                INSERT INTO role_permissions (role_id, permission_id)
+                VALUES ${placeholders}
+              `).bind(...values));
+          }
       }
       
       // Exécuter en batch (atomique)
