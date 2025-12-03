@@ -29,8 +29,8 @@ const AdminRoles = ({ onBack }) => {
                 axios.get(API_URL + '/roles/permissions/all'),
                 axios.get(API_URL + '/settings/modules')
             ]);
-            setRoles(rolesRes.data.roles);
-            setPermissions(permsRes.data.permissions);
+            setRoles(rolesRes.data.roles || []);
+            setPermissions(permsRes.data.permissions || []);
             if (modulesRes.data) setActiveModules(modulesRes.data);
         } catch (err) {
             console.error("Erreur chargement rôles/permissions:", err);
@@ -125,10 +125,10 @@ const AdminRoles = ({ onBack }) => {
 
         // Stats Row (Minimalist)
         React.createElement('div', { className: 'grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8' },
-            StatsCard({ title: 'Total Rôles', value: roles.length, icon: 'fa-users' }),
-            StatsCard({ title: 'Système', value: systemRolesCount, icon: 'fa-lock' }),
-            StatsCard({ title: 'Personnalisés', value: customRolesCount, icon: 'fa-user-edit' }),
-            StatsCard({ title: 'Permissions', value: permissions.length, icon: 'fa-key' })
+            React.createElement(StatsCard, { title: 'Total Rôles', value: roles.length, icon: 'fa-users' }),
+            React.createElement(StatsCard, { title: 'Système', value: systemRolesCount, icon: 'fa-lock' }),
+            React.createElement(StatsCard, { title: 'Personnalisés', value: customRolesCount, icon: 'fa-user-edit' }),
+            React.createElement(StatsCard, { title: 'Permissions', value: permissions.length, icon: 'fa-key' })
         ),
 
         // Info Alert (Subtle)

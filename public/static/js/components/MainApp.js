@@ -349,7 +349,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
         // --- ADMIN ROLES (FULL SCREEN MODAL) ---
         showAdminRoles && React.createElement('div', { className: 'fixed inset-0 z-[100] overflow-y-auto bg-gray-50 animate-fadeIn' },
-            React.createElement(AdminRoles, { onBack: () => setShowAdminRoles(false) })
+            React.createElement(window.AdminRoles, { onBack: () => setShowAdminRoles(false) })
         ),
 
         // --- FOOTER ---

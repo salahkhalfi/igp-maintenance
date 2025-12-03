@@ -314,7 +314,10 @@ settings.get('/:key', async (c) => {
       return c.json({ error: 'Paramètre non trouvé' }, 404);
     }
 
-    return c.json({ setting_value: result.setting_value });
+    return c.json({ 
+      setting_value: result.setting_value,
+      value: result.setting_value // Alias for frontend compatibility
+    });
   } catch (error) {
     console.error('Get setting error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
