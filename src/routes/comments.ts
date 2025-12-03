@@ -16,81 +16,73 @@ const comments = new Hono<{ Bindings: Bindings }>();
 comments.post('/', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // 🕵️ DEBUG LOGGING
-    console.log(`[COMMENTS] POST / received from ${user.email}`);
+    console.log(`[COMMENTS] POST / request from ${user?.email}`);
 
-    // 🛡️ SECURITY HOTFIX: Explicitly allow Technicians and Admins to comment
-    // This bypasses potentially broken RBAC checks for the moment
-    const role = user.role?.toLowerCase(); // Ensure case insensitivity
-    
-    // 🔥 ULTRA-HOTFIX: FORCE ALLOW ALL COMMENTS TO DIAGNOSE 403 vs 404
-    const canComment = true;
-
-    if (!canComment) {
-       console.warn(`[COMMENTS] Permission denied for user ${user.email} (role: '${user.role}'/'${role}')`);
-       return c.json({ 
-         error: `PERMISSION REFUSÉE (Rôle détecté: ${user.role})`,
-         debug_role: user.role,
-         debug_email: user.email,
-         debug_is_super_admin: user.isSuperAdmin,
-         debug_role_normalized: role
-       }, 403);
-    }
-
-    // 🧹 MANUAL BODY PARSING (No Zod Middleware)
+    // 🧹 MANUAL BODY PARSING
     let body;
     try {
       body = await c.req.json();
-      console.log('[COMMENTS] Body received:', JSON.stringify(body));
     } catch (e) {
-      console.error('[COMMENTS] Failed to parse JSON body:', e);
       return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
-    const { ticket_id, user_name, user_role, comment, created_at } = body;
+    // 🛡️ ROBUST EXTRACTION & CASTING
+    // Force cast ticket_id to number
+    const ticket_id = Number(body.ticket_id);
+    const user_name = String(body.user_name || 'Anonyme');
+    const comment = String(body.comment || '');
+    const user_role = body.user_role ? String(body.user_role) : (user?.role || null);
+    
+    // 🔍 BASIC VALIDATION
+    if (isNaN(ticket_id) || ticket_id <= 0) {
+      return c.json({ error: `Invalid ticket_id: ${body.ticket_id}` }, 400);
+    }
+    if (!comment.trim()) {
+      return c.json({ error: 'Comment cannot be empty' }, 400);
+    }
 
-    // 🔍 MANUAL VALIDATION
-    if (!ticket_id) return c.json({ error: 'ticket_id is required' }, 400);
-    if (!user_name) return c.json({ error: 'user_name is required' }, 400);
-    if (!comment) return c.json({ error: 'comment is required' }, 400);
+    console.log(`[COMMENTS] Attempting insert: Ticket=${ticket_id}, User=${user_name}, Comment="${comment.substring(0, 20)}..."`);
 
     const db = getDb(c.env);
 
-    // Vérifier que le ticket existe
-    const ticket = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.id, ticket_id))
-      .get();
+    // ⚡ DIRECT INSERT (Skip explicit existence check - let FK constraint handle it)
+    // This rules out "Select failed but Insert would work" scenarios
+    try {
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        
+        const result = await db.insert(ticketComments).values({
+          ticket_id,
+          user_name,
+          user_role,
+          comment,
+          created_at: timestamp
+        }).returning();
 
-    if (!ticket) {
-      console.error(`[COMMENTS] Ticket ${ticket_id} not found in DB`);
-      return c.json({ error: `TICKET INTROUVABLE (ID: ${ticket_id})` }, 404);
+        console.log('[COMMENTS] Insert SUCCESS:', result[0]);
+        return c.json({ comment: result[0] }, 201);
+
+    } catch (dbError: any) {
+        console.error('[COMMENTS] Database Insert Failed:', dbError);
+        
+        // Check for FK constraint failure (Error code 787 in SQLite/D1 usually, or explicit message)
+        if (dbError.message && (dbError.message.includes('FOREIGN KEY') || dbError.message.includes('constraint'))) {
+             return c.json({ 
+                 error: `TICKET INTROUVABLE (ID: ${ticket_id}) - Échec contrainte intégrité`,
+                 details: dbError.message 
+             }, 404);
+        }
+
+        return c.json({ 
+            error: 'ERREUR BASE DE DONNÉES',
+            details: dbError.message || String(dbError)
+        }, 500);
     }
 
-    // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
-    const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-    console.log(`[COMMENTS] Inserting comment for ticket ${ticket_id} by ${user_name}`);
-
-    // Insérer le commentaire
-    const result = await db.insert(ticketComments).values({
-      ticket_id,
-      user_name,
-      user_role: user_role || null,
-      comment,
-      created_at: timestamp
-    }).returning();
-
-    console.log('[COMMENTS] Insert success:', result[0]);
-
-    return c.json({ comment: result[0] }, 201);
   } catch (error: any) {
-    console.error('Add comment error:', error);
+    console.error('Add comment critical error:', error);
     return c.json({ 
-      error: 'ERREUR SERVEUR LORS DE L\'AJOUT DU COMMENTAIRE',
-      details: error.message || String(error),
+      error: 'ERREUR CRITIQUE DU SERVEUR',
+      details: error.message,
       stack: error.stack
     }, 500);
   }
