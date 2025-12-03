@@ -11,13 +11,14 @@ const AdminRoles = ({ onBack }) => {
     const [editingRole, setEditingRole] = React.useState(null); // null = mode création, objet = modification
     const [viewingRole, setViewingRole] = React.useState(null);
 
-    // Stats
-    const systemRolesCount = roles.filter(r => r.is_system === 1).length;
-    const customRolesCount = roles.filter(r => r.is_system === 0).length;
+    const [viewMode, setViewMode] = React.useState('list'); // 'list' or 'grid' - Default to list as requested by user
+    const [systemRolesCount, setSystemRolesCount] = React.useState(0);
+    const [customRolesCount, setCustomRolesCount] = React.useState(0);
 
     React.useEffect(() => {
-        fetchData();
-    }, []);
+        setSystemRolesCount(roles.filter(r => r.is_system === 1).length);
+        setCustomRolesCount(roles.filter(r => r.is_system === 0).length);
+    }, [roles]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -104,10 +105,22 @@ const AdminRoles = ({ onBack }) => {
                 React.createElement('h1', { className: 'text-2xl font-bold text-gray-900' }, 'Gestion des Rôles'),
                 React.createElement('p', { className: 'text-sm text-gray-500 mt-1' }, 'Configuration des accès et permissions (RBAC)')
             ),
-            React.createElement('button', {
-                onClick: onBack,
-                className: 'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center mt-4 md:mt-0 shadow-sm'
-            }, React.createElement('i', { className: 'fas fa-arrow-left mr-2' }), 'Retour')
+            React.createElement('div', { className: 'flex items-center gap-2' },
+                React.createElement('div', { className: 'bg-gray-100 p-1 rounded-lg flex items-center mr-4' },
+                    React.createElement('button', {
+                        onClick: () => setViewMode('list'),
+                        className: `px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`
+                    }, React.createElement('i', { className: 'fas fa-list' }), 'Liste'),
+                    React.createElement('button', {
+                        onClick: () => setViewMode('grid'),
+                        className: `px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`
+                    }, React.createElement('i', { className: 'fas fa-th-large' }), 'Cartes')
+                ),
+                React.createElement('button', {
+                    onClick: onBack,
+                    className: 'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center shadow-sm'
+                }, React.createElement('i', { className: 'fas fa-arrow-left mr-2' }), 'Retour')
+            )
         ),
 
         // Stats Row (Minimalist)
@@ -128,15 +141,89 @@ const AdminRoles = ({ onBack }) => {
             )
         ),
 
-        // Roles Grid (Clean Cards)
-        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' },
-            roles.map(role => React.createElement(RoleCard, {
-                key: role.id,
-                role: role,
-                onEdit: () => handleEditClick(role.id),
-                onView: () => handleViewClick(role.id),
-                onDelete: () => handleDeleteRole(role)
-            }))
+        // Content - List or Grid
+        viewMode === 'list' ? (
+            // LIST VIEW (TABLE)
+            React.createElement('div', { className: 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden' },
+                React.createElement('div', { className: 'overflow-x-auto' },
+                    React.createElement('table', { className: 'min-w-full divide-y divide-gray-200' },
+                        React.createElement('thead', { className: 'bg-gray-50' },
+                            React.createElement('tr', null,
+                                React.createElement('th', { className: 'px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider' }, 'Rôle'),
+                                React.createElement('th', { className: 'px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider' }, 'Identifiant'),
+                                React.createElement('th', { className: 'px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell' }, 'Description'),
+                                React.createElement('th', { className: 'px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider' }, 'Type'),
+                                React.createElement('th', { className: 'px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider' }, 'Permissions'),
+                                React.createElement('th', { className: 'px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider' }, 'Actions')
+                            )
+                        ),
+                        React.createElement('tbody', { className: 'bg-white divide-y divide-gray-200' },
+                            roles.map(role => {
+                                const isSystem = role.is_system === 1;
+                                return React.createElement('tr', { key: role.id, className: 'hover:bg-gray-50 transition-colors' },
+                                    // Name
+                                    React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap' },
+                                        React.createElement('div', { className: 'text-sm font-bold text-gray-900' }, role.name)
+                                    ),
+                                    // Slug
+                                    React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap' },
+                                        React.createElement('span', { className: 'px-2 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-mono' }, role.slug)
+                                    ),
+                                    // Description
+                                    React.createElement('td', { className: 'px-6 py-4 hidden md:table-cell' },
+                                        React.createElement('div', { className: 'text-sm text-gray-500 line-clamp-1', title: role.description }, role.description || '-')
+                                    ),
+                                    // Type
+                                    React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-center' },
+                                        isSystem 
+                                            ? React.createElement('span', { className: 'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 border border-slate-200' }, 'SYSTÈME')
+                                            : React.createElement('span', { className: 'px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200' }, 'PERSO')
+                                    ),
+                                    // Permissions Count
+                                    React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-center' },
+                                        React.createElement('span', { className: 'px-2 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200' },
+                                            role.permissions_count + ' perms'
+                                        )
+                                    ),
+                                    // Actions
+                                    React.createElement('td', { className: 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium' },
+                                        React.createElement('div', { className: 'flex items-center justify-end gap-2' },
+                                            React.createElement('button', {
+                                                onClick: () => handleViewClick(role.id),
+                                                className: 'text-gray-400 hover:text-blue-600 p-1.5 hover:bg-blue-50 rounded transition',
+                                                title: 'Voir détails'
+                                            }, React.createElement('i', { className: 'fas fa-eye' })),
+                                            
+                                            React.createElement('button', {
+                                                onClick: () => handleEditClick(role.id),
+                                                className: 'text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded transition',
+                                                title: 'Modifier'
+                                            }, React.createElement('i', { className: 'fas fa-edit' })),
+                                            
+                                            !isSystem && React.createElement('button', {
+                                                onClick: () => handleDeleteRole(role),
+                                                className: 'text-gray-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded transition',
+                                                title: 'Supprimer'
+                                            }, React.createElement('i', { className: 'fas fa-trash-alt' }))
+                                        )
+                                    )
+                                );
+                            })
+                        )
+                    )
+                )
+            )
+        ) : (
+            // GRID VIEW (CARDS)
+            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' },
+                roles.map(role => React.createElement(RoleCard, {
+                    key: role.id,
+                    role: role,
+                    onEdit: () => handleEditClick(role.id),
+                    onView: () => handleViewClick(role.id),
+                    onDelete: () => handleDeleteRole(role)
+                }))
+            )
         ),
 
         // Modals
