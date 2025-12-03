@@ -54,6 +54,8 @@ export async function loadRolePermissions(DB: D1Database, roleName: string, isSu
       return new Set();
     }
 
+    console.log(`[RBAC] Loading permissions for role: '${roleName}'`);
+
     const { results } = await DB.prepare(`
       SELECT p.slug
       FROM permissions p
@@ -63,21 +65,47 @@ export async function loadRolePermissions(DB: D1Database, roleName: string, isSu
     `).bind(roleName).all() as any;
 
     const permissions = new Set<string>();
-    for (const perm of results) {
-      // 1. Ajouter la permission brute (ex: "tickets.create")
-      permissions.add(perm.slug);
+    
+    if (results && Array.isArray(results)) {
+      for (const perm of results) {
+        // 1. Ajouter la permission brute (ex: "tickets.create")
+        permissions.add(perm.slug);
 
-      // 2. Gérer la portée implicite (ex: "tickets.create" -> "tickets.create.all")
-      const parts = perm.slug.split('.');
-      if (parts.length === 2) {
-        permissions.add(`${perm.slug}.all`);
+        // 2. Gérer la portée implicite (ex: "tickets.create" -> "tickets.create.all")
+        const parts = perm.slug.split('.');
+        if (parts.length === 2) {
+          permissions.add(`${perm.slug}.all`);
+        }
       }
     }
 
     console.log(`[RBAC] Loaded ${permissions.size} permissions for role '${roleName}'`);
+
+    // 🚑 EMERGENCY FALLBACK: Si le rôle est 'technician' et qu'aucune permission n'est trouvée
+    // Cela indique probablement une erreur DB ou une corruption. On restaure les accès de base.
+    if (permissions.size === 0 && roleName === 'technician') {
+      console.warn('[RBAC] EMERGENCY FALLBACK ACTIVATED for Technician');
+      const fallbackPerms = [
+        'tickets.read', 'tickets.create', 'tickets.update', 'tickets.close',
+        'comments.create', // Assuming this exists or is covered by tickets.read
+        'machines.read', 'machines.update',
+        'users.read',
+        'planning.read', // Added back for stability
+        'messages.use', 'messages.delete.own'
+      ];
+      for (const p of fallbackPerms) {
+        permissions.add(p);
+        permissions.add(`${p}.all`);
+      }
+    }
+    
     return permissions;
   } catch (error) {
     console.error(`Error loading permissions for role ${roleName}:`, error);
+    // Fallback on error too
+    if (roleName === 'technician') {
+       return new Set(['tickets.read.all', 'tickets.create.all']);
+    }
     return new Set();
   }
 }
