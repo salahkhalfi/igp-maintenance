@@ -227,7 +227,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Description</h3>
                     <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {ticket.description || "Aucune description fournie."}
+                      {safeTicket.description}
                     </p>
                   </div>
 
@@ -251,7 +251,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                           <select 
                             className="w-full p-2 border rounded-lg text-sm"
                             onChange={(e) => assignMutation.mutate({ id: ticket.id, techId: Number(e.target.value) || null })}
-                            defaultValue={ticket.assigned_to || ""}
+                            defaultValue={safeTicket.assigned_to || ""}
                           >
                             <option value="">Non assigné</option>
                             {technicians.map(t => (
@@ -262,11 +262,11 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${ticket.assigned_to ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                            {ticket.assigned_to_name ? ticket.assigned_to_name.charAt(0) : '?'}
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${safeTicket.assigned_to ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                            {safeTicket.assigned_to_name ? safeTicket.assigned_to_name.charAt(0) : '?'}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900">{ticket.assigned_to_name || "Non assigné"}</p>
+                            <p className="text-sm font-bold text-gray-900">{safeTicket.assigned_to_name || "Non assigné"}</p>
                             <p className="text-xs text-gray-500">Technicien responsable</p>
                           </div>
                         </div>
