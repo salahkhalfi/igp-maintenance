@@ -44,7 +44,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     language: 'fr-FR'
   });
 
-  const { isRecording, audioURL: audioUrl, recordingDuration: recordingTime, startRecording, stopRecording, cancelRecording: clearAudio } = useAudioRecorder();
+  const { isRecording, audioURL: audioUrl, recordingDuration: recordingTime, startRecording, stopRecording, cancelRecording: clearAudio, error: audioError } = useAudioRecorder();
 
   // Queries
   const { data: ticket, isLoading } = useQuery({
@@ -53,6 +53,13 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     enabled: !!ticketId && isOpen,
     refetchInterval: 30000 // Rafraîchissement auto toutes les 30s
   });
+
+  // Afficher les erreurs audio
+  useEffect(() => {
+    if (audioError) {
+      alert(`Erreur microphone: ${audioError}`);
+    }
+  }, [audioError]);
 
   const { data: commentsData } = useQuery({
     queryKey: ['ticket-comments', ticketId],
@@ -219,7 +226,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+            <div className={`flex-1 bg-gray-50 ${activeTab === 'comments' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto p-6'}`}>
               
               {/* TAB: DETAILS */}
               {activeTab === 'details' && (
