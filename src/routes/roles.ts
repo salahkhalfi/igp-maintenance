@@ -1,21 +1,22 @@
-// Routes pour la gestion des rôles et permissions (Admin uniquement)
+// Routes pour la gestion des rôles et permissions
+// Refactored to use granular permissions instead of adminOnly
 
 import { Hono } from 'hono';
-import { authMiddleware, adminOnly } from '../middlewares/auth';
+import { authMiddleware, requirePermission } from '../middlewares/auth';
 import { clearPermissionsCache } from '../utils/permissions';
 import type { Bindings } from '../types';
 import { LIMITS } from '../utils/validation';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// 🔒 SÉCURITÉ RENFORCÉE: Appliquer le middleware sur TOUTES les routes de ce fichier
-// Cela garantit que /api/roles (GET /) et /api/roles/* sont protégés
-app.use('*', authMiddleware, adminOnly);
+// 🔒 SÉCURITÉ: Authentification requise pour toutes les routes
+app.use('*', authMiddleware);
 
 /**
  * GET /api/roles - Liste tous les rôles
+ * Requis: permission 'roles.read'
  */
-app.get('/', async (c) => {
+app.get('/', requirePermission('roles', 'read'), async (c) => {
   try {
     console.log('[ROLES] GET / - Request received');
     
@@ -47,8 +48,9 @@ app.get('/', async (c) => {
 
 /**
  * GET /api/roles/:id - Détails d'un rôle avec ses permissions
+ * Requis: permission 'roles.read'
  */
-app.get('/:id', async (c) => {
+app.get('/:id', requirePermission('roles', 'read'), async (c) => {
   try {
     const id = c.req.param('id');
 
@@ -61,19 +63,37 @@ app.get('/:id', async (c) => {
       return c.json({ error: 'Rôle non trouvé' }, 404);
     }
 
-    // Récupérer les permissions du rôle
-    const { results: permissionsRaw } = await c.env.DB.prepare(`
-      SELECT
-        p.id,
-        p.slug,
-        p.name as display_name,
-        p.module as resource,
-        p.description
-      FROM permissions p
-      INNER JOIN role_permissions rp ON p.id = rp.permission_id
-      WHERE rp.role_id = ?
-      ORDER BY p.module, p.slug
-    `).bind(id).all();
+    let permissionsRaw;
+
+    // 👑 ADMIN BYPASS DISPLAY: Pour admin/super_admin, on affiche toutes les permissions
+    if (role.slug === 'admin' || role.slug === 'super_admin') {
+       const { results } = await c.env.DB.prepare(`
+        SELECT
+          id,
+          slug,
+          name as display_name,
+          module as resource,
+          description
+        FROM permissions
+        ORDER BY module, slug
+      `).all();
+      permissionsRaw = results;
+    } else {
+      // Récupérer les permissions du rôle depuis la table de liaison
+      const { results } = await c.env.DB.prepare(`
+        SELECT
+          p.id,
+          p.slug,
+          p.name as display_name,
+          p.module as resource,
+          p.description
+        FROM permissions p
+        INNER JOIN role_permissions rp ON p.id = rp.permission_id
+        WHERE rp.role_id = ?
+        ORDER BY p.module, p.slug
+      `).bind(id).all();
+      permissionsRaw = results;
+    }
 
     // Transformer les permissions pour le frontend
     const permissions = (permissionsRaw as any[]).map(p => {
@@ -110,8 +130,9 @@ app.get('/:id', async (c) => {
 
 /**
  * GET /api/roles/permissions/all - Liste toutes les permissions disponibles
+ * Requis: permission 'roles.read'
  */
-app.get('/permissions/all', async (c) => {
+app.get('/permissions/all', requirePermission('roles', 'read'), async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT
@@ -155,8 +176,9 @@ app.get('/permissions/all', async (c) => {
 
 /**
  * POST /api/roles - Créer un nouveau rôle personnalisé
+ * Requis: permission 'roles.write'
  */
-app.post('/', async (c) => {
+app.post('/', requirePermission('roles', 'write'), async (c) => {
   try {
     const body = await c.req.json();
     const { slug, name, description, permission_ids } = body;
@@ -350,8 +372,9 @@ app.put('/:id', async (c) => {
 
 /**
  * DELETE /api/roles/:id - Supprimer un rôle personnalisé
+ * Requis: permission 'roles.write'
  */
-app.delete('/:id', async (c) => {
+app.delete('/:id', requirePermission('roles', 'write'), async (c) => {
   try {
     const id = c.req.param('id');
 
@@ -400,4 +423,4 @@ app.delete('/:id', async (c) => {
   }
 });
 
-export default app;
+export default app;p;

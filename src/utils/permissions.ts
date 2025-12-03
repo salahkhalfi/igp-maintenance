@@ -27,6 +27,26 @@ let lastCacheUpdate = 0;
  */
 export async function loadRolePermissions(DB: D1Database, roleName: string): Promise<Set<string>> {
   try {
+    // 👑 ADMIN BYPASS: Les administrateurs et super-administrateurs ont toujours TOUTES les permissions
+    if (roleName === 'admin' || roleName === 'super_admin') {
+      try {
+        const { results } = await DB.prepare('SELECT slug FROM permissions').all() as any;
+        const permissions = new Set<string>();
+        for (const perm of results) {
+          permissions.add(perm.slug);
+          const parts = perm.slug.split('.');
+          if (parts.length === 2) {
+            permissions.add(`${perm.slug}.all`);
+          }
+        }
+        console.log(`[RBAC] Admin Bypass: Loaded ALL ${permissions.size} permissions for role '${roleName}'`);
+        return permissions;
+      } catch (e) {
+        console.error('[RBAC] Admin Bypass failed to load permissions:', e);
+        // Fallback to normal loading if this fails for some reason
+      }
+    }
+
     if (!DB || typeof DB.prepare !== 'function') {
       console.error('[PERMISSIONS] Invalid DB object passed to loadRolePermissions');
       return new Set();
