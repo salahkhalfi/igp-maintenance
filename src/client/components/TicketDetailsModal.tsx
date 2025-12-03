@@ -298,11 +298,11 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
 
               {/* TAB: MEDIA */}
               {activeTab === 'media' && (
-  solved' ? 'RÉSOLU' : 'OUVERT'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[300px]">
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                    <ImageIcon className="w-12 h-12 mb-3 opacity-50" />
+                    <p>Aucune photo ou vidéo pour le moment.</p>
+                    <p className="text-xs mt-2">(Fonctionnalité de galerie en cours de développement)</p>
                   </div>
                 </div>
               )}
