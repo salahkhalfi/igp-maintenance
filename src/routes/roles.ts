@@ -259,7 +259,7 @@ app.post('/', requirePermission('roles', 'write'), async (c) => {
 /**
  * PUT /api/roles/:id - Modifier un rôle
  */
-app.put('/:id', async (c) => {
+app.put('/:id', requirePermission('roles', 'write'), async (c) => {
   try {
     const id = c.req.param('id');
     const body = await c.req.json();
@@ -326,11 +326,17 @@ app.put('/:id', async (c) => {
       `).bind(id).run();
 
       // Ajouter les nouvelles permissions
-      for (const permId of permission_ids) {
+      if (permission_ids.length > 0) {
+        const placeholders = permission_ids.map(() => '(?, ?)').join(',');
+        const values = [];
+        for (const permId of permission_ids) {
+          values.push(id, permId);
+        }
+        
         await c.env.DB.prepare(`
           INSERT INTO role_permissions (role_id, permission_id)
-          VALUES (?, ?)
-        `).bind(id, permId).run();
+          VALUES ${placeholders}
+        `).bind(...values).run();
       }
     }
 
