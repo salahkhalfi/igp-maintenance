@@ -1,7 +1,7 @@
 // Routes Alerts - Alertes automatiques pour tickets en retard
 
 import { Hono } from 'hono';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, requirePermission } from '../middlewares/auth';
 import { formatUserName } from '../utils/userFormatter';
 import type { Bindings } from '../types';
 

@@ -6,7 +6,7 @@ import { eq, and, or, desc, asc, sql, getTableColumns, ne, inArray } from 'drizz
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { messages, users, pushLogs, pushSubscriptions } from '../db/schema';
-import { authMiddleware, requirePermission } from '../middlewares/auth';
+import { authMiddleware, requirePermission, requireAnyPermission } from '../middlewares/auth';
 import { checkModule } from '../utils/modules';
 import { hasPermission } from '../utils/permissions';
 import { formatUserName } from '../utils/userFormatter';
