@@ -225,16 +225,19 @@ export async function syncAdminPermissions(DB: D1Database, activeModules: string
     console.log(`[RBAC] Found ${results.length} permissions to grant to Admin`);
 
     // 3. Insérer les permissions pour l'admin (INSERT OR IGNORE pour éviter les doublons)
-    // Utilisation de DB.batch pour la performance et la robustesse
     if (results.length > 0) {
-      const statements = results.map((perm: any) => 
-        DB.prepare(`
-          INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
-          VALUES (?, ?)
-        `).bind(adminRole.id, perm.id)
-      );
-      
-      await DB.batch(statements);
+      // D1 Batch limit is typically 128. We use a safe chunk size of 50.
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < results.length; i += CHUNK_SIZE) {
+        const chunk = results.slice(i, i + CHUNK_SIZE);
+        const statements = chunk.map((perm: any) => 
+          DB.prepare(`
+            INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
+            VALUES (?, ?)
+          `).bind(adminRole.id, perm.id)
+        );
+        await DB.batch(statements);
+      }
     }
 
     // 4. Vider le cache pour que les changements soient immédiats

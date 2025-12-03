@@ -231,16 +231,21 @@ app.post('/', requirePermission('roles', 'write'), async (c) => {
     // Attribuer les permissions
     if (permission_ids && Array.isArray(permission_ids) && permission_ids.length > 0) {
       const uniquePermissionIds = [...new Set(permission_ids)];
-      const placeholders = uniquePermissionIds.map(() => '(?, ?)').join(',');
-      const values = [];
-      for (const permId of uniquePermissionIds) {
-        values.push(roleId, permId);
-      }
+      const CHUNK_SIZE = 100;
       
-      await c.env.DB.prepare(`
-        INSERT INTO role_permissions (role_id, permission_id)
-        VALUES ${placeholders}
-      `).bind(...values).run();
+      for (let i = 0; i < uniquePermissionIds.length; i += CHUNK_SIZE) {
+        const chunk = uniquePermissionIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '(?, ?)').join(',');
+        const values = [];
+        for (const permId of chunk) {
+          values.push(roleId, permId);
+        }
+        
+        await c.env.DB.prepare(`
+          INSERT INTO role_permissions (role_id, permission_id)
+          VALUES ${placeholders}
+        `).bind(...values).run();
+      }
     }
 
     // Vider le cache des permissions
@@ -337,16 +342,22 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
 
       // 2. Ajouter les nouvelles permissions
       if (uniquePermissionIds.length > 0) {
-        const placeholders = uniquePermissionIds.map(() => '(?, ?)').join(',');
-        const values = [];
-        for (const permId of uniquePermissionIds) {
-          values.push(id, permId);
-        }
+        // Split into chunks to avoid SQL variable limits (though high) and keep statements manageable
+        const CHUNK_SIZE = 100; // 100 * 2 parameters = 200 params per query, very safe
         
-        statements.push(c.env.DB.prepare(`
-          INSERT INTO role_permissions (role_id, permission_id)
-          VALUES ${placeholders}
-        `).bind(...values));
+        for (let i = 0; i < uniquePermissionIds.length; i += CHUNK_SIZE) {
+            const chunk = uniquePermissionIds.slice(i, i + CHUNK_SIZE);
+            const placeholders = chunk.map(() => '(?, ?)').join(',');
+            const values = [];
+            for (const permId of chunk) {
+              values.push(id, permId);
+            }
+            
+            statements.push(c.env.DB.prepare(`
+              INSERT INTO role_permissions (role_id, permission_id)
+              VALUES ${placeholders}
+            `).bind(...values));
+        }
       }
       
       // Exécuter en batch (atomique)
