@@ -272,6 +272,12 @@ app.post('/', requirePermission('roles', 'write'), async (c) => {
 app.put('/:id', requirePermission('roles', 'write'), async (c) => {
   try {
     const id = c.req.param('id');
+    const roleId = parseInt(id);
+    
+    if (isNaN(roleId)) {
+      return c.json({ error: 'ID de rôle invalide' }, 400);
+    }
+
     const body = await c.req.json();
     const { name, description, permission_ids } = body;
 
@@ -302,7 +308,7 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
     // Vérifier que le rôle existe
     const role = await c.env.DB.prepare(
       'SELECT * FROM roles WHERE id = ?'
-    ).bind(id).first() as any;
+    ).bind(roleId).first() as any;
 
     if (!role) {
       return c.json({ error: 'Rôle non trouvé' }, 404);
@@ -318,14 +324,14 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
         UPDATE roles
         SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).bind(trimmedName, trimmedDescription, id).run();
+      `).bind(trimmedName, trimmedDescription, roleId).run();
     } else {
       // Rôle personnalisé: tout peut être modifié
       await c.env.DB.prepare(`
         UPDATE roles
         SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).bind(trimmedName, trimmedDescription, id).run();
+      `).bind(trimmedName, trimmedDescription, roleId).run();
     }
 
     // Mettre à jour les permissions
@@ -338,7 +344,7 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       // 1. Supprimer toutes les permissions actuelles
       statements.push(c.env.DB.prepare(`
         DELETE FROM role_permissions WHERE role_id = ?
-      `).bind(id));
+      `).bind(roleId));
 
       // 2. Ajouter les nouvelles permissions
       if (uniquePermissionIds.length > 0) {
@@ -350,7 +356,7 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
             const placeholders = chunk.map(() => '(?, ?)').join(',');
             const values = [];
             for (const permId of chunk) {
-              values.push(id, permId);
+              values.push(roleId, permId);
             }
             
             statements.push(c.env.DB.prepare(`
@@ -370,7 +376,7 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
     // Récupérer le rôle mis à jour
     const updatedRole = await c.env.DB.prepare(`
       SELECT * FROM roles WHERE id = ?
-    `).bind(id).first();
+    `).bind(roleId).first();
 
     return c.json({
       message: 'Rôle mis à jour avec succès',
