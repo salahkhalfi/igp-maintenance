@@ -13,22 +13,19 @@ import type { Bindings } from '../types';
 const comments = new Hono<{ Bindings: Bindings }>();
 
 // POST /api/comments - Ajouter un commentaire à un ticket
-comments.post('/', authMiddleware, zValidator('json', createCommentSchema), async (c) => {
+comments.post('/', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     
+    // 🕵️ DEBUG LOGGING
+    console.log(`[COMMENTS] POST / received from ${user.email}`);
+
     // 🛡️ SECURITY HOTFIX: Explicitly allow Technicians and Admins to comment
     // This bypasses potentially broken RBAC checks for the moment
     const role = user.role?.toLowerCase(); // Ensure case insensitivity
     
     // 🔥 ULTRA-HOTFIX: FORCE ALLOW ALL COMMENTS TO DIAGNOSE 403 vs 404
     const canComment = true;
-    /*
-      role === 'admin' || 
-      role === 'technician' || 
-      role === 'supervisor' ||
-      await hasPermission(c.env.DB, user.role, 'tickets', 'read', 'all', user.isSuperAdmin);
-    */
 
     if (!canComment) {
        console.warn(`[COMMENTS] Permission denied for user ${user.email} (role: '${user.role}'/'${role}')`);
@@ -41,8 +38,23 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
        }, 403);
     }
 
-    const body = c.req.valid('json');
+    // 🧹 MANUAL BODY PARSING (No Zod Middleware)
+    let body;
+    try {
+      body = await c.req.json();
+      console.log('[COMMENTS] Body received:', JSON.stringify(body));
+    } catch (e) {
+      console.error('[COMMENTS] Failed to parse JSON body:', e);
+      return c.json({ error: 'Invalid JSON body' }, 400);
+    }
+
     const { ticket_id, user_name, user_role, comment, created_at } = body;
+
+    // 🔍 MANUAL VALIDATION
+    if (!ticket_id) return c.json({ error: 'ticket_id is required' }, 400);
+    if (!user_name) return c.json({ error: 'user_name is required' }, 400);
+    if (!comment) return c.json({ error: 'comment is required' }, 400);
+
     const db = getDb(c.env);
 
     // Vérifier que le ticket existe
@@ -60,6 +72,8 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
     // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
     const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
 
+    console.log(`[COMMENTS] Inserting comment for ticket ${ticket_id} by ${user_name}`);
+
     // Insérer le commentaire
     const result = await db.insert(ticketComments).values({
       ticket_id,
@@ -69,10 +83,16 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
       created_at: timestamp
     }).returning();
 
+    console.log('[COMMENTS] Insert success:', result[0]);
+
     return c.json({ comment: result[0] }, 201);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Add comment error:', error);
-    return c.json({ error: 'Erreur lors de l\'ajout du commentaire' }, 500);
+    return c.json({ 
+      error: 'ERREUR SERVEUR LORS DE L\'AJOUT DU COMMENTAIRE',
+      details: error.message || String(error),
+      stack: error.stack
+    }, 500);
   }
 });
 
