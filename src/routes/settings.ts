@@ -1,8 +1,7 @@
 // Routes de gestion des paramètres système
 
 import { Hono } from 'hono';
-import { adminOnly, authMiddleware, superAdminOnly, requirePermission } from '../middlewares/auth';
-import { syncAdminPermissions } from '../utils/permissions';
+import { adminOnly, authMiddleware } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const settings = new Hono<{ Bindings: Bindings }>();
@@ -18,58 +17,13 @@ const RECOMMENDED_HEIGHT = 80;
 // ============================================================================
 
 /**
- * POST /api/settings/trigger-cleanup - Déclenchement manuel du "Concierge"
- * Accès: Administrateurs (admin role) uniquement
- * Proxy vers la logique de nettoyage (Janitor)
- */
-settings.post('/trigger-cleanup', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
-  try {
-    const now = new Date();
-    console.log('🧹 MANUAL Janitor Triggered by Admin:', now.toISOString());
-
-    // Note: Idéalement, on factoriserait la logique de nettoyage dans un service partagé (utils/cleanup.ts)
-    // pour éviter la duplication avec cron.ts. Pour l'instant, on duplique pour la rapidité du fix.
-    
-    // 1. Nettoyer les événements de planning passés (> 3 mois)
-    const planningResult = await c.env.DB.prepare(`
-      DELETE FROM planning_events 
-      WHERE date < date('now', '-3 months')
-    `).run();
-    
-    // 2. Nettoyer les notes personnelles terminées (> 30 jours)
-    const notesResult = await c.env.DB.prepare(`
-      DELETE FROM planner_notes 
-      WHERE done = 1 
-      AND created_at < datetime('now', '-30 days')
-    `).run();
-
-    // 3. Optimisation de la base de données (VACUUM)
-    await c.env.DB.prepare('PRAGMA optimize').run();
-
-    return c.json({
-        success: true,
-        message: "Nettoyage manuel terminé avec succès",
-        deleted: {
-            planning_events: planningResult.meta.changes,
-            notes: notesResult.meta.changes
-        },
-        timestamp: now.toISOString()
-    });
-
-  } catch (error) {
-    console.error('❌ Manual Janitor Error:', error);
-    return c.json({ error: 'Erreur lors du nettoyage manuel', details: error instanceof Error ? error.message : 'Unknown' }, 500);
-  }
-});
-
-/**
  * POST /api/settings/upload-logo - Upload du logo de l'entreprise
  * Accès: Administrateurs (admin role)
  * Dimensions recommandées: 200x80 pixels (ratio 2.5:1)
  * Formats acceptés: PNG, JPEG, WEBP
  * Taille max: 500 KB
  */
-settings.post('/upload-logo', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
+settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -198,7 +152,7 @@ settings.get('/logo', async (c) => {
  * DELETE /api/settings/logo - Supprimer le logo personnalisé et revenir au logo par défaut
  * Accès: Administrateurs (admin role)
  */
-settings.delete('/logo', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
+settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -237,7 +191,7 @@ settings.delete('/logo', authMiddleware, requirePermission('settings', 'manage')
  * Accès: Administrateurs (admin role)
  * Validation: Max 100 caractères, échappement HTML, UTF-8
  */
-settings.put('/title', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
+settings.put('/title', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -289,7 +243,7 @@ settings.put('/title', authMiddleware, requirePermission('settings', 'manage'), 
  * Accès: Administrateurs (admin role)
  * Validation: Max 150 caractères, échappement HTML, UTF-8
  */
-settings.put('/subtitle', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
+settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
   try {
     const user = c.get('user') as any;
 
@@ -336,148 +290,6 @@ settings.put('/subtitle', authMiddleware, requirePermission('settings', 'manage'
   }
 });
 
-/**
- * GET /api/settings/modules - Récupérer l'état des modules (Licence)
- * Accès: Authentifié
- */
-settings.get('/modules', authMiddleware, async (c) => {
-  try {
-    const result = await c.env.DB.prepare(`
-      SELECT setting_value FROM system_settings WHERE setting_key = 'active_modules'
-    `).first();
-
-    // Valeurs par défaut (Tout activé pour commencer)
-    const defaultModules = {
-      planning: true,
-      statistics: true,
-      notifications: true,
-      messaging: true,
-      machines: true
-    };
-
-    if (!result || !result.setting_value) {
-      return c.json(defaultModules);
-    }
-
-    try {
-      return c.json({ ...defaultModules, ...JSON.parse(result.setting_value as string) });
-    } catch (e) {
-      return c.json(defaultModules);
-    }
-  } catch (error) {
-    console.error('Get modules error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-/**
- * GET /api/settings/modules/preferences - Récupérer les préférences d'affichage du client
- * Accès: Authentifié (Admin)
- */
-settings.get('/modules/preferences', authMiddleware, async (c) => {
-  try {
-    const result = await c.env.DB.prepare(`
-      SELECT setting_value FROM system_settings WHERE setting_key = 'client_module_preferences'
-    `).first();
-
-    // Par défaut, tout est activé (null = true)
-    const defaultPrefs = {
-      planning: true,
-      statistics: true,
-      notifications: true,
-      messaging: true,
-      machines: true
-    };
-
-    if (!result || !result.setting_value) {
-      return c.json(defaultPrefs);
-    }
-
-    try {
-      return c.json({ ...defaultPrefs, ...JSON.parse(result.setting_value as string) });
-    } catch (e) {
-      return c.json(defaultPrefs);
-    }
-  } catch (error) {
-    console.error('Get module preferences error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-/**
- * PUT /api/settings/modules/preferences - Mettre à jour les préférences d'affichage du client
- * Accès: Admin (Client)
- */
-settings.put('/modules/preferences', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
-  try {
-    const body = await c.req.json();
-    const value = JSON.stringify(body);
-
-    // Upsert logic
-    const existing = await c.env.DB.prepare(`
-      SELECT id FROM system_settings WHERE setting_key = 'client_module_preferences'
-    `).first();
-
-    if (existing) {
-      await c.env.DB.prepare(`
-        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'client_module_preferences'
-      `).bind(value).run();
-    } else {
-      await c.env.DB.prepare(`
-        INSERT INTO system_settings (setting_key, setting_value) VALUES ('client_module_preferences', ?)
-      `).bind(value).run();
-    }
-
-    return c.json({ success: true, preferences: body });
-  } catch (error) {
-    console.error('Update module preferences error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-/**
- * PUT /api/settings/modules - Mettre à jour les licences (Feature Flipping)
- * Accès: Super Admin Only (Propriétaire SaaS)
- */
-settings.put('/modules', authMiddleware, superAdminOnly, async (c) => {
-  try {
-    const body = await c.req.json();
-    const value = JSON.stringify(body); // Stockage JSON string
-
-    // Upsert logic
-    const existing = await c.env.DB.prepare(`
-      SELECT id FROM system_settings WHERE setting_key = 'active_modules'
-    `).first();
-
-    if (existing) {
-      await c.env.DB.prepare(`
-        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'active_modules'
-      `).bind(value).run();
-    } else {
-      await c.env.DB.prepare(`
-        INSERT INTO system_settings (setting_key, setting_value) VALUES ('active_modules', ?)
-      `).bind(value).run();
-    }
-
-    // 🔄 SYNC AUTOMATIQUE: Activer les permissions pour l'Admin selon les modules actifs
-    try {
-      const activeModulesList = Object.keys(body).filter(key => body[key] === true);
-      if (c.executionCtx?.waitUntil) {
-        c.executionCtx.waitUntil(syncAdminPermissions(c.env.DB, activeModulesList));
-      } else {
-        await syncAdminPermissions(c.env.DB, activeModulesList);
-      }
-    } catch (e) {
-      console.error('Failed to sync admin permissions:', e);
-    }
-
-    return c.json({ success: true, modules: body });
-  } catch (error) {
-    console.error('Update modules error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
 // ============================================================================
 // ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
 // ============================================================================
@@ -510,74 +322,12 @@ settings.get('/:key', async (c) => {
 });
 
 /**
- * GET /api/settings/modules/status - Récupérer l'état des modules (Licence)
- * Accès: Authentifié
- */
-settings.get('/modules/status', async (c) => {
-  try {
-    const result = await c.env.DB.prepare(`
-      SELECT setting_value FROM system_settings WHERE setting_key = 'active_modules'
-    `).first();
-
-    // Valeurs par défaut (Tout activé pour commencer)
-    const defaultModules = {
-      planning: true,
-      analytics: true,
-      notifications: true
-    };
-
-    if (!result || !result.setting_value) {
-      return c.json(defaultModules);
-    }
-
-    try {
-      return c.json({ ...defaultModules, ...JSON.parse(result.setting_value as string) });
-    } catch (e) {
-      return c.json(defaultModules);
-    }
-  } catch (error) {
-    console.error('Get modules error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-/**
- * PUT /api/settings/modules/status - Mettre à jour les licences (Feature Flipping)
- * Accès: Super Admin Only
- */
-settings.put('/modules/status', authMiddleware, superAdminOnly, async (c) => {
-  try {
-    const body = await c.req.json();
-    const value = JSON.stringify(body); // Stockage JSON string
-
-    // Upsert logic
-    const existing = await c.env.DB.prepare(`
-      SELECT id FROM system_settings WHERE setting_key = 'active_modules'
-    `).first();
-
-    if (existing) {
-      await c.env.DB.prepare(`
-        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'active_modules'
-      `).bind(value).run();
-    } else {
-      await c.env.DB.prepare(`
-        INSERT INTO system_settings (setting_key, setting_value) VALUES ('active_modules', ?)
-      `).bind(value).run();
-    }
-
-    return c.json({ success: true, modules: body });
-  } catch (error) {
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-/**
  * PUT /api/settings/:key - Mettre à jour une valeur de paramètre
  * Accès: Admin uniquement
  *
  * Utilisé pour: timezone_offset_hours, etc.
  */
-settings.put('/:key', authMiddleware, requirePermission('settings', 'manage'), async (c) => {
+settings.put('/:key', adminOnly, async (c) => {
   try {
     const key = c.req.param('key');
     const body = await c.req.json();

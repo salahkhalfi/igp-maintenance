@@ -1,32 +1,5 @@
-import { sqliteTable, integer, text, index, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
-
-// --- ROLES TABLE ---
-export const roles = sqliteTable('roles', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(), // e.g., "Électromécanicien"
-  slug: text('slug').notNull().unique(), // e.g., "technician" - Links to users.role
-  description: text('description'),
-  is_system: integer('is_system').default(0), // 1 = Cannot be deleted (Admin, etc.)
-  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-// --- PERMISSIONS TABLE ---
-export const permissions = sqliteTable('permissions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(), // e.g., "Créer un utilisateur"
-  slug: text('slug').notNull().unique(), // e.g., "users.create"
-  module: text('module').notNull(), // e.g., "users", "tickets"
-  description: text('description'),
-});
-
-// --- ROLE PERMISSIONS TABLE ---
-export const rolePermissions = sqliteTable('role_permissions', {
-  role_id: integer('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
-  permission_id: integer('permission_id').notNull().references(() => permissions.id, { onDelete: 'cascade' }),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.role_id, t.permission_id] }),
-}));
 
 // --- USERS TABLE ---
 export const users = sqliteTable('users', {
@@ -34,12 +7,11 @@ export const users = sqliteTable('users', {
   email: text('email').notNull().unique(),
   password_hash: text('password_hash').notNull(),
   full_name: text('full_name').notNull(),
-  first_name: text('first_name'),
-  last_name: text('last_name'),
-  role: text('role').notNull(), // Legacy role string (for now)
-  role_id: integer('role_id').references(() => roles.id), // New relationship
-  is_super_admin: integer('is_super_admin').default(0),
-  last_login: text('last_login'),
+  first_name: text('first_name'), // Added in later migration
+  last_name: text('last_name'),   // Added in later migration
+  role: text('role').notNull(), // 'admin', 'supervisor', 'technician', 'operator', 'furnace_operator'
+  is_super_admin: integer('is_super_admin').default(0), // Added in migration 0015
+  last_login: text('last_login'), // Added in migration 0009
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
@@ -51,7 +23,7 @@ export const machines = sqliteTable('machines', {
   model: text('model'),
   serial_number: text('serial_number').unique(),
   location: text('location'),
-  status: text('status').default('operational'),
+  status: text('status').default('operational'), // 'operational', 'maintenance', 'out_of_service'
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
@@ -67,9 +39,9 @@ export const tickets = sqliteTable('tickets', {
   priority: text('priority').notNull().default('medium'),
   reported_by: integer('reported_by').notNull().references(() => users.id),
   assigned_to: integer('assigned_to').references(() => users.id),
-  reporter_name: text('reporter_name'),
-  assignee_name: text('assignee_name'),
-  scheduled_date: text('scheduled_date'),
+  reporter_name: text('reporter_name'), // Added in migration 0003
+  assignee_name: text('assignee_name'), // Added in migration 0003
+  scheduled_date: text('scheduled_date'), // Added in migration 0004
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
   completed_at: text('completed_at'),
@@ -133,8 +105,8 @@ export const ticketComments = sqliteTable('ticket_comments', {
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   sender_id: integer('sender_id').notNull().references(() => users.id),
-  recipient_id: integer('recipient_id').references(() => users.id),
-  message_type: text('message_type').notNull(),
+  recipient_id: integer('recipient_id').references(() => users.id), // Can be null for public messages
+  message_type: text('message_type').notNull(), // 'public', 'private'
   content: text('content').notNull(),
   is_read: integer('is_read').default(0),
   read_at: text('read_at'),
@@ -167,7 +139,7 @@ export const pushLogs = sqliteTable('push_logs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   user_id: integer('user_id').notNull(),
   ticket_id: integer('ticket_id'),
-  status: text('status').notNull(),
+  status: text('status').notNull(), // 'success', 'failed', 'no_subscription'
   error_message: text('error_message'),
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
@@ -181,7 +153,7 @@ export const webhookNotifications = sqliteTable('webhook_notifications', {
   sent_at: text('sent_at').notNull(),
   response_status: integer('response_status'),
   response_body: text('response_body'),
-  scheduled_date_notified: text('scheduled_date_notified'),
+  scheduled_date_notified: text('scheduled_date_notified'), // Added in later migration
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -201,7 +173,7 @@ export const pendingNotifications = sqliteTable('pending_notifications', {
   body: text('body').notNull(),
   icon: text('icon'),
   badge: text('badge'),
-  data: text('data'),
-  sent_to_endpoints: text('sent_to_endpoints'),
+  data: text('data'), // JSON string
+  sent_to_endpoints: text('sent_to_endpoints'), // JSON string array
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });

@@ -64,16 +64,6 @@ export async function adminOnly(c: Context<{ Bindings: Bindings }>, next: Next) 
   await next();
 }
 
-// Middleware pour Super Admin uniquement (Propriétaire SaaS)
-export async function superAdminOnly(c: Context<{ Bindings: Bindings }>, next: Next) {
-    const user = c.get('user') as any;
-    // Vérifie si user.is_super_admin (DB) ou user.isSuperAdmin (JWT) est true
-    if (!user || (!user.is_super_admin && !user.isSuperAdmin)) {
-        return c.json({ error: 'Accès réservé au Super Administrateur (Propriétaire)' }, 403);
-    }
-    await next();
-}
-
 export async function technicianOrAdmin(c: Context<{ Bindings: Bindings }>, next: Next) {
   const user = c.get('user') as any;
 
@@ -125,7 +115,7 @@ export function requirePermission(resource: string, action: string, scope: strin
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
-    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope, user.isSuperAdmin);
+    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
 
     if (!allowed) {
       return c.json({
@@ -159,7 +149,7 @@ export function requireAnyPermission(permissions: PermissionString[]) {
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
-    const allowed = await hasAnyPermission(c.env.DB, user.role, permissions, user.isSuperAdmin);
+    const allowed = await hasAnyPermission(c.env.DB, user.role, permissions);
 
     if (!allowed) {
       return c.json({

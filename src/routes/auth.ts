@@ -9,7 +9,6 @@ import { getDb } from '../db';
 import { users } from '../db/schema';
 import { hashPassword, verifyPassword, isLegacyHash, upgradeLegacyHash } from '../utils/password';
 import { signToken } from '../utils/jwt';
-import { getRolePermissions } from '../utils/permissions';
 import { loginSchema, registerSchema } from '../schemas/auth';
 import type { Bindings } from '../types';
 
@@ -129,9 +128,6 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
       console.error("Failed to update last_login:", error);
     }
 
-    // Charger les permissions du rôle (avec bypass pour Super Admin)
-    const permissions = await getRolePermissions(c.env.DB, user.role, user.is_super_admin === 1);
-
     // Retirer le hash du mot de passe
     const { password_hash, ...userWithoutPassword } = user;
 
@@ -174,7 +170,7 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
       );
     }
 
-    return c.json({ token, user: userWithoutPassword, permissions });
+    return c.json({ token, user: userWithoutPassword });
   } catch (error) {
     console.error('Login error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
@@ -199,7 +195,6 @@ auth.get('/me', async (c) => {
         first_name: users.first_name,
         last_name: users.last_name,
         role: users.role,
-        is_super_admin: users.is_super_admin,
         created_at: users.created_at,
         updated_at: users.updated_at,
         last_login: users.last_login
@@ -212,10 +207,7 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
-    // Charger les permissions du rôle (avec bypass pour Super Admin)
-    const permissions = await getRolePermissions(c.env.DB, user.role, user.is_super_admin === 1);
-
-    return c.json({ user, permissions });
+    return c.json({ user });
   } catch (error) {
     console.error('Me error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);

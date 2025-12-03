@@ -6,52 +6,15 @@ import { eq, and, or, desc, asc, sql, getTableColumns, ne, inArray } from 'drizz
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { messages, users, pushLogs, pushSubscriptions } from '../db/schema';
-import { authMiddleware, requirePermission, requireAnyPermission } from '../middlewares/auth';
-import { checkModule } from '../utils/modules';
-import { hasPermission } from '../utils/permissions';
+import { authMiddleware } from '../middlewares/auth';
 import { formatUserName } from '../utils/userFormatter';
 import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
-import { sendPushNotification } from './push';
 import type { Bindings } from '../types';
 
 const messagesRoute = new Hono<{ Bindings: Bindings }>();
 
-// GET /api/messages/available-users - Récupérer les utilisateurs (Accessible avec auth simple, sans check module/permission strict pour debug)
-messagesRoute.get('/available-users', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    const db = getDb(c.env);
-
-    const results = await db
-      .select({
-        id: users.id,
-        first_name: users.first_name,
-        full_name: users.full_name,
-        role: users.role,
-        email: users.email
-      })
-      .from(users)
-      .where(and(
-        ne(users.id, user.userId),
-        ne(users.id, 0)
-      ))
-      .orderBy(desc(users.role), asc(users.first_name));
-
-    return c.json({ users: results });
-  } catch (error) {
-    console.error('Get available users error:', error);
-    return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
-  }
-});
-
-// Middleware: Check if Messaging Module is enabled (Global for this route)
-messagesRoute.use('*', checkModule('messaging'));
-
-// NOTE: We removed global requirePermission to debug access issues.
-// Permissions are now checked per-route or relaxed for read-only resources.
-
 // POST /api/messages - Envoyer un message (public ou privé)
-messagesRoute.post('/', authMiddleware, requirePermission('messages', 'use'), zValidator('json', sendMessageSchema), async (c) => {
+messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -72,6 +35,8 @@ messagesRoute.post('/', authMiddleware, requirePermission('messages', 'use'), zV
     // 🔔 Envoyer push notification si message privé
     if (message_type === 'private' && recipient_id) {
       try {
+        const { sendPushNotification } = await import('./push');
+        
         // Obtenir le nom de l'expéditeur
         const senderName = formatUserName(user, 'Un utilisateur');
         
@@ -130,7 +95,7 @@ messagesRoute.post('/', authMiddleware, requirePermission('messages', 'use'), zV
 });
 
 // POST /api/messages/audio - Envoyer un message audio
-messagesRoute.post('/audio', authMiddleware, requirePermission('messages', 'use'), async (c) => {
+messagesRoute.post('/audio', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -211,6 +176,7 @@ messagesRoute.post('/audio', authMiddleware, requirePermission('messages', 'use'
     // 🔔 Envoyer push notification si message privé
     if (messageType === 'private' && recipientId) {
       try {
+        const { sendPushNotification } = await import('./push');
         const recipientIdNum = parseInt(recipientId);
         
         const senderName = formatUserName(user, 'Un utilisateur');
@@ -267,15 +233,12 @@ messagesRoute.post('/audio', authMiddleware, requirePermission('messages', 'use'
     }, 201);
   } catch (error) {
     console.error('Upload audio error:', error);
-    return c.json({ 
-      error: 'Erreur lors de l\'envoi du message vocal',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
+    return c.json({ error: 'Erreur lors de l\'envoi du message vocal' }, 500);
   }
 });
 
 // GET /api/messages/public - Récupérer les messages publics avec pagination
-messagesRoute.get('/public', authMiddleware, requirePermission('messages', 'use'), zValidator('query', getMessagesQuerySchema), async (c) => {
+messagesRoute.get('/public', authMiddleware, zValidator('query', getMessagesQuerySchema), async (c) => {
   try {
     const { page, limit } = c.req.valid('query');
     const offset = (page - 1) * limit;
@@ -321,7 +284,7 @@ messagesRoute.get('/public', authMiddleware, requirePermission('messages', 'use'
 });
 
 // GET /api/messages/conversations - Récupérer les conversations privées
-messagesRoute.get('/conversations', authMiddleware, requirePermission('messages', 'use'), async (c) => {
+messagesRoute.get('/conversations', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     const db = getDb(c.env);
@@ -418,7 +381,7 @@ messagesRoute.get('/conversations', authMiddleware, requirePermission('messages'
 });
 
 // GET /api/messages/private/:contactId - Récupérer les messages privés avec un contact
-messagesRoute.get('/private/:contactId', authMiddleware, requirePermission('messages', 'use'), zValidator('param', contactIdParamSchema), async (c) => {
+messagesRoute.get('/private/:contactId', authMiddleware, zValidator('param', contactIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -461,7 +424,7 @@ messagesRoute.get('/private/:contactId', authMiddleware, requirePermission('mess
 });
 
 // GET /api/messages/unread-count
-messagesRoute.get('/unread-count', authMiddleware, requirePermission('messages', 'use'), async (c) => {
+messagesRoute.get('/unread-count', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -483,11 +446,37 @@ messagesRoute.get('/unread-count', authMiddleware, requirePermission('messages',
   }
 });
 
-// GET /api/messages/available-users (MOVED TO TOP)
-// messagesRoute.get('/available-users', authMiddleware, async (c) => { ... });
+// GET /api/messages/available-users
+messagesRoute.get('/available-users', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const db = getDb(c.env);
+
+    const results = await db
+      .select({
+        id: users.id,
+        first_name: users.first_name,
+        full_name: users.full_name,
+        role: users.role,
+        email: users.email
+      })
+      .from(users)
+      .where(and(
+        inArray(users.role, ['operator', 'furnace_operator', 'technician', 'supervisor', 'admin']),
+        ne(users.id, user.userId),
+        ne(users.id, 0)
+      ))
+      .orderBy(desc(users.role), asc(users.first_name));
+
+    return c.json({ users: results });
+  } catch (error) {
+    console.error('Get available users error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
+  }
+});
 
 // DELETE /api/messages/:messageId
-messagesRoute.delete('/:messageId', authMiddleware, requireAnyPermission(['messages.delete.all', 'messages.delete.own']), zValidator('param', messageIdParamSchema), async (c) => {
+messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -510,23 +499,13 @@ messagesRoute.delete('/:messageId', authMiddleware, requireAnyPermission(['messa
       return c.json({ error: 'Message non trouvé' }, 404);
     }
 
-    // RBAC Check
-    const canDeleteAll = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'all');
-    const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'own');
-
-    let canDelete = false;
-
-    if (canDeleteAll) {
-        canDelete = true;
-    } else if (canDeleteOwn && message.sender_id === currentUserId) {
-        canDelete = true;
-    }
+    const canDelete =
+      message.sender_id === currentUserId ||
+      user.role === 'admin' ||
+      (user.role === 'supervisor' && message.sender_role !== 'admin');
 
     if (!canDelete) {
-      return c.json({ 
-          error: 'Permission refusée',
-          details: 'Nécessite messages.delete.all ou messages.delete.own (si expéditeur)'
-      }, 403);
+      return c.json({ error: 'Vous n\'avez pas la permission de supprimer ce message' }, 403);
     }
 
     if (message.audio_file_key) {
@@ -551,7 +530,7 @@ messagesRoute.delete('/:messageId', authMiddleware, requireAnyPermission(['messa
 });
 
 // POST /api/messages/bulk-delete
-messagesRoute.post('/bulk-delete', authMiddleware, requireAnyPermission(['messages.delete.all', 'messages.delete.own']), zValidator('json', bulkDeleteMessagesSchema), async (c) => {
+messagesRoute.post('/bulk-delete', authMiddleware, zValidator('json', bulkDeleteMessagesSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -583,15 +562,10 @@ messagesRoute.post('/bulk-delete', authMiddleware, requireAnyPermission(['messag
           continue;
         }
 
-        const canDeleteAll = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'all');
-        const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'messages', 'delete', 'own');
-
-        let canDelete = false;
-        if (canDeleteAll) {
-            canDelete = true;
-        } else if (canDeleteOwn && message.sender_id === currentUserId) {
-            canDelete = true;
-        }
+        const canDelete =
+          message.sender_id === currentUserId ||
+          user.role === 'admin' ||
+          (user.role === 'supervisor' && message.sender_role !== 'admin');
 
         if (!canDelete) {
           errors.push({ messageId, error: 'Permission refusée' });
@@ -718,6 +692,7 @@ export async function sendLoginSummaryNotification(
     }
     
     // 4️⃣ Envoyer la notification de résumé
+    const { sendPushNotification } = await import('./push');
     
     const messageText = unreadCount === 1 
       ? 'Vous avez 1 message non lu'

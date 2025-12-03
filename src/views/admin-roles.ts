@@ -41,8 +41,8 @@ export const adminRolesHTML = `<!DOCTYPE html>
                     <div class="flex items-start">
                         <i class="fas fa-info-circle text-blue-500 text-base sm:text-lg mt-0.5 mr-2 sm:mr-3 flex-shrink-0"></i>
                         <div>
-                            <p class="text-xs sm:text-sm font-semibold text-blue-800 mb-1">Architecture RBAC Fixe</p>
-                            <p class="text-xs text-blue-700">Les 14 rôles système sont fixes mais <b>leurs permissions sont modifiables</b>. La création de nouveaux rôles est désactivée pour garantir l'intégrité du système.</p>
+                            <p class="text-xs sm:text-sm font-semibold text-blue-800 mb-1">Rôles système uniquement</p>
+                            <p class="text-xs text-blue-700">Les 14 rôles prédéfinis couvrent tous les besoins de l'industrie. La création de rôles personnalisés n'est plus nécessaire.</p>
                         </div>
                     </div>
                 </div>

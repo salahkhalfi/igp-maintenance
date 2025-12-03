@@ -12,17 +12,8 @@ import {
   type PushMessage,
   type VapidKeys
 } from '@block65/webcrypto-web-push';
-import { checkModule } from '../utils/modules';
-import { authMiddleware, requirePermission } from '../middlewares/auth';
 
 const push = new Hono<{ Bindings: Bindings }>();
-
-// Middleware: Check if Notifications Module is enabled for critical routes
-// We exempt vapid-public-key to allow frontend to at least check availability gracefully
-push.use('/subscribe', checkModule('notifications'));
-push.use('/unsubscribe', checkModule('notifications'));
-push.use('/test', checkModule('notifications'));
-push.use('/test-user/*', checkModule('notifications'));
 
 /**
  * POST /api/push/subscribe
@@ -191,53 +182,6 @@ push.get('/vapid-public-key', async (c) => {
     return c.json({ publicKey });
   } catch (error) {
     console.error('❌ VAPID key error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
-  }
-});
-
-// API: Push subscriptions list (Accessible to all, filtered by role)
-push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), async (c) => {
-  try {
-    const user = c.get('user') as any;
-    
-    // Check permissions for "seeing all" (Admin or Manager)
-    const canSeeAll = user.role === 'admin' || 
-                      user.is_super_admin || 
-                      (user.permissions && (user.permissions.includes('notifications.manage') || user.permissions.includes('notifications.manage.all')));
-    
-    let query = `
-      SELECT 
-        ps.id,
-        ps.user_id,
-        ps.endpoint,
-        ps.device_type,
-        ps.device_name,
-        ps.created_at,
-        u.full_name as user_full_name,
-        u.email as user_email,
-        u.role as user_role
-      FROM push_subscriptions ps
-      LEFT JOIN users u ON ps.user_id = u.id
-    `;
-    
-    let params: any[] = [];
-    
-    if (!canSeeAll) {
-        // Regular users only see their own devices
-        query += ` WHERE ps.user_id = ?`;
-        params.push(user.userId);
-    }
-    
-    query += ` ORDER BY ps.created_at DESC`;
-
-    const subscriptions = await c.env.DB.prepare(query).bind(...params).all();
-
-    return c.json({
-      subscriptions: subscriptions.results || [],
-      isAdminView: canSeeAll
-    });
-  } catch (error) {
-    console.error('[Push Subscriptions List API] Error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
@@ -573,9 +517,17 @@ push.post('/test', async (c) => {
  * POST /api/push/test-user/:userId - Envoyer une notification de test à un utilisateur spécifique (ADMIN ONLY)
  * Permet de tester l'envoi de notifications push à n'importe quel utilisateur
  */
-push.post('/test-user/:userId', authMiddleware, checkModule('notifications'), requirePermission('notifications', 'manage'), async (c) => {
+push.post('/test-user/:userId', async (c) => {
   try {
     const user = c.get('user') as any;
+    if (!user || !user.userId) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    // Vérifier si l'utilisateur est admin
+    if (user.role !== 'admin' && user.role !== 'supervisor') {
+      return c.json({ error: 'Accès refusé - Admin ou Superviseur requis' }, 403);
+    }
 
     const targetUserId = parseInt(c.req.param('userId'));
     if (isNaN(targetUserId)) {

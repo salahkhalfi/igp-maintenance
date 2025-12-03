@@ -9,32 +9,13 @@ import { tickets, machines, users, media, ticketTimeline, pushLogs } from '../db
 import { generateTicketId } from '../utils/ticket-id';
 import { formatUserName } from '../utils/userFormatter';
 import { createTicketSchema, updateTicketSchema, ticketIdParamSchema, getTicketsQuerySchema } from '../schemas/tickets';
-import { requirePermission, requireAnyPermission, authMiddleware } from '../middlewares/auth';
-import { hasPermission } from '../utils/permissions';
-import { sendPushNotification } from './push';
 import type { Bindings } from '../types';
 
 const ticketsRoute = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/tickets - Liste tous les tickets
-ticketsRoute.get('/', authMiddleware, zValidator('query', getTicketsQuerySchema), async (c) => {
+ticketsRoute.get('/', zValidator('query', getTicketsQuerySchema), async (c) => {
   try {
-    const user = c.get('user') as any;
-    
-    // 🛡️ SECURITY HOTFIX: Explicit role check to allow listing tickets
-    // Bypasses potential DB permission issues
-    const role = user.role?.toLowerCase();
-    const canRead = 
-      role === 'admin' || 
-      role === 'technician' || 
-      role === 'supervisor' ||
-      role === 'operator' || // Operators need to see their own tickets
-      await hasPermission(c.env.DB, user.role, 'tickets', 'read', 'all', user.isSuperAdmin);
-
-    if (!canRead) {
-        return c.json({ error: 'Permission refusée' }, 403);
-    }
-
     const { status, priority } = c.req.valid('query');
     
     const db = getDb(c.env);
@@ -47,18 +28,6 @@ ticketsRoute.get('/', authMiddleware, zValidator('query', getTicketsQuerySchema)
     }
     if (priority) {
       conditions.push(eq(tickets.priority, priority));
-    }
-
-    // Whitelist for Technician: Filter if needed, but currently they see all tickets
-    // Only Operators are restricted to their own tickets usually, but logic above allows "read all" for them?
-    // Actually, hasPermission('tickets', 'read', 'all') is checked.
-    // If operator doesn't have 'read.all', they might fall through.
-    // But line 31 says `role === 'operator'`. This implies Operators can see ALL tickets?
-    // Usually operators should only see their own.
-    // Let's refine this check for Operators.
-    
-    if (role === 'operator') {
-       conditions.push(eq(tickets.reported_by, user.userId));
     }
 
     const results = await db
@@ -89,23 +58,8 @@ ticketsRoute.get('/', authMiddleware, zValidator('query', getTicketsQuerySchema)
 });
 
 // GET /api/tickets/:id - Détails d'un ticket
-ticketsRoute.get('/:id', authMiddleware, zValidator('param', ticketIdParamSchema), async (c) => {
+ticketsRoute.get('/:id', zValidator('param', ticketIdParamSchema), async (c) => {
   try {
-    const user = c.get('user') as any;
-    
-    // 🛡️ SECURITY HOTFIX
-    const role = user.role?.toLowerCase();
-    const canRead = 
-      role === 'admin' || 
-      role === 'technician' || 
-      role === 'supervisor' ||
-      role === 'operator' ||
-      await hasPermission(c.env.DB, user.role, 'tickets', 'read', 'all', user.isSuperAdmin);
-
-    if (!canRead) {
-        return c.json({ error: 'Permission refusée' }, 403);
-    }
-
     const { id } = c.req.valid('param');
     // isNaN check handled by Zod
 
@@ -135,11 +89,6 @@ ticketsRoute.get('/:id', authMiddleware, zValidator('param', ticketIdParamSchema
 
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
-    }
-
-    // Check ownership for operators
-    if (role === 'operator' && ticket.reported_by !== user.userId) {
-        return c.json({ error: 'Vous ne pouvez voir que vos propres tickets' }, 403);
     }
 
     // Récupérer les médias
@@ -175,23 +124,9 @@ ticketsRoute.get('/:id', authMiddleware, zValidator('param', ticketIdParamSchema
 });
 
 // POST /api/tickets - Créer un nouveau ticket
-ticketsRoute.post('/', authMiddleware, zValidator('json', createTicketSchema), async (c) => {
+ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
   try {
     const user = c.get('user') as any;
-    
-    // 🛡️ SECURITY HOTFIX
-    const role = user.role?.toLowerCase();
-    const canCreate = 
-      role === 'admin' || 
-      role === 'technician' || 
-      role === 'supervisor' ||
-      role === 'operator' ||
-      await hasPermission(c.env.DB, user.role, 'tickets', 'create', 'all', user.isSuperAdmin);
-
-    if (!canCreate) {
-        return c.json({ error: 'Permission refusée' }, 403);
-    }
-
     const body = c.req.valid('json');
     const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
 
@@ -272,6 +207,7 @@ ticketsRoute.post('/', authMiddleware, zValidator('json', createTicketSchema), a
               .get();
 
             if (assignedUser) {
+              const { sendPushNotification } = await import('./push');
               const safeTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
               
               // Ensure ID is valid number
@@ -324,17 +260,12 @@ ticketsRoute.post('/', authMiddleware, zValidator('json', createTicketSchema), a
 
   } catch (error) {
     console.error('Create ticket error:', error);
-    return c.json({ 
-      error: 'Erreur lors de la création du ticket',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
+    return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
   }
 });
 
 // PATCH /api/tickets/:id - Mettre à jour un ticket
-// Note: requirePermission middleware checks DB. If DB is broken, this might fail.
-// But we fixed hasPermission to allow Admin/Technician fallback.
-ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('param', ticketIdParamSchema), zValidator('json', updateTicketSchema), async (c) => {
+ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator('json', updateTicketSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const { id } = c.req.valid('param');
@@ -360,12 +291,10 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
     }
 
     // Permissions checks
-    const role = user.role?.toLowerCase();
-    
-    if (role === 'operator' && currentTicket.reported_by !== user.userId) {
+    if (user.role === 'operator' && currentTicket.reported_by !== user.userId) {
       return c.json({ error: 'Vous ne pouvez modifier que vos propres tickets' }, 403);
     }
-    if (role === 'operator' && body.status && body.status !== currentTicket.status) {
+    if (user.role === 'operator' && body.status && body.status !== currentTicket.status) {
       return c.json({ error: 'Les opérateurs ne peuvent pas changer le statut des tickets' }, 403);
     }
 
@@ -404,6 +333,8 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
     });
 
     // Push notifications logic
+    const { sendPushNotification } = await import('./push');
+
     // 1. Assignment changed
     if (body.assigned_to && body.assigned_to !== currentTicket.assigned_to) {
       // Notify old assignee
@@ -489,30 +420,18 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
     return c.json({ ticket: updatedTicket });
   } catch (error) {
     console.error('Update ticket error:', error);
-    return c.json({ 
-      error: 'Erreur lors de la mise à jour du ticket',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
+    return c.json({ error: 'Erreur lors de la mise à jour du ticket' }, 500);
   }
 });
 
 // DELETE /api/tickets/:id - Supprimer un ticket
-ticketsRoute.delete('/:id', requireAnyPermission(['tickets.delete.all', 'tickets.delete.own']), zValidator('param', ticketIdParamSchema), async (c) => {
+ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const { id } = c.req.valid('param');
+    // isNaN check handled by Zod
+
     const db = getDb(c.env);
-
-    // Vérification des permissions
-    const canDeleteAll = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'all', user.isSuperAdmin);
-    const canDeleteOwn = await hasPermission(c.env.DB, user.role, 'tickets', 'delete', 'own', user.isSuperAdmin);
-
-    if (!canDeleteAll && !canDeleteOwn) {
-      return c.json({ 
-        error: 'Permission refusée: tickets.delete',
-        required_permission: 'tickets.delete.own ou tickets.delete.all'
-      }, 403);
-    }
 
     const ticket = await db
       .select()
@@ -524,8 +443,7 @@ ticketsRoute.delete('/:id', requireAnyPermission(['tickets.delete.all', 'tickets
       return c.json({ error: 'Ticket non trouvé' }, 404);
     }
 
-    // Si pas de permission "delete all", on vérifie la propriété
-    if (!canDeleteAll && ticket.reported_by !== user.userId) {
+    if (user.role === 'operator' && ticket.reported_by !== user.userId) {
       return c.json({ error: 'Vous ne pouvez supprimer que vos propres tickets' }, 403);
     }
 

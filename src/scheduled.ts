@@ -25,9 +25,6 @@ export default {
       // TÂCHE #2: Vérification des tickets expirés (existant)
       await checkOverdueTickets(env);
 
-      // TÂCHE #3: Cleanup du vieux "junk" (Planning, Notes, Tickets archivés) - NOUVEAU
-      await cleanupOldData(env);
-
       console.log('✅ Cloudflare CRON terminé avec succès');
     } catch (error) {
       console.error('❌ Erreur Cloudflare CRON:', error);
@@ -35,49 +32,6 @@ export default {
     }
   },
 };
-
-/**
- * Cleanup des données obsolètes ("Junk") pour optimiser la base de données
- * - Planning > 3 mois
- * - Notes "Done" > 30 jours
- * - Tickets archivés > 2 ans (Optionnel / À activer si besoin)
- */
-async function cleanupOldData(env: Bindings): Promise<void> {
-  console.log('🧹 CRON cleanup-old-data démarré');
-
-  try {
-    // 1. Nettoyer les événements de planning passés (> 3 mois)
-    // On garde un trimestre d'historique pour référence
-    const planningResult = await env.DB.prepare(`
-      DELETE FROM planning_events 
-      WHERE date < date('now', '-3 months')
-    `).run();
-    console.log(`✅ CRON: Planning nettoyé (${planningResult.meta.changes} événements supprimés)`);
-
-    // 2. Nettoyer les notes personnelles terminées (> 30 jours)
-    // Une fois cochées, elles ne servent plus à grand chose après un mois
-    // Note: On utilise 'now' car planner_notes n'a pas toujours created_at, mais on filtre par 'done=1'
-    // Si created_at existe, on l'utilise, sinon on risque de supprimer des tâches sans date.
-    // Vérification sécurité: on supprime seulement si on est sûr (table planner_notes a created_at via migration auto d1?)
-    // D'après les logs précédents, planner_notes A BIEN created_at (timestamp auto).
-    const notesResult = await env.DB.prepare(`
-      DELETE FROM planner_notes 
-      WHERE done = 1 
-      AND created_at < datetime('now', '-30 days')
-    `).run();
-    console.log(`✅ CRON: Notes terminées nettoyées (${notesResult.meta.changes} notes supprimées)`);
-
-    // 3. Optimisation de la base de données (VACUUM)
-    // Récupère l'espace disque inutilisé après les suppressions
-    // Note: D1 gère cela automatiquement en partie, mais un PRAGMA optimize aide
-    await env.DB.prepare('PRAGMA optimize').run();
-    console.log('✅ CRON: Base de données optimisée (PRAGMA optimize)');
-
-  } catch (error) {
-    console.error('❌ CRON: Erreur cleanup-old-data:', error);
-    // Ne pas bloquer le reste
-  }
-}
 
 /**
  * Cleanup des subscriptions push inactives >30 jours

@@ -20,7 +20,6 @@ interface TicketDetailsModalProps {
   ticketId: number | null;
   currentUserRole?: UserRole;
   currentUserId?: number;
-  currentUserName?: string;
 }
 
 export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({ 
@@ -28,8 +27,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
   onClose, 
   ticketId, 
   currentUserRole,
-  currentUserId,
-  currentUserName = 'Anonyme'
+  currentUserId 
 }) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'details' | 'media' | 'comments'>('details');
@@ -44,7 +42,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     language: 'fr-FR'
   });
 
-  const { isRecording, audioURL: audioUrl, recordingDuration: recordingTime, startRecording, stopRecording, cancelRecording: clearAudio, error: audioError } = useAudioRecorder();
+  const { isRecording, audioURL: audioUrl, recordingDuration: recordingTime, startRecording, stopRecording, cancelRecording: clearAudio } = useAudioRecorder();
 
   // Queries
   const { data: ticket, isLoading } = useQuery({
@@ -53,13 +51,6 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     enabled: !!ticketId && isOpen,
     refetchInterval: 30000 // Rafraîchissement auto toutes les 30s
   });
-
-  // Afficher les erreurs audio
-  useEffect(() => {
-    if (audioError) {
-      alert(`Erreur microphone: ${audioError}`);
-    }
-  }, [audioError]);
 
   const { data: commentsData } = useQuery({
     queryKey: ['ticket-comments', ticketId],
@@ -95,39 +86,27 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
 
   const commentMutation = useMutation({
     mutationFn: async () => {
-      console.log('[MODAL] Submitting comment for ticket:', ticketId);
-      console.log('[MODAL] User:', currentUserName, 'Role:', currentUserRole);
-      console.log('[MODAL] Content:', commentText || "Audio Note");
-
-      if (!ticketId) throw new Error("Ticket ID is missing");
-
-      const payload = {
-        ticket_id: ticketId,
-        user_name: currentUserName || 'Utilisateur',
-        user_role: currentUserRole,
-        comment: audioUrl ? "Note vocale (Audio upload not linked yet)" : commentText
-      };
-
-      console.log('[MODAL] Payload:', payload);
-
-      try {
-        const result = await commentService.create(payload);
-        console.log('[MODAL] Success result:', result);
-        return result;
-      } catch (err) {
-        console.error('[MODAL] Mutation error:', err);
-        throw err;
+      // Note: Audio upload logic for comments is simplified here.
+      // In a real scenario, we'd upload the blob to media service first, then link it.
+      // For now, we'll just post text.
+      if (audioUrl) {
+         // Fallback for audio if not fully implemented in comment service
+         return commentService.create({
+            ticket_id: ticketId!,
+            user_name: 'Moi', // Should use real name
+            comment: "Note vocale (Audio upload not linked yet)"
+         });
       }
+      return commentService.create({
+        ticket_id: ticketId!,
+        user_name: 'Moi', // Should be dynamic based on user
+        comment: commentText
+      });
     },
     onSuccess: () => {
       setCommentText('');
       clearAudio();
       queryClient.invalidateQueries({ queryKey: ['ticket-comments', ticketId] });
-      // Force explicit refetch
-      queryClient.refetchQueries({ queryKey: ['ticket-comments', ticketId] });
-    },
-    onError: (error: any) => {
-        alert(`Erreur lors de l'envoi: ${error.message || 'Erreur inconnue'}`);
     }
   });
 
@@ -138,22 +117,30 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     }
   }, [comments, activeTab]);
 
-  // SAFE DATA PREPARATION
-  // Ensure all rendered fields are strictly strings or numbers
-  const safeTicket = ticket ? {
-    id: ticket.id,
-    priority: String(ticket.priority || 'low').toUpperCase(),
-    status: String(ticket.status || 'open').toUpperCase(),
-    title: String(ticket.title || 'Sans titre'),
-    created_by_name: String(ticket.created_by_name || 'Inconnu'),
-    created_at: ticket.created_at ? new Date(ticket.created_at) : new Date(),
-    machine_name: String(ticket.machine_name || ticket.machine_type || 'Machine inconnue'),
-    description: String(ticket.description || 'Aucune description.'),
-    assigned_to_name: ticket.assigned_to_name ? String(ticket.assigned_to_name) : null,
-    assigned_to: ticket.assigned_to
-  } : null;
-
   if (!isOpen || !ticketId) return null;
+
+  // Helpers pour l'UI
+  const getStatusColor = (status: TicketStatus) => {
+    switch (status) {
+      case 'open': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'in_progress': return 'bg-orange-100 text-orange-700 border-orange-200';
+      case 'resolved': return 'bg-green-100 text-green-700 border-green-200';
+      case 'closed': return 'bg-gray-100 text-gray-700 border-gray-200';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const getPriorityColor = (p: TicketPriority) => {
+    switch (p) {
+      case 'critical': return 'text-red-600 bg-red-50 border-red-100';
+      case 'high': return 'text-orange-600 bg-orange-50 border-orange-100';
+      case 'medium': return 'text-blue-600 bg-blue-50 border-blue-100';
+      case 'low': return 'text-green-600 bg-green-50 border-green-100';
+    }
+  };
+
+  const canEdit = currentUserRole === 'admin' || currentUserRole === 'supervisor' || ticket?.created_by === currentUserId;
+  const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-200">
@@ -163,7 +150,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
           <div className="flex-1 flex items-center justify-center p-12">
             <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
           </div>
-        ) : !safeTicket ? (
+        ) : !ticket ? (
           <div className="p-8 text-center">
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-bold">Ticket introuvable</h3>
@@ -175,19 +162,19 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
             <div className="flex items-start justify-between p-6 border-b border-gray-100 bg-white z-10">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-mono text-gray-400">#{safeTicket.id}</span>
+                  <span className="text-sm font-mono text-gray-400">#{ticket.id}</span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getPriorityColor(ticket.priority)}`}>
-                    {safeTicket.priority}
+                    {ticket.priority.toUpperCase()}
                   </span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(ticket.status)}`}>
-                    {safeTicket.status === 'IN_PROGRESS' ? 'EN COURS' : safeTicket.status === 'RESOLVED' ? 'RÉSOLU' : safeTicket.status}
+                    {ticket.status === 'in_progress' ? 'EN COURS' : ticket.status === 'resolved' ? 'RÉSOLU' : ticket.status.toUpperCase()}
                   </span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 line-clamp-1">{safeTicket.title}</h2>
+                <h2 className="text-2xl font-bold text-gray-800 line-clamp-1">{ticket.title}</h2>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span className="flex items-center gap-1"><User className="w-4 h-4" /> {safeTicket.created_by_name}</span>
-                  <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {format(safeTicket.created_at, "d MMM yyyy 'à' HH:mm", { locale: fr })}</span>
-                  <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {safeTicket.machine_name}</span>
+                  <span className="flex items-center gap-1"><User className="w-4 h-4" /> {ticket.created_by_name || 'Inconnu'}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {format(new Date(ticket.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr })}</span>
+                  <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {ticket.machine_name}</span>
                 </div>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -218,7 +205,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className={`flex-1 bg-gray-50 ${activeTab === 'comments' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto p-6'}`}>
+            <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
               
               {/* TAB: DETAILS */}
               {activeTab === 'details' && (
@@ -227,7 +214,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Description</h3>
                     <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {safeTicket.description}
+                      {ticket.description || "Aucune description fournie."}
                     </p>
                   </div>
 
@@ -251,7 +238,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                           <select 
                             className="w-full p-2 border rounded-lg text-sm"
                             onChange={(e) => assignMutation.mutate({ id: ticket.id, techId: Number(e.target.value) || null })}
-                            defaultValue={safeTicket.assigned_to || ""}
+                            defaultValue={ticket.assigned_to || ""}
                           >
                             <option value="">Non assigné</option>
                             {technicians.map(t => (
@@ -262,11 +249,11 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${safeTicket.assigned_to ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                            {safeTicket.assigned_to_name ? safeTicket.assigned_to_name.charAt(0) : '?'}
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${ticket.assigned_to ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                            {ticket.assigned_to_name ? ticket.assigned_to_name.charAt(0) : '?'}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-gray-900">{safeTicket.assigned_to_name || "Non assigné"}</p>
+                            <p className="text-sm font-bold text-gray-900">{ticket.assigned_to_name || "Non assigné"}</p>
                             <p className="text-xs text-gray-500">Technicien responsable</p>
                           </div>
                         </div>
@@ -307,47 +294,108 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                 </div>
               )}
 
-              {/* TAB: MEDIA */}
-              {activeTab === 'media' && (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[300px]">
-                  <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                    <ImageIcon className="w-12 h-12 mb-3 opacity-50" />
-                    <p>Aucune photo ou vidéo pour le moment.</p>
-                    <p className="text-xs mt-2">(Fonctionnalité de galerie en cours de développement)</p>
-                  </div>
-                </div>
-              )}
-
               {/* TAB: COMMENTS */}
               {activeTab === 'comments' && (
-                <div className="flex flex-col h-[500px] justify-center items-center p-10">
-                    <AlertTriangle className="w-12 h-12 text-orange-500 mb-4" />
-                    <h3 className="text-lg font-bold text-gray-800 mb-2">Maintenance des Commentaires</h3>
-                    <p className="text-center text-gray-600 max-w-md">
-                        Le module de commentaires est en cours de restauration pour corriger le problème d'affichage. 
-                        <br/>
-                        La fonction "Ajouter un commentaire" reste active via le bouton ci-dessous pour les urgences.
-                    </p>
-                    
-                    <button
-                        onClick={() => {
-                            const text = prompt("Ajouter un commentaire (Mode Secours):");
-                            if (text) {
-                                commentMutation.mutate(); 
-                                // Hack: mutate uses internal state 'commentText' which is empty here.
-                                // We need to update state first or pass param.
-                                // Actually, let's just use a direct service call in this emergency block.
-                                commentService.create({
-                                    ticket_id: ticketId,
-                                    user_name: currentUserName || 'Admin',
-                                    comment: text
-                                }).then(() => alert("Commentaire ajouté (Rafraîchissez la page pour voir)")).catch(e => alert("Erreur: " + e.message));
-                            }
-                        }}
-                        className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700"
-                    >
-                        Ajouter un commentaire (Simple)
-                    </button>
+                <div className="flex flex-col h-[500px]">
+                  <div className="flex-1 overflow-y-auto space-y-4 pr-2 mb-4">
+                    {comments.length === 0 ? (
+                      <p className="text-center text-gray-400 text-sm py-10">Aucun commentaire. Soyez le premier à écrire !</p>
+                    ) : (
+                      comments.map((c: any) => (
+                        <div key={c.id} className={`flex gap-3 ${c.user_id === currentUserId ? 'flex-row-reverse' : ''}`}>
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
+                            {c.user_name?.charAt(0) || 'U'}
+                          </div>
+                          <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                            c.user_id === currentUserId 
+                              ? 'bg-blue-600 text-white rounded-tr-none' 
+                              : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none'
+                          }`}>
+                            {c.type === 'audio' ? (
+                              <div className="flex items-center gap-2">
+                                <button className="p-2 bg-white/20 rounded-full hover:bg-white/30">
+                                  <Play className="w-4 h-4" />
+                                </button>
+                                <span>Note vocale (0:15)</span>
+                              </div>
+                            ) : (
+                              <p>{c.content}</p>
+                            )}
+                            <p className={`text-[10px] mt-1 opacity-70 text-right`}>
+                              {format(new Date(c.created_at), 'HH:mm')}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <div ref={commentsEndRef} />
+                  </div>
+
+                  {/* Input Zone */}
+                  <div className="bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex items-end gap-2">
+                    {isRecording ? (
+                      <div className="flex-1 flex items-center justify-between bg-red-50 px-4 py-2 rounded-lg animate-pulse">
+                        <span className="text-red-600 font-medium flex items-center gap-2">
+                          <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                          Enregistrement... {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                        </span>
+                        <button onClick={stopRecording} className="p-1.5 bg-red-200 text-red-700 rounded-full hover:bg-red-300">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : audioUrl ? (
+                      <div className="flex-1 flex items-center justify-between bg-blue-50 px-4 py-2 rounded-lg">
+                        <span className="text-blue-600 font-medium flex items-center gap-2">
+                          <Play className="w-4 h-4" />
+                          Note vocale prête
+                        </span>
+                        <button onClick={clearAudio} className="p-1.5 hover:bg-blue-200 rounded-full text-blue-700">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex-1 relative">
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="Écrire un commentaire..."
+                          className="w-full pl-3 pr-10 py-3 bg-transparent resize-none focus:outline-none text-sm max-h-20"
+                          rows={1}
+                        />
+                        {hasRecognition && (
+                          <button 
+                            onClick={isListening ? stopListening : startListening}
+                            className={`absolute right-2 top-2 p-1.5 rounded-full transition-colors ${
+                              isListening ? 'bg-red-100 text-red-500 animate-pulse' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-1">
+                      {!commentText && !audioUrl && !isRecording && (
+                        <button 
+                          onClick={startRecording}
+                          className="p-3 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+                          title="Enregistrer un message vocal"
+                        >
+                          <Mic className="w-5 h-5" />
+                        </button>
+                      )}
+                      {(commentText || audioUrl) && (
+                        <button
+                          onClick={() => commentMutation.mutate()}
+                          disabled={commentMutation.isPending}
+                          className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:shadow-none"
+                        >
+                          {commentMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -215,7 +215,6 @@ const AppContent = () => {
             ticketId={selectedTicketId}
             currentUserRole={currentUser.role as any}
             currentUserId={currentUser.id}
-            currentUserName={currentUser.full_name}
         />
 
         <NotificationModal 

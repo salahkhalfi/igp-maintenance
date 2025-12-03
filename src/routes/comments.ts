@@ -1,148 +1,138 @@
 // Routes pour la gestion des commentaires sur les tickets
-// Version ULTRA-SIMPLIFIÉE et ROBUSTE (Raw SQL)
+// Refactored to use Drizzle ORM + Zod Validation
 
 import { Hono } from 'hono';
-import { getCookie } from 'hono/cookie';
-import { verifyToken } from '../utils/jwt';
+import { zValidator } from '@hono/zod-validator';
+import { eq, asc } from 'drizzle-orm';
+import { getDb } from '../db';
+import { ticketComments, tickets, media } from '../db/schema';
+import { createCommentSchema, ticketIdParamSchema, commentIdParamSchema } from '../schemas/comments';
+import { authMiddleware } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const comments = new Hono<{ Bindings: Bindings }>();
 
-// OPTIONS handler for CORS preflight
-comments.options('/', (c) => {
-  return c.text('', 204);
-});
-
-// POST /api/comments - Ajouter un commentaire
-comments.post('/', async (c) => {
-  const start = Date.now();
-  console.log(`[COMMENTS] Request received at ${new Date().toISOString()}`);
-
+// POST /api/comments - Ajouter un commentaire à un ticket
+comments.post('/', authMiddleware, zValidator('json', createCommentSchema), async (c) => {
   try {
-    // 1. AUTHENTICATION (Manual)
-    let user: any = null;
-    try {
-        const cookieToken = getCookie(c, 'auth_token');
-        const authHeader = c.req.header('Authorization');
-        const token = cookieToken || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null);
-        
-        if (token) {
-            user = await verifyToken(token, c.env.JWT_SECRET);
-        }
-    } catch (e) {
-        console.warn('[COMMENTS] Auth check failed:', e);
-    }
-    
-    const userName = user?.full_name || user?.email || 'Anonyme';
-    const userRole = user?.role || 'anonymous';
-    
-    console.log(`[COMMENTS] User: ${userName} (${userRole})`);
+    const body = c.req.valid('json');
+    const { ticket_id, user_name, user_role, comment, created_at } = body;
+    const db = getDb(c.env);
 
-    // 2. BODY PARSING (Manual & Safe)
-    let body: any = {};
-    try {
-        const text = await c.req.text();
-        if (text) {
-            body = JSON.parse(text);
-        }
-    } catch (e) {
-        console.error('[COMMENTS] JSON parse error:', e);
-        return c.json({ error: 'Invalid JSON' }, 400);
+    // Vérifier que le ticket existe
+    const ticket = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.id, ticket_id))
+      .get();
+
+    if (!ticket) {
+      return c.json({ error: 'Ticket non trouvé' }, 404);
     }
 
-    console.log('[COMMENTS] Body:', JSON.stringify(body));
+    // Utiliser le timestamp de l'appareil de l'utilisateur si fourni
+    const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-    // 3. VALIDATION
-    const ticketId = Number(body.ticket_id);
-    const commentText = String(body.comment || '').trim();
-    const submittedUserName = String(body.user_name || userName);
+    // Insérer le commentaire
+    const result = await db.insert(ticketComments).values({
+      ticket_id,
+      user_name,
+      user_role: user_role || null,
+      comment,
+      created_at: timestamp
+    }).returning();
 
-    console.log(`[COMMENTS] Validating: ticketId=${ticketId}, comment="${commentText}"`);
-
-    if (!ticketId || isNaN(ticketId)) {
-        console.warn('[COMMENTS] Invalid ticket_id');
-        return c.json({ error: 'Invalid ticket_id' }, 400);
-    }
-    if (!commentText) {
-        console.warn('[COMMENTS] Empty comment');
-        return c.json({ error: 'Empty comment' }, 400);
-    }
-
-    // 4. DATABASE INSERT (Raw SQL)
-    const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    
-    // Ensure DB exists
-    if (!c.env.DB) {
-        throw new Error('Database binding (DB) is missing');
-    }
-
-    console.log(`[COMMENTS] Inserting for Ticket ${ticketId}...`);
-
-    try {
-        const result = await c.env.DB.prepare(`
-            INSERT INTO ticket_comments (ticket_id, user_name, user_role, comment, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            RETURNING *
-        `).bind(ticketId, submittedUserName, userRole, commentText, timestamp).first();
-
-        console.log('[COMMENTS] Insert success:', JSON.stringify(result));
-        
-        return c.json({ comment: result }, 201);
-
-    } catch (dbError: any) {
-        console.error('[COMMENTS] SQL Error:', dbError);
-        
-        if (dbError.message && (dbError.message.includes('FOREIGN') || dbError.message.includes('constraint'))) {
-            return c.json({ error: `Ticket ${ticketId} introuvable (Erreur intégrité)` }, 404);
-        }
-        throw dbError;
-    }
-
-  } catch (error: any) {
-    console.error('[COMMENTS] Critical Error:', error);
-    return c.json({ 
-        error: 'Erreur serveur interne', 
-        details: error.message,
-        stack: error.stack 
-    }, 500);
-  } finally {
-    console.log(`[COMMENTS] Request processed in ${Date.now() - start}ms`);
+    return c.json({ comment: result[0] }, 201);
+  } catch (error) {
+    console.error('Add comment error:', error);
+    return c.json({ error: 'Erreur lors de l\'ajout du commentaire' }, 500);
   }
 });
 
-// GET /api/comments/ticket/:ticketId
-comments.get('/ticket/:ticketId', async (c) => {
-    const ticketId = c.req.param('ticketId');
-    console.log(`[COMMENTS] Fetching for ticket ${ticketId}`);
-    
-    try {
-        const { results } = await c.env.DB.prepare(`
-            SELECT * FROM ticket_comments 
-            WHERE ticket_id = ? 
-            ORDER BY created_at ASC
-        `).bind(ticketId).all();
-        
-        return c.json({ comments: results });
-    } catch (e: any) {
-        return c.json({ error: e.message }, 500);
-    }
+// GET /api/comments/ticket/:ticketId - Liste les commentaires d'un ticket
+comments.get('/ticket/:ticketId', authMiddleware, zValidator('param', ticketIdParamSchema), async (c) => {
+  try {
+    const { ticketId } = c.req.valid('param');
+    // isNaN check handled by Zod
+
+    const db = getDb(c.env);
+    const results = await db
+      .select()
+      .from(ticketComments)
+      .where(eq(ticketComments.ticket_id, ticketId))
+      .orderBy(asc(ticketComments.created_at)); // Ordre chronologique pour les conversations
+
+    return c.json({ comments: results });
+  } catch (error) {
+    console.error('Get comments error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des commentaires' }, 500);
+  }
 });
 
-// DELETE /api/comments/:id
-comments.delete('/:id', async (c) => {
-    const id = c.req.param('id');
-    try {
-        // Simple auth check for delete
-        const authHeader = c.req.header('Authorization');
-        if (!authHeader && !getCookie(c, 'auth_token')) {
-            return c.json({ error: 'Unauthorized' }, 401);
-        }
-        
-        await c.env.DB.prepare('DELETE FROM ticket_comments WHERE id = ?').bind(id).run();
-        return c.json({ success: true });
-    } catch (e: any) {
-        return c.json({ error: e.message }, 500);
+// DELETE /api/comments/:id - Supprimer un commentaire (protégé)
+comments.delete('/:id', authMiddleware, zValidator('param', commentIdParamSchema), async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const { id } = c.req.valid('param');
+    // isNaN check handled by Zod
+
+    const db = getDb(c.env);
+
+    // Récupérer le commentaire
+    const comment = await db
+      .select()
+      .from(ticketComments)
+      .where(eq(ticketComments.id, id))
+      .get();
+
+    if (!comment) {
+      return c.json({ error: 'Commentaire non trouvé' }, 404);
     }
+
+    // Permissions
+    const canDelete = 
+      user.role === 'admin' || 
+      user.role === 'supervisor' ||
+      (user.first_name && comment.user_name === user.first_name);
+
+    if (!canDelete) {
+      return c.json({ error: 'Permission refusée' }, 403);
+    }
+
+    // Suppression en cascade : Vérifier si c'est un message vocal [audio:ID]
+    const audioMatch = comment.comment.match(/\[audio:(\d+)\]/);
+    if (audioMatch) {
+      const mediaId = Number(audioMatch[1]);
+      
+      // Récupérer les infos du média
+      const mediaInfo = await db
+        .select()
+        .from(media)
+        .where(eq(media.id, mediaId))
+        .get();
+
+      if (mediaInfo) {
+        try {
+          // Supprimer de R2
+          await c.env.MEDIA_BUCKET.delete(mediaInfo.file_key);
+          console.log(`Média audio associé supprimé de R2: ${mediaInfo.file_key}`);
+          
+          // Supprimer de la table media
+          await db.delete(media).where(eq(media.id, mediaId));
+        } catch (mediaError) {
+          console.error('Erreur lors de la suppression du média audio associé', mediaError);
+        }
+      }
+    }
+
+    // Supprimer le commentaire
+    await db.delete(ticketComments).where(eq(ticketComments.id, id));
+
+    return c.json({ success: true, message: 'Commentaire supprimé' });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    return c.json({ error: 'Erreur lors de la suppression du commentaire' }, 500);
+  }
 });
 
 export default comments;

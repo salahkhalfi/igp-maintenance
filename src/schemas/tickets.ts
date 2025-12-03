@@ -16,7 +16,7 @@ export const createTicketSchema = z.object({
 export const updateTicketSchema = z.object({
   title: z.string().min(3).max(200).optional(),
   description: z.string().max(2000).optional(),
-  status: z.string().optional(),
+  status: z.enum(['received', 'diagnostic', 'in_progress', 'waiting_parts', 'completed', 'archived']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   assigned_to: z.coerce.number().int().optional().nullable(),
   scheduled_date: z.string().optional().nullable(),
@@ -28,6 +28,6 @@ export const ticketIdParamSchema = z.object({
 });
 
 export const getTicketsQuerySchema = z.object({
-  status: z.string().optional(),
+  status: z.enum(['received', 'diagnostic', 'in_progress', 'waiting_parts', 'completed', 'archived']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional()
 });

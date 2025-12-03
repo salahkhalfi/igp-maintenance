@@ -39,7 +39,6 @@ export interface JWTPayload {
   full_name?: string;
   first_name?: string;
   last_name?: string;
-  isSuperAdmin?: boolean;
   iat?: number;
   exp?: number;
 }

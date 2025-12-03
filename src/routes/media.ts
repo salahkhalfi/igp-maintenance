@@ -2,7 +2,7 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
-import { authMiddleware, requirePermission } from '../middlewares/auth';
+import { authMiddleware } from '../middlewares/auth';
 import { LIMITS, validateFileUpload } from '../utils/validation';
 
 const media = new Hono<{ Bindings: Bindings }>();
@@ -24,7 +24,7 @@ function formatFileSize(bytes: number): string {
 }
 
 // POST /api/media/upload - Upload un fichier vers R2 (protégé)
-media.post('/upload', authMiddleware, requirePermission('tickets', 'update'), async (c) => {
+media.post('/upload', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     const formData = await c.req.formData();
@@ -58,16 +58,11 @@ media.post('/upload', authMiddleware, requirePermission('tickets', 'update'), as
 
     // Vérifier que le ticket existe
     const ticket = await c.env.DB.prepare(
-      'SELECT id, reported_by FROM tickets WHERE id = ?'
-    ).bind(ticketIdNum).first() as any;
+      'SELECT id FROM tickets WHERE id = ?'
+    ).bind(ticketIdNum).first();
 
     if (!ticket) {
       return c.json({ error: 'Ticket non trouvé' }, 404);
-    }
-
-    // Vérification stricte pour les opérateurs (ne peuvent uploader que sur leurs propres tickets)
-    if (user.role === 'operator' && ticket.reported_by !== user.userId) {
-      return c.json({ error: 'Vous ne pouvez ajouter des fichiers qu\'à vos propres tickets' }, 403);
     }
 
     // Générer une clé unique pour le fichier (nettoyer le nom de fichier)
@@ -105,10 +100,7 @@ media.post('/upload', authMiddleware, requirePermission('tickets', 'update'), as
     return c.json({ media: newMedia }, 201);
   } catch (error) {
     console.error('Upload error:', error);
-    return c.json({ 
-      error: 'Erreur lors de l\'upload du fichier',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
+    return c.json({ error: 'Erreur lors de l\'upload du fichier' }, 500);
   }
 });
 
@@ -147,7 +139,7 @@ media.get('/:id', async (c) => {
 });
 
 // DELETE /api/media/:id - Supprimer un fichier (protégé)
-media.delete('/:id', authMiddleware, requirePermission('tickets', 'update'), async (c) => {
+media.delete('/:id', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     const id = c.req.param('id');
@@ -218,7 +210,7 @@ media.delete('/:id', authMiddleware, requirePermission('tickets', 'update'), asy
 });
 
 // GET /api/media/ticket/:ticketId - Liste les médias d'un ticket (protégé)
-media.get('/ticket/:ticketId', authMiddleware, requirePermission('tickets', 'read'), async (c) => {
+media.get('/ticket/:ticketId', authMiddleware, async (c) => {
   try {
     const ticketId = c.req.param('ticketId');
 
