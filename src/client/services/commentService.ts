@@ -1,4 +1,4 @@
-import { client, getAuthHeaders } from '../api';
+import { client, getAuthHeaders, getAuthToken } from '../api';
 
 interface CreateCommentRequest {
   ticket_id: number;
@@ -8,10 +8,11 @@ interface CreateCommentRequest {
   created_at?: string;
 }
 
-// Service de gestion des commentaires (Version RPC + Zod)
+// Service de gestion des commentaires (Version Fetch Directe pour Diagnostic)
 export const commentService = {
   
   getAllByTicketId: async (ticketId: number): Promise<{ comments: any[] }> => {
+    // Utilisation standard pour GET
     const res = await client.api.comments.ticket[':ticketId'].$get(
       { param: { ticketId: ticketId.toString() } },
       { headers: getAuthHeaders() }
@@ -24,16 +25,27 @@ export const commentService = {
   },
 
   create: async (data: CreateCommentRequest): Promise<{ comment: any }> => {
-    const res = await client.api.comments.$post(
-      { json: data },
-      { headers: getAuthHeaders() }
-    );
+    console.log('[CLIENT] Sending comment via FETCH:', data);
+    
+    // Utilisation FETCH DIRECT pour contourner les potentiels bugs RPC/Typage
+    const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(data)
+    });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error((error as any).error || 'Failed to add comment');
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('[CLIENT] Comment failed:', result);
+      throw new Error((result as any).error || result.details || 'Failed to add comment');
     }
-    return res.json();
+    
+    console.log('[CLIENT] Comment success:', result);
+    return result;
   },
 
   delete: async (id: number): Promise<void> => {

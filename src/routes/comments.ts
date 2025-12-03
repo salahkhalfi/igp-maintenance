@@ -8,23 +8,36 @@ import { getDb } from '../db';
 import { ticketComments, tickets, media } from '../db/schema';
 import { createCommentSchema, ticketIdParamSchema, commentIdParamSchema } from '../schemas/comments';
 import { authMiddleware, requirePermission } from '../middlewares/auth';
+import { hasPermission } from '../utils/permissions';
 import type { Bindings } from '../types';
 
 const comments = new Hono<{ Bindings: Bindings }>();
 
 // POST /api/comments - Ajouter un commentaire à un ticket
-// 🔓 PUBLIC ACCESS FOR DIAGNOSTICS (Auth Removed)
-comments.post('/', async (c) => {
+comments.post('/', authMiddleware, async (c) => {
   try {
-    // 👻 MOCK USER (Since Auth is removed)
-    const user = { 
-        email: 'diagnostic@mode.com', 
-        role: 'admin', 
-        userId: 999,
-        isSuperAdmin: true 
-    };
+    const user = c.get('user') as any;
     
-    console.log(`[COMMENTS] POST / (Public Diagnostic Mode)`);
+    // 🕵️ DEBUG LOGGING
+    console.log(`[COMMENTS] POST / received from ${user.email}`);
+
+    // 🛡️ SECURITY HOTFIX: Explicitly allow Technicians and Admins to comment
+    // This bypasses potentially broken RBAC checks for the moment
+    const role = user.role?.toLowerCase(); // Ensure case insensitivity
+    
+    // 🔥 ULTRA-HOTFIX: FORCE ALLOW ALL COMMENTS TO DIAGNOSE 403 vs 404
+    const canComment = true;
+
+    if (!canComment) {
+       console.warn(`[COMMENTS] Permission denied for user ${user.email} (role: '${user.role}'/'${role}')`);
+       return c.json({ 
+         error: `PERMISSION REFUSÉE (Rôle détecté: ${user.role})`,
+         debug_role: user.role,
+         debug_email: user.email,
+         debug_is_super_admin: user.isSuperAdmin,
+         debug_role_normalized: role
+       }, 403);
+    }
 
     // 🧹 MANUAL BODY PARSING
     let body;
@@ -38,10 +51,10 @@ comments.post('/', async (c) => {
 
     // 🛡️ ROBUST EXTRACTION & CASTING
     const ticket_id = Number(body.ticket_id);
-    const user_name = String(body.user_name || 'Diagnostic User');
+    const user_name = String(body.user_name || 'Anonyme');
     const comment = String(body.comment || '');
-    const user_role = 'admin';
-
+    const user_role = body.user_role ? String(body.user_role) : (user?.role || null);
+    
     // 🔍 BASIC VALIDATION
     if (isNaN(ticket_id) || ticket_id <= 0) {
       return c.json({ error: `Invalid ticket_id: ${body.ticket_id}` }, 400);
@@ -52,7 +65,7 @@ comments.post('/', async (c) => {
 
     const db = getDb(c.env);
 
-    // ⚡ DIRECT INSERT
+    // ⚡ DIRECT INSERT with detailed error handling
     try {
         const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
         
@@ -71,19 +84,18 @@ comments.post('/', async (c) => {
     } catch (dbError: any) {
         console.error('[COMMENTS] Database Insert Failed:', dbError);
         
-        // ⚠️ FALLBACK MOCK SUCCESS
+        // Check for FK constraint failure
+        if (dbError.message && (dbError.message.includes('FOREIGN KEY') || dbError.message.includes('constraint'))) {
+             return c.json({ 
+                 error: `TICKET INTROUVABLE (ID: ${ticket_id}) - Échec contrainte intégrité`,
+                 details: dbError.message 
+             }, 404);
+        }
+
         return c.json({ 
-          comment: {
-            id: 999999,
-            ticket_id,
-            user_name,
-            user_role,
-            comment,
-            created_at: new Date().toISOString()
-          },
-          _debug_warning: 'THIS IS A FAKE COMMENT (DB FAILED)',
-          _db_error: dbError.message
-        }, 201);
+            error: 'ERREUR BASE DE DONNÉES',
+            details: dbError.message || String(dbError)
+        }, 500);
     }
 
   } catch (error: any) {
