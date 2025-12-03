@@ -349,6 +349,23 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       // Deduplicate permission IDs
       const uniquePermissionIds = [...new Set(validPermissionIds)];
       
+      // Validation: Vérifier que tous les IDs de permissions existent vraiment
+      if (uniquePermissionIds.length > 0) {
+        // On vérifie par lots pour éviter les limites de paramètres SQL
+        const VERIFY_CHUNK_SIZE = 50;
+        for (let i = 0; i < uniquePermissionIds.length; i += VERIFY_CHUNK_SIZE) {
+          const chunk = uniquePermissionIds.slice(i, i + VERIFY_CHUNK_SIZE);
+          const placeholders = chunk.map(() => '?').join(',');
+          const result = await c.env.DB.prepare(`
+            SELECT COUNT(*) as count FROM permissions WHERE id IN (${placeholders})
+          `).bind(...chunk).first() as any;
+          
+          if (result.count !== chunk.length) {
+             return c.json({ error: 'Certains IDs de permissions fournis n\'existent pas dans la base de données' }, 400);
+          }
+        }
+      }
+
       const statements = [];
 
       // 1. Supprimer toutes les permissions actuelles
@@ -358,8 +375,8 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
 
       // 2. Ajouter les nouvelles permissions
       if (uniquePermissionIds.length > 0) {
-        // Split into chunks to avoid SQL variable limits (though high) and keep statements manageable
-        const CHUNK_SIZE = 100; // 100 * 2 parameters = 200 params per query, very safe
+        // D1 Binding Limit Safety: Reduce chunk size to 40 (80 params) to be well under 100 limit if it exists
+        const CHUNK_SIZE = 40;
         
         for (let i = 0; i < uniquePermissionIds.length; i += CHUNK_SIZE) {
             const chunk = uniquePermissionIds.slice(i, i + CHUNK_SIZE);
