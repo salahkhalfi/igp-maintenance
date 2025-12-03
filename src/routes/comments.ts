@@ -19,17 +19,21 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
     
     // 🛡️ SECURITY HOTFIX: Explicitly allow Technicians and Admins to comment
     // This bypasses potentially broken RBAC checks for the moment
-    // The proper check should be: await hasPermission(c.env.DB, user.role, 'tickets', 'read')
-    // But we are adding a role whitelist to guarantee functionality
+    const role = user.role?.toLowerCase(); // Ensure case insensitivity
+    
     const canComment = 
-      user.role === 'admin' || 
-      user.role === 'technician' || 
-      user.role === 'supervisor' ||
+      role === 'admin' || 
+      role === 'technician' || 
+      role === 'supervisor' ||
       await hasPermission(c.env.DB, user.role, 'tickets', 'read', 'all', user.isSuperAdmin);
 
     if (!canComment) {
-       console.warn(`[COMMENTS] Permission denied for user ${user.email} (role: ${user.role})`);
-       return c.json({ error: 'Permission refusée: Vous ne pouvez pas commenter ce ticket' }, 403);
+       console.warn(`[COMMENTS] Permission denied for user ${user.email} (role: '${user.role}'/'${role}')`);
+       return c.json({ 
+         error: 'Permission refusée: Vous ne pouvez pas commenter ce ticket',
+         debug_role: user.role,
+         debug_email: user.email
+       }, 403);
     }
 
     const body = c.req.valid('json');
