@@ -55,8 +55,18 @@ const App = () => {
             ]);
             
             // currentUser global assignment (legacy compatibility)
-            currentUser = userRes.data.user;
-            setCurrentUserState(userRes.data.user);
+            // CRITICAL FIX: Merge permissions and ensure userId exists
+            const apiUser = userRes.data.user;
+            const apiPermissions = userRes.data.permissions || [];
+            
+            const normalizedUser = {
+                ...apiUser,
+                userId: apiUser.id, // Ensure userId is present
+                permissions: apiPermissions
+            };
+
+            currentUser = normalizedUser;
+            setCurrentUserState(normalizedUser);
 
             // Charger titre et sous-titre personnalisés (public)
             try {
