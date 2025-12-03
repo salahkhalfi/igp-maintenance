@@ -129,8 +129,8 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
       console.error("Failed to update last_login:", error);
     }
 
-    // Charger les permissions du rôle
-    const permissions = await getRolePermissions(c.env.DB, user.role);
+    // Charger les permissions du rôle (avec bypass pour Super Admin)
+    const permissions = await getRolePermissions(c.env.DB, user.role, user.is_super_admin === 1);
 
     // Retirer le hash du mot de passe
     const { password_hash, ...userWithoutPassword } = user;
@@ -212,8 +212,8 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
-    // Charger les permissions du rôle
-    const permissions = await getRolePermissions(c.env.DB, user.role);
+    // Charger les permissions du rôle (avec bypass pour Super Admin)
+    const permissions = await getRolePermissions(c.env.DB, user.role, user.is_super_admin === 1);
 
     return c.json({ user, permissions });
   } catch (error) {

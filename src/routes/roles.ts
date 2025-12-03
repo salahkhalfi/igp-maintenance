@@ -63,37 +63,19 @@ app.get('/:id', requirePermission('roles', 'read'), async (c) => {
       return c.json({ error: 'Rôle non trouvé' }, 404);
     }
 
-    let permissionsRaw;
-
-    // 👑 ADMIN BYPASS DISPLAY: Pour admin/super_admin, on affiche toutes les permissions
-    if (role.slug === 'admin' || role.slug === 'super_admin') {
-       const { results } = await c.env.DB.prepare(`
-        SELECT
-          id,
-          slug,
-          name as display_name,
-          module as resource,
-          description
-        FROM permissions
-        ORDER BY module, slug
-      `).all();
-      permissionsRaw = results;
-    } else {
-      // Récupérer les permissions du rôle depuis la table de liaison
-      const { results } = await c.env.DB.prepare(`
-        SELECT
-          p.id,
-          p.slug,
-          p.name as display_name,
-          p.module as resource,
-          p.description
-        FROM permissions p
-        INNER JOIN role_permissions rp ON p.id = rp.permission_id
-        WHERE rp.role_id = ?
-        ORDER BY p.module, p.slug
-      `).bind(id).all();
-      permissionsRaw = results;
-    }
+    // Récupérer les permissions du rôle depuis la table de liaison
+    const { results: permissionsRaw } = await c.env.DB.prepare(`
+      SELECT
+        p.id,
+        p.slug,
+        p.name as display_name,
+        p.module as resource,
+        p.description
+      FROM permissions p
+      INNER JOIN role_permissions rp ON p.id = rp.permission_id
+      WHERE rp.role_id = ?
+      ORDER BY p.module, p.slug
+    `).bind(id).all();
 
     // Transformer les permissions pour le frontend
     const permissions = (permissionsRaw as any[]).map(p => {

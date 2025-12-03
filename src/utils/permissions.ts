@@ -23,12 +23,13 @@ let lastCacheUpdate = 0;
  * Charger toutes les permissions d'un rôle depuis la base de données
  * @param DB - Instance D1 Database
  * @param roleName - Nom du rôle (admin, supervisor, etc.)
+ * @param isSuperAdmin - Si l'utilisateur est super administrateur (flag)
  * @returns Set de permissions au format "resource.action.scope"
  */
-export async function loadRolePermissions(DB: D1Database, roleName: string): Promise<Set<string>> {
+export async function loadRolePermissions(DB: D1Database, roleName: string, isSuperAdmin: boolean = false): Promise<Set<string>> {
   try {
-    // 👑 ADMIN BYPASS: Les administrateurs et super-administrateurs ont toujours TOUTES les permissions
-    if (roleName === 'admin' || roleName === 'super_admin') {
+    // 👑 SUPER ADMIN BYPASS: Le Super Admin (propriétaire) a toujours TOUTES les permissions
+    if (isSuperAdmin) {
       try {
         const { results } = await DB.prepare('SELECT slug FROM permissions').all() as any;
         const permissions = new Set<string>();
@@ -39,11 +40,11 @@ export async function loadRolePermissions(DB: D1Database, roleName: string): Pro
             permissions.add(`${perm.slug}.all`);
           }
         }
-        console.log(`[RBAC] Admin Bypass: Loaded ALL ${permissions.size} permissions for role '${roleName}'`);
+        console.log(`[RBAC] Super Admin Bypass: Loaded ALL ${permissions.size} permissions for super admin (role: '${roleName}')`);
         return permissions;
       } catch (e) {
-        console.error('[RBAC] Admin Bypass failed to load permissions:', e);
-        // Fallback to normal loading if this fails for some reason
+        console.error('[RBAC] Super Admin Bypass failed to load permissions:', e);
+        // Fallback
       }
     }
 
@@ -87,6 +88,7 @@ export async function loadRolePermissions(DB: D1Database, roleName: string): Pro
  * @param resource - Ressource (tickets, machines, users, etc.)
  * @param action - Action (create, read, update, delete, etc.)
  * @param scope - Portée (all, own, team, etc.)
+ * @param isSuperAdmin - Si l'utilisateur est super administrateur
  * @returns true si l'utilisateur a la permission
  */
 export async function hasPermission(
@@ -94,11 +96,12 @@ export async function hasPermission(
   userRole: string,
   resource: string,
   action: string,
-  scope: string = 'all'
+  scope: string = 'all',
+  isSuperAdmin: boolean = false
 ): Promise<boolean> {
   try {
-    // 👑 ADMIN BYPASS: Les administrateurs et super-administrateurs ont toujours TOUTES les permissions
-    if (userRole === 'admin' || userRole === 'super_admin') {
+    // 👑 SUPER ADMIN BYPASS: Le Super Admin a toujours accès
+    if (isSuperAdmin) {
       return true;
     }
 
@@ -110,9 +113,10 @@ export async function hasPermission(
     }
 
     // Charger depuis le cache ou la DB
+    // Note: On utilise userRole comme clé de cache. Le Super Admin ne passe pas par ici.
     let rolePermissions = permissionsCache.get(userRole);
     if (!rolePermissions) {
-      rolePermissions = await loadRolePermissions(DB, userRole);
+      rolePermissions = await loadRolePermissions(DB, userRole, false);
       permissionsCache.set(userRole, rolePermissions);
     }
 
@@ -139,19 +143,18 @@ export async function hasPermission(
 
 /**
  * Vérifier si un utilisateur a AU MOINS UNE des permissions listées
- * @param DB - Instance D1 Database
- * @param userRole - Rôle de l'utilisateur
- * @param permissions - Liste de permissions au format "resource.action.scope"
- * @returns true si l'utilisateur a au moins une permission
  */
 export async function hasAnyPermission(
   DB: D1Database,
   userRole: string,
-  permissions: PermissionString[]
+  permissions: PermissionString[],
+  isSuperAdmin: boolean = false
 ): Promise<boolean> {
+  if (isSuperAdmin) return true;
+  
   for (const perm of permissions) {
     const [resource, action, scope] = perm.split('.');
-    if (await hasPermission(DB, userRole, resource, action, scope)) {
+    if (await hasPermission(DB, userRole, resource, action, scope, isSuperAdmin)) {
       return true;
     }
   }
@@ -160,19 +163,18 @@ export async function hasAnyPermission(
 
 /**
  * Vérifier si un utilisateur a TOUTES les permissions listées
- * @param DB - Instance D1 Database
- * @param userRole - Rôle de l'utilisateur
- * @param permissions - Liste de permissions au format "resource.action.scope"
- * @returns true si l'utilisateur a toutes les permissions
  */
 export async function hasAllPermissions(
   DB: D1Database,
   userRole: string,
-  permissions: PermissionString[]
+  permissions: PermissionString[],
+  isSuperAdmin: boolean = false
 ): Promise<boolean> {
+  if (isSuperAdmin) return true;
+
   for (const perm of permissions) {
     const [resource, action, scope] = perm.split('.');
-    if (!(await hasPermission(DB, userRole, resource, action, scope))) {
+    if (!(await hasPermission(DB, userRole, resource, action, scope, isSuperAdmin))) {
       return false;
     }
   }
@@ -180,13 +182,10 @@ export async function hasAllPermissions(
 }
 
 /**
- * Récupérer toutes les permissions d'un rôle
- * @param DB - Instance D1 Database
- * @param roleName - Nom du rôle
- * @returns Tableau de permissions au format "resource.action.scope"
+ * Récupérer toutes les permissions d'un rôle (pour le frontend)
  */
-export async function getRolePermissions(DB: D1Database, roleName: string): Promise<string[]> {
-  const permissions = await loadRolePermissions(DB, roleName);
+export async function getRolePermissions(DB: D1Database, roleName: string, isSuperAdmin: boolean = false): Promise<string[]> {
+  const permissions = await loadRolePermissions(DB, roleName, isSuperAdmin);
   return Array.from(permissions);
 }
 

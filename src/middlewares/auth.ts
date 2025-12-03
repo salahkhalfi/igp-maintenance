@@ -125,7 +125,7 @@ export function requirePermission(resource: string, action: string, scope: strin
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
-    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope);
+    const allowed = await hasPermission(c.env.DB, user.role, resource, action, scope, user.isSuperAdmin);
 
     if (!allowed) {
       return c.json({
@@ -159,7 +159,7 @@ export function requireAnyPermission(permissions: PermissionString[]) {
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
-    const allowed = await hasAnyPermission(c.env.DB, user.role, permissions);
+    const allowed = await hasAnyPermission(c.env.DB, user.role, permissions, user.isSuperAdmin);
 
     if (!allowed) {
       return c.json({
