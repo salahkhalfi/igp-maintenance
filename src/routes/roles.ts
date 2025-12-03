@@ -349,10 +349,17 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       // Deduplicate permission IDs
       const uniquePermissionIds = [...new Set(validPermissionIds)];
       
+      const statements = [];
+
+      // 1. TOUJOURS Supprimer toutes les permissions actuelles d'abord
+      // C'est crucial pour que les désélections (unchecked) fonctionnent
+      statements.push(c.env.DB.prepare(`
+        DELETE FROM role_permissions WHERE role_id = ?
+      `).bind(roleId));
+      
       // Validation: Vérifier que tous les IDs de permissions existent vraiment
       if (uniquePermissionIds.length > 0) {
         // Validation et Filtrage: Ne garder que les IDs qui existent vraiment
-        // Cela évite les erreurs 400 si le frontend envoie des IDs obsolètes
         const validIdsFromDb: number[] = [];
         const VERIFY_CHUNK_SIZE = 50;
         
@@ -370,20 +377,15 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
             }
           } catch (dbError) {
              console.error('DB Error during verification:', dbError);
-             // En cas d'erreur de lecture, on continue avec les autres chunks pour ne pas tout bloquer
-             // Mais c'est critique si on ne peut pas vérifier
              throw dbError; 
           }
         }
         
-        // On utilise UNIQUEMENT les IDs validés pour l'insertion
         const idsToInsert = validIdsFromDb;
-        
         console.log(`[ROLES] Update: Received ${uniquePermissionIds.length} IDs, Validated ${idsToInsert.length} IDs`);
 
         // 2. Ajouter les nouvelles permissions (uniquement les valides)
         if (idsToInsert.length > 0) {
-            // D1 Binding Limit Safety: Reduce chunk size to 40 (80 params)
             const CHUNK_SIZE = 40;
             
             for (let i = 0; i < idsToInsert.length; i += CHUNK_SIZE) {
