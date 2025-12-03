@@ -230,12 +230,17 @@ app.post('/', requirePermission('roles', 'write'), async (c) => {
 
     // Attribuer les permissions
     if (permission_ids && Array.isArray(permission_ids) && permission_ids.length > 0) {
-      for (const permId of permission_ids) {
-        await c.env.DB.prepare(`
-          INSERT INTO role_permissions (role_id, permission_id)
-          VALUES (?, ?)
-        `).bind(roleId, permId).run();
+      const uniquePermissionIds = [...new Set(permission_ids)];
+      const placeholders = uniquePermissionIds.map(() => '(?, ?)').join(',');
+      const values = [];
+      for (const permId of uniquePermissionIds) {
+        values.push(roleId, permId);
       }
+      
+      await c.env.DB.prepare(`
+        INSERT INTO role_permissions (role_id, permission_id)
+        VALUES ${placeholders}
+      `).bind(...values).run();
     }
 
     // Vider le cache des permissions
@@ -320,24 +325,32 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
 
     // Mettre à jour les permissions
     if (permission_ids && Array.isArray(permission_ids)) {
-      // Supprimer toutes les permissions actuelles
-      await c.env.DB.prepare(`
-        DELETE FROM role_permissions WHERE role_id = ?
-      `).bind(id).run();
+      // Deduplicate permission IDs
+      const uniquePermissionIds = [...new Set(permission_ids)];
+      
+      const statements = [];
 
-      // Ajouter les nouvelles permissions
-      if (permission_ids.length > 0) {
-        const placeholders = permission_ids.map(() => '(?, ?)').join(',');
+      // 1. Supprimer toutes les permissions actuelles
+      statements.push(c.env.DB.prepare(`
+        DELETE FROM role_permissions WHERE role_id = ?
+      `).bind(id));
+
+      // 2. Ajouter les nouvelles permissions
+      if (uniquePermissionIds.length > 0) {
+        const placeholders = uniquePermissionIds.map(() => '(?, ?)').join(',');
         const values = [];
-        for (const permId of permission_ids) {
+        for (const permId of uniquePermissionIds) {
           values.push(id, permId);
         }
         
-        await c.env.DB.prepare(`
+        statements.push(c.env.DB.prepare(`
           INSERT INTO role_permissions (role_id, permission_id)
           VALUES ${placeholders}
-        `).bind(...values).run();
+        `).bind(...values));
       }
+      
+      // Exécuter en batch (atomique)
+      await c.env.DB.batch(statements);
     }
 
     // Vider le cache des permissions
