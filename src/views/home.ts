@@ -52,6 +52,8 @@ export const homeHTML = `
     <script src="/static/js/components/ManageColumnsModal.js"></script>
     <script src="/static/js/components/TicketComments.js"></script>
     <script src="/static/js/components/TicketAttachments.js"></script>
+    <script src="/static/js/components/UserForms.js"></script>
+    <script src="/static/js/components/UserList.js"></script>
     <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
     <script src="/static/js/components/MainApp.js?v=2.8.3"></script>
     <script src="/static/js/components/App.js?v=2.8.3"></script>
