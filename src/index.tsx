@@ -69,6 +69,7 @@ import messages from './routes/messages';
 import audio from './routes/audio';
 import cron from './routes/cron';
 import alerts from './routes/alerts';
+import planning from './routes/planning';
 import scheduledHandler from './scheduled';
 import type { Bindings } from './types';
 
@@ -238,6 +239,9 @@ app.route('/api/cron', cron);
 
 // Routes Alerts - Alertes tickets en retard (authentifiées)
 app.route('/api/alerts', alerts);
+
+// Routes Planning - Gestion du planning de production
+app.route('/api/planning', planning);
 
 // Page d'administration des rôles (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/roles', async (c) => {
