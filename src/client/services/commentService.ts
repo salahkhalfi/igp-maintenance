@@ -27,17 +27,27 @@ export const commentService = {
   create: async (data: CreateCommentRequest): Promise<{ comment: any }> => {
     console.log('[CLIENT] Sending comment via FETCH:', data);
     
+    const token = getAuthToken() || '';
+    console.log('[CLIENT] Using token length:', token.length);
+
     // Utilisation FETCH DIRECT pour contourner les potentiels bugs RPC/Typage
     const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getAuthToken()}`
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(data)
     });
 
-    const result = await response.json();
+    let result;
+    const text = await response.text();
+    try {
+        result = text ? JSON.parse(text) : {};
+    } catch (e) {
+        console.error('[CLIENT] Failed to parse response:', text);
+        throw new Error('Server returned invalid JSON: ' + text.substring(0, 50));
+    }
 
     if (!response.ok) {
       console.error('[CLIENT] Comment failed:', result);

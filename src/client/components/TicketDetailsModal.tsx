@@ -20,6 +20,7 @@ interface TicketDetailsModalProps {
   ticketId: number | null;
   currentUserRole?: UserRole;
   currentUserId?: number;
+  currentUserName?: string;
 }
 
 export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({ 
@@ -27,7 +28,8 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
   onClose, 
   ticketId, 
   currentUserRole,
-  currentUserId 
+  currentUserId,
+  currentUserName = 'Anonyme'
 }) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'details' | 'media' | 'comments'>('details');
@@ -86,27 +88,39 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
 
   const commentMutation = useMutation({
     mutationFn: async () => {
-      // Note: Audio upload logic for comments is simplified here.
-      // In a real scenario, we'd upload the blob to media service first, then link it.
-      // For now, we'll just post text.
-      if (audioUrl) {
-         // Fallback for audio if not fully implemented in comment service
-         return commentService.create({
-            ticket_id: ticketId!,
-            user_name: 'Moi', // Should use real name
-            comment: "Note vocale (Audio upload not linked yet)"
-         });
+      console.log('[MODAL] Submitting comment for ticket:', ticketId);
+      console.log('[MODAL] User:', currentUserName, 'Role:', currentUserRole);
+      console.log('[MODAL] Content:', commentText || "Audio Note");
+
+      if (!ticketId) throw new Error("Ticket ID is missing");
+
+      const payload = {
+        ticket_id: ticketId,
+        user_name: currentUserName || 'Utilisateur',
+        user_role: currentUserRole,
+        comment: audioUrl ? "Note vocale (Audio upload not linked yet)" : commentText
+      };
+
+      console.log('[MODAL] Payload:', payload);
+
+      try {
+        const result = await commentService.create(payload);
+        console.log('[MODAL] Success result:', result);
+        return result;
+      } catch (err) {
+        console.error('[MODAL] Mutation error:', err);
+        throw err;
       }
-      return commentService.create({
-        ticket_id: ticketId!,
-        user_name: 'Moi', // Should be dynamic based on user
-        comment: commentText
-      });
     },
     onSuccess: () => {
       setCommentText('');
       clearAudio();
       queryClient.invalidateQueries({ queryKey: ['ticket-comments', ticketId] });
+      // Force explicit refetch
+      queryClient.refetchQueries({ queryKey: ['ticket-comments', ticketId] });
+    },
+    onError: (error: any) => {
+        alert(`Erreur lors de l'envoi: ${error.message || 'Erreur inconnue'}`);
     }
   });
 
