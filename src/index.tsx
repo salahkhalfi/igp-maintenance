@@ -203,7 +203,7 @@ app.get('/api/preferences/:key', async (c) => {
         `).bind(key).first();
 
         if (!result) {
-          return c.json({ error: 'Paramètre non trouvé' }, 404);
+          return c.json({ setting_value: null, value: null });
         }
 
         return c.json({ 
