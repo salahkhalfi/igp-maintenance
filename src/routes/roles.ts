@@ -355,13 +355,21 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
         const VERIFY_CHUNK_SIZE = 50;
         for (let i = 0; i < uniquePermissionIds.length; i += VERIFY_CHUNK_SIZE) {
           const chunk = uniquePermissionIds.slice(i, i + VERIFY_CHUNK_SIZE);
-          const placeholders = chunk.map(() => '?').join(',');
-          const result = await c.env.DB.prepare(`
-            SELECT COUNT(*) as count FROM permissions WHERE id IN (${placeholders})
-          `).bind(...chunk).first() as any;
+          if (chunk.length === 0) continue;
           
-          if (result.count !== chunk.length) {
-             return c.json({ error: 'Certains IDs de permissions fournis n\'existent pas dans la base de données' }, 400);
+          const placeholders = chunk.map(() => '?').join(',');
+          // Use explicit query to verify IDs exist
+          const query = `SELECT COUNT(*) as count FROM permissions WHERE id IN (${placeholders})`;
+          
+          try {
+            const result = await c.env.DB.prepare(query).bind(...chunk).first() as any;
+            if (!result || result.count !== chunk.length) {
+               console.error(`Permission verification failed. Expected ${chunk.length}, got ${result?.count}`);
+               return c.json({ error: 'Certains IDs de permissions fournis n\'existent pas dans la base de données' }, 400);
+            }
+          } catch (dbError) {
+             console.error('DB Error during verification:', dbError);
+             throw dbError;
           }
         }
       }
@@ -409,9 +417,14 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       message: 'Rôle mis à jour avec succès',
       role: updatedRole
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update role error:', error);
-    return c.json({ error: 'Erreur lors de la mise à jour du rôle' }, 500);
+    // Return precise error for debugging
+    return c.json({ 
+      error: 'Erreur lors de la mise à jour du rôle',
+      details: error.message || String(error),
+      stack: c.env.ENVIRONMENT !== 'production' ? error.stack : undefined
+    }, 500);
   }
 });
 
