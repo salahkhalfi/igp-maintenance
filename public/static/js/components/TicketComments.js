@@ -154,6 +154,17 @@ const TicketComments = ({ ticketId, currentUser, onRefresh }) => {
     };
 
     const renderCommentContent = (commentText) => {
+        // SAFEGUARD: Ensure commentText is a string
+        if (typeof commentText === 'object' && commentText !== null) {
+            try {
+                commentText = JSON.stringify(commentText);
+            } catch (e) {
+                commentText = "[Objet non affichable]";
+            }
+        }
+        if (commentText === null || commentText === undefined) commentText = "";
+        commentText = String(commentText);
+
         const audioMatch = commentText.match(/\[audio:(\d+)\]/);
         
         if (audioMatch) {

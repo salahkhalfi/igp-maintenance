@@ -301,10 +301,18 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                     {comments.length === 0 ? (
                       <p className="text-center text-gray-400 text-sm py-10">Aucun commentaire. Soyez le premier à écrire !</p>
                     ) : (
-                      comments.map((c: any) => (
+                      comments.map((c: any) => {
+                        // 🛑 SAFE RENDER: Ensure we render simple strings or nothing
+                        const contentText = typeof c.comment === 'string' ? c.comment : 
+                                            typeof c.content === 'string' ? c.content : 
+                                            typeof c.comment === 'object' ? JSON.stringify(c.comment) : 'Message non affichable';
+                        
+                        const userName = typeof c.user_name === 'string' ? c.user_name : 'U';
+
+                        return (
                         <div key={c.id} className={`flex gap-3 ${c.user_id === currentUserId ? 'flex-row-reverse' : ''}`}>
                           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
-                            {c.user_name?.charAt(0) || 'U'}
+                            {userName.charAt(0)}
                           </div>
                           <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
                             c.user_id === currentUserId 
@@ -319,14 +327,14 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                                 <span>Note vocale (0:15)</span>
                               </div>
                             ) : (
-                              <p>{c.content}</p>
+                              <p className="break-words">{contentText}</p>
                             )}
                             <p className={`text-[10px] mt-1 opacity-70 text-right`}>
-                              {format(new Date(c.created_at), 'HH:mm')}
+                              {c.created_at ? format(new Date(c.created_at), 'HH:mm') : ''}
                             </p>
                           </div>
                         </div>
-                      ))
+                      )})
                     )}
                     <div ref={commentsEndRef} />
                   </div>
