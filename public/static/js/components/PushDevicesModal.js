@@ -19,12 +19,15 @@ const PushDevicesModal = ({ show, onClose }) => {
             });
             const data = await response.json();
             setDevices(data.subscriptions || []);
+            setIsAdminView(data.isAdminView || false); // Store admin view status
         } catch (error) {
             console.error('Erreur chargement appareils:', error);
         } finally {
             setLoading(false);
         }
     };
+
+    const [isAdminView, setIsAdminView] = React.useState(false);
 
     const getDeviceIcon = (deviceType) => {
         if (!deviceType) return 'fa-mobile-alt';
@@ -60,10 +63,10 @@ const PushDevicesModal = ({ show, onClose }) => {
                     React.createElement('div', {},
                         React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold flex items-center gap-2' },
                             React.createElement('i', { className: 'fas fa-bell' }),
-                            'Appareils Notifications Push'
+                            isAdminView ? 'Tous les Appareils (Admin)' : 'Mes Appareils'
                         ),
                         React.createElement('p', { className: 'text-teal-200 text-xs sm:text-sm mt-1' }, 
-                            'Appareils enregistrés pour recevoir les notifications'
+                            isAdminView ? 'Gestion de tous les appareils enregistrés' : 'Gérez vos appareils connectés'
                         )
                     ),
                     React.createElement('button', {

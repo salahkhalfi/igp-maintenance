@@ -2,7 +2,8 @@ const MessagingSidebar = ({
     conversations, 
     availableUsers, 
     selectedContact, 
-    onSelectContact 
+    onSelectContact,
+    onClose
 }) => {
     const getRoleBadgeClass = (role) => {
         const colors = {
@@ -34,6 +35,10 @@ const MessagingSidebar = ({
             React.createElement('select', {
                 onChange: (e) => {
                     const userId = parseInt(e.target.value);
+                    if (userId === 0) {
+                        if (onClose) onClose();
+                        return;
+                    }
                     if (!userId) {
                         e.target.value = '';
                         return;

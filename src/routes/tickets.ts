@@ -11,6 +11,7 @@ import { formatUserName } from '../utils/userFormatter';
 import { createTicketSchema, updateTicketSchema, ticketIdParamSchema, getTicketsQuerySchema } from '../schemas/tickets';
 import { requirePermission, requireAnyPermission } from '../middlewares/auth';
 import { hasPermission } from '../utils/permissions';
+import { sendPushNotification } from './push';
 import type { Bindings } from '../types';
 
 const ticketsRoute = new Hono<{ Bindings: Bindings }>();
@@ -209,7 +210,6 @@ ticketsRoute.post('/', requirePermission('tickets', 'create'), zValidator('json'
               .get();
 
             if (assignedUser) {
-              const { sendPushNotification } = await import('./push');
               const safeTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
               
               // Ensure ID is valid number
@@ -262,7 +262,10 @@ ticketsRoute.post('/', requirePermission('tickets', 'create'), zValidator('json'
 
   } catch (error) {
     console.error('Create ticket error:', error);
-    return c.json({ error: 'Erreur lors de la création du ticket' }, 500);
+    return c.json({ 
+      error: 'Erreur lors de la création du ticket',
+      details: error instanceof Error ? error.message : String(error)
+    }, 500);
   }
 });
 
@@ -335,8 +338,6 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
     });
 
     // Push notifications logic
-    const { sendPushNotification } = await import('./push');
-
     // 1. Assignment changed
     if (body.assigned_to && body.assigned_to !== currentTicket.assigned_to) {
       // Notify old assignee
@@ -422,7 +423,10 @@ ticketsRoute.patch('/:id', requirePermission('tickets', 'update'), zValidator('p
     return c.json({ ticket: updatedTicket });
   } catch (error) {
     console.error('Update ticket error:', error);
-    return c.json({ error: 'Erreur lors de la mise à jour du ticket' }, 500);
+    return c.json({ 
+      error: 'Erreur lors de la mise à jour du ticket',
+      details: error instanceof Error ? error.message : String(error)
+    }, 500);
   }
 });
 

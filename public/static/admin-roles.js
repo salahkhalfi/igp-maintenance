@@ -531,8 +531,14 @@ async function saveRole() {
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Erreur sauvegarde');
+            let errorMsg = 'Erreur sauvegarde';
+            try {
+                const error = await response.json();
+                errorMsg = error.error || errorMsg;
+            } catch (e) {
+                errorMsg = `Status ${response.status} ${response.statusText}`;
+            }
+            throw new Error(errorMsg);
         }
         
         const result = await response.json();

@@ -66,9 +66,22 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
 
     const loadAvailableUsers = async () => {
         try {
+            console.log('[Messaging] Loading available users...');
             const response = await axios.get(API_URL + '/messages/available-users');
-            setAvailableUsers(response.data.users);
-        } catch (error) {}
+            const users = response.data.users || [];
+            console.log('[Messaging] Available users loaded:', users.length);
+            
+            if (users.length === 0) {
+                console.warn('[Messaging] List is empty. Check API or DB.');
+            }
+            
+            setAvailableUsers(users);
+        } catch (error) {
+            console.error('[Messaging] Failed to load users:', error);
+            if (error.response) {
+                console.error('[Messaging] Error details:', error.response.status, error.response.data);
+            }
+        }
     };
 
     const loadUnreadCount = async () => {
@@ -225,6 +238,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                     conversations: conversations,
                     availableUsers: availableUsers,
                     selectedContact: selectedContact,
+                    onClose: onClose,
                     onSelectContact: (contact) => {
                         setSelectedContact(contact);
                         loadPrivateMessages(contact.id);
@@ -243,37 +257,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                     onDeleteMessage: handleDeleteMessage,
                     onBulkDelete: handleBulkDelete,
                     onOpenPrivateMessage: openPrivateMessage,
+                    onClose: onClose,
                     onBack: () => setSelectedContact(null)
                 }) : 
-                
-                // Empty State for Private tab when no contact selected (Handled inside ChatWindow now or here)
-                // Actually MessagingChatWindow handles the "no selected contact" case?
-                // Wait, in my implementation of MessagingChatWindow, I added a check:
-                // if (activeTab === 'private' && !selectedContact) return placeholder...
-                // So I can just render it.
-                // BUT, if I render it alongside Sidebar on mobile, it might be tricky.
-                // Let's look at the previous implementation layout.
-                // Desktop: Sidebar | Chat
-                // Mobile: Sidebar (if !selectedContact) OR Chat (if selectedContact)
-                
-                // In my new MessagingModal:
-                // Sidebar component handles: "hidden sm:flex" if selectedContact.
-                // So on mobile, if selectedContact is present, Sidebar is hidden.
-                // ChatWindow should be visible.
-                
-                // So:
-                // 1. Sidebar is rendered always (but hides itself on mobile via CSS if selectedContact is true).
-                // 2. ChatWindow is rendered.
-                
-                // If activeTab == 'private' AND !selectedContact:
-                // Sidebar is visible on mobile.
-                // ChatWindow should render the "Select a contact" placeholder (on Desktop) or nothing (on Mobile)?
-                // In previous code:
-                // If !selectedContact:
-                //   Render Placeholder div (flex-1 flex items-center...)
-                
-                // My MessagingChatWindow implementation handles `if (activeTab === 'private' && !selectedContact)` by returning that placeholder.
-                // So I can just render MessagingChatWindow always.
                 
                 React.createElement(MessagingChatWindow, {
                     messages: activeTab === 'public' ? publicMessages : privateMessages,
@@ -286,6 +272,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                     onDeleteMessage: handleDeleteMessage,
                     onBulkDelete: handleBulkDelete,
                     onOpenPrivateMessage: openPrivateMessage,
+                    onClose: onClose,
                     onBack: () => setSelectedContact(null)
                 })
             )

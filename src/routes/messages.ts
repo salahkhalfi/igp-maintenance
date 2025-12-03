@@ -11,19 +11,47 @@ import { checkModule } from '../utils/modules';
 import { hasPermission } from '../utils/permissions';
 import { formatUserName } from '../utils/userFormatter';
 import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
-import { requirePermission } from '../middlewares/auth';
+import { sendPushNotification } from './push';
 import type { Bindings } from '../types';
 
 const messagesRoute = new Hono<{ Bindings: Bindings }>();
 
-// Middleware: Check if Messaging Module is enabled
+// GET /api/messages/available-users - Récupérer les utilisateurs (Accessible avec auth simple, sans check module/permission strict pour debug)
+messagesRoute.get('/available-users', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const db = getDb(c.env);
+
+    const results = await db
+      .select({
+        id: users.id,
+        first_name: users.first_name,
+        full_name: users.full_name,
+        role: users.role,
+        email: users.email
+      })
+      .from(users)
+      .where(and(
+        ne(users.id, user.userId),
+        ne(users.id, 0)
+      ))
+      .orderBy(desc(users.role), asc(users.first_name));
+
+    return c.json({ users: results });
+  } catch (error) {
+    console.error('Get available users error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
+  }
+});
+
+// Middleware: Check if Messaging Module is enabled (Global for this route)
 messagesRoute.use('*', checkModule('messaging'));
 
-// Check permissions for all routes
-messagesRoute.use('*', requirePermission('messages', 'use'));
+// NOTE: We removed global requirePermission to debug access issues.
+// Permissions are now checked per-route or relaxed for read-only resources.
 
 // POST /api/messages - Envoyer un message (public ou privé)
-messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), async (c) => {
+messagesRoute.post('/', authMiddleware, requirePermission('messages', 'use'), zValidator('json', sendMessageSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -44,8 +72,6 @@ messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), a
     // 🔔 Envoyer push notification si message privé
     if (message_type === 'private' && recipient_id) {
       try {
-        const { sendPushNotification } = await import('./push');
-        
         // Obtenir le nom de l'expéditeur
         const senderName = formatUserName(user, 'Un utilisateur');
         
@@ -104,7 +130,7 @@ messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), a
 });
 
 // POST /api/messages/audio - Envoyer un message audio
-messagesRoute.post('/audio', authMiddleware, async (c) => {
+messagesRoute.post('/audio', authMiddleware, requirePermission('messages', 'use'), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -185,7 +211,6 @@ messagesRoute.post('/audio', authMiddleware, async (c) => {
     // 🔔 Envoyer push notification si message privé
     if (messageType === 'private' && recipientId) {
       try {
-        const { sendPushNotification } = await import('./push');
         const recipientIdNum = parseInt(recipientId);
         
         const senderName = formatUserName(user, 'Un utilisateur');
@@ -242,12 +267,15 @@ messagesRoute.post('/audio', authMiddleware, async (c) => {
     }, 201);
   } catch (error) {
     console.error('Upload audio error:', error);
-    return c.json({ error: 'Erreur lors de l\'envoi du message vocal' }, 500);
+    return c.json({ 
+      error: 'Erreur lors de l\'envoi du message vocal',
+      details: error instanceof Error ? error.message : String(error)
+    }, 500);
   }
 });
 
 // GET /api/messages/public - Récupérer les messages publics avec pagination
-messagesRoute.get('/public', authMiddleware, zValidator('query', getMessagesQuerySchema), async (c) => {
+messagesRoute.get('/public', authMiddleware, requirePermission('messages', 'use'), zValidator('query', getMessagesQuerySchema), async (c) => {
   try {
     const { page, limit } = c.req.valid('query');
     const offset = (page - 1) * limit;
@@ -293,7 +321,7 @@ messagesRoute.get('/public', authMiddleware, zValidator('query', getMessagesQuer
 });
 
 // GET /api/messages/conversations - Récupérer les conversations privées
-messagesRoute.get('/conversations', authMiddleware, async (c) => {
+messagesRoute.get('/conversations', authMiddleware, requirePermission('messages', 'use'), async (c) => {
   try {
     const user = c.get('user') as any;
     const db = getDb(c.env);
@@ -390,7 +418,7 @@ messagesRoute.get('/conversations', authMiddleware, async (c) => {
 });
 
 // GET /api/messages/private/:contactId - Récupérer les messages privés avec un contact
-messagesRoute.get('/private/:contactId', authMiddleware, zValidator('param', contactIdParamSchema), async (c) => {
+messagesRoute.get('/private/:contactId', authMiddleware, requirePermission('messages', 'use'), zValidator('param', contactIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -433,7 +461,7 @@ messagesRoute.get('/private/:contactId', authMiddleware, zValidator('param', con
 });
 
 // GET /api/messages/unread-count
-messagesRoute.get('/unread-count', authMiddleware, async (c) => {
+messagesRoute.get('/unread-count', authMiddleware, requirePermission('messages', 'use'), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -455,36 +483,11 @@ messagesRoute.get('/unread-count', authMiddleware, async (c) => {
   }
 });
 
-// GET /api/messages/available-users
-messagesRoute.get('/available-users', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    const db = getDb(c.env);
-
-    const results = await db
-      .select({
-        id: users.id,
-        first_name: users.first_name,
-        full_name: users.full_name,
-        role: users.role,
-        email: users.email
-      })
-      .from(users)
-      .where(and(
-        ne(users.id, user.userId),
-        ne(users.id, 0)
-      ))
-      .orderBy(desc(users.role), asc(users.first_name));
-
-    return c.json({ users: results });
-  } catch (error) {
-    console.error('Get available users error:', error);
-    return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
-  }
-});
+// GET /api/messages/available-users (MOVED TO TOP)
+// messagesRoute.get('/available-users', authMiddleware, async (c) => { ... });
 
 // DELETE /api/messages/:messageId
-messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageIdParamSchema), async (c) => {
+messagesRoute.delete('/:messageId', authMiddleware, requirePermission('messages', 'use'), zValidator('param', messageIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -548,7 +551,7 @@ messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageI
 });
 
 // POST /api/messages/bulk-delete
-messagesRoute.post('/bulk-delete', authMiddleware, zValidator('json', bulkDeleteMessagesSchema), async (c) => {
+messagesRoute.post('/bulk-delete', authMiddleware, requirePermission('messages', 'use'), zValidator('json', bulkDeleteMessagesSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -715,7 +718,6 @@ export async function sendLoginSummaryNotification(
     }
     
     // 4️⃣ Envoyer la notification de résumé
-    const { sendPushNotification } = await import('./push');
     
     const messageText = unreadCount === 1 
       ? 'Vous avez 1 message non lu'

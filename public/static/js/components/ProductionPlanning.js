@@ -1,6 +1,6 @@
 const ProductionPlanning = ({ onClose }) => {
-    // État pour le mois affiché (Initialisé à Décembre 2025)
-    const [currentDate, setCurrentDate] = React.useState(new Date(2025, 11, 1));
+    // État pour le mois affiché (Initialisé au mois courant)
+    const [currentDate, setCurrentDate] = React.useState(new Date());
 
     const getMonthName = (date) => {
         return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });

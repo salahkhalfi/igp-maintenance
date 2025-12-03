@@ -27,6 +27,11 @@ let lastCacheUpdate = 0;
  */
 export async function loadRolePermissions(DB: D1Database, roleName: string): Promise<Set<string>> {
   try {
+    if (!DB || typeof DB.prepare !== 'function') {
+      console.error('[PERMISSIONS] Invalid DB object passed to loadRolePermissions');
+      return new Set();
+    }
+
     const { results } = await DB.prepare(`
       SELECT p.slug
       FROM permissions p
@@ -37,16 +42,17 @@ export async function loadRolePermissions(DB: D1Database, roleName: string): Pro
 
     const permissions = new Set<string>();
     for (const perm of results) {
-      // Le slug est déjà au format "resource.action" ou "resource.action.scope"
-      // Si le scope est manquant, on suppose "all" par défaut pour la compatibilité
+      // 1. Ajouter la permission brute (ex: "tickets.create")
+      permissions.add(perm.slug);
+
+      // 2. Gérer la portée implicite (ex: "tickets.create" -> "tickets.create.all")
       const parts = perm.slug.split('.');
       if (parts.length === 2) {
         permissions.add(`${perm.slug}.all`);
-      } else {
-        permissions.add(perm.slug);
       }
     }
 
+    console.log(`[RBAC] Loaded ${permissions.size} permissions for role '${roleName}'`);
     return permissions;
   } catch (error) {
     console.error(`Error loading permissions for role ${roleName}:`, error);

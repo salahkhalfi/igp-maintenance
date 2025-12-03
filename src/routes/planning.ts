@@ -23,7 +23,7 @@ app.get('/', async (c) => {
         // Filter notes by logged-in user ID
         // If user is not found (should not happen due to authMiddleware), return empty or shared notes?
         // Safe approach: return empty if no user, otherwise filter by user.id
-        const userId = user ? user.id : 0;
+        const userId = user?.userId ?? user?.id ?? 0;
         
         const { results: notes } = await c.env.DB.prepare(
             'SELECT * FROM planner_notes WHERE user_id = ? ORDER BY priority DESC, created_at DESC'
@@ -159,11 +159,19 @@ app.post('/notes', requirePermission('planning', 'read'), async (c) => {
     if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
     try {
+        const userId = user?.userId ?? user?.id ?? null;
+
+        // Validate user ID - strict check
+        if (userId === null) {
+            console.error('[PLANNING] Error: User ID is null/undefined in POST /notes', user);
+            return c.json({ error: 'User ID verification failed' }, 403);
+        }
+        
         const result = await c.env.DB.prepare(
             'INSERT INTO planner_notes (text, time, done, priority, notified, user_id) VALUES (?, ?, ?, ?, ?, ?)'
-        ).bind(text, time, done ? 1 : 0, priority, notified ? 1 : 0, user.id).run();
+        ).bind(text, time, done ? 1 : 0, priority, notified ? 1 : 0, userId).run();
 
-        return c.json({ id: result.meta.last_row_id, ...body, user_id: user.id }, 201);
+        return c.json({ id: result.meta.last_row_id, ...body, user_id: userId }, 201);
     } catch (error) {
         console.error(error);
         return c.json({ error: 'Error creating note' }, 500);
@@ -190,7 +198,8 @@ app.put('/notes/:id', requirePermission('planning', 'read'), async (c) => {
         // Let's check if user_id matches.
         // Note: existing.user_id might be null for legacy notes created before this feature.
         // Strategy: If null, allow anyone (or first claimer). If set, must match.
-        if (existing.user_id !== null && existing.user_id !== user.id) {
+        const userId = user?.userId ?? user?.id ?? null;
+        if (existing.user_id !== null && existing.user_id !== userId) {
             return c.json({ error: 'Forbidden' }, 403);
         }
 
@@ -230,7 +239,8 @@ app.delete('/notes/:id', requirePermission('planning', 'read'), async (c) => {
         const existing = await c.env.DB.prepare('SELECT user_id FROM planner_notes WHERE id = ?').bind(id).first();
         if (!existing) return c.json({ error: 'Note not found' }, 404);
         
-        if (existing.user_id !== null && existing.user_id !== user.id) {
+        const userId = user?.userId ?? user?.id ?? null;
+        if (existing.user_id !== null && existing.user_id !== userId) {
             return c.json({ error: 'Forbidden' }, 403);
         }
 

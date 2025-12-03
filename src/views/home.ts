@@ -34,9 +34,9 @@ export const homeHTML = `
     <script src="/static/js/components/LoginForm.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js"></script>
-    <script src="/static/js/components/TicketAttachments.js?v=2.8.3"></script>
-    <script src="/static/js/components/TicketHistory.js?v=2.8.3"></script>
-    <script src="/static/js/components/TicketComments.js?v=2.8.3"></script>
+    <script src="/static/js/components/TicketAttachments.js?v=2.14.14"></script>
+    <script src="/static/js/components/TicketHistory.js?v=2.14.14"></script>
+    <script src="/static/js/components/TicketComments.js?v=2.14.14"></script>
     <script src="/static/js/components/TicketDetailsModal.js"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
     <script src="/static/js/components/MachineManagementModal.js"></script>
@@ -48,17 +48,17 @@ export const homeHTML = `
     <script src="/static/js/components/ProductionPlanning.js"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
     <script src="/static/js/components/OverdueTicketsModal.js"></script>
-    <script src="/static/js/components/PushDevicesModal.js"></script>
+    <script src="/static/js/components/PushDevicesModal.js?v=2.14.15"></script>
     <script src="/static/js/components/UserList.js"></script>
     <script src="/static/js/components/UserForms.js"></script>
-    <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
-    <script src="/static/js/components/AppHeader.js?v=2.8.3"></script>
-    <script src="/static/js/components/AdminRoles.js?v=2.8.3"></script>
-    <script src="/static/js/hooks/useTickets.js?v=2.8.3"></script>
-    <script src="/static/js/hooks/useMachines.js?v=2.8.3"></script>
-    <script src="/static/js/components/KanbanBoard.js?v=2.8.3"></script>
-    <script src="/static/js/components/MainApp.js?v=2.8.3"></script>
-    <script src="/static/js/components/App.js?v=2.8.3"></script>
+    <script src="/static/js/components/UserManagementModal.js?v=2.14.14"></script>
+    <script src="/static/js/components/AppHeader.js?v=2.14.15"></script>
+    <script src="/static/js/components/AdminRoles.js?v=2.14.14"></script>
+    <script src="/static/js/hooks/useTickets.js?v=2.14.14"></script>
+    <script src="/static/js/hooks/useMachines.js?v=2.14.14"></script>
+    <script src="/static/js/components/KanbanBoard.js?v=2.14.14"></script>
+    <script src="/static/js/components/MainApp.js?v=2.14.14"></script>
+    <script src="/static/js/components/App.js?v=2.14.14"></script>
     <style>
         /* Background avec photo d'atelier IGP pour toutes les pages */
         body {

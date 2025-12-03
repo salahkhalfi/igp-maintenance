@@ -9,7 +9,8 @@ const MessagingChatWindow = ({
     onDeleteMessage, 
     onBulkDelete,
     onOpenPrivateMessage,
-    onBack
+    onBack,
+    onClose
 }) => {
     const messagesEndRef = React.useRef(null);
     const [messageContent, setMessageContent] = React.useState('');
@@ -245,7 +246,7 @@ const MessagingChatWindow = ({
                 React.createElement('i', { className: 'fas fa-arrow-left text-6xl mb-4' }),
                 React.createElement('p', { className: 'text-lg mb-6' }, 'Sélectionnez un contact'),
                 React.createElement('button', {
-                    onClick: onBack, // Actually close modal if passed, but here maybe useful for mobile
+                    onClick: onClose || onBack, // Use onClose if available, otherwise fallback to onBack (though onBack likely just clears selection which is already null)
                     className: 'hidden sm:block mt-4 px-6 py-3 bg-gradient-to-r from-slate-700 to-gray-700 text-white rounded-lg hover:from-slate-800 hover:to-gray-800 font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto'
                 },
                     React.createElement('i', { className: 'fas fa-times' }),

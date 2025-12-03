@@ -195,11 +195,17 @@ push.get('/vapid-public-key', async (c) => {
   }
 });
 
-// API: Push subscriptions list (Admin/Supervisor only)
-push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), requirePermission('notifications', 'manage'), async (c) => {
+// API: Push subscriptions list (Accessible to all, filtered by role)
+push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), async (c) => {
   try {
     const user = c.get('user') as any;
-    const subscriptions = await c.env.DB.prepare(`
+    
+    // Check permissions for "seeing all" (Admin or Manager)
+    const canSeeAll = user.role === 'admin' || 
+                      user.is_super_admin || 
+                      (user.permissions && (user.permissions.includes('notifications.manage') || user.permissions.includes('notifications.manage.all')));
+    
+    let query = `
       SELECT 
         ps.id,
         ps.user_id,
@@ -212,11 +218,23 @@ push.get('/subscriptions-list', authMiddleware, checkModule('notifications'), re
         u.role as user_role
       FROM push_subscriptions ps
       LEFT JOIN users u ON ps.user_id = u.id
-      ORDER BY ps.created_at DESC
-    `).all();
+    `;
+    
+    let params: any[] = [];
+    
+    if (!canSeeAll) {
+        // Regular users only see their own devices
+        query += ` WHERE ps.user_id = ?`;
+        params.push(user.userId);
+    }
+    
+    query += ` ORDER BY ps.created_at DESC`;
+
+    const subscriptions = await c.env.DB.prepare(query).bind(...params).all();
 
     return c.json({
-      subscriptions: subscriptions.results || []
+      subscriptions: subscriptions.results || [],
+      isAdminView: canSeeAll
     });
   } catch (error) {
     console.error('[Push Subscriptions List API] Error:', error);

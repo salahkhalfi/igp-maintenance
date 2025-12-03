@@ -130,7 +130,7 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
     }
 
     // Charger les permissions du rôle
-    const permissions = await getRolePermissions(c.env, user.role);
+    const permissions = await getRolePermissions(c.env.DB, user.role);
 
     // Retirer le hash du mot de passe
     const { password_hash, ...userWithoutPassword } = user;
@@ -213,7 +213,7 @@ auth.get('/me', async (c) => {
     }
 
     // Charger les permissions du rôle
-    const permissions = await getRolePermissions(c.env, user.role);
+    const permissions = await getRolePermissions(c.env.DB, user.role);
 
     return c.json({ user, permissions });
   } catch (error) {

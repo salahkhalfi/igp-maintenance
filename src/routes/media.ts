@@ -100,7 +100,10 @@ media.post('/upload', authMiddleware, async (c) => {
     return c.json({ media: newMedia }, 201);
   } catch (error) {
     console.error('Upload error:', error);
-    return c.json({ error: 'Erreur lors de l\'upload du fichier' }, 500);
+    return c.json({ 
+      error: 'Erreur lors de l\'upload du fichier',
+      details: error instanceof Error ? error.message : String(error)
+    }, 500);
   }
 });
 
