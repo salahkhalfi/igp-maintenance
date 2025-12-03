@@ -122,18 +122,6 @@ const AdminRoles = ({ onBack }) => {
         );
     }
 
-    if (error) {
-        return React.createElement('div', { className: 'min-h-screen bg-white p-8 flex flex-col items-center justify-center' },
-            React.createElement('div', { className: 'text-red-500 text-5xl mb-4' }, React.createElement('i', { className: 'fas fa-exclamation-circle' })),
-            React.createElement('h2', { className: 'text-2xl font-bold text-gray-800 mb-2' }, 'Erreur de chargement'),
-            React.createElement('p', { className: 'text-gray-600 mb-6 text-center max-w-md' }, error),
-            React.createElement('button', {
-                onClick: onBack,
-                className: 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md'
-            }, 'Retour au menu')
-        );
-    }
-
     return React.createElement('div', { className: 'min-h-screen bg-white p-4 md:p-8' },
         // Header Clean
         React.createElement('div', { className: 'flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4' },
@@ -544,7 +532,7 @@ const RoleViewModal = ({ role, activeModules, onClose }) => {
                 React.createElement('div', null,
                     React.createElement('h2', { className: 'text-xl font-bold text-gray-900' }, role.name),
                     React.createElement('div', { className: 'flex items-center mt-2 gap-2' },
-                        React.createElement('span', { className: 'px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-mono' }, `rounded text-xs font-mono' }, `@${role.slug}`),
+                        React.createElement('span', { className: 'px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-mono' }, `@${role.slug}`),
                         role.is_system === 1 && React.createElement('span', { className: 'px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-bold uppercase' }, 'Système')
                     )
                 ),

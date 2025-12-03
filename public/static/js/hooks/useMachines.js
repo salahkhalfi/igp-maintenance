@@ -19,3 +19,5 @@ const useMachines = () => {
 
     return { machines, loading, error, fetchMachines };
 };
+
+window.useMachines = useMachines;

@@ -40,3 +40,5 @@ const useTickets = () => {
 
     return { tickets, loading, error, fetchTickets, moveTicket, deleteTicket, setTickets };
 };
+
+window.useTickets = useTickets;
