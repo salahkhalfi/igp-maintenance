@@ -346,6 +346,8 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
 
     // Mettre à jour les permissions
     if (validPermissionIds) {
+      console.log(`[ROLES] Update request for role ${roleId} with ${validPermissionIds.length} permissions`);
+      
       // Deduplicate permission IDs
       const uniquePermissionIds = [...new Set(validPermissionIds)];
       
@@ -356,19 +358,36 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
         DELETE FROM role_permissions WHERE role_id = ?
       `).bind(roleId));
       
-      // 2. SIMPLIFICATION RADICALE: Récupérer TOUTES les permissions valides d'un coup
-      // Il y en a peu (<100), c'est beaucoup plus fiable que des chunks
-      const allPermissions = await c.env.DB.prepare('SELECT id FROM permissions').all() as any;
-      const validDbIds = new Set<number>(allPermissions.results.map((p: any) => p.id));
+      // 2. Récupérer TOUTES les permissions valides
+      let validDbIds = new Set<number>();
+      try {
+        const response = await c.env.DB.prepare('SELECT id FROM permissions').all() as any;
+        if (response && response.results && Array.isArray(response.results)) {
+          validDbIds = new Set<number>(response.results.map((p: any) => p.id));
+          console.log(`[ROLES] Fetched ${validDbIds.size} valid permission IDs from DB`);
+        } else {
+          console.error('[ROLES] Failed to fetch permissions: Invalid response format', response);
+          // Emergency fallback: If we can't verify, we assume IDs are valid (risky but better than blocking)
+          // or we abort. Let's abort to prevent corruption.
+          throw new Error('Impossible de vérifier les permissions existantes (Erreur DB)');
+        }
+      } catch (dbError) {
+        console.error('[ROLES] DB Error fetching permissions:', dbError);
+        throw dbError;
+      }
 
       // Filtrer les IDs fournis par le client
       const idsToInsert = uniquePermissionIds.filter(id => validDbIds.has(id));
       
-      console.log(`[ROLES] Update Simplifié: Reçu ${uniquePermissionIds.length} IDs, Validés ${idsToInsert.length} IDs`);
+      console.log(`[ROLES] Update: Reçu ${uniquePermissionIds.length} IDs, Validés ${idsToInsert.length} IDs`);
+      
+      if (uniquePermissionIds.length > 0 && idsToInsert.length === 0) {
+         console.warn('[ROLES] WARNING: All provided permission IDs were rejected! This might indicate a frontend/backend ID mismatch.');
+      }
 
-      // 3. Insérer les nouvelles permissions (uniquement les valides)
+      // 3. Insérer les nouvelles permissions
       if (idsToInsert.length > 0) {
-          const CHUNK_SIZE = 40; // Toujours utiliser des chunks pour l'insertion (limite SQL)
+          const CHUNK_SIZE = 40;
           
           for (let i = 0; i < idsToInsert.length; i += CHUNK_SIZE) {
               const chunk = idsToInsert.slice(i, i + CHUNK_SIZE);
@@ -386,7 +405,13 @@ app.put('/:id', requirePermission('roles', 'write'), async (c) => {
       }
       
       // Exécuter en batch (atomique)
-      await c.env.DB.batch(statements);
+      try {
+        await c.env.DB.batch(statements);
+        console.log('[ROLES] Batch update successful');
+      } catch (batchError) {
+        console.error('[ROLES] Batch update failed:', batchError);
+        throw batchError;
+      }
     }
 
     // Vider le cache des permissions
