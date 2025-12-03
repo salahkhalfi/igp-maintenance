@@ -15,14 +15,17 @@ const comments = new Hono<{ Bindings: Bindings }>();
 // POST /api/comments - Ajouter un commentaire à un ticket
 comments.post('/', authMiddleware, async (c) => {
   try {
+    // 🔍 DIAGNOSTIC MODE: Log everything
     const user = c.get('user') as any;
-    console.log(`[COMMENTS] POST / request from ${user?.email}`);
+    console.log(`[COMMENTS] POST / received from ${user?.email}`);
 
     // 🧹 MANUAL BODY PARSING
     let body;
     try {
       body = await c.req.json();
+      console.log('[COMMENTS] Raw body:', JSON.stringify(body));
     } catch (e) {
+      console.error('[COMMENTS] JSON parse failed:', e);
       return c.json({ error: 'Invalid JSON body' }, 400);
     }
 
@@ -33,23 +36,25 @@ comments.post('/', authMiddleware, async (c) => {
     const comment = String(body.comment || '');
     const user_role = body.user_role ? String(body.user_role) : (user?.role || null);
     
+    console.log(`[COMMENTS] Parsed: Ticket=${ticket_id}, User=${user_name}, Comment="${comment.substring(0, 10)}..."`);
+
     // 🔍 BASIC VALIDATION
     if (isNaN(ticket_id) || ticket_id <= 0) {
+      console.error(`[COMMENTS] Invalid ticket_id: ${body.ticket_id}`);
       return c.json({ error: `Invalid ticket_id: ${body.ticket_id}` }, 400);
     }
     if (!comment.trim()) {
+      console.error('[COMMENTS] Empty comment');
       return c.json({ error: 'Comment cannot be empty' }, 400);
     }
 
-    console.log(`[COMMENTS] Attempting insert: Ticket=${ticket_id}, User=${user_name}, Comment="${comment.substring(0, 20)}..."`);
-
     const db = getDb(c.env);
 
-    // ⚡ DIRECT INSERT (Skip explicit existence check - let FK constraint handle it)
-    // This rules out "Select failed but Insert would work" scenarios
+    // ⚡ DIRECT INSERT with detailed error handling
     try {
         const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
         
+        console.log('[COMMENTS] Executing INSERT query...');
         const result = await db.insert(ticketComments).values({
           ticket_id,
           user_name,
@@ -58,13 +63,13 @@ comments.post('/', authMiddleware, async (c) => {
           created_at: timestamp
         }).returning();
 
-        console.log('[COMMENTS] Insert SUCCESS:', result[0]);
+        console.log('[COMMENTS] Insert SUCCESS:', JSON.stringify(result[0]));
         return c.json({ comment: result[0] }, 201);
 
     } catch (dbError: any) {
         console.error('[COMMENTS] Database Insert Failed:', dbError);
         
-        // Check for FK constraint failure (Error code 787 in SQLite/D1 usually, or explicit message)
+        // Check for FK constraint failure
         if (dbError.message && (dbError.message.includes('FOREIGN KEY') || dbError.message.includes('constraint'))) {
              return c.json({ 
                  error: `TICKET INTROUVABLE (ID: ${ticket_id}) - Échec contrainte intégrité`,
