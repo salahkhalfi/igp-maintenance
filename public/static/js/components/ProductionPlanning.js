@@ -442,10 +442,10 @@ const ProductionPlanning = ({ onClose }) => {
                         setSelectedEvent(null);
                         setShowAddModal(true); 
                     },
-                    className: 'hidden sm:flex px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition font-semibold items-center gap-2' 
+                    className: 'flex px-3 lg:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition font-semibold items-center gap-2' 
                 },
                     React.createElement('i', { className: 'fas fa-plus' }),
-                    'Nouvel Événement'
+                    React.createElement('span', { className: 'hidden sm:inline' }, 'Nouvel Événement')
                 ),
                 React.createElement('div', { className: 'h-8 w-px bg-gray-200 mx-1' }),
                 React.createElement('button', {
@@ -529,7 +529,7 @@ const ProductionPlanning = ({ onClose }) => {
                 ),
 
                 // Calendar Cells
-                React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-5 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
+                React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
                     workDays.map((dayObj, idx) => {
                         const dayEvents = getEventsForDay(dayObj.dateStr);
                         const dayNames = ['Dim', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Sam'];
@@ -550,10 +550,10 @@ const ProductionPlanning = ({ onClose }) => {
                                     // Mobile Day Name
                                     React.createElement('span', { className: 'lg:hidden text-sm font-bold text-slate-500 uppercase' }, dayNames[dayObj.dayOfWeek])
                                 ),
-                                // Add Button (Visible on Hover)
+                                // Add Button (Always visible on mobile, hover on desktop)
                                 React.createElement('button', { 
                                     onClick: () => { setSelectedEvent(null); setNewEventDate(dayObj.dateStr); setShowAddModal(true); },
-                                    className: 'opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
+                                    className: 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
                                 }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
                             ),
                             
