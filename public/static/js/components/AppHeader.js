@@ -42,6 +42,11 @@ const AppHeader = ({
     // Push Notification Logic
     const [pushState, setPushState] = React.useState(typeof Notification !== 'undefined' ? Notification.permission : 'default');
     
+    // Stable logo URL to prevent cache flooding and re-render flickering
+    // Only updates on full page refresh or explicit update
+    const [logoTimestamp] = React.useState(Date.now());
+    const logoUrl = '/api/settings/logo?t=' + logoTimestamp;
+    
     React.useEffect(() => {
         const updatePushState = () => {
             if (typeof Notification !== 'undefined') {
@@ -150,9 +155,12 @@ const AppHeader = ({
                 React.createElement('div', { className: 'flex justify-between items-center w-full md:w-auto md:min-w-0 group' },
                     React.createElement('div', { className: 'flex items-center' },
                         React.createElement('img', {
-                            src: '/api/settings/logo?t=' + Date.now(), alt: 'Logo',
+                            src: logoUrl, alt: 'Logo',
                             className: 'h-8 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
-                            onError: (e) => { e.target.src = '/static/logo-igp.png'; }
+                            onError: (e) => { 
+                                if (e.target.src.includes('logo-igp.png')) return; // Prevent infinite loop
+                                e.target.src = '/static/logo-igp.png'; 
+                            }
                         }),
                         React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-black/10' },
                             React.createElement('h1', { className: 'text-sm md:text-base font-bold leading-none text-slate-800', title: headerTitle }, headerTitle),

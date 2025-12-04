@@ -72,6 +72,14 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch((error) => {
+        // Spécial: Si c'est le logo qui échoue, retourner l'image locale par défaut
+        if (event.request.url.includes('/api/settings/logo')) {
+             return fetch('/static/logo-igp.png').catch(() => {
+                 // Si même le logo par défaut échoue, retourner une réponse vide valide pour l'image
+                 return new Response('', { status: 404 });
+             });
+        }
+
         // Si réseau échoue, essayer le cache
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
