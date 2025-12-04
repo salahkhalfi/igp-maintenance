@@ -234,7 +234,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
             React.createElement('div', { className: 'flex-1 flex overflow-hidden relative' },
                 
                 // Sidebar (Only for Private tab)
-                activeTab === 'private' ? React.createElement(MessagingSidebar, {
+                activeTab === 'private' ? React.createElement(window.MessagingSidebar, {
                     conversations: conversations,
                     availableUsers: availableUsers,
                     selectedContact: selectedContact,
@@ -246,7 +246,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                 }) : null,
 
                 // Chat Window (For both Public and Private)
-                (activeTab === 'public' || (activeTab === 'private' && selectedContact)) ? React.createElement(MessagingChatWindow, {
+                (activeTab === 'public' || (activeTab === 'private' && selectedContact)) ? React.createElement(window.MessagingChatWindow, {
                     messages: activeTab === 'public' ? publicMessages : privateMessages,
                     currentUser: currentUser,
                     loading: loading,
@@ -261,7 +261,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                     onBack: () => setSelectedContact(null)
                 }) : 
                 
-                React.createElement(MessagingChatWindow, {
+                React.createElement(window.MessagingChatWindow, {
                     messages: activeTab === 'public' ? publicMessages : privateMessages,
                     currentUser: currentUser,
                     loading: loading,
