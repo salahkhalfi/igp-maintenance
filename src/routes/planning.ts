@@ -58,7 +58,7 @@ app.get('/', async (c) => {
 // ÉVÉNEMENTS (EVENTS)
 // ==========================================
 
-app.post('/events', requirePermission('planning.manage'), async (c) => {
+app.post('/events', requirePermission('planning', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
     const { date, type, title, details, status } = body;
@@ -77,7 +77,7 @@ app.post('/events', requirePermission('planning.manage'), async (c) => {
   }
 });
 
-app.put('/events/:id', requirePermission('planning.manage'), async (c) => {
+app.put('/events/:id', requirePermission('planning', 'manage'), async (c) => {
   try {
     const id = c.req.param('id');
     const body = await c.req.json();
@@ -106,7 +106,7 @@ app.put('/events/:id', requirePermission('planning.manage'), async (c) => {
   }
 });
 
-app.delete('/events/:id', requirePermission('planning.manage'), async (c) => {
+app.delete('/events/:id', requirePermission('planning', 'manage'), async (c) => {
   try {
     const id = c.req.param('id');
     await c.env.DB.prepare('DELETE FROM planning_events WHERE id = ?').bind(id).run();
@@ -120,7 +120,7 @@ app.delete('/events/:id', requirePermission('planning.manage'), async (c) => {
 // CATÉGORIES
 // ==========================================
 
-app.post('/categories', requirePermission('planning.manage'), async (c) => {
+app.post('/categories', requirePermission('planning', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
     const { id, label, icon, color } = body;
@@ -137,7 +137,7 @@ app.post('/categories', requirePermission('planning.manage'), async (c) => {
   }
 });
 
-app.put('/categories/:id', requirePermission('planning.manage'), async (c) => {
+app.put('/categories/:id', requirePermission('planning', 'manage'), async (c) => {
   try {
     const id = c.req.param('id');
     const body = await c.req.json();
@@ -152,7 +152,7 @@ app.put('/categories/:id', requirePermission('planning.manage'), async (c) => {
   }
 });
 
-app.delete('/categories/:id', requirePermission('planning.manage'), async (c) => {
+app.delete('/categories/:id', requirePermission('planning', 'manage'), async (c) => {
   try {
     const id = c.req.param('id');
     await c.env.DB.prepare('DELETE FROM planning_categories WHERE id = ?').bind(id).run();

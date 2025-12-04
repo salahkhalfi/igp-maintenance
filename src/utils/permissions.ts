@@ -28,16 +28,16 @@ let lastCacheUpdate = 0;
 export async function loadRolePermissions(DB: D1Database, roleName: string): Promise<Set<string>> {
   try {
     const { results } = await DB.prepare(`
-      SELECT p.resource, p.action, p.scope
+      SELECT p.slug
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       INNER JOIN roles r ON rp.role_id = r.id
-      WHERE r.name = ?
+      WHERE r.slug = ?
     `).bind(roleName).all() as any;
 
     const permissions = new Set<string>();
     for (const perm of results) {
-      permissions.add(`${perm.resource}.${perm.action}.${perm.scope}`);
+      permissions.add(perm.slug);
     }
 
     return permissions;
@@ -78,9 +78,16 @@ export async function hasPermission(
       permissionsCache.set(userRole, rolePermissions);
     }
 
-    // Vérifier la permission exacte
+    // Vérifier la permission exacte (ex: tickets.read.all)
     const exactPermission = `${resource}.${action}.${scope}`;
     if (rolePermissions.has(exactPermission)) {
+      return true;
+    }
+
+    // Vérifier la permission sans scope (ex: planning.manage) si le scope demandé est 'all' ou implicite
+    // Cela permet de supporter des permissions simples comme 'planning.manage' dans la DB
+    const simplePermission = `${resource}.${action}`;
+    if (rolePermissions.has(simplePermission)) {
       return true;
     }
 
