@@ -291,10 +291,10 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
- * GET /api/settings/modules - Obtenir la configuration des modules
+ * GET /api/settings/modules/status - Obtenir les licences modules (Global)
  * Accès: Tous les utilisateurs authentifiés
  */
-settings.get('/modules', async (c) => {
+settings.get('/modules/status', async (c) => {
   try {
     const result = await c.env.DB.prepare(`
       SELECT setting_value FROM system_settings WHERE setting_key = 'modules_config'
@@ -319,15 +319,135 @@ settings.get('/modules', async (c) => {
       return c.json(defaults);
     }
   } catch (error) {
-    console.error('Get modules error:', error);
-    // Return defaults on error to prevent UI blocking
-    return c.json({ 
+    console.error('Get modules status error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/modules/status - Mettre à jour les licences modules
+ * Accès: Admin uniquement
+ */
+settings.put('/modules/status', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const configString = JSON.stringify(body);
+
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'modules_config'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'modules_config'
+      `).bind(configString).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value) VALUES ('modules_config', ?)
+      `).bind(configString).run();
+    }
+
+    return c.json({ message: 'Licences mises à jour', config: body });
+  } catch (error) {
+    console.error('Update modules status error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/modules/preferences - Obtenir les préférences modules (Client)
+ * Accès: Tous les utilisateurs authentifiés
+ */
+settings.get('/modules/preferences', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'modules_preferences'
+    `).first();
+
+    const defaults = { 
       planning: true, 
       statistics: true, 
       notifications: true, 
       messaging: true, 
       machines: true 
+    };
+
+    if (!result || !(result as any).setting_value) {
+      return c.json(defaults);
+    }
+
+    try {
+      const config = JSON.parse((result as any).setting_value);
+      return c.json({ ...defaults, ...config });
+    } catch (e) {
+      return c.json(defaults);
+    }
+  } catch (error) {
+    console.error('Get modules preferences error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/modules/preferences - Mettre à jour les préférences modules
+ * Accès: Admin uniquement
+ */
+settings.put('/modules/preferences', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const configString = JSON.stringify(body);
+
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'modules_preferences'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'modules_preferences'
+      `).bind(configString).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value) VALUES ('modules_preferences', ?)
+      `).bind(configString).run();
+    }
+
+    return c.json({ message: 'Préférences mises à jour', config: body });
+  } catch (error) {
+    console.error('Update modules preferences error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * POST /api/settings/trigger-cleanup - Lancer le nettoyage manuel
+ * Accès: Admin uniquement
+ */
+settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
+  try {
+    // Logique de nettoyage simplifiée (Suppression données > 90 jours)
+    // Suppression events > 90 jours
+    const delEvents = await c.env.DB.prepare(`
+      DELETE FROM planning_events 
+      WHERE date < date('now', '-90 days')
+    `).run();
+
+    // Suppression notes terminées > 30 jours
+    const delNotes = await c.env.DB.prepare(`
+      DELETE FROM planner_notes 
+      WHERE done = 1 AND created_at < date('now', '-30 days')
+    `).run();
+
+    return c.json({ 
+      success: true, 
+      message: 'Nettoyage effectué',
+      deleted: {
+        events: delEvents.meta.changes,
+        notes: delNotes.meta.changes
+      }
     });
+  } catch (error) {
+    console.error('Manual cleanup error:', error);
+    return c.json({ error: 'Erreur lors du nettoyage' }, 500);
   }
 });
 
