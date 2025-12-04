@@ -51,19 +51,35 @@ roles.get('/:id', async (c) => {
     }
 
     // Récupérer les permissions du rôle
-    const { results: permissions } = await c.env.DB.prepare(`
+    const { results: rawPermissions } = await c.env.DB.prepare(`
       SELECT
         p.id,
-        p.resource,
-        p.action,
-        p.scope,
-        p.display_name,
+        p.name,
+        p.slug,
+        p.module,
         p.description
       FROM permissions p
       INNER JOIN role_permissions rp ON p.id = rp.permission_id
       WHERE rp.role_id = ?
-      ORDER BY p.resource, p.action, p.scope
+      ORDER BY p.module, p.slug
     `).bind(id).all();
+
+    // Map permissions to expected format
+    const permissions = rawPermissions.map((p: any) => {
+      const parts = p.slug.split('.');
+      const action = parts.length > 1 ? parts[1] : p.slug;
+      const scope = parts.length > 2 ? parts[2] : 'all';
+
+      return {
+        id: p.id,
+        resource: p.module,
+        action: action,
+        scope: scope,
+        display_name: p.name,
+        description: p.description,
+        slug: p.slug
+      };
+    });
 
     return c.json({
       role: {
@@ -85,27 +101,41 @@ roles.get('/permissions/all', async (c) => {
     const { results } = await c.env.DB.prepare(`
       SELECT
         id,
-        resource,
-        action,
-        scope,
-        display_name,
+        name,
+        slug,
+        module,
         description
       FROM permissions
-      ORDER BY resource, action, scope
+      ORDER BY module, slug
     `).all();
 
-    // Grouper par ressource pour une meilleure organisation
+    // Map and Group
     const grouped: any = {};
-    for (const perm of results) {
-      const p = perm as any;
-      if (!grouped[p.resource]) {
-        grouped[p.resource] = [];
-      }
-      grouped[p.resource].push(p);
-    }
+    const mappedResults = results.map((p: any) => {
+        const parts = p.slug.split('.');
+        const action = parts.length > 1 ? parts[1] : p.slug;
+        const scope = parts.length > 2 ? parts[2] : 'all';
+
+        const mapped = {
+            id: p.id,
+            resource: p.module,
+            action: action,
+            scope: scope,
+            display_name: p.name,
+            description: p.description,
+            slug: p.slug
+        };
+
+        if (!grouped[mapped.resource]) {
+            grouped[mapped.resource] = [];
+        }
+        grouped[mapped.resource].push(mapped);
+
+        return mapped;
+    });
 
     return c.json({
-      permissions: results,
+      permissions: mappedResults,
       grouped
     });
   } catch (error) {
@@ -297,7 +327,6 @@ roles.put('/:id', async (c) => {
 
     // Update: name (UI), description
     // slug cannot be changed
-    // NOTE: updated_at is managed by SQLite or not present, query removed it as it's not in table schema
     await c.env.DB.prepare(`
       UPDATE roles
       SET name = ?, description = ?
