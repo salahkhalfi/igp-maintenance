@@ -1,5 +1,4 @@
 const ProductionPlanning = ({ onClose }) => {
-    // État pour le mois affiché (Initialisé au mois courant)
     const [currentDate, setCurrentDate] = React.useState(new Date());
 
     const getMonthName = (date) => {
@@ -15,9 +14,8 @@ const ProductionPlanning = ({ onClose }) => {
     };
     
     const [activeFilter, setActiveFilter] = React.useState('all');
-    const [viewMode, setViewMode] = React.useState('calendar'); // 'calendar' or 'list'
+    const [viewMode, setViewMode] = React.useState('calendar');
     
-    // CATEGORIES STATE - Init with defaults to prevent "empty screen" syndrome
     const DEFAULT_CATEGORIES = [
         { id: 'cut', label: 'Mise en Prod', icon: 'fa-layer-group', color: 'blue' },
         { id: 'ship', label: 'Expéditions', icon: 'fa-truck', color: 'green' },
@@ -30,34 +28,24 @@ const ProductionPlanning = ({ onClose }) => {
     const [showCategoryModal, setShowCategoryModal] = React.useState(false);
     const [editingCategory, setEditingCategory] = React.useState(null);
 
-    // EVENTS STATE
     const [events, setEvents] = React.useState([]);
-
-    // NOTES STATE
     const [plannerNotes, setPlannerNotes] = React.useState([]);
 
-    // LOAD DATA FROM API
     React.useEffect(() => {
-        // Ajouter un timestamp pour éviter le cache navigateur/proxy
         axios.get('/api/planning?t=' + Date.now())
             .then(res => {
                 const data = res.data;
                 if (data.categories && Array.isArray(data.categories) && data.categories.length > 0) {
                     setCategories(data.categories);
                 }
-                // If empty from API, we keep the defaults (fail-safe)
-                
                 if (data.events) setEvents(data.events);
                 if (data.notes) setPlannerNotes(data.notes);
             })
             .catch(err => {
                 console.error('Error loading planning data:', err);
-                // Fallback visuel en cas d'erreur (optionnel, mais utile pour debug mobile)
-                // alert("Erreur de chargement des données planning"); 
             });
     }, []);
 
-    // HELPERS FOR STYLES & ICONS
     const getCategoryStyle = (type, status) => {
         const cat = categories.find(c => c.id === type);
         const color = cat ? cat.color : 'gray';
@@ -82,20 +70,17 @@ const ProductionPlanning = ({ onClose }) => {
         return cat ? cat.icon : 'fa-circle';
     };
 
-    // Handle Save Category (Add or Update)
     const handleSaveCategory = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         
         if (editingCategory) {
-            // UPDATE EXISTING
             const updatedCat = {
                 label: formData.get('label'),
                 color: formData.get('color'),
                 icon: formData.get('icon')
             };
             
-            // Optimistic UI Update
             setCategories(categories.map(c => 
                 c.id === editingCategory.id ? { ...c, ...updatedCat } : c
             ));
@@ -105,7 +90,6 @@ const ProductionPlanning = ({ onClose }) => {
                 .catch(err => console.error('Error updating category:', err));
 
         } else {
-            // CREATE NEW
             const newCat = {
                 id: 'cat_' + Date.now(),
                 label: formData.get('label'),
@@ -113,7 +97,6 @@ const ProductionPlanning = ({ onClose }) => {
                 icon: formData.get('icon')
             };
             
-            // Optimistic UI Update
             setCategories([...categories, newCat]);
 
             axios.post('/api/planning/categories', newCat)
@@ -122,17 +105,14 @@ const ProductionPlanning = ({ onClose }) => {
         e.target.reset();
     };
 
-    // Handle Edit Click
     const handleEditCategoryClick = (cat) => {
         setEditingCategory(cat);
     };
 
-    // Handle Cancel Edit
     const handleCancelEdit = () => {
         setEditingCategory(null);
     };
 
-    // Handle Delete Category
     const handleDeleteCategory = (id) => {
         if (confirm('Supprimer cette catégorie ? Les événements existants perdront leur style.')) {
             setCategories(categories.filter(c => c.id !== id));
@@ -145,12 +125,9 @@ const ProductionPlanning = ({ onClose }) => {
         }
     };
 
-    // État pour le Drag & Drop
     const [draggedEventId, setDraggedEventId] = React.useState(null);
-    // Toggle Sidebar Mobile
     const [showMobileNotes, setShowMobileNotes] = React.useState(false);
     
-    // NOTIFICATIONS SYSTEM
     const [notificationPerm, setNotificationPerm] = React.useState(
         typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
@@ -171,10 +148,6 @@ const ProductionPlanning = ({ onClose }) => {
         });
     };
 
-    // Liste "Aide-Mémoire"
-    // (Déplacé dans le state plus haut pour être mutable)
-
-    // Vérification périodique des rappels (toutes les 30 secondes)
     React.useEffect(() => {
         if (notificationPerm !== 'granted') return;
 
@@ -188,10 +161,9 @@ const ProductionPlanning = ({ onClose }) => {
                 let hasChanges = false;
                 const nextNotes = prevNotes.map(note => {
                     if (!note.done && !note.notified && note.time === currentTime) {
-                        // TRIGGER NOTIFICATION
                         new Notification("Rappel IGP Production", {
                             body: note.text,
-                            icon: "https://cdn-icons-png.flaticon.com/512/1028/1028918.png" // Generic warning icon
+                            icon: "https://cdn-icons-png.flaticon.com/512/1028/1028918.png"
                         });
                         
                         hasChanges = true;
@@ -199,10 +171,6 @@ const ProductionPlanning = ({ onClose }) => {
                     }
                     return note;
                 });
-                
-                // Only update state if needed to avoid loops/re-renders, 
-                // and maybe sync 'notified' status to DB? 
-                // For now, just local state update to avoid repeated alerts.
                 return hasChanges ? nextNotes : prevNotes;
             });
         }, 30000);
@@ -210,7 +178,6 @@ const ProductionPlanning = ({ onClose }) => {
         return () => clearInterval(interval);
     }, [notificationPerm]);
 
-    // Add Note Handler
     const handleAddNote = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -220,7 +187,7 @@ const ProductionPlanning = ({ onClose }) => {
         if (!text) return;
 
         const newNote = {
-            id: Date.now(), // Temp ID
+            id: Date.now(),
             text: text,
             time: time,
             date: date,
@@ -241,23 +208,19 @@ const ProductionPlanning = ({ onClose }) => {
         e.target.reset();
     };
 
-    // Update Note Handler (New)
     const handleUpdateNote = (id, updatedData) => {
-        // Optimistic Update
         setPlannerNotes(current => current.map(n => n.id === id ? { ...n, ...updatedData } : n));
 
         axios.put(`/api/planning/notes/${id}`, updatedData)
             .catch(err => console.error('Error updating note:', err));
     };
 
-    // Toggle Note Done
     const toggleNote = (id) => {
         const note = plannerNotes.find(n => n.id === id);
         if (!note) return;
         handleUpdateNote(id, { done: !note.done });
     };
 
-    // Delete Note
     const deleteNote = (id) => {
         setPlannerNotes(plannerNotes.filter(n => n.id !== id));
         
@@ -265,27 +228,23 @@ const ProductionPlanning = ({ onClose }) => {
             .catch(err => console.error('Error deleting note:', err));
     };
 
-    // Add/Edit Modal State
     const [showAddModal, setShowAddModal] = React.useState(false);
-    const [selectedEvent, setSelectedEvent] = React.useState(null); // null = mode création
-    const [newEventDate, setNewEventDate] = React.useState(''); // Format "YYYY-MM-DD"
+    const [selectedEvent, setSelectedEvent] = React.useState(null);
+    const [newEventDate, setNewEventDate] = React.useState('');
 
-    // Open Edit Modal
     const handleEditEventClick = (e, evt) => {
-        e.stopPropagation(); // Empêcher le déclenchement du drag start si on clique
+        e.stopPropagation();
         setSelectedEvent(evt);
         setNewEventDate(evt.date);
         setShowAddModal(true);
     };
 
-    // Handle Add/Update Event
     const handleSaveEvent = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const dateVal = formData.get('date'); // "YYYY-MM-DD"
+        const dateVal = formData.get('date');
         
         if (selectedEvent) {
-            // MODE MODIFICATION
             const updatedEvent = {
                 date: dateVal,
                 type: formData.get('type'),
@@ -293,7 +252,6 @@ const ProductionPlanning = ({ onClose }) => {
                 details: formData.get('details')
             };
 
-            // Optimistic
             setEvents(prevEvents => prevEvents.map(evt => {
                 if (evt.id === selectedEvent.id) {
                     return { ...evt, ...updatedEvent };
@@ -305,9 +263,8 @@ const ProductionPlanning = ({ onClose }) => {
                 .catch(err => console.error('Error updating event:', err));
 
         } else {
-            // MODE CRÉATION
             const newEvent = {
-                id: Date.now(), // Temporary ID for UI
+                id: Date.now(),
                 date: dateVal,
                 type: formData.get('type'),
                 status: 'confirmed',
@@ -315,13 +272,11 @@ const ProductionPlanning = ({ onClose }) => {
                 details: formData.get('details')
             };
             
-            // Optimistic UI update (temporary ID)
             setEvents([...events, newEvent]);
 
             axios.post('/api/planning/events', newEvent)
             .then(res => {
                 const savedEvent = res.data;
-                // Replace temporary ID with real DB ID
                 setEvents(currentEvents => currentEvents.map(evt => 
                     evt.id === newEvent.id ? savedEvent : evt
                 ));
@@ -332,10 +287,8 @@ const ProductionPlanning = ({ onClose }) => {
         setSelectedEvent(null);
     };
 
-    // Handle Delete Event
     const handleDeleteEvent = () => {
         if (selectedEvent) {
-            // Optimistic
             setEvents(prevEvents => prevEvents.filter(evt => evt.id !== selectedEvent.id));
             
             axios.delete(`/api/planning/events/${selectedEvent.id}`)
@@ -346,11 +299,9 @@ const ProductionPlanning = ({ onClose }) => {
         }
     };
 
-    // Gestion du Drag
     const handleDragStart = (e, eventId) => {
         setDraggedEventId(eventId);
         e.dataTransfer.effectAllowed = 'move';
-        // Petite astuce pour l'image fantôme (optionnel)
         e.target.style.opacity = '0.5';
     };
 
@@ -360,7 +311,7 @@ const ProductionPlanning = ({ onClose }) => {
     };
 
     const handleDragOver = (e) => {
-        e.preventDefault(); // Nécessaire pour autoriser le Drop
+        e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
     };
 
@@ -368,7 +319,6 @@ const ProductionPlanning = ({ onClose }) => {
         e.preventDefault();
         if (!draggedEventId || !targetDate) return;
 
-        // Optimistic UI Update
         setEvents(prevEvents => prevEvents.map(evt => {
             if (evt.id === draggedEventId) {
                 return { ...evt, date: targetDate };
@@ -376,31 +326,25 @@ const ProductionPlanning = ({ onClose }) => {
             return evt;
         }));
 
-        // API Call
         axios.put(`/api/planning/events/${draggedEventId}`, { date: targetDate })
             .catch(err => console.error('Error moving event:', err));
     };
 
-    // Génération de la grille dynamique
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth(); // 0-11
-    const daysInMonth = new Date(year, month + 1, 0).getDate(); // Nombre de jours
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     
-    // Générer les jours du mois actuel
     const days = Array.from({ length: daysInMonth }, (_, i) => {
         const dayNum = i + 1;
         const dateObj = new Date(year, month, dayNum);
-        // Format YYYY-MM-DD local (attention au fuseau, mais ici on simplifie)
-        // On force le format "YYYY-MM-DD" manuellement pour éviter les soucis de timezone
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
         return {
             num: dayNum,
             dateStr: dateStr,
-            dayOfWeek: dateObj.getDay() // 0=Dimanche, 1=Lundi...
+            dayOfWeek: dateObj.getDay()
         };
     });
 
-    // Filtrer pour n'avoir que les jours de la semaine (Lundi=1 à Vendredi=5)
     const workDays = days.filter(d => d.dayOfWeek >= 1 && d.dayOfWeek <= 5);
 
     const getEventsForDay = (dateStr) => {
@@ -412,7 +356,6 @@ const ProductionPlanning = ({ onClose }) => {
     };
 
     return React.createElement('div', { className: 'fixed inset-0 z-[150] bg-gray-100 flex flex-col animate-fadeIn' },
-        // HEADER
         React.createElement('div', { className: 'bg-white border-b p-3 lg:px-6 lg:py-3 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shadow-sm z-20 shrink-0' },
             React.createElement('div', { className: 'flex-1 min-w-0 w-full md:w-auto' },
                 React.createElement('h1', { className: 'text-lg lg:text-2xl font-bold text-slate-800 flex items-center gap-2 lg:gap-3 truncate' },
@@ -428,14 +371,12 @@ const ProductionPlanning = ({ onClose }) => {
                 )
             ),
             React.createElement('div', { className: 'flex items-center justify-between md:justify-end gap-2 w-full md:w-auto' },
-                // Bouton Gestion Catégories
                 React.createElement('div', { className: 'flex items-center gap-2' },
                     React.createElement('button', { 
                         onClick: () => setShowCategoryModal(true),
                         className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition shadow-sm'
                     }, React.createElement('i', { className: 'fas fa-cog' })),
 
-                    // Bouton Notes Mobile
                     React.createElement('button', { 
                         onClick: () => setShowMobileNotes(!showMobileNotes),
                         className: `lg:hidden w-10 h-10 flex items-center justify-center rounded-lg transition ${showMobileNotes ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'}`
@@ -443,7 +384,6 @@ const ProductionPlanning = ({ onClose }) => {
                 ),
 
                 React.createElement('div', { className: 'flex items-center gap-2' },
-                    // TV View Toggle
                     React.createElement('button', { 
                         onClick: () => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar'),
                         title: viewMode === 'calendar' ? 'Passer en vue TV / Liste' : 'Passer en vue Calendrier',
@@ -452,7 +392,6 @@ const ProductionPlanning = ({ onClose }) => {
 
                     React.createElement('button', { 
                         onClick: () => { 
-                            // Date par défaut : Aujourd'hui ou le 1er du mois affiché
                             const today = new Date();
                             const defaultDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(Math.max(1, Math.min(today.getDate(), daysInMonth))).padStart(2, '0')}`;
                             setNewEventDate(defaultDate); 
@@ -473,16 +412,13 @@ const ProductionPlanning = ({ onClose }) => {
             )
         ),
 
-        // FILTERS & TOOLBAR
         React.createElement('div', { className: 'bg-white border-b py-2 px-2 lg:px-6 flex flex-col lg:flex-row gap-3 lg:gap-4 items-stretch lg:items-center shadow-sm z-10 shrink-0' },
-            
-            // 1. FILTERS CONTAINER (Scrollable on Mobile)
             React.createElement('div', { className: 'flex items-center overflow-hidden w-full lg:w-auto min-w-0' },
                 React.createElement('span', { className: 'text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0 hidden lg:inline' }, 'Filtres :'),
                 
                 React.createElement('div', { 
                     className: 'flex overflow-x-auto gap-2 items-center pb-2 lg:pb-0 w-full no-scrollbar mask-linear-fade',
-                    style: { scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } // Smooth scrolling
+                    style: { scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }
                 },
                     React.createElement('button', {
                         onClick: () => setActiveFilter('all'),
@@ -492,7 +428,6 @@ const ProductionPlanning = ({ onClose }) => {
                     categories.length === 0 ? React.createElement('span', { className: 'text-xs text-gray-400 italic whitespace-nowrap px-2' }, 'Aucune catégorie') : null,
 
                     categories.map(cat => {
-                        // Style dynamique basé sur la couleur de la catégorie
                         const colorStyles = {
                             blue:   activeFilter === cat.id ? 'bg-blue-600 text-white border-blue-700 shadow-md transform scale-105'   : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
                             green:  activeFilter === cat.id ? 'bg-green-600 text-white border-green-700 shadow-md transform scale-105' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
@@ -516,7 +451,6 @@ const ProductionPlanning = ({ onClose }) => {
                 )
             ),
 
-            // 2. NAVIGATION (Month)
             React.createElement('div', { className: 'flex justify-center lg:justify-end lg:ml-auto shrink-0' },
                 React.createElement('div', { className: 'flex bg-gray-100 rounded-lg p-1 shadow-inner' },
                     React.createElement('button', { 
@@ -534,16 +468,12 @@ const ProductionPlanning = ({ onClose }) => {
             )
         ),
 
-        // MAIN CONTENT (GRID + SIDEBAR)
         React.createElement('div', { className: 'flex-1 flex flex-col lg:flex-row overflow-hidden relative' },
             
-            // VIEW CONTENT
             viewMode === 'list' ? (
-                // LIST / TV VIEW
                 React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-8' },
                     React.createElement('div', { className: 'max-w-5xl mx-auto w-full space-y-8' },
                         (() => {
-                            // Filter events by current month and active filter
                             const filteredEvents = events.filter(evt => {
                                 const evtDate = new Date(evt.date);
                                 if (evtDate.getMonth() !== currentDate.getMonth() || evtDate.getFullYear() !== currentDate.getFullYear()) return false;
@@ -558,7 +488,6 @@ const ProductionPlanning = ({ onClose }) => {
                                 );
                             }
 
-                            // Group by date
                             const eventsByDate = filteredEvents.reduce((acc, evt) => {
                                 if (!acc[evt.date]) acc[evt.date] = [];
                                 acc[evt.date].push(evt);
@@ -577,7 +506,6 @@ const ProductionPlanning = ({ onClose }) => {
                                     React.createElement('div', { className: 'grid gap-4' },
                                         eventsByDate[dateStr].map(evt => {
                                             const cat = categories.find(c => c.id === evt.type);
-                                            // Styles TV View (Larger, clearer)
                                             const baseStyle = getCategoryStyle(evt.type, evt.status);
                                             
                                             return React.createElement('div', { 
@@ -622,16 +550,13 @@ const ProductionPlanning = ({ onClose }) => {
                     )
                 )
             ) : (
-                // CALENDAR GRID
                 React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-hidden' },
-                    // Days Header (5 jours - Desktop Only)
                     React.createElement('div', { className: 'hidden lg:grid grid-cols-5 border-b bg-white shadow-sm' },
                         ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'].map(day => 
                             React.createElement('div', { key: day, className: 'py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider' }, day)
                         )
                     ),
 
-                    // Calendar Cells
                     React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
                         workDays.map((dayObj, idx) => {
                             const dayEvents = getEventsForDay(dayObj.dateStr);
@@ -650,17 +575,14 @@ const ProductionPlanning = ({ onClose }) => {
                                                 dayObj.num === new Date().getDate() && currentDate.getMonth() === new Date().getMonth() ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 bg-slate-100'
                                             }` 
                                         }, dayObj.num),
-                                        // Mobile Day Name
                                         React.createElement('span', { className: 'lg:hidden text-sm font-bold text-slate-500 uppercase' }, dayNames[dayObj.dayOfWeek])
                                     ),
-                                    // Add Button (Always visible on mobile, hover on desktop)
                                     React.createElement('button', { 
                                         onClick: () => { setSelectedEvent(null); setNewEventDate(dayObj.dateStr); setShowAddModal(true); },
                                         className: 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
                                     }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
                                 ),
                                 
-                                // Events List
                                 React.createElement('div', { className: 'flex-1 overflow-y-auto space-y-1 custom-scrollbar' },
                                     dayEvents.map((evt, eIdx) => 
                                         React.createElement('div', { 
@@ -690,13 +612,12 @@ const ProductionPlanning = ({ onClose }) => {
                 )
             ),
 
-            // Utilisation du composant PlanningNotes nettoyé
             viewMode === 'calendar' ? React.createElement(window.PlanningNotes, {
                 notes: plannerNotes,
                 showMobile: showMobileNotes,
                 onCloseMobile: () => setShowMobileNotes(false),
                 onAdd: handleAddNote,
-                onUpdate: handleUpdateNote, // New prop
+                onUpdate: handleUpdateNote,
                 onToggle: toggleNote,
                 onDelete: deleteNote,
                 notificationPerm: notificationPerm,
@@ -704,7 +625,6 @@ const ProductionPlanning = ({ onClose }) => {
             }) : null
         ),
 
-        // Utilisation du composant PlanningModals nettoyé
         React.createElement(window.PlanningModals, {
             showAddModal,
             setShowAddModal,
@@ -724,5 +644,4 @@ const ProductionPlanning = ({ onClose }) => {
     );
 };
 
-// Make it available globally
 window.ProductionPlanning = ProductionPlanning;
