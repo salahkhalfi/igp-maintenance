@@ -20,6 +20,11 @@ const AdminRoles = ({ onBack }) => {
         setCustomRolesCount(roles.filter(r => r.is_system === 0).length);
     }, [roles]);
 
+    // Initial load
+    React.useEffect(() => {
+        fetchData();
+    }, []);
+
     const fetchData = async () => {
         setLoading(true);
         setError(null);
