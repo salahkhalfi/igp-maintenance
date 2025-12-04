@@ -44,9 +44,9 @@ export const homeHTML = `
     <script src="/static/js/hooks/useTickets.js"></script>
     <script src="/static/js/hooks/useMachines.js"></script>
     <script src="/static/js/components/AppHeader.js"></script>
-    <script src="/static/js/components/planning/PlanningNotes.js"></script>
-    <script src="/static/js/components/planning/PlanningModals.js"></script>
-    <script src="/static/js/components/ProductionPlanning.js"></script>
+    <script src="/static/js/components/planning/PlanningNotes.js?v=2.14.180"></script>
+    <script src="/static/js/components/planning/PlanningModals.js?v=2.14.180"></script>
+    <script src="/static/js/components/ProductionPlanning.js?v=2.14.180"></script>
     <script src="/static/js/components/KanbanBoard.js"></script>
     <script src="/static/js/components/AdminRoles.js"></script>
     <script src="/static/js/components/ManageColumnsModal.js"></script>
