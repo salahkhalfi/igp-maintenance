@@ -135,10 +135,12 @@ const PlanningModals = ({
                                     ),
                                     React.createElement('div', { className: 'flex items-center gap-1' },
                                         React.createElement('button', {
+                                            type: 'button',
                                             onClick: () => onEditCategoryClick(cat),
                                             className: 'text-slate-400 hover:text-blue-600 p-2 hover:bg-blue-50 rounded-lg transition'
                                         }, React.createElement('i', { className: 'fas fa-pen' })),
                                         React.createElement('button', {
+                                            type: 'button',
                                             onClick: () => onDeleteCategory(cat.id),
                                             className: 'text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition'
                                         }, React.createElement('i', { className: 'fas fa-trash-alt' }))

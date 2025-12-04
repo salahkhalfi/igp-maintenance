@@ -459,12 +459,12 @@ const ProductionPlanning = ({ onClose }) => {
         React.createElement('div', { className: 'bg-white border-b py-2 px-2 lg:px-6 flex flex-col lg:flex-row gap-3 lg:gap-4 items-stretch lg:items-center shadow-sm z-10 shrink-0' },
             
             // 1. FILTERS CONTAINER (Scrollable on Mobile)
-            React.createElement('div', { className: 'flex items-center overflow-hidden' },
+            React.createElement('div', { className: 'flex items-center overflow-hidden w-full lg:w-auto min-w-0' },
                 React.createElement('span', { className: 'text-xs font-bold text-slate-400 uppercase tracking-wider mr-2 shrink-0 hidden lg:inline' }, 'Filtres :'),
                 
                 React.createElement('div', { 
-                    className: 'flex overflow-x-auto gap-2 items-center pb-1 lg:pb-0 w-full no-scrollbar',
-                    style: { scrollbarWidth: 'none', msOverflowStyle: 'none' } // Hide scrollbar
+                    className: 'flex overflow-x-auto gap-2 items-center pb-2 lg:pb-0 w-full no-scrollbar mask-linear-fade',
+                    style: { scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } // Smooth scrolling
                 },
                     React.createElement('button', {
                         onClick: () => setActiveFilter('all'),
