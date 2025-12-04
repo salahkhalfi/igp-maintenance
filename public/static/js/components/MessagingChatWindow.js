@@ -239,6 +239,61 @@ const MessagingChatWindow = ({
         }
     };
 
+    // Format message content with links/buttons
+    const formatMessageContent = (content) => {
+        // Regex for [Label](/url)
+        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = linkRegex.exec(content)) !== null) {
+            // Add text before the link
+            if (match.index > lastIndex) {
+                parts.push(content.substring(lastIndex, match.index));
+            }
+
+            const label = match[1];
+            const url = match[2];
+
+            // Add the link as a button
+            parts.push(React.createElement('button', {
+                key: match.index,
+                onClick: (e) => {
+                    e.stopPropagation(); 
+                    // Handle internal actions
+                    if (url === '/planning') {
+                        // Close current modal first
+                        if (onClose) onClose();
+                        // Dispatch event for MainApp
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('open-planning'));
+                        }, 100);
+                    } else if (url.startsWith('/')) {
+                        // Other internal links - reload to root with param
+                        window.location.href = url;
+                    } else {
+                        // External links
+                        window.open(url, '_blank');
+                    }
+                },
+                className: 'inline-flex items-center gap-1.5 px-3 py-1 my-1 mx-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold text-xs shadow-sm transform hover:scale-105'
+            },
+                React.createElement('i', { className: 'fas fa-external-link-alt' }),
+                label
+            ));
+
+            lastIndex = linkRegex.lastIndex;
+        }
+
+        // Add remaining text
+        if (lastIndex < content.length) {
+            parts.push(content.substring(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : content;
+    };
+
     // RENDER
     if (activeTab === 'private' && !selectedContact) {
         return React.createElement('div', { className: 'flex-1 flex items-center justify-center bg-gray-50' },
@@ -363,9 +418,9 @@ const MessagingChatWindow = ({
                             ),
                             msg.audio_duration ? React.createElement('p', { className: 'text-[10px] text-gray-500 mt-1 text-right' }, formatRecordingDuration(msg.audio_duration)) : null
                         ) : React.createElement('div', { className: 'flex flex-col ' + (isMe ? 'items-end' : 'items-start') },
-                            React.createElement('p', { 
+                            React.createElement('div', { 
                                 className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
-                            }, msg.content),
+                            }, formatMessageContent(msg.content)),
                             activeTab === 'private' ? React.createElement('span', { className: 'text-[10px] text-gray-400 mt-1 opacity-70' }, formatMessageTime(msg.created_at)) : null
                         ),
                         canDelete(msg) && !selectionMode ? React.createElement('button', {

@@ -132,6 +132,19 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }
     }, [tickets]);
 
+    // Listener for 'open-planning' event
+    React.useEffect(() => {
+        const handleOpenPlanning = () => {
+            if (activeModules.planning) {
+                setShowProductionPlanning(true);
+            } else {
+                alert("Le module Planning n'est pas activé.");
+            }
+        };
+        window.addEventListener('open-planning', handleOpenPlanning);
+        return () => window.removeEventListener('open-planning', handleOpenPlanning);
+    }, [activeModules]);
+
     // Service Worker Messages
     React.useEffect(() => {
         const handleServiceWorkerMessage = (event) => {
