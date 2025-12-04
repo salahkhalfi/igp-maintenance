@@ -361,9 +361,17 @@ app.get('/api/stats/active-tickets', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     
-    // Only admins and supervisors can see stats
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
-      return c.json({ error: 'Accès refusé' }, 403);
+    // Allow access to dashboard stats for most roles
+    const allowedRoles = ['admin', 'supervisor', 'director', 'coordinator', 'planner', 'senior_technician', 'technician', 'team_leader'];
+    
+    if (!user || !allowedRoles.includes(user.role)) {
+      // For other roles (operators, etc.), return 0 counts instead of 403 to avoid console errors
+      return c.json({
+        activeTickets: 0,
+        overdueTickets: 0,
+        activeTechnicians: 0,
+        pushDevices: 0
+      });
     }
 
     // Count active tickets (not completed, not cancelled, not archived)
