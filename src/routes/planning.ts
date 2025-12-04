@@ -1,12 +1,71 @@
 
 import { Hono } from 'hono';
 import { Bindings } from '../types';
-import { authMiddleware, requirePermission } from '../middlewares/auth';
+import { authMiddleware, requirePermission, adminOnly } from '../middlewares/auth';
+import { getDb } from '../db';
+import { messages } from '../db/schema';
+import { sendPushNotification } from './push';
+import { formatUserName } from '../utils/userFormatter';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
 // Middleware d'authentification pour toutes les routes planning
 app.use('*', authMiddleware);
+
+/**
+ * POST /api/planning/share
+ * Partager le planning avec un utilisateur spécifique (envoie une notification/message)
+ */
+app.post('/share', adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const body = await c.req.json();
+    const { targetUserId, message } = body;
+
+    if (!targetUserId) {
+      return c.json({ error: 'Utilisateur cible requis' }, 400);
+    }
+
+    const db = getDb(c.env);
+    const senderName = formatUserName(user, 'L\'administrateur');
+
+    // 1. Créer le contenu du message
+    const defaultMessage = "📅 Je vous invite à consulter le planning de production.";
+    const content = message || defaultMessage;
+    const fullContent = `${content} [Voir le Planning](/planning)`;
+
+    // 2. Insérer dans la messagerie interne
+    const result = await db.insert(messages).values({
+      sender_id: Number(user.userId),
+      recipient_id: Number(targetUserId),
+      message_type: 'private',
+      content: fullContent,
+      is_read: 0
+    }).returning();
+    
+    // 3. Envoyer la notification Push
+    const pushResult = await sendPushNotification(c.env, Number(targetUserId), {
+      title: '📅 Planning Partagé',
+      body: `${senderName} vous a partagé le planning de production.`,
+      icon: '/icon-192.png',
+      data: {
+        url: '/planning',
+        action: 'share_planning',
+        senderId: user.userId
+      }
+    });
+
+    return c.json({ 
+      success: true, 
+      message: 'Invitation envoyée avec succès',
+      pushSent: pushResult.success
+    });
+
+  } catch (error) {
+    console.error('Share planning error:', error);
+    return c.json({ error: 'Erreur lors du partage du planning' }, 500);
+  }
+});
 
 /**
  * GET /api/planning

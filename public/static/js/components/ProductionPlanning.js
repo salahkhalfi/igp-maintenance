@@ -128,6 +128,19 @@ const ProductionPlanning = ({ onClose }) => {
     const [draggedEventId, setDraggedEventId] = React.useState(null);
     const [showMobileNotes, setShowMobileNotes] = React.useState(false);
     
+    const [showShareModal, setShowShareModal] = React.useState(false);
+
+    const handleSharePlanning = async (userId, message) => {
+        try {
+            await axios.post('/api/planning/share', { targetUserId: userId, message });
+            alert('Invitation envoyée avec succès !');
+        } catch (err) {
+            console.error(err);
+            alert('Erreur lors de l\'envoi : ' + (err.response?.data?.error || err.message));
+            throw err;
+        }
+    };
+
     const [notificationPerm, setNotificationPerm] = React.useState(
         typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
@@ -384,6 +397,12 @@ const ProductionPlanning = ({ onClose }) => {
                 ),
 
                 React.createElement('div', { className: 'flex items-center gap-2' },
+                    React.createElement('button', {
+                        onClick: () => setShowShareModal(true),
+                        title: 'Partager le planning',
+                        className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition shadow-sm'
+                    }, React.createElement('i', { className: 'fas fa-share-alt' })),
+
                     React.createElement('button', { 
                         onClick: () => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar'),
                         title: viewMode === 'calendar' ? 'Passer en vue TV / Liste' : 'Passer en vue Calendrier',
@@ -640,7 +659,107 @@ const ProductionPlanning = ({ onClose }) => {
             onCancelEditCategory: handleCancelEdit,
             onDeleteCategory: handleDeleteCategory,
             onSaveCategory: handleSaveCategory
+        }),
+
+        showShareModal && React.createElement(ShareModal, {
+            onClose: () => setShowShareModal(false),
+            onShare: handleSharePlanning
         })
+    );
+};
+
+const ShareModal = ({ onClose, onShare }) => {
+    const [users, setUsers] = React.useState([]);
+    const [selectedUser, setSelectedUser] = React.useState('');
+    const [message, setMessage] = React.useState('');
+    const [loading, setLoading] = React.useState(true);
+    const [sending, setSending] = React.useState(false);
+    const [error, setError] = React.useState(null);
+
+    React.useEffect(() => {
+        axios.get('/api/messages/available-users')
+            .then(res => {
+                setUsers(res.data.users || []);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Error fetching users:', err);
+                setError('Impossible de charger les utilisateurs');
+                setLoading(false);
+            });
+    }, []);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        
+        setSending(true);
+        try {
+            await onShare(selectedUser, message);
+            onClose();
+        } catch (err) {
+            setError('Erreur lors du partage');
+            setSending(false);
+        }
+    };
+
+    return React.createElement('div', { className: 'fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn' },
+        React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-slideUp' },
+            React.createElement('div', { className: 'p-4 border-b flex justify-between items-center bg-gray-50' },
+                React.createElement('h3', { className: 'font-bold text-gray-800 flex items-center gap-2' },
+                    React.createElement('i', { className: 'fas fa-share-alt text-blue-600' }),
+                    'Partager le planning'
+                ),
+                React.createElement('button', { onClick: onClose, className: 'text-gray-400 hover:text-gray-600' },
+                    React.createElement('i', { className: 'fas fa-times' })
+                )
+            ),
+            React.createElement('form', { onSubmit: handleSubmit, className: 'p-6' },
+                error && React.createElement('div', { className: 'mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm' }, error),
+                
+                React.createElement('div', { className: 'mb-4' },
+                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Destinataire'),
+                    loading ? 
+                        React.createElement('div', { className: 'text-sm text-gray-500' }, 'Chargement...') :
+                        React.createElement('select', {
+                            className: 'w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none',
+                            value: selectedUser,
+                            onChange: (e) => setSelectedUser(e.target.value),
+                            required: true
+                        },
+                            React.createElement('option', { value: '' }, '-- Sélectionner un utilisateur --'),
+                            users.map(u => React.createElement('option', { key: u.id, value: u.id }, u.full_name || u.email))
+                        )
+                ),
+                
+                React.createElement('div', { className: 'mb-6' },
+                    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Message (optionnel)'),
+                    React.createElement('textarea', {
+                        className: 'w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm',
+                        rows: 3,
+                        value: message,
+                        onChange: (e) => setMessage(e.target.value),
+                        placeholder: "Je vous invite à consulter le planning de production..."
+                    })
+                ),
+                
+                React.createElement('div', { className: 'flex justify-end gap-3' },
+                    React.createElement('button', {
+                        type: 'button',
+                        onClick: onClose,
+                        className: 'px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md'
+                    }, 'Annuler'),
+                    React.createElement('button', {
+                        type: 'submit',
+                        disabled: !selectedUser || sending,
+                        className: `px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm flex items-center gap-2 ${sending ? 'opacity-70 cursor-not-allowed' : ''}`
+                    },
+                        sending && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                        'Envoyer l\'invitation'
+                    )
+                )
+            )
+        )
     );
 };
 
