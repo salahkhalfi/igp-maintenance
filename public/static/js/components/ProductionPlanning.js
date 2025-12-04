@@ -687,7 +687,7 @@ const ProductionPlanning = ({ onClose }) => {
                         );
                     })
                 )
-            ),
+            )),
 
             // Utilisation du composant PlanningNotes nettoyé
             // Only show notes in Calendar mode, or if forced open on mobile
