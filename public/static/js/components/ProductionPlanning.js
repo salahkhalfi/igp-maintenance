@@ -215,12 +215,14 @@ const ProductionPlanning = ({ onClose }) => {
         const formData = new FormData(e.target);
         const text = formData.get('text');
         const time = formData.get('time');
+        const date = formData.get('date');
         if (!text) return;
 
         const newNote = {
             id: Date.now(), // Temp ID
             text: text,
             time: time,
+            date: date,
             done: false,
             priority: 'medium',
             notified: false

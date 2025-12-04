@@ -7,9 +7,10 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
         const formData = new FormData(e.target);
         const text = formData.get('text');
         const time = formData.get('time');
+        const date = formData.get('date');
 
         if (editingNote) {
-            onUpdate(editingNote.id, { text, time });
+            onUpdate(editingNote.id, { text, time, date });
             setEditingNote(null);
         } else {
             onAdd(e);
@@ -79,11 +80,15 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
                         React.createElement('div', { className: 'flex-1 pr-4' },
                             React.createElement('p', { className: `text-sm leading-snug font-medium ${note.done ? 'text-gray-400 line-through' : 'text-slate-700'}` }, note.text),
                             
-                            // Meta info (Time & Priority)
-                            React.createElement('div', { className: 'mt-2 flex items-center gap-2' },
+                            // Meta info (Time, Date & Priority)
+                            React.createElement('div', { className: 'mt-2 flex items-center gap-2 flex-wrap' },
                                 note.time && React.createElement('span', { className: `text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${note.notified ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'}` },
                                     React.createElement('i', { className: 'far fa-clock' }),
                                     note.time
+                                ),
+                                note.date && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 bg-purple-50 text-purple-600' },
+                                    React.createElement('i', { className: 'far fa-calendar' }),
+                                    new Date(note.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
                                 ),
                                 note.priority === 'high' && !note.done && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-red-50 text-red-600 rounded-full font-bold uppercase tracking-wide' }, 'Urgent')
                             )
@@ -111,11 +116,18 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
                 }),
                 React.createElement('div', { className: 'flex gap-2' },
                     React.createElement('input', { 
+                        name: 'date',
+                        type: 'date',
+                        defaultValue: editingNote ? editingNote.date : '',
+                        key: editingNote ? `date-${editingNote.id}` : 'date-new',
+                        className: 'w-28 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                    }),
+                    React.createElement('input', { 
                         name: 'time',
                         type: 'time',
                         defaultValue: editingNote ? editingNote.time : '',
                         key: editingNote ? `time-${editingNote.id}` : 'time-new',
-                        className: 'w-24 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                        className: 'w-20 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
                     }),
                     React.createElement('button', { 
                         type: 'submit',

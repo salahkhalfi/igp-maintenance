@@ -170,27 +170,27 @@ app.post('/notes', async (c) => {
   try {
     const user = c.get('user') as any;
     const body = await c.req.json();
-    const { text, time, priority } = body;
+    const { text, time, date, priority } = body;
 
     // Essayer d'insérer avec user_id
     try {
       const result = await c.env.DB.prepare(
-        `INSERT INTO planner_notes (text, time, priority, done, user_id) VALUES (?, ?, ?, 0, ?)`
-      ).bind(text, time, priority || 'medium', user.id).run();
+        `INSERT INTO planner_notes (text, time, date, priority, done, user_id) VALUES (?, ?, ?, ?, 0, ?)`
+      ).bind(text, time, date || null, priority || 'medium', user.id).run();
       
       return c.json({
         id: result.meta.last_row_id,
-        text, time, priority, done: false, user_id: user.id
+        text, time, date, priority, done: false, user_id: user.id
       }, 201);
     } catch (e) {
       // Fallback sans user_id (si migration pas appliquée)
       const result = await c.env.DB.prepare(
-        `INSERT INTO planner_notes (text, time, priority, done) VALUES (?, ?, ?, 0)`
-      ).bind(text, time, priority || 'medium').run();
+        `INSERT INTO planner_notes (text, time, date, priority, done) VALUES (?, ?, ?, ?, 0)`
+      ).bind(text, time, date || null, priority || 'medium').run();
       
       return c.json({
         id: result.meta.last_row_id,
-        text, time, priority, done: false
+        text, time, date, priority, done: false
       }, 201);
     }
   } catch (error) {
@@ -218,6 +218,10 @@ app.put('/notes/:id', async (c) => {
     if (body.time !== undefined) {
       updates.push('time = ?');
       values.push(body.time);
+    }
+    if (body.date !== undefined) {
+      updates.push('date = ?');
+      values.push(body.date);
     }
     if (body.priority !== undefined) {
       updates.push('priority = ?');
