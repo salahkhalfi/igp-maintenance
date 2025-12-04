@@ -412,8 +412,8 @@ const ProductionPlanning = ({ onClose }) => {
 
     return React.createElement('div', { className: 'fixed inset-0 z-[150] bg-gray-100 flex flex-col animate-fadeIn' },
         // HEADER
-        React.createElement('div', { className: 'bg-white border-b px-3 lg:px-6 py-2 lg:py-3 flex justify-between items-center shadow-sm z-20 shrink-0' },
-            React.createElement('div', { className: 'flex-1 min-w-0' },
+        React.createElement('div', { className: 'bg-white border-b p-3 lg:px-6 lg:py-3 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-0 shadow-sm z-20 shrink-0' },
+            React.createElement('div', { className: 'flex-1 min-w-0 w-full md:w-auto' },
                 React.createElement('h1', { className: 'text-lg lg:text-2xl font-bold text-slate-800 flex items-center gap-2 lg:gap-3 truncate' },
                     React.createElement('div', { className: 'bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-sm shrink-0' },
                         React.createElement('i', { className: 'far fa-calendar-alt text-lg' })
@@ -426,38 +426,42 @@ const ProductionPlanning = ({ onClose }) => {
                     React.createElement('span', null, 'Vue Directeur')
                 )
             ),
-            React.createElement('div', { className: 'flex items-center gap-3' },
+            React.createElement('div', { className: 'flex items-center justify-between md:justify-end gap-2 w-full md:w-auto' },
                 // Bouton Gestion Catégories
-                React.createElement('button', { 
-                    onClick: () => setShowCategoryModal(true),
-                    className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition shadow-sm'
-                }, React.createElement('i', { className: 'fas fa-cog' })),
+                React.createElement('div', { className: 'flex items-center gap-2' },
+                    React.createElement('button', { 
+                        onClick: () => setShowCategoryModal(true),
+                        className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition shadow-sm'
+                    }, React.createElement('i', { className: 'fas fa-cog' })),
 
-                // Bouton Notes Mobile
-                React.createElement('button', { 
-                    onClick: () => setShowMobileNotes(!showMobileNotes),
-                    className: `lg:hidden w-10 h-10 flex items-center justify-center rounded-lg transition ${showMobileNotes ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'}`
-                }, React.createElement('i', { className: 'fas fa-sticky-note' })),
-
-                React.createElement('button', { 
-                    onClick: () => { 
-                        // Date par défaut : Aujourd'hui ou le 1er du mois affiché
-                        const today = new Date();
-                        const defaultDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(Math.max(1, Math.min(today.getDate(), daysInMonth))).padStart(2, '0')}`;
-                        setNewEventDate(defaultDate); 
-                        setSelectedEvent(null);
-                        setShowAddModal(true); 
-                    },
-                    className: 'flex px-3 lg:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition font-semibold items-center gap-2' 
-                },
-                    React.createElement('i', { className: 'fas fa-plus' }),
-                    React.createElement('span', { className: 'hidden sm:inline' }, 'Nouvel Événement')
+                    // Bouton Notes Mobile
+                    React.createElement('button', { 
+                        onClick: () => setShowMobileNotes(!showMobileNotes),
+                        className: `lg:hidden w-10 h-10 flex items-center justify-center rounded-lg transition ${showMobileNotes ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-500'}`
+                    }, React.createElement('i', { className: 'fas fa-sticky-note' }))
                 ),
-                React.createElement('div', { className: 'h-8 w-px bg-gray-200 mx-1' }),
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition shadow-sm'
-                }, 'Fermer')
+
+                React.createElement('div', { className: 'flex items-center gap-2' },
+                    React.createElement('button', { 
+                        onClick: () => { 
+                            // Date par défaut : Aujourd'hui ou le 1er du mois affiché
+                            const today = new Date();
+                            const defaultDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(Math.max(1, Math.min(today.getDate(), daysInMonth))).padStart(2, '0')}`;
+                            setNewEventDate(defaultDate); 
+                            setSelectedEvent(null);
+                            setShowAddModal(true); 
+                        },
+                        className: 'flex px-3 lg:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition font-semibold items-center gap-2' 
+                    },
+                        React.createElement('i', { className: 'fas fa-plus' }),
+                        React.createElement('span', { className: 'hidden sm:inline' }, 'Nouvel Événement')
+                    ),
+                    React.createElement('div', { className: 'h-8 w-px bg-gray-200 mx-1 hidden md:block' }),
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition shadow-sm'
+                    }, 'Fermer')
+                )
             )
         ),
 
