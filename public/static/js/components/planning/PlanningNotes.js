@@ -1,5 +1,30 @@
 // Composant : Panneau Latéral "Notes & Rappels"
-const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onToggle, onDelete, notificationPerm, onRequestPerm }) => {
+const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onToggle, onDelete, notificationPerm, onRequestPerm }) => {
+    const [editingNote, setEditingNote] = React.useState(null); // null or note object
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const text = formData.get('text');
+        const time = formData.get('time');
+
+        if (editingNote) {
+            onUpdate(editingNote.id, { text, time });
+            setEditingNote(null);
+        } else {
+            onAdd(e);
+        }
+        e.target.reset();
+    };
+
+    // Reset form when canceling edit
+    const handleCancelEdit = () => {
+        setEditingNote(null);
+        // Optional: Reset form fields visually if not controlled
+        const form = document.getElementById('note-form');
+        if (form) form.reset();
+    };
+
     return React.createElement('div', { className: `${showMobile ? 'absolute inset-0 z-50' : 'hidden'} lg:relative lg:flex lg:w-80 bg-white border-l border-gray-200 flex-col shadow-xl transition-all` },
         React.createElement('div', { className: 'p-5 border-b bg-slate-50 flex justify-between items-center' },
             React.createElement('h3', { className: 'font-bold text-slate-800 flex items-center gap-2' },
@@ -30,11 +55,17 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onToggle, onDe
         React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 space-y-3' },
             notes.map(note => 
                 React.createElement('div', { key: note.id, className: 'bg-white p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition group animate-slideIn relative' },
-                    // Delete button (visible on hover)
-                    React.createElement('button', {
-                        onClick: () => onDelete(note.id),
-                        className: 'absolute top-2 right-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition'
-                    }, React.createElement('i', { className: 'fas fa-times' })),
+                    // Delete & Edit buttons (visible on hover)
+                    React.createElement('div', { className: 'absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition' },
+                        React.createElement('button', {
+                            onClick: () => setEditingNote(note),
+                            className: 'text-gray-300 hover:text-blue-500 p-1'
+                        }, React.createElement('i', { className: 'fas fa-pen text-xs' })),
+                        React.createElement('button', {
+                            onClick: () => onDelete(note.id),
+                            className: 'text-gray-300 hover:text-red-500 p-1'
+                        }, React.createElement('i', { className: 'fas fa-times text-xs' }))
+                    ),
 
                     React.createElement('div', { className: 'flex items-start gap-3' },
                         React.createElement('div', { 
@@ -62,28 +93,38 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onToggle, onDe
             )
         ),
 
-        // Add Input
+        // Add/Edit Input
         React.createElement('div', { className: 'p-4 border-t bg-gray-50' },
-            React.createElement('form', { onSubmit: onAdd, className: 'relative flex flex-col gap-2' },
+            React.createElement('form', { id: 'note-form', onSubmit: handleEditSubmit, className: 'relative flex flex-col gap-2' },
+                editingNote && React.createElement('div', { className: 'flex justify-between items-center text-xs text-blue-600 mb-1 font-bold' },
+                    'Modification en cours...',
+                    React.createElement('button', { type: 'button', onClick: handleCancelEdit, className: 'text-gray-500 hover:text-gray-700 underline' }, 'Annuler')
+                ),
                 React.createElement('input', { 
                     name: 'text',
                     type: 'text', 
                     required: true,
-                    placeholder: 'Ajouter une tâche...',
+                    defaultValue: editingNote ? editingNote.text : '',
+                    key: editingNote ? `edit-${editingNote.id}` : 'new', // Force re-render on switch
+                    placeholder: editingNote ? 'Modifier la tâche...' : 'Ajouter une tâche...',
                     className: 'w-full pl-4 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition'
                 }),
                 React.createElement('div', { className: 'flex gap-2' },
                     React.createElement('input', { 
                         name: 'time',
                         type: 'time',
+                        defaultValue: editingNote ? editingNote.time : '',
+                        key: editingNote ? `time-${editingNote.id}` : 'time-new',
                         className: 'w-24 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
                     }),
                     React.createElement('button', { 
                         type: 'submit',
-                        className: 'flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-xs font-bold transition shadow-sm flex items-center justify-center gap-2' 
+                        className: `flex-1 rounded-lg py-2 text-xs font-bold transition shadow-sm flex items-center justify-center gap-2 ${
+                            editingNote ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }` 
                     },
-                        'Ajouter',
-                        React.createElement('i', { className: 'fas fa-plus' })
+                        editingNote ? 'Enregistrer' : 'Ajouter',
+                        React.createElement('i', { className: editingNote ? 'fas fa-save' : 'fas fa-plus' })
                     )
                 )
             )

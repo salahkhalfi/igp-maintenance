@@ -238,16 +238,20 @@ const ProductionPlanning = ({ onClose }) => {
         e.target.reset();
     };
 
+    // Update Note Handler (New)
+    const handleUpdateNote = (id, updatedData) => {
+        // Optimistic Update
+        setPlannerNotes(current => current.map(n => n.id === id ? { ...n, ...updatedData } : n));
+
+        axios.put(`/api/planning/notes/${id}`, updatedData)
+            .catch(err => console.error('Error updating note:', err));
+    };
+
     // Toggle Note Done
     const toggleNote = (id) => {
         const note = plannerNotes.find(n => n.id === id);
         if (!note) return;
-        
-        const newDone = !note.done;
-        setPlannerNotes(plannerNotes.map(n => n.id === id ? { ...n, done: newDone } : n));
-        
-        axios.put(`/api/planning/notes/${id}`, { done: newDone })
-            .catch(err => console.error('Error toggling note:', err));
+        handleUpdateNote(id, { done: !note.done });
     };
 
     // Delete Note
@@ -592,6 +596,7 @@ const ProductionPlanning = ({ onClose }) => {
                 showMobile: showMobileNotes,
                 onCloseMobile: () => setShowMobileNotes(false),
                 onAdd: handleAddNote,
+                onUpdate: handleUpdateNote, // New prop
                 onToggle: toggleNote,
                 onDelete: deleteNote,
                 notificationPerm: notificationPerm,

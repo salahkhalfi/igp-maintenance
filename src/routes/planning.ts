@@ -202,12 +202,35 @@ app.put('/notes/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const body = await c.req.json();
-    
+
+    // Construction dynamique de la requête UPDATE
+    const updates: string[] = [];
+    const values: any[] = [];
+
     if (body.done !== undefined) {
-      await c.env.DB.prepare(
-        'UPDATE planner_notes SET done = ? WHERE id = ?'
-      ).bind(body.done ? 1 : 0, id).run();
+      updates.push('done = ?');
+      values.push(body.done ? 1 : 0);
     }
+    if (body.text !== undefined) {
+      updates.push('text = ?');
+      values.push(body.text);
+    }
+    if (body.time !== undefined) {
+      updates.push('time = ?');
+      values.push(body.time);
+    }
+    if (body.priority !== undefined) {
+      updates.push('priority = ?');
+      values.push(body.priority);
+    }
+
+    if (updates.length === 0) return c.json({ message: 'Rien à modifier' });
+
+    values.push(id);
+
+    await c.env.DB.prepare(
+      `UPDATE planner_notes SET ${updates.join(', ')} WHERE id = ?`
+    ).bind(...values).run();
 
     return c.json({ success: true });
   } catch (error) {
