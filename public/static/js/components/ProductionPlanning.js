@@ -622,75 +622,75 @@ const ProductionPlanning = ({ onClose }) => {
                     )
                 )
             ) : (
-            // CALENDAR GRID
-            React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-hidden' },
-                // Days Header (5 jours - Desktop Only)
-                React.createElement('div', { className: 'hidden lg:grid grid-cols-5 border-b bg-white shadow-sm' },
-                    ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'].map(day => 
-                        React.createElement('div', { key: day, className: 'py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider' }, day)
-                    )
-                ),
+                // CALENDAR GRID
+                React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-hidden' },
+                    // Days Header (5 jours - Desktop Only)
+                    React.createElement('div', { className: 'hidden lg:grid grid-cols-5 border-b bg-white shadow-sm' },
+                        ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'].map(day => 
+                            React.createElement('div', { key: day, className: 'py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider' }, day)
+                        )
+                    ),
 
-                // Calendar Cells
-                React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
-                    workDays.map((dayObj, idx) => {
-                        const dayEvents = getEventsForDay(dayObj.dateStr);
-                        const dayNames = ['Dim', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Sam'];
-                        
-                        return React.createElement('div', { 
-                            key: dayObj.dateStr, 
-                            onDragOver: handleDragOver,
-                            onDrop: (e) => handleDrop(e, dayObj.dateStr),
-                            className: `rounded-xl border bg-white border-slate-200 hover:shadow-md hover:border-blue-300 p-3 flex flex-col gap-2 relative transition-all group min-h-[140px]` 
-                        },
-                            React.createElement('div', { className: 'flex justify-between items-start mb-1' },
-                                React.createElement('div', { className: 'flex items-center gap-2' },
-                                    React.createElement('span', { 
-                                        className: `text-lg font-bold w-8 h-8 flex items-center justify-center rounded-full ${
-                                            dayObj.num === new Date().getDate() && currentDate.getMonth() === new Date().getMonth() ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 bg-slate-100'
-                                        }` 
-                                    }, dayObj.num),
-                                    // Mobile Day Name
-                                    React.createElement('span', { className: 'lg:hidden text-sm font-bold text-slate-500 uppercase' }, dayNames[dayObj.dayOfWeek])
-                                ),
-                                // Add Button (Always visible on mobile, hover on desktop)
-                                React.createElement('button', { 
-                                    onClick: () => { setSelectedEvent(null); setNewEventDate(dayObj.dateStr); setShowAddModal(true); },
-                                    className: 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
-                                }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
-                            ),
+                    // Calendar Cells
+                    React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
+                        workDays.map((dayObj, idx) => {
+                            const dayEvents = getEventsForDay(dayObj.dateStr);
+                            const dayNames = ['Dim', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Sam'];
                             
-                            // Events List
-                            React.createElement('div', { className: 'flex-1 overflow-y-auto space-y-1 custom-scrollbar' },
-                                dayEvents.map((evt, eIdx) => 
-                                    React.createElement('div', { 
-                                        key: eIdx, 
-                                        draggable: true,
-                                        onClick: (e) => handleEditEventClick(e, evt),
-                                        onDragStart: (e) => handleDragStart(e, evt.id),
-                                        onDragEnd: handleDragEnd,
-                                        className: `text-xs p-2 rounded-lg shadow-sm cursor-pointer hover:scale-[1.02] transition-transform border border-transparent ${getCategoryStyle(evt.type, evt.status)}`,
-                                        title: 'Cliquez pour modifier'
-                                    },
-                                        React.createElement('div', { className: 'flex items-center justify-between mb-0.5' },
-                                            React.createElement('div', { className: 'flex items-center gap-1.5' },
-                                                React.createElement('i', { className: `fas ${getCategoryIcon(evt.type)}` }),
-                                                React.createElement('span', { className: 'font-bold truncate max-w-[80px]' }, categories.find(c => c.id === evt.type)?.label || 'Autre')
+                            return React.createElement('div', { 
+                                key: dayObj.dateStr, 
+                                onDragOver: handleDragOver,
+                                onDrop: (e) => handleDrop(e, dayObj.dateStr),
+                                className: `rounded-xl border bg-white border-slate-200 hover:shadow-md hover:border-blue-300 p-3 flex flex-col gap-2 relative transition-all group min-h-[140px]` 
+                            },
+                                React.createElement('div', { className: 'flex justify-between items-start mb-1' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('span', { 
+                                            className: `text-lg font-bold w-8 h-8 flex items-center justify-center rounded-full ${
+                                                dayObj.num === new Date().getDate() && currentDate.getMonth() === new Date().getMonth() ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 bg-slate-100'
+                                            }` 
+                                        }, dayObj.num),
+                                        // Mobile Day Name
+                                        React.createElement('span', { className: 'lg:hidden text-sm font-bold text-slate-500 uppercase' }, dayNames[dayObj.dayOfWeek])
+                                    ),
+                                    // Add Button (Always visible on mobile, hover on desktop)
+                                    React.createElement('button', { 
+                                        onClick: () => { setSelectedEvent(null); setNewEventDate(dayObj.dateStr); setShowAddModal(true); },
+                                        className: 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
+                                    }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
+                                ),
+                                
+                                // Events List
+                                React.createElement('div', { className: 'flex-1 overflow-y-auto space-y-1 custom-scrollbar' },
+                                    dayEvents.map((evt, eIdx) => 
+                                        React.createElement('div', { 
+                                            key: eIdx, 
+                                            draggable: true,
+                                            onClick: (e) => handleEditEventClick(e, evt),
+                                            onDragStart: (e) => handleDragStart(e, evt.id),
+                                            onDragEnd: handleDragEnd,
+                                            className: `text-xs p-2 rounded-lg shadow-sm cursor-pointer hover:scale-[1.02] transition-transform border border-transparent ${getCategoryStyle(evt.type, evt.status)}`,
+                                            title: 'Cliquez pour modifier'
+                                        },
+                                            React.createElement('div', { className: 'flex items-center justify-between mb-0.5' },
+                                                React.createElement('div', { className: 'flex items-center gap-1.5' },
+                                                    React.createElement('i', { className: `fas ${getCategoryIcon(evt.type)}` }),
+                                                    React.createElement('span', { className: 'font-bold truncate max-w-[80px]' }, categories.find(c => c.id === evt.type)?.label || 'Autre')
+                                                ),
+                                                evt.status === 'tentative' && React.createElement('i', { className: 'fas fa-question-circle opacity-50' })
                                             ),
-                                            evt.status === 'tentative' && React.createElement('i', { className: 'fas fa-question-circle opacity-50' })
-                                        ),
-                                        React.createElement('div', { className: 'truncate font-medium leading-tight' }, evt.title),
-                                        evt.details && React.createElement('div', { className: 'text-[10px] opacity-75 truncate mt-0.5' }, evt.details)
+                                            React.createElement('div', { className: 'truncate font-medium leading-tight' }, evt.title),
+                                            evt.details && React.createElement('div', { className: 'text-[10px] opacity-75 truncate mt-0.5' }, evt.details)
+                                        )
                                     )
                                 )
-                            )
-                        );
-                    })
+                            );
+                        })
+                    )
                 )
-            )),
+            ),
 
             // Utilisation du composant PlanningNotes nettoyé
-            // Only show notes in Calendar mode, or if forced open on mobile
             viewMode === 'calendar' ? React.createElement(window.PlanningNotes, {
                 notes: plannerNotes,
                 showMobile: showMobileNotes,
