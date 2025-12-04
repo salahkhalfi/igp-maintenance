@@ -15,6 +15,7 @@ const ProductionPlanning = ({ onClose }) => {
     };
     
     const [activeFilter, setActiveFilter] = React.useState('all');
+    const [viewMode, setViewMode] = React.useState('calendar'); // 'calendar' or 'list'
     
     // CATEGORIES STATE - Init with defaults to prevent "empty screen" syndrome
     const DEFAULT_CATEGORIES = [
@@ -442,6 +443,12 @@ const ProductionPlanning = ({ onClose }) => {
                 ),
 
                 React.createElement('div', { className: 'flex items-center gap-2' },
+                    // TV View Toggle
+                    React.createElement('button', { 
+                        onClick: () => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar'),
+                        className: `w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm ${viewMode === 'list' ? 'bg-slate-800 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`
+                    }, React.createElement('i', { className: viewMode === 'calendar' ? 'fas fa-tv' : 'fas fa-calendar-alt' })),
+
                     React.createElement('button', { 
                         onClick: () => { 
                             // Date par défaut : Aujourd'hui ou le 1er du mois affiché
@@ -529,6 +536,91 @@ const ProductionPlanning = ({ onClose }) => {
         // MAIN CONTENT (GRID + SIDEBAR)
         React.createElement('div', { className: 'flex-1 flex flex-col lg:flex-row overflow-hidden relative' },
             
+            // VIEW CONTENT
+            viewMode === 'list' ? (
+                // LIST / TV VIEW
+                React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-y-auto p-4 lg:p-8' },
+                    React.createElement('div', { className: 'max-w-5xl mx-auto w-full space-y-8' },
+                        (() => {
+                            // Filter events by current month and active filter
+                            const filteredEvents = events.filter(evt => {
+                                const evtDate = new Date(evt.date);
+                                if (evtDate.getMonth() !== currentDate.getMonth() || evtDate.getFullYear() !== currentDate.getFullYear()) return false;
+                                if (activeFilter !== 'all' && evt.type !== activeFilter) return false;
+                                return true;
+                            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                            if (filteredEvents.length === 0) {
+                                return React.createElement('div', { className: 'text-center py-20 text-gray-400' },
+                                    React.createElement('i', { className: 'fas fa-calendar-times text-6xl mb-4 opacity-50' }),
+                                    React.createElement('p', { className: 'text-xl font-medium' }, 'Aucun événement pour ce mois')
+                                );
+                            }
+
+                            // Group by date
+                            const eventsByDate = filteredEvents.reduce((acc, evt) => {
+                                if (!acc[evt.date]) acc[evt.date] = [];
+                                acc[evt.date].push(evt);
+                                return acc;
+                            }, {});
+
+                            return Object.keys(eventsByDate).map(dateStr => {
+                                const dateObj = new Date(dateStr);
+                                const dateLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                                
+                                return React.createElement('div', { key: dateStr, className: 'animate-slideIn' },
+                                    React.createElement('h3', { className: 'text-2xl font-bold text-slate-800 mb-4 capitalize flex items-center gap-3 border-b border-slate-200 pb-2' }, 
+                                        React.createElement('span', { className: 'text-blue-600' }, dateObj.getDate()),
+                                        dateLabel
+                                    ),
+                                    React.createElement('div', { className: 'grid gap-4' },
+                                        eventsByDate[dateStr].map(evt => {
+                                            const cat = categories.find(c => c.id === evt.type);
+                                            // Styles TV View (Larger, clearer)
+                                            const baseStyle = getCategoryStyle(evt.type, evt.status);
+                                            
+                                            return React.createElement('div', { 
+                                                key: evt.id,
+                                                onClick: (e) => handleEditEventClick(e, evt),
+                                                className: `bg-white rounded-xl shadow-sm border-l-8 p-6 cursor-pointer hover:shadow-lg transition-all ${baseStyle.replace('border-l-4', 'border-l-8')}`
+                                            },
+                                                React.createElement('div', { className: 'flex flex-col md:flex-row md:items-start justify-between gap-4' },
+                                                    React.createElement('div', { className: 'flex-1' },
+                                                        React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
+                                                            React.createElement('span', { className: `px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider flex items-center gap-2 w-fit ${
+                                                                cat?.color === 'blue' ? 'bg-blue-100 text-blue-800' :
+                                                                cat?.color === 'green' ? 'bg-green-100 text-green-800' :
+                                                                cat?.color === 'red' ? 'bg-red-100 text-red-800' :
+                                                                cat?.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                                                                'bg-gray-100 text-gray-800'
+                                                            }` },
+                                                                React.createElement('i', { className: `fas ${cat?.icon || 'fa-circle'}` }),
+                                                                cat?.label || 'Autre'
+                                                            ),
+                                                            evt.status === 'tentative' && React.createElement('span', { className: 'text-amber-500 font-bold text-sm flex items-center gap-1' },
+                                                                React.createElement('i', { className: 'fas fa-question-circle' }), 'À confirmer'
+                                                            )
+                                                        ),
+                                                        React.createElement('h4', { className: 'text-2xl font-bold text-slate-900 mb-2 leading-snug' }, evt.title),
+                                                        evt.details && React.createElement('div', { className: 'text-lg text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100 mt-2' }, 
+                                                            evt.details.split('\n').map((line, i) => React.createElement('p', { key: i, className: 'mb-1 last:mb-0' }, line))
+                                                        )
+                                                    ),
+                                                    React.createElement('div', { className: 'flex items-center gap-2 md:flex-col shrink-0' },
+                                                        React.createElement('button', { className: 'w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition' },
+                                                            React.createElement('i', { className: 'fas fa-pen text-xl' })
+                                                        )
+                                                    )
+                                                )
+                                            );
+                                        })
+                                    )
+                                );
+                            });
+                        })()
+                    )
+                )
+            ) : (
             // CALENDAR GRID
             React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-hidden' },
                 // Days Header (5 jours - Desktop Only)
