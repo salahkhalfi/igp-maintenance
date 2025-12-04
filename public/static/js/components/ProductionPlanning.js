@@ -446,6 +446,7 @@ const ProductionPlanning = ({ onClose }) => {
                     // TV View Toggle
                     React.createElement('button', { 
                         onClick: () => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar'),
+                        title: viewMode === 'calendar' ? 'Passer en vue TV / Liste' : 'Passer en vue Calendrier',
                         className: `w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm ${viewMode === 'list' ? 'bg-slate-800 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`
                     }, React.createElement('i', { className: viewMode === 'calendar' ? 'fas fa-tv' : 'fas fa-calendar-alt' })),
 
@@ -689,7 +690,8 @@ const ProductionPlanning = ({ onClose }) => {
             ),
 
             // Utilisation du composant PlanningNotes nettoyé
-            React.createElement(window.PlanningNotes, {
+            // Only show notes in Calendar mode, or if forced open on mobile
+            viewMode === 'calendar' ? React.createElement(window.PlanningNotes, {
                 notes: plannerNotes,
                 showMobile: showMobileNotes,
                 onCloseMobile: () => setShowMobileNotes(false),
@@ -699,7 +701,7 @@ const ProductionPlanning = ({ onClose }) => {
                 onDelete: deleteNote,
                 notificationPerm: notificationPerm,
                 onRequestPerm: requestNotificationPermission
-            })
+            }) : null
         ),
 
         // Utilisation du composant PlanningModals nettoyé
