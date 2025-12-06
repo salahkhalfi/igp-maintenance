@@ -911,14 +911,14 @@ export const tvHTML = `
                     \`;
                 } else {
                     // TIMELINE: Compact
-                    el.className = 'ml-8 mb-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    el.className = 'ml-4 lg:ml-8 mb-3 lg:mb-4 bg-slate-800/50 rounded-lg p-3 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
-                        <div class="flex justify-between items-start">
-                            <div class="font-bold text-white text-xl leading-snug line-clamp-2 whitespace-normal">\${t.title}</div>
-                            \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-base"></i>' : ''}
+                        <div class="flex flex-wrap justify-between items-start gap-y-1">
+                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-2 whitespace-normal">\${t.title}</div>
+                            \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-sm lg:text-base"></i>' : ''}
                         </div>
-                        <div class="text-slate-400 text-base mt-2 flex items-center gap-2">
-                            <i class="fas fa-wrench text-sm"></i>
+                        <div class="text-slate-400 text-sm lg:text-sm lg:text-base mt-0.5 lg:mt-1 lg:mt-2 flex flex-wrap items-center gap-2">
+                            <i class="fas fa-wrench text-xs lg:text-sm"></i>
                             \${t.machine_name}
                             <span class="ml-auto font-mono text-blue-300">\${t.assignee_name || '?'}</span>
                         </div>
@@ -934,11 +934,11 @@ export const tvHTML = `
 
                     el.innerHTML = \`
                         <div class="flex items-center gap-3 xl:gap-5">
-                            <div class="h-10 w-10 xl:h-16 xl:w-16 rounded-full bg-slate-800 flex items-center justify-center text-lg xl:text-3xl flex-shrink-0">
+                            <div class="h-8 w-8 lg:h-10 lg:w-10 xl:h-16 xl:w-16 rounded-full bg-slate-800 flex items-center justify-center text-lg xl:text-3xl flex-shrink-0">
                                 <i class="fas \${e.category_icon || 'fa-calendar'} text-slate-200"></i>
                             </div>
                             <div class="w-full min-w-0">
-                                <div class="flex justify-between items-start">
+                                <div class="flex flex-wrap justify-between items-start gap-y-1">
                                     <h3 class="text-lg xl:text-3xl font-bold text-white pr-2 xl:pr-4 line-clamp-2 leading-tight whitespace-normal">\${e.title}</h3>
                                     \${e.time ? '<span class="text-xs xl:text-xl font-mono font-bold text-cyan-300 bg-slate-800/80 border border-slate-600 px-2 xl:px-2 xl:px-3 py-0.5 xl:py-1 rounded ml-auto whitespace-nowrap">' + e.time.substring(0, 5) + '</span>' : ''}
                                 </div>
@@ -948,18 +948,18 @@ export const tvHTML = `
                     \`;
                 } else {
                     // TIMELINE EVENT: Very Compact
-                    el.className = 'ml-8 mb-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    el.className = 'ml-4 lg:ml-8 mb-3 lg:mb-4 bg-slate-800/50 rounded-lg p-3 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
-                        <div class="flex items-center gap-4">
-                            <div class="h-10 w-10 rounded bg-slate-700 flex items-center justify-center flex-shrink-0">
-                                <i class="fas \${e.category_icon || 'fa-calendar-day'} text-lg text-slate-300"></i>
+                        <div class="flex items-center gap-2 lg:gap-4">
+                            <div class="h-8 w-8 lg:h-10 lg:w-10 rounded bg-slate-700 flex items-center justify-center flex-shrink-0">
+                                <i class="fas \${e.category_icon || 'fa-calendar-day'} text-base lg:text-lg text-slate-300"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                    \${e.time ? '<span class="font-mono font-bold text-cyan-300 text-base bg-slate-900 px-2 py-0.5 rounded border border-slate-600 shadow-sm">' + e.time.substring(0, 5) + '</span>' : ''}
-                                    <div class="font-bold text-white text-xl leading-none line-clamp-2 whitespace-normal">\${e.title}</div>
+                                <div class="flex flex-wrap items-center gap-x-2 lg:gap-x-3 gap-y-1">
+                                    \${e.time ? '<span class="font-mono font-bold text-cyan-300 text-sm lg:text-base bg-slate-900 px-1.5 lg:px-2 py-0.5 rounded border border-slate-600 shadow-sm">' + e.time.substring(0, 5) + '</span>' : ''}
+                                    <div class="font-bold text-white text-base lg:text-xl leading-none line-clamp-2 whitespace-normal">\${e.title}</div>
                                 </div>
-                                <div class="text-slate-500 text-base mt-1 line-clamp-1 whitespace-normal">\${e.category_label}</div>
+                                <div class="text-slate-500 text-sm lg:text-base mt-0.5 lg:mt-1 line-clamp-1 whitespace-normal">\${e.category_label}</div>
                             </div>
                         </div>
                     \`;
@@ -1046,7 +1046,7 @@ export const tvHTML = `
                 const header = document.createElement('div');
                 header.className = 'relative z-10 mb-6 mt-4';
                 header.innerHTML = \`
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 lg:gap-4">
                         <div class="bg-slate-900 border-2 border-blue-500 rounded-full h-4 w-4 -ml-[9px]"></div>
                         <span class="text-blue-400 font-mono font-bold text-lg uppercase tracking-widest">
                             \${dateObj.format('dddd D MMMM')}
