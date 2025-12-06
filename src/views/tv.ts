@@ -267,12 +267,12 @@ export const tvHTML = `
             </div>
         </div>
 
-        <div class="flex items-center gap-8 w-1/4 justify-end flex-shrink-0">
+        <div class="flex items-center gap-4 w-auto pl-4 justify-end flex-shrink-0">
             <!-- WEATHER WIDGET (Compact) -->
-            <div class="flex items-center gap-3 border-r border-slate-700 pr-6 hidden xl:flex">
-                <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-2xl"></i>
-                <div class="text-right">
-                    <div id="weather-temp" class="text-2xl font-bold text-white leading-none">--°</div>
+            <!-- Weather removed from here -->
+                
+                
+                    
                 </div>
             </div>
 
@@ -291,12 +291,20 @@ export const tvHTML = `
         <section class="w-[60%] flex flex-col border-r border-slate-800 bg-slate-900/50 relative p-6">
             
             <!-- Header Today -->
-            <div class="flex items-center gap-3 mb-4 border-b border-slate-800/50 pb-3">
-                <div class="bg-blue-600 h-6 w-1 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
-                <h2 class="text-3xl font-bold text-white tracking-tight uppercase flex items-center gap-3">
-                    Aujourd'hui
-                </h2>
-                <span id="today-date-large" class="text-sm text-blue-400/80 font-mono font-bold uppercase tracking-widest ml-auto">...</span>
+            <div class="flex items-center justify-between gap-3 mb-4 border-b border-slate-800/50 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600 h-6 w-1 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
+                    <h2 class="text-xl lg:text-3xl font-bold text-white tracking-tight uppercase">
+                        Aujourd'hui
+                    </h2>
+                </div>
+
+                <div class="flex items-center gap-3 hidden xl:flex">
+                    <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-2xl"></i>
+                    <div id="weather-temp" class="text-2xl font-bold text-white leading-none">--°</div>
+                </div>
+
+                <span id="today-date-large" class="text-sm text-blue-400/80 font-mono font-bold uppercase tracking-widest">...</span>
             </div>
 
             <!-- ACTIVE CONTENT SCROLL -->
@@ -898,7 +906,7 @@ export const tvHTML = `
                                 \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 animate-pulse">EN COURS</span>' : ''}
                                 \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 animate-pulse">CRITIQUE</span>' : ''}
                             </div>
-                            <div class="text-right">
+                            
                                 <div class="text-base xl:text-2xl font-bold text-white leading-none">\${t.assignee_name || 'Non assigné'}</div>
                                 <div class="text-slate-400 text-[10px] xl:text-sm uppercase tracking-wider">Intervenant</div>
                             </div>
