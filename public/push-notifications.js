@@ -341,9 +341,14 @@ async function initPushNotifications() {
 
       console.log('🔔 [INIT] Déjà abonné?', isSubscribed);
       
-      // IMPORTANT: Ne pas subscribe si appartient à un autre user
+      // IMPORTANT: Si la permission est accordée mais que l'abonnement n'est pas le nôtre (appareil partagé),
+      // on force la réinscription pour "voler" l'appareil et recevoir NOS notifications.
       if (!isSubscribed) {
-        console.log('⚠️ [INIT] Subscription absente ou appartient à autre user - NE PAS auto-subscribe');
+        console.log('🔄 [INIT] Appareil partagé détecté : Récupération automatique des notifications...');
+        await subscribeToPush();
+        // Mettre à jour l'état après réinscription
+        window.dispatchEvent(new CustomEvent('push-notification-changed'));
+        return;
       }
       
       // Always update button color based on ACTUAL ownership

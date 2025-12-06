@@ -52,6 +52,7 @@ import { guideHTML } from './views/guide';
 import { changelogHTML } from './views/changelog';
 import { homeHTML } from './views/home';
 import { historiqueHTML } from './views/historique';
+import { tvHTML } from './views/tv';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
@@ -70,6 +71,8 @@ import audio from './routes/audio';
 import cron from './routes/cron';
 import alerts from './routes/alerts';
 import planning from './routes/planning';
+import chat from './routes/chat';
+import tv from './routes/tv';
 import scheduledHandler from './scheduled';
 import type { Bindings } from './types';
 
@@ -279,6 +282,40 @@ app.route('/api/alerts', alerts);
 // Routes Planning - Gestion du planning de production
 app.route('/api/planning', planning);
 
+// Routes Messenger (V2) - Indépendantes
+app.route('/api/v2/chat', chat);
+
+// Routes TV - Affichage passif sécurisé par clé (Chromecast/TV)
+app.route('/api/tv', tv);
+
+// Servir la nouvelle app Messenger (Compilée par Vite)
+// Version SPA avec contenu HTML injecté via ASSETS pour éviter les erreurs 500
+app.get('/messenger/*', async (c) => {
+  // Try to serve static asset first if it has extension
+  if (c.req.path.includes('.')) {
+    return c.env.ASSETS.fetch(c.req.raw);
+  }
+  // Otherwise serve index.html for SPA routing with NO CACHE
+  const response = await c.env.ASSETS.fetch(new URL('/messenger/index.html', c.req.url));
+  const newResponse = new Response(response.body, response);
+  newResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  newResponse.headers.set('Pragma', 'no-cache');
+  newResponse.headers.set('Expires', '0');
+  return newResponse;
+});
+app.get('/messenger', async (c) => {
+  const response = await c.env.ASSETS.fetch(new URL('/messenger/index.html', c.req.url));
+  const newResponse = new Response(response.body, response);
+  newResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  newResponse.headers.set('Pragma', 'no-cache');
+  newResponse.headers.set('Expires', '0');
+  return newResponse;
+});
+
+// Servir la vue TV via Hono pour éviter les 404 statiques
+app.get('/tv.html', (c) => c.html(tvHTML));
+app.get('/tv', (c) => c.html(tvHTML)); // Alias pour flexibilité
+
 // Page d'administration des rôles (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/roles', async (c) => {
   // Servir la page telle quelle - l'authentification sera vérifiée par le JS client
@@ -461,8 +498,9 @@ app.get('/api/push/subscriptions-list', authMiddleware, async (c) => {
   try {
     const user = c.get('user') as any;
     
-    // Only admins and supervisors can see subscriptions list
-    if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
+    // Only management roles can see subscriptions list
+    const allowedRoles = ['admin', 'supervisor', 'director', 'coordinator', 'planner'];
+    if (!user || !allowedRoles.includes(user.role)) {
       return c.json({ error: 'Accès refusé' }, 403);
     }
 

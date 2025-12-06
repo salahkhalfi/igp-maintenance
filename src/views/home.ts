@@ -46,9 +46,9 @@ export const homeHTML = `
     <script src="/static/js/hooks/useTickets.js"></script>
     <script src="/static/js/hooks/useMachines.js"></script>
     <script src="/static/js/components/AppHeader.js"></script>
-    <script src="/static/js/components/planning/PlanningNotes.js?v=2.14.180"></script>
-    <script src="/static/js/components/planning/PlanningModals.js?v=2.14.180"></script>
-    <script src="/static/js/components/ProductionPlanning.js?v=2.14.180"></script>
+    <script src="/static/js/components/planning/PlanningNotes_v2.js?v=2.14.182"></script>
+    <script src="/static/js/components/planning/PlanningModals_v3.js?v=3.0.0"></script>
+    <script src="/static/js/components/ProductionPlanning_v3.js?v=3.0.0"></script>
     <script src="/static/js/components/KanbanBoard.js"></script>
     <script src="/static/js/components/AdminRoles.js"></script>
     <script src="/static/js/components/ManageColumnsModal.js"></script>
@@ -484,6 +484,7 @@ export const homeHTML = `
 
     <script>
         // API_URL est défini dans utils.js
+        console.log('HOME HTML LOADED v3.0.0 FORCE');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 
@@ -547,6 +548,136 @@ export const homeHTML = `
         // UserManagementModal - DÉPLACÉ VERS /static/js/components/UserManagementModal.js
         // MainApp - DÉPLACÉ VERS /static/js/components/MainApp.js
         // App - DÉPLACÉ VERS /static/js/components/App.js
+
+        // --- TV DASHBOARD MODAL ---
+        const TVDashboardModal = ({ isOpen, onClose }) => {
+            const [config, setConfig] = React.useState(null);
+            const [loading, setLoading] = React.useState(false);
+            const [error, setError] = React.useState(null);
+            const [copied, setCopied] = React.useState(false);
+            const [regenerating, setRegenerating] = React.useState(false);
+
+            React.useEffect(() => {
+                if (isOpen) {
+                    loadConfig();
+                }
+            }, [isOpen]);
+
+            const loadConfig = () => {
+                setLoading(true);
+                setError(null);
+                axios.get('/api/tv/admin/config')
+                    .then(res => {
+                        setConfig(res.data);
+                        setLoading(false);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        setError("Impossible de récupérer la configuration TV.");
+                        setLoading(false);
+                    });
+            };
+
+            const copyToClipboard = () => {
+                if (!config) return;
+                navigator.clipboard.writeText(config.url).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                });
+            };
+
+            const handleRegenerate = () => {
+                if (!confirm("ATTENTION : Générer une nouvelle clé rendra l'ancien lien invalide. Tous les écrans devront être mis à jour. Continuer ?")) {
+                    return;
+                }
+                
+                setRegenerating(true);
+                axios.post('/api/tv/admin/regenerate')
+                    .then(res => {
+                        setConfig({ key: res.data.key, url: res.data.url });
+                        alert("Nouvelle clé générée avec succès !");
+                    })
+                    .catch(err => {
+                        alert("Erreur lors de la génération de la clé.");
+                        console.error(err);
+                    })
+                    .finally(() => {
+                        setRegenerating(false);
+                    });
+            };
+
+            if (!isOpen) return null;
+
+            return React.createElement('div', { className: "modal active", style: { zIndex: 1100 } },
+                React.createElement('div', { className: "modal-content bg-white rounded-lg shadow-2xl p-6 max-w-lg w-full mx-4" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-6" },
+                        React.createElement('h2', { className: "text-xl font-bold text-gray-800 flex items-center gap-2" },
+                            React.createElement('i', { className: "fas fa-tv text-blue-600" }),
+                            "Mode Affichage TV"
+                        ),
+                        React.createElement('button', { onClick: onClose, className: "text-gray-400 hover:text-gray-600" },
+                            React.createElement('i', { className: "fas fa-times text-xl" })
+                        )
+                    ),
+                    
+                    loading ? 
+                        React.createElement('div', { className: "flex justify-center py-8" },
+                            React.createElement('i', { className: "fas fa-spinner fa-spin text-3xl text-blue-500" })
+                        ) :
+                    error ?
+                        React.createElement('div', { className: "bg-red-50 text-red-600 p-4 rounded-lg mb-4" },
+                            React.createElement('i', { className: "fas fa-exclamation-circle mr-2" }),
+                            error
+                        ) :
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('div', { className: "bg-blue-50 p-4 rounded-lg border border-blue-100" },
+                                React.createElement('p', { className: "text-sm text-blue-800 mb-2 font-medium" },
+                                    "Lien d'accès sécurisé pour l'écran TV :"
+                                ),
+                                React.createElement('div', { className: "flex items-center gap-2" },
+                                    React.createElement('input', { 
+                                        type: "text", 
+                                        readOnly: true, 
+                                        value: config?.url || '', 
+                                        className: "flex-1 p-2 text-sm bg-white border border-blue-200 rounded text-gray-600 font-mono select-all focus:outline-none" 
+                                    }),
+                                    React.createElement('button', { 
+                                        onClick: copyToClipboard,
+                                        className: \`p-2 rounded transition-colors \${copied ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}\`
+                                    },
+                                        React.createElement('i', { className: \`fas \${copied ? 'fa-check' : 'fa-copy'}\` })
+                                    )
+                                )
+                            ),
+                            React.createElement('div', { className: "grid grid-cols-2 gap-4" },
+                                React.createElement('a', { 
+                                    href: config?.url, 
+                                    target: "_blank",
+                                    className: "flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group text-decoration-none" 
+                                },
+                                    React.createElement('i', { className: "fas fa-external-link-alt text-2xl text-gray-400 group-hover:text-blue-500 mb-2" }),
+                                    React.createElement('span', { className: "text-sm font-bold text-gray-600 group-hover:text-blue-600" }, "Ouvrir l'affichage")
+                                ),
+                                React.createElement('button', { 
+                                    onClick: handleRegenerate,
+                                    disabled: regenerating,
+                                    className: "flex flex-col items-center justify-center p-4 border border-gray-200 bg-gray-50 rounded-lg hover:bg-red-50 hover:border-red-200 transition-colors group" 
+                                },
+                                    React.createElement('i', { className: \`fas \${regenerating ? 'fa-spinner fa-spin' : 'fa-sync-alt'} text-2xl text-gray-400 group-hover:text-red-500 mb-2\` }),
+                                    React.createElement('span', { className: "text-sm font-bold text-gray-600 group-hover:text-red-600" }, "Régénérer la Clé")
+                                )
+                            ),
+                            React.createElement('div', { className: "text-xs text-gray-400 mt-4 text-center" },
+                                React.createElement('i', { className: "fas fa-shield-alt mr-1" }),
+                                "Ce lien contient une clé d'accès. Ne le partagez qu'aux personnes autorisées."
+                            )
+                        )
+                )
+            );
+        };
+
+        // Expose to window for MainApp to use if needed (though we'll inject it into App)
+        window.TVDashboardModal = TVDashboardModal;
 
 
         const root = ReactDOM.createRoot(document.getElementById('root'));

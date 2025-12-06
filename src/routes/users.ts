@@ -325,6 +325,10 @@ usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
     // Re-assign timeline to System User (0) to satisfy NOT NULL constraint
     await db.update(ticketTimeline).set({ user_id: 0 }).where(eq(ticketTimeline.user_id, id));
 
+    // Re-assign chat messages to System User (0) to prevent FK violation and preserve history
+    // Note: chat_participants is handled automatically by ON DELETE CASCADE in the database schema
+    await c.env.DB.prepare('UPDATE chat_messages SET sender_id = 0 WHERE sender_id = ?').bind(id).run();
+
     await db.delete(users).where(eq(users.id, id));
 
     return c.json({

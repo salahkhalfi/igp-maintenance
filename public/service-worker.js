@@ -3,7 +3,7 @@
  * Gère le cache offline et les notifications push
  */
 
-const CACHE_VERSION = 'v1.0.3';
+const CACHE_VERSION = 'v1.0.5';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers à mettre en cache pour mode offline (optionnel - désactivé pour éviter erreurs)

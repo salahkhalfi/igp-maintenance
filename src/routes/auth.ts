@@ -6,7 +6,7 @@ import { setCookie } from 'hono/cookie';
 import { eq, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
-import { users } from '../db/schema';
+import { users, chatGuests } from '../db/schema';
 import { hashPassword, verifyPassword, isLegacyHash, upgradeLegacyHash } from '../utils/password';
 import { signToken } from '../utils/jwt';
 import { loginSchema, registerSchema } from '../schemas/auth';
@@ -86,91 +86,138 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
     const { email, password, rememberMe } = c.req.valid('json');
     const db = getDb(c.env);
 
-    // Récupérer l'utilisateur
+    // Récupérer l'utilisateur (Standard User)
     const user = await db
       .select()
       .from(users)
       .where(eq(users.email, email))
       .get();
 
-    if (!user) {
-      return c.json({ error: 'Email ou mot de passe incorrect' }, 401);
-    }
+    // 1. Try Standard User
+    if (user) {
+        // Vérifier le mot de passe
+        const isValid = await verifyPassword(password, user.password_hash);
+        if (!isValid) {
+          return c.json({ error: 'Email ou mot de passe incorrect' }, 401);
+        }
 
-    // Vérifier le mot de passe
-    const isValid = await verifyPassword(password, user.password_hash);
-    if (!isValid) {
-      return c.json({ error: 'Email ou mot de passe incorrect' }, 401);
-    }
-
-    // 🔒 MIGRATION AUTOMATIQUE: Mettre à jour l'ancien hash vers PBKDF2
-    if (isLegacyHash(user.password_hash)) {
-      try {
-        const newHash = await upgradeLegacyHash(password);
-        await db
-          .update(users)
-          .set({ password_hash: newHash, updated_at: sql`CURRENT_TIMESTAMP` })
-          .where(eq(users.id, user.id));
-
-        console.log(`Password upgraded for user ${user.email} (SHA-256 → PBKDF2)`);
-      } catch (error) {
-        console.error('Failed to upgrade password hash:', error);
-      }
-    }
-
-    // 📅 MISE À JOUR LAST_LOGIN
-    try {
-      await db
-        .update(users)
-        .set({ last_login: sql`CURRENT_TIMESTAMP` })
-        .where(eq(users.id, user.id));
-    } catch (error) {
-      console.error("Failed to update last_login:", error);
-    }
-
-    // Retirer le hash du mot de passe
-    const { password_hash, ...userWithoutPassword } = user;
-
-    // Expiration dynamique selon Remember Me
-    const expiresInDays = rememberMe ? 30 : 7;
-    const expiresInSeconds = expiresInDays * 24 * 60 * 60;
-
-    // Générer le token JWT avec expiration dynamique
-    const token = await signToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      full_name: user.full_name,
-      first_name: user.first_name || user.full_name,
-      last_name: user.last_name || '',
-      isSuperAdmin: user.is_super_admin === 1
-    }, expiresInSeconds);
-
-    // Définir le cookie HttpOnly sécurisé
-    setCookie(c, 'auth_token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax',
-      maxAge: expiresInSeconds,
-      path: '/'
-    });
-
-    // 🔔 LOGIN SUMMARY NOTIFICATION (LAW #12)
-    if (c.executionCtx?.waitUntil) {
-      c.executionCtx.waitUntil(
-        (async () => {
+        // 🔒 MIGRATION AUTOMATIQUE: Mettre à jour l'ancien hash vers PBKDF2
+        if (isLegacyHash(user.password_hash)) {
           try {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            const { sendLoginSummaryNotification } = await import('./messages');
-            await sendLoginSummaryNotification(c.env, user.id);
+            const newHash = await upgradeLegacyHash(password);
+            await db
+              .update(users)
+              .set({ password_hash: newHash, updated_at: sql`CURRENT_TIMESTAMP` })
+              .where(eq(users.id, user.id));
+            console.log(`Password upgraded for user ${user.email} (SHA-256 → PBKDF2)`);
           } catch (error) {
-            console.error('[LOGIN] Summary notification failed (non-blocking):', error);
+            console.error('Failed to upgrade password hash:', error);
           }
-        })()
-      );
+        }
+
+        // 📅 MISE À JOUR LAST_LOGIN
+        try {
+          await db
+            .update(users)
+            .set({ last_login: sql`CURRENT_TIMESTAMP` })
+            .where(eq(users.id, user.id));
+        } catch (error) {
+          console.error("Failed to update last_login:", error);
+        }
+
+        // Retirer le hash du mot de passe
+        const { password_hash, ...userWithoutPassword } = user;
+
+        // Expiration dynamique selon Remember Me
+        const expiresInDays = rememberMe ? 30 : 7;
+        const expiresInSeconds = expiresInDays * 24 * 60 * 60;
+
+        // Générer le token JWT
+        const token = await signToken({
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+          full_name: user.full_name,
+          first_name: user.first_name || user.full_name,
+          last_name: user.last_name || '',
+          isSuperAdmin: user.is_super_admin === 1
+        }, expiresInSeconds);
+
+        // Définir le cookie HttpOnly sécurisé
+        setCookie(c, 'auth_token', token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'Lax',
+          maxAge: expiresInSeconds,
+          path: '/'
+        });
+
+        // 🔔 LOGIN SUMMARY NOTIFICATION
+        if (c.executionCtx?.waitUntil) {
+          c.executionCtx.waitUntil(
+            (async () => {
+              try {
+                await new Promise(resolve => setTimeout(resolve, 10000));
+                const { sendLoginSummaryNotification } = await import('./messages');
+                await sendLoginSummaryNotification(c.env, user.id);
+              } catch (error) {
+                console.error('[LOGIN] Summary notification failed (non-blocking):', error);
+              }
+            })()
+          );
+        }
+
+        return c.json({ token, user: userWithoutPassword });
     }
 
-    return c.json({ token, user: userWithoutPassword });
+    // 2. Try Guest User (If not found in Users)
+    const guest = await db
+        .select()
+        .from(chatGuests)
+        .where(eq(chatGuests.email, email))
+        .get();
+
+    if (guest) {
+        if (!guest.is_active) {
+            return c.json({ error: 'Compte invité désactivé' }, 403);
+        }
+
+        const isValid = await verifyPassword(password, guest.password_hash);
+        if (!isValid) {
+            return c.json({ error: 'Email ou mot de passe incorrect' }, 401);
+        }
+
+        // IMPORTANT: Guest IDs are NEGATIVE to avoid collision in chat_participants
+        const guestId = -Math.abs(guest.id);
+
+        const expiresInDays = rememberMe ? 30 : 7;
+        const expiresInSeconds = expiresInDays * 24 * 60 * 60;
+
+        const token = await signToken({
+            userId: guestId,
+            email: guest.email,
+            role: 'guest',
+            full_name: guest.full_name,
+            first_name: guest.full_name.split(' ')[0],
+            last_name: guest.full_name.split(' ').slice(1).join(' '),
+            isGuest: true,
+            company: guest.company
+        }, expiresInSeconds);
+
+        setCookie(c, 'auth_token', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Lax',
+            maxAge: expiresInSeconds,
+            path: '/'
+        });
+
+        const { password_hash, ...guestWithoutPassword } = guest;
+        return c.json({ token, user: { ...guestWithoutPassword, id: guestId } });
+    }
+
+    return c.json({ error: 'Email ou mot de passe incorrect' }, 401);
+
   } catch (error) {
     console.error('Login error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);

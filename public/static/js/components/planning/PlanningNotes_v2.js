@@ -8,11 +8,17 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
         const text = formData.get('text');
         const time = formData.get('time');
         const date = formData.get('date');
+        // Explicitly cast to boolean for API
+        const is_dashboard = formData.get('is_dashboard') === 'on';
 
         if (editingNote) {
-            onUpdate(editingNote.id, { text, time, date });
+            onUpdate(editingNote.id, { text, time, date, is_dashboard });
             setEditingNote(null);
         } else {
+            // For Add, we need to pass the form data logic or just the values
+            // But onAdd expects event e usually? No, ProductionPlanning_v3.js onAdd logic handles formData extraction again
+            // BUT, if we want to pass is_dashboard, we must ensure it's in the form or handled.
+            // Since onAdd takes (e), and the checkbox IS in the form (e.target), it should work fine.
             onAdd(e);
         }
         e.target.reset();
@@ -82,6 +88,10 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
                             
                             // Meta info (Time, Date & Priority)
                             React.createElement('div', { className: 'mt-2 flex items-center gap-2 flex-wrap' },
+                                (!!note.is_dashboard) && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold flex items-center gap-1 border border-purple-200' },
+                                    React.createElement('i', { className: 'fas fa-tv' }),
+                                    'TV'
+                                ),
                                 note.time && React.createElement('span', { className: `text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${note.notified ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-600'}` },
                                     React.createElement('i', { className: 'far fa-clock' }),
                                     note.time
@@ -104,6 +114,20 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
                 editingNote && React.createElement('div', { className: 'flex justify-between items-center text-xs text-blue-600 mb-1 font-bold' },
                     'Modification en cours...',
                     React.createElement('button', { type: 'button', onClick: handleCancelEdit, className: 'text-gray-500 hover:text-gray-700 underline' }, 'Annuler')
+                ),
+                React.createElement('div', { className: 'flex items-center gap-2 px-1 mb-1' },
+                    React.createElement('input', {
+                        type: 'checkbox',
+                        name: 'is_dashboard',
+                        id: 'is_dashboard_check',
+                        defaultChecked: editingNote ? (!!editingNote.is_dashboard) : false,
+                        key: editingNote ? `dashboard-${editingNote.id}-${editingNote.is_dashboard}` : 'dashboard-new',
+                        className: 'w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500 border-gray-300'
+                    }),
+                    React.createElement('label', { htmlFor: 'is_dashboard_check', className: 'text-xs text-slate-600 font-medium select-none cursor-pointer flex items-center gap-1' }, 
+                        React.createElement('i', { className: 'fas fa-tv text-slate-400' }),
+                        'Diffuser sur TV (selon date/heure)'
+                    )
                 ),
                 React.createElement('input', { 
                     name: 'text',

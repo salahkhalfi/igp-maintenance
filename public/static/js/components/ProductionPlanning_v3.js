@@ -17,11 +17,12 @@ const ProductionPlanning = ({ onClose }) => {
     const [viewMode, setViewMode] = React.useState('calendar');
     
     const DEFAULT_CATEGORIES = [
-        { id: 'cut', label: 'Mise en Prod', icon: 'fa-layer-group', color: 'blue' },
-        { id: 'ship', label: 'Expéditions', icon: 'fa-truck', color: 'green' },
-        { id: 'maintenance', label: 'Maintenance', icon: 'fa-tools', color: 'red' },
-        { id: 'reminder', label: 'Rappel / Note', icon: 'fa-info-circle', color: 'yellow' },
-        { id: 'blocked', label: 'Bloqué', icon: 'fa-ban', color: 'red' }
+        { id: 'prod', label: 'Production', icon: 'fa-industry', color: 'blue' },
+        { id: 'maint', label: 'Maintenance', icon: 'fa-tools', color: 'orange' },
+        { id: 'log', label: 'Logistique', icon: 'fa-truck', color: 'purple' },
+        { id: 'qual', label: 'Qualité', icon: 'fa-clipboard-check', color: 'green' },
+        { id: 'sst', label: 'SST / Sécurité', icon: 'fa-hard-hat', color: 'red' },
+        { id: 'admin', label: 'Admin / RH', icon: 'fa-users', color: 'gray' }
     ];
 
     const [categories, setCategories] = React.useState(DEFAULT_CATEGORIES);
@@ -197,6 +198,8 @@ const ProductionPlanning = ({ onClose }) => {
         const text = formData.get('text');
         const time = formData.get('time');
         const date = formData.get('date');
+        const is_dashboard = formData.get('is_dashboard') === 'on';
+
         if (!text) return;
 
         const newNote = {
@@ -206,26 +209,53 @@ const ProductionPlanning = ({ onClose }) => {
             date: date,
             done: false,
             priority: 'medium',
-            notified: false
+            notified: false,
+            is_dashboard: is_dashboard
         };
         
-        setPlannerNotes([...plannerNotes, newNote]);
+        setPlannerNotes(current => {
+            const updatedNotes = [...current, newNote];
+            // Note: On permet maintenant d'avoir plusieurs notes "Dashboard" actives
+            // La logique exclusive a été retirée du backend et du frontend
+            return updatedNotes;
+        });
         
         axios.post('/api/planning/notes', newNote)
         .then(res => {
              const savedNote = res.data;
              setPlannerNotes(current => current.map(n => n.id === newNote.id ? savedNote : n));
         })
-        .catch(err => console.error('Error adding note:', err));
+        .catch(err => {
+            console.error('Error adding note:', err);
+            alert('Erreur lors de l\'ajout : ' + (err.response?.data?.error || err.message));
+            setPlannerNotes(current => current.filter(n => n.id !== newNote.id));
+        });
         
         e.target.reset();
     };
 
     const handleUpdateNote = (id, updatedData) => {
-        setPlannerNotes(current => current.map(n => n.id === id ? { ...n, ...updatedData } : n));
+        // Optimistic update
+        setPlannerNotes(current => current.map(n => {
+            if (n.id === id) {
+                return { ...n, ...updatedData };
+            }
+            return n;
+        }));
 
         axios.put(`/api/planning/notes/${id}`, updatedData)
-            .catch(err => console.error('Error updating note:', err));
+            .then(res => {
+                if (res.data.note) {
+                    // Update with real server data (handles int/bool conversion)
+                    setPlannerNotes(current => current.map(n => n.id === id ? res.data.note : n));
+                }
+            })
+            .catch(err => {
+                console.error('Error updating note:', err);
+                alert('Erreur lors de la mise à jour : ' + (err.response?.data?.error || err.message));
+                // Revert optimistic update on error
+                setPlannerNotes(current => current.map(n => n.id === id ? { ...n, is_dashboard: !updatedData.is_dashboard } : n));
+            });
     };
 
     const toggleNote = (id) => {
@@ -260,6 +290,7 @@ const ProductionPlanning = ({ onClose }) => {
         if (selectedEvent) {
             const updatedEvent = {
                 date: dateVal,
+                time: formData.get('time'),
                 type: formData.get('type'),
                 title: formData.get('title'),
                 details: formData.get('details')
@@ -279,6 +310,7 @@ const ProductionPlanning = ({ onClose }) => {
             const newEvent = {
                 id: Date.now(),
                 date: dateVal,
+                time: formData.get('time'),
                 type: formData.get('type'),
                 status: 'confirmed',
                 title: formData.get('title'),
@@ -549,7 +581,10 @@ const ProductionPlanning = ({ onClose }) => {
                                                                 React.createElement('i', { className: 'fas fa-question-circle' }), 'À confirmer'
                                                             )
                                                         ),
-                                                        React.createElement('h4', { className: 'text-2xl font-bold text-slate-900 mb-2 leading-snug' }, evt.title),
+                                                        React.createElement('h4', { className: 'text-2xl font-bold text-slate-900 mb-2 leading-snug flex items-center gap-2' }, 
+                                                            evt.time && React.createElement('span', { className: 'text-lg font-mono font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded' }, evt.time),
+                                                            evt.title
+                                                        ),
                                                         evt.details && React.createElement('div', { className: 'text-lg text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100 mt-2' }, 
                                                             evt.details.split('\n').map((line, i) => React.createElement('p', { key: i, className: 'mb-1 last:mb-0' }, line))
                                                         )
@@ -620,7 +655,10 @@ const ProductionPlanning = ({ onClose }) => {
                                                 ),
                                                 evt.status === 'tentative' && React.createElement('i', { className: 'fas fa-question-circle opacity-50' })
                                             ),
-                                            React.createElement('div', { className: 'truncate font-medium leading-tight' }, evt.title),
+                                            React.createElement('div', { className: 'truncate font-medium leading-tight' }, 
+                                                evt.time && React.createElement('span', { className: 'mr-1 font-mono text-[10px] opacity-75 bg-white/50 px-1 rounded' }, evt.time),
+                                                evt.title
+                                            ),
                                             evt.details && React.createElement('div', { className: 'text-[10px] opacity-75 truncate mt-0.5' }, evt.details)
                                         )
                                     )

@@ -1,5 +1,28 @@
 # Historique des Changements
 
+## [2.14.1] - 2025-12-04 (Diagnostic Update)
+### 🔧 Outils
+- **Diagnostic Push** : Ajout d'une route API `/api/push/diagnose/:query` pour vérifier l'état des notifications push d'un utilisateur spécifique (abonnements, logs, tests) en temps réel.
+
+## [2.14.0] - 2025-12-04 (Beta 3)
+### 🚀 Nouvelles Fonctionnalités
+- **Vue TV / Liste** : Nouveau bouton bascule sur la page Planning pour affichage optimisé sur grands écrans (TV) ou liste compacte.
+- **Partage Planning** : Possibilité d'envoyer une invitation directe au planning via la messagerie interne.
+- **Liens Intelligents** : Détection automatique des liens `/planning` dans les messages avec transformation en bouton d'action "Voir le Planning".
+
+### 🐛 Corrections
+- **Stats Technicien** : Résolution de l'erreur 403 pour l'accès aux statistiques du dashboard pour les techniciens.
+- **Messagerie** : Correction d'erreurs de référence (ReferenceError) et scripts manquants empêchant l'ouverture de la messagerie.
+- **Stabilité** : Correctifs divers pour assurer la non-régression lors du déploiement.
+
+## [2.13.0] - 2025-12-02
+### 📦 Architecture SaaS & Modules
+- **Feature Flipping** : Activation/désactivation dynamique des modules (Planning, Stats, Notifications).
+- **Monétisation** : Gestion des licences par entreprise.
+- **Sécurité** : Middleware de blocage pour les modules désactivés.
+- **UI Adaptative** : Masquage automatique des éléments d'interface des modules inactifs.
+- **Cron Jobs** : Nettoyage automatique des données obsolètes.
+
 ## [2.10.7] - 2025-12-01 (Stable Restore Point)
 ### 🔙 Rétablissement (Rollback)
 - **Menu Principal** : Retour à la version classique "boutons individuels" (Utilisateurs, Machines, etc.) pour garantir la compatibilité mobile.

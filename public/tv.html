@@ -1,0 +1,944 @@
+
+<!DOCTYPE html>
+<html lang="fr" class="h-full antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>IGP Glass - Corporate Dashboard v2.7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/locale/fr.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        // Corporate Palette
+                        corp: {
+                            bg: '#0f172a',       // Slate 900
+                            panel: '#1e293b',    // Slate 800
+                            header: '#020617',   // Slate 950
+                            border: '#334155',   // Slate 700
+                            primary: '#0ea5e9',  // Sky 500
+                            accent: '#3b82f6',   // Blue 500
+                            success: '#10b981',  // Emerald 500
+                            warning: '#f59e0b',  // Amber 500
+                            danger: '#ef4444',   // Red 500
+                            text: '#f1f5f9',     // Slate 100
+                            muted: '#94a3b8',    // Slate 400
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
+                        'glow': '0 0 15px rgba(14, 165, 233, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Corporate Cleanliness - Adaptive System */
+        :root {
+            --bg-color: #f8fafc; /* Slate 50 */
+            --text-main: #0f172a; /* Slate 900 */
+            --text-muted: #64748b; /* Slate 500 */
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0; /* Slate 200 */
+            --header-bg: #1e293b; /* Slate 800 */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a; /* Slate 900 */
+                --text-main: #f1f5f9; /* Slate 100 */
+                --text-muted: #94a3b8; /* Slate 400 */
+                --card-bg: #1e293b; /* Slate 800 */
+                --card-border: #334155; /* Slate 700 */
+                --header-bg: #020617; /* Slate 950 */
+            }
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Header uses dark theme always for contrast with logo */
+        .header-custom {
+            background-color: #0f172a; 
+            border-bottom: 1px solid #334155;
+        }
+        @media (prefers-color-scheme: light) {
+            .header-custom {
+                background-color: #ffffff;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .header-custom h1 { color: #0f172a; }
+            .header-custom .text-corp-muted { color: #64748b; }
+            .header-custom #clock-time { color: #0f172a; }
+        }
+
+        /* Card Styling */
+        .dashboard-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .dashboard-card:hover {
+            border-color: var(--text-muted);
+        }
+
+        /* Override potential user agent styles */
+        p, div, h1, h2, h3, h4, span {
+            color: inherit; 
+        }
+
+        /* Hide Scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Status Indicators */
+        .status-indicator {
+            width: 12px; height: 12px; border-radius: 50%;
+            display: inline-block; position: relative;
+        }
+        .status-indicator::after {
+            content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border-radius: 50%; opacity: 0.4; animation: pulse 2s infinite;
+        }
+        .status-green { background-color: #10b981; }
+        .status-green::after { background-color: #10b981; }
+        .status-red { background-color: #ef4444; }
+        .status-red::after { background-color: #ef4444; animation: pulse 1s infinite; }
+
+        /* Header Gradient Line */
+        .header-line {
+            height: 4px;
+            background: linear-gradient(90deg, #0ea5e9 0%, #3b82f6 50%, #10b981 100%);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col lg:overflow-hidden overflow-y-auto">
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background-color: var(--bg-color);">
+        <div class="p-8 rounded-lg border shadow-2xl max-w-md w-full text-center" style="background-color: var(--card-bg); border-color: var(--card-border);">
+            <div class="mb-6 text-corp-primary">
+                <i class="fas fa-shield-alt text-5xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-2 uppercase tracking-wide" style="color: var(--text-main);">Accès Sécurisé</h1>
+            <p class="mb-6 text-sm" style="color: var(--text-muted);">Tableau de bord industriel IGP Glass</p>
+            <input type="text" id="access-key" placeholder="Clé d'autorisation" 
+                class="w-full rounded p-3 text-center mb-4 focus:outline-none font-mono border" style="background-color: rgba(0,0,0,0.1); color: var(--text-main); border-color: var(--card-border);">
+            <button onclick="saveKey()" class="w-full bg-corp-primary hover:bg-sky-600 text-white font-bold py-3 rounded uppercase tracking-wider transition-colors">
+                Connexion
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN INTERFACE -->
+    <div id="main-display" class="flex-1 flex flex-col hidden opacity-0 transition-opacity duration-500">
+        
+        <!-- TOP BAR -->
+        <div class="header-line shrink-0"></div>
+        <header class="bg-corp-header border-b border-corp-border min-h-[5rem] py-2 lg:py-0 px-4 lg:px-6 flex flex-col lg:flex-row items-center justify-between shrink-0 gap-2 lg:gap-0">
+            <!-- Brand -->
+            <div class="flex items-center gap-4">
+                <div class="bg-white p-1.5 rounded w-12 h-12 flex items-center justify-center">
+                    <img src="/logo-igp.png" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" class="max-w-full max-h-full object-contain">
+                    <i class="fas fa-industry text-slate-900 text-2xl hidden"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black text-white uppercase tracking-tight leading-none">PLANNING DES OPÉRATIONS</h1>
+                    <div class="text-xs text-corp-primary font-bold uppercase tracking-widest mt-1">Vue Globale de la Compagnie</div>
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="flex items-center gap-2 lg:gap-8 w-full lg:w-auto justify-between lg:justify-end">
+                <!-- View Switcher -->
+                <div class="flex items-center gap-1 rounded p-1 border mr-2 lg:mr-4" style="background-color: rgba(15, 23, 42, 0.5); border-color: var(--card-border);">
+                    <button onclick="switchView('day')" id="btn-day" class="px-2 lg:px-3 py-1 text-[10px] lg:text-xs font-bold rounded uppercase transition-colors bg-corp-primary text-white">Jour</button>
+                    <button onclick="switchView('week')" id="btn-week" class="px-2 lg:px-3 py-1 text-[10px] lg:text-xs font-bold rounded uppercase transition-colors text-slate-400 hover:text-white">Semaine</button>
+                    <button onclick="switchView('month')" id="btn-month" class="px-2 lg:px-3 py-1 text-[10px] lg:text-xs font-bold rounded uppercase transition-colors text-slate-400 hover:text-white">Mois</button>
+                </div>
+
+                <!-- Navigation -->
+                <div class="flex items-center gap-1 rounded p-1 border mr-2 lg:mr-4" style="background-color: rgba(15, 23, 42, 0.5); border-color: var(--card-border);">
+                    <button onclick="changeDate(-1)" class="px-3 py-1 text-xs font-bold rounded uppercase transition-colors text-slate-400 hover:text-white hover:bg-white/10"><i class="fas fa-chevron-left"></i></button>
+                    <button onclick="resetDate()" class="px-3 py-1 text-xs font-bold rounded uppercase transition-colors text-slate-400 hover:text-white hover:bg-white/10"><i class="fas fa-calendar-day"></i></button>
+                    <button onclick="changeDate(1)" class="px-3 py-1 text-xs font-bold rounded uppercase transition-colors text-slate-400 hover:text-white hover:bg-white/10"><i class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <!-- Connection Indicator -->
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded border" style="background-color: rgba(15, 23, 42, 0.5); border-color: var(--card-border);">
+                    <div id="status-dot" class="status-indicator status-green"></div>
+                    <span id="status-text" class="text-xs font-bold text-corp-muted uppercase">Connecté</span>
+                </div>
+
+                <!-- Clock -->
+                <div class="text-right">
+                    <div id="clock-time" class="text-3xl font-bold font-mono text-white leading-none">--:--</div>
+                    <div id="clock-date" class="text-xs text-corp-muted font-medium uppercase mt-1">-- -- ----</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD CONTENT -->
+        <div class="flex-1 overflow-visible lg:overflow-hidden p-3 lg:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 relative">
+            
+            <!-- MAIN COLUMN (Left - 2/3) -->
+            <div class="lg:col-span-2 flex flex-col gap-4 h-full">
+                
+                <!-- KPI Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4 shrink-0 lg:h-24">
+                    <!-- Total Active -->
+                    <div class="dashboard-card flex items-center px-6 gap-4 border-l-4 border-l-sky-500">
+                        <div class="p-3 bg-sky-500/10 rounded-lg">
+                            <i class="fas fa-tasks text-sky-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold" style="color: var(--text-main);" id="stat-today">0</div>
+                            <div class="text-xs uppercase font-bold" style="color: var(--text-muted);">Activités Ce Jour</div>
+                        </div>
+                    </div>
+                    
+                    <!-- In Progress -->
+                    <div class="dashboard-card flex items-center px-6 gap-4 border-l-4 border-l-blue-500">
+                        <div class="p-3 bg-blue-500/10 rounded-lg">
+                            <i class="fas fa-wrench text-blue-500 text-xl animate-pulse"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold" style="color: var(--text-main);" id="stat-progress">0</div>
+                            <div class="text-xs uppercase font-bold" style="color: var(--text-muted);">En Cours</div>
+                        </div>
+                    </div>
+
+                    <!-- Urgent -->
+                    <div class="dashboard-card flex items-center px-6 gap-4 border-l-4 border-l-red-500" id="stat-urgent-card">
+                        <div class="p-3 bg-red-500/10 rounded-lg">
+                            <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-red-400" id="stat-urgent">0</div>
+                            <div class="text-xs text-red-300/70 uppercase font-bold">Points Critiques</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main List Header -->
+                <div class="flex items-center justify-between mt-2 pb-2 border-b" style="border-color: var(--card-border);">
+                    <h2 class="text-lg font-bold flex items-center gap-2 uppercase tracking-wider" style="color: var(--text-main);">
+                        <i class="fas fa-calendar-check text-corp-primary"></i> Opérations & Agenda du Jour
+                    </h2>
+                    <div id="scroll-status" class="text-xs font-mono text-corp-muted bg-slate-800 px-2 py-1 rounded hidden">
+                        <i class="fas fa-pause mr-1"></i> PAUSE
+                    </div>
+                </div>
+
+                <!-- Scrollable List -->
+                <div id="today-list" class="h-[50vh] lg:h-auto lg:flex-1 overflow-y-auto pr-2 space-y-3 no-scrollbar relative">
+                     <!-- Items Injected JS -->
+                </div>
+            </div>
+
+            <!-- SIDEBAR (Right - 1/3) -->
+            <div class="flex flex-col gap-4 lg:gap-6 h-auto lg:h-full border-t lg:border-t-0 border-l-0 lg:border-l pt-4 lg:pt-0 lg:pl-6" style="border-color: var(--card-border);">
+                
+                <!-- Alerts Section -->
+                <div id="critical-section" class="hidden shrink-0 flex flex-col gap-2">
+                    <h3 class="text-sm font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fas fa-bell animate-swing"></i> Alertes Prioritaires
+                    </h3>
+                    <div id="critical-list" class="space-y-3">
+                        <!-- Alerts Injected JS -->
+                    </div>
+                </div>
+
+                <!-- Upcoming Section -->
+                <div class="flex-1 flex flex-col min-h-0 h-[40vh] lg:h-auto">
+                    <h3 id="upcoming-title" class="text-sm font-bold text-corp-muted uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fas fa-forward"></i> À Venir / Demain
+                    </h3>
+                    <div id="upcoming-list" class="flex-1 overflow-y-auto pr-2 space-y-2 no-scrollbar p-4 rounded-lg border h-full" style="background-color: rgba(0,0,0,0.05); border-color: var(--card-border);">
+                        <!-- Upcoming Injected JS -->
+                    </div>
+                </div>
+
+                <!-- Legend / Footer -->
+                <div class="mt-auto shrink-0 pt-4 border-t text-xs" style="border-color: var(--card-border); color: var(--text-muted);">
+                    <div id="legend-container" class="grid grid-cols-2 gap-2">
+                        <!-- Injected JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Progress -->
+        <div class="h-1 bg-slate-800 shrink-0 w-full relative">
+             <div id="refresh-bar" class="absolute top-0 left-0 h-full bg-corp-primary transition-all duration-1000 ease-linear" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <script>
+        dayjs.locale('fr');
+        
+        // --- CONFIG ---
+        const REFRESH_INTERVAL = 60000; // 60s
+        let accessKey = new URLSearchParams(window.location.search).get('key');
+        let refreshTimer = null;
+        let currentView = 'day';
+        let currentDate = dayjs();
+        let globalData = { events: [], tickets: [], notes: [] };
+
+        // --- NAVIGATION ---
+        function changeDate(delta) {
+            currentDate = currentDate.add(delta, currentView);
+            render(globalData.events, globalData.tickets, globalData.notes);
+            
+            // Visual feedback
+            const btn = delta < 0 ? document.querySelector('.fa-chevron-left').parentElement : document.querySelector('.fa-chevron-right').parentElement;
+            btn.classList.add('text-white', 'bg-white/20');
+            setTimeout(() => btn.classList.remove('text-white', 'bg-white/20'), 200);
+        }
+
+        function resetDate() {
+            currentDate = dayjs();
+            render(globalData.events, globalData.tickets, globalData.notes);
+        }
+
+        // --- VIEW SWITCHING ---
+        function switchView(mode) {
+            currentView = mode;
+            
+            // Update Buttons
+            ['day', 'week', 'month'].forEach(v => {
+                const btn = document.getElementById('btn-' + v);
+                if(v === mode) {
+                    btn.className = 'px-3 py-1 text-xs font-bold rounded uppercase transition-colors bg-corp-primary text-white';
+                } else {
+                    btn.className = 'px-3 py-1 text-xs font-bold rounded uppercase transition-colors text-slate-400 hover:text-white';
+                }
+            });
+
+            // Render
+            render(globalData.events, globalData.tickets, globalData.notes);
+        }
+
+        // --- INITIALIZATION ---
+        function init() {
+            if (!accessKey) accessKey = localStorage.getItem('igp_tv_key');
+            
+            if (!accessKey) {
+                document.getElementById('setup-screen').classList.remove('hidden');
+            } else {
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('main-display').classList.remove('hidden');
+                setTimeout(() => document.getElementById('main-display').classList.remove('opacity-0'), 100);
+                
+                startClock();
+                loadData();
+                startRefreshCycle();
+                preventSleep();
+                
+                // Init Remote
+                new RemoteController();
+            }
+        }
+
+        function saveKey() {
+            const val = document.getElementById('access-key').value.trim();
+            if(val) {
+                localStorage.setItem('igp_tv_key', val);
+                window.location.href = window.location.pathname + '?key=' + val;
+            }
+        }
+
+        async function preventSleep() {
+            try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch(e){}
+        }
+
+        // --- CLOCK & REFRESH ---
+        function startClock() {
+            const update = () => {
+                const n = dayjs();
+                document.getElementById('clock-time').textContent = n.format('HH:mm');
+                document.getElementById('clock-date').textContent = n.format('dddd D MMMM YYYY');
+            };
+            update();
+            setInterval(update, 1000);
+        }
+
+        function startRefreshCycle() {
+            const bar = document.getElementById('refresh-bar');
+            let w = 0;
+            if(refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                w += (100 / (REFRESH_INTERVAL/1000));
+                if(w >= 100) { w=0; loadData(); }
+                bar.style.width = w + '%';
+            }, 1000);
+        }
+
+        // --- UTILS ---
+        function resolveColor(input) {
+            if (!input) return '#64748b'; // Default Slate
+            if (input.startsWith('#')) return input; // Already Hex
+
+            // Map Admin names to Hex codes
+            const map = {
+                'blue': '#3b82f6',   // Production
+                'green': '#10b981',  // Qualité
+                'red': '#ef4444',    // Sécurité
+                'yellow': '#f59e0b', // Attention
+                'purple': '#8b5cf6', // Logistique
+                'orange': '#f97316', // Maintenance
+                'gray': '#64748b',   // Admin
+                'slate': '#64748b'
+            };
+            return map[input] || '#64748b';
+        }
+
+        // --- DATA ---
+        async function loadData() {
+            try {
+                const res = await axios.get('/api/tv/data?key=' + accessKey + '&_t=' + Date.now());
+                const { stats, events, tickets, notes, categories } = res.data;
+
+                // Update Legend
+                if(categories && categories.length > 0) {
+                    const legContainer = document.getElementById('legend-container');
+                    legContainer.innerHTML = categories.map(c => `
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-sm" style="background-color: ${resolveColor(c.color)}"></span> 
+                            ${c.label}
+                        </div>
+                    `).join('');
+                }
+
+                // Update KPI
+                document.getElementById('stat-today').innerText = stats.today_count;
+                document.getElementById('stat-progress').innerText = stats.in_progress;
+                document.getElementById('stat-urgent').innerText = stats.urgent;
+                
+                // Urgent styling
+                const urgCard = document.getElementById('stat-urgent-card');
+                if(stats.urgent > 0) {
+                    urgCard.classList.add('bg-red-900/20', 'animate-pulse');
+                } else {
+                    urgCard.classList.remove('bg-red-900/20', 'animate-pulse');
+                }
+
+                // Status
+                document.getElementById('status-dot').className = 'status-indicator status-green';
+                document.getElementById('status-text').innerText = 'CONNECTÉ';
+
+                // Store global data for view switching
+                globalData = { events, tickets, notes };
+                render(events, tickets, notes);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status-dot').className = 'status-indicator status-red';
+                document.getElementById('status-text').innerText = 'ERREUR SYSTÈME';
+                if(e.response?.status === 403) { localStorage.removeItem('igp_tv_key'); location.reload(); }
+            }
+        }
+
+        function render(events, tickets) {
+            const container = document.getElementById('main-display');
+            
+            // If Day view, use standard layout
+            if(currentView === 'day') {
+                document.getElementById('today-list').parentElement.classList.remove('hidden'); // Show Left Col
+                document.getElementById('upcoming-list').parentElement.parentElement.classList.remove('hidden'); // Show Sidebar
+                document.getElementById('week-view')?.remove();
+                document.getElementById('month-view')?.remove();
+                
+                // Restore Grid
+                container.querySelector('.grid').classList.add('lg:grid-cols-3');
+                container.querySelector('.grid').classList.remove('flex-col');
+
+                renderDay(events, tickets);
+                return;
+            }
+
+            // Hide standard layout elements
+            document.getElementById('today-list').parentElement.classList.add('hidden');
+            document.getElementById('upcoming-list').parentElement.parentElement.classList.add('hidden');
+            
+            // Remove existing special views
+            document.getElementById('week-view')?.remove();
+            document.getElementById('month-view')?.remove();
+
+            // Render Special View
+            if(currentView === 'week') renderWeek(events, tickets);
+            if(currentView === 'month') renderMonth(events);
+        }
+
+        function renderDay(events, tickets) {
+            // Update Title Context
+            const titleEl = document.querySelector('#main-display h2');
+            if(titleEl) {
+                const isToday = currentDate.isSame(dayjs(), 'day');
+                titleEl.innerHTML = `<i class="fas fa-calendar-check text-corp-primary"></i> ${isToday ? 'Opérations & Agenda du Jour' : 'Agenda du ' + currentDate.format('dddd D MMMM')}`;
+            }
+
+            const mainList = document.getElementById('today-list');
+            
+            // Update Sidebar Title
+            const upTitle = document.getElementById('upcoming-title');
+            if(upTitle) {
+                const nextDay = currentDate.add(1, 'day');
+                upTitle.innerHTML = `<i class="fas fa-forward"></i> Dès le ${nextDay.format('dddd D MMM')}`;
+            }
+
+            const critList = document.getElementById('critical-list');
+            const upList = document.getElementById('upcoming-list');
+            const critSection = document.getElementById('critical-section');
+
+            mainList.innerHTML = '';
+            critList.innerHTML = '';
+            upList.innerHTML = '';
+            let hasCrit = false;
+
+            // 1. Process Tickets
+            tickets.forEach(t => {
+                const isCrit = t.priority === 'critical' && t.status !== 'completed';
+                // Show tickets scheduled for today in main list
+                const isCurrent = t.scheduled_date && dayjs(t.scheduled_date).isSame(currentDate, 'day');
+                const isFuture = t.scheduled_date && dayjs(t.scheduled_date).isAfter(currentDate.endOf('day'));
+
+                if(isCrit) {
+                    hasCrit = true;
+                    critList.innerHTML += renderCritical(t);
+                } else if(isFuture) {
+                    upList.innerHTML += renderSmall(t, 'ticket');
+                } else if(isCurrent || t.status === 'in_progress') {
+                    mainList.innerHTML += renderMain(t);
+                }
+            });
+
+            // 2. Process Events
+            events.forEach(e => {
+                const isCurrent = dayjs(e.date).isSame(currentDate, 'day');
+                if(isCurrent) {
+                    mainList.insertAdjacentHTML('afterbegin', renderEvent(e));
+                } else {
+                    // Only show next few days in upcoming to avoid clutter
+                    if(dayjs(e.date).isAfter(currentDate) && dayjs(e.date).isBefore(currentDate.add(7, 'day'))) {
+                        upList.insertAdjacentHTML('afterbegin', renderSmall(e, 'event'));
+                    }
+                }
+            });
+
+            // Visibility
+            if(hasCrit) critSection.classList.remove('hidden');
+            else critSection.classList.add('hidden');
+
+            setupAutoScroll(mainList);
+        }
+
+        function renderWeek(events, tickets) {
+            const container = document.querySelector('#main-display .grid');
+            container.classList.remove('lg:grid-cols-3');
+            
+            const weekStart = currentDate.startOf('week');
+            const weekEnd = weekStart.add(4, 'day');
+            
+            // Vertical Layout (Rows = Days)
+            let html = '<div id="week-view" class="w-full h-full flex flex-col gap-2">';
+            html += `<div class="flex justify-between items-center px-2 mb-2">
+                        <h2 class="text-xl font-bold uppercase" style="color: var(--text-main);">Semaine ${weekStart.format('w')} <span class="text-sm opacity-70 normal-case">(${weekStart.format('D MMM')} - ${weekEnd.format('D MMM')})</span></h2>
+                     </div>`;
+            
+            for(let i=0; i<5; i++) { // Loop 0-4 (Mon-Fri)
+                const d = weekStart.add(i, 'day');
+                const isToday = d.isSame(dayjs(), 'day');
+                const dateStr = d.format('YYYY-MM-DD');
+                
+                // Filter items
+                const dayEvents = events.filter(e => e.date.startsWith(dateStr));
+                const dayTickets = tickets.filter(t => t.scheduled_date && t.scheduled_date.startsWith(dateStr));
+
+                // Row Container
+                html += `
+                <div class="flex items-stretch rounded-lg border ${isToday ? 'ring-2 ring-corp-primary bg-slate-900/20' : ''}" style="background-color: var(--card-bg); border-color: var(--card-border); height: calc(20% - 0.5rem);">
+                    <!-- Date Column -->
+                    <div class="w-32 flex flex-col justify-center items-center border-r p-2 shrink-0" style="border-color: var(--card-border); background-color: ${isToday ? 'var(--corp-primary)' : 'transparent'}">
+                        <div class="text-lg font-bold uppercase ${isToday ? 'text-white' : ''}" style="color: ${isToday ? 'white' : 'var(--text-muted)'}">${d.format('dddd')}</div>
+                        <div class="text-3xl font-bold leading-none ${isToday ? 'text-white' : ''}" style="color: ${isToday ? 'white' : 'var(--text-main)'}">${d.format('D')}</div>
+                    </div>
+                    
+                    <!-- Events Horizontal Scroll -->
+                    <div class="flex-1 flex items-center gap-3 overflow-x-auto no-scrollbar p-2">
+                        ${dayEvents.length === 0 && dayTickets.length === 0 ? 
+                            `<div class="text-sm italic" style="color: var(--text-muted);">Aucun événement planifié</div>` : ''}
+                        
+                        ${dayEvents.map(e => {
+                            const color = resolveColor(e.category_color || 'blue');
+                            const time = dayjs(e.date).format('HH:mm');
+                            return `
+                            <div class="h-full min-w-[200px] max-w-[300px] rounded p-2 flex flex-col justify-center border-l-4 shadow-sm" style="background-color: ${color}15; border-left-color: ${color};">
+                                <div class="flex items-center gap-2 text-[10px] font-bold uppercase mb-1" style="color: ${color};">
+                                    <span>${time !== '00:00' ? time : ''}</span>
+                                    <span>${e.category_label || 'Événement'}</span>
+                                </div>
+                                <div class="font-bold text-sm leading-tight line-clamp-2" style="color: var(--text-main);">${e.title}</div>
+                            </div>`;
+                        }).join('')}
+
+                        ${dayTickets.map(t => {
+                            const time = dayjs(t.scheduled_date).format('HH:mm');
+                            return `
+                            <div class="h-full min-w-[200px] max-w-[300px] rounded p-2 flex flex-col justify-center border-l-4 shadow-sm border-l-slate-400" style="background-color: rgba(148, 163, 184, 0.1);">
+                                <div class="flex items-center gap-2 text-[10px] font-bold uppercase mb-1 text-slate-400">
+                                    <span class="font-mono">${time}</span>
+                                    <span><i class="fas fa-wrench"></i> Intervention</span>
+                                </div>
+                                <div class="font-bold text-sm leading-tight line-clamp-2" style="color: var(--text-main);">${t.machine_name}</div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }
+            html += '</div>';
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function renderMonth(events) {
+            const container = document.querySelector('#main-display .grid');
+            container.classList.remove('lg:grid-cols-3');
+            
+            const monthStart = currentDate.startOf('month');
+            const daysInMonth = monthStart.daysInMonth();
+            // Calc empty slots for Mon-Fri only. 
+            // day(): 0(Sun), 1(Mon)... 6(Sat).
+            // We want 1(Mon)->0, 2(Tue)->1, ... 5(Fri)->4.
+            // If starts on Sat(6) or Sun(0), we skip them until we hit a weekday.
+            // Simplification: Just iterate all days and skip Sat/Sun in rendering.
+            // But we need proper alignment for the first week.
+            
+            // Find first weekday
+            let startDayIndex = monthStart.day(); 
+            let emptySlots = 0;
+            if(startDayIndex >= 1 && startDayIndex <= 5) {
+                emptySlots = startDayIndex - 1; // Mon(1)-1=0, Tue(2)-1=1...
+            } else if(startDayIndex === 0) { // Starts Sunday
+                 // First visible day is Mon 2nd. Spacers: 0.
+                 // But wait, grid needs to align. 
+                 // If Month starts Sun 1st, the first row is Mon 2nd, Tue 3rd...
+                 // Correct.
+            } else if(startDayIndex === 6) { // Starts Saturday
+                 // First visible day is Mon 3rd. Spacers: 0.
+            }
+            
+            // Headers (5 cols)
+            let html = '<div id="month-view" class="w-full h-full flex flex-col">';
+            html += `<h2 class="text-2xl font-bold mb-4 uppercase text-center" style="color: var(--text-main);">${monthStart.format('MMMM YYYY')}</h2>`;
+            
+            html += '<div class="grid grid-cols-5 gap-2 mb-2">'; // 5 Cols
+            ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'].forEach(d => {
+                html += `<div class="text-center text-xs font-bold uppercase" style="color: var(--text-muted);">${d}</div>`;
+            });
+            html += '</div>';
+
+            // Grid
+            html += '<div class="grid grid-cols-5 grid-rows-5 gap-2 flex-1">';
+            
+            // Empty slots
+            for(let i=0; i<emptySlots; i++) {
+                html += '<div class="rounded opacity-50" style="background-color: rgba(0,0,0,0.02);"></div>';
+            }
+
+            // Days
+            for(let i=1; i<=daysInMonth; i++) {
+                const d = monthStart.date(i);
+                const dayIndex = d.day();
+                
+                // Skip Sat(6) and Sun(0)
+                if(dayIndex === 0 || dayIndex === 6) continue;
+
+                const isToday = d.isSame(dayjs(), 'day');
+                const dateStr = d.format('YYYY-MM-DD');
+                const dayEvents = events.filter(e => e.date.startsWith(dateStr));
+
+                html += `
+                <div class="rounded border p-1 flex flex-col relative ${isToday ? 'ring-2 ring-corp-primary' : ''}" style="background-color: var(--card-bg); border-color: var(--card-border);">
+                    <div class="text-xs font-bold mb-1 ${isToday ? 'text-corp-primary' : ''}" style="color: ${isToday ? 'var(--corp-primary)' : 'var(--text-muted)'}">${i}</div>
+                    <div class="flex-1 overflow-y-auto no-scrollbar space-y-0.5">
+                        ${dayEvents.map(e => {
+                            const color = resolveColor(e.category_color || 'blue');
+                            return `<div class="w-full h-1.5 rounded-full" style="background-color: ${color};" title="${e.title}"></div>`;
+                        }).join('')}
+                    </div>
+                    ${dayEvents.length > 0 ? `<div class="text-[9px] font-bold text-center mt-auto truncate" style="color: var(--text-main);">${dayEvents[0].title}</div>` : ''}
+                </div>`;
+            }
+            
+            html += '</div></div>';
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function renderNote(n) {
+            return `
+            <div class="dashboard-card p-4 border-l-4 border-l-yellow-400 mb-2 bg-yellow-900/20 animate-enter">
+                <div class="flex items-start gap-3">
+                    <div class="text-center bg-yellow-500/20 rounded p-2 min-w-[3rem]">
+                        <i class="fas fa-sticky-note text-yellow-400 text-2xl"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-yellow-400 uppercase tracking-wider mb-1">Note / Consigne</div>
+                        <div class="text-white font-medium text-lg leading-snug" style="color: white !important;">${n.text}</div>
+                        ${n.time ? `<div class="text-xs text-yellow-200/70 mt-2 flex items-center gap-1"><i class="far fa-clock"></i> ${n.time}</div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderMain(t) {
+            // Semantic colors
+            const map = {
+                'received': { c: 'slate', t: 'À Traiter', i: 'fa-inbox' },
+                'diagnostic': { c: 'amber', t: 'En Étude', i: 'fa-search' },
+                'in_progress': { c: 'blue', t: 'En Cours', i: 'fa-spinner fa-spin' },
+                'waiting_parts': { c: 'purple', t: 'En Attente', i: 'fa-hourglass-half' },
+                'completed': { c: 'emerald', t: 'Terminé', i: 'fa-check' }
+            };
+            const s = map[t.status] || map['received'];
+            const priority = t.priority === 'high' ? '<span class="text-orange-400 font-bold ml-2 uppercase text-xs">[HAUTE]</span>' : '';
+            const time = t.scheduled_date ? dayjs(t.scheduled_date).format('HH:mm') : '--:--';
+            const assignee = t.assignee_name ? t.assignee_name : 'Non assigné';
+
+            return `
+            <div class="dashboard-card p-4 border-l-4 border-l-${s.c}-500 flex flex-col sm:flex-row sm:items-center justify-between group gap-3 sm:gap-0">
+                <div class="flex-1 min-w-0 sm:pr-4">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-xs text-slate-400">#${t.ticket_id.split('-').pop()}</span>
+                        <span class="text-${s.c}-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+                            <i class="fas ${s.i}"></i> ${s.t}
+                        </span>
+                        ${priority}
+                    </div>
+                    <h3 class="text-xl font-bold truncate group-hover:text-sky-400 transition-colors" style="color: var(--text-main);">${t.machine_name || 'Équipement inconnu'}</h3>
+                    <div class="text-sm font-bold text-sky-400 mb-1 truncate">${t.title}</div>
+                    <p class="text-base leading-relaxed line-clamp-2 font-medium" style="color: var(--text-main); opacity: 0.9;">${t.description || 'Aucune description disponible.'}</p>
+                </div>
+                
+                <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:pl-4 sm:border-l sm:ml-4 sm:w-40 shrink-0 w-full pt-3 sm:pt-0 border-t sm:border-t-0" style="border-color: var(--card-border);">
+                    <div class="font-mono text-2xl font-bold" style="color: var(--text-main);">${time}</div>
+                    <div class="flex items-center gap-2 text-sm px-2 py-1 rounded-full max-w-full" style="color: var(--text-muted); background-color: rgba(148, 163, 184, 0.1);">
+                        <i class="fas fa-user-circle text-xs"></i>
+                        <span class="truncate">${assignee}</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderCritical(t) {
+            return `
+            <div class="bg-red-500 text-white p-4 rounded shadow-lg animate-pulse flex items-center gap-4">
+                <i class="fas fa-radiation text-2xl shrink-0"></i>
+                <div class="min-w-0">
+                    <div class="font-black uppercase tracking-wider text-xs text-red-100">Urgence Critique</div>
+                    <div class="font-bold text-lg leading-none truncate">${t.machine_name}</div>
+                    <div class="font-medium text-sm truncate mt-0.5">${t.title}</div>
+                    <div class="text-xs opacity-100 line-clamp-1 mt-1 border-t border-white/20 pt-1 font-medium">${t.description || ''}</div>
+                </div>
+            </div>`;
+        }
+
+        function renderEvent(e) {
+            // Use category color if available, else default to indigo
+            const rawColor = e.category_color || 'blue'; 
+            const color = resolveColor(rawColor);
+            const icon = e.category_icon || 'fa-calendar';
+            const label = e.category_label || 'Événement';
+
+            return `
+            <div class="dashboard-card p-4 border-l-4 mb-2" style="border-left-color: ${color}; background-color: var(--card-bg);">
+                <div class="flex items-center gap-3">
+                    <div class="text-center rounded p-1 min-w-[3rem]" style="background: ${color}30;">
+                        <div class="text-xs font-bold uppercase" style="color: ${color};">${dayjs(e.date).format('MMM')}</div>
+                        <div class="text-lg font-bold leading-none" style="color: var(--text-main);">${dayjs(e.date).format('DD')}</div>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold uppercase flex items-center gap-1" style="color: ${color};">
+                            <i class="fas ${icon}"></i> ${label}
+                        </div>
+                        <div class="font-bold text-lg truncate" style="color: var(--text-main);">${e.title}</div>
+                        <div class="text-sm line-clamp-2 font-medium" style="color: var(--text-muted);">${e.details || ''}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderSmall(item, type) {
+            if(type === 'event') {
+                const rawColor = item.category_color || 'blue';
+                const color = resolveColor(rawColor);
+                const label = item.category_label || 'Événement';
+                return `
+                <div class="flex flex-col gap-1 p-3 border-b transition-colors hover:bg-black/5" style="border-color: var(--card-border);">
+                    <div class="flex items-center gap-3">
+                        <div class="font-mono text-xs shrink-0" style="color: ${color}; width: 40px;">${dayjs(item.date).format('DD/MM')}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: ${color};">${label}</div>
+                            <div class="text-sm font-bold truncate" style="color: var(--text-main);">${item.title}</div>
+                        </div>
+                    </div>
+                    ${item.details ? `<div class="text-xs pl-[52px] line-clamp-2" style="color: var(--text-muted);">${item.details}</div>` : ''}
+                </div>`;
+            }
+            // Ticket (Upcoming)
+            return `
+            <div class="flex flex-col gap-1 p-3 border-b transition-colors hover:bg-black/5" style="border-color: var(--card-border);">
+                <div class="flex items-center gap-3">
+                    <div class="font-mono text-xs shrink-0" style="color: var(--text-muted); width: 40px;">${dayjs(item.scheduled_date).format('HH:mm')}</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-bold truncate" style="color: var(--text-main);">${item.machine_name}</div>
+                    </div>
+                </div>
+                <div class="pl-[52px]">
+                    <div class="text-sky-400 text-xs truncate mb-0.5">${item.title}</div>
+                    ${item.description ? `<div class="text-xs line-clamp-2" style="color: var(--text-muted);">${item.description}</div>` : ''}
+                </div>
+            </div>`;
+        }
+
+        // --- SCROLL & REMOTE ---
+        function setupAutoScroll(container) {
+            if (container.dataset.scrollInterval) clearInterval(parseInt(container.dataset.scrollInterval));
+            if (container.scrollHeight <= container.clientHeight) return;
+
+            let direction = 1;
+            let pause = 100; // Start delay
+            container.dataset.isPaused = "false";
+
+            const interval = setInterval(() => {
+                if (!document.body.contains(container)) { clearInterval(interval); return; }
+                if (container.dataset.isPaused === "true") return;
+                if (pause > 0) { pause--; return; }
+
+                const current = container.scrollTop;
+                const max = container.scrollHeight - container.clientHeight;
+
+                if (direction === 1 && current >= max) { pause = 150; direction = -1; }
+                else if (direction === -1 && current <= 0) { pause = 150; direction = 1; }
+
+                container.scrollTop += direction;
+            }, 50); // Smooth slow scroll
+
+            container.dataset.scrollInterval = interval;
+        }
+
+        class RemoteController {
+            constructor() {
+                this.container = document.getElementById('today-list');
+                document.addEventListener('keydown', (e) => this.handle(e));
+            }
+
+            handle(e) {
+                const STEP = 150;
+                
+                // Visual Feedback for remote usage
+                this.showActivity();
+
+                // TV Remote Navigation
+                switch(e.keyCode) {
+                    case 37: // LEFT ARROW (Prev Time)
+                        changeDate(-1);
+                        this.toast("Recul " + (currentView === 'day' ? 'Jour' : currentView === 'week' ? 'Semaine' : 'Mois'));
+                        break;
+                    case 39: // RIGHT ARROW (Next Time)
+                        changeDate(1);
+                        this.toast("Avance " + (currentView === 'day' ? 'Jour' : currentView === 'week' ? 'Semaine' : 'Mois'));
+                        break;
+                    case 38: // UP
+                        this.container.dataset.isPaused = "true";
+                        this.container.scrollTop -= STEP;
+                        break;
+                    case 40: // DOWN
+                        this.container.dataset.isPaused = "true";
+                        this.container.scrollTop += STEP;
+                        break;
+                    case 13: // ENTER/OK
+                    case 32: // SPACE
+                        const isP = this.container.dataset.isPaused === "true";
+                        this.container.dataset.isPaused = (!isP).toString();
+                        this.toast(isP ? "▶️ Reprise Auto" : "⏸️ Pause Manuelle");
+                        document.getElementById('scroll-status').style.display = isP ? 'none' : 'block';
+                        break;
+                    case 82: // R (Reload)
+                    case 406: // Blue
+                        location.reload();
+                        break;
+                    case 403: // Red (Day)
+                        switchView('day');
+                        this.toast("Vue Jour");
+                        break;
+                    case 404: // Green (Week)
+                        switchView('week');
+                        this.toast("Vue Semaine");
+                        break;
+                    case 405: // Yellow (Month)
+                        switchView('month');
+                        this.toast("Vue Mois");
+                        break;
+                }
+                
+                // Auto-resume after 10s of inactivity
+                clearTimeout(this.resumeTimer);
+                this.resumeTimer = setTimeout(() => {
+                    this.container.dataset.isPaused = "false";
+                    document.getElementById('scroll-status').style.display = 'none';
+                }, 10000);
+            }
+
+            nextView() {
+                const views = ['day', 'week', 'month'];
+                const next = views[(views.indexOf(currentView) + 1) % views.length];
+                switchView(next);
+                this.toast(`Vue ${next === 'day' ? 'Jour' : next === 'week' ? 'Semaine' : 'Mois'}`);
+            }
+
+            prevView() {
+                const views = ['day', 'week', 'month'];
+                const prev = views[(views.indexOf(currentView) - 1 + views.length) % views.length];
+                switchView(prev);
+                this.toast(`Vue ${prev === 'day' ? 'Jour' : prev === 'week' ? 'Semaine' : 'Mois'}`);
+            }
+
+            showActivity() {
+                document.body.style.cursor = 'default';
+                clearTimeout(this.cursorTimer);
+                this.cursorTimer = setTimeout(() => document.body.style.cursor = 'none', 2000);
+            }
+
+            toast(msg) {
+                const el = document.createElement('div');
+                el.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-sky-600 text-white px-4 py-2 rounded font-bold shadow-xl z-50 uppercase tracking-wide animate-bounce';
+                el.innerText = msg;
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 2000);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

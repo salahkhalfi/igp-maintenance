@@ -16,6 +16,23 @@ export const users = sqliteTable('users', {
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
+// --- CHAT GUESTS TABLE ---
+export const chatGuests = sqliteTable('chat_guests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  email: text('email').notNull().unique(),
+  password_hash: text('password_hash').notNull(),
+  full_name: text('full_name').notNull(),
+  company: text('company'),
+  role: text('role').default('guest'),
+  is_active: integer('is_active', { mode: 'boolean' }).default(true),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    emailIdx: index('idx_chat_guests_email').on(table.email),
+  };
+});
+
 // --- MACHINES TABLE ---
 export const machines = sqliteTable('machines', {
   id: integer('id').primaryKey({ autoIncrement: true }),

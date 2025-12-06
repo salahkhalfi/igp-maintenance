@@ -89,11 +89,14 @@ push.post('/subscribe', async (c) => {
     }
 
     // Insérer ou mettre à jour la subscription
+    // FIX 2.14.1: Ajouter user_id = excluded.user_id pour transférer le token au nouvel utilisateur
+    // en cas de partage d'appareil
     await c.env.DB.prepare(`
       INSERT INTO push_subscriptions
       (user_id, endpoint, p256dh, auth, device_type, device_name, last_used)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(endpoint) DO UPDATE SET
+        user_id = excluded.user_id,
         last_used = datetime('now'),
         device_type = excluded.device_type,
         device_name = excluded.device_name
@@ -780,6 +783,119 @@ push.get('/send-test-to-salah', async (c) => {
     return c.json({ 
       success: false,
       error: 'Erreur lors de l\'envoi',
+      details: error instanceof Error ? error.message : String(error)
+    }, 500);
+  }
+});
+
+/**
+ * GET /api/push/diagnose/:query
+ * Outil de diagnostic complet pour un utilisateur (ID, email ou nom)
+ * Permet de vérifier les abonnements, logs et tester l'envoi
+ * Usage: /api/push/diagnose/2?send=true
+ */
+push.get('/diagnose/:query', async (c) => {
+  try {
+    const query = c.req.param('query');
+    const sendTest = c.req.query('send') === 'true';
+    const db = c.env.DB;
+    
+    console.log(`[PUSH-DIAGNOSE] Searching for: ${query}`);
+
+    // 1. Trouver l'utilisateur
+    let user;
+    const asId = parseInt(query);
+    
+    if (!isNaN(asId)) {
+      user = await db.prepare('SELECT id, first_name, last_name, email, role FROM users WHERE id = ?').bind(asId).first();
+    } else if (query.includes('@')) {
+      user = await db.prepare('SELECT id, first_name, last_name, email, role FROM users WHERE email = ?').bind(query).first();
+    } else {
+      user = await db.prepare('SELECT id, first_name, last_name, email, role FROM users WHERE first_name LIKE ? OR last_name LIKE ?').bind(`%${query}%`, `%${query}%`).first();
+    }
+
+    if (!user) {
+      return c.json({ error: `Utilisateur non trouvé pour la recherche: "${query}"` }, 404);
+    }
+
+    const userId = user.id as number;
+    console.log(`[PUSH-DIAGNOSE] Found user: ${user.first_name} ${user.last_name} (ID: ${userId})`);
+
+    // 2. Récupérer les abonnements
+    const subscriptions = await db.prepare(`
+      SELECT id, endpoint, device_type, device_name, datetime(last_used, 'localtime') as last_used, datetime(created_at, 'localtime') as created_at
+      FROM push_subscriptions
+      WHERE user_id = ?
+      ORDER BY last_used DESC
+    `).bind(userId).all();
+
+    // 3. Récupérer les logs récents
+    const logs = await db.prepare(`
+      SELECT id, status, error_message, datetime(created_at, 'localtime') as created_at
+      FROM push_logs
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 5
+    `).bind(userId).all();
+
+    // 4. Récupérer les notifications en attente
+    const pending = await db.prepare(`
+      SELECT COUNT(*) as count FROM pending_notifications WHERE user_id = ?
+    `).bind(userId).first();
+
+    let pushResult = null;
+
+    // 5. Envoyer un test si demandé
+    if (sendTest) {
+      console.log(`[PUSH-DIAGNOSE] Sending test push to user ${userId}...`);
+      pushResult = await sendPushNotification(c.env, userId, {
+        title: '🛠️ Diagnostic Push',
+        body: 'Si vous recevez ceci, vos notifications fonctionnent correctement !',
+        icon: '/icon-192.png',
+        data: { type: 'diagnostic', timestamp: Date.now() }
+      });
+
+      // Logger ce test
+      await db.prepare(`
+        INSERT INTO push_logs (user_id, status, error_message)
+        VALUES (?, ?, ?)
+      `).bind(
+        userId,
+        pushResult.success ? 'diag_success' : 'diag_failed',
+        pushResult.success ? 'Diagnostic OK' : JSON.stringify(pushResult)
+      ).run();
+    }
+
+    return c.json({
+      user: {
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        email: user.email,
+        role: user.role
+      },
+      summary: {
+        subscriptions_count: subscriptions.results?.length || 0,
+        has_active_subs: (subscriptions.results?.length || 0) > 0,
+        pending_notifications: pending?.count || 0,
+        last_error: logs.results?.[0]?.status === 'failed' ? logs.results[0].error_message : null
+      },
+      subscriptions: subscriptions.results,
+      recent_logs: logs.results,
+      test_result: pushResult ? {
+        attempted: true,
+        success: pushResult.success,
+        sent_count: pushResult.sentCount,
+        failed_count: pushResult.failedCount
+      } : {
+        attempted: false,
+        message: 'Ajoutez ?send=true à l\'URL pour tester l\'envoi'
+      }
+    });
+
+  } catch (error) {
+    console.error('[PUSH-DIAGNOSE] Error:', error);
+    return c.json({ 
+      error: 'Erreur interne lors du diagnostic',
       details: error instanceof Error ? error.message : String(error)
     }, 500);
   }

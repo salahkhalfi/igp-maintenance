@@ -106,11 +106,27 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface ChatGuest {
+  id: number;
+  email: string;
+  full_name: string;
+  company?: string;
+  role: 'guest';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Bindings Cloudflare
 export interface Bindings {
   DB: D1Database;
   MEDIA_BUCKET: R2Bucket;
   JWT_SECRET?: string;
   CRON_SECRET?: string;
+  TV_ACCESS_KEY?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  PUSH_ENABLED?: string;
   ENVIRONMENT?: string; // 'production' | 'development' | 'staging'
+  ASSETS: Fetcher;
 }

@@ -21,6 +21,7 @@ const AppHeader = ({
     onOpenManageColumns,
     onOpenSystemSettings,
     onOpenAdminRoles,
+    onOpenTv,
     onOpenPlanning,
     onOpenDetails,
     activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true }, // Default
@@ -210,7 +211,7 @@ const AppHeader = ({
                 // ACTIONS & BADGES
                 React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-between w-full md:w-auto md:justify-start mt-2 md:mt-0 flex-shrink-0" },
                     React.createElement('div', { className: "flex items-center gap-2 flex-wrap" },
-                        React.createElement('p', { className: "text-xs font-extrabold text-blue-800 hidden lg:block" }, activeTicketsCount + " actifs"),
+                        React.createElement('p', { id: "active-tickets-count", className: "text-xs font-extrabold text-blue-800 hidden lg:block" }, activeTicketsCount + " actifs"),
                         safeHasPermission('tickets.read') && React.createElement('button', {
                             className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200',
                             onClick: onOpenOverdue, title: 'Tickets en retard'
@@ -292,6 +293,7 @@ const AppHeader = ({
                 safeHasPermission('planning.read') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-500' }), 'Planning'),
                 safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
                 safeHasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
+                safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenTv, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-tv mr-2 text-purple-600' }), 'Écran TV'),
                 React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-blue-700 transition' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),
                 React.createElement('button', { onClick: onLogout, className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-gray-700 transition' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Déconnexion')
             )

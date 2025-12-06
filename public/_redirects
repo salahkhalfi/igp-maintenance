@@ -1,12 +1,13 @@
-# Redirection de toutes les anciennes URLs vers le domaine personnalisé
-# https://developers.cloudflare.com/pages/platform/redirects/
+# Cloudflare Pages Redirects
+# Format: /source /destination status
 
-# Forcer HTTPS
-http://mecanique.igpglass.ca/* https://mecanique.igpglass.ca/:splat 301
+# PWA Push Notifications
+/service-worker.js /service-worker.js 200
+/manifest.json /manifest.json 200
 
-# Rediriger les anciennes URLs Cloudflare vers le domaine personnalisé
-https://5e61f01a.webapp-7t8.pages.dev/* https://mecanique.igpglass.ca/:splat 301
-https://98a3ffaf.webapp-7t8.pages.dev/* https://mecanique.igpglass.ca/:splat 301
-https://2ced545d.webapp-7t8.pages.dev/* https://mecanique.igpglass.ca/:splat 301
+# TV View (Direct access, no SPA routing)
+/tv /tv.html 200
+/tv.html /tv.html 200
 
-# Note : webapp-7t8.pages.dev reste comme fallback technique
+# SPA Fallback (Must be last)
+/* /index.html 200

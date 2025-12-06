@@ -3,19 +3,29 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({ jsxImportSource: 'react' })],
+  esbuild: {
+    jsxFactory: 'React.createElement',
+    jsxFragment: 'React.Fragment',
+  },
   build: {
     // Output to dist/static/client so it can be served by Hono
     outDir: 'dist/static/client',
     emptyOutDir: true,
     manifest: true, // Useful for later
     rollupOptions: {
-      input: 'src/client/main.tsx',
-      // Externalize React to use the global CDN version (avoids dual instance issues with legacy scripts)
-      external: ['react', 'react-dom'],
+      input: {
+        main: 'src/client/main.tsx',
+      },
+      // Externalize React for the main app
+      external: (id) => {
+        return ['react', 'react-dom'].includes(id);
+      },
       output: {
-        // Fixed name for easy inclusion in legacy HTML for now
-        entryFileNames: 'main.js',
+        // Smart naming: main.js for legacy app
+        entryFileNames: (chunkInfo) => {
+          return chunkInfo.name === 'main' ? 'main.js' : '[name]-[hash].js';
+        },
         assetFileNames: 'assets/[name].[ext]',
         globals: {
           react: 'React',

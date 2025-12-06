@@ -24,6 +24,15 @@ const KanbanBoard = ({
     const completedStatus = columns.find(s => s.key === 'completed');
     const archivedStatus = columns.find(s => s.key === 'archived');
 
+    // --- DETECT ORPHANED TICKETS ---
+    // Tickets whose status does not match any visible column
+    // Excludes 'cancelled' (hidden by design)
+    const columnKeys = new Set(columns.map(c => c.key));
+    const orphanedTickets = tickets.filter(t => 
+        !columnKeys.has(t.status) && 
+        t.status !== 'cancelled'
+    );
+
     // Nettoyage du menu contextuel au clic global
     React.useEffect(() => {
         const handleClick = () => setContextMenu(null);
@@ -90,6 +99,7 @@ const KanbanBoard = ({
     };
 
     const handleDragOver = (e, status) => {
+        if (status === 'orphaned') return; // Prevent dropping into orphaned column
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
@@ -399,7 +409,15 @@ const KanbanBoard = ({
             // 1. Workflow Actif
             React.createElement('div', { className: 'overflow-x-auto pb-4' },
                 React.createElement('div', { className: 'kanban-grid flex gap-3' },
-                    workflowStatuses.map(status => renderColumn(status, getTicketsByStatus(status.key)))
+                    workflowStatuses.map(status => renderColumn(status, getTicketsByStatus(status.key))),
+                    
+                    // ORPHANED TICKETS COLUMN (Recovery Mode)
+                    orphanedTickets.length > 0 ? renderColumn({
+                        key: 'orphaned',
+                        label: '⚠️ Non classés',
+                        icon: 'exclamation-triangle',
+                        color: 'red'
+                    }, orphanedTickets) : null
                 )
             ),
             // 2. Terminés

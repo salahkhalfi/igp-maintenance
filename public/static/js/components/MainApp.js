@@ -17,6 +17,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
     const [showAdminRoles, setShowAdminRoles] = React.useState(false);
     const [showProductionPlanning, setShowProductionPlanning] = React.useState(false);
+    const [showTvModal, setShowTvModal] = React.useState(false);
 
     // Gestion des modules (Feature Flipping)
     const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
@@ -174,7 +175,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     // --- FONCTIONS MÉTIER ---
 
     const getActiveTicketsCount = () => {
-        let activeTickets = tickets.filter(t => t.status !== 'completed' && t.status !== 'archived');
+        let activeTickets = tickets.filter(t => t.status !== 'completed' && t.status !== 'archived' && t.status !== 'cancelled');
         if (currentUser && currentUser.role === 'operator') {
             activeTickets = activeTickets.filter(t => t.reported_by === currentUser.id);
         }
@@ -333,6 +334,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
+            onOpenTv: () => { setShowTvModal(true); setShowMobileMenu(false); },
             onOpenPlanning: () => { 
                 if (activeModules.planning) {
                     setShowProductionPlanning(true); 
@@ -345,7 +347,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }),
 
         // --- PRODUCTION PLANNING (FULL SCREEN MODAL) ---
-        showProductionPlanning && React.createElement(ProductionPlanning, { onClose: () => setShowProductionPlanning(false) }),
+        showProductionPlanning && React.createElement(window.ProductionPlanning, { onClose: () => setShowProductionPlanning(false) }),
 
         // --- KANBAN BOARD ---
         React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
@@ -364,6 +366,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         showAdminRoles && React.createElement('div', { className: 'fixed inset-0 z-[100] overflow-y-auto bg-gray-50 animate-fadeIn' },
             React.createElement(window.AdminRoles, { onBack: () => setShowAdminRoles(false) })
         ),
+
+        // --- TV DASHBOARD MODAL ---
+        showTvModal && React.createElement(window.TVDashboardModal, { isOpen: showTvModal, onClose: () => setShowTvModal(false) }),
 
         // --- FOOTER ---
         React.createElement('footer', { className: 'mt-12 py-6 text-center border-t-4 border-igp-blue', style: footerStyle },

@@ -37,6 +37,26 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.2 (4 Décembre 2025) - VUE TV SATELLITE 📺🚀
+- **🛰️ MODE KIOSQUE** : Nouvelle page indépendante `/tv.html` pour affichage sur Smart TV / Chromecast.
+- **🔒 SÉCURITÉ KEY** : Accès protégé par clé URL (pas de login/session qui expire).
+- **🔄 AUTO-PILOT** : Rafraîchissement automatique (60s) et défilement automatique intelligent.
+- **👀 VISIBILITÉ** : Interface sombre, gros contrastes, lisible à 5 mètres.
+- **🛠️ INDÉPENDANCE** : Architecture "Satellite" qui ne touche pas au cœur de l'application (0 risque).
+
+### Version 2.14.1 (4 Décembre 2025) - FIX PUSH APPAREILS PARTAGÉS 📱🔄
+- **🐛 FIX CRITIQUE** : Résolution du problème de notifications non reçues sur appareils partagés (ex: Laurent/Brahim).
+- **🔄 RÉINSCRIPTION AUTO** : Détection automatique du changement d'utilisateur et transfert de la propriété de l'appareil.
+- **🛠️ OUTIL DIAGNOSTIC** : Nouvelle route `/api/push/diagnose/:query` pour inspecter l'état des notifications.
+- **✨ UX AMÉLIORÉE** : Plus besoin de se désabonner manuellement, une simple reconnexion suffit.
+
+### Version 2.14.0 (4 Décembre 2025) - BETA 3: PARTAGE PLANNING & VUE TV 📺✨
+- **📺 VUE TV / LISTE** : Bascule entre vue calendrier et liste compacte pour affichage sur grands écrans
+- **📤 PARTAGE INTELLIGENT** : Invitation directe au planning via messagerie avec lien cliquable
+- **🔗 LIENS ACTIFS** : Transformation automatique des URLs `/planning` en boutons d'action
+- **🐛 CORRECTIFS TECH** : Stats technicien (403), scripts manquants, références JS
+- **🧪 STABILITÉ** : Validation non-régression, backup de sécurité "Beta 3"
+
 ### Version 2.13.0 (2 Décembre 2025) - GESTION DES MODULES & LICENCES 📦✨
 - **📦 FEATURE FLIPPING** : Système complet d'activation/désactivation de modules (Planning, Stats, Notifications)
 - **💼 MONÉTISATION** : Architecture prête pour le SaaS avec gestion des licences par entreprise

@@ -120,16 +120,16 @@ app.get('/', async (c) => {
 app.post('/events', requirePermission('planning', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
-    const { date, type, title, details, status } = body;
+    const { date, type, title, details, status, time } = body;
 
     const result = await c.env.DB.prepare(
-      `INSERT INTO planning_events (date, type, title, details, status) 
-       VALUES (?, ?, ?, ?, ?)`
-    ).bind(date, type, title, details || '', status || 'confirmed').run();
+      `INSERT INTO planning_events (date, type, title, details, status, time) 
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(date, type, title, details || '', status || 'confirmed', time || null).run();
 
     return c.json({
       id: result.meta.last_row_id,
-      date, type, title, details, status
+      date, type, title, details, status, time
     }, 201);
   } catch (error) {
     return c.json({ error: 'Erreur création événement' }, 500);
@@ -150,6 +150,7 @@ app.put('/events/:id', requirePermission('planning', 'manage'), async (c) => {
     if (body.title !== undefined) { updates.push('title = ?'); values.push(body.title); }
     if (body.details !== undefined) { updates.push('details = ?'); values.push(body.details); }
     if (body.status !== undefined) { updates.push('status = ?'); values.push(body.status); }
+    if (body.time !== undefined) { updates.push('time = ?'); values.push(body.time); }
 
     if (updates.length === 0) return c.json({ message: 'Rien à modifier' });
 
@@ -225,35 +226,37 @@ app.delete('/categories/:id', requirePermission('planning', 'manage'), async (c)
 // NOTES
 // ==========================================
 
+
 app.post('/notes', async (c) => {
   try {
     const user = c.get('user') as any;
+    const userId = user.userId || user.id; // Support both formats
     const body = await c.req.json();
-    const { text, time, date, priority } = body;
+    const { text, time, date, priority, is_dashboard } = body;
 
-    // Essayer d'insérer avec user_id
-    try {
-      const result = await c.env.DB.prepare(
-        `INSERT INTO planner_notes (text, time, date, priority, done, user_id) VALUES (?, ?, ?, ?, 0, ?)`
-      ).bind(text, time, date || null, priority || 'medium', user.id).run();
-      
-      return c.json({
-        id: result.meta.last_row_id,
-        text, time, date, priority, done: false, user_id: user.id
-      }, 201);
-    } catch (e) {
-      // Fallback sans user_id (si migration pas appliquée)
-      const result = await c.env.DB.prepare(
-        `INSERT INTO planner_notes (text, time, date, priority, done) VALUES (?, ?, ?, ?, 0)`
-      ).bind(text, time, date || null, priority || 'medium').run();
-      
-      return c.json({
-        id: result.meta.last_row_id,
-        text, time, date, priority, done: false
-      }, 201);
-    }
+    // Simple, explicit INSERT with no fallback
+    const result = await c.env.DB.prepare(
+      `INSERT INTO planner_notes (text, time, date, priority, done, user_id, is_dashboard) 
+       VALUES (?, ?, ?, ?, 0, ?, ?)`
+    ).bind(
+      text, 
+      time, 
+      date || null, 
+      priority || 'medium', 
+      userId, 
+      is_dashboard ? 1 : 0
+    ).run();
+
+    // Explicitly fetch the created note to ensure we return what's in DB
+    const savedNote = await c.env.DB.prepare(
+      `SELECT * FROM planner_notes WHERE id = ?`
+    ).bind(result.meta.last_row_id).first();
+    
+    return c.json(savedNote, 201);
+
   } catch (error) {
-    return c.json({ error: 'Erreur création note' }, 500);
+    console.error('Create note error:', error);
+    return c.json({ error: 'Erreur création note: ' + String(error) }, 500);
   }
 });
 
@@ -286,18 +289,29 @@ app.put('/notes/:id', async (c) => {
       updates.push('priority = ?');
       values.push(body.priority);
     }
+    if (body.is_dashboard !== undefined) {
+      updates.push('is_dashboard = ?');
+      values.push(body.is_dashboard ? 1 : 0);
+    }
 
     if (updates.length === 0) return c.json({ message: 'Rien à modifier' });
 
     values.push(id);
 
+    // Execute Update
     await c.env.DB.prepare(
       `UPDATE planner_notes SET ${updates.join(', ')} WHERE id = ?`
     ).bind(...values).run();
 
-    return c.json({ success: true });
+    // Explicitly fetch the updated note
+    const updatedNote = await c.env.DB.prepare(
+      'SELECT * FROM planner_notes WHERE id = ?'
+    ).bind(id).first();
+
+    return c.json({ success: true, note: updatedNote });
   } catch (error) {
-    return c.json({ error: 'Erreur modification note' }, 500);
+    console.error('Update note error:', error);
+    return c.json({ error: 'Erreur modification note: ' + String(error) }, 500);
   }
 });
 

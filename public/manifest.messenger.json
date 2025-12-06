@@ -1,0 +1,18 @@
+{
+  "id": "/messenger/",
+  "name": "IGP Messenger",
+  "short_name": "Messenger",
+  "start_url": "/messenger/",
+  "display": "standalone",
+  "background_color": "#111b21",
+  "theme_color": "#128C7E",
+  "scope": "/messenger/",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/messenger-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

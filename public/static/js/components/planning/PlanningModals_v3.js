@@ -1,4 +1,5 @@
 // Composant : Modales (Ajout Événement + Gestion Catégories)
+console.log('PlanningModals loaded v2.14.182 - Time field included');
 const PlanningModals = ({ 
     showAddModal, 
     setShowAddModal, 
@@ -30,8 +31,8 @@ const PlanningModals = ({
                     ),
                     // Modal Form
                     React.createElement('form', { onSubmit: onSaveEvent, className: 'p-6 space-y-5' },
-                        // Date & Type Row
-                        React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4' },
+                        // Date & Time & Type Row
+                        React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-3 gap-4' },
                             React.createElement('div', null,
                                 React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Date'),
                                 React.createElement('input', { 
@@ -39,6 +40,15 @@ const PlanningModals = ({
                                     type: 'date',
                                     defaultValue: newEventDate,
                                     required: true,
+                                    className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700' 
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Heure'),
+                                React.createElement('input', { 
+                                    name: 'time', 
+                                    type: 'time', 
+                                    defaultValue: selectedEvent ? selectedEvent.time : '',
                                     className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700' 
                                 })
                             ),
