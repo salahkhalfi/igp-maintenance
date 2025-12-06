@@ -232,15 +232,16 @@ app.post('/notes', async (c) => {
     const user = c.get('user') as any;
     const userId = user.userId || user.id; // Support both formats
     const body = await c.req.json();
-    const { text, time, date, priority, is_dashboard } = body;
+    const { text, time, end_time, date, priority, is_dashboard } = body;
 
     // Simple, explicit INSERT with no fallback
     const result = await c.env.DB.prepare(
-      `INSERT INTO planner_notes (text, time, date, priority, done, user_id, is_dashboard) 
-       VALUES (?, ?, ?, ?, 0, ?, ?)`
+      `INSERT INTO planner_notes (text, time, end_time, date, priority, done, user_id, is_dashboard) 
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?)`
     ).bind(
       text, 
       time, 
+      end_time || null,
       date || null, 
       priority || 'medium', 
       userId, 
@@ -280,6 +281,10 @@ app.put('/notes/:id', async (c) => {
     if (body.time !== undefined) {
       updates.push('time = ?');
       values.push(body.time);
+    }
+    if (body.end_time !== undefined) {
+      updates.push('end_time = ?');
+      values.push(body.end_time);
     }
     if (body.date !== undefined) {
       updates.push('date = ?');

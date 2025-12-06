@@ -244,90 +244,78 @@ export const tvHTML = `
     </div>
 
     <!-- HEADER -->
-    <header class="h-24 flex-none bg-slate-900 border-b border-slate-800 flex items-center justify-between px-8 relative z-10">
+    <header class="h-24 flex-none bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-8 relative z-10 backdrop-blur-md">
         <div class="flex items-center gap-6 w-1/4 flex-shrink-0">
-            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-14 w-auto transition-all duration-500">
+            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-16 w-auto transition-all duration-500">
             <div class="h-10 w-px bg-slate-700"></div>
             <div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">PLANNING IGP</h1>
-                <p class="text-blue-400 text-sm font-mono font-bold tracking-widest uppercase">Corporate Dashboard</p>
+                <h1 class="text-4xl font-bold text-white tracking-tight leading-none">PLANNING IGP</h1>
+                <p class="text-blue-400 text-sm font-mono font-bold tracking-widest uppercase leading-none mt-1">Dashboard</p>
             </div>
         </div>
 
-        <!-- BROADCAST MESSAGE (Flex Center - Responsive) -->
-        <div class="flex-1 flex justify-center items-center px-4 z-20 min-w-0">
-            <div id="tv-broadcast" class="hidden bg-indigo-900/95 border-2 border-indigo-500/50 text-white px-8 py-3 rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.5)] flex items-center gap-5 transition-all duration-500 backdrop-blur-md max-w-full transform hover:scale-105">
-                <i class="fas fa-bullhorn text-yellow-400 text-3xl animate-pulse flex-shrink-0"></i>
-                <span id="tv-broadcast-text" class="text-2xl font-bold tracking-wide line-clamp-2 leading-tight text-center drop-shadow-md">Message système...</span>
+        <!-- BROADCAST MESSAGE (Compact) -->
+        <div class="flex-1 flex justify-start items-center px-8 z-20 min-w-0 mr-8">
+            <div id="tv-broadcast" class="hidden relative flex items-center gap-4 pl-2 pr-6 py-2 rounded-full bg-slate-900/80 border border-slate-700/50 backdrop-blur-xl shadow-lg transition-all duration-500 max-w-full group">
+                <!-- Icon Bubble -->
+                <div class="relative h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-blue-900/50 flex-shrink-0 border border-white/10">
+                    <i class="fas fa-bullhorn text-white text-sm animate-pulse"></i>
+                </div>
+                
+                <!-- Text -->
+                <span id="tv-broadcast-text" class="relative text-xl font-bold text-slate-100 tracking-tight leading-tight font-sans truncate">Message...</span>
             </div>
         </div>
 
-        <div class="flex items-center gap-12 w-1/4 justify-end flex-shrink-0">
-            <!-- WEATHER WIDGET (MONTREAL) -->
+        <div class="flex items-center gap-8 w-1/4 justify-end flex-shrink-0">
+            <!-- WEATHER WIDGET (Compact) -->
             <div class="flex items-center gap-4 border-r border-slate-700 pr-8 hidden xl:flex">
-                <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-4xl"></i>
+                <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-5xl"></i>
                 <div class="text-right">
-                    <div id="weather-temp" class="text-4xl font-bold text-white leading-none">--°</div>
-                    <div class="text-blue-400 text-xs font-bold uppercase tracking-wider mt-1">Montréal</div>
+                    <div id="weather-temp" class="text-5xl font-bold text-white leading-none">--°</div>
                 </div>
             </div>
 
-            <!-- MÉTÉO / STATUS SYSTEM -->
-            <div class="text-right hidden lg:block">
-                <div id="system-status" class="flex items-center gap-2 justify-end text-green-400 text-sm font-bold">
-                    <span class="relative flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                    </span>
-                    SYSTÈME ONLINE
-                </div>
-                <div class="text-slate-400 text-xs mt-1">v2.7.0</div>
-            </div>
-
-            <!-- CLOCK -->
+            <!-- CLOCK (Compact) -->
             <div class="text-right font-mono leading-none">
-                <div id="clock-time" class="text-6xl font-bold text-white tracking-tighter">--:--</div>
+                <div id="clock-time" class="text-7xl font-bold text-white tracking-tighter">--:--</div>
                 <div id="clock-date" class="text-xl text-blue-300 font-semibold uppercase mt-1">---</div>
             </div>
-
-            <!-- FULLSCREEN TOGGLE -->
-            <button id="btn-fullscreen" onclick="toggleFullscreen()" class="text-slate-700 hover:text-blue-500 transition-all duration-300 p-2 rounded-full hover:bg-slate-800 focus:outline-none focus:text-blue-400 focus:bg-slate-800 focus:ring-2 focus:ring-blue-500" title="Plein écran">
-                <i class="fas fa-expand text-2xl"></i>
-            </button>
         </div>
     </header>
 
     <!-- MAIN CONTENT GRID -->
     <main class="flex-1 flex overflow-hidden relative">
         
-        <!-- LEFT COLUMN: TODAY / ACTIVE (60%) -->
+        <!-- LEFT COLUMN: TODAY (60%) -->
         <section class="w-[60%] flex flex-col border-r border-slate-800 bg-slate-900/50 relative p-8">
             
             <!-- Header Today -->
-            <div class="flex items-center gap-4 mb-8">
-                <div class="bg-blue-600 h-12 w-2"></div>
-                <h2 class="text-5xl font-black text-white tracking-tight uppercase">Aujourd'hui</h2>
-                <span id="today-date-large" class="text-3xl text-slate-400 font-light">...</span>
+            <div class="flex items-center gap-4 mb-6 border-b border-slate-800/50 pb-4">
+                <div class="bg-blue-600 h-8 w-1.5 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
+                <h2 class="text-3xl font-bold text-white tracking-tight uppercase flex items-center gap-3">
+                    Aujourd'hui
+                </h2>
+                <span id="today-date-large" class="text-xl text-blue-400/80 font-mono font-bold uppercase tracking-widest ml-auto">...</span>
             </div>
 
             <!-- ACTIVE CONTENT SCROLL -->
-            <div id="today-content" class="flex-1 overflow-y-auto space-y-4 pr-4 scrolling-container pb-[50vh] focus:outline-none" tabindex="0">
+            <div id="today-content" class="flex-1 overflow-y-auto space-y-3 pr-2 scrolling-container pb-[50vh] focus:outline-none" tabindex="0">
                 <!-- Content injected via JS -->
             </div>
 
-            <!-- EMPTY STATE PLACEHOLDER (Hidden by default) -->
-            <div id="today-empty" class="hidden h-full flex flex-col items-center justify-center opacity-30">
-                <i class="fas fa-check-circle text-9xl mb-4"></i>
-                <h3 class="text-4xl font-bold">R.A.S.</h3>
-                <p class="text-2xl">Aucune activité planifiée aujourd'hui</p>
+            <!-- EMPTY STATE -->
+            <div id="today-empty" class="hidden h-full flex flex-col items-center justify-center opacity-30 scale-75">
+                <i class="fas fa-check-circle text-7xl mb-4"></i>
+                <h3 class="text-2xl font-bold">R.A.S.</h3>
             </div>
 
         </section>
 
-        <!-- RIGHT COLUMN: UPCOMING TIMELINE (40%) -->
+        <!-- RIGHT COLUMN: TIMELINE (40%) -->
         <section class="w-[40%] bg-slate-950 relative flex flex-col">
-            <div class="p-6 pb-2 border-b border-slate-800 bg-slate-900 z-20 shadow-xl">
-                <h2 class="text-2xl font-bold text-blue-100 flex items-center gap-3">
+            <div class="p-6 border-b border-slate-800 bg-slate-900 z-20 shadow-xl">
+                <h2 class="text-3xl font-bold text-blue-100 flex items-center gap-3">
                     <i class="fas fa-history text-blue-500"></i>
                     PLANNING À VENIR
                 </h2>
@@ -354,7 +342,8 @@ export const tvHTML = `
             DETAILS: {
                 SHOW_DELAY: 500,        // ms before popup appears (Optimized)
                 HIDE_DELAY: 300         // ms before popup disappears
-            }
+            },
+            BROADCAST_INTERVAL: 10000   // 10s per message in rotation
         };
 
         let TV_KEY = new URLSearchParams(window.location.search).get('key');
@@ -366,13 +355,15 @@ export const tvHTML = `
             appData: null,
             lastDataHash: '',
             isPaused: false,
+            broadcastIndex: 0, // Current rotation index
             timers: {
                 detailsShow: null,
                 detailsHide: null,
                 scroll: null,
                 clock: null,
                 weather: null,
-                data: null
+                data: null,
+                broadcast: null // Timer for message rotation
             }
         };
 
@@ -715,6 +706,11 @@ export const tvHTML = `
             State.timers.clock = setInterval(updateClock, 1000);
             State.timers.weather = setInterval(fetchWeather, 600000); // 10min
             State.timers.data = setInterval(loadData, CONFIG.REFRESH_INTERVAL);
+            // Broadcast rotation timer (Priority logic is checked inside renderBroadcast called by clock/update)
+            State.timers.broadcast = setInterval(() => {
+                State.broadcastIndex++;
+                renderBroadcast(); // Re-render to show next message
+            }, CONFIG.BROADCAST_INTERVAL);
 
             // Initial Load
             await loadData();
@@ -794,7 +790,7 @@ export const tvHTML = `
         // ==========================================
 
         function renderDashboard() {
-            renderBroadcast();
+            renderBroadcast(); // Force immediate update on data load
             renderTodayColumn();
             renderUpcomingTimeline();
         }
@@ -803,13 +799,65 @@ export const tvHTML = `
             const broadcastEl = document.getElementById('tv-broadcast');
             const broadcastText = document.getElementById('tv-broadcast-text');
             
-            // Check for message in root appData (standard) or look for specific ticket type
-            let msg = State.appData.message || State.appData.broadcast_message;
+            let msg = null;
+
+            // 1. Get all potential notes
+            // Prioritize 'broadcast_notes' array from new API, fallback to 'message' legacy
+            const notes = State.appData.broadcast_notes || [];
             
-            // Optional: Look for a note tagged 'dashboard' in tickets if not in root (Fallback)
-            if (!msg && State.appData.tickets) {
-                const note = State.appData.tickets.find(t => t.type === 'note' && t.is_dashboard);
-                if (note) msg = note.title || note.description;
+            if (notes.length > 0) {
+                const now = dayjs();
+                const currentTimeStr = now.format('HH:mm');
+                const todayStr = now.format('YYYY-MM-DD');
+
+                // 2. Check for PRIORITY OVERRIDE (Time-based)
+                // A note is PRIORITY if:
+                // - It has a specific TIME defined
+                // - AND we are within its window [Time, EndTime] (or [Time, Time+1h] default)
+                // - AND it is scheduled for Today (or no date = daily recur)
+                const priorityNotes = notes.filter(n => {
+                    if (!n.time) return false; // No time = No priority override
+
+                    // Check Date (If defined, must match today. If null, assumes daily/immediate)
+                    if (n.date && n.date !== todayStr) return false;
+
+                    const startTime = dayjs(\`\${todayStr}T\${n.time}\`);
+                    
+                    // Determine End Time
+                    let endTime;
+                    if (n.end_time) {
+                        endTime = dayjs(\`\${todayStr}T\${n.end_time}\`);
+                    } else {
+                        // Default duration: 1 hour if no end time specified
+                        endTime = startTime.add(1, 'hour');
+                    }
+
+                    // Check if NOW is within window
+                    return now.isAfter(startTime) && now.isBefore(endTime);
+                });
+
+                if (priorityNotes.length > 0) {
+                    // PRIORITY MODE: Rotate only among priority notes
+                    // Using broadcastIndex ensures we rotate if multiple priorities overlap
+                    const note = priorityNotes[State.broadcastIndex % priorityNotes.length];
+                    msg = note.text;
+                } else {
+                    // STANDARD MODE: Rotate among ALL notes (or just non-priority ones?)
+                    // User requirement: "notes without date/time -> rotate". 
+                    // Let's include ALL valid notes in the rotation when no priority is active.
+                    const note = notes[State.broadcastIndex % notes.length];
+                    msg = note.text;
+                }
+
+            } else {
+                // Fallback Legacy
+                msg = State.appData.message || State.appData.broadcast_message;
+                
+                // Optional: Look for a note tagged 'dashboard' in tickets if not in root (Fallback)
+                if (!msg && State.appData.tickets) {
+                    const note = State.appData.tickets.find(t => t.type === 'note' && t.is_dashboard);
+                    if (note) msg = note.title || note.description;
+                }
             }
 
             if (msg) {
@@ -837,36 +885,37 @@ export const tvHTML = `
 
                 // Different styling for Today vs Timeline
                 if (isToday) {
+                    // TODAY: Reduced padding (p-4), smaller fonts
                     el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-6 mb-4 interactive-card\`;
                     el.innerHTML = \`
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex items-center gap-3">
-                                <span class="text-2xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
-                                <span class="font-mono text-slate-400 text-lg">#\${t.ticket_id}</span>
-                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black animate-pulse">EN COURS</span>' : ''}
-                                \${isCritical ? '<span class="status-pill bg-red-600 text-white animate-pulse">CRITIQUE</span>' : ''}
+                                <span class="text-3xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
+                                <span class="font-mono text-slate-400 text-xl">#\${t.ticket_id}</span>
+                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-sm px-3 py-1 animate-pulse">EN COURS</span>' : ''}
+                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-sm px-3 py-1 animate-pulse">CRITIQUE</span>' : ''}
                             </div>
                             <div class="text-right">
-                                <div class="text-xl font-bold text-white">\${t.assignee_name || 'Non assigné'}</div>
-                                <div class="text-slate-400 text-sm">Intervenant</div>
+                                <div class="text-2xl font-bold text-white leading-none">\${t.assignee_name || 'Non assigné'}</div>
+                                <div class="text-slate-400 text-sm uppercase tracking-wider">Intervenant</div>
                             </div>
                         </div>
-                        <h3 class="text-3xl font-bold text-white mb-2 leading-tight">\${t.title}</h3>
-                        <div class="flex items-center gap-2 text-blue-300 text-xl font-mono">
+                        <h3 class="text-4xl font-bold text-white mb-2 leading-tight">\${t.title}</h3>
+                        <div class="flex items-center gap-2 text-blue-300 text-xl font-mono mt-2">
                             <i class="fas fa-industry"></i>
                             \${t.machine_name}
                         </div>
                     \`;
                 } else {
-                    // Timeline Ticket (Compact)
-                    el.className = 'ml-8 mb-6 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    // TIMELINE: Compact
+                    el.className = 'ml-8 mb-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
                         <div class="flex justify-between items-start">
-                            <div class="font-bold text-white text-lg">\${t.title}</div>
-                            \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500"></i>' : ''}
+                            <div class="font-bold text-white text-xl leading-snug">\${t.title}</div>
+                            \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-base"></i>' : ''}
                         </div>
-                        <div class="text-slate-400 text-sm mt-1 flex items-center gap-2">
-                            <i class="fas fa-wrench text-xs"></i>
+                        <div class="text-slate-400 text-base mt-2 flex items-center gap-2">
+                            <i class="fas fa-wrench text-sm"></i>
                             \${t.machine_name}
                             <span class="ml-auto font-mono text-blue-300">\${t.assignee_name || '?'}</span>
                         </div>
@@ -876,37 +925,38 @@ export const tvHTML = `
             } else {
                 const e = item.data;
                 if (isToday) {
+                    // TODAY EVENT: Reduced icon (h-10), smaller title (text-lg)
                     el.className = \`\${baseClasses} glass-panel rounded-xl p-6 mb-4 border-l-8 border-blue-500 interactive-card\`;
                     if (e.category_color) el.style.borderLeftColor = e.category_color;
 
                     el.innerHTML = \`
-                        <div class="flex items-center gap-4">
-                            <div class="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center text-3xl">
+                        <div class="flex items-center gap-5">
+                            <div class="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center text-3xl flex-shrink-0">
                                 <i class="fas \${e.category_icon || 'fa-calendar'} text-slate-200"></i>
                             </div>
-                            <div class="w-full">
+                            <div class="w-full min-w-0">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-2xl font-bold text-white">\${e.title}</h3>
-                                    \${e.time ? '<span class="text-2xl font-mono font-bold text-cyan-300 bg-slate-800/80 border border-slate-600 px-3 py-1 rounded-lg ml-4 whitespace-nowrap shadow-lg">' + e.time.substring(0, 5) + '</span>' : ''}
+                                    <h3 class="text-3xl font-bold text-white truncate pr-4">\${e.title}</h3>
+                                    \${e.time ? '<span class="text-xl font-mono font-bold text-cyan-300 bg-slate-800/80 border border-slate-600 px-3 py-1 rounded ml-auto whitespace-nowrap">' + e.time.substring(0, 5) + '</span>' : ''}
                                 </div>
-                                <p class="text-slate-400 text-lg">\${e.description || e.category_label}</p>
+                                <p class="text-slate-400 text-xl truncate">\${e.description || e.category_label}</p>
                             </div>
                         </div>
                     \`;
                 } else {
-                    // Timeline Event (Compact)
-                    el.className = 'ml-8 mb-6 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    // TIMELINE EVENT: Very Compact
+                    el.className = 'ml-8 mb-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
-                        <div class="flex items-center gap-3">
-                            <div class="h-8 w-8 rounded bg-slate-700 flex items-center justify-center flex-shrink-0">
-                                <i class="fas \${e.category_icon || 'fa-calendar-day'} text-sm text-slate-300"></i>
+                        <div class="flex items-center gap-4">
+                            <div class="h-10 w-10 rounded bg-slate-700 flex items-center justify-center flex-shrink-0">
+                                <i class="fas \${e.category_icon || 'fa-calendar-day'} text-lg text-slate-300"></i>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                                     \${e.time ? '<span class="font-mono font-bold text-cyan-300 text-base bg-slate-900 px-2 py-0.5 rounded border border-slate-600 shadow-sm">' + e.time.substring(0, 5) + '</span>' : ''}
-                                    <div class="font-bold text-white text-lg leading-none">\${e.title}</div>
+                                    <div class="font-bold text-white text-xl leading-none truncate">\${e.title}</div>
                                 </div>
-                                <div class="text-slate-500 text-sm mt-1">\${e.category_label}</div>
+                                <div class="text-slate-500 text-base mt-1 truncate">\${e.category_label}</div>
                             </div>
                         </div>
                     \`;
@@ -991,7 +1041,7 @@ export const tvHTML = `
             dates.forEach(dateStr => {
                 const dateObj = dayjs(dateStr);
                 const header = document.createElement('div');
-                header.className = 'relative z-10 mb-6 mt-2';
+                header.className = 'relative z-10 mb-6 mt-4';
                 header.innerHTML = \`
                     <div class="flex items-center gap-4">
                         <div class="bg-slate-900 border-2 border-blue-500 rounded-full h-4 w-4 -ml-[9px]"></div>

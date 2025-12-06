@@ -158,58 +158,48 @@ app.get('/data', checkTvKey, async (c) => {
                    eventsResults.filter(e => e.date >= startOfDay && e.date <= todayEndIso).length
     };
 
-    // 5. Récupérer le message spécial du dashboard
-    let dashboardMessage = null;
+    // 5. Récupérer TOUS les messages du dashboard (Array pour rotation)
+    let dashboardNotes = [];
     try {
-      // Date et Heure actuelles pour le filtrage temporel
-      // On veut le message le plus récent (ID DESC) qui est programmé pour MAINTENANT ou AVANT
       const now = new Date();
-      // Format YYYY-MM-DD
-      const currentDate = now.toISOString().split('T')[0]; 
-      // Format HH:MM
-      const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
-
-      // Logique de sélection :
-      // 1. is_dashboard = 1 (Activé pour TV)
-      // 2. done = 0 (Pas terminé)
-      // 3. Planification :
-      //    - Si Date NULL : Affichage immédiat (Priorité faible)
-      //    - Si Date < Aujourd'hui : Affichage immédiat (Retard)
-      //    - Si Date = Aujourd'hui :
-      //         - Si Heure NULL : Affichage immédiat (Toute la journée)
-      //         - Si Heure <= Maintenant : Affichage immédiat (Heure passée)
-      // Ordre : Date DESC, Time DESC pour prendre le créneau le plus récent activé
+      const currentDate = now.toISOString().split('T')[0];
       
-      const note = await c.env.DB.prepare(`
-        SELECT text FROM planner_notes 
+      // On récupère toutes les notes actives pour le dashboard
+      // On inclut celles qui sont "futures" pour la logique de priorité
+      const notes = await c.env.DB.prepare(`
+        SELECT id, text, time, end_time, date 
+        FROM planner_notes 
         WHERE is_dashboard = 1 
-        AND done = 0 
-        AND (
-          date IS NULL 
-          OR date < ? 
-          OR (date = ? AND (time IS NULL OR time <= ?))
-        )
-        ORDER BY date DESC, time DESC, id DESC
-        LIMIT 1
-      `).bind(currentDate, currentDate, currentTime).first();
+        AND done = 0
+        ORDER BY date ASC, time ASC
+      `).all();
       
-      if (note && note.text) {
-        dashboardMessage = note.text;
+      if (notes && notes.results) {
+        dashboardNotes = notes.results;
       }
     } catch (e) {
-      // Ignore error if column doesn't exist yet
+      console.error('TV: Error fetching dashboard notes:', e);
+    }
+
+    // 6. Compatibilité ascendante : Message unique (le plus pertinent)
+    // On garde la logique "legacy" pour les vieux clients TV qui n'auraient pas reloadé
+    let dashboardMessage = null;
+    if (dashboardNotes.length > 0) {
+        // Simple fallback: take the first one or the "most current" one
+        dashboardMessage = dashboardNotes[0].text;
     }
 
     return c.json({
       meta: {
         generated_at: new Date().toISOString(),
-        version: "2.7.1"
+        version: "2.8.0"
       },
       stats,
       events: eventsResults,
       tickets: activeTickets,
-      categories, // Envoi des catégories au frontend
-      message: dashboardMessage
+      categories,
+      message: dashboardMessage, // Legacy support
+      broadcast_notes: dashboardNotes // New array support
     });
 
   } catch (error) {

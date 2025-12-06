@@ -6,13 +6,14 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
         e.preventDefault();
         const formData = new FormData(e.target);
         const text = formData.get('text');
-        const time = formData.get('time');
-        const date = formData.get('date');
+        const time = formData.get('time') || null;
+        const end_time = formData.get('end_time') || null;
+        const date = formData.get('date') || null;
         // Explicitly cast to boolean for API
         const is_dashboard = formData.get('is_dashboard') === 'on';
 
         if (editingNote) {
-            onUpdate(editingNote.id, { text, time, date, is_dashboard });
+            onUpdate(editingNote.id, { text, time, end_time, date, is_dashboard });
             setEditingNote(null);
         } else {
             // For Add, we need to pass the form data logic or just the values
@@ -138,24 +139,37 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
                     placeholder: editingNote ? 'Modifier la tâche...' : 'Ajouter une tâche...',
                     className: 'w-full pl-4 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition'
                 }),
-                React.createElement('div', { className: 'flex gap-2' },
+                React.createElement('div', { className: 'flex flex-col gap-2' },
                     React.createElement('input', { 
                         name: 'date',
                         type: 'date',
                         defaultValue: editingNote ? editingNote.date : '',
                         key: editingNote ? `date-${editingNote.id}` : 'date-new',
-                        className: 'w-28 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                        className: 'w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
                     }),
-                    React.createElement('input', { 
-                        name: 'time',
-                        type: 'time',
-                        defaultValue: editingNote ? editingNote.time : '',
-                        key: editingNote ? `time-${editingNote.id}` : 'time-new',
-                        className: 'w-20 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
-                    }),
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement('input', { 
+                            name: 'time',
+                            type: 'time',
+                            title: 'Début',
+                            placeholder: 'Début',
+                            defaultValue: editingNote ? editingNote.time : '',
+                            key: editingNote ? `time-${editingNote.id}` : 'time-new',
+                            className: 'flex-1 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                        }),
+                        React.createElement('input', { 
+                            name: 'end_time',
+                            type: 'time',
+                            title: 'Fin (Optionnel)',
+                            placeholder: 'Fin',
+                            defaultValue: editingNote ? editingNote.end_time : '',
+                            key: editingNote ? `end-time-${editingNote.id}` : 'end-time-new',
+                            className: 'flex-1 px-2 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                        })
+                    ),
                     React.createElement('button', { 
                         type: 'submit',
-                        className: `flex-1 rounded-lg py-2 text-xs font-bold transition shadow-sm flex items-center justify-center gap-2 ${
+                        className: `w-full rounded-lg py-2 text-xs font-bold transition shadow-sm flex items-center justify-center gap-2 ${
                             editingNote ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }` 
                     },
