@@ -315,7 +315,7 @@ export const tvHTML = `
         <!-- RIGHT COLUMN: TIMELINE (40%) -->
         <section class="w-[40%] bg-slate-950 relative flex flex-col">
             <div class="p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
-                <h2 class="text-3xl font-bold text-blue-100 flex items-center gap-3">
+                <h2 class="text-xl lg:text-3xl font-bold text-blue-100 flex items-center gap-2 lg:gap-3">
                     <i class="fas fa-history text-blue-500"></i>
                     PLANNING À VENIR
                 </h2>
@@ -911,7 +911,7 @@ export const tvHTML = `
                     \`;
                 } else {
                     // TIMELINE: Compact
-                    el.className = 'ml-4 lg:ml-8 mb-3 lg:mb-4 bg-slate-800/50 rounded-lg p-3 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
                         <div class="flex flex-wrap justify-between items-start gap-y-1">
                             <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-2 whitespace-normal">\${t.title}</div>
@@ -948,7 +948,7 @@ export const tvHTML = `
                     \`;
                 } else {
                     // TIMELINE EVENT: Very Compact
-                    el.className = 'ml-4 lg:ml-8 mb-3 lg:mb-4 bg-slate-800/50 rounded-lg p-3 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
                         <div class="flex items-center gap-2 lg:gap-4">
                             <div class="h-8 w-8 lg:h-10 lg:w-10 rounded bg-slate-700 flex items-center justify-center flex-shrink-0">
@@ -1044,11 +1044,11 @@ export const tvHTML = `
             dates.forEach(dateStr => {
                 const dateObj = dayjs(dateStr);
                 const header = document.createElement('div');
-                header.className = 'relative z-10 mb-6 mt-4';
+                header.className = 'relative z-10 mb-3 lg:mb-6 mt-2 lg:mt-4';
                 header.innerHTML = \`
                     <div class="flex items-center gap-2 lg:gap-4">
                         <div class="bg-slate-900 border-2 border-blue-500 rounded-full h-4 w-4 -ml-[9px]"></div>
-                        <span class="text-blue-400 font-mono font-bold text-lg uppercase tracking-widest">
+                        <span class="text-blue-400 font-mono font-bold text-sm lg:text-lg uppercase tracking-widest">
                             \${dateObj.format('dddd D MMMM')}
                         </span>
                     </div>
