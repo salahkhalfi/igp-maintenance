@@ -181,17 +181,17 @@ export const tvHTML = `
             left: 0;
             right: 0;
             height: auto; /* Allow auto height based on content */
-            min-height: 20vh;
-            max-height: 40vh;
+            min-height: 15vh;
+            max-height: 35vh;
             background: rgba(15, 23, 42, 0.95); /* Slate-900 */
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
             transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100;
-            padding: 2rem;
+            /* padding handled by classes */
             display: flex;
-            gap: 2rem;
+            /* gap handled by classes */
             color: white;
             pointer-events: none; /* Fix for chaotic hover behavior */
         }
@@ -224,13 +224,13 @@ export const tvHTML = `
 <body class="h-screen flex flex-col">
 
     <!-- DETAILS PANEL (Bottom Sheet) -->
-    <div id="details-panel">
+    <div id="details-panel" class="p-4 lg:p-8 gap-4 lg:gap-8">
         <div class="detail-content w-full flex flex-col justify-center">
-            <div class="flex items-center gap-4 mb-4">
-                <span id="detail-badge" class="hidden px-2 xl:px-3 py-0.5 xl:py-1 rounded text-sm font-bold uppercase border">BADGE</span>
-                <div id="detail-meta" class="text-blue-400 font-mono text-lg uppercase tracking-widest">METADATA • INFO</div>
+            <div class="flex items-center gap-2 lg:gap-4 mb-2 lg:mb-4">
+                <span id="detail-badge" class="hidden px-2 lg:px-3 py-0.5 lg:py-1 rounded text-xs lg:text-sm font-bold uppercase border">BADGE</span>
+                <div id="detail-meta" class="text-blue-400 font-mono text-sm lg:text-lg uppercase tracking-widest">METADATA • INFO</div>
             </div>
-            <p id="detail-desc" class="text-slate-200 text-3xl font-light leading-relaxed max-w-7xl">Description complète...</p>
+            <p id="detail-desc" class="text-slate-200 text-xl lg:text-3xl font-light leading-snug lg:leading-relaxed max-w-7xl">Description complète...</p>
         </div>
     </div>
 
@@ -590,7 +590,7 @@ export const tvHTML = `
                 
                 // Reset Badge
                 badge.classList.add('hidden');
-                badge.className = 'hidden px-2 xl:px-3 py-0.5 xl:py-1 rounded text-sm font-bold uppercase border'; 
+                badge.className = 'hidden px-2 lg:px-3 py-0.5 lg:py-1 rounded text-xs lg:text-sm font-bold uppercase border'; 
 
                 if (item.type === 'ticket') {
                     const t = item.data;
@@ -1048,7 +1048,7 @@ export const tvHTML = `
                 header.innerHTML = \`
                     <div class="flex items-center gap-2 lg:gap-4">
                         <div class="bg-slate-900 border-2 border-blue-500 rounded-full h-4 w-4 -ml-[9px]"></div>
-                        <span class="text-blue-400 font-mono font-bold text-sm lg:text-lg uppercase tracking-widest">
+                        <span class="text-blue-400 font-mono font-bold text-sm lg:text-sm lg:text-lg uppercase tracking-widest">
                             \${dateObj.format('dddd D MMMM')}
                         </span>
                     </div>
