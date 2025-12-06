@@ -750,10 +750,10 @@ export const tvHTML = `
                     const temp = Math.round(temperature_2m);
                     
                     let icon = 'fa-sun', color = 'text-yellow-400';
-                    if (weather_code >= 1 && weather_code <= 3) { icon = 'fa-cloud-sun'; color = 'text-gray-300'; }
+                    if (weather_code >= 1 && weather_code <= 3) { icon = 'fa-cloud-sun'; color = 'text-blue-200'; }
                     else if (weather_code >= 45 && weather_code <= 48) { icon = 'fa-smog'; color = 'text-slate-400'; }
                     else if (weather_code >= 51 && weather_code <= 67) { icon = 'fa-cloud-rain'; color = 'text-blue-400'; }
-                    else if (weather_code >= 71 && weather_code <= 77) { icon = 'fa-snowflake'; color = 'text-cyan-300'; }
+                    else if (weather_code >= 71 && weather_code <= 77) { icon = 'fa-snowflake'; color = 'text-sky-400'; }
                     else if (weather_code >= 80 && weather_code <= 82) { icon = 'fa-cloud-showers-heavy'; color = 'text-blue-500'; }
                     else if (weather_code >= 95) { icon = 'fa-bolt'; color = 'text-yellow-500'; }
 
