@@ -753,12 +753,12 @@ export const tvHTML = `
                     if (weather_code >= 1 && weather_code <= 3) { icon = 'fa-cloud-sun'; color = 'text-gray-300'; }
                     else if (weather_code >= 45 && weather_code <= 48) { icon = 'fa-smog'; color = 'text-slate-400'; }
                     else if (weather_code >= 51 && weather_code <= 67) { icon = 'fa-cloud-rain'; color = 'text-blue-400'; }
-                    else if (weather_code >= 71 && weather_code <= 77) { icon = 'fa-snowflake'; color = 'text-white'; }
+                    else if (weather_code >= 71 && weather_code <= 77) { icon = 'fa-snowflake'; color = 'text-cyan-300'; }
                     else if (weather_code >= 80 && weather_code <= 82) { icon = 'fa-cloud-showers-heavy'; color = 'text-blue-500'; }
                     else if (weather_code >= 95) { icon = 'fa-bolt'; color = 'text-yellow-500'; }
 
-                    document.getElementById('weather-temp').textContent = \`\${temp}°\`;
-                    document.getElementById('weather-icon').className = \`fas \${icon} \${color} text-4xl\`;
+                    document.getElementById('weather-temp').className = `text-xl lg:text-2xl font-bold leading-none ${color}`; document.getElementById('weather-temp').textContent = \`\${temp}°\`;
+                    document.getElementById('weather-icon').className = \`fas \${icon} \${color} text-xl lg:text-2xl\`;
                 }
             } catch (e) {
                 console.error("Weather Error:", e);
