@@ -757,7 +757,7 @@ export const tvHTML = `
                     else if (weather_code >= 80 && weather_code <= 82) { icon = 'fa-cloud-showers-heavy'; color = 'text-blue-500'; }
                     else if (weather_code >= 95) { icon = 'fa-bolt'; color = 'text-yellow-500'; }
 
-                    document.getElementById('weather-temp').className = `text-xl lg:text-2xl font-bold leading-none ${color}`; document.getElementById('weather-temp').textContent = \`\${temp}°\`;
+                    document.getElementById('weather-temp').className = \`text-xl lg:text-2xl font-bold leading-none \${color}\`; document.getElementById('weather-temp').textContent = \`\${temp}°\`;
                     document.getElementById('weather-icon').className = \`fas \${icon} \${color} text-xl lg:text-2xl\`;
                 }
             } catch (e) {
