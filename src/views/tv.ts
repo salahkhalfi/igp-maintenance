@@ -227,7 +227,7 @@ export const tvHTML = `
     <div id="details-panel">
         <div class="detail-content w-full flex flex-col justify-center">
             <div class="flex items-center gap-4 mb-4">
-                <span id="detail-badge" class="hidden px-3 py-1 rounded text-sm font-bold uppercase border">BADGE</span>
+                <span id="detail-badge" class="hidden px-2 xl:px-3 py-0.5 xl:py-1 rounded text-sm font-bold uppercase border">BADGE</span>
                 <div id="detail-meta" class="text-blue-400 font-mono text-lg uppercase tracking-widest">METADATA • INFO</div>
             </div>
             <p id="detail-desc" class="text-slate-200 text-3xl font-light leading-relaxed max-w-7xl">Description complète...</p>
@@ -244,42 +244,42 @@ export const tvHTML = `
     </div>
 
     <!-- HEADER -->
-    <header class="h-24 flex-none bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-8 relative z-10 backdrop-blur-md">
-        <div class="flex items-center gap-6 w-1/4 flex-shrink-0">
-            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-16 w-auto transition-all duration-500">
-            <div class="h-10 w-px bg-slate-700"></div>
+    <header class="h-16 flex-none bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-6 relative z-10 backdrop-blur-md">
+        <div class="flex items-center gap-4 w-1/4 flex-shrink-0">
+            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-10 w-auto transition-all duration-500">
+            <div class="h-6 w-px bg-slate-700"></div>
             <div>
-                <h1 class="text-4xl font-bold text-white tracking-tight leading-none">PLANNING IGP</h1>
-                <p class="text-blue-400 text-sm font-mono font-bold tracking-widest uppercase leading-none mt-1">Dashboard</p>
+                <h1 class="text-lg font-bold text-white tracking-tight leading-none">PLANNING IGP</h1>
+                <p class="text-blue-400 text-[10px] font-mono font-bold tracking-widest uppercase leading-none mt-0.5">Dashboard</p>
             </div>
         </div>
 
         <!-- BROADCAST MESSAGE (Compact) -->
-        <div class="flex-1 flex justify-start items-center px-8 z-20 min-w-0 mr-8">
-            <div id="tv-broadcast" class="hidden relative flex items-center gap-4 pl-2 pr-6 py-2 rounded-full bg-slate-900/80 border border-slate-700/50 backdrop-blur-xl shadow-lg transition-all duration-500 max-w-full group">
+        <div class="flex-1 flex justify-start items-center px-6 z-20 min-w-0 mr-4">
+            <div id="tv-broadcast" class="hidden relative flex items-center gap-3 pl-1.5 pr-4 py-1 rounded-full bg-slate-900/80 border border-slate-700/50 backdrop-blur-xl shadow-lg transition-all duration-500 max-w-full group">
                 <!-- Icon Bubble -->
-                <div class="relative h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-blue-900/50 flex-shrink-0 border border-white/10">
-                    <i class="fas fa-bullhorn text-white text-sm animate-pulse"></i>
+                <div class="relative h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-blue-900/50 flex-shrink-0 border border-white/10">
+                    <i class="fas fa-bullhorn text-white text-xs animate-pulse"></i>
                 </div>
                 
                 <!-- Text -->
-                <span id="tv-broadcast-text" class="relative text-xl font-bold text-slate-100 tracking-tight leading-tight font-sans truncate">Message...</span>
+                <span id="tv-broadcast-text" class="relative text-2xl font-bold text-slate-100 tracking-tight leading-tight font-sans truncate">Message...</span>
             </div>
         </div>
 
         <div class="flex items-center gap-8 w-1/4 justify-end flex-shrink-0">
             <!-- WEATHER WIDGET (Compact) -->
-            <div class="flex items-center gap-4 border-r border-slate-700 pr-8 hidden xl:flex">
-                <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-5xl"></i>
+            <div class="flex items-center gap-3 border-r border-slate-700 pr-6 hidden xl:flex">
+                <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-2xl"></i>
                 <div class="text-right">
-                    <div id="weather-temp" class="text-5xl font-bold text-white leading-none">--°</div>
+                    <div id="weather-temp" class="text-2xl font-bold text-white leading-none">--°</div>
                 </div>
             </div>
 
             <!-- CLOCK (Compact) -->
             <div class="text-right font-mono leading-none">
-                <div id="clock-time" class="text-7xl font-bold text-white tracking-tighter">--:--</div>
-                <div id="clock-date" class="text-xl text-blue-300 font-semibold uppercase mt-1">---</div>
+                <div id="clock-time" class="text-4xl font-bold text-white tracking-tighter">--:--</div>
+                <div id="clock-date" class="text-xs text-blue-300 font-semibold uppercase mt-0.5">---</div>
             </div>
         </div>
     </header>
@@ -288,15 +288,15 @@ export const tvHTML = `
     <main class="flex-1 flex overflow-hidden relative">
         
         <!-- LEFT COLUMN: TODAY (60%) -->
-        <section class="w-[60%] flex flex-col border-r border-slate-800 bg-slate-900/50 relative p-8">
+        <section class="w-[60%] flex flex-col border-r border-slate-800 bg-slate-900/50 relative p-6">
             
             <!-- Header Today -->
-            <div class="flex items-center gap-4 mb-6 border-b border-slate-800/50 pb-4">
-                <div class="bg-blue-600 h-8 w-1.5 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
+            <div class="flex items-center gap-3 mb-4 border-b border-slate-800/50 pb-3">
+                <div class="bg-blue-600 h-6 w-1 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]"></div>
                 <h2 class="text-3xl font-bold text-white tracking-tight uppercase flex items-center gap-3">
                     Aujourd'hui
                 </h2>
-                <span id="today-date-large" class="text-xl text-blue-400/80 font-mono font-bold uppercase tracking-widest ml-auto">...</span>
+                <span id="today-date-large" class="text-sm text-blue-400/80 font-mono font-bold uppercase tracking-widest ml-auto">...</span>
             </div>
 
             <!-- ACTIVE CONTENT SCROLL -->
@@ -314,14 +314,17 @@ export const tvHTML = `
 
         <!-- RIGHT COLUMN: TIMELINE (40%) -->
         <section class="w-[40%] bg-slate-950 relative flex flex-col">
-            <div class="p-6 border-b border-slate-800 bg-slate-900 z-20 shadow-xl">
+            <div class="p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
                 <h2 class="text-3xl font-bold text-blue-100 flex items-center gap-3">
                     <i class="fas fa-history text-blue-500"></i>
                     PLANNING À VENIR
                 </h2>
+                <button id="btn-fullscreen" class="p-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white transition-all duration-300 focus:ring-4 focus:ring-blue-500 outline-none border border-slate-700" onclick="toggleFullscreen()" tabindex="0">
+                    <i class="fas fa-expand text-2xl"></i>
+                </button>
             </div>
             
-            <div id="timeline-content" class="flex-1 overflow-y-auto p-6 pl-10 space-y-8 relative scrolling-container focus:outline-none pb-[50vh]" tabindex="0">
+            <div id="timeline-content" class="flex-1 overflow-y-auto p-4 pl-8 space-y-6 relative scrolling-container focus:outline-none pb-[50vh]" tabindex="0">
                 <!-- Line background -->
                 <div class="timeline-line"></div>
                 <!-- Content injected via JS -->
@@ -587,7 +590,7 @@ export const tvHTML = `
                 
                 // Reset Badge
                 badge.classList.add('hidden');
-                badge.className = 'hidden px-3 py-1 rounded text-sm font-bold uppercase border'; 
+                badge.className = 'hidden px-2 xl:px-3 py-0.5 xl:py-1 rounded text-sm font-bold uppercase border'; 
 
                 if (item.type === 'ticket') {
                     const t = item.data;
@@ -886,22 +889,22 @@ export const tvHTML = `
                 // Different styling for Today vs Timeline
                 if (isToday) {
                     // TODAY: Reduced padding (p-4), smaller fonts
-                    el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-6 mb-4 interactive-card\`;
+                    el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-3 xl:p-6 mb-3 xl:mb-4 interactive-card\`;
                     el.innerHTML = \`
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex items-center gap-3">
-                                <span class="text-3xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
-                                <span class="font-mono text-slate-400 text-xl">#\${t.ticket_id}</span>
-                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-sm px-3 py-1 animate-pulse">EN COURS</span>' : ''}
-                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-sm px-3 py-1 animate-pulse">CRITIQUE</span>' : ''}
+                        <div class="flex flex-wrap justify-between items-start mb-2 gap-y-1">
+                            <div class="flex items-center gap-2 xl:gap-3">
+                                <span class="text-lg xl:text-3xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
+                                <span class="font-mono text-slate-400 text-xs xl:text-xl">#\${t.ticket_id}</span>
+                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 animate-pulse">EN COURS</span>' : ''}
+                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 animate-pulse">CRITIQUE</span>' : ''}
                             </div>
                             <div class="text-right">
-                                <div class="text-2xl font-bold text-white leading-none">\${t.assignee_name || 'Non assigné'}</div>
-                                <div class="text-slate-400 text-sm uppercase tracking-wider">Intervenant</div>
+                                <div class="text-base xl:text-2xl font-bold text-white leading-none">\${t.assignee_name || 'Non assigné'}</div>
+                                <div class="text-slate-400 text-[10px] xl:text-sm uppercase tracking-wider">Intervenant</div>
                             </div>
                         </div>
-                        <h3 class="text-4xl font-bold text-white mb-2 leading-tight">\${t.title}</h3>
-                        <div class="flex items-center gap-2 text-blue-300 text-xl font-mono mt-2">
+                        <h3 class="text-lg xl:text-3xl font-bold text-white mb-2 leading-tight line-clamp-2 whitespace-normal">\${t.title}</h3>
+                        <div class="flex items-center gap-2 text-blue-300 text-xs xl:text-xl font-mono mt-2">
                             <i class="fas fa-industry"></i>
                             \${t.machine_name}
                         </div>
@@ -911,7 +914,7 @@ export const tvHTML = `
                     el.className = 'ml-8 mb-4 bg-slate-800/50 rounded-lg p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
                         <div class="flex justify-between items-start">
-                            <div class="font-bold text-white text-xl leading-snug">\${t.title}</div>
+                            <div class="font-bold text-white text-xl leading-snug line-clamp-2 whitespace-normal">\${t.title}</div>
                             \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-base"></i>' : ''}
                         </div>
                         <div class="text-slate-400 text-base mt-2 flex items-center gap-2">
@@ -926,20 +929,20 @@ export const tvHTML = `
                 const e = item.data;
                 if (isToday) {
                     // TODAY EVENT: Reduced icon (h-10), smaller title (text-lg)
-                    el.className = \`\${baseClasses} glass-panel rounded-xl p-6 mb-4 border-l-8 border-blue-500 interactive-card\`;
+                    el.className = \`\${baseClasses} glass-panel rounded-xl p-3 xl:p-6 mb-3 xl:mb-4 border-l-4 xl:border-l-8 border-blue-500 interactive-card\`;
                     if (e.category_color) el.style.borderLeftColor = e.category_color;
 
                     el.innerHTML = \`
-                        <div class="flex items-center gap-5">
-                            <div class="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center text-3xl flex-shrink-0">
+                        <div class="flex items-center gap-3 xl:gap-5">
+                            <div class="h-10 w-10 xl:h-16 xl:w-16 rounded-full bg-slate-800 flex items-center justify-center text-lg xl:text-3xl flex-shrink-0">
                                 <i class="fas \${e.category_icon || 'fa-calendar'} text-slate-200"></i>
                             </div>
                             <div class="w-full min-w-0">
                                 <div class="flex justify-between items-start">
-                                    <h3 class="text-3xl font-bold text-white truncate pr-4">\${e.title}</h3>
-                                    \${e.time ? '<span class="text-xl font-mono font-bold text-cyan-300 bg-slate-800/80 border border-slate-600 px-3 py-1 rounded ml-auto whitespace-nowrap">' + e.time.substring(0, 5) + '</span>' : ''}
+                                    <h3 class="text-lg xl:text-3xl font-bold text-white pr-2 xl:pr-4 line-clamp-2 leading-tight whitespace-normal">\${e.title}</h3>
+                                    \${e.time ? '<span class="text-xs xl:text-xl font-mono font-bold text-cyan-300 bg-slate-800/80 border border-slate-600 px-2 xl:px-2 xl:px-3 py-0.5 xl:py-1 rounded ml-auto whitespace-nowrap">' + e.time.substring(0, 5) + '</span>' : ''}
                                 </div>
-                                <p class="text-slate-400 text-xl truncate">\${e.description || e.category_label}</p>
+                                <p class="text-slate-400 text-xs xl:text-xl line-clamp-2 leading-snug whitespace-normal">\${e.description || e.category_label}</p>
                             </div>
                         </div>
                     \`;
@@ -954,9 +957,9 @@ export const tvHTML = `
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                                     \${e.time ? '<span class="font-mono font-bold text-cyan-300 text-base bg-slate-900 px-2 py-0.5 rounded border border-slate-600 shadow-sm">' + e.time.substring(0, 5) + '</span>' : ''}
-                                    <div class="font-bold text-white text-xl leading-none truncate">\${e.title}</div>
+                                    <div class="font-bold text-white text-xl leading-none line-clamp-2 whitespace-normal">\${e.title}</div>
                                 </div>
-                                <div class="text-slate-500 text-base mt-1 truncate">\${e.category_label}</div>
+                                <div class="text-slate-500 text-base mt-1 line-clamp-1 whitespace-normal">\${e.category_label}</div>
                             </div>
                         </div>
                     \`;
