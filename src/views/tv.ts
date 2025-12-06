@@ -299,9 +299,9 @@ export const tvHTML = `
                     </h2>
                 </div>
 
-                <div class="flex items-center gap-3 hidden xl:flex">
-                    <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-2xl"></i>
-                    <div id="weather-temp" class="text-2xl font-bold text-white leading-none">--°</div>
+                <div class="flex items-center gap-2 lg:gap-3">
+                    <i id="weather-icon" class="fas fa-cloud-sun text-yellow-400 text-xl lg:text-2xl"></i>
+                    <div id="weather-temp" class="text-xl lg:text-2xl font-bold text-white leading-none">--°</div>
                 </div>
 
                 <span id="today-date-large" class="text-sm text-blue-400/80 font-mono font-bold uppercase tracking-widest">...</span>
