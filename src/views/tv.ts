@@ -314,13 +314,13 @@ export const tvHTML = `
 
         <!-- RIGHT COLUMN: TIMELINE (40%) -->
         <section class="w-[40%] bg-slate-950 relative flex flex-col">
-            <div class="p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
+            <div class="p-3 lg:p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
                 <h2 class="text-xl lg:text-3xl font-bold text-blue-100 flex items-center gap-2 lg:gap-3">
                     <i class="fas fa-history text-blue-500"></i>
                     PLANNING À VENIR
                 </h2>
-                <button id="btn-fullscreen" class="p-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white transition-all duration-300 focus:ring-4 focus:ring-blue-500 outline-none border border-slate-700" onclick="toggleFullscreen()" tabindex="0">
-                    <i class="fas fa-expand text-2xl"></i>
+                <button id="btn-fullscreen" class="p-2 lg:p-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-white transition-all duration-300 focus:ring-4 focus:ring-blue-500 outline-none border border-slate-700" onclick="toggleFullscreen()" tabindex="0">
+                    <i class="fas fa-expand text-lg lg:text-2xl"></i>
                 </button>
             </div>
             
