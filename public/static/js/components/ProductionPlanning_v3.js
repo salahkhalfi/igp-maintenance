@@ -393,7 +393,8 @@ const ProductionPlanning = ({ onClose }) => {
         };
     });
 
-    const workDays = days.filter(d => d.dayOfWeek >= 1 && d.dayOfWeek <= 5);
+    // Show all days including weekends
+    const displayDays = days;
 
     const getEventsForDay = (dateStr) => {
         return events.filter(e => {
@@ -608,14 +609,18 @@ const ProductionPlanning = ({ onClose }) => {
                 )
             ) : (
                 React.createElement('div', { className: 'flex-1 flex flex-col bg-slate-50 lg:border-r border-gray-200 overflow-hidden' },
-                    React.createElement('div', { className: 'hidden lg:grid grid-cols-5 border-b bg-white shadow-sm' },
-                        ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'].map(day => 
+                    React.createElement('div', { className: 'hidden lg:grid grid-cols-7 border-b bg-white shadow-sm' },
+                        ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => 
                             React.createElement('div', { key: day, className: 'py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider' }, day)
                         )
                     ),
 
-                    React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
-                        workDays.map((dayObj, idx) => {
+                    React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 flex-1 overflow-y-auto p-3 lg:p-4 gap-3 lg:gap-4 pb-20 lg:pb-4' },
+                        // Add empty cells for offset to align first day
+                        Array.from({ length: new Date(year, month, 1).getDay() }).map((_, i) => 
+                            React.createElement('div', { key: `empty-${i}`, className: 'hidden lg:block bg-transparent' })
+                        ),
+                        displayDays.map((dayObj, idx) => {
                             const dayEvents = getEventsForDay(dayObj.dateStr);
                             const dayNames = ['Dim', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Sam'];
                             
