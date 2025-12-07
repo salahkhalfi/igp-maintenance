@@ -37,6 +37,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.4 (7 Décembre 2025) - ADMINISTRATION GROUPES DE CHAT 💬🛠️
+- **🛠️ GESTION ADMIN GROUPES** : L'administrateur global et l'administrateur du groupe peuvent désormais modifier le nom et l'icône des groupes.
+- **✏️ ÉDITION SIMPLIFIÉE** : Boutons d'édition (crayon et caméra) toujours visibles et accessibles (plus d'effet hover masqué).
+- **🔒 PERMISSIONS ÉTENDUES** : Le rôle 'admin' (Super Admin) a maintenant les droits d'édition sur tous les groupes, même s'il n'en est pas le créateur.
+- **✅ ACCESSIBILITÉ MOBILE** : Amélioration de l'interface pour faciliter l'édition sur écran tactile.
+
 ### Version 2.14.3 (7 Décembre 2025) - DIFFUSION TV IMAGES & GALERIES 📺🖼️✨
 - **📸 BROADCAST RICH MEDIA** : Support complet pour diffusion d'images et galeries sur TV
 - **🖼️ NOUVEAUX TYPES DE MESSAGES** :
