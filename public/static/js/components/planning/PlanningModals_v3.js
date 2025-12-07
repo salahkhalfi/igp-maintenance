@@ -91,6 +91,18 @@ const PlanningModals = ({
                             })
                         ),
 
+                        // Show on TV Checkbox
+                        React.createElement('div', { className: 'flex items-center gap-2 mt-2' },
+                            React.createElement('input', { 
+                                type: 'checkbox', 
+                                name: 'show_on_tv', 
+                                id: 'show_on_tv',
+                                defaultChecked: selectedEvent ? (selectedEvent.show_on_tv !== 0 && selectedEvent.show_on_tv !== false) : true, 
+                                className: 'w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300' 
+                            }),
+                            React.createElement('label', { htmlFor: 'show_on_tv', className: 'text-sm text-slate-700 font-medium cursor-pointer' }, 'Afficher sur le TV Board')
+                        ),
+
                         // Footer Buttons
                         React.createElement('div', { className: 'flex flex-col-reverse sm:flex-row justify-between items-center gap-3 pt-2' },
                             // Delete Button (Only in Edit Mode)

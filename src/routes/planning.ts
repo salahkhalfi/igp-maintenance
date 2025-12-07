@@ -120,16 +120,16 @@ app.get('/', async (c) => {
 app.post('/events', requirePermission('planning', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
-    const { date, type, title, details, status, time } = body;
+    const { date, type, title, details, status, time, show_on_tv } = body;
 
     const result = await c.env.DB.prepare(
-      `INSERT INTO planning_events (date, type, title, details, status, time) 
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).bind(date, type, title, details || '', status || 'confirmed', time || null).run();
+      `INSERT INTO planning_events (date, type, title, details, status, time, show_on_tv) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(date, type, title, details || '', status || 'confirmed', time || null, show_on_tv === undefined ? 1 : (show_on_tv ? 1 : 0)).run();
 
     return c.json({
       id: result.meta.last_row_id,
-      date, type, title, details, status, time
+      date, type, title, details, status, time, show_on_tv: show_on_tv === undefined ? true : show_on_tv
     }, 201);
   } catch (error) {
     return c.json({ error: 'Erreur création événement' }, 500);
@@ -151,6 +151,7 @@ app.put('/events/:id', requirePermission('planning', 'manage'), async (c) => {
     if (body.details !== undefined) { updates.push('details = ?'); values.push(body.details); }
     if (body.status !== undefined) { updates.push('status = ?'); values.push(body.status); }
     if (body.time !== undefined) { updates.push('time = ?'); values.push(body.time); }
+    if (body.show_on_tv !== undefined) { updates.push('show_on_tv = ?'); values.push(body.show_on_tv ? 1 : 0); }
 
     if (updates.length === 0) return c.json({ message: 'Rien à modifier' });
 

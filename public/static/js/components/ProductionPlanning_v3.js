@@ -286,6 +286,7 @@ const ProductionPlanning = ({ onClose }) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const dateVal = formData.get('date');
+        const showOnTv = formData.get('show_on_tv') === 'on';
         
         if (selectedEvent) {
             const updatedEvent = {
@@ -293,7 +294,8 @@ const ProductionPlanning = ({ onClose }) => {
                 time: formData.get('time'),
                 type: formData.get('type'),
                 title: formData.get('title'),
-                details: formData.get('details')
+                details: formData.get('details'),
+                show_on_tv: showOnTv
             };
 
             setEvents(prevEvents => prevEvents.map(evt => {
@@ -314,7 +316,8 @@ const ProductionPlanning = ({ onClose }) => {
                 type: formData.get('type'),
                 status: 'confirmed',
                 title: formData.get('title'),
-                details: formData.get('details')
+                details: formData.get('details'),
+                show_on_tv: showOnTv
             };
             
             setEvents([...events, newEvent]);

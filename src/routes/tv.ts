@@ -90,7 +90,7 @@ app.get('/data', checkTvKey, async (c) => {
           c.icon as category_icon
         FROM planning_events e
         LEFT JOIN planning_categories c ON e.type = c.id
-        WHERE e.date >= ? AND e.date <= ?
+        WHERE e.date >= ? AND e.date <= ? AND (e.show_on_tv IS NULL OR e.show_on_tv = 1)
         ORDER BY e.date ASC
       `).bind(startOfPast, endOfFuture).all();
       eventsResults = events.results || [];
