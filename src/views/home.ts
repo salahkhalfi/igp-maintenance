@@ -60,31 +60,43 @@ export const homeHTML = `
     <script src="/static/js/components/MainApp.js?v=2.8.3"></script>
     <script src="/static/js/components/App.js?v=2.8.3"></script>
     <style>
-        /* Background avec photo d'atelier IGP pour toutes les pages */
-        body {
+        /* FIXED BACKGROUND LAYER - Solves mobile/resize glitching */
+        #app-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: url(/static/maintenance-bg-premium.jpg);
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
+            z-index: -1;
+            will-change: transform; /* Hint to GPU */
+        }
+
+        body {
+            /* Background moved to #app-background */
             min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll on body */
         }
 
         .kanban-column {
             min-height: 400px;
             min-width: 260px;
-            background: rgba(255, 255, 255, 0.50);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            /* REMOVED backdrop-filter to fix Chrome rendering artifacts (flashing/red tints) */
+            background: rgba(255, 255, 255, 0.80); /* Reduced opacity from 0.90 to 0.80 for better transparency */
+            /* backdrop-filter: blur(16px); REMOVED */
+            /* -webkit-backdrop-filter: blur(16px); REMOVED */
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1); /* Simplified shadow */
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: transform 0.2s ease; /* Simplified transition */
         }
 
         .kanban-column:hover {
-            background: rgba(255, 255, 255, 0.60);
-            box-shadow: 0 8px 28px 0 rgba(0, 0, 0, 0.22);
+            background: rgba(255, 255, 255, 0.90); /* Slightly more opaque on hover (from 0.95 to 0.90) */
+            box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.12);
             transform: translateY(-2px);
         }
 
@@ -465,6 +477,7 @@ export const homeHTML = `
     </style>
 </head>
 <body>
+    <div id="app-background"></div>
     <div id="root">
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div style="text-align: center; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">

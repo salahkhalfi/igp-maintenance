@@ -245,11 +245,11 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                           showUserGuide;
 
     const footerStyle = isAnyModalOpen ? {
-        background: '#f1f5f9', backdropFilter: 'none', WebkitBackdropFilter: 'none',
+        background: '#f1f5f9',
         boxShadow: 'none', borderTop: '4px solid #003366'
     } : {
-        background: 'rgba(255, 255, 255, 0.40)', backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 -8px 32px 0 rgba(0, 0, 0, 0.2)',
+        background: 'rgba(255, 255, 255, 0.90)', /* Removed backdrop-filter for stability */
+        boxShadow: '0 -4px 12px 0 rgba(0, 0, 0, 0.1)',
         border: '1px solid rgba(255, 255, 255, 0.5)', borderTop: '4px solid #003366'
     };
 

@@ -78,11 +78,8 @@ const LoginForm = ({ onLogin }) => {
     return React.createElement('div', {
         className: 'min-h-screen flex items-center justify-center relative',
         style: {
-            // Image de fond (fixe)
-            backgroundImage: 'url(/static/maintenance-bg-premium.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed'
+            // Background handled globally by #app-background in home.html
+            // keeping transparent to show it
         }
     },
         // Overlay sombre pour améliorer le contraste et faire ressortir la carte
@@ -95,11 +92,10 @@ const LoginForm = ({ onLogin }) => {
             className: 'p-6 sm:p-8 rounded-2xl w-full max-w-md mx-4 relative', // Compact padding on mobile
             style: {
                 zIndex: 1, // Au-dessus de l'overlay
-                background: 'rgba(255, 255, 255, 0.25)', // Plus opaque pour lisibilité
-                backdropFilter: 'blur(25px) saturate(180%)', // Flou plus intense type iOS
-                WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.3) inset', // Ombre portée + bordure interne subtile
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+                background: 'rgba(255, 255, 255, 0.90)', // Opaque background instead of blur
+                // backdropFilter removed for Chrome stability
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.8)'
             }
         },
             React.createElement('div', { className: 'text-center mb-4 sm:mb-8' }, // Reduced margin on mobile

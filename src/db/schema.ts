@@ -12,6 +12,7 @@ export const users = sqliteTable('users', {
   role: text('role').notNull(), // 'admin', 'supervisor', 'technician', 'operator', 'furnace_operator'
   is_super_admin: integer('is_super_admin').default(0), // Added in migration 0015
   last_login: text('last_login'), // Added in migration 0009
+  avatar_key: text('avatar_key'), // Added in migration 0007
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });

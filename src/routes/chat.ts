@@ -20,7 +20,8 @@ app.get('/conversations', async (c) => {
         // AUTO-JOIN and UPDATE LAST_SEEN
         // Update last_seen for current user (handle guest vs employee)
         try {
-            if (user.is_guest) {
+            const isGuest = user.isGuest || user.is_guest;
+            if (isGuest) {
                 await c.env.DB.prepare(`UPDATE chat_guests SET last_seen = CURRENT_TIMESTAMP WHERE id = ?`).bind(Math.abs(userId)).run();
             } else {
                 await c.env.DB.prepare(`UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?`).bind(userId).run();
@@ -57,7 +58,8 @@ app.get('/conversations', async (c) => {
             SELECT 
                 c.id, 
                 c.type, 
-                c.name, 
+                c.name,
+                c.avatar_key, 
                 c.updated_at,
                 (
                     SELECT content FROM chat_messages 
@@ -81,9 +83,13 @@ app.get('/conversations', async (c) => {
                 (
                     SELECT COUNT(*)
                     FROM chat_participants cp_online
-                    JOIN users u_online ON cp_online.user_id = u_online.id
+                    LEFT JOIN users u_online ON cp_online.user_id = u_online.id AND cp_online.user_id > 0
+                    LEFT JOIN chat_guests g_online ON ABS(cp_online.user_id) = g_online.id AND cp_online.user_id < 0
                     WHERE cp_online.conversation_id = c.id
-                    AND u_online.last_seen > datetime('now', '-5 minutes')
+                    AND (
+                        u_online.last_seen > datetime('now', '-5 minutes') OR 
+                        g_online.last_seen > datetime('now', '-5 minutes')
+                    )
                 ) as online_count,
                 (
                     SELECT COUNT(*) FROM chat_messages cm
@@ -100,10 +106,28 @@ app.get('/conversations', async (c) => {
             ORDER BY c.updated_at DESC
         `).bind(userId, userId).all();
 
-        // For direct chats, we need to find the OTHER user's name/avatar
-        // TODO: Implement name resolution for Direct Chats
+        // Resolve names/avatars for Direct Chats
+        const enhancedConversations = await Promise.all((conversations.results || []).map(async (conv: any) => {
+            if (conv.type === 'direct' && !conv.name) {
+                // Find the OTHER participant
+                const otherUser = await c.env.DB.prepare(`
+                    SELECT 
+                        COALESCE(u.full_name, g.full_name) as full_name, 
+                        u.avatar_key 
+                    FROM chat_participants cp
+                    LEFT JOIN users u ON cp.user_id = u.id AND cp.user_id > 0
+                    LEFT JOIN chat_guests g ON ABS(cp.user_id) = g.id AND cp.user_id < 0
+                    WHERE cp.conversation_id = ? AND cp.user_id != ?
+                `).bind(conv.id, userId).first();
 
-        return c.json({ conversations: conversations.results, debug: debugLog });
+                if (otherUser) {
+                    return { ...conv, name: otherUser.full_name, avatar_key: otherUser.avatar_key };
+                }
+            }
+            return conv;
+        }));
+
+        return c.json({ conversations: enhancedConversations, debug: debugLog });
     } catch (e) {
         return c.json({ error: 'Failed to load conversations', debug: debugLog + ` ERR: ${e}` }, 500);
     }
@@ -123,33 +147,44 @@ app.get('/conversations/:id/messages', async (c) => {
 
     if (!isParticipant) return c.json({ error: 'Access denied' }, 403);
 
+    // Updated Query: Support Guests (Negative IDs)
     const messages = await c.env.DB.prepare(`
         SELECT 
             m.id, 
             m.sender_id, 
-            u.full_name as sender_name,
+            COALESCE(u.full_name, g.full_name) as sender_name,
+            u.avatar_key as sender_avatar_key,
             m.type, 
             m.content, 
             m.media_key, 
             m.created_at 
         FROM chat_messages m
-        JOIN users u ON m.sender_id = u.id
+        LEFT JOIN users u ON m.sender_id = u.id AND m.sender_id > 0
+        LEFT JOIN chat_guests g ON ABS(m.sender_id) = g.id AND m.sender_id < 0
         WHERE m.conversation_id = ?
         ORDER BY m.created_at DESC
         LIMIT ? OFFSET ?
     `).bind(conversationId, limit, offset).all();
 
     // Récupérer le statut de lecture ET les infos des participants
+    // Updated Query: Support Guests
     const participants = await c.env.DB.prepare(`
-        SELECT cp.user_id, cp.last_read_at, cp.role, u.full_name, u.last_seen
+        SELECT 
+            cp.user_id, 
+            cp.last_read_at, 
+            cp.role, 
+            COALESCE(u.full_name, g.full_name) as full_name, 
+            COALESCE(u.last_seen, g.last_seen) as last_seen, 
+            u.avatar_key
         FROM chat_participants cp
-        JOIN users u ON cp.user_id = u.id
+        LEFT JOIN users u ON cp.user_id = u.id AND cp.user_id > 0
+        LEFT JOIN chat_guests g ON ABS(cp.user_id) = g.id AND cp.user_id < 0
         WHERE cp.conversation_id = ?
     `).bind(conversationId).all();
 
     // Récupérer les infos de la conversation
     const conversation = await c.env.DB.prepare(`
-        SELECT id, type, name, created_by, created_at 
+        SELECT id, type, name, avatar_key, created_by, created_at 
         FROM chat_conversations 
         WHERE id = ?
     `).bind(conversationId).first();
@@ -181,7 +216,7 @@ app.get('/users', async (c) => {
     
     // 1. Employees
     const employees = await c.env.DB.prepare(`
-        SELECT id, full_name, role, email 
+        SELECT id, full_name, role, email, avatar_key
         FROM users 
         WHERE id != ? 
         ORDER BY first_name ASC
@@ -331,7 +366,10 @@ app.post('/send', async (c) => {
             SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?
         `).bind(conversationId, user.userId).first();
 
-        if (!isParticipant) return c.json({ error: 'Access denied' }, 403);
+        if (!isParticipant) {
+            console.warn(`[CHAT-SEND-DENIED] User ${user.userId} denied access to conv ${conversationId}`);
+            return c.json({ error: 'Access denied' }, 403);
+        }
 
         await c.env.DB.prepare(`
             INSERT INTO chat_messages (id, conversation_id, sender_id, type, content, media_key, media_meta)
@@ -457,25 +495,87 @@ app.post('/conversations', async (c) => {
     }
 });
 
-// 10. PUT /api/v2/chat/conversations/:id - Update conversation (Name, Icon) - Admin only
+// 10. PUT /api/v2/chat/conversations/:id - Update conversation (Name, Avatar) - Admin only
 app.put('/conversations/:id', async (c) => {
     const user = c.get('user');
     const conversationId = c.req.param('id');
-    const { name } = await c.req.json();
+    const { name, avatar_key } = await c.req.json();
 
-    // Vérifier si l'utilisateur est admin du groupe
+    // Vérifier si l'utilisateur est admin du groupe ou Admin Global
     const participant = await c.env.DB.prepare(`
         SELECT role FROM chat_participants WHERE conversation_id = ? AND user_id = ?
     `).bind(conversationId, user.userId).first();
 
-    if (!participant || participant.role !== 'admin') {
+    const isGroupAdmin = participant && participant.role === 'admin';
+    const isGlobalAdmin = user.role === 'admin';
+
+    if (!isGroupAdmin && !isGlobalAdmin) {
         return c.json({ error: 'Seul l\'administrateur du groupe peut modifier les infos' }, 403);
     }
 
-    await c.env.DB.prepare(`UPDATE chat_conversations SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-        .bind(name, conversationId).run();
+    if (name !== undefined) {
+        await c.env.DB.prepare(`UPDATE chat_conversations SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+            .bind(name, conversationId).run();
+    }
+    
+    if (avatar_key !== undefined) {
+        await c.env.DB.prepare(`UPDATE chat_conversations SET avatar_key = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+            .bind(avatar_key, conversationId).run();
+    }
 
     return c.json({ success: true });
+});
+
+// POST /api/v2/chat/conversations/:id/avatar - Upload group avatar
+app.post('/conversations/:id/avatar', async (c) => {
+    try {
+        const user = c.get('user');
+        const conversationId = c.req.param('id');
+        
+        // Check permissions
+        const participant = await c.env.DB.prepare(`
+            SELECT role FROM chat_participants WHERE conversation_id = ? AND user_id = ?
+        `).bind(conversationId, user.userId).first();
+
+        const isGroupAdmin = participant && participant.role === 'admin';
+        const isGlobalAdmin = user.role === 'admin';
+
+        if (!isGroupAdmin && !isGlobalAdmin) {
+            return c.json({ error: 'Admin only' }, 403);
+        }
+
+        const formData = await c.req.formData();
+        const file = formData.get('file') as File;
+
+        if (!file) return c.json({ error: 'No file provided' }, 400);
+        
+        // Basic validation
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            return c.json({ error: `Invalid file type (${file.type}). Only images allowed.` }, 400);
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            return c.json({ error: 'File too large (max 5MB)' }, 400);
+        }
+
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const key = `groups/${conversationId}/avatar-${timestamp}-${randomStr}`;
+
+        // Upload to R2
+        await c.env.MEDIA_BUCKET.put(key, await file.arrayBuffer(), {
+            httpMetadata: { contentType: file.type }
+        });
+
+        // Update Conversation Record
+        await c.env.DB.prepare(`UPDATE chat_conversations SET avatar_key = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+            .bind(key, conversationId).run();
+
+        return c.json({ success: true, avatar_key: key });
+    } catch (e: any) {
+        console.error("Group avatar upload error", e);
+        return c.json({ error: `Upload failed: ${e.message}` }, 500);
+    }
 });
 
 // 11. DELETE /api/v2/chat/conversations/:id/participants/:userId - Remove participant (Kick)
@@ -511,6 +611,44 @@ app.delete('/conversations/:id/participants/:userId', async (c) => {
     `).bind(messageId, conversationId, user.userId, content).run();
 
     return c.json({ success: true });
+});
+
+// 5. POST /api/v2/chat/profile/avatar - Update user avatar
+app.post('/profile/avatar', async (c) => {
+    try {
+        const user = c.get('user');
+        const formData = await c.req.formData();
+        const file = formData.get('file') as File;
+
+        if (!file) return c.json({ error: 'No file provided' }, 400);
+        
+        // Basic validation
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            return c.json({ error: `Invalid file type (${file.type}). Only images allowed.` }, 400);
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit for avatars
+            return c.json({ error: 'File too large (max 5MB)' }, 400);
+        }
+
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const key = `avatars/${user.userId}-${timestamp}-${randomStr}`;
+
+        // Upload to R2
+        await c.env.MEDIA_BUCKET.put(key, await file.arrayBuffer(), {
+            httpMetadata: { contentType: file.type }
+        });
+
+        // Update User Record
+        await c.env.DB.prepare(`UPDATE users SET avatar_key = ? WHERE id = ?`)
+            .bind(key, user.userId).run();
+
+        return c.json({ success: true, avatar_key: key });
+    } catch (e: any) {
+        console.error("Avatar upload error", e);
+        return c.json({ error: `Upload failed: ${e.message}` }, 500);
+    }
 });
 
 // 5. POST /api/v2/chat/upload - Upload chat attachment

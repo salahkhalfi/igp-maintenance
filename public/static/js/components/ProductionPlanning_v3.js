@@ -32,7 +32,10 @@ const ProductionPlanning = ({ onClose }) => {
     const [events, setEvents] = React.useState([]);
     const [plannerNotes, setPlannerNotes] = React.useState([]);
 
-    React.useEffect(() => {
+    const [isRefreshing, setIsRefreshing] = React.useState(false);
+
+    const loadData = () => {
+        setIsRefreshing(true);
         axios.get('/api/planning?t=' + Date.now())
             .then(res => {
                 const data = res.data;
@@ -44,7 +47,14 @@ const ProductionPlanning = ({ onClose }) => {
             })
             .catch(err => {
                 console.error('Error loading planning data:', err);
+            })
+            .finally(() => {
+                setIsRefreshing(false);
             });
+    };
+
+    React.useEffect(() => {
+        loadData();
     }, []);
 
     const getCategoryStyle = (type, status) => {
@@ -287,6 +297,9 @@ const ProductionPlanning = ({ onClose }) => {
         const formData = new FormData(e.target);
         const dateVal = formData.get('date');
         const showOnTv = formData.get('show_on_tv') === 'on';
+        const isPopup = formData.get('is_popup') === 'on';
+        const imageUrl = formData.get('image_url');
+        const displayDuration = formData.get('display_duration');
         
         if (selectedEvent) {
             const updatedEvent = {
@@ -295,7 +308,10 @@ const ProductionPlanning = ({ onClose }) => {
                 type: formData.get('type'),
                 title: formData.get('title'),
                 details: formData.get('details'),
-                show_on_tv: showOnTv
+                show_on_tv: showOnTv,
+                is_popup: isPopup,
+                image_url: imageUrl,
+                display_duration: displayDuration ? parseInt(displayDuration) : 15
             };
 
             setEvents(prevEvents => prevEvents.map(evt => {
@@ -317,7 +333,10 @@ const ProductionPlanning = ({ onClose }) => {
                 status: 'confirmed',
                 title: formData.get('title'),
                 details: formData.get('details'),
-                show_on_tv: showOnTv
+                show_on_tv: showOnTv,
+                is_popup: isPopup,
+                image_url: imageUrl,
+                display_duration: displayDuration ? parseInt(displayDuration) : 15
             };
             
             setEvents([...events, newEvent]);
@@ -400,7 +419,7 @@ const ProductionPlanning = ({ onClose }) => {
         return events.filter(e => {
             if (e.date !== dateStr) return false;
             if (activeFilter === 'all') return true;
-            return e.type === activeFilter;
+            return e.type == activeFilter; // Loose equality for number/string mismatch
         });
     };
 
@@ -433,6 +452,12 @@ const ProductionPlanning = ({ onClose }) => {
                 ),
 
                 React.createElement('div', { className: 'flex items-center gap-2' },
+                    React.createElement('button', { 
+                        onClick: loadData,
+                        title: 'Rafraîchir les données',
+                        className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition shadow-sm'
+                    }, React.createElement('i', { className: `fas fa-sync-alt ${isRefreshing ? 'fa-spin text-blue-600' : ''}` })),
+
                     React.createElement('button', {
                         onClick: () => setShowShareModal(true),
                         title: 'Partager le planning',
@@ -639,16 +664,21 @@ const ProductionPlanning = ({ onClose }) => {
                                         }, dayObj.num),
                                         React.createElement('span', { className: 'lg:hidden text-sm font-bold text-slate-500 uppercase' }, dayNames[dayObj.dayOfWeek])
                                     ),
-                                    React.createElement('button', { 
-                                        onClick: () => { setSelectedEvent(null); setNewEventDate(dayObj.dateStr); setShowAddModal(true); },
-                                        className: 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
-                                    }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
+                                    React.createElement('div', { className: 'flex items-center gap-1' },
+                                        dayEvents.length > 0 && React.createElement('span', { 
+                                            className: 'text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md' 
+                                        }, `${dayEvents.length}`),
+                                        React.createElement('button', { 
+                                            onClick: () => { setSelectedEvent(null); setNewEventDate(dayObj.dateStr); setShowAddModal(true); },
+                                            className: 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition p-1' 
+                                        }, React.createElement('i', { className: 'fas fa-plus-circle text-lg' }))
+                                    )
                                 ),
                                 
                                 React.createElement('div', { className: 'flex-1 overflow-y-auto space-y-1 custom-scrollbar' },
                                     dayEvents.map((evt, eIdx) => 
                                         React.createElement('div', { 
-                                            key: eIdx, 
+                                            key: evt.id || eIdx, 
                                             draggable: true,
                                             onClick: (e) => handleEditEventClick(e, evt),
                                             onDragStart: (e) => handleDragStart(e, evt.id),

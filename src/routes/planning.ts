@@ -120,16 +120,29 @@ app.get('/', async (c) => {
 app.post('/events', requirePermission('planning', 'manage'), async (c) => {
   try {
     const body = await c.req.json();
-    const { date, type, title, details, status, time, show_on_tv } = body;
+    const { date, type, title, details, status, time, show_on_tv, image_url, is_popup, display_duration } = body;
 
     const result = await c.env.DB.prepare(
-      `INSERT INTO planning_events (date, type, title, details, status, time, show_on_tv) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind(date, type, title, details || '', status || 'confirmed', time || null, show_on_tv === undefined ? 1 : (show_on_tv ? 1 : 0)).run();
+      `INSERT INTO planning_events (date, type, title, details, status, time, show_on_tv, image_url, is_popup, display_duration) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      date, 
+      type, 
+      title, 
+      details || '', 
+      status || 'confirmed', 
+      time || null, 
+      show_on_tv === undefined ? 1 : (show_on_tv ? 1 : 0),
+      image_url || null,
+      is_popup ? 1 : 0,
+      display_duration || 15
+    ).run();
 
     return c.json({
       id: result.meta.last_row_id,
-      date, type, title, details, status, time, show_on_tv: show_on_tv === undefined ? true : show_on_tv
+      date, type, title, details, status, time, 
+      show_on_tv: show_on_tv === undefined ? true : show_on_tv,
+      image_url, is_popup, display_duration
     }, 201);
   } catch (error) {
     return c.json({ error: 'Erreur création événement' }, 500);
@@ -152,6 +165,9 @@ app.put('/events/:id', requirePermission('planning', 'manage'), async (c) => {
     if (body.status !== undefined) { updates.push('status = ?'); values.push(body.status); }
     if (body.time !== undefined) { updates.push('time = ?'); values.push(body.time); }
     if (body.show_on_tv !== undefined) { updates.push('show_on_tv = ?'); values.push(body.show_on_tv ? 1 : 0); }
+    if (body.image_url !== undefined) { updates.push('image_url = ?'); values.push(body.image_url); }
+    if (body.is_popup !== undefined) { updates.push('is_popup = ?'); values.push(body.is_popup ? 1 : 0); }
+    if (body.display_duration !== undefined) { updates.push('display_duration = ?'); values.push(body.display_duration); }
 
     if (updates.length === 0) return c.json({ message: 'Rien à modifier' });
 

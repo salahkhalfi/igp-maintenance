@@ -33,6 +33,18 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
         if (form) form.reset();
     };
 
+    const handleResetDateTime = () => {
+        const form = document.getElementById('note-form');
+        if (form) {
+            const dateInput = form.querySelector('input[name="date"]');
+            const timeInput = form.querySelector('input[name="time"]');
+            const endTimeInput = form.querySelector('input[name="end_time"]');
+            if (dateInput) dateInput.value = '';
+            if (timeInput) timeInput.value = '';
+            if (endTimeInput) endTimeInput.value = '';
+        }
+    };
+
     return React.createElement('div', { className: `${showMobile ? 'absolute inset-0 z-50' : 'hidden'} lg:relative lg:flex lg:w-80 bg-white border-l border-gray-200 flex-col shadow-xl transition-all` },
         React.createElement('div', { className: 'p-5 border-b bg-slate-50 flex justify-between items-center' },
             React.createElement('h3', { className: 'font-bold text-slate-800 flex items-center gap-2' },
@@ -140,13 +152,21 @@ const PlanningNotes = ({ notes, showMobile, onCloseMobile, onAdd, onUpdate, onTo
                     className: 'w-full pl-4 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 transition'
                 }),
                 React.createElement('div', { className: 'flex flex-col gap-2' },
-                    React.createElement('input', { 
-                        name: 'date',
-                        type: 'date',
-                        defaultValue: editingNote ? editingNote.date : '',
-                        key: editingNote ? `date-${editingNote.id}` : 'date-new',
-                        className: 'w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
-                    }),
+                    React.createElement('div', { className: 'flex gap-2 items-center' },
+                        React.createElement('input', { 
+                            name: 'date',
+                            type: 'date',
+                            defaultValue: editingNote ? editingNote.date : '',
+                            key: editingNote ? `date-${editingNote.id}` : 'date-new',
+                            className: 'flex-1 px-3 py-2 text-xs bg-white border border-gray-200 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500'
+                        }),
+                        React.createElement('button', {
+                            type: 'button',
+                            onClick: handleResetDateTime,
+                            title: 'Effacer Date et Heures',
+                            className: 'h-9 w-9 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-red-500 rounded-lg transition border border-gray-200 shadow-sm'
+                        }, React.createElement('i', { className: 'fas fa-eraser' }))
+                    ),
                     React.createElement('div', { className: 'flex gap-2' },
                         React.createElement('input', { 
                             name: 'time',

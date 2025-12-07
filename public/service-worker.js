@@ -3,7 +3,7 @@
  * Gère le cache offline et les notifications push
  */
 
-const CACHE_VERSION = 'v1.0.5';
+const CACHE_VERSION = 'v1.0.6';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers à mettre en cache pour mode offline (optionnel - désactivé pour éviter erreurs)
@@ -123,6 +123,11 @@ self.addEventListener('push', (event) => {
       : data.data?.messageId 
         ? `message-${data.data.messageId}` 
         : `notif-${Date.now()}`,
+    renotify: true, // Force notification to play sound/vibrate even if tag is same
+    silent: false,  // Ensure sound is not silenced
+    sound: '/static/notification.mp3', // Custom sound (supported on Android/some browsers)
+    timestamp: Date.now(), // Ensure uniqueness for sorting
+    priority: 2, // High priority for older Android
     requireInteraction: false,
     actions: data.actions || []
   };

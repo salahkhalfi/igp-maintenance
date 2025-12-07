@@ -53,6 +53,7 @@ import { changelogHTML } from './views/changelog';
 import { homeHTML } from './views/home';
 import { historiqueHTML } from './views/historique';
 import { tvHTML } from './views/tv';
+import { tvAdminHTML } from './views/tv-admin';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
@@ -315,6 +316,9 @@ app.get('/messenger', async (c) => {
 // Servir la vue TV via Hono pour éviter les 404 statiques
 app.get('/tv.html', (c) => c.html(tvHTML));
 app.get('/tv', (c) => c.html(tvHTML)); // Alias pour flexibilité
+
+// Page d'administration TV (accessible sans auth serveur, auth gérée par JS)
+app.get('/admin/tv', (c) => c.html(tvAdminHTML));
 
 // Page d'administration des rôles (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/roles', async (c) => {

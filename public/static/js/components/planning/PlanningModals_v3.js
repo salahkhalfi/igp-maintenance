@@ -1,5 +1,5 @@
 // Composant : Modales (Ajout Événement + Gestion Catégories)
-console.log('PlanningModals loaded v2.14.182 - Time field included');
+console.log('PlanningModals loaded v3.0.1 - URL Fix & Logging');
 const PlanningModals = ({ 
     showAddModal, 
     setShowAddModal, 
@@ -16,6 +16,53 @@ const PlanningModals = ({
     onDeleteCategory,
     onSaveCategory
 }) => {
+    // State for TV options visibility
+    const [showTvExtras, setShowTvExtras] = React.useState(false);
+    const [uploading, setUploading] = React.useState(false);
+    const [imageUrl, setImageUrl] = React.useState(null);
+
+    // Update state when modal opens or event changes
+    React.useEffect(() => {
+        if (showAddModal) {
+            // Default to true if creating new, or use existing value
+            const isVisible = selectedEvent ? (selectedEvent.show_on_tv !== 0 && selectedEvent.show_on_tv !== false) : true;
+            setShowTvExtras(isVisible);
+            setImageUrl(selectedEvent ? selectedEvent.image_url : '');
+        }
+    }, [showAddModal, selectedEvent]);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch('/api/media/broadcast/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+            
+            const data = await response.json();
+            if (data.success && data.url) {
+                setImageUrl(data.url);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Erreur lors de l\'upload de l\'image');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     return React.createElement(React.Fragment, null,
         // ADD EVENT MODAL
         showAddModal && React.createElement('div', { className: 'fixed inset-0 z-[200] bg-black/50 overflow-y-auto animate-fadeIn' },
@@ -91,16 +138,110 @@ const PlanningModals = ({
                             })
                         ),
 
-                        // Show on TV Checkbox
-                        React.createElement('div', { className: 'flex items-center gap-2 mt-2' },
-                            React.createElement('input', { 
-                                type: 'checkbox', 
-                                name: 'show_on_tv', 
-                                id: 'show_on_tv',
-                                defaultChecked: selectedEvent ? (selectedEvent.show_on_tv !== 0 && selectedEvent.show_on_tv !== false) : true, 
-                                className: 'w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300' 
-                            }),
-                            React.createElement('label', { htmlFor: 'show_on_tv', className: 'text-sm text-slate-700 font-medium cursor-pointer' }, 'Afficher sur le TV Board')
+                        // Show on TV Section
+                        React.createElement('div', { className: 'bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 space-y-3' },
+                            // Main Toggle
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                React.createElement('div', { className: 'relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in' },
+                                    React.createElement('input', { 
+                                        type: 'checkbox', 
+                                        name: 'show_on_tv', 
+                                        id: 'show_on_tv',
+                                        checked: showTvExtras,
+                                        onChange: (e) => setShowTvExtras(e.target.checked),
+                                        className: 'toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 top-1' // Custom toggle style would be better but keeping simple for now
+                                    }),
+                                    React.createElement('label', { 
+                                        htmlFor: 'show_on_tv', 
+                                        className: `toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${showTvExtras ? 'bg-blue-600' : 'bg-gray-300'}` 
+                                    })
+                                ),
+                                React.createElement('label', { htmlFor: 'show_on_tv', className: 'text-sm font-bold text-slate-700 cursor-pointer select-none' }, 
+                                    React.createElement('i', { className: 'fas fa-tv mr-2 text-slate-500' }),
+                                    'Afficher sur le TV Board'
+                                )
+                            ),
+                            
+                            // Extra Options (Conditional)
+                            showTvExtras && React.createElement('div', { className: 'pl-2 pt-2 grid grid-cols-1 gap-4 animate-fadeIn border-t border-slate-200 mt-2' },
+                                // Popup Option
+                                React.createElement('div', { className: 'flex items-start gap-2 p-2 rounded hover:bg-white transition' },
+                                    React.createElement('input', { 
+                                        type: 'checkbox', 
+                                        name: 'is_popup', 
+                                        id: 'is_popup',
+                                        defaultChecked: selectedEvent ? (selectedEvent.is_popup === 1 || selectedEvent.is_popup === true) : false,
+                                        className: 'mt-1 w-4 h-4 text-purple-600 rounded focus:ring-purple-500 border-gray-300' 
+                                    }),
+                                    React.createElement('div', null,
+                                        React.createElement('label', { htmlFor: 'is_popup', className: 'block text-sm font-bold text-slate-700 cursor-pointer' }, 'Mode POPUP (Prioritaire)'),
+                                        React.createElement('p', { className: 'text-xs text-slate-500' }, 'S\'affiche en plein écran par dessus le planning')
+                                    )
+                                ),
+
+                                // Image URL
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Image (Upload ou URL)'),
+                                    React.createElement('div', { className: 'flex flex-col gap-2' },
+                                        // Upload Button
+                                        React.createElement('div', { className: 'flex items-center gap-2' },
+                                            React.createElement('label', { 
+                                                className: `flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer transition text-sm font-medium border border-slate-300 ${uploading ? 'opacity-50 pointer-events-none' : ''}`
+                                            },
+                                                React.createElement('i', { className: uploading ? 'fas fa-spinner fa-spin' : 'fas fa-cloud-upload-alt' }),
+                                                uploading ? 'Envoi...' : 'Choisir un fichier',
+                                                React.createElement('input', {
+                                                    type: 'file',
+                                                    accept: 'image/*',
+                                                    className: 'hidden',
+                                                    onChange: handleImageUpload,
+                                                    disabled: uploading
+                                                })
+                                            ),
+                                            imageUrl && React.createElement('span', { className: 'text-xs text-green-600 font-bold flex items-center' },
+                                                React.createElement('i', { className: 'fas fa-check-circle mr-1' }), 'Image chargée'
+                                            )
+                                        ),
+                                        
+                                        // URL Input (Auto-filled)
+                                        React.createElement('div', { className: 'relative flex-1' },
+                                            React.createElement('i', { className: 'fas fa-link absolute left-3 top-3 text-slate-400' }),
+                                            React.createElement('input', { 
+                                                name: 'image_url', 
+                                                type: 'text', 
+                                                value: imageUrl || '',
+                                                onChange: (e) => setImageUrl(e.target.value),
+                                                placeholder: 'https://... ou URL automatique',
+                                                className: 'w-full pl-9 p-2.5 border border-slate-300 rounded-lg text-sm bg-white font-mono text-xs text-slate-600' 
+                                            })
+                                        ),
+                                        
+                                        // Preview
+                                        imageUrl && React.createElement('div', { className: 'mt-1 relative h-24 w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-100' },
+                                            React.createElement('img', { 
+                                                src: imageUrl, 
+                                                className: 'h-full w-full object-contain',
+                                                onError: (e) => e.target.style.display = 'none' 
+                                            })
+                                        )
+                                    )
+                                ),
+
+                                // Duration
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Durée (secondes)'),
+                                    React.createElement('div', { className: 'relative w-32' },
+                                        React.createElement('i', { className: 'fas fa-clock absolute left-3 top-3 text-slate-400' }),
+                                        React.createElement('input', { 
+                                            name: 'display_duration', 
+                                            type: 'number', 
+                                            min: 5, max: 300,
+                                            defaultValue: selectedEvent ? (selectedEvent.display_duration || 15) : 15,
+                                            className: 'w-full pl-9 p-2.5 border border-slate-300 rounded-lg text-sm bg-white' 
+                                        })
+                                    )
+                                )
+                            )
                         ),
 
                         // Footer Buttons

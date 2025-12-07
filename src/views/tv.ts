@@ -174,6 +174,27 @@ export const tvHTML = `
         html {
             scroll-behavior: smooth;
         }
+        /* IMAGE POPUP PANEL (Above Details) */
+        #image-popup-panel {
+            position: fixed;
+            bottom: 35vh; /* Positioned above the max-height of details panel */
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 140; /* Above details panel (100) */
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+        }
+        
+        #image-popup-panel.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
         /* Details Panel - Bottom Sheet */
         #details-panel {
             position: fixed;
@@ -219,9 +240,67 @@ export const tvHTML = `
             flex-col-direction: column;
             justify-content: center;
         }
+
+        /* News Ticker Animation */
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+        .news-ticker-text {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%; /* Start from right */
+            animation: ticker 20s linear infinite; /* Continuous flow */
+        }
+        .mask-linear {
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+        /* BROADCAST MESSAGE (Premium - Emerald Theme) */
+        .bg-slate-900\/90 { /* Adjust fallback if needed, but inline classes override */ }
+
+        /* BROADCAST OVERLAY */
+        #broadcast-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #broadcast-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col">
+<body class="h-screen flex flex-col p-1 lg:p-4 bg-slate-950 overflow-hidden">
+
+    <!-- BROADCAST OVERLAY (Full Screen) -->
+    <div id="broadcast-overlay" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center p-8 lg:p-16 text-center">
+        <div id="broadcast-content-container" class="max-w-7xl w-full h-full flex flex-col items-center justify-center relative">
+            <!-- Injected via JS -->
+        </div>
+        <!-- Progress Bar -->
+        <div class="absolute bottom-0 left-0 w-full h-2 bg-slate-800">
+            <div id="broadcast-progress" class="h-full bg-emerald-500 w-0"></div>
+        </div>
+    </div>
+
+    <!-- IMAGE POPUP PANEL (Above Details) -->
+    <div id="image-popup-panel">
+        <img id="popup-image" src="" class="max-h-[45vh] max-w-[80vw] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-4 border-slate-700/50 object-contain bg-slate-900/80 backdrop-blur-sm">
+    </div>
 
     <!-- DETAILS PANEL (Bottom Sheet) -->
     <div id="details-panel" class="p-4 lg:p-8 gap-4 lg:gap-8">
@@ -243,27 +322,48 @@ export const tvHTML = `
         </div>
     </div>
 
+    <!-- SETUP SCREEN (Overlay) -->
+    <div id="setup-screen" class="hidden fixed inset-0 z-[300] flex items-center justify-center bg-slate-950">
+        <div class="p-8 rounded-xl border border-slate-700 shadow-2xl max-w-md w-full text-center bg-slate-900">
+            <div class="mb-6 text-blue-500">
+                <i class="fas fa-shield-alt text-5xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-2 uppercase tracking-wide text-white">Accès Sécurisé</h1>
+            <p class="mb-6 text-sm text-slate-400">Tableau de bord industriel IGP Glass</p>
+            <input type="text" id="access-key" placeholder="Clé d'autorisation" 
+                class="w-full rounded-lg p-3 text-center mb-4 focus:outline-none font-mono border bg-slate-800 text-white border-slate-700 focus:border-blue-500 transition-colors">
+            <button onclick="saveKey()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg uppercase tracking-wider transition-colors">
+                Connexion
+            </button>
+        </div>
+    </div>
+
     <!-- HEADER -->
-    <header class="h-16 flex-none bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-6 relative z-10 backdrop-blur-md">
-        <div class="flex items-center gap-4 w-1/4 flex-shrink-0">
-            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-10 w-auto transition-all duration-500">
-            <div class="h-6 w-px bg-slate-700"></div>
-            <div>
-                <h1 class="text-lg font-bold text-white tracking-tight leading-none">PLANNING IGP</h1>
+    <header class="h-16 flex-none bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 lg:px-6 relative z-10 backdrop-blur-md gap-4">
+        <div class="flex items-center gap-4 w-auto flex-shrink-0">
+            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-8 lg:h-10 w-auto transition-all duration-500">
+            <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
+            <div class="hidden sm:block">
+                <h1 class="text-base lg:text-lg font-bold text-white tracking-tight leading-none">PLANNING IGP</h1>
                 <p class="text-blue-400 text-[10px] font-mono font-bold tracking-widest uppercase leading-none mt-0.5">Dashboard</p>
             </div>
         </div>
 
-        <!-- BROADCAST MESSAGE (Compact) -->
-        <div class="flex-1 flex justify-start items-center px-6 z-20 min-w-0 mr-4">
-            <div id="tv-broadcast" class="hidden relative flex items-center gap-3 pl-1.5 pr-4 py-1 rounded-full bg-slate-900/80 border border-slate-700/50 backdrop-blur-xl shadow-lg transition-all duration-500 max-w-full group">
+        <!-- BROADCAST MESSAGE (Premium) -->
+        <div class="flex-1 flex justify-start items-center z-20 min-w-0">
+            <div id="tv-broadcast" class="hidden relative flex items-center gap-2 lg:gap-4 pl-2 pr-4 lg:pr-6 py-1.5 lg:py-2 rounded-full bg-slate-900/90 border border-emerald-500/50 backdrop-blur-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-500 w-full max-w-full group overflow-hidden">
+                <!-- Ambient Glow Behind -->
+                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-green-500/10 to-transparent opacity-100"></div>
+                
                 <!-- Icon Bubble -->
-                <div class="relative h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-blue-900/50 flex-shrink-0 border border-white/10">
-                    <i class="fas fa-bullhorn text-white text-xs animate-pulse"></i>
+                <div class="relative h-10 w-10 rounded-full bg-gradient-to-br from-emerald-600 to-green-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.6)] flex-shrink-0 border border-white/20 z-10">
+                    <i class="fas fa-bullhorn text-white text-sm animate-pulse drop-shadow-md"></i>
                 </div>
                 
-                <!-- Text -->
-                <span id="tv-broadcast-text" class="relative text-2xl font-bold text-slate-100 tracking-tight leading-tight font-sans truncate">Message...</span>
+                <!-- Text (Ticker) -->
+                <div class="flex-1 overflow-hidden relative h-8 flex items-center mask-linear z-10 w-full">
+                    <span id="tv-broadcast-text" class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-emerald-100 tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5" style="text-shadow: 0 0 15px rgba(52, 211, 153, 0.6);">Message...</span>
+                </div>
             </div>
         </div>
 
@@ -304,11 +404,11 @@ export const tvHTML = `
                     <div id="weather-temp" class="text-xl lg:text-2xl font-bold text-white leading-none">--°</div>
                 </div>
 
-                <span id="today-date-large" class="text-sm text-blue-400/80 font-mono font-bold uppercase tracking-widest">...</span>
+                <span id="today-date-large" class="text-sm md:text-lg lg:text-xl xl:text-2xl text-blue-400 font-mono font-bold uppercase tracking-widest">...</span>
             </div>
 
             <!-- ACTIVE CONTENT SCROLL -->
-            <div id="today-content" class="flex-1 overflow-y-auto space-y-3 pr-2 scrolling-container pb-[50vh] focus:outline-none" tabindex="0">
+            <div id="today-content" class="flex-1 overflow-y-auto space-y-3 pr-2 scrolling-container pt-6 pb-[50vh] focus:outline-none" tabindex="0">
                 <!-- Content injected via JS -->
             </div>
 
@@ -323,7 +423,7 @@ export const tvHTML = `
         <!-- RIGHT COLUMN: TIMELINE (40%) -->
         <section class="w-[40%] bg-slate-950 relative flex flex-col">
             <div class="p-3 lg:p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
-                <h2 class="text-xl lg:text-3xl font-bold text-blue-100 flex items-center gap-2 lg:gap-3">
+                <h2 class="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-blue-100 flex items-center gap-2 lg:gap-3 whitespace-nowrap">
                     <i class="fas fa-history text-blue-500"></i>
                     PLANNING À VENIR
                 </h2>
@@ -354,7 +454,7 @@ export const tvHTML = `
                 SHOW_DELAY: 500,        // ms before popup appears (Optimized)
                 HIDE_DELAY: 300         // ms before popup disappears
             },
-            BROADCAST_INTERVAL: 10000   // 10s per message in rotation
+            BROADCAST_INTERVAL: 20000   // 20s per message (Aligned with Ticker)
         };
 
         let TV_KEY = new URLSearchParams(window.location.search).get('key');
@@ -375,6 +475,139 @@ export const tvHTML = `
                 weather: null,
                 data: null,
                 broadcast: null // Timer for message rotation
+            },
+            tickerObserver: null
+        };
+
+        // ==========================================
+        // BROADCAST OVERLAY MANAGER (RICH MEDIA)
+        // ==========================================
+        const BroadcastOverlayManager = {
+            messages: [],
+            timer: null,
+            progressTimer: null,
+            currentIndex: 0,
+            isShowing: false,
+            
+            init(messages) {
+                // Check if messages changed to avoid reset?
+                // Simple approach: just update list. If timer running, it picks up new list next time.
+                // If empty before and now full, start.
+                const wasEmpty = this.messages.length === 0;
+                this.messages = messages || [];
+                
+                if (this.messages.length > 0 && wasEmpty) {
+                    this.scheduleNext();
+                } else if (this.messages.length === 0) {
+                    this.stop();
+                }
+            },
+
+            stop() {
+                if (this.timer) clearTimeout(this.timer);
+                if (this.progressTimer) clearInterval(this.progressTimer);
+                this.hide();
+            },
+
+            scheduleNext() {
+                if (this.messages.length === 0) return;
+                
+                // Wait 45s before showing next overlay (Dashboard time)
+                this.timer = setTimeout(() => {
+                    this.showNext();
+                }, 45000); 
+            },
+
+            showNext() {
+                // If user is interacting, delay
+                if (State.isPaused && !this.isShowing) {
+                    this.scheduleNext();
+                    return;
+                }
+
+                const msg = this.messages[this.currentIndex];
+                this.currentIndex = (this.currentIndex + 1) % this.messages.length;
+                
+                this.render(msg);
+                this.show();
+                
+                // Progress Bar
+                const duration = (msg.display_duration || 15) * 1000;
+                const start = Date.now();
+                const bar = document.getElementById('broadcast-progress');
+                if(bar) bar.style.width = '0%';
+                
+                if (this.progressTimer) clearInterval(this.progressTimer);
+                this.progressTimer = setInterval(() => {
+                    const elapsed = Date.now() - start;
+                    const pct = Math.min(100, (elapsed / duration) * 100);
+                    if(bar) bar.style.width = pct + '%';
+                    
+                    if (elapsed >= duration) {
+                        clearInterval(this.progressTimer);
+                        this.hide();
+                        this.scheduleNext();
+                    }
+                }, 50);
+            },
+
+            render(msg) {
+                const container = document.getElementById('broadcast-content-container');
+                if (!container) return;
+
+                let html = '';
+                
+                const titleHtml = msg.title ? \`<h1 class="text-5xl lg:text-7xl font-bold text-white mb-8 font-display tracking-tight drop-shadow-lg">\${msg.title}</h1>\` : '';
+                const contentHtml = msg.content ? \`<p class="text-2xl lg:text-4xl text-slate-200 max-w-5xl leading-relaxed font-light drop-shadow-md whitespace-pre-line">\${msg.content}</p>\` : '';
+                
+                if (msg.type === 'image_text' || msg.type === 'text') { 
+                    const imgHtml = (msg.media_urls && msg.media_urls.length > 0) 
+                        ? \`<img src="\${msg.media_urls[0]}" class="max-h-[60vh] w-auto rounded-3xl shadow-2xl border-4 border-white/10 mb-8 object-contain bg-black/20">\` 
+                        : '';
+                    
+                    html = \`
+                        <div class="flex flex-col items-center animate-fade-in-up w-full">
+                            \${titleHtml}
+                            \${imgHtml}
+                            \${contentHtml}
+                        </div>
+                    \`;
+                } else if (msg.type === 'gallery') {
+                    const images = msg.media_urls || [];
+                    const gridHtml = images.slice(0, 6).map(url => \`
+                        <div class="aspect-video rounded-2xl overflow-hidden shadow-xl border-2 border-white/10 bg-black/50">
+                            <img src="\${url}" class="w-full h-full object-cover">
+                        </div>
+                    \`).join('');
+                    
+                    html = \`
+                        <div class="flex flex-col items-center w-full h-full justify-center animate-fade-in-up">
+                            \${titleHtml}
+                            <div class="gallery-grid w-full gap-6 lg:gap-8 p-4 mb-8">
+                                \${gridHtml}
+                            </div>
+                            \${contentHtml}
+                        </div>
+                    \`;
+                }
+                
+                container.innerHTML = html;
+            },
+
+            show() {
+                this.isShowing = true;
+                const el = document.getElementById('broadcast-overlay');
+                if (el) el.classList.add('visible');
+                // Pause other rotations
+                PresentationManager.stop();
+            },
+
+            hide() {
+                this.isShowing = false;
+                const el = document.getElementById('broadcast-overlay');
+                if (el) el.classList.remove('visible');
+                // Resume other rotations
+                PresentationManager.start();
             }
         };
 
@@ -388,7 +621,16 @@ export const tvHTML = `
 
             start() {
                 this.stop();
-                this.next();
+                
+                // If we are starting from scratch or resuming, handle gracefully
+                // To avoid jumping immediately on resume, we show current first
+                if (this.currentIndex === -1) {
+                    this.next();
+                } else {
+                    // Resume mode: Re-focus current item for full duration before advancing
+                    this.showCurrent();
+                    this.timer = setTimeout(() => this.next(), this.CYCLE_DURATION);
+                }
             },
 
             stop() {
@@ -398,20 +640,42 @@ export const tvHTML = `
             next() {
                 if (State.isPaused) return;
 
-                // Combine both lists for a unified presentation cycle
-                const todayItems = Array.from(document.querySelectorAll('#today-content [tabindex="0"]'));
-                const timelineItems = Array.from(document.querySelectorAll('#timeline-content [tabindex="0"]'));
-                
-                // Determine priority: If there are items today, cycle them, then cycle timeline
-                const allItems = [...todayItems, ...timelineItems];
-                
+                const allItems = this.getAllItems();
                 if (allItems.length === 0) return;
 
                 // Move to next index
                 this.currentIndex = (this.currentIndex + 1) % allItems.length;
-                const item = allItems[this.currentIndex];
 
-                // Highlight interaction
+                // Fluidity: Reset timeline scroll when cycle restarts
+                if (this.currentIndex === 0) {
+                    const timelineContainer = document.getElementById('timeline-content');
+                    if (timelineContainer) timelineContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                this.showCurrent();
+
+                // Schedule next cycle
+                this.timer = setTimeout(() => {
+                    this.next();
+                }, this.CYCLE_DURATION);
+            },
+
+            getAllItems() {
+                const todayItems = Array.from(document.querySelectorAll('#today-content [tabindex="0"]'));
+                const timelineItems = Array.from(document.querySelectorAll('#timeline-content [tabindex="0"]'));
+                return [...todayItems, ...timelineItems];
+            },
+
+            showCurrent() {
+                const allItems = this.getAllItems();
+                if (allItems.length === 0) return;
+
+                // Safety check for index out of bounds (e.g. after list update)
+                if (this.currentIndex >= allItems.length || this.currentIndex < 0) {
+                    this.currentIndex = 0;
+                }
+
+                const item = allItems[this.currentIndex];
                 if (item) {
                     // Focus triggers existing listeners (DetailsManager.show)
                     item.focus({ preventScroll: true });
@@ -419,11 +683,6 @@ export const tvHTML = `
                     // Smooth scroll to center (KEY: prevents hiding behind popup)
                     item.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-
-                // Schedule next cycle
-                this.timer = setTimeout(() => {
-                    this.next();
-                }, this.CYCLE_DURATION);
             }
         };
 
@@ -568,7 +827,9 @@ export const tvHTML = `
                     panel: document.getElementById('details-panel'),
                     desc: document.getElementById('detail-desc'),
                     meta: document.getElementById('detail-meta'),
-                    badge: document.getElementById('detail-badge')
+                    badge: document.getElementById('detail-badge'),
+                    imagePanel: document.getElementById('image-popup-panel'),
+                    image: document.getElementById('popup-image')
                 };
 
                 // Close on Escape/Backspace
@@ -581,33 +842,42 @@ export const tvHTML = `
 
             // Validate if item has enough content to show popup
             hasContent(item) {
+                const data = item.data;
+                const hasImg = !!data.image_url;
+
                 if (item.type === 'ticket') {
-                    const t = item.data;
-                    return t.description && t.description.trim().length > 0;
+                    return (data.description && data.description.trim().length > 0) || hasImg;
                 } else {
-                    const e = item.data;
                     // Use 'details' for events, 'description' is for tickets
-                    const hasDetails = e.details && e.details.trim().length > 0;
-                    const hasCat = e.category_label && e.category_label.trim().length > 0;
-                    return hasDetails || hasCat;
+                    const hasDetails = data.details && data.details.trim().length > 0;
+                    const hasCat = data.category_label && data.category_label.trim().length > 0;
+                    return hasDetails || hasCat || hasImg;
                 }
             },
 
             updateDOM(item) {
-                const { desc, meta, badge } = this.elements;
+                const { desc, meta, badge, imagePanel, image } = this.elements;
+                const data = item.data;
                 
+                // Handle Image
+                if (data.image_url) {
+                    image.src = data.image_url;
+                    image.onload = () => imagePanel.classList.add('loaded');
+                } else {
+                    image.src = '';
+                }
+
                 // Reset Badge
                 badge.classList.add('hidden');
                 badge.className = 'hidden px-2 lg:px-3 py-0.5 lg:py-1 rounded text-xs lg:text-sm font-bold uppercase border'; 
 
                 if (item.type === 'ticket') {
-                    const t = item.data;
-                    desc.textContent = t.description;
-                    meta.textContent = \`TICKET #\${t.ticket_id} • \${t.machine_name} • \${t.assignee_name || 'Non assigné'}\`;
+                    desc.textContent = data.description || '';
+                    meta.textContent = \`TICKET #\${data.ticket_id} • \${data.machine_name} • \${data.assignee_name || 'Non assigné'}\`;
                     
                     // Badge
                     badge.classList.remove('hidden');
-                    if (t.status === 'in_progress') {
+                    if (data.status === 'in_progress') {
                         badge.textContent = 'EN COURS';
                         badge.classList.add('bg-green-900', 'text-green-300', 'border-green-700');
                     } else {
@@ -616,15 +886,14 @@ export const tvHTML = `
                     }
 
                 } else {
-                    const e = item.data;
                     // Use 'details' property for events
-                    desc.textContent = e.details || e.category_label;
-                    meta.textContent = \`ÉVÉNEMENT • \${dayjs(e.date).format('D MMMM YYYY')} \${e.time ? '• ' + e.time.substring(0,5) : ''}\`;
+                    desc.textContent = data.details || data.category_label || '';
+                    meta.textContent = \`ÉVÉNEMENT • \${dayjs(data.date).format('D MMMM YYYY')} \${data.time ? '• ' + data.time.substring(0,5) : ''}\`;
                     
                     // Badge
-                    if (e.category_label) {
+                    if (data.category_label) {
                         badge.classList.remove('hidden');
-                        badge.textContent = e.category_label;
+                        badge.textContent = data.category_label;
                         badge.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-600');
                     }
                 }
@@ -637,12 +906,19 @@ export const tvHTML = `
                 }
                 this.updateDOM(item);
                 this.elements.panel.classList.add('visible');
+                
+                // Show Image Panel if URL exists
+                if (item.data.image_url) {
+                    this.elements.imagePanel.classList.add('visible');
+                } else {
+                    this.elements.imagePanel.classList.remove('visible');
+                }
             },
 
             hide() {
                 this.elements.panel.classList.remove('visible');
+                this.elements.imagePanel.classList.remove('visible');
             },
-
             // TIMERS LOGIC
             clearTimers() {
                 if (State.timers.detailsShow) clearTimeout(State.timers.detailsShow);
@@ -701,9 +977,27 @@ export const tvHTML = `
         // CORE FUNCTIONS
         // ==========================================
 
+        function saveKey() {
+            const val = document.getElementById('access-key').value.trim();
+            if(val) {
+                localStorage.setItem('igp_tv_key', val);
+                // Reload with new key
+                const url = new URL(window.location.href);
+                url.searchParams.set('key', val);
+                window.location.href = url.toString();
+            }
+        }
+
         async function init() {
             // Auth Check
             if (!TV_KEY) TV_KEY = localStorage.getItem('igp_tv_key');
+            
+            if (!TV_KEY) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('setup-screen').classList.remove('hidden');
+                return;
+            }
+
             if (TV_KEY) localStorage.setItem('igp_tv_key', TV_KEY);
 
             // Init Modules
@@ -717,11 +1011,11 @@ export const tvHTML = `
             State.timers.clock = setInterval(updateClock, 1000);
             State.timers.weather = setInterval(fetchWeather, 600000); // 10min
             State.timers.data = setInterval(loadData, CONFIG.REFRESH_INTERVAL);
-            // Broadcast rotation timer (Priority logic is checked inside renderBroadcast called by clock/update)
+            // Broadcast timer: Check for time-based updates (active/inactive notes)
+            // We show all active notes in a continuous ticker, so we don't rotate index.
             State.timers.broadcast = setInterval(() => {
-                State.broadcastIndex++;
-                renderBroadcast(); // Re-render to show next message
-            }, CONFIG.BROADCAST_INTERVAL);
+                renderBroadcast(); 
+            }, 10000);
 
             // Initial Load
             await loadData();
@@ -768,7 +1062,8 @@ export const tvHTML = `
         async function loadData() {
             try {
                 if (!TV_KEY) {
-                    window.location.href = '/tv-login.html';
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('setup-screen').classList.remove('hidden');
                     return;
                 }
 
@@ -785,13 +1080,25 @@ export const tvHTML = `
                 
                 document.getElementById('loading').classList.add('hidden');
                 
+                // Pause presentation during render to avoid index conflicts
+                PresentationManager.stop();
+
                 renderDashboard();
+                
+                // Initialize Broadcast Overlay with new rich messages
+                if (State.appData.broadcast_messages) {
+                    BroadcastOverlayManager.init(State.appData.broadcast_messages);
+                }
+                
+                // Resume presentation (will re-validate index and show current)
+                PresentationManager.start();
 
             } catch (error) {
                 console.error("Load Error:", error);
                 if (error.response && error.response.status === 403) {
                     localStorage.removeItem('igp_tv_key');
-                    alert("Clé d'accès invalide.");
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('setup-screen').classList.remove('hidden');
                 }
             }
         }
@@ -806,79 +1113,219 @@ export const tvHTML = `
             renderUpcomingTimeline();
         }
 
-        function renderBroadcast() {
-            const broadcastEl = document.getElementById('tv-broadcast');
-            const broadcastText = document.getElementById('tv-broadcast-text');
+        
+        // ==========================================
+        // DYNAMIC BROADCAST THEME
+        // ==========================================
+        function applyBroadcastTheme(isScheduled) {
+            const el = document.getElementById('tv-broadcast');
+            const glow = document.getElementById('broadcast-glow');
+            const iconContainer = document.getElementById('broadcast-icon-container');
+            const icon = document.getElementById('broadcast-icon');
             
-            let msg = null;
+            if (!el || !glow || !iconContainer || !icon) return;
 
-            // 1. Get all potential notes
-            // Prioritize 'broadcast_notes' array from new API, fallback to 'message' legacy
-            const notes = State.appData.broadcast_notes || [];
+            const theme = isScheduled ? {
+                border: 'border-amber-500/50',
+                shadow: 'shadow-[0_0_20px_rgba(245,158,11,0.4)]',
+                glow: 'from-amber-500/20 via-orange-500/10',
+                iconBg: 'from-amber-600 to-orange-500',
+                iconShadow: 'shadow-[0_0_15px_rgba(245,158,11,0.6)]',
+                iconClass: 'fa-clock'
+            } : {
+                border: 'border-emerald-500/50',
+                shadow: 'shadow-[0_0_20px_rgba(16,185,129,0.4)]',
+                glow: 'from-emerald-500/20 via-green-500/10',
+                iconBg: 'from-emerald-600 to-green-500',
+                iconShadow: 'shadow-[0_0_15px_rgba(16,185,129,0.6)]',
+                iconClass: 'fa-bullhorn'
+            };
             
-            if (notes.length > 0) {
-                const now = dayjs();
-                const currentTimeStr = now.format('HH:mm');
-                const todayStr = now.format('YYYY-MM-DD');
-
-                // 2. Check for PRIORITY OVERRIDE (Time-based)
-                // A note is PRIORITY if:
-                // - It has a specific TIME defined
-                // - AND we are within its window [Time, EndTime] (or [Time, Time+1h] default)
-                // - AND it is scheduled for Today (or no date = daily recur)
-                const priorityNotes = notes.filter(n => {
-                    if (!n.time) return false; // No time = No priority override
-
-                    // Check Date (If defined, must match today. If null, assumes daily/immediate)
-                    if (n.date && n.date !== todayStr) return false;
-
-                    const startTime = dayjs(\`\${todayStr}T\${n.time}\`);
-                    
-                    // Determine End Time
-                    let endTime;
-                    if (n.end_time) {
-                        endTime = dayjs(\`\${todayStr}T\${n.end_time}\`);
-                    } else {
-                        // Default duration: 1 hour if no end time specified
-                        endTime = startTime.add(1, 'hour');
-                    }
-
-                    // Check if NOW is within window
-                    return now.isAfter(startTime) && now.isBefore(endTime);
-                });
-
-                if (priorityNotes.length > 0) {
-                    // PRIORITY MODE: Rotate only among priority notes
-                    // Using broadcastIndex ensures we rotate if multiple priorities overlap
-                    const note = priorityNotes[State.broadcastIndex % priorityNotes.length];
-                    msg = note.text;
-                } else {
-                    // STANDARD MODE: Rotate among ALL notes (or just non-priority ones?)
-                    // User requirement: "notes without date/time -> rotate". 
-                    // Let's include ALL valid notes in the rotation when no priority is active.
-                    const note = notes[State.broadcastIndex % notes.length];
-                    msg = note.text;
-                }
-
-            } else {
-                // Fallback Legacy
-                msg = State.appData.message || State.appData.broadcast_message;
-                
-                // Optional: Look for a note tagged 'dashboard' in tickets if not in root (Fallback)
-                if (!msg && State.appData.tickets) {
-                    const note = State.appData.tickets.find(t => t.type === 'note' && t.is_dashboard);
-                    if (note) msg = note.title || note.description;
-                }
-            }
-
-            if (msg) {
-                broadcastText.textContent = msg;
-                broadcastEl.classList.remove('hidden');
-            } else {
-                broadcastEl.classList.add('hidden');
+            // Apply Classes
+            // Note: We maintain base layout classes and just swap theme colors
+            el.className = \`relative flex items-center gap-2 lg:gap-4 pl-2 pr-4 lg:pr-6 py-1.5 lg:py-2 rounded-full bg-slate-900/90 backdrop-blur-xl transition-all duration-500 w-full max-w-full group overflow-hidden \${theme.border} \${theme.shadow}\`;
+            
+            glow.className = \`absolute inset-0 bg-gradient-to-r \${theme.glow} to-transparent opacity-100 transition-all duration-500\`;
+            
+            iconContainer.className = \`relative h-10 w-10 rounded-full bg-gradient-to-br \${theme.iconBg} flex items-center justify-center \${theme.iconShadow} flex-shrink-0 border border-white/20 z-10 transition-all duration-500\`;
+            
+            // Only change icon class if needed to prevent flicker
+            if (!icon.classList.contains(theme.iconClass)) {
+                icon.className = \`fas \${theme.iconClass} text-white text-sm animate-pulse drop-shadow-md\`;
             }
         }
 
+        function setupTickerObserver() {
+            if (State.tickerObserver) {
+                State.tickerObserver.disconnect();
+            }
+            
+            const container = document.getElementById('tv-broadcast');
+            // We observe the items inside the scrolling text
+            const items = document.querySelectorAll('.broadcast-item');
+            
+            if (items.length === 0) return;
+            
+            State.tickerObserver = new IntersectionObserver((entries) => {
+                // Find the entry that is most visible or just entering?
+                // Since text scrolls right-to-left, we want to catch the one entering from the right (mostly)
+                // OR the one that is currently dominant.
+                
+                // Let's filter for intersecting entries
+                const visible = entries.filter(e => e.isIntersecting);
+                
+                if (visible.length > 0) {
+                    // If multiple are visible, which one dictates the theme?
+                    // The one on the right is the "New" one coming in.
+                    // The one on the left is the "Old" one leaving.
+                    // Let's pick the one that just entered (last one in DOM usually? No)
+                    // Let's pick the one with highest intersectionRatio?
+                    // Or simply: if ANY scheduled item is visible, go Scheduled (High Alert)?
+                    // But user wants distinction.
+                    
+                    // Logic: If the "Leading" (left-most) item is leaving, we might be looking at the next one.
+                    // Simple logic: Use the last visible item (the one entering/most recently entered).
+                    // Because that's what catches the eye as "New info".
+                    
+                    // Sort by DOM order?
+                    // Actually, let's just use the first intersecting one for now, or prioritize Scheduled.
+                    
+                    // Better UX: If a scheduled message is on screen, show Urgent Icon.
+                    const hasScheduled = visible.some(e => e.target.dataset.scheduled === 'true');
+                    applyBroadcastTheme(hasScheduled);
+                }
+            }, {
+                root: container,
+                threshold: 0.1 // Trigger as soon as 10% is visible
+            });
+            
+            items.forEach(i => State.tickerObserver.observe(i));
+        }
+
+
+        function renderBroadcast() {
+            const broadcastEl = document.getElementById('tv-broadcast');
+            
+            const notes = State.appData.broadcast_notes || [];
+            let combinedHTML = '';
+            let isContainerScheduled = false; // Initial state
+            let plainText = '';
+
+            if (notes.length > 0) {
+                const now = dayjs();
+                const todayStr = now.format('YYYY-MM-DD');
+
+                const activeNotes = notes.filter(n => {
+                    if (!n.time) {
+                        if (n.date && n.date !== todayStr) return false;
+                        return true;
+                    }
+                    if (n.date && n.date !== todayStr) return false;
+                    const startTime = dayjs(todayStr + 'T' + n.time);
+                    let endTime;
+                    if (n.end_time) endTime = dayjs(todayStr + 'T' + n.end_time);
+                    else endTime = startTime.add(1, 'hour');
+                    return now.isAfter(startTime) && now.isBefore(endTime);
+                });
+
+                if (activeNotes.length > 0) {
+                    // Determine initial theme based on first item
+                    isContainerScheduled = !!activeNotes[0].time;
+                    
+                    const separator = '<span class="mx-8 text-slate-500/50 text-sm flex items-center"><i class="fas fa-circle text-[6px]"></i></span>';
+                    
+                    combinedHTML = activeNotes.map(n => {
+                        const isSched = !!n.time;
+                        const colorClass = isSched ? 'text-amber-100' : 'text-emerald-100';
+                        const iconClass = isSched ? 'fa-clock' : 'fa-bullhorn';
+                        const shadowStyle = isSched ? 'text-shadow: 0 0 15px rgba(251, 191, 36, 0.6);' : 'text-shadow: 0 0 15px rgba(52, 211, 153, 0.6);';
+                        
+                        // Wrap in .broadcast-item for Observer
+                        return \`<span class="broadcast-item inline-flex items-center" data-scheduled="\${isSched}">
+                                    <span class="\${colorClass} inline-flex items-center" style="\${shadowStyle}">
+                                        <i class="fas \${iconClass} mr-2 opacity-80"></i>\${n.text}
+                                    </span>
+                                </span>\`;
+                    }).join(separator);
+                    
+                    plainText = activeNotes.map(n => n.text).join(' ');
+                }
+            }
+
+            if (!combinedHTML) {
+                 const msg = State.appData.message || State.appData.broadcast_message;
+                 if (msg) {
+                     combinedHTML = \`<span class="broadcast-item inline-flex items-center" data-scheduled="false">
+                                        <span class="text-emerald-100 inline-flex items-center" style="text-shadow: 0 0 15px rgba(52, 211, 153, 0.6);">
+                                            <i class="fas fa-bullhorn mr-2 opacity-80"></i>\${msg}
+                                        </span>
+                                     </span>\`;
+                     plainText = msg;
+                 } else if (State.appData.tickets) {
+                     const note = State.appData.tickets.find(t => t.type === 'note' && t.is_dashboard);
+                     if (note) {
+                         const txt = note.title || note.description;
+                         combinedHTML = \`<span class="broadcast-item inline-flex items-center" data-scheduled="false">
+                                            <span class="text-emerald-100 inline-flex items-center" style="text-shadow: 0 0 15px rgba(52, 211, 153, 0.6);">
+                                                <i class="fas fa-bullhorn mr-2 opacity-80"></i>\${txt}
+                                            </span>
+                                         </span>\`;
+                         plainText = txt;
+                     }
+                 }
+            }
+
+            if (combinedHTML) {
+                const signature = plainText + '|' + isContainerScheduled;
+                if (broadcastEl.dataset.signature === signature) return;
+                broadcastEl.dataset.signature = signature;
+
+                // Initial Theme (will be updated by Observer)
+                const theme = isContainerScheduled ? {
+                    border: 'border-amber-500/50',
+                    shadow: 'shadow-[0_0_20px_rgba(245,158,11,0.4)]',
+                    glow: 'from-amber-500/20 via-orange-500/10',
+                    iconBg: 'from-amber-600 to-orange-500',
+                    iconShadow: 'shadow-[0_0_15px_rgba(245,158,11,0.6)]',
+                    iconClass: 'fa-clock'
+                } : {
+                    border: 'border-emerald-500/50',
+                    shadow: 'shadow-[0_0_20px_rgba(16,185,129,0.4)]',
+                    glow: 'from-emerald-500/20 via-green-500/10',
+                    iconBg: 'from-emerald-600 to-green-500',
+                    iconShadow: 'shadow-[0_0_15px_rgba(16,185,129,0.6)]',
+                    iconClass: 'fa-bullhorn'
+                };
+
+                const duration = Math.max(20, 10 + (plainText.length * 0.15));
+
+                broadcastEl.className = \`hidden relative flex items-center gap-2 lg:gap-4 pl-2 pr-4 lg:pr-6 py-1.5 lg:py-2 rounded-full bg-slate-900/90 backdrop-blur-xl transition-all duration-500 w-full max-w-full group overflow-hidden \${theme.border} \${theme.shadow}\`;
+                
+                // Add IDs for dynamic updates
+                broadcastEl.innerHTML = \`
+                    <div id="broadcast-glow" class="absolute inset-0 bg-gradient-to-r \${theme.glow} to-transparent opacity-100 transition-all duration-500"></div>
+                    <div id="broadcast-icon-container" class="relative h-10 w-10 rounded-full bg-gradient-to-br \${theme.iconBg} flex items-center justify-center \${theme.iconShadow} flex-shrink-0 border border-white/20 z-10 transition-all duration-500">
+                        <i id="broadcast-icon" class="fas \${theme.iconClass} text-white text-sm animate-pulse drop-shadow-md"></i>
+                    </div>
+                    <div class="flex-1 overflow-hidden relative h-8 flex items-center mask-linear z-10 w-full">
+                        <div class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5 flex items-center" style="animation-duration: \${duration}s;">
+                           \${combinedHTML}
+                        </div>
+                    </div>
+                \`;
+
+                broadcastEl.classList.remove('hidden');
+                
+                // Init Observer
+                setTimeout(setupTickerObserver, 100);
+            } else {
+                broadcastEl.classList.add('hidden');
+                broadcastEl.dataset.signature = '';
+            }
+        }
+
+        // Space before next function
+        
         function createItemElement(item, isToday = false) {
             const el = document.createElement('div');
             el.setAttribute('tabindex', '0');
@@ -989,7 +1436,7 @@ export const tvHTML = `
 
             // Filter & Sort
             State.appData.events.forEach(e => {
-                if (dayjs(e.date).format('YYYY-MM-DD') === todayStr) {
+                if (e.date.split('T')[0] === todayStr) {
                     items.push({ type: 'event', data: e, sortTime: dayjs(e.date).valueOf() });
                 }
             });
@@ -1031,7 +1478,7 @@ export const tvHTML = `
             };
 
             State.appData.events.forEach(e => 
-                addItem(dayjs(e.date).format('YYYY-MM-DD'), { type: 'event', data: e }));
+                addItem(e.date.split('T')[0], { type: 'event', data: e }));
                 
             State.appData.tickets.forEach(t => {
                 if(t.scheduled_date) addItem(dayjs(t.scheduled_date).format('YYYY-MM-DD'), { type: 'ticket', data: t });

@@ -1,17 +1,71 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
+// --- Sound Manager (Robust Fix) ---
+
+const SoundManager = {
+    audio: new Audio('/static/notification.mp3'),
+    
+    // Force browser to accept audio by playing a silent buffer via Web Audio API
+    unlock: function() {
+        // Method 1: HTML5 Audio Unlock
+        this.audio.volume = 0;
+        this.audio.play().then(() => {
+            this.audio.pause();
+            this.audio.currentTime = 0;
+            this.audio.volume = 1;
+        }).catch(() => {});
+
+        // Method 2: Web Audio API Unlock (IOS/Mobile specific)
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContext) {
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                gain.gain.value = 0; // Silent
+                osc.start(0);
+                osc.stop(0.001);
+                console.log("🔊 Audio Engine Unlocked");
+            }
+        } catch (e) {
+            console.error("Audio Context unlock failed", e);
+        }
+    },
+
+    play: function() {
+        // Always reset to ensure it plays from start
+        this.audio.currentTime = 0;
+        this.audio.volume = 1.0;
+        
+        const promise = this.audio.play();
+        if (promise !== undefined) {
+            promise.catch(error => {
+                console.error("❌ Notification sound failed:", error);
+            });
+        }
+        return promise;
+    }
+};
+
 // --- Global Styles & Utils ---
 
 const GlobalStyles = () => (
     <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
         * {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
             box-sizing: border-box;
+        }
+
+        h1, h2, h3, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         html, body {
@@ -21,91 +75,99 @@ const GlobalStyles = () => (
             height: 100%;
             overflow: hidden;
             overscroll-behavior: none;
-            background-color: #0f172a;
+            background-color: #000000;
         }
 
-        /* Glass Scrollbar - High Contrast */
+        /* Glass Scrollbar - Ultra Thin */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.2);
+            background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .glass-panel {
-            background: rgba(17, 24, 39, 0.7); /* Plus de transparence pour le glass */
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2); /* Bordure plus marquée */
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            background: rgba(15, 15, 15, 0.6);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .glass-sidebar {
-            background: rgba(17, 24, 39, 0.8); /* Transparence pour la sidebar */
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(5, 5, 5, 0.65);
+            backdrop-filter: blur(40px);
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .glass-header {
-            background: rgba(17, 24, 39, 0.75); /* Transparence pour le header */
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            background: rgba(5, 5, 5, 0.65);
+            backdrop-filter: blur(40px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .glass-input {
-            background: rgba(0, 0, 0, 0.4); /* Fond sombre pour contraste avec texte blanc */
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: #ffffff;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-input:focus {
-            background: rgba(0, 0, 0, 0.6);
-            border-color: #10b981; /* Emerald */
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
         }
         .glass-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.3);
         }
 
         .glass-button-primary {
-            background: #10b981; /* Couleur solide pour lisibilité */
-            border: 1px solid #059669;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-button-primary:hover {
-            background: #059669;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
 
         .message-bubble-me {
-            background: #059669; /* Vert solide plus sombre */
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
             color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .message-bubble-them {
-            background: #374151; /* Gris solide */
-            color: white;
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
         }
 
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-in-right { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        .hover-trigger .hover-target { opacity: 0; transform: translateX(-10px); transition: all 0.3s ease; }
+        .hover-trigger:hover .hover-target { opacity: 1; transform: translateX(0); }
+
+        .bg-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
     `}</style>
 );
 
@@ -126,6 +188,16 @@ const getUserRoleFromToken = (token: string | null) => {
         return payload.role || '';
     } catch (e) {
         return '';
+    }
+};
+
+const getNameFromToken = (token: string | null) => {
+    if (!token) return '';
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.full_name || payload.name || 'Utilisateur';
+    } catch (e) {
+        return 'Utilisateur';
     }
 };
 
@@ -151,26 +223,26 @@ const formatTime = (dateStr: string | null) => {
 
 const getInitials = (name: string) => {
     if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const initials = name.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    return initials || '?';
 };
 
 const getAvatarGradient = (name: string) => {
-    // Couleurs plus saturées et sombres pour le contraste
-    const colors = [
-        'bg-red-700', 
-        'bg-blue-700', 
-        'bg-emerald-700', 
-        'bg-orange-700', 
-        'bg-purple-700', 
-        'bg-pink-700', 
-        'bg-cyan-700', 
-        'bg-teal-700'
+    const gradients = [
+        'bg-gradient-to-br from-rose-500 to-red-700',
+        'bg-gradient-to-br from-blue-500 to-indigo-700',
+        'bg-gradient-to-br from-emerald-400 to-green-700',
+        'bg-gradient-to-br from-amber-400 to-orange-700',
+        'bg-gradient-to-br from-violet-500 to-purple-700',
+        'bg-gradient-to-br from-fuchsia-500 to-pink-700',
+        'bg-gradient-to-br from-cyan-400 to-blue-700',
+        'bg-gradient-to-br from-teal-400 to-emerald-700'
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
         hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return colors[Math.abs(hash) % colors.length];
+    return gradients[Math.abs(hash) % gradients.length];
 };
 
 const urlBase64ToUint8Array = (base64String: string) => {
@@ -191,12 +263,14 @@ interface User {
     full_name: string;
     role: string;
     email: string;
+    avatar_key?: string | null;
 }
 
 interface Conversation {
     id: string;
     type: 'direct' | 'group';
     name: string | null;
+    avatar_key?: string | null;
     last_message: string | null;
     last_message_time: string | null;
     unread_count: number;
@@ -208,6 +282,7 @@ interface Message {
     id: string;
     sender_id: number;
     sender_name: string;
+    sender_avatar_key?: string | null;
     content: string;
     created_at: string;
     type: string;
@@ -252,60 +327,59 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#111827] p-4 text-white relative overflow-hidden">
-            {/* Background plus subtil et technique */}
-            <div className="absolute inset-0" style={{ 
-                backgroundImage: 'radial-gradient(#1f2937 1px, transparent 1px)', 
-                backgroundSize: '40px 40px',
-                opacity: 0.3 
-            }}></div>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#050505] p-4 text-white relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-emerald-900/10 blur-[150px]"></div>
+                <div className="absolute top-[40%] -right-[10%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[150px]"></div>
+            </div>
+            <div className="bg-noise absolute inset-0 z-0 opacity-20"></div>
             
             <div className="w-full max-w-md z-10 animate-slide-up px-4">
-                <div className="glass-panel p-6 md:p-10 rounded-xl border border-gray-700 shadow-2xl bg-[#1f2937]">
-                    <div className="flex flex-col items-center mb-8 md:mb-10">
-                        <img src="/logo-igp.png" alt="IGP Glass" className="h-24 object-contain mb-6 drop-shadow-lg" />
-                        <h1 className="text-2xl font-bold tracking-tight text-white uppercase tracking-wider">Messenger</h1>
-                        <div className="h-1 w-16 bg-emerald-500 mt-4 rounded-full"></div>
+                <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl">
+                    <div className="flex flex-col items-center mb-10">
+                        <img src="/logo-igp.png" alt="IGP Glass" className="h-20 object-contain mb-6 drop-shadow-2xl" />
+                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">Messenger</h1>
+                        <p className="text-gray-400 text-sm mt-2 font-medium tracking-wide uppercase">Connexion Sécurisée</p>
                     </div>
                     
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-5">
                         {error && (
-                            <div className="bg-red-900/50 border border-red-500 text-white p-4 rounded-lg text-sm font-medium text-center flex items-center justify-center gap-3">
-                                <i className="fas fa-exclamation-triangle text-red-400"></i> {error}
+                            <div className="bg-red-500/10 border border-red-500/30 text-red-200 p-4 rounded-xl text-sm font-medium text-center flex items-center justify-center gap-3 backdrop-blur-md">
+                                <i className="fas fa-exclamation-circle"></i> {error}
                             </div>
                         )}
                         
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-300 uppercase tracking-wider ml-1">Email</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Email Professionnel</label>
                             <div className="relative group">
-                                <i className="fas fa-envelope absolute left-4 top-3.5 text-gray-400 z-10"></i>
+                                <i className="fas fa-envelope absolute left-4 top-3.5 text-gray-500 transition-colors group-focus-within:text-emerald-400 z-10"></i>
                                 <input 
                                     type="email" 
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full glass-input rounded-lg py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none font-medium"
-                                    placeholder="votre.email@igpglass.ca"
+                                    className="w-full glass-input rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-600 focus:outline-none font-medium"
+                                    placeholder="nom@igpglass.ca"
                                     required
                                 />
                             </div>
                         </div>
                         
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-300 uppercase tracking-wider ml-1">Mot de passe</label>
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Mot de passe</label>
                             <div className="relative group">
-                                <i className="fas fa-lock absolute left-4 top-3.5 text-gray-400 z-10"></i>
+                                <i className="fas fa-lock absolute left-4 top-3.5 text-gray-500 transition-colors group-focus-within:text-emerald-400 z-10"></i>
                                 <input 
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full glass-input rounded-lg py-3 pl-10 pr-10 text-white placeholder-gray-500 focus:outline-none font-medium"
+                                    className="w-full glass-input rounded-xl py-3 pl-11 pr-10 text-white placeholder-gray-600 focus:outline-none font-medium"
                                     placeholder="••••••••"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-3.5 text-gray-400 hover:text-emerald-400 transition-colors focus:outline-none z-10"
+                                    className="absolute right-4 top-3.5 text-gray-500 hover:text-emerald-400 transition-colors focus:outline-none z-10"
                                 >
                                     <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                 </button>
@@ -315,17 +389,11 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full glass-button-primary text-white font-bold py-4 rounded-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 uppercase tracking-wide text-sm shadow-lg"
+                            className="w-full glass-button-primary text-white font-bold py-4 rounded-xl mt-8 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 uppercase tracking-wide text-sm"
                         >
-                            {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <>Connexion <i className="fas fa-arrow-right"></i></>}
+                            {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <>Se connecter</>}
                         </button>
                     </form>
-                    
-                    <div className="mt-10 text-center border-t border-gray-700 pt-6">
-                        <p className="text-gray-500 text-xs font-semibold">
-                            © 2025 IGP Glass Technology
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -348,61 +416,70 @@ const UserSelect = ({ onSelect, selectedIds, onClose }: { onSelect: (ids: number
     const filteredUsers = users.filter(u => u.full_name.toLowerCase().includes(search.toLowerCase()));
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col animate-fade-in">
-            <div className="bg-[#0b141a] h-full w-full md:max-w-md md:border-r border-white/10 flex flex-col">
-                <div className="h-16 glass-header px-4 flex items-center gap-4">
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><i className="fas fa-arrow-left text-lg"></i></button>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col animate-fade-in">
+            <div className="bg-[#0a0a0a] h-full w-full md:max-w-md md:border-r border-white/10 flex flex-col shadow-2xl">
+                <div className="h-20 glass-header px-6 flex items-center gap-4 flex-shrink-0">
+                    <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all flex items-center justify-center"><i className="fas fa-arrow-left"></i></button>
                     <div className="flex-1">
-                        <div className="text-white font-bold text-lg">Nouveau message</div>
-                        <div className="text-emerald-500 text-xs font-medium">{selected.length} participant(s)</div>
+                        <div className="text-white font-bold text-xl font-display">Nouvelle discussion</div>
+                        <div className="text-emerald-500 text-xs font-bold tracking-wide uppercase mt-0.5">{selected.length} sélectionné(s)</div>
                     </div>
                 </div>
                 
-                <div className="p-4 border-b border-white/5">
-                    <div className="glass-input rounded-xl px-4 py-2.5 flex items-center gap-3">
+                <div className="p-6 border-b border-white/5">
+                    <div className="glass-input rounded-2xl px-4 py-3 flex items-center gap-3 transition-all focus-within:bg-white/5">
                         <i className="fas fa-search text-gray-500"></i>
                         <input 
                             type="text" 
-                            placeholder="Rechercher un collègue..." 
+                            placeholder="Rechercher..." 
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="bg-transparent text-white w-full focus:outline-none placeholder-gray-600"
+                            className="bg-transparent text-white w-full focus:outline-none placeholder-gray-600 font-medium"
+                            autoFocus
                         />
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
                     {filteredUsers.map(user => (
                         <div 
                             key={user.id} 
                             onClick={() => toggleUser(user.id)}
-                            className={`flex items-center gap-4 p-3 mb-1 rounded-xl cursor-pointer transition-all ${selected.includes(user.id) ? 'bg-emerald-500/10 border border-emerald-500/20' : 'hover:bg-white/5 border border-transparent'}`}
+                            className={`group flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all duration-200 ${selected.includes(user.id) ? 'bg-emerald-500/10 border border-emerald-500/30' : 'hover:bg-white/5 border border-transparent'}`}
                         >
                             <div className="relative">
-                                <div className={`w-12 h-12 rounded-full ${getAvatarGradient(user.full_name)} flex items-center justify-center text-white font-bold shadow-lg`}>
-                                    {getInitials(user.full_name)}
-                                </div>
+                                {user.avatar_key ? (
+                                    <img 
+                                        src={`/api/auth/avatar/${user.id}?t=${Date.now()}`}
+                                        className="w-12 h-12 rounded-2xl object-cover shadow-lg"
+                                        alt={user.full_name}
+                                    />
+                                ) : (
+                                    <div className={`w-12 h-12 rounded-2xl ${getAvatarGradient(user.full_name)} flex items-center justify-center text-white font-bold shadow-lg text-sm`}>
+                                        {getInitials(user.full_name)}
+                                    </div>
+                                )}
                                 {selected.includes(user.id) && (
-                                    <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full w-5 h-5 flex items-center justify-center border-2 border-[#0b141a] shadow-sm">
+                                    <div className="absolute -top-1 -right-1 bg-emerald-500 rounded-full w-5 h-5 flex items-center justify-center border-2 border-[#0a0a0a] shadow-sm animate-scale-in">
                                         <i className="fas fa-check text-white text-[10px]"></i>
                                     </div>
                                 )}
                             </div>
                             <div className="flex-1">
-                                <div className={`font-semibold ${selected.includes(user.id) ? 'text-emerald-400' : 'text-gray-200'}`}>{user.full_name}</div>
-                                <div className="text-gray-500 text-xs uppercase tracking-wide font-medium">{user.role}</div>
+                                <div className={`font-semibold text-base ${selected.includes(user.id) ? 'text-emerald-400' : 'text-gray-200 group-hover:text-white'}`}>{user.full_name}</div>
+                                <div className="text-gray-500 text-xs uppercase tracking-wider font-bold mt-0.5">{user.role}</div>
                             </div>
                         </div>
                     ))}
                 </div>
 
                 {selected.length > 0 && (
-                    <div className="p-4 border-t border-white/10 bg-[#0b141a]/90 backdrop-blur-md">
+                    <div className="p-6 border-t border-white/10 bg-[#0a0a0a]/90 backdrop-blur-xl pb-8">
                         <button 
                             onClick={() => onSelect(selected)}
-                            className="w-full glass-button-primary text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
+                            className="w-full glass-button-primary text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 text-base shadow-xl"
                         >
-                            <span>Continuer</span> <i className="fas fa-arrow-right"></i>
+                            <span>Commencer</span> <i className="fas fa-arrow-right"></i>
                         </button>
                     </div>
                 )}
@@ -415,34 +492,35 @@ const CreateGroupModal = ({ selectedUserIds, onClose, onCreate }: { selectedUser
     const [name, setName] = useState('');
 
     return (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-            <div className="w-full max-w-md glass-panel rounded-2xl overflow-hidden animate-slide-up">
-                <div className="h-16 px-6 flex items-center justify-between border-b border-white/5">
-                    <div className="text-white font-bold text-lg">Créer un groupe</div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><i className="fas fa-times"></i></button>
+        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in">
+            <div className="w-full max-w-md glass-panel rounded-3xl overflow-hidden animate-slide-up border border-white/10 shadow-2xl">
+                <div className="h-20 px-8 flex items-center justify-between border-b border-white/5">
+                    <div className="text-white font-bold text-xl font-display">Nouveau Groupe</div>
+                    <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"><i className="fas fa-times"></i></button>
                 </div>
 
-                <div className="p-8 flex flex-col items-center">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 border border-white/10 flex items-center justify-center mb-8 shadow-inner group cursor-pointer hover:from-emerald-900 hover:to-gray-800 transition-all">
-                        <i className="fas fa-camera text-gray-400 text-3xl group-hover:text-emerald-400 transition-colors"></i>
+                <div className="p-10 flex flex-col items-center">
+                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center mb-8 shadow-inner group cursor-pointer hover:from-gray-800 hover:to-gray-900 transition-all relative overflow-hidden">
+                        <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <i className="fas fa-camera text-gray-500 text-3xl group-hover:text-emerald-400 transition-colors z-10"></i>
                     </div>
 
-                    <div className="w-full mb-2">
+                    <div className="w-full mb-3 relative group">
                         <input 
                             type="text" 
                             placeholder="Nom du groupe" 
                             value={name}
                             onChange={e => setName(e.target.value)}
-                            className="w-full bg-transparent text-white text-xl font-medium text-center border-b-2 border-emerald-500/50 focus:border-emerald-500 py-2 focus:outline-none transition-colors placeholder-gray-600"
+                            className="w-full bg-transparent text-white text-2xl font-bold text-center border-b-2 border-white/10 focus:border-emerald-500 py-3 focus:outline-none transition-colors placeholder-gray-700 font-display"
                             autoFocus
                         />
                     </div>
-                    <div className="text-gray-500 text-xs w-full text-right mb-8 font-medium">{name.length}/25</div>
+                    <div className="text-gray-500 text-xs font-bold tracking-widest w-full text-right mb-10 opacity-50">{name.length}/25</div>
 
                     <button 
                         onClick={() => onCreate(name)}
                         disabled={!name.trim()}
-                        className="w-full glass-button-primary text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full glass-button-primary text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl text-base"
                     >
                         <i className="fas fa-check"></i> Créer le groupe
                     </button>
@@ -495,78 +573,78 @@ const GuestManagementModal = ({ onClose }: { onClose: () => void }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-md flex flex-col animate-slide-up items-center justify-center p-4">
-            <div className="w-full max-w-2xl glass-panel rounded-2xl flex flex-col max-h-[85vh]">
-                <div className="h-16 px-6 flex items-center justify-between border-b border-white/5">
+        <div className="fixed inset-0 z-[70] bg-black/90 backdrop-blur-xl flex flex-col animate-slide-up items-center justify-center p-4">
+            <div className="w-full max-w-2xl glass-panel rounded-3xl flex flex-col max-h-[85vh] border border-white/10 shadow-2xl">
+                <div className="h-20 px-8 flex items-center justify-between border-b border-white/5">
                     <div>
-                        <div className="text-white font-bold text-lg">Invités Externes</div>
-                        <div className="text-gray-500 text-xs">Accès restreint au chat uniquement</div>
+                        <div className="text-white font-bold text-xl font-display">Invités Externes</div>
+                        <div className="text-gray-500 text-xs font-bold tracking-wide uppercase mt-1">Accès restreint au chat</div>
                     </div>
                     <div className="flex gap-4">
-                        <button onClick={() => setShowForm(true)} className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-4 py-2 rounded-lg font-bold text-sm border border-emerald-500/20 transition-all">
+                        <button onClick={() => setShowForm(true)} className="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 px-5 py-2.5 rounded-xl font-bold text-sm border border-emerald-500/20 transition-all shadow-lg shadow-emerald-900/20">
                             <i className="fas fa-plus mr-2"></i> Ajouter
                         </button>
-                        <button onClick={onClose} className="text-gray-400 hover:text-white"><i className="fas fa-times text-xl"></i></button>
+                        <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors"><i className="fas fa-times"></i></button>
                     </div>
                 </div>
 
                 {showForm && (
-                    <div className="p-6 bg-white/5 border-b border-white/5">
-                        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-8 bg-white/5 border-b border-white/5">
+                        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <input 
                                 placeholder="Email (Identifiant)" 
-                                className="col-span-1 md:col-span-2 glass-input rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none text-base"
+                                className="col-span-1 md:col-span-2 glass-input rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none text-sm font-medium"
                                 value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required
                             />
                             <input 
                                 placeholder="Mot de passe" 
-                                className="glass-input rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none text-base"
+                                className="glass-input rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none text-sm font-medium"
                                 value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required
                             />
                             <input 
                                 placeholder="Nom complet" 
-                                className="glass-input rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none text-base"
+                                className="glass-input rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none text-sm font-medium"
                                 value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} required
                             />
                             <input 
                                 placeholder="Entreprise / Rôle" 
-                                className="col-span-1 md:col-span-2 glass-input rounded-xl p-3 text-white placeholder-gray-500 focus:outline-none text-base"
+                                className="col-span-1 md:col-span-2 glass-input rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none text-sm font-medium"
                                 value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})}
                             />
-                            <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
-                                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-400 hover:text-white text-sm font-medium">Annuler</button>
-                                <button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-emerald-900/20 transition-all w-full md:w-auto">Créer l'accès</button>
+                            <div className="col-span-1 md:col-span-2 flex justify-end gap-4 mt-2">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 text-gray-400 hover:text-white text-sm font-bold transition-colors">Annuler</button>
+                                <button type="submit" disabled={loading} className="glass-button-primary text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all w-full md:w-auto text-sm">Créer</button>
                             </div>
                         </form>
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                     {guests.length === 0 ? (
-                        <div className="text-center py-10">
-                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i className="fas fa-user-clock text-gray-600 text-2xl"></i>
+                        <div className="text-center py-12 opacity-50">
+                            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
+                                <i className="fas fa-user-clock text-gray-500 text-3xl"></i>
                             </div>
-                            <p className="text-gray-500">Aucun invité configuré</p>
+                            <p className="text-gray-400 font-medium">Aucun invité configuré</p>
                         </div>
                     ) : (
-                        <div className="grid gap-3">
+                        <div className="grid gap-4">
                             {guests.map(g => (
-                                <div key={g.id} className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
+                                <div key={g.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all group">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg text-lg">
                                             {getInitials(g.full_name)}
                                         </div>
                                         <div>
-                                            <div className="text-white font-medium">{g.full_name}</div>
-                                            <div className="text-gray-400 text-sm flex items-center gap-2">
-                                                <i className="fas fa-building text-xs"></i> {g.company || 'Externe'} 
-                                                <span className="text-gray-600">•</span> 
-                                                <span className="text-gray-500 font-mono text-xs">{g.email}</span>
+                                            <div className="text-white font-bold text-lg">{g.full_name}</div>
+                                            <div className="text-gray-400 text-sm flex items-center gap-2 mt-0.5 font-medium">
+                                                <i className="fas fa-building text-xs opacity-70"></i> {g.company || 'Externe'} 
+                                                <span className="text-gray-600 mx-1">•</span> 
+                                                <span className="text-gray-500 font-mono text-xs tracking-tight">{g.email}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleDelete(g.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100">
+                                    <button onClick={() => handleDelete(g.id)} className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100">
                                         <i className="fas fa-trash-alt"></i>
                                     </button>
                                 </div>
@@ -579,17 +657,77 @@ const GuestManagementModal = ({ onClose }: { onClose: () => void }) => {
     );
 };
 
-const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, onOpenInfo: () => void }) => {
+const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName, currentUserAvatarKey, onOpenInfo, onAvatarUpdate }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, currentUserName: string, currentUserAvatarKey: string | null, onOpenInfo: () => void, onAvatarUpdate: () => void }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [pushEnabled, setPushEnabled] = useState(false);
     const [currentUserRole, setCurrentUserRole] = useState<string>('operator');
+    
+    // Avatar upload
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [avatarError, setAvatarError] = useState(false);
+
+    useEffect(() => {
+        setAvatarError(false);
+    }, [currentUserAvatarKey]);
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            
+            // Validation client-side
+            if (file.size > 5 * 1024 * 1024) {
+                alert("L'image est trop volumineuse (maximum 5 Mo)");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            setUploadingAvatar(true);
+            try {
+                await axios.post('/api/auth/avatar', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                onAvatarUpdate(); // Refresh in App
+            } catch (err) {
+                alert("Erreur lors de l'upload de l'avatar");
+            } finally {
+                setUploadingAvatar(false);
+            }
+        }
+    };
+
+    const handleDeleteAvatar = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm("Voulez-vous supprimer votre photo de profil ?")) return;
+        
+        setUploadingAvatar(true);
+        try {
+            await axios.delete('/api/auth/avatar');
+            onAvatarUpdate();
+        } catch (err) {
+            alert("Erreur lors de la suppression");
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
     
     // UI States
     const [showUserSelect, setShowUserSelect] = useState(false);
     const [showCreateGroup, setShowCreateGroup] = useState(false);
     const [showGuestManager, setShowGuestManager] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+
+    // Sound logic
+    // Removed local ref to use global SoundManager
+    const prevConversationsRef = useRef<Conversation[]>([]);
+
+    const firstName = currentUserName.split(' ')[0] || 'Utilisateur';
 
     useEffect(() => {
         const token = localStorage.getItem('auth_token');
@@ -611,7 +749,34 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
         const fetchConversations = async () => {
             try {
                 const res = await axios.get('/api/v2/chat/conversations');
-                setConversations(res.data.conversations || []);
+                const newConvs = res.data.conversations || [];
+                setConversations(newConvs);
+
+                // Check for new unread messages in OTHER conversations
+                const prevConvs = prevConversationsRef.current;
+                
+                // Only if we have history (not first load)
+                if (prevConvs.length > 0) {
+                    const hasNew = newConvs.some(nc => {
+                        // Skip if this conversation is currently open (ChatWindow handles sound for active chat)
+                        if (selectedId && nc.id === selectedId) return false;
+
+                        const pc = prevConvs.find(p => p.id === nc.id);
+                        // If unread count increased
+                        if (pc && nc.unread_count > pc.unread_count) return true;
+                        // If new conversation with unread messages
+                        if (!pc && nc.unread_count > 0) return true;
+                        return false;
+                    });
+
+                    if (hasNew) {
+                        SoundManager.play().catch(e => {
+                           console.error("Sound blocked by browser policy", e);
+                        });
+                    }
+                }
+                prevConversationsRef.current = newConvs;
+
             } catch (err: any) {
                 console.error("Fetch conv error", err);
             } finally {
@@ -622,7 +787,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
         fetchConversations();
         const interval = setInterval(fetchConversations, 5000);
         return () => clearInterval(interval);
-    }, []);
+    }, [selectedId]);
 
     const handleCreateGroup = async (name: string) => {
         try {
@@ -648,32 +813,6 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
         }
     };
 
-    const enablePush = async () => {
-        try {
-            const token = localStorage.getItem('auth_token');
-            if (!token) return;
-
-            const keyRes = await fetch('/api/push/vapid-public-key', { headers: { 'Authorization': `Bearer ${token}` } });
-            const { publicKey } = await keyRes.json();
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicKey)
-            });
-
-            await fetch('/api/push/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ subscription, deviceType: 'mobile', deviceName: `Web (${navigator.userAgent})` })
-            });
-
-            setPushEnabled(true);
-            alert('Notifications activées ! 🔔');
-        } catch (err: any) {
-            console.error(err);
-        }
-    };
-
     const canCreateGroup = ['admin', 'supervisor', 'technician', 'coordinator', 'planner'].includes(currentUserRole);
     const isAdmin = currentUserRole === 'admin';
 
@@ -685,16 +824,18 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center h-full glass-sidebar w-full md:w-[400px]">
-            <div className="flex flex-col items-center gap-4">
-                <i className="fas fa-circle-notch fa-spin text-emerald-500 text-3xl"></i>
-                <div className="text-gray-500 text-sm font-medium">Chargement...</div>
+        <div className="flex items-center justify-center h-full glass-sidebar w-full md:w-[420px]">
+            <div className="flex flex-col items-center gap-6">
+                <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
+                <div className="text-emerald-500 text-sm font-bold tracking-widest uppercase animate-pulse">Chargement...</div>
             </div>
         </div>
     );
 
     return (
-        <div className="glass-sidebar w-full md:w-[400px] flex flex-col h-full border-r border-white/5 z-20">
+        <div className="glass-sidebar w-full md:w-[420px] flex flex-col h-full z-20 relative bg-[#080808]">
+            <div className="bg-noise absolute inset-0 opacity-10 pointer-events-none"></div>
+            
             {showUserSelect && !showCreateGroup && (
                 <UserSelect 
                     selectedIds={selectedUsers}
@@ -719,66 +860,105 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
             )}
             {showGuestManager && <GuestManagementModal onClose={() => setShowGuestManager(false)} />}
 
-            {/* Header Redesign: Plus grand, plus aéré */}
-            <div className="p-5 bg-[#111827] border-b border-gray-800 flex flex-col gap-4 flex-shrink-0 shadow-xl z-30">
+            {/* PREMIUM HEADER */}
+            <div className="px-6 pt-8 pb-6 flex flex-col gap-6 flex-shrink-0 z-30 relative">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
-                            <img src="/messenger-icon.svg" className="w-6 h-6" alt="Logo" />
+                    <div onClick={handleAvatarClick} className="flex items-center gap-4 bg-white/5 pr-6 pl-2 py-2 rounded-full border border-white/5 backdrop-blur-md shadow-lg hover:bg-white/10 transition-all cursor-pointer group relative">
+                        <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                        <div className="relative">
+                            {currentUserAvatarKey && !avatarError ? (
+                                <img 
+                                    src={`/api/auth/avatar/${currentUserId}?t=${Date.now()}`} 
+                                    className="w-10 h-10 rounded-full object-cover shadow-lg shadow-emerald-900/20 border border-white/10"
+                                    alt="Avatar"
+                                    onError={() => setAvatarError(true)}
+                                />
+                            ) : (
+                                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-full flex items-center justify-center shadow-lg shadow-emerald-900/20 text-white font-bold text-sm">
+                                    {getInitials(currentUserName)}
+                                </div>
+                            )}
+                            {uploadingAvatar && (
+                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center z-10">
+                                    <i className="fas fa-spinner fa-spin text-white text-xs"></i>
+                                </div>
+                            )}
+                            {currentUserAvatarKey && (
+                                <div 
+                                    onClick={handleDeleteAvatar}
+                                    className="absolute -bottom-1 -left-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#151515] opacity-0 group-hover:opacity-100 transition-opacity z-30 cursor-pointer hover:bg-red-600 shadow-lg hover:scale-110"
+                                    title="Supprimer la photo"
+                                >
+                                    <i className="fas fa-trash text-[8px] text-white"></i>
+                                </div>
+                            )}
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-800 rounded-full flex items-center justify-center border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                <i className="fas fa-camera text-[8px] text-white"></i>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-white font-bold text-lg tracking-tight leading-none">IGP Messenger</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span className="text-gray-400 text-xs font-medium">En ligne</span>
+                        <div className="flex flex-col">
+                            <span className="text-white font-bold text-sm leading-none group-hover:text-emerald-400 transition-colors">{firstName}</span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">En ligne</span>
                             </div>
                         </div>
                     </div>
                     
                     <div className="flex gap-3">
+                        <button 
+                            onClick={() => {
+                                SoundManager.play().then(() => alert("🔊 Son de test envoyé !")).catch(() => alert("❌ Erreur : Le navigateur bloque le son. Cliquez n'importe où sur la page puis réessayez."));
+                            }}
+                            className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all border border-emerald-500/20 hover:border-emerald-500 shadow-lg"
+                            title="Tester le son"
+                        >
+                            <i className="fas fa-volume-up text-sm"></i>
+                        </button>
                         {isAdmin && (
-                            <button onClick={() => setShowGuestManager(true)} className="w-10 h-10 rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white flex items-center justify-center transition-all border border-gray-700" title="Gérer les invités">
-                                <i className="fas fa-user-shield"></i>
+                            <button onClick={() => setShowGuestManager(true)} className="w-11 h-11 rounded-2xl bg-gray-800/50 text-gray-400 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all border border-white/5 hover:border-white/20 shadow-lg" title="Gérer les invités">
+                                <i className="fas fa-user-shield text-sm"></i>
                             </button>
                         )}
-                        <button onClick={handleLogout} className="w-10 h-10 rounded-xl bg-red-900/20 text-red-500 hover:bg-red-600 hover:text-white flex items-center justify-center transition-all border border-red-900/30" title="Déconnexion">
-                            <i className="fas fa-power-off"></i>
+                        <button onClick={handleLogout} className="w-11 h-11 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/20 hover:border-red-500 shadow-lg" title="Déconnexion">
+                            <i className="fas fa-power-off text-sm"></i>
                         </button>
                     </div>
                 </div>
 
                 <div className="flex gap-3">
-                    {/* Barre de recherche élargie */}
-                    <div className="flex-1 relative">
-                        <i className="fas fa-search absolute left-3 top-3 text-gray-500"></i>
-                        <input type="text" placeholder="Rechercher..." className="w-full bg-gray-800/50 border border-gray-700 text-white text-base md:text-sm rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-emerald-500 focus:bg-gray-800 transition-all placeholder-gray-500" />
+                    <div className="flex-1 relative group">
+                        <i className="fas fa-search absolute left-4 top-3.5 text-gray-500 group-focus-within:text-emerald-500 transition-colors"></i>
+                        <input type="text" placeholder="Rechercher..." className="w-full bg-white/5 border border-white/5 text-white text-sm rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all placeholder-gray-600 shadow-inner font-medium" />
                     </div>
 
-                    {/* Menu Nouveau : Bouton Principal plus gros */}
                     <div className="relative group">
-                        <button className="w-10 h-10 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 flex items-center justify-center transition-all shadow-lg shadow-emerald-900/20">
+                        <button className="w-12 h-full rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white hover:scale-105 flex items-center justify-center transition-all shadow-lg shadow-emerald-900/30 border border-emerald-400/20">
                             <i className="fas fa-plus text-lg"></i>
                         </button>
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-[#1f2937] border border-gray-700 rounded-xl shadow-2xl overflow-hidden hidden group-hover:block z-50 p-1">
+                        <div className="absolute right-0 top-full mt-3 w-64 bg-[#151515] border border-white/10 rounded-2xl shadow-2xl overflow-hidden hidden group-hover:block z-50 p-2 backdrop-blur-xl">
                             <button 
                                 onClick={() => { setSelectedUsers([]); setShowUserSelect(true); }} 
-                                className="w-full text-left px-4 py-3 hover:bg-gray-700 rounded-lg text-white text-sm flex items-center gap-3 transition-colors"
+                                className="w-full text-left px-4 py-3.5 hover:bg-white/5 rounded-xl text-white text-sm flex items-center gap-4 transition-colors group/item"
                             >
-                                <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center"><i className="fas fa-user"></i></div>
+                                <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20 group-hover/item:bg-blue-500 group-hover/item:text-white transition-all"><i className="fas fa-comment-alt"></i></div>
                                 <div>
-                                    <div className="font-bold">Discussion Privée</div>
-                                    <div className="text-xs text-gray-400">Contacter un collègue</div>
+                                    <div className="font-bold text-gray-200 group-hover/item:text-white">Discussion Privée</div>
+                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">Direct Message</div>
                                 </div>
                             </button>
                             {canCreateGroup && (
                                 <button 
                                     onClick={() => { setSelectedUsers([]); setShowUserSelect(true); setShowCreateGroup(true); }} 
-                                    className="w-full text-left px-4 py-3 hover:bg-gray-700 rounded-lg text-white text-sm flex items-center gap-3 transition-colors mt-1"
+                                    className="w-full text-left px-4 py-3.5 hover:bg-white/5 rounded-xl text-white text-sm flex items-center gap-4 transition-colors mt-1 group/item"
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i className="fas fa-users"></i></div>
+                                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover/item:bg-emerald-500 group-hover/item:text-white transition-all"><i className="fas fa-users"></i></div>
                                     <div>
-                                        <div className="font-bold">Nouveau Groupe</div>
-                                        <div className="text-xs text-gray-400">Créer une équipe</div>
+                                        <div className="font-bold text-gray-200 group-hover/item:text-white">Nouveau Groupe</div>
+                                        <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">Team Chat</div>
                                     </div>
                                 </button>
                             )}
@@ -787,77 +967,90 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
                 </div>
             </div>
             
-            {/* Conversation List: Plus d'espace */}
-            <div className="overflow-y-auto flex-1 custom-scrollbar p-4 space-y-4 bg-[#0b141a]">
+            {/* LISTE CONVERSATIONS - PREMIUM STYLE */}
+            <div className="overflow-y-auto flex-1 custom-scrollbar px-4 pb-4 space-y-2 relative z-10">
                 {conversations.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-center opacity-60">
-                        <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                            <i className="fas fa-inbox text-2xl text-gray-500"></i>
+                    <div className="flex flex-col items-center justify-center h-64 text-center opacity-40 mt-10">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-b from-white/5 to-transparent flex items-center justify-center mb-6 border border-white/5">
+                            <i className="fas fa-wind text-4xl text-gray-600"></i>
                         </div>
-                        <p className="text-gray-400 text-sm font-medium">Aucune conversation</p>
+                        <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Vide pour l'instant</p>
                     </div>
                 ) : conversations.map(conv => {
-                    const avatarGradient = conv.name ? getAvatarGradient(conv.name) : 'bg-gray-600';
+                    const avatarGradient = conv.name ? getAvatarGradient(conv.name) : 'bg-gray-800';
                     const isActive = selectedId === conv.id;
                     
                     return (
                         <div 
                             key={conv.id} 
                             onClick={() => onSelect(conv.id)} 
-                            className={`group relative flex items-center gap-3 p-3 md:gap-4 md:p-4 rounded-2xl cursor-pointer transition-all duration-300 border 
+                            className={`group relative p-4 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-sm
                                 ${isActive 
-                                    ? 'bg-gradient-to-r from-emerald-900/40 to-[#1f2937] border-emerald-500/50 shadow-lg shadow-emerald-900/20 translate-x-1 z-10' 
-                                    : 'bg-[#161b22]/60 border-white/5 hover:bg-[#1f2937] hover:border-white/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/50'
+                                    ? 'bg-gradient-to-r from-emerald-900/20 to-emerald-900/5 border-emerald-500/30 shadow-[0_8px_30px_rgba(0,0,0,0.5)] translate-x-2' 
+                                    : 'bg-[#111111]/90 border-white/5 hover:bg-[#161616] hover:border-white/10 hover:shadow-xl hover:shadow-black/50 hover:-translate-y-1'
                                 }`}
-                            style={{ backdropFilter: 'blur(10px)' }}
                         >
-                            {/* Active Indicator Strip */}
-                            {isActive && <div className="absolute left-0 top-3 bottom-3 md:top-4 md:bottom-4 w-1 bg-emerald-500 rounded-r-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>}
+                            {/* Glowing Active Border */}
+                            {isActive && (
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1 bg-emerald-500 rounded-r-full shadow-[0_0_15px_rgba(16,185,129,0.6)]"></div>
+                            )}
 
-                            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl ${avatarGradient} flex-shrink-0 flex items-center justify-center text-white font-bold shadow-lg relative text-sm md:text-lg border border-white/10 group-hover:scale-105 transition-transform duration-300`}>
-                                {conv.type === 'group' ? <i className="fas fa-users"></i> : getInitials(conv.name || '')}
-                                {conv.unread_count > 0 && (
-                                    <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-5 h-5 md:w-6 md:h-6 bg-red-500 rounded-full border-2 md:border-4 border-[#0b141a] flex items-center justify-center text-[9px] md:text-[10px] font-bold shadow-sm animate-bounce">
-                                        {conv.unread_count}
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0 py-1">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex flex-col min-w-0 flex-1 mr-3">
-                                        <span className={`font-bold text-base truncate transition-colors ${isActive ? 'text-white' : 'text-gray-200 group-hover:text-white'}`}>
-                                            {conv.name || (conv.type === 'group' ? 'Groupe sans nom' : 'Discussion Privée')}
-                                        </span>
-                                        {conv.type === 'group' && (
-                                            <span 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onSelect(conv.id);
-                                                    onOpenInfo();
-                                                }}
-                                                className="mt-1 text-[10px] uppercase font-bold tracking-wider text-emerald-500 flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 hover:bg-emerald-500/20 cursor-pointer transition-all w-fit"
-                                            >
-                                                <i className={`fas ${conv.participant_count && conv.participant_count <= 1 ? 'fa-user-plus' : 'fa-users'}`}></i> 
-                                                {conv.participant_count && conv.participant_count <= 1 ? 'Ajouter' : `${conv.participant_count} Membres`}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className={`text-[10px] font-bold tracking-wide px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0 transition-colors ${isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-black/30 text-gray-500 group-hover:text-gray-300'}`}>
-                                        {formatTime(conv.last_message_time)}
-                                    </span>
-                                </div>
-                                
-                                <div className="flex justify-between items-center">
-                                    <span className={`text-sm truncate w-[90%] block transition-colors ${isActive ? 'text-emerald-100/70' : 'text-gray-500 group-hover:text-gray-400'}`}>
-                                        {conv.last_message || 'Nouvelle discussion'}
-                                    </span>
-                                    {conv.online_count !== undefined && conv.online_count > 0 && (
-                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981] animate-pulse"></div>
-                                            {conv.online_count} en ligne
+                            <div className="flex items-start gap-4">
+                                <div className="relative">
+                                    {conv.avatar_key ? (
+                                        <img 
+                                            src={`/api/v2/chat/asset?key=${encodeURIComponent(conv.avatar_key)}`} 
+                                            // Fallback to auth avatar endpoint if asset key is standard avatar key
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                if (!target.src.includes('/api/auth/avatar/')) {
+                                                    // If it's a user avatar key, we might need to parse ID from it or just use the direct serving endpoint if we knew the ID. 
+                                                    // Actually, the backend returns u.avatar_key. 
+                                                    // Let's use the robust /api/auth/avatar endpoint if it fails, BUT we need User ID.
+                                                    // Easier: The backend returns 'avatars/USERID/...' as key.
+                                                    // Let's try to load it via R2 asset proxy first.
+                                                    // Actually, for Avatars, better to use the avatar endpoint if possible, but we don't have the ID easily here without parsing.
+                                                    // Let's stick to R2 asset proxy for now, it should work if key is correct.
+                                                    target.style.display = 'none'; // Hide if fail
+                                                }
+                                            }}
+                                            className="w-14 h-14 rounded-2xl object-cover shadow-lg border border-white/10 group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    ) : (
+                                        <div className={`w-14 h-14 rounded-2xl ${avatarGradient} flex-shrink-0 flex items-center justify-center text-white font-bold shadow-lg text-lg border border-white/10 group-hover:scale-105 transition-transform duration-300`}>
+                                            {conv.type === 'group' ? <i className="fas fa-users text-white/80"></i> : getInitials(conv.name || '')}
                                         </div>
                                     )}
+                                    {conv.unread_count > 0 && (
+                                        <div className="absolute -top-2 -right-2 min-w-[22px] h-[22px] px-1.5 bg-emerald-500 rounded-full border-[3px] border-[#080808] flex items-center justify-center text-[10px] font-bold shadow-sm text-black animate-bounce">
+                                            {conv.unread_count}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="flex-1 min-w-0 pt-0.5">
+                                    <div className="flex justify-between items-baseline mb-1">
+                                        <h3 className={`font-bold text-base truncate transition-colors ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                                            {conv.name || (conv.type === 'group' ? 'Groupe sans nom' : 'Discussion Privée')}
+                                        </h3>
+                                        <span className={`text-[10px] font-bold tracking-wide whitespace-nowrap ml-2 ${isActive ? 'text-emerald-400' : 'text-gray-600 group-hover:text-gray-500'}`}>
+                                            {formatTime(conv.last_message_time)}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center">
+                                        <p className={`text-sm truncate w-[85%] font-medium ${isActive ? 'text-gray-300' : 'text-gray-500 group-hover:text-gray-400'} ${conv.unread_count > 0 ? 'text-white font-semibold' : ''}`}>
+                                            {conv.last_message ? (
+                                                conv.last_message.startsWith('🎤') ? <span className="text-emerald-400 italic">{conv.last_message}</span> :
+                                                conv.last_message.startsWith('📷') ? <span className="text-blue-400 italic">{conv.last_message}</span> :
+                                                conv.last_message
+                                            ) : <span className="opacity-50 italic">Nouvelle discussion</span>}
+                                        </p>
+                                        
+                                        {conv.online_count !== undefined && conv.online_count > 0 && (
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -870,30 +1063,68 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, onOpenInfo }: {
 
 const ImageViewer = ({ src, onClose }: { src: string, onClose: () => void }) => {
     return (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col animate-fade-in" onClick={onClose}>
-            <div className="absolute top-4 right-4">
-                <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all">
-                    <i className="fas fa-times"></i>
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col animate-fade-in" onClick={onClose}>
+            <div className="absolute top-6 right-6">
+                <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/10">
+                    <i className="fas fa-times text-xl"></i>
                 </button>
             </div>
-            <div className="flex-1 flex items-center justify-center p-8">
-                <img src={src} alt="Full view" className="max-h-full max-w-full object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
+            <div className="flex-1 flex items-center justify-center p-4 md:p-12">
+                <img src={src} alt="Full view" className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl border border-white/5" onClick={(e) => e.stopPropagation()} />
             </div>
         </div>
     );
 };
 
-const GroupInfo = ({ participants, conversationId, conversationName, conversationType, currentUserId, currentUserRole, onClose, onPrivateChat, autoOpenAddMember = false }: { participants: Participant[], conversationId: string, conversationName: string | null, conversationType: 'direct' | 'group', currentUserId: number | null, currentUserRole: string, onClose: () => void, onPrivateChat: (userId: number) => void, autoOpenAddMember?: boolean }) => {
+const GroupInfo = ({ participants, conversationId, conversationName, conversationAvatarKey, conversationType, currentUserId, currentUserRole, onClose, onPrivateChat, autoOpenAddMember = false }: { participants: Participant[], conversationId: string, conversationName: string | null, conversationAvatarKey: string | null, conversationType: 'direct' | 'group', currentUserId: number | null, currentUserRole: string, onClose: () => void, onPrivateChat: (userId: number) => void, autoOpenAddMember?: boolean }) => {
     const [showAddMember, setShowAddMember] = useState(false);
     const [isManageMode, setIsManageMode] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(conversationName || '');
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        setEditName(conversationName || '');
+    }, [conversationName]);
     
     useEffect(() => {
         if (autoOpenAddMember) setShowAddMember(true);
     }, [autoOpenAddMember]);
 
     const currentUserParticipant = participants.find(p => p.user_id === currentUserId);
-    const isAdminOrSupervisor = currentUserParticipant && (currentUserParticipant.role === 'admin' || currentUserParticipant.role === 'supervisor');
+    const isGroupAdmin = currentUserParticipant && currentUserParticipant.role === 'admin';
     const isGlobalAdmin = currentUserRole === 'admin';
+    const canEdit = (isGroupAdmin || isGlobalAdmin) && conversationType === 'group';
+
+    const handleSaveInfo = async () => {
+        try {
+            await axios.put(`/api/v2/chat/conversations/${conversationId}`, { name: editName });
+            setIsEditing(false);
+            window.location.reload(); 
+        } catch (e) {
+            alert("Erreur lors de la modification");
+        }
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            setUploadingAvatar(true);
+            try {
+                await axios.post(`/api/v2/chat/conversations/${conversationId}/avatar`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                window.location.reload();
+            } catch (err) {
+                alert("Erreur upload avatar");
+            } finally {
+                setUploadingAvatar(false);
+            }
+        }
+    };
 
     const handleDeleteGroup = async () => {
         if (!confirm("ATTENTION ADMIN : Voulez-vous supprimer DÉFINITIVEMENT ce groupe et tous ses messages/médias ?")) return;
@@ -952,80 +1183,132 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
     };
 
     return (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:absolute md:inset-y-0 md:right-0 md:left-auto md:w-[350px] flex justify-end">
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:absolute md:inset-y-0 md:right-0 md:left-auto md:w-[380px] flex justify-end">
             {showAddMember && (
                 <UserSelect selectedIds={[]} onClose={() => setShowAddMember(false)} onSelect={handleAddMember} />
             )}
 
-            <div className="w-full md:w-[350px] bg-[#111827] h-full flex flex-col animate-slide-in-right border-l border-gray-700 shadow-2xl">
+            <div className="w-full md:w-[380px] bg-[#0c0c0c] h-full flex flex-col animate-slide-in-right border-l border-white/10 shadow-2xl">
                 {/* En-tête Panel */}
-                <div className="h-16 bg-[#1f2937] px-4 flex items-center justify-between flex-shrink-0 border-b border-gray-700">
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                        <i className="fas fa-arrow-left"></i> Retour
+                <div className="h-20 bg-white/5 px-6 flex items-center justify-between flex-shrink-0 border-b border-white/5 backdrop-blur-xl">
+                    <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors flex items-center gap-3 font-bold text-sm group">
+                        <i className="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Retour
                     </button>
-                    <div className="text-white font-bold">{conversationType === 'group' ? 'Infos Groupe' : 'Infos Discussion'}</div>
+                    <div className="text-white font-bold font-display tracking-wide">DÉTAILS</div>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 min-h-0 pb-10">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 min-h-0 pb-10">
                     {/* Gros Icone de Groupe */}
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-24 h-24 rounded-full bg-[#1f2937] border-2 border-gray-600 flex items-center justify-center mb-4 shadow-lg">
-                            <i className={`fas ${conversationType === 'group' ? 'fa-users' : 'fa-user'} text-white text-4xl`}></i>
+                    <div className="flex flex-col items-center mb-10 relative group/avatar">
+                        <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                        <div className="relative">
+                            {conversationAvatarKey ? (
+                                <img 
+                                    src={`/api/v2/chat/asset?key=${encodeURIComponent(conversationAvatarKey)}`}
+                                    className="w-28 h-28 rounded-3xl object-cover shadow-2xl border border-white/10"
+                                    alt="Group"
+                                />
+                            ) : (
+                                <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-gray-800 to-black border border-white/10 flex items-center justify-center shadow-2xl relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-emerald-500/5 rounded-3xl"></div>
+                                    <i className={`fas ${conversationType === 'group' ? 'fa-users' : 'fa-user'} text-gray-200 text-4xl`}></i>
+                                </div>
+                            )}
+                            
+                            {canEdit && (
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploadingAvatar}
+                                    className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-10 h-10 bg-gray-800 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-emerald-500 transition-colors shadow-lg z-10"
+                                >
+                                    {uploadingAvatar ? <i className="fas fa-spinner fa-spin text-xs"></i> : <i className="fas fa-camera text-xs"></i>}
+                                </button>
+                            )}
                         </div>
-                        <h2 className="text-white text-xl font-bold text-center">{conversationName || (conversationType === 'group' ? 'Groupe sans nom' : 'Discussion Privée')}</h2>
-                        <div className="text-emerald-500 text-sm font-medium mt-1">{participants.length} participant{participants.length > 1 ? 's' : ''}</div>
+
+                        {isEditing ? (
+                            <div className="mt-6 w-full flex flex-col gap-2 animate-fade-in">
+                                <input 
+                                    value={editName}
+                                    onChange={e => setEditName(e.target.value)}
+                                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-center font-bold focus:outline-none focus:border-emerald-500 transition-colors"
+                                    placeholder="Nom du groupe"
+                                    autoFocus
+                                />
+                                <div className="flex gap-2 justify-center mt-2">
+                                    <button onClick={() => setIsEditing(false)} className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold uppercase">Annuler</button>
+                                    <button onClick={handleSaveInfo} className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold uppercase shadow-lg">Sauvegarder</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center mt-6 relative group/title">
+                                <h2 className="text-white text-2xl font-bold text-center font-display flex items-center justify-center gap-3">
+                                    {conversationName || (conversationType === 'group' ? 'Groupe sans nom' : 'Discussion Privée')}
+                                    {canEdit && (
+                                        <button onClick={() => setIsEditing(true)} className="text-gray-500 hover:text-white transition-colors ml-2">
+                                            <i className="fas fa-pen text-sm"></i>
+                                        </button>
+                                    )}
+                                </h2>
+                                <div className="text-emerald-500 text-sm font-bold uppercase tracking-widest mt-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 inline-block">
+                                    {participants.length} participant{participants.length > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Actions Principales */}
-                    <div className="grid grid-cols-2 gap-3 mb-8">
+                    <div className="grid grid-cols-2 gap-4 mb-10">
                         <button 
                             onClick={() => setShowAddMember(true)}
-                            className="flex flex-col items-center justify-center p-4 bg-[#1f2937] rounded-xl border border-gray-600 hover:border-emerald-500 hover:text-emerald-500 transition-all text-gray-300"
+                            className="flex flex-col items-center justify-center p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
                         >
-                            <i className="fas fa-user-plus text-xl mb-2"></i>
-                            <span className="text-xs font-bold">Ajouter</span>
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-emerald-500 group-hover:text-white transition-colors text-emerald-500">
+                                <i className="fas fa-user-plus"></i>
+                            </div>
+                            <span className="text-xs font-bold text-gray-300 group-hover:text-white uppercase tracking-wide">Ajouter</span>
                         </button>
                         
-                        {isAdminOrSupervisor && conversationType === 'group' && (
+                        {isGroupAdmin && conversationType === 'group' && (
                             <button 
                                 onClick={() => setIsManageMode(!isManageMode)}
-                                className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all ${isManageMode ? 'bg-red-900/20 border-red-500 text-red-400' : 'bg-[#1f2937] border-gray-600 hover:border-orange-500 hover:text-orange-500 text-gray-300'}`}
+                                className={`flex flex-col items-center justify-center p-5 rounded-2xl border transition-all group ${isManageMode ? 'bg-red-500/10 border-red-500/50' : 'bg-white/5 border-white/5 hover:border-orange-500/50 hover:bg-orange-500/5'}`}
                             >
-                                <i className={`fas ${isManageMode ? 'fa-check' : 'fa-cog'} text-xl mb-2`}></i>
-                                <span className="text-xs font-bold">{isManageMode ? 'Terminer' : 'Gérer'}</span>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 transition-colors ${isManageMode ? 'bg-red-500 text-white' : 'bg-white/5 text-orange-500 group-hover:bg-orange-500 group-hover:text-white'}`}>
+                                    <i className={`fas ${isManageMode ? 'fa-check' : 'fa-cog'}`}></i>
+                                </div>
+                                <span className={`text-xs font-bold uppercase tracking-wide ${isManageMode ? 'text-red-400' : 'text-gray-300 group-hover:text-white'}`}>{isManageMode ? 'Terminer' : 'Gérer'}</span>
                             </button>
                         )}
                     </div>
 
                     {/* Liste des Membres */}
-                    <div className="space-y-2">
-                        <div className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-3 border-b border-gray-700 pb-2">
-                            Participants ({participants.length})
+                    <div className="space-y-3">
+                        <div className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 pl-1">
+                            Membres du groupe
                         </div>
                         
                         {participants.map(p => (
-                            <div key={p.user_id} className="flex items-center justify-between p-3 bg-[#1f2937] rounded-xl border border-gray-700/50">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className={`w-10 h-10 rounded-full ${getAvatarGradient(p.full_name)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 relative`}>
+                            <div key={p.user_id} className="flex items-center justify-between p-3.5 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all group/member">
+                                    <div className="flex items-center gap-4 overflow-hidden">
+                                        <div className={`w-10 h-10 rounded-xl ${getAvatarGradient(p.full_name)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md`}>
                                             {getInitials(p.full_name)}
-                                            {/* Status dot (simulated 'online' for now since they are in the list) */}
-                                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#1f2937] rounded-full"></div>
                                         </div>
-                                        <div className="min-w-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => p.user_id !== currentUserId && onPrivateChat(p.user_id)}>
-                                            <div className="text-white font-medium truncate text-sm flex items-center gap-2">
+                                        <div className="min-w-0 cursor-pointer" onClick={() => p.user_id !== currentUserId && onPrivateChat(p.user_id)}>
+                                            <div className="text-white font-bold truncate text-sm flex items-center gap-2">
                                                 {p.full_name}
-                                                {p.user_id === currentUserId && <span className="text-xs bg-gray-700 px-1.5 rounded text-gray-300">Moi</span>}
+                                                {p.user_id === currentUserId && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-gray-300 border border-white/5">Moi</span>}
                                             </div>
-                                            <div className="text-gray-500 text-xs">{p.role === 'admin' ? 'Administrateur' : 'Membre'}</div>
+                                            <div className="text-gray-500 text-xs font-medium mt-0.5 uppercase tracking-wide">{p.role === 'admin' ? 'Administrateur' : 'Membre'}</div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-2 opacity-0 group-hover/member:opacity-100 transition-opacity">
                                         {/* Message Privé Button */}
                                         {p.user_id !== currentUserId && (
                                             <button 
                                                 onClick={() => onPrivateChat(p.user_id)}
-                                                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-gray-400 hover:text-emerald-400 flex items-center justify-center transition-all"
+                                                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-emerald-500 text-gray-400 hover:text-white flex items-center justify-center transition-all"
                                                 title="Message privé"
                                             >
                                                 <i className="fas fa-comment-alt text-xs"></i>
@@ -1036,13 +1319,13 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                                         {isManageMode && p.user_id !== currentUserId ? (
                                             <button 
                                                 onClick={() => handleRemoveMember(p.user_id, p.full_name)}
-                                                className="w-8 h-8 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"
+                                                className="w-8 h-8 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
                                                 title="Retirer du groupe"
                                             >
-                                                <i className="fas fa-minus-circle"></i>
+                                                <i className="fas fa-minus"></i>
                                             </button>
                                         ) : (
-                                            p.role === 'admin' && <i className="fas fa-crown text-yellow-500 text-xs ml-2" title="Admin"></i>
+                                            p.role === 'admin' && <i className="fas fa-crown text-amber-400 text-xs ml-1" title="Admin"></i>
                                         )}
                                     </div>
                             </div>
@@ -1051,11 +1334,11 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
 
                 </div>
                 
-                <div className="p-4 bg-[#1f2937] border-t border-gray-700 flex-shrink-0 space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.3)] z-10 relative">
+                <div className="p-6 bg-[#0c0c0c] border-t border-white/10 flex-shrink-0 space-y-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-10 relative">
                     {conversationType === 'group' && (
                         <button 
                             onClick={handleLeaveGroup}
-                            className="w-full flex items-center justify-center gap-2 p-3 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all text-sm font-bold"
+                            className="w-full flex items-center justify-center gap-3 p-4 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all text-sm font-bold uppercase tracking-wide border border-transparent hover:border-white/10"
                         >
                             <i className="fas fa-sign-out-alt"></i> Quitter le groupe
                         </button>
@@ -1064,9 +1347,9 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                     {isGlobalAdmin && (
                         <button 
                             onClick={handleDeleteGroup}
-                            className="w-full flex items-center justify-center gap-2 p-3 text-red-500 hover:text-white hover:bg-red-600 rounded-lg transition-all text-sm font-bold border border-red-900/30"
+                            className="w-full flex items-center justify-center gap-3 p-4 text-red-500 hover:text-white hover:bg-red-600 rounded-xl transition-all text-sm font-bold uppercase tracking-wide border border-red-900/30 bg-red-500/5"
                         >
-                            <i className="fas fa-trash-alt"></i> {conversationType === 'group' ? 'SUPPRIMER LE GROUPE' : 'SUPPRIMER LA DISCUSSION'} (Admin)
+                            <i className="fas fa-trash-alt"></i> Supprimer (Admin)
                         </button>
                     )}
                 </div>
@@ -1087,6 +1370,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [triggerAddMember, setTriggerAddMember] = useState(false);
     const [viewImage, setViewImage] = useState<string | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(true);
+    const [isInputExpanded, setIsInputExpanded] = useState(false);
+    const inputTimeoutRef = useRef<any>(null);
     
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
@@ -1097,6 +1382,40 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    
+    // Sound logic handled by SoundManager
+
+    const handleInputInteraction = (currentValue?: string) => {
+        setIsInputExpanded(true);
+        if (inputTimeoutRef.current) {
+            clearTimeout(inputTimeoutRef.current);
+        }
+        
+        const valueToCheck = currentValue !== undefined ? currentValue : input;
+
+        // Only auto-collapse if empty
+        if (valueToCheck.trim().length === 0) {
+            inputTimeoutRef.current = setTimeout(() => {
+                setIsInputExpanded(false);
+            }, 1000);
+        }
+    };
+
+    // Auto-resize and persistent expansion logic
+    useEffect(() => {
+        if (textareaRef.current) {
+            // Reset height to auto/min to correctly calculate scrollHeight for shrinking
+            textareaRef.current.style.height = '48px'; 
+            const scrollHeight = textareaRef.current.scrollHeight;
+            textareaRef.current.style.height = `${Math.min(scrollHeight, 128)}px`;
+        }
+        
+        if (input.trim().length > 0) {
+            setIsInputExpanded(true);
+            if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+        }
+    }, [input]);
 
     const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '👏', '🔥', '🎉', '🤔', '✅', '❌', '👋'];
 
@@ -1118,6 +1437,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             setConversation(res.data.conversation || null);
             setMessages(prev => {
                 if (prev.length !== newMessages.length) {
+                    // Play sound if new message from others
+                    if (newMessages.length > prev.length) {
+                        const lastMsg = newMessages[newMessages.length - 1];
+                        if (lastMsg.sender_id !== currentUserId) {
+                            SoundManager.play().catch(e => console.error("Sound error:", e));
+                        }
+                    }
                     setTimeout(scrollToBottom, 100);
                     markAsRead();
                 }
@@ -1247,11 +1573,20 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ conversationId, content: input, type: 'text' })
             });
-            if (response.ok) { setInput(''); setShowEmoji(false); fetchMessages(); }
+            if (response.ok) { 
+                setInput(''); 
+                setShowEmoji(false); 
+                fetchMessages();
+                
+                // Start timeout to collapse after sending
+                if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
+                inputTimeoutRef.current = setTimeout(() => setIsInputExpanded(false), 1000);
+            }
         } catch (err) { console.error(err); }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
+        handleInputInteraction();
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     };
 
@@ -1292,9 +1627,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         if (loadingMessages) {
              return (
                 <div className="flex justify-center items-center h-full animate-fade-in">
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-12 h-12 rounded-full border-4 border-emerald-500/30 border-t-emerald-500 animate-spin"></div>
-                        <span className="text-emerald-500 font-medium text-sm animate-pulse">Chargement...</span>
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
                     </div>
                 </div>
              );
@@ -1305,34 +1639,34 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             
             return (
                 <div className="flex flex-col items-center justify-center h-full animate-fade-in p-8 text-center">
-                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10 shadow-lg">
-                        <i className="fas fa-users text-gray-400 text-3xl"></i>
+                    <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-gray-800 to-black flex items-center justify-center mb-8 border border-white/5 shadow-2xl">
+                        <i className="fas fa-users text-gray-600 text-4xl"></i>
                     </div>
-                    <h3 className="text-white font-bold text-xl mb-2">
-                        {hasMembers ? "La discussion est ouverte !" : "Le groupe est prêt !"}
+                    <h3 className="text-white font-bold text-2xl mb-3 font-display">
+                        {hasMembers ? "La discussion est ouverte" : "Le groupe est prêt"}
                     </h3>
-                    <p className="text-gray-400 mb-8 max-w-xs mx-auto">
+                    <p className="text-gray-400 mb-10 max-w-sm mx-auto text-lg font-light">
                         {hasMembers 
                             ? "Il n'y a pas encore de messages. Lancez la conversation avec vos collègues." 
                             : "Il n'y a pas encore de messages. Ajoutez des collègues pour commencer la discussion."}
                     </p>
                     
                     {hasMembers ? (
-                         <div className="bg-white/5 rounded-xl p-4 border border-white/5 mb-4 max-w-xs w-full">
-                            <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-3">Membres présents</div>
-                            <div className="flex flex-wrap justify-center gap-2">
+                         <div className="bg-white/5 rounded-2xl p-6 border border-white/5 mb-6 max-w-xs w-full backdrop-blur-md">
+                            <div className="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-4 text-left">Membres présents</div>
+                            <div className="flex flex-wrap gap-3">
                                 {participants.map(p => (
-                                    <div key={p.user_id} className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs text-white border border-gray-600" title={p.full_name}>
+                                    <div key={p.user_id} className="w-10 h-10 rounded-xl bg-gray-700 flex items-center justify-center text-xs text-white border border-gray-600 shadow-lg font-bold" title={p.full_name}>
                                         {getInitials(p.full_name)}
                                     </div>
                                 )).slice(0, 5)}
-                                {participants.length > 5 && <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-xs text-gray-400">+{participants.length - 5}</div>}
+                                {participants.length > 5 && <div className="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center text-xs text-gray-400 border border-gray-700 font-bold">+{participants.length - 5}</div>}
                             </div>
                          </div>
                     ) : (
                         <button 
                             onClick={() => { setShowInfo(true); setTriggerAddMember(true); }}
-                            className="glass-button-primary text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-lg hover:scale-105 transition-transform"
+                            className="glass-button-primary text-white font-bold py-4 px-8 rounded-2xl flex items-center gap-3 shadow-xl hover:scale-105 transition-transform text-base"
                         >
                             <i className="fas fa-user-plus"></i> Ajouter des membres
                         </button>
@@ -1358,8 +1692,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 else if (dateObj.toDateString() === yesterday.toDateString()) displayDate = "Hier";
 
                 result.push(
-                    <div key={`date-${dateStr}`} className="flex justify-center my-6">
-                        <span className="bg-white/5 border border-white/5 backdrop-blur-md text-gray-400 text-[10px] font-bold py-1 px-3 rounded-full uppercase tracking-wider shadow-sm">
+                    <div key={`date-${dateStr}`} className="flex justify-center my-8">
+                        <span className="bg-black/40 border border-white/10 backdrop-blur-md text-gray-400 text-[11px] font-bold py-1.5 px-4 rounded-full uppercase tracking-widest shadow-lg">
                             {displayDate}
                         </span>
                     </div>
@@ -1379,59 +1713,106 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 });
             }
 
+            // Avatar rendering logic
+            const avatarUrl = msg.sender_avatar_key 
+                ? `/api/auth/avatar/${msg.sender_id}` // Use standardized avatar endpoint which handles caching/fallback
+                : null;
+
             result.push(
-                <div key={msg.id} className={`flex mb-4 ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in`}>
-                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[70%]`}>
+                <div key={msg.id} className={`flex mb-6 ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in group items-end gap-3`}>
+                    
+                    {/* Avatar for OTHERS (Left) */}
+                    {!isMe && (
+                        <div className="flex-shrink-0 mb-1">
+                            {avatarUrl ? (
+                                <img 
+                                    src={avatarUrl} 
+                                    alt={msg.sender_name}
+                                    className="w-8 h-8 rounded-xl object-cover shadow-md border border-white/10 cursor-pointer hover:scale-110 transition-transform"
+                                    onClick={() => handlePrivateChat(msg.sender_id)}
+                                    title={msg.sender_name}
+                                />
+                            ) : (
+                                <div 
+                                    className={`w-8 h-8 rounded-xl ${getAvatarGradient(msg.sender_name)} flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-white/10 cursor-pointer hover:scale-110 transition-transform`}
+                                    onClick={() => handlePrivateChat(msg.sender_id)}
+                                    title={msg.sender_name}
+                                >
+                                    {getInitials(msg.sender_name)}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[65%]`}>
                         {!isMe && (
                             <div 
                                 onClick={() => handlePrivateChat(msg.sender_id)}
-                                className={`text-[10px] font-bold mb-1 ml-1 ${getAvatarGradient(msg.sender_name).replace('bg-gradient-to-br', '').replace('from-', 'text-').replace('to-', 'text-opacity-80')} cursor-pointer hover:underline hover:text-white transition-colors flex items-center gap-1`}
+                                className={`text-[11px] font-bold mb-1.5 ml-1 ${getAvatarGradient(msg.sender_name).replace('bg-gradient-to-br', '').replace('from-', 'text-').replace('to-', 'text-opacity-100')} cursor-pointer hover:underline transition-colors flex items-center gap-1.5`}
                                 title="Envoyer un message privé"
                             >
-                                {msg.sender_name} <i className="fas fa-comment-dots text-[9px] opacity-50"></i>
+                                {msg.sender_name} 
                             </div>
                         )}
                         
-                        <div className={`p-3 rounded-2xl shadow-md backdrop-blur-sm relative group transition-all hover:shadow-lg ${isMe ? 'message-bubble-me text-white rounded-tr-sm' : 'message-bubble-them text-gray-100 rounded-tl-sm'}`}>
+                        <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${isMe ? 'message-bubble-me text-white rounded-tr-sm' : 'message-bubble-them text-gray-100 rounded-tl-sm'}`}>
                             {isGlobalAdmin && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
-                                    className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20 text-xs border-2 border-[#0b141a]"
+                                    className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20 text-xs border-2 border-[#0b141a] hover:scale-110"
                                     title="Supprimer (Admin)"
                                 >
                                     <i className="fas fa-trash"></i>
                                 </button>
                             )}
                             {msg.type === 'image' && msg.media_key ? (
-                                <div className="mb-1 overflow-hidden rounded-lg">
+                                <div className="overflow-hidden rounded-xl border border-white/10">
                                     <img 
                                         src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} 
                                         alt="Photo" 
-                                        className="max-h-80 object-cover w-full cursor-pointer hover:scale-105 transition-transform duration-500"
+                                        className="max-h-96 object-cover w-full cursor-pointer hover:scale-105 transition-transform duration-700"
                                         onClick={() => setViewImage(`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`)}
                                     />
                                 </div>
                             ) : msg.type === 'audio' && msg.media_key ? (
-                                <div className="flex items-center gap-3 pr-2 min-w-[220px]">
-                                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                                        <i className="fas fa-play text-xs pl-0.5"></i>
+                                <div className="flex items-center gap-4 pr-2 min-w-[260px]">
+                                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 shadow-inner">
+                                        <i className="fas fa-play text-sm pl-0.5"></i>
                                     </div>
                                     <audio controls src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} className="h-8 w-full opacity-90" />
                                 </div>
                             ) : (
-                                <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-8 pb-1">
+                                <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
                                     {msg.content}
                                 </div>
                             )}
                             
-                            <div className={`text-[10px] absolute bottom-1 right-3 flex items-center gap-1 font-medium ${isMe ? 'text-emerald-100/70' : 'text-gray-400'}`}>
+                            <div className={`text-[10px] absolute bottom-1.5 right-3 flex items-center gap-1.5 font-bold tracking-wide ${isMe ? 'text-emerald-100/60' : 'text-gray-500'}`}>
                                 <span>{formatTime(msg.created_at)}</span>
                                 {isMe && (
-                                    <i className={`fas fa-check-double text-[10px] ${isRead ? 'text-white' : 'text-emerald-200/50'}`}></i>
+                                    <i className={`fas fa-check-double text-[10px] ${isRead ? 'text-white' : 'text-emerald-200/40'}`}></i>
                                 )}
                             </div>
                         </div>
                     </div>
+
+                    {/* Avatar for ME (Right) */}
+                    {isMe && (
+                        <div className="flex-shrink-0 mb-1">
+                            {avatarUrl ? (
+                                <img 
+                                    src={avatarUrl} 
+                                    alt="Me"
+                                    className="w-8 h-8 rounded-xl object-cover shadow-md border border-white/10"
+                                />
+                            ) : (
+                                <div className={`w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-[10px] font-bold shadow-md border border-white/10`}>
+                                    {getInitials(msg.sender_name)}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                 </div>
             );
         }
@@ -1439,124 +1820,146 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     return (
-        <div className="flex-1 flex flex-col bg-[#0b141a] relative h-full overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-gray-800/20 via-[#0b141a] to-[#0b141a]">
+        <div className="flex-1 flex flex-col bg-[#050505] relative h-full overflow-hidden">
+            <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+                <div className="absolute top-[10%] left-[20%] w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute bottom-[10%] right-[20%] w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px]"></div>
+            </div>
+            <div className="bg-noise absolute inset-0 opacity-[0.03] pointer-events-none z-0"></div>
+
             {viewImage && <ImageViewer src={viewImage} onClose={() => setViewImage(null)} />}
-            {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
+            {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
             
             {previewFile && (
-                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-fade-in">
-                    <div className="w-full max-w-lg glass-panel rounded-2xl p-6 flex flex-col items-center">
-                        <h3 className="text-white font-bold text-lg mb-4">Envoyer une photo</h3>
-                        <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-6 bg-black border border-white/10">
+                <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-fade-in">
+                    <div className="w-full max-w-xl glass-panel rounded-3xl p-8 flex flex-col items-center border border-white/10 shadow-2xl">
+                        <h3 className="text-white font-bold text-2xl mb-6 font-display">Envoyer une photo</h3>
+                        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-8 bg-black border border-white/10 shadow-inner">
                             <img src={URL.createObjectURL(previewFile)} alt="Preview" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex gap-4 w-full">
-                            <button onClick={() => setPreviewFile(null)} className="flex-1 py-3 rounded-xl text-gray-300 hover:bg-white/5 font-medium transition-colors">Annuler</button>
-                            <button onClick={sendImage} disabled={uploading} className="flex-1 glass-button-primary text-white font-bold rounded-xl flex justify-center items-center shadow-lg">
-                                {uploading ? <i className="fas fa-circle-notch fa-spin"></i> : <span>Envoyer <i className="fas fa-paper-plane ml-2"></i></span>}
+                            <button onClick={() => setPreviewFile(null)} className="flex-1 py-4 rounded-xl text-gray-400 hover:bg-white/5 font-bold transition-colors text-sm">ANNULER</button>
+                            <button onClick={sendImage} disabled={uploading} className="flex-1 glass-button-primary text-white font-bold rounded-xl flex justify-center items-center shadow-xl">
+                                {uploading ? <i className="fas fa-circle-notch fa-spin"></i> : <span>ENVOYER <i className="fas fa-paper-plane ml-2"></i></span>}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <header onClick={() => setShowInfo(true)} className="h-20 glass-header px-4 md:px-6 flex items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-colors shadow-lg shadow-black/20 sticky top-0 w-full">
-                <div className="flex items-center gap-3">
+            <header onClick={() => setShowInfo(true)} className="h-24 glass-header px-6 md:px-8 flex items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-all duration-300 shadow-2xl shadow-black/40 sticky top-0 w-full group/header backdrop-blur-xl border-b border-white/5">
+                <div className="flex items-center gap-5">
                     {/* Bouton Retour / Sortir Renforcé */}
                     <button 
                         onClick={(e) => { e.stopPropagation(); onBack(); }} 
-                        className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl px-3 py-2 transition-all mr-1"
+                        className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl px-4 py-2.5 transition-all mr-2 shadow-lg"
                         title="Sortir de la discussion"
                     >
                         <i className="fas fa-chevron-left text-emerald-500 group-hover:text-white transition-colors text-lg"></i>
-                        <span className="text-sm font-bold text-gray-300 group-hover:text-white hidden sm:inline">Retour</span>
+                        <span className="text-sm font-bold text-gray-300 group-hover:text-white hidden sm:inline">RETOUR</span>
                     </button>
 
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-600 to-cyan-700 flex items-center justify-center shadow-lg border border-white/10">
-                        <i className="fas fa-users text-white text-xs"></i>
+                    <div className="relative">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center shadow-xl border border-white/10 group-hover/header:scale-105 transition-transform duration-300">
+                            <i className="fas fa-users text-gray-400 text-lg group-hover/header:text-emerald-400 transition-colors"></i>
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#050505] rounded-full flex items-center justify-center">
+                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                        </div>
                     </div>
+                    
                     <div className="min-w-0">
-                        <div className="text-white font-bold text-base md:text-lg leading-tight truncate">Discussion</div>
-                        <div className="text-emerald-500 text-[10px] md:text-xs font-medium truncate flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span className="truncate max-w-[150px] md:max-w-xs">
-                                {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Infos'}
+                        <div className="text-white font-bold text-lg md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
+                        <div className="text-gray-500 text-xs font-bold truncate flex items-center gap-2 mt-1 tracking-wider uppercase">
+                            <span className="truncate max-w-[200px] md:max-w-md">
+                                {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Chargement...'}
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-3 text-gray-400">
-                    <button onClick={(e) => { e.stopPropagation(); }} className="hidden md:flex hover:text-white transition-colors w-10 h-10 items-center justify-center rounded-xl hover:bg-white/10"><i className="fas fa-search"></i></button>
+                <div className="flex gap-4 text-gray-400">
+                    <button onClick={(e) => { e.stopPropagation(); }} className="hidden md:flex hover:text-white transition-colors w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5"><i className="fas fa-search text-lg"></i></button>
                     
                     {/* Bouton Fermer Explicite (X) */}
                     <button 
                         onClick={(e) => { e.stopPropagation(); onBack(); }} 
-                        className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 flex items-center justify-center transition-all shadow-lg"
+                        className="w-12 h-12 rounded-2xl bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/10 hover:border-red-500 flex items-center justify-center transition-all shadow-lg hover:shadow-red-500/20"
                         title="Fermer la discussion"
                     >
-                        <i className="fas fa-times text-lg"></i>
+                        <i className="fas fa-times text-xl"></i>
                     </button>
                 </div>
             </header>
 
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6 z-10 custom-scrollbar relative">
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 md:p-10 z-10 custom-scrollbar relative scroll-smooth">
                 {renderMessages()}
                 <div ref={messagesEndRef} />
             </div>
 
-            <footer className="glass-header p-4 z-10 flex-shrink-0">
-                <div className="max-w-4xl mx-auto flex items-end gap-3 bg-[#161b22] border border-white/10 p-2 rounded-2xl shadow-lg relative">
+            <footer className="glass-header p-4 md:p-6 z-20 flex-shrink-0 border-t border-white/5">
+                <div className="max-w-5xl mx-auto flex items-end gap-3 relative">
                     {showEmoji && !isRecording && (
-                        <div className="absolute bottom-full left-0 mb-4 bg-[#161b22] border border-white/10 rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 w-72 animate-slide-up backdrop-blur-xl">
+                        <div className="absolute bottom-full right-0 mb-4 bg-[#151515] border border-white/10 rounded-3xl shadow-2xl p-4 grid grid-cols-6 gap-2 w-80 animate-slide-up backdrop-blur-xl z-50">
                             {commonEmojis.map(emoji => (
-                                <button key={emoji} onClick={() => setInput(prev => prev + emoji)} className="text-2xl hover:bg-white/10 rounded-lg p-2 transition-colors">{emoji}</button>
+                                <button key={emoji} onClick={() => setInput(prev => prev + emoji)} className="text-3xl hover:bg-white/10 rounded-xl p-3 transition-all hover:scale-110">{emoji}</button>
                             ))}
                         </div>
                     )}
 
                     {isRecording ? (
-                        <div className="flex-1 flex items-center justify-between px-4 py-2 animate-pulse bg-red-500/5 rounded-xl border border-red-500/20">
-                            <div className="flex items-center gap-3 text-white">
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
-                                <span className="font-mono text-lg text-red-400 font-bold">{formatDuration(recordingTime)}</span>
+                        <div className="flex-1 flex items-center justify-between px-6 py-3 animate-pulse bg-red-500/10 rounded-[2rem] border border-red-500/20 h-[56px]">
+                            <div className="flex items-center gap-4 text-white">
+                                <div className="w-3 h-3 rounded-full bg-red-500 animate-ping"></div>
+                                <span className="font-mono text-lg text-red-400 font-bold tracking-widest">{formatDuration(recordingTime)}</span>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <button onClick={cancelRecording} className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-wide px-3">Annuler</button>
-                                <button onClick={stopRecording} className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 shadow-lg shadow-red-500/30 transition-all transform hover:scale-105">
+                            <div className="flex items-center gap-4">
+                                <button onClick={cancelRecording} className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest px-2 hover:underline">Annuler</button>
+                                <button onClick={stopRecording} className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 shadow-lg shadow-red-500/30 transition-all transform hover:scale-110">
                                     <i className="fas fa-paper-plane"></i>
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <>
-                            <div className="flex items-center gap-1 pb-1">
+                            {/* Bouton Plus (Upload) - Gauche */}
+                            <div 
+                                className={`pb-1 transition-all duration-300 ease-in-out overflow-hidden ${isInputExpanded ? 'w-0 opacity-0 mr-0' : 'w-12 opacity-100 mr-0'}`}
+                            >
                                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
-                                <button onClick={() => setShowEmoji(!showEmoji)} className={`w-10 h-10 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center ${showEmoji ? 'text-emerald-500' : 'text-gray-400'}`}>
-                                    <i className="far fa-smile text-lg"></i>
-                                </button>
-                                <button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center text-gray-400 hover:text-emerald-400">
-                                    <i className="fas fa-plus text-lg"></i>
+                                <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-full bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all shadow-lg group">
+                                    <i className="fas fa-plus text-lg group-hover:rotate-90 transition-transform duration-300"></i>
                                 </button>
                             </div>
-                            <div className="flex-1 py-2">
+
+                            {/* Zone de texte + Emoji - Centre (Style Input) */}
+                            <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-[1.5rem] flex items-end p-1.5 pl-5 gap-2 shadow-inner focus-within:border-emerald-500/50 focus-within:bg-[#202020] transition-all">
                                 <textarea 
+                                    ref={textareaRef}
                                     value={input}
-                                    onChange={e => setInput(e.target.value)}
+                                    onChange={e => {
+                                        setInput(e.target.value);
+                                        handleInputInteraction(e.target.value);
+                                    }}
+                                    onFocus={() => handleInputInteraction()}
                                     onKeyDown={handleKeyPress}
-                                    placeholder="Écrivez un message..." 
-                                    className="bg-transparent text-white w-full max-h-32 focus:outline-none placeholder-gray-500 resize-none text-base md:text-[15px] pt-1 leading-relaxed custom-scrollbar"
+                                    placeholder="Message..." 
+                                    className="bg-transparent text-white w-full max-h-32 focus:outline-none placeholder-gray-500 resize-none text-[15px] font-medium leading-relaxed custom-scrollbar py-3"
                                     rows={1}
-                                    style={{ minHeight: '24px' }}
+                                    style={{ minHeight: '48px' }}
                                 />
+                                <button onClick={() => setShowEmoji(!showEmoji)} className={`w-10 h-10 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center mb-1 ${showEmoji ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
+                                    <i className="far fa-smile text-xl"></i>
+                                </button>
                             </div>
-                            <div className="pb-1 pr-1">
+
+                            {/* Bouton Envoyer / Micro - Droite */}
+                            <div className="pb-1">
                                 {input.trim() ? (
-                                    <button onClick={sendMessage} className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 shadow-lg shadow-emerald-900/30 transition-all transform hover:scale-105">
-                                        <i className="fas fa-paper-plane text-sm"></i>
+                                    <button onClick={sendMessage} className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 shadow-lg shadow-emerald-900/30 transition-all transform hover:scale-105 active:scale-95">
+                                        <i className="fas fa-paper-plane text-lg ml-0.5"></i>
                                     </button>
                                 ) : (
-                                    <button onClick={startRecording} className="w-10 h-10 rounded-xl bg-white/5 text-gray-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all">
+                                    <button onClick={startRecording} className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-white/10 text-gray-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg">
                                         <i className="fas fa-microphone text-lg"></i>
                                     </button>
                                 )}
@@ -1570,20 +1973,20 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 };
 
 const EmptyState = () => (
-    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#0b141a] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
-        <div className="w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px] absolute pointer-events-none"></div>
+    <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#050505] relative overflow-hidden">
+        <div className="absolute inset-0 bg-noise opacity-[0.03]"></div>
+        <div className="absolute top-[20%] right-[30%] w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none animate-pulse"></div>
         
-        <div className="relative z-10 text-center p-8 backdrop-blur-sm bg-white/5 rounded-3xl border border-white/5 shadow-2xl max-w-md">
-            <img src="/logo-igp.png" alt="IGP Logo" className="h-32 mx-auto mb-8 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
-            <h1 className="text-white text-3xl font-bold mb-4 tracking-tight">IGP Messenger</h1>
-            <p className="text-gray-400 text-lg leading-relaxed mb-8 font-light">
-                Plateforme de communication collaborative pour toutes les équipes. 
-                <span className="block mt-2 text-emerald-500 font-medium">Connecté & Synchronisé.</span>
+        <div className="relative z-10 text-center p-12 backdrop-blur-xl bg-white/5 rounded-[3rem] border border-white/5 shadow-2xl max-w-lg transform hover:scale-105 transition-transform duration-700">
+            <img src="/logo-igp.png" alt="IGP Logo" className="h-40 mx-auto mb-10 object-contain drop-shadow-2xl" />
+            <h1 className="text-white text-4xl font-bold mb-6 tracking-tight font-display">IGP Messenger</h1>
+            <p className="text-gray-400 text-xl leading-relaxed mb-10 font-light">
+                L'expérience de communication ultime pour les professionnels.
+                <span className="block mt-4 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500 font-bold">Rapide. Sécurisé. Fluide.</span>
             </p>
-            <div className="flex items-center justify-center gap-2 text-gray-500 text-xs font-mono border-t border-white/10 pt-6">
+            <div className="flex items-center justify-center gap-3 text-gray-600 text-xs font-mono border-t border-white/5 pt-8 uppercase tracking-widest">
                 <i className="fas fa-shield-alt text-emerald-500"></i>
-                Chiffré de bout en bout • v2.14.194
+                Chiffré de bout en bout • v3.0.0 Premium
             </div>
         </div>
     </div>
@@ -1593,16 +1996,48 @@ const App = () => {
     const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [currentUserRole, setCurrentUserRole] = useState<string>('');
+    const [currentUserName, setCurrentUserName] = useState<string>('');
+    const [currentUserAvatarKey, setCurrentUserAvatarKey] = useState<string | null>(null);
     const [showLogin, setShowLogin] = useState(true);
     const [autoOpenInfo, setAutoOpenInfo] = useState(false);
     
+    const fetchUserInfo = async () => {
+        try {
+            const res = await axios.get('/api/auth/me');
+            if (res.data.user) {
+                 setCurrentUserAvatarKey(res.data.user.avatar_key);
+            }
+        } catch (e) { console.error("Error fetching user info", e); }
+    };
+
     useEffect(() => {
         const token = localStorage.getItem('auth_token');
         if (token) {
             setCurrentUserId(getUserIdFromToken(token));
             setCurrentUserRole(getUserRoleFromToken(token));
+            setCurrentUserName(getNameFromToken(token));
+            fetchUserInfo();
             setShowLogin(false);
         }
+
+        // --- AUDIO UNLOCKER ---
+        // Aggressive unlocking on any interaction
+        const handleInteraction = () => {
+            SoundManager.unlock();
+            // We don't remove the listener to ensure we keep the session "warm" if needed
+            // But usually once is enough for the session.
+            // Let's keep it lightweight.
+        };
+
+        ['click', 'touchstart', 'keydown'].forEach(evt => 
+            window.addEventListener(evt, handleInteraction, { once: true })
+        );
+
+        return () => {
+            ['click', 'touchstart', 'keydown'].forEach(evt => 
+                window.removeEventListener(evt, handleInteraction)
+            );
+        };
     }, []);
 
     if (showLogin) {
@@ -1614,6 +2049,8 @@ const App = () => {
                     if (token) {
                         setCurrentUserId(getUserIdFromToken(token));
                         setCurrentUserRole(getUserRoleFromToken(token));
+                        setCurrentUserName(getNameFromToken(token));
+                        fetchUserInfo();
                         setShowLogin(false);
                     }
                 }} />
@@ -1624,20 +2061,21 @@ const App = () => {
     return (
         <>
             <GlobalStyles />
-            <div className="flex h-[100dvh] bg-[#0f172a] overflow-hidden font-sans relative">
-                {/* Background Mesh Gradient for Glass Effect */}
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]"></div>
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-900/20 blur-[120px]"></div>
-                    <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] rounded-full bg-blue-900/10 blur-[100px]"></div>
+            <div className="flex h-[100dvh] bg-[#050505] overflow-hidden font-sans relative" style={{ backgroundImage: 'url(/static/maintenance-bg-premium.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                <div className="absolute inset-0 z-0 bg-black/60 backdrop-blur-md pointer-events-none">
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/20 blur-[150px] mix-blend-overlay"></div>
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/20 blur-[150px] mix-blend-overlay"></div>
                 </div>
 
-                <div className={`${selectedConvId ? 'hidden md:flex' : 'flex'} w-full md:w-auto md:flex-none h-full z-20 relative`}>
+                <div className={`${selectedConvId ? 'hidden md:flex' : 'flex'} w-full md:w-auto md:flex-none h-full z-20 relative shadow-[20px_0_50px_rgba(0,0,0,0.5)]`}>
                     <ConversationList 
                         onSelect={setSelectedConvId} 
                         selectedId={selectedConvId} 
                         currentUserId={currentUserId}
+                        currentUserName={currentUserName}
+                        currentUserAvatarKey={currentUserAvatarKey}
                         onOpenInfo={() => setAutoOpenInfo(true)} 
+                        onAvatarUpdate={fetchUserInfo}
                     />
                 </div>
 

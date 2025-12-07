@@ -189,23 +189,168 @@ app.get('/data', checkTvKey, async (c) => {
         dashboardMessage = dashboardNotes[0].text;
     }
 
+    // 7. Récupérer les Messages de Diffusion (Nouveau système - Images/Galeries)
+    let broadcastMessages = [];
+    try {
+        // Fix Timezone Issue: Use Local Date (Eastern Time - UTC-5)
+        // Cloudflare Workers uses UTC. We need to match user's day in Quebec.
+        const now = new Date();
+        const localDate = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // UTC-5
+        const localDateStr = localDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        const localNowIso = localDate.toISOString();
+
+        const msgs = await c.env.DB.prepare(`
+            SELECT * FROM broadcast_messages 
+            WHERE is_active = 1 
+            AND (start_date IS NULL OR start_date <= ?)
+            AND (end_date IS NULL OR end_date >= ?)
+            ORDER BY priority DESC, created_at DESC
+        `).bind(localDateStr, localDateStr).all();
+        broadcastMessages = msgs.results || [];
+        
+        // Parse media_urls JSON
+        broadcastMessages = broadcastMessages.map((msg: any) => ({
+            ...msg,
+            media_urls: msg.media_urls ? JSON.parse(msg.media_urls) : [],
+            is_active: Boolean(msg.is_active)
+        }));
+
+        // 8. NOTE: Planning Events are NO LONGER merged into Broadcasts
+        // They are handled by the frontend DetailsManager for simultaneous display
+        // as requested by user (Photo + Details together on hover).
+
+    } catch (e) {
+        console.error('TV: Error fetching broadcast messages:', e);
+    }
+
     return c.json({
       meta: {
         generated_at: new Date().toISOString(),
-        version: "2.8.0"
+        version: "2.9.0"
       },
       stats,
       events: eventsResults,
       tickets: activeTickets,
       categories,
       message: dashboardMessage, // Legacy support
-      broadcast_notes: dashboardNotes // New array support
+      broadcast_notes: dashboardNotes, // Notes textuelles
+      broadcast_messages: broadcastMessages // Riche contenu (Images/Galeries)
     });
 
   } catch (error) {
     console.error('TV Data Error:', error);
     return c.json({ error: 'Erreur chargement données TV' }, 500);
   }
+});
+
+
+/**
+ * GET /api/tv/admin/messages
+ * Récupère tous les messages de diffusion (admin)
+ */
+app.get('/admin/messages', authMiddleware, adminOnly, async (c) => {
+    try {
+        const result = await c.env.DB.prepare(`
+            SELECT * FROM broadcast_messages ORDER BY created_at DESC
+        `).all();
+        
+        const messages = (result.results || []).map((msg: any) => ({
+            ...msg,
+            media_urls: msg.media_urls ? JSON.parse(msg.media_urls) : [],
+            is_active: Boolean(msg.is_active)
+        }));
+
+        return c.json({ messages });
+    } catch (error) {
+        console.error('TV Admin Get Messages Error:', error);
+        return c.json({ error: 'Erreur chargement messages' }, 500);
+    }
+});
+
+/**
+ * POST /api/tv/admin/messages
+ * Créer un nouveau message de diffusion
+ */
+app.post('/admin/messages', authMiddleware, adminOnly, async (c) => {
+    try {
+        const body = await c.req.json();
+        const { type, title, content, media_urls, display_duration, start_date, end_date, priority, is_active } = body;
+        
+        const user = c.get('user') as any;
+
+        const result = await c.env.DB.prepare(`
+            INSERT INTO broadcast_messages (type, title, content, media_urls, display_duration, start_date, end_date, priority, is_active, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+            type || 'text',
+            title || null,
+            content || null,
+            JSON.stringify(media_urls || []),
+            display_duration || 15,
+            start_date || null,
+            end_date || null,
+            priority || 0,
+            is_active !== undefined ? (is_active ? 1 : 0) : 1,
+            user.userId || user.id
+        ).run();
+
+        return c.json({ success: true, id: result.meta.last_row_id });
+    } catch (error) {
+        console.error('TV Admin Create Message Error:', error);
+        return c.json({ error: 'Erreur création message' }, 500);
+    }
+});
+
+/**
+ * PUT /api/tv/admin/messages/:id
+ * Modifier un message de diffusion
+ */
+app.put('/admin/messages/:id', authMiddleware, adminOnly, async (c) => {
+    try {
+        const id = c.req.param('id');
+        const body = await c.req.json();
+        
+        const updates: string[] = [];
+        const values: any[] = [];
+
+        if (body.type !== undefined) { updates.push('type = ?'); values.push(body.type); }
+        if (body.title !== undefined) { updates.push('title = ?'); values.push(body.title); }
+        if (body.content !== undefined) { updates.push('content = ?'); values.push(body.content); }
+        if (body.media_urls !== undefined) { updates.push('media_urls = ?'); values.push(JSON.stringify(body.media_urls)); }
+        if (body.display_duration !== undefined) { updates.push('display_duration = ?'); values.push(body.display_duration); }
+        if (body.start_date !== undefined) { updates.push('start_date = ?'); values.push(body.start_date); }
+        if (body.end_date !== undefined) { updates.push('end_date = ?'); values.push(body.end_date); }
+        if (body.priority !== undefined) { updates.push('priority = ?'); values.push(body.priority); }
+        if (body.is_active !== undefined) { updates.push('is_active = ?'); values.push(body.is_active ? 1 : 0); }
+
+        if (updates.length === 0) return c.json({ message: 'Rien à modifier' });
+
+        values.push(id);
+
+        await c.env.DB.prepare(`
+            UPDATE broadcast_messages SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+        `).bind(...values).run();
+
+        return c.json({ success: true });
+    } catch (error) {
+        console.error('TV Admin Update Message Error:', error);
+        return c.json({ error: 'Erreur modification message' }, 500);
+    }
+});
+
+/**
+ * DELETE /api/tv/admin/messages/:id
+ * Supprimer un message de diffusion
+ */
+app.delete('/admin/messages/:id', authMiddleware, adminOnly, async (c) => {
+    try {
+        const id = c.req.param('id');
+        await c.env.DB.prepare('DELETE FROM broadcast_messages WHERE id = ?').bind(id).run();
+        return c.json({ success: true });
+    } catch (error) {
+        console.error('TV Admin Delete Message Error:', error);
+        return c.json({ error: 'Erreur suppression message' }, 500);
+    }
 });
 
 /**

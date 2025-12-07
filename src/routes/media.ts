@@ -104,7 +104,153 @@ media.post('/upload', authMiddleware, async (c) => {
   }
 });
 
+// POST /api/media/broadcast/upload - Upload un fichier pour la diffusion TV (Admin/Supervisor/Planner/Coordinator)
+media.post('/broadcast/upload', authMiddleware, async (c) => {
+    try {
+        const user = c.get('user') as any;
+        
+        // Vérification permissions étendue (Admin, Supervisor, Planner, Coordinator)
+        const allowedRoles = ['admin', 'supervisor', 'planner', 'coordinator'];
+        if (!allowedRoles.includes(user.role)) {
+            return c.json({ error: 'Permission refusée' }, 403);
+        }
+
+        const formData = await c.req.formData();
+        const file = formData.get('file') as File;
+
+        if (!file) {
+            return c.json({ error: 'Aucun fichier fourni' }, 400);
+        }
+
+        // Validation basique
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+            console.error(`[Upload] Fichier trop gros: ${file.size} bytes`);
+            return c.json({ error: 'Fichier trop volumineux (max 10MB)' }, 400);
+        }
+
+        if (!file.type.startsWith('image/')) {
+            console.error(`[Upload] Type invalide: ${file.type}`);
+            return c.json({ error: 'Seules les images sont autorisées' }, 400);
+        }
+
+        // Générer clé R2
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileKey = `broadcast/${timestamp}-${randomStr}-${sanitizedFileName}`;
+
+        // Upload vers R2
+        const arrayBuffer = await file.arrayBuffer();
+        await c.env.MEDIA_BUCKET.put(fileKey, arrayBuffer, {
+            httpMetadata: {
+                contentType: file.type,
+            },
+        });
+
+        // URL publique via Query Param (Plus robuste que path encoded)
+        const publicUrl = `/api/media/public?key=${encodeURIComponent(fileKey)}`;
+
+        return c.json({ 
+            success: true,
+            url: publicUrl,
+            file_key: fileKey
+        });
+
+    } catch (error) {
+        console.error('Broadcast upload error:', error);
+        return c.json({ error: 'Erreur upload broadcast: ' + String(error) }, 500);
+    }
+});
+
+// GET /api/media/public - Servir un fichier R2 via sa clé (Query Param)
+// Route plus sûre pour éviter les problèmes d'encodage de slashes dans l'URL
+media.get('/public', async (c) => {
+    try {
+        const key = c.req.query('key');
+        
+        if (!key) {
+            return c.text('Clé manquante', 400);
+        }
+        
+        const object = await c.env.MEDIA_BUCKET.get(key);
+        if (!object) {
+            return c.text('Fichier non trouvé', 404);
+        }
+
+        const headers = new Headers();
+        object.writeHttpMetadata(headers);
+        headers.set('etag', object.httpEtag);
+        headers.set('Cache-Control', 'public, max-age=31536000'); 
+
+        return new Response(object.body, {
+            headers,
+        });
+    } catch (e) {
+        console.error('Media public fetch error:', e);
+        return c.text('Erreur serveur', 500);
+    }
+});
+
+// Legacy route support (redirect or handle) - Wildcard to capture full path including slashes
+media.get('/public/*', async (c) => {
+    try {
+        const path = c.req.path;
+        // Prefix length to strip: /api/media/public/
+        // Assuming this router is mounted at /api/media
+        // The path inside this handler might be /public/... or full path depending on Hono setup.
+        // Let's assume absolute path for safety check.
+        
+        // Find "public/" segment
+        const marker = '/public/';
+        const idx = path.indexOf(marker);
+        
+        if (idx === -1) {
+            // Check query param case just in case this handler caught it (unlikely if order preserved)
+            const queryKey = c.req.query('key');
+            if (queryKey) {
+                 const object = await c.env.MEDIA_BUCKET.get(queryKey);
+                 if (!object) return c.text('Fichier non trouvé', 404);
+                 const headers = new Headers();
+                 object.writeHttpMetadata(headers);
+                 headers.set('Cache-Control', 'public, max-age=31536000');
+                 return new Response(object.body, { headers });
+            }
+            return c.text('Invalid path', 400);
+        }
+        
+        const rawKey = path.substring(idx + marker.length);
+        const fileKey = decodeURIComponent(rawKey);
+        
+        const object = await c.env.MEDIA_BUCKET.get(fileKey);
+        if (!object) return c.text('Not found', 404);
+        
+        const headers = new Headers();
+        object.writeHttpMetadata(headers);
+        headers.set('Cache-Control', 'public, max-age=31536000');
+        return new Response(object.body, { headers });
+    } catch (e) {
+        return c.text('Error', 500);
+    }
+});
+
+// GET /api/media/ticket/:ticketId - Liste les médias d'un ticket (protégé)
+media.get('/ticket/:ticketId', authMiddleware, async (c) => {
+  try {
+    const ticketId = c.req.param('ticketId');
+
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM media WHERE ticket_id = ? ORDER BY created_at DESC'
+    ).bind(ticketId).all();
+
+    return c.json({ media: results });
+  } catch (error) {
+    console.error('Get ticket media error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des médias' }, 500);
+  }
+});
+
 // GET /api/media/:id - Récupérer un fichier depuis R2 (PUBLIC pour charger les images)
+// MOVED TO BOTTOM: This acts as a catch-all for ID-based lookups
 media.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
@@ -206,22 +352,6 @@ media.delete('/:id', authMiddleware, async (c) => {
   } catch (error) {
     console.error('Delete media error:', error);
     return c.json({ error: 'Erreur lors de la suppression du media' }, 500);
-  }
-});
-
-// GET /api/media/ticket/:ticketId - Liste les médias d'un ticket (protégé)
-media.get('/ticket/:ticketId', authMiddleware, async (c) => {
-  try {
-    const ticketId = c.req.param('ticketId');
-
-    const { results } = await c.env.DB.prepare(
-      'SELECT * FROM media WHERE ticket_id = ? ORDER BY created_at DESC'
-    ).bind(ticketId).all();
-
-    return c.json({ media: results });
-  } catch (error) {
-    console.error('Get ticket media error:', error);
-    return c.json({ error: 'Erreur lors de la récupération des médias' }, 500);
   }
 });
 

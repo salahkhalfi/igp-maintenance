@@ -93,6 +93,23 @@ const AppHeader = ({
         return () => clearInterval(interval);
     }, [searchPlaceholders.length]);
 
+    // Handle resize to prevent layout glitches
+    React.useEffect(() => {
+        const handleResize = () => {
+            // Close mobile menu on desktop to prevent layout glitches
+            if (window.innerWidth >= 768 && showMobileMenu) {
+                setShowMobileMenu(false);
+            }
+            // Close search results on resize to prevent positioning errors
+            if (showSearchResults) {
+                setShowSearchResults(false);
+            }
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [showMobileMenu, showSearchResults]);
+
     React.useEffect(() => {
         const updatePos = () => {
             if (searchInputRef.current && showSearchResults) {
@@ -101,10 +118,9 @@ const AppHeader = ({
             }
         };
         window.addEventListener('scroll', updatePos);
-        window.addEventListener('resize', updatePos);
+        // Removed resize listener here to avoid conflicts, handled by handleResize above
         return () => {
             window.removeEventListener('scroll', updatePos);
-            window.removeEventListener('resize', updatePos);
         };
     }, [showSearchResults]);
 
@@ -278,7 +294,7 @@ const AppHeader = ({
             React.createElement('div', { 
                 className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100' : 'hidden')
             },
-                safeHasPermission('tickets.create') && React.createElement('button', { onClick: onOpenCreateModal, className: 'hidden md:flex px-3 py-1.5 bg-blue-800 text-white text-sm rounded-md shadow-md items-center hover:bg-blue-900 transition' }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Demande'),
+
                 activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
                     React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
                     (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
@@ -294,6 +310,7 @@ const AppHeader = ({
                 safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
                 safeHasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
                 safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenTv, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-tv mr-2 text-purple-600' }), 'Écran TV'),
+
                 React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-blue-700 transition' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),
                 React.createElement('button', { onClick: onLogout, className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-gray-700 transition' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Déconnexion')
             )

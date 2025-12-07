@@ -37,6 +37,19 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.3 (7 Décembre 2025) - DIFFUSION TV IMAGES & GALERIES 📺🖼️✨
+- **📸 BROADCAST RICH MEDIA** : Support complet pour diffusion d'images et galeries sur TV
+- **🖼️ NOUVEAUX TYPES DE MESSAGES** :
+  - **Image + Texte** : Grande image mise en avant avec titre et description
+  - **Galerie** : Grille de 6 images animées pour retours d'événements/excursions
+- **✨ ANIMATIONS** : Transitions fluides (Fade In Up) pour l'apparition des contenus
+- **🛠️ ADMIN PANEL TV** : Nouvelle interface `/admin/tv` pour gérer les contenus :
+  - Création intuitive de messages
+  - Upload d'images par glisser-déposer (supporte multiple)
+  - Prévisualisation immédiate
+  - Gestion des priorités et dates de diffusion
+- **🚀 PERF** : Chargement optimisé des images et gestion du cache
+
 ### Version 2.14.2 (4 Décembre 2025) - VUE TV SATELLITE 📺🚀
 - **🛰️ MODE KIOSQUE** : Nouvelle page indépendante `/tv.html` pour affichage sur Smart TV / Chromecast.
 - **🔒 SÉCURITÉ KEY** : Accès protégé par clé URL (pas de login/session qui expire).
