@@ -766,4 +766,47 @@ app.delete('/conversations/:id/messages/:messageId', async (c) => {
     return c.json({ success: true });
 });
 
+// 14. DELETE /api/v2/chat/conversations/:id/messages - Clear all messages (Admin or Group Admin)
+app.delete('/conversations/:id/messages', async (c) => {
+    const user = c.get('user');
+    const conversationId = c.req.param('id');
+
+    // Check permissions (Global Admin or Group Admin)
+    const participant = await c.env.DB.prepare(`
+        SELECT role FROM chat_participants WHERE conversation_id = ? AND user_id = ?
+    `).bind(conversationId, user.userId).first();
+
+    const isGroupAdmin = participant && participant.role === 'admin';
+    const isGlobalAdmin = user.role === 'admin';
+
+    if (!isGroupAdmin && !isGlobalAdmin) {
+        return c.json({ error: 'Admin only' }, 403);
+    }
+
+    // 1. Find all media keys to delete
+    const mediaMessages = await c.env.DB.prepare(`
+        SELECT media_key FROM chat_messages 
+        WHERE conversation_id = ? AND media_key IS NOT NULL
+    `).bind(conversationId).all();
+
+    // 2. Delete from R2
+    const keysToDelete = (mediaMessages.results || []).map((m: any) => m.media_key).filter((k: any) => k);
+    if (keysToDelete.length > 0) {
+        // Delete in batches if necessary, but Promise.all is okay for reasonable amounts
+        await Promise.all(keysToDelete.map((key: string) => c.env.MEDIA_BUCKET.delete(key)));
+    }
+
+    // 3. Delete messages
+    await c.env.DB.prepare(`DELETE FROM chat_messages WHERE conversation_id = ?`).bind(conversationId).run();
+
+    // 4. Insert system message
+    const sysId = crypto.randomUUID();
+    await c.env.DB.prepare(`
+        INSERT INTO chat_messages (id, conversation_id, sender_id, type, content)
+        VALUES (?, ?, ?, 'system', ?)
+    `).bind(sysId, conversationId, user.userId, 'a vidé la discussion').run();
+
+    return c.json({ success: true });
+});
+
 export default app;

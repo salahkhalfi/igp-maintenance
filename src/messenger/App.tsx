@@ -1182,6 +1182,17 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
         }
     };
 
+    const handleClearChat = async () => {
+        if (!confirm("ATTENTION : Voulez-vous supprimer TOUS les messages de cette discussion ? Cette action est irréversible.")) return;
+        try {
+            await axios.delete(`/api/v2/chat/conversations/${conversationId}/messages`);
+            onClose();
+            window.location.reload(); 
+        } catch (e) {
+            alert('Erreur lors de la suppression des messages');
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:absolute md:inset-y-0 md:right-0 md:left-auto md:w-[380px] flex justify-end">
             {showAddMember && (
@@ -1341,6 +1352,15 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                             className="w-full flex items-center justify-center gap-3 p-4 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all text-sm font-bold uppercase tracking-wide border border-transparent hover:border-white/10"
                         >
                             <i className="fas fa-sign-out-alt"></i> Quitter le groupe
+                        </button>
+                    )}
+
+                    {(isGroupAdmin || isGlobalAdmin) && (
+                        <button 
+                            onClick={handleClearChat}
+                            className="w-full flex items-center justify-center gap-3 p-4 text-orange-500 hover:text-white hover:bg-orange-600 rounded-xl transition-all text-sm font-bold uppercase tracking-wide border border-orange-900/30 bg-orange-500/5"
+                        >
+                            <i className="fas fa-eraser"></i> Vider la discussion
                         </button>
                     )}
 
