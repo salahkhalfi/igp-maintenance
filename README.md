@@ -37,6 +37,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.5 (7 Décembre 2025) - ADMINISTRATION AVANCÉE CHAT 🧹✨
+- **🧹 VIDER DISCUSSION** : Nouvelle fonctionnalité pour les administrateurs permettant de supprimer tous les messages d'un groupe en un clic sans supprimer le groupe lui-même.
+- **🗑️ NETTOYAGE COMPLET** : Suppression en cascade des messages et des fichiers médias associés (R2) pour libérer de l'espace.
+- **🛡️ SÉCURITÉ** : Action irréversible protégée par une double confirmation. Accessible uniquement aux admins globaux et admins du groupe.
+- **✨ UX** : Bouton "Vider la discussion" ajouté dans le panneau d'information du groupe.
+
 ### Version 2.14.4 (7 Décembre 2025) - ADMINISTRATION GROUPES DE CHAT 💬🛠️
 - **🛠️ GESTION ADMIN GROUPES** : L'administrateur global et l'administrateur du groupe peuvent désormais modifier le nom et l'icône des groupes.
 - **✏️ ÉDITION SIMPLIFIÉE** : Boutons d'édition (crayon et caméra) toujours visibles et accessibles (plus d'effet hover masqué).
