@@ -357,7 +357,7 @@ app.post('/conversations/:id/participants', async (c) => {
 // 3. POST /api/v2/chat/send - Send a message
 app.post('/send', async (c) => {
     const user = c.get('user');
-    const { conversationId, content, type = 'text', mediaKey, mediaMeta } = await c.req.json();
+    const { conversationId, content, type = 'text', mediaKey, mediaMeta, isCall } = await c.req.json();
     const messageId = crypto.randomUUID();
 
     try {
@@ -398,8 +398,14 @@ app.post('/send', async (c) => {
                     WHERE conversation_id = ? AND user_id != ?
                 `).bind(conversationId, user.userId).all();
 
-                const pushTitle = user.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Nouveau message';
-                const pushBody = type === 'image' ? '📷 Photo envoyée' : content;
+                // Logic spécial pour les sonneries (Beeper)
+                const pushTitle = isCall 
+                    ? `📞 APPEL DE ${user.first_name ? user.first_name.toUpperCase() : 'UTILISATEUR'}`
+                    : (user.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Nouveau message');
+                
+                const pushBody = isCall
+                    ? "Sonnerie en cours... Appuyez pour répondre"
+                    : (type === 'image' ? '📷 Photo envoyée' : content);
 
                 for (const p of participants) {
                     await sendPushNotification(c.env, p.user_id as number, {
@@ -408,7 +414,8 @@ app.post('/send', async (c) => {
                         icon: '/icon-192.png',
                         data: {
                             url: 'https://mecanique.igpglass.ca/messenger',
-                            conversationId: conversationId
+                            conversationId: conversationId,
+                            isCall: isCall // CRITICAL: This triggers the SW vibrate/sound logic
                         }
                     });
                 }
