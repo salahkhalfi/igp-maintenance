@@ -413,7 +413,7 @@ app.post('/send', async (c) => {
                         body: pushBody,
                         icon: '/icon-192.png',
                         data: {
-                            url: 'https://mecanique.igpglass.ca/messenger',
+                            url: `https://mecanique.igpglass.ca/messenger?conversationId=${conversationId}`,
                             conversationId: conversationId,
                             isCall: isCall // CRITICAL: This triggers the SW vibrate/sound logic
                         }

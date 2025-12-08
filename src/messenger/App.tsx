@@ -661,6 +661,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
     const [pushEnabled, setPushEnabled] = useState(false);
+    const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
     const [currentUserRole, setCurrentUserRole] = useState<string>('operator');
     
     // Avatar upload
@@ -746,6 +747,17 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             });
         }
 
+        // Monitor Push Permission
+        if ('Notification' in window) {
+            setPushPermission(Notification.permission);
+        }
+        
+        // Listen for custom event from push-notifications.js
+        const handlePushChange = () => {
+            if ('Notification' in window) setPushPermission(Notification.permission);
+        };
+        window.addEventListener('push-notification-changed', handlePushChange);
+
         const fetchConversations = async () => {
             try {
                 const res = await axios.get('/api/v2/chat/conversations');
@@ -820,6 +832,18 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         if (confirm("Voulez-vous vous déconnecter ?")) {
             localStorage.removeItem('auth_token');
             window.location.reload();
+        }
+    };
+
+    const handleSubscribe = async () => {
+        if ((window as any).requestPushPermission) {
+            const res = await (window as any).requestPushPermission();
+            if (res && res.success) {
+                setPushPermission('granted');
+                alert("Notifications activées !");
+            }
+        } else {
+            alert("Fonctionnalité non supportée");
         }
     };
 
@@ -909,6 +933,18 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                     </div>
                     
                     <div className="flex gap-3">
+                        <button 
+                            onClick={handleSubscribe}
+                            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
+                                pushPermission === 'granted' 
+                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20' 
+                                : 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 animate-pulse'
+                            }`}
+                            title={pushPermission === 'granted' ? "Notifications actives" : "ACTIVER les notifications"}
+                        >
+                            <i className={`fas ${pushPermission === 'granted' ? 'fa-bell' : 'fa-bell-slash'}`}></i>
+                        </button>
+
                         <button 
                             onClick={() => {
                                 SoundManager.play().then(() => alert("🔊 Son de test envoyé !")).catch(() => alert("❌ Erreur : Le navigateur bloque le son. Cliquez n'importe où sur la page puis réessayez."));
@@ -2082,6 +2118,23 @@ const App = () => {
             setCurrentUserName(getNameFromToken(token));
             fetchUserInfo();
             setShowLogin(false);
+        }
+
+        // --- PUSH NOTIFICATIONS ---
+        // Auto-init on load
+        if ((window as any).initPushNotifications) {
+            (window as any).initPushNotifications();
+        }
+
+        // --- DEEP LINKING ---
+        const params = new URLSearchParams(window.location.search);
+        const conversationId = params.get('conversationId');
+        
+        if (conversationId) {
+            console.log("🔗 Deep link detected:", conversationId);
+            setSelectedConvId(conversationId);
+            // Clean URL to prevent loop on refresh, but keep it clean
+            window.history.replaceState({}, '', window.location.pathname);
         }
 
         // --- AUDIO UNLOCKER ---
