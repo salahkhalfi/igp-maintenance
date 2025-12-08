@@ -37,6 +37,11 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.14 (8 Décembre 2025) - FIX LOGOUT ERROR 🐛✨
+- **🐛 FIX**: Correction de l'erreur "Auth token missing" lors de la déconnexion.
+- **🛡️ ROBUSTESSE**: Vérification du token avant l'initialisation des notifications push.
+- **🤫 SILENCIEUX**: Suppression des alertes et logs d'erreur inutiles si non connecté.
+
 ### Version 2.14.13 (8 Décembre 2025) - FIX PUSH SCRIPT & AXIOS REMOVAL 🐛✨
 - **🐛 FIX CRITIQUE** : Suppression de la dépendance `axios` dans `push-notifications.js` (ReferenceError).
 - **🔄 FETCH API** : Réécriture complète utilisant `fetch` natif pour compatibilité browser.

@@ -89,7 +89,7 @@ async function subscribeToPush() {
     
     if (!authToken) {
       console.error('[SUBSCRIBE] ERREUR: Token auth manquant');
-      alert('Token auth manquant. Reconnectez-vous.');
+      // On n'affiche plus d'alerte ici, car cette fonction peut être appelée automatiquement
       return { success: false, error: 'not_authenticated' };
     }
     
@@ -174,6 +174,8 @@ async function subscribeToPush() {
     console.error('[SUBSCRIBE] ERREUR push subscription:', error);
     
     if (error.status === 401) {
+        // Seulement alerter si c'est une vraie erreur 401 serveur
+        // Si c'est juste "token missing" (déjà géré plus haut), on n'alerte pas
         alert('Session expirée. Veuillez vous reconnecter.');
     }
     
@@ -220,6 +222,11 @@ async function isPushSubscribed() {
       });
       return result && result.isSubscribed;
     } catch (error) {
+      // Ignorer l'erreur "Auth token missing" silencieusement
+      if (error.message === 'Auth token missing') {
+        return false;
+      }
+      
       console.error('[IS_SUBSCRIBED] Backend verification failed:', error);
       return false;
     }
@@ -233,6 +240,13 @@ async function isPushSubscribed() {
 // Initialiser push notifications après login
 async function initPushNotifications() {
   try {
+    // Vérifier si l'utilisateur est connecté avant tout
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        console.log('🔕 [INIT] Pas de token d\'authentification, initialisation push ignorée.');
+        return;
+    }
+  
     console.log('🔔 [INIT] Starting push notification initialization...');
     
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
