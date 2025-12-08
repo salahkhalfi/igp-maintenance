@@ -897,9 +897,9 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             {showGuestManager && <GuestManagementModal onClose={() => setShowGuestManager(false)} />}
 
             {/* PREMIUM HEADER */}
-            <div className="px-6 pt-8 pb-6 flex flex-col gap-6 flex-shrink-0 z-30 relative">
+            <div className="px-4 md:px-6 pt-8 pb-6 flex flex-col gap-6 flex-shrink-0 z-30 relative">
                 <div className="flex items-center justify-between">
-                    <div onClick={handleAvatarClick} className="flex items-center gap-4 bg-white/5 pr-6 pl-2 py-2 rounded-full border border-white/5 backdrop-blur-md shadow-lg hover:bg-white/10 transition-all cursor-pointer group relative">
+                    <div onClick={handleAvatarClick} className="flex items-center gap-3 md:gap-4 bg-white/5 pr-3 md:pr-6 pl-2 py-2 rounded-full border border-white/5 backdrop-blur-md shadow-lg hover:bg-white/10 transition-all cursor-pointer group relative">
                         <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
                         <div className="relative">
                             {currentUserAvatarKey && !avatarError ? (
@@ -933,7 +933,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                             </div>
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-white font-bold text-sm leading-none group-hover:text-emerald-400 transition-colors">{firstName}</span>
+                            <span className="text-white font-bold text-sm leading-none group-hover:text-emerald-400 transition-colors truncate max-w-[80px] md:max-w-none">{firstName}</span>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <span className="relative flex h-2 w-2">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -944,10 +944,10 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                         </div>
                     </div>
                     
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 md:gap-3">
                         <button 
                             onClick={handleSubscribe}
-                            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
+                            className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
                                 pushPermission === 'granted' 
                                 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20' 
                                 : 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 animate-pulse'
@@ -961,17 +961,17 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                             onClick={() => {
                                 SoundManager.play().then(() => alert("🔊 Son de test envoyé !")).catch(() => alert("❌ Erreur : Le navigateur bloque le son. Cliquez n'importe où sur la page puis réessayez."));
                             }}
-                            className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all border border-emerald-500/20 hover:border-emerald-500 shadow-lg"
+                            className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all border border-emerald-500/20 hover:border-emerald-500 shadow-lg"
                             title="Tester le son"
                         >
                             <i className="fas fa-volume-up text-sm"></i>
                         </button>
                         {isAdmin && (
-                            <button onClick={() => setShowGuestManager(true)} className="w-11 h-11 rounded-2xl bg-gray-800/50 text-gray-400 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all border border-white/5 hover:border-white/20 shadow-lg" title="Gérer les invités">
+                            <button onClick={() => setShowGuestManager(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gray-800/50 text-gray-400 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all border border-white/5 hover:border-white/20 shadow-lg" title="Gérer les invités">
                                 <i className="fas fa-user-shield text-sm"></i>
                             </button>
                         )}
-                        <button onClick={handleLogout} className="w-11 h-11 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/20 hover:border-red-500 shadow-lg" title="Déconnexion">
+                        <button onClick={handleLogout} className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/20 hover:border-red-500 shadow-lg" title="Déconnexion">
                             <i className="fas fa-power-off text-sm"></i>
                         </button>
                     </div>
