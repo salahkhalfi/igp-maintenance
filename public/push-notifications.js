@@ -1,6 +1,7 @@
 /**
  * Push Notifications Frontend Logic
  * Gère l'abonnement et les permissions push
+ * REWRITTEN TO USE FETCH (No Axios dependency)
  */
 
 // Convertir clé VAPID publique de base64url en Uint8Array
@@ -38,6 +39,40 @@ function getDeviceInfo() {
   return { deviceType, deviceName };
 }
 
+// Helper pour les requêtes API avec auth
+async function apiRequest(url, method = 'GET', body = null) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Auth token missing');
+
+    const headers = {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+    };
+
+    const options = {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+    };
+
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+        // Tenter de lire le message d'erreur JSON
+        let errorMsg = response.statusText;
+        try {
+            const data = await response.json();
+            if (data && data.error) errorMsg = data.error;
+        } catch(e) {}
+        
+        const error = new Error(errorMsg);
+        error.status = response.status;
+        throw error;
+    }
+
+    return await response.json();
+}
+
 // S'abonner aux notifications push
 async function subscribeToPush() {
   try {
@@ -49,31 +84,8 @@ async function subscribeToPush() {
       return { success: false, error: 'not_supported' };
     }
     
-    // Verifier authentification - PRIORITE 1: axios.defaults, PRIORITE 2: localStorage
-    let authToken = null;
-    
-    console.log('[SUBSCRIBE] window.axios existe?', !!window.axios);
-    console.log('[SUBSCRIBE] localStorage accessible?', !!localStorage);
-    
-    // Essayer d'abord axios.defaults
-    if (window.axios && window.axios.defaults && window.axios.defaults.headers && window.axios.defaults.headers.common) {
-      const authHeader = window.axios.defaults.headers.common['Authorization'];
-      console.log('[SUBSCRIBE] axios.defaults.headers.common.Authorization:', authHeader ? 'EXISTS' : 'NULL');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        authToken = authHeader.substring(7); // Enlever 'Bearer '
-        console.log('[SUBSCRIBE] Auth token from axios.defaults (length:', authToken.length, ')');
-      }
-    }
-    
-    // Sinon essayer localStorage
-    if (!authToken) {
-      authToken = localStorage.getItem('auth_token');
-      if (authToken) {
-        console.log('[SUBSCRIBE] Auth token from localStorage (length:', authToken.length, ')');
-      } else {
-        console.log('[SUBSCRIBE] localStorage.auth_token est NULL');
-      }
-    }
+    // Verifier authentification (localStorage uniquement)
+    const authToken = localStorage.getItem('auth_token');
     
     if (!authToken) {
       console.error('[SUBSCRIBE] ERREUR: Token auth manquant');
@@ -81,9 +93,9 @@ async function subscribeToPush() {
       return { success: false, error: 'not_authenticated' };
     }
     
-    console.log('[SUBSCRIBE] Token trouve, longueur:', authToken.length);
+    console.log('[SUBSCRIBE] Token trouve via localStorage');
     
-    // Attendre que service worker soit VRAIMENT ready (same logic as initPushNotifications)
+    // Attendre que service worker soit VRAIMENT ready
     console.log('[SUBSCRIBE] Attente service worker...');
     let swReady = false;
     for (let i = 0; i < 20; i++) {
@@ -110,7 +122,6 @@ async function subscribeToPush() {
     
     if (existingSubscription) {
       console.log('[SUBSCRIBE] Subscription existante trouvée');
-      console.log('[SUBSCRIBE] Existing endpoint:', existingSubscription.endpoint.substring(0, 50) + '...');
       
       // Vérifier si cette subscription appartient à CET utilisateur
       const isMySubscription = await isPushSubscribed();
@@ -121,26 +132,16 @@ async function subscribeToPush() {
       await existingSubscription.unsubscribe();
       console.log('[SUBSCRIBE] Ancienne subscription révoquée');
       
-      // Wait for Service Worker to process unsubscribe (critical for multi-user devices)
-      console.log('[SUBSCRIBE] Waiting 1s for SW to process unsubscribe...');
+      // Wait for Service Worker to process unsubscribe
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // C'est une "mise à jour" seulement si c'était MA subscription
       wasUpdated = isMySubscription;
-      console.log('[SUBSCRIBE] wasUpdated:', wasUpdated, '(true = mise à jour, false = nouvel abonnement)');
     }
     
-    // Recuperer cle VAPID publique (avec auth)
-    console.log('[SUBSCRIBE] Fetching VAPID public key avec Authorization header...');
-    console.log('[SUBSCRIBE] Auth header sera:', 'Bearer ' + authToken.substring(0, 20) + '...');
-    
-    const response = await axios.get('/api/push/vapid-public-key', {
-      headers: {
-        'Authorization': 'Bearer ' + authToken
-      }
-    });
-    console.log('[SUBSCRIBE] VAPID key recu, status:', response.status);
-    const { publicKey } = response.data;
+    // Recuperer cle VAPID publique
+    console.log('[SUBSCRIBE] Fetching VAPID public key...');
+    const { publicKey } = await apiRequest('/api/push/vapid-public-key');
     console.log('[SUBSCRIBE] Public key:', publicKey.substring(0, 20) + '...');
     
     // S'abonner (toujours créer une NOUVELLE subscription)
@@ -150,51 +151,30 @@ async function subscribeToPush() {
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
     console.log('[SUBSCRIBE] Browser subscription created');
-    console.log('[SUBSCRIBE] Endpoint:', subscription.endpoint.substring(0, 50) + '...');
     
-    // Envoyer au serveur (avec auth)
+    // Envoyer au serveur
     const deviceInfo = getDeviceInfo();
-    console.log('[SUBSCRIBE] Device info:', deviceInfo);
-    console.log('[SUBSCRIBE] Sending subscription to /api/push/subscribe...');
+    console.log('[SUBSCRIBE] Sending subscription to server...');
     
-    const subscribeResponse = await axios.post('/api/push/subscribe', {
+    await apiRequest('/api/push/subscribe', 'POST', {
       subscription: subscription.toJSON(),
       deviceType: deviceInfo.deviceType,
       deviceName: deviceInfo.deviceName
-    }, {
-      headers: {
-        'Authorization': 'Bearer ' + authToken
-      }
     });
     
-    console.log('[SUBSCRIBE] Backend response:', subscribeResponse.status, subscribeResponse.data);
+    console.log('[SUBSCRIBE] SUCCESS! Backend updated');
     
     if (wasUpdated) {
-      console.log('[SUBSCRIBE] SUCCESS! Subscription mise a jour (ancienne revoquee + nouvelle creee)');
       return { success: true, updated: true };
     } else {
-      console.log('[SUBSCRIBE] SUCCESS! Push notifications activees (nouvelle subscription)');
       return { success: true, updated: false };
     }
     
   } catch (error) {
     console.error('[SUBSCRIBE] ERREUR push subscription:', error);
     
-    // Log détaillé de l'erreur
-    if (error.response) {
-      console.error('[SUBSCRIBE] Status:', error.response.status);
-      console.error('[SUBSCRIBE] Data:', error.response.data);
-      console.error('[SUBSCRIBE] Headers:', error.response.headers);
-      
-      if (error.response.status === 401) {
-        console.error('[SUBSCRIBE] ERREUR 401 AUTHENTICATION!');
-        console.error('[SUBSCRIBE] Le token auth est probablement invalide ou expire');
-        alert('Erreur authentication (401). Reconnectez-vous.');
-      }
-    } else if (error.request) {
-      console.error('[SUBSCRIBE] Pas de reponse du serveur:', error.request);
-    } else {
-      console.error('[SUBSCRIBE] Erreur setup requete:', error.message);
+    if (error.status === 401) {
+        alert('Session expirée. Veuillez vous reconnecter.');
     }
     
     return { success: false, error: error.message };
@@ -219,8 +199,6 @@ async function requestPushPermission() {
 }
 
 // Vérifier si déjà abonné
-// IMPORTANT: Vérifie à la fois le navigateur ET la base de données
-// pour éviter les conflits multi-utilisateurs sur un même appareil
 async function isPushSubscribed() {
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -232,51 +210,17 @@ async function isPushSubscribed() {
     
     // Si aucune subscription dans le navigateur, retourner false
     if (!subscription) {
-      console.log('[IS_SUBSCRIBED] No browser subscription found');
       return false;
     }
     
-    console.log('[IS_SUBSCRIBED] Browser subscription exists, verifying with backend...');
-    
-    // Vérifier si cette subscription appartient à l'utilisateur actuel
-    // en interrogeant le backend
+    // Vérifier avec le backend
     try {
-      let authToken = null;
-      
-      // Essayer d'abord axios.defaults
-      if (window.axios && window.axios.defaults && window.axios.defaults.headers && window.axios.defaults.headers.common) {
-        const authHeader = window.axios.defaults.headers.common['Authorization'];
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          authToken = authHeader.substring(7);
-        }
-      }
-      
-      // Sinon essayer localStorage
-      if (!authToken) {
-        authToken = localStorage.getItem('auth_token');
-      }
-      
-      if (!authToken) {
-        console.log('[IS_SUBSCRIBED] No auth token, cannot verify');
-        return false;
-      }
-      
-      // Appeler le backend pour vérifier
-      const response = await axios.post('/api/push/verify-subscription', {
+      const result = await apiRequest('/api/push/verify-subscription', 'POST', {
         endpoint: subscription.endpoint
-      }, {
-        headers: {
-          'Authorization': 'Bearer ' + authToken
-        }
       });
-      
-      const isValid = response.data && response.data.isSubscribed;
-      console.log('[IS_SUBSCRIBED] Backend verification result:', isValid);
-      return isValid;
-      
+      return result && result.isSubscribed;
     } catch (error) {
       console.error('[IS_SUBSCRIBED] Backend verification failed:', error);
-      // En cas d'erreur backend, considérer comme non abonné pour forcer réabonnement
       return false;
     }
     
@@ -291,88 +235,52 @@ async function initPushNotifications() {
   try {
     console.log('🔔 [INIT] Starting push notification initialization...');
     
-    // Vérifier support
-    if (!('Notification' in window)) {
-      console.log('❌ Notifications non supportées sur cet appareil');
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      console.log('❌ Notifications non supportées');
       return;
     }
     
-    if (!('serviceWorker' in navigator)) {
-      console.log('❌ Service Worker non supporté');
-      return;
-    }
-    
-    console.log('🔔 [INIT] Permission actuelle:', Notification.permission);
-    
-    // Attendre que le Service Worker soit vraiment prêt (max 10 secondes)
-    // Protection Try/Catch pour Brave
     let swReady = false;
     try {
         for (let i = 0; i < 20; i++) {
           const registration = await navigator.serviceWorker.getRegistration();
           if (registration && registration.active) {
             swReady = true;
-            console.log('✅ [INIT] Service Worker est actif');
             break;
           }
-          console.log(`⏳ [INIT] Attente Service Worker... (${i + 1}/20)`);
           await new Promise(resolve => setTimeout(resolve, 500));
         }
-    } catch (e) {
-        console.warn('⚠️ [INIT] Erreur accès Service Worker (Brave?):', e);
-        // Continue execution but expect failures in subscription check
-    }
+    } catch (e) {}
     
-    if (!swReady) {
-      console.log('⚠️ [INIT] Service Worker pas prêt ou inaccessible, on continue quand même');
-    }
-    
-    // Si déjà autorisé, vérifier ownership AVANT de subscribe
+    // Si déjà autorisé, vérifier ownership
     if (Notification.permission === 'granted') {
-      console.log('✅ [INIT] Permission déjà accordée, vérification abonnement...');
-      
       let isSubscribed = false;
       try {
           isSubscribed = await isPushSubscribed();
       } catch (e) {
-          console.warn('⚠️ [INIT] Impossible de vérifier abonnement:', e);
           isSubscribed = false;
       }
 
-      console.log('🔔 [INIT] Déjà abonné?', isSubscribed);
-      
-      // IMPORTANT: Si la permission est accordée mais que l'abonnement n'est pas le nôtre (appareil partagé),
-      // on force la réinscription pour "voler" l'appareil et recevoir NOS notifications.
       if (!isSubscribed) {
-        console.log('🔄 [INIT] Appareil partagé détecté : Récupération automatique des notifications...');
+        console.log('🔄 [INIT] Récupération automatique des notifications...');
         await subscribeToPush();
-        // Mettre à jour l'état après réinscription
         window.dispatchEvent(new CustomEvent('push-notification-changed'));
         return;
       }
       
-      // Always update button color based on ACTUAL ownership
       window.dispatchEvent(new CustomEvent('push-notification-changed'));
       return;
     }
     
-    // Update button color for denied/default states
     window.dispatchEvent(new CustomEvent('push-notification-changed'));
     
-    // NE JAMAIS demander automatiquement la permission
-    // L'utilisateur doit cliquer manuellement sur le bouton "Notifications"
-    console.log('🔔 [INIT] Permission status:', Notification.permission);
-    console.log('🔔 [INIT] Abonnement uniquement manuel via bouton');
-    
   } catch (error) {
-    console.error('❌ [INIT] Erreur initialisation push notifications:', error);
+    console.error('❌ [INIT] Erreur initialisation:', error);
   }
 }
 
-// Exposer les fonctions pour l'app React
+// Exposer les fonctions
 window.initPushNotifications = initPushNotifications;
 window.requestPushPermission = requestPushPermission;
 window.isPushSubscribed = isPushSubscribed;
 window.subscribeToPush = subscribeToPush;
-// updatePushButtonColor removed - handled by React component now
-
