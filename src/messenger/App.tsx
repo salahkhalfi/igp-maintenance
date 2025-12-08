@@ -836,14 +836,26 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     };
 
     const handleSubscribe = async () => {
+        // Diagnostic avant l'erreur
+        if (!('serviceWorker' in navigator)) {
+            alert("Votre navigateur ne supporte pas les Service Workers. Impossible d'activer les notifications.");
+            return;
+        }
+        if (!('PushManager' in window)) {
+            alert("Votre navigateur ne supporte pas le Push API (iOS: Ajoutez à l'écran d'accueil).");
+            return;
+        }
+        
         if ((window as any).requestPushPermission) {
             const res = await (window as any).requestPushPermission();
             if (res && res.success) {
                 setPushPermission('granted');
-                alert("Notifications activées !");
+                alert("✅ Notifications activées avec succès !");
+            } else {
+                alert("❌ Erreur d'activation: " + (res?.error || "Inconnue"));
             }
         } else {
-            alert("Fonctionnalité non supportée");
+            alert("⚠️ Erreur système: Le script de notification n'est pas chargé. Rafraîchissez la page.");
         }
     };
 
