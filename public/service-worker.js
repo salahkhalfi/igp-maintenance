@@ -108,27 +108,33 @@ self.addEventListener('push', (event) => {
     }
   }
   
+  const isCall = data.data?.isCall === true;
+
   const options = {
     body: data.body,
     icon: data.icon || '/icon-192.png',
     badge: data.badge || '/icon-192.png',
     data: data.data || {},
-    vibrate: [200, 100, 200],
+    // Vibrate: Call pattern (long) vs Message pattern (short)
+    vibrate: isCall ? [500, 200, 500, 200, 500] : [200, 100, 200],
     // Use unique tag to prevent notification grouping
+    // - For calls: ALWAYS unique to ensure sound plays
     // - For tickets: use ticketId (allows grouping per ticket)
     // - For messages: use messageId (each message separate)
     // - Fallback: timestamp (always unique)
-    tag: data.data?.ticketId 
-      ? `ticket-${data.data.ticketId}` 
-      : data.data?.messageId 
-        ? `message-${data.data.messageId}` 
-        : `notif-${Date.now()}`,
+    tag: isCall 
+      ? `call-${Date.now()}`
+      : data.data?.ticketId 
+        ? `ticket-${data.data.ticketId}` 
+        : data.data?.messageId 
+          ? `message-${data.data.messageId}` 
+          : `notif-${Date.now()}`,
     renotify: true, // Force notification to play sound/vibrate even if tag is same
     silent: false,  // Ensure sound is not silenced
     sound: '/static/notification.mp3', // Custom sound (supported on Android/some browsers)
     timestamp: Date.now(), // Ensure uniqueness for sorting
     priority: 2, // High priority for older Android
-    requireInteraction: false,
+    requireInteraction: isCall, // Call notification stays until interacted with
     actions: data.actions || []
   };
   

@@ -1643,7 +1643,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 body: JSON.stringify({
                     conversationId,
                     content: '📞 SONNERIE: Je tente de vous joindre par vocal ! (Ouvrez le chat)',
-                    type: 'text' // Standard text triggers standard push logic = Safe
+                    type: 'text',
+                    isCall: true // Special flag for Service Worker to boost priority/vibration
                 })
             });
             alert("📳 Sonnerie envoyée avec succès !");
