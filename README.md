@@ -37,7 +37,14 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
-### Version 2.14.6 (8 Décembre 2025) - PRÉPARATION APPELS AUDIO/VIDÉO 📞✨
+### Version 2.14.13 (8 Décembre 2025) - FIX PUSH SCRIPT & AXIOS REMOVAL 🐛✨
+- **🐛 FIX CRITIQUE** : Suppression de la dépendance `axios` dans `push-notifications.js` (ReferenceError).
+- **🔄 FETCH API** : Réécriture complète utilisant `fetch` natif pour compatibilité browser.
+- **🚀 DEPLOY FIX** : Correction des problèmes de déploiement (tailwindcss, node_modules).
+- **🔔 ROBUSTESSE** : Amélioration de la logique de souscription et de re-souscription.
+- **✅ STATUS** : Déploiement réussi, notifications push opérationnelles.
+
+### Version 2.14.12 (8 Décembre 2025) - FIX PUSH PAYLOAD & URLS 📱✨
 - **📞 PRÉPARATION VISUELLE** : Ajout des icônes d'appel audio et vidéo dans l'interface de chat.
 - **🚧 PHASE 1** : Intégration visuelle uniquement (boutons inactifs pour le moment).
 - **🔒 SÉCURITÉ** : Architecture "Zero Risk" validée pour future implémentation (pas d'impact sur existant).
