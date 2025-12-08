@@ -408,19 +408,24 @@ app.post('/send', async (c) => {
                     : (type === 'image' ? '📷 Photo envoyée' : content);
 
                 for (const p of participants) {
-                    await sendPushNotification(c.env, p.user_id as number, {
+                    const payload: any = {
                         title: pushTitle,
                         body: pushBody,
                         icon: '/icon-192.png',
-                        actions: isCall ? [
-                            { action: 'open', title: '📞 Répondre' }
-                        ] : undefined,
                         data: {
-                            url: `/messenger?conversationId=${conversationId}`,
+                            url: `https://mecanique.igpglass.ca/messenger?conversationId=${conversationId}`,
                             conversationId: conversationId,
                             isCall: isCall // CRITICAL: This triggers the SW vibrate/sound logic
                         }
-                    });
+                    };
+
+                    if (isCall) {
+                        payload.actions = [
+                            { action: 'open', title: '📞 Répondre' }
+                        ];
+                    }
+
+                    await sendPushNotification(c.env, p.user_id as number, payload);
                 }
             } catch (err) {
                 console.error("Push chat error", err);
