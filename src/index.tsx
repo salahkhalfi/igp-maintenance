@@ -45,7 +45,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/cloudflare-workers';
-import { authMiddleware, adminOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
+import { authMiddleware, adminOnly, internalUserOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
 import { hasPermission, getRolePermissions } from './utils/permissions';
 import { adminRolesHTML } from './views/admin-roles';
 import { guideHTML } from './views/guide';
@@ -171,26 +171,26 @@ app.use('/api/roles/*', authMiddleware, adminOnly);
 app.route('/api/roles', roles);
 
 
-app.use('/api/tickets/*', authMiddleware);
+app.use('/api/tickets/*', authMiddleware, internalUserOnly);
 app.route('/api/tickets', tickets);
 
 
 // Routes des machines
-app.use('/api/machines/*', authMiddleware);
+app.use('/api/machines/*', authMiddleware, internalUserOnly);
 app.route('/api/machines', machines);
 
 // Routes des techniciens et équipes
 app.route('/api/technicians', technicians);
 
 // Routes des utilisateurs
-app.use('/api/users/*', authMiddleware);
+app.use('/api/users/*', authMiddleware, internalUserOnly);
 app.route('/api/users', users);
 
 app.route('/api/media', media);
 
 app.route('/api/comments', comments);
 
-app.use('/api/search/*', authMiddleware);
+app.use('/api/search/*', authMiddleware, internalUserOnly);
 app.route('/api/search', search);
 
 // Routes des paramètres système
@@ -241,7 +241,7 @@ app.put('/api/preferences/:key', authMiddleware, async (c) => {
 });
 
 // Routes des webhooks pour notifications
-app.use('/api/webhooks/*', authMiddleware);
+app.use('/api/webhooks/*', authMiddleware, internalUserOnly);
 app.route('/api/webhooks', webhooks);
 
 // Routes des push notifications PWA

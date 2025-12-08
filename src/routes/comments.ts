@@ -7,13 +7,16 @@ import { eq, asc } from 'drizzle-orm';
 import { getDb } from '../db';
 import { ticketComments, tickets, media } from '../db/schema';
 import { createCommentSchema, ticketIdParamSchema, commentIdParamSchema } from '../schemas/comments';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, internalUserOnly } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const comments = new Hono<{ Bindings: Bindings }>();
 
+// Middleware d'authentification pour toutes les routes commentaires
+comments.use('*', authMiddleware, internalUserOnly);
+
 // POST /api/comments - Ajouter un commentaire à un ticket
-comments.post('/', authMiddleware, zValidator('json', createCommentSchema), async (c) => {
+comments.post('/', zValidator('json', createCommentSchema), async (c) => {
   try {
     const body = c.req.valid('json');
     const { ticket_id, user_name, user_role, comment, created_at } = body;
@@ -50,7 +53,7 @@ comments.post('/', authMiddleware, zValidator('json', createCommentSchema), asyn
 });
 
 // GET /api/comments/ticket/:ticketId - Liste les commentaires d'un ticket
-comments.get('/ticket/:ticketId', authMiddleware, zValidator('param', ticketIdParamSchema), async (c) => {
+comments.get('/ticket/:ticketId', zValidator('param', ticketIdParamSchema), async (c) => {
   try {
     const { ticketId } = c.req.valid('param');
     // isNaN check handled by Zod
@@ -70,7 +73,7 @@ comments.get('/ticket/:ticketId', authMiddleware, zValidator('param', ticketIdPa
 });
 
 // DELETE /api/comments/:id - Supprimer un commentaire (protégé)
-comments.delete('/:id', authMiddleware, zValidator('param', commentIdParamSchema), async (c) => {
+comments.delete('/:id', zValidator('param', commentIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const { id } = c.req.valid('param');

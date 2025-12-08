@@ -10,7 +10,7 @@ import { formatUserName } from '../utils/userFormatter';
 const app = new Hono<{ Bindings: Bindings }>();
 
 // Middleware d'authentification pour toutes les routes planning
-app.use('*', authMiddleware);
+app.use('*', authMiddleware, internalUserOnly);
 
 /**
  * POST /api/planning/share

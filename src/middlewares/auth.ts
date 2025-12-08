@@ -64,6 +64,17 @@ export async function adminOnly(c: Context<{ Bindings: Bindings }>, next: Next) 
   await next();
 }
 
+// Middleware pour empêcher l'accès aux invités (Guest)
+export async function internalUserOnly(c: Context<{ Bindings: Bindings }>, next: Next) {
+  const user = c.get('user') as any;
+
+  if (!user || user.role === 'guest' || user.isGuest) {
+    return c.json({ error: 'Accès réservé aux employés internes' }, 403);
+  }
+
+  await next();
+}
+
 export async function technicianOrAdmin(c: Context<{ Bindings: Bindings }>, next: Next) {
   const user = c.get('user') as any;
 

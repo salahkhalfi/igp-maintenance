@@ -6,15 +6,18 @@ import { eq, and, or, desc, asc, sql, getTableColumns, ne, inArray } from 'drizz
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { messages, users, pushLogs, pushSubscriptions } from '../db/schema';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, internalUserOnly } from '../middlewares/auth';
 import { formatUserName } from '../utils/userFormatter';
 import { sendMessageSchema, bulkDeleteMessagesSchema, getMessagesQuerySchema, contactIdParamSchema, messageIdParamSchema } from '../schemas/messages';
 import type { Bindings } from '../types';
 
 const messagesRoute = new Hono<{ Bindings: Bindings }>();
 
+// Protect all internal message routes
+messagesRoute.use('*', authMiddleware, internalUserOnly);
+
 // POST /api/messages - Envoyer un message (public ou privé)
-messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), async (c) => {
+messagesRoute.post('/', zValidator('json', sendMessageSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -95,7 +98,7 @@ messagesRoute.post('/', authMiddleware, zValidator('json', sendMessageSchema), a
 });
 
 // POST /api/messages/audio - Envoyer un message audio
-messagesRoute.post('/audio', authMiddleware, async (c) => {
+messagesRoute.post('/audio', async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -238,7 +241,7 @@ messagesRoute.post('/audio', authMiddleware, async (c) => {
 });
 
 // GET /api/messages/public - Récupérer les messages publics avec pagination
-messagesRoute.get('/public', authMiddleware, zValidator('query', getMessagesQuerySchema), async (c) => {
+messagesRoute.get('/public', zValidator('query', getMessagesQuerySchema), async (c) => {
   try {
     const { page, limit } = c.req.valid('query');
     const offset = (page - 1) * limit;
@@ -284,7 +287,7 @@ messagesRoute.get('/public', authMiddleware, zValidator('query', getMessagesQuer
 });
 
 // GET /api/messages/conversations - Récupérer les conversations privées
-messagesRoute.get('/conversations', authMiddleware, async (c) => {
+messagesRoute.get('/conversations', async (c) => {
   try {
     const user = c.get('user') as any;
     const db = getDb(c.env);
@@ -381,7 +384,7 @@ messagesRoute.get('/conversations', authMiddleware, async (c) => {
 });
 
 // GET /api/messages/private/:contactId - Récupérer les messages privés avec un contact
-messagesRoute.get('/private/:contactId', authMiddleware, zValidator('param', contactIdParamSchema), async (c) => {
+messagesRoute.get('/private/:contactId', zValidator('param', contactIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -424,7 +427,7 @@ messagesRoute.get('/private/:contactId', authMiddleware, zValidator('param', con
 });
 
 // GET /api/messages/unread-count
-messagesRoute.get('/unread-count', authMiddleware, async (c) => {
+messagesRoute.get('/unread-count', async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -447,7 +450,7 @@ messagesRoute.get('/unread-count', authMiddleware, async (c) => {
 });
 
 // GET /api/messages/available-users
-messagesRoute.get('/available-users', authMiddleware, async (c) => {
+messagesRoute.get('/available-users', async (c) => {
   try {
     const user = c.get('user') as any;
     const db = getDb(c.env);
@@ -476,7 +479,7 @@ messagesRoute.get('/available-users', authMiddleware, async (c) => {
 });
 
 // DELETE /api/messages/:messageId
-messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageIdParamSchema), async (c) => {
+messagesRoute.delete('/:messageId', zValidator('param', messageIdParamSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);
@@ -530,7 +533,7 @@ messagesRoute.delete('/:messageId', authMiddleware, zValidator('param', messageI
 });
 
 // POST /api/messages/bulk-delete
-messagesRoute.post('/bulk-delete', authMiddleware, zValidator('json', bulkDeleteMessagesSchema), async (c) => {
+messagesRoute.post('/bulk-delete', zValidator('json', bulkDeleteMessagesSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const currentUserId = Number(user.userId);

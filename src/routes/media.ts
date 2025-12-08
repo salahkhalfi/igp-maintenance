@@ -2,7 +2,7 @@
 
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, internalUserOnly } from '../middlewares/auth';
 import { LIMITS, validateFileUpload } from '../utils/validation';
 
 const media = new Hono<{ Bindings: Bindings }>();
@@ -24,7 +24,7 @@ function formatFileSize(bytes: number): string {
 }
 
 // POST /api/media/upload - Upload un fichier vers R2 (protégé)
-media.post('/upload', authMiddleware, async (c) => {
+media.post('/upload', authMiddleware, internalUserOnly, async (c) => {
   try {
     const user = c.get('user') as any;
     const formData = await c.req.formData();
@@ -234,7 +234,7 @@ media.get('/public/*', async (c) => {
 });
 
 // GET /api/media/ticket/:ticketId - Liste les médias d'un ticket (protégé)
-media.get('/ticket/:ticketId', authMiddleware, async (c) => {
+media.get('/ticket/:ticketId', authMiddleware, internalUserOnly, async (c) => {
   try {
     const ticketId = c.req.param('ticketId');
 
@@ -285,7 +285,7 @@ media.get('/:id', async (c) => {
 });
 
 // DELETE /api/media/:id - Supprimer un fichier (protégé)
-media.delete('/:id', authMiddleware, async (c) => {
+media.delete('/:id', authMiddleware, internalUserOnly, async (c) => {
   try {
     const user = c.get('user') as any;
     const id = c.req.param('id');

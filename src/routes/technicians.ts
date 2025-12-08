@@ -1,13 +1,13 @@
 // Routes pour la gestion des techniciens et équipes
 
 import { Hono } from 'hono';
-import { authMiddleware, technicianSupervisorOrAdmin } from '../middlewares/auth';
+import { authMiddleware, internalUserOnly, technicianSupervisorOrAdmin } from '../middlewares/auth';
 import type { Bindings } from '../types';
 
 const technicians = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/technicians - Liste des techniciens
-technicians.get('/', authMiddleware, async (c) => {
+technicians.get('/', authMiddleware, internalUserOnly, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT id, first_name, email

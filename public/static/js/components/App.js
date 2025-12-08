@@ -45,20 +45,28 @@ const App = () => {
 
     const loadData = async () => {
         try {
+            // 1. Fetch user first to check role (Security & Redirection)
+            const userRes = await axios.get(API_URL + '/auth/me');
+            
+            const apiUser = userRes.data.user;
+            const apiPermissions = userRes.data.permissions || [];
+            
+            // CRITICAL: Redirect GUEST users to Messenger immediately
+            // This prevents guests from accessing the maintenance dashboard
+            if (apiUser.role === 'guest' || apiUser.isGuest) {
+                window.location.href = '/messenger';
+                return;
+            }
+
+            // 2. Fetch operational data only for internal users
             // Use hooks to fetch data, but keep global loading management here for now
-            // Note: fetchTickets and fetchMachines will update their own internal state
-            // but return the data so we can use it here if needed (though we use the hooks state for props)
-            const [ticketsData, machinesData, userRes] = await Promise.all([
+            const [ticketsData, machinesData] = await Promise.all([
                 fetchTickets(),
-                fetchMachines(),
-                axios.get(API_URL + '/auth/me')
+                fetchMachines()
             ]);
             
             // currentUser global assignment (legacy compatibility)
             // CRITICAL FIX: Merge permissions and ensure userId exists
-            const apiUser = userRes.data.user;
-            const apiPermissions = userRes.data.permissions || [];
-            
             const normalizedUser = {
                 ...apiUser,
                 userId: apiUser.id, // Ensure userId is present
@@ -141,6 +149,12 @@ const App = () => {
                 ...response.data.user,
                 permissions: response.data.permissions || []
             };
+            
+            // CRITICAL: Redirect GUEST users to Messenger immediately
+            if (userData.role === 'guest' || userData.isGuest) {
+                window.location.href = '/messenger';
+                return;
+            }
             
             currentUser = userData;
             setCurrentUserState(userData);
