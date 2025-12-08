@@ -412,8 +412,11 @@ app.post('/send', async (c) => {
                         title: pushTitle,
                         body: pushBody,
                         icon: '/icon-192.png',
+                        actions: isCall ? [
+                            { action: 'open', title: '📞 Répondre' }
+                        ] : undefined,
                         data: {
-                            url: `https://mecanique.igpglass.ca/messenger?conversationId=${conversationId}`,
+                            url: `/messenger?conversationId=${conversationId}`,
                             conversationId: conversationId,
                             isCall: isCall // CRITICAL: This triggers the SW vibrate/sound logic
                         }

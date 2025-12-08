@@ -157,8 +157,12 @@ self.addEventListener('notificationclick', (event) => {
   // Construire l'URL appropriée selon le type de notification
   let urlToOpen = notificationData.url || '/';
   
+  // Pour les appels et conversations Messenger (Priorité)
+  if (notificationData.conversationId) {
+    urlToOpen = `/messenger?conversationId=${notificationData.conversationId}`;
+  }
   // Pour les tickets: ouvrir le modal du ticket directement
-  if ((action === 'view_ticket' || action === 'view') && (notificationData.ticketId || notificationData.ticket_id)) {
+  else if ((action === 'view_ticket' || action === 'view') && (notificationData.ticketId || notificationData.ticket_id)) {
     // Support both camelCase and snake_case, and force string conversion
     const tid = notificationData.ticketId || notificationData.ticket_id;
     urlToOpen = `/?ticket=${tid}`;
@@ -180,7 +184,7 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       // Pour les interactions boutons, on préfère TOUJOURS ouvrir une fenêtre
       // C'est la SEULE méthode fiable pour fermer le panneau de notification sur Android
-      if (action === 'view_ticket' || action === 'view' || action === 'acknowledge' || action === 'new_audio_message' || action === 'new_private_message') {
+      if (action === 'view_ticket' || action === 'view' || action === 'acknowledge' || action === 'new_audio_message' || action === 'new_private_message' || action === 'open') {
           if (clients.openWindow) {
               return clients.openWindow(urlToOpen);
           }
