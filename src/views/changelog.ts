@@ -192,7 +192,42 @@ export const changelogHTML = `
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.14.6 - ACTUELLE -->
+            <!-- Version 2.14.7 - ACTUELLE -->
+            <div class="timeline-item" data-version="2.14.7" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
+                    <i class="fas fa-phone-volume"></i>
+                </div>
+                <div class="version-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.14.7</h2>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Appels Audio (Mode "Sonnerie")
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Le bouton Téléphone 📞 envoie maintenant une sonnerie réelle</li>
+                                <li>• Envoie une notification push prioritaire "🔔 SONNERIE"</li>
+                                <li>• Solution stable sans risque pour la batterie ou le son</li>
+                                <li>• Idéal pour alerter avant de parler en vocal (Walkie-Talkie)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-improvement"><i class="fas fa-shield-alt"></i> Zero Risk</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.14.6 -->
             <div class="timeline-item" data-version="2.14.6" data-types="feature">
                 <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
                     <i class="fas fa-phone-alt"></i>
@@ -202,7 +237,7 @@ export const changelogHTML = `
                         <div>
                             <h2 class="text-2xl font-bold text-gray-800">Version 2.14.6</h2>
                         </div>
-                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">PRÉCÉDENTE</span>
                     </div>
 
                     <div class="space-y-4">

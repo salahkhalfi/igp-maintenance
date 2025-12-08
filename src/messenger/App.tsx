@@ -1629,6 +1629,30 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         }
     };
 
+    const handleAudioCall = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm("Envoyer une SONNERIE d'appel à ce groupe/utilisateur ?\n\nCela enverra une notification push immédiate.")) return;
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            await fetch('/api/v2/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    conversationId,
+                    content: '📞 SONNERIE: Je tente de vous joindre par vocal ! (Ouvrez le chat)',
+                    type: 'text' // Standard text triggers standard push logic = Safe
+                })
+            });
+            alert("📳 Sonnerie envoyée avec succès !");
+            fetchMessages(); // Refresh UI to show the system message
+        } catch (err) {
+            alert("Erreur lors de l'envoi de la sonnerie");
+        }
+    };
+
     const handleDeleteMessage = async (msgId: string) => {
         if(!confirm("Admin: Supprimer ce message ?")) return;
         try {
@@ -1901,18 +1925,18 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 {/* NOUVEAUX ICONES APPEL (VISUEL SEULEMENT - PHASE 1) */}
                 <div className="flex items-center gap-2 md:gap-4 mr-2">
                     <button 
-                        onClick={(e) => { e.stopPropagation(); alert("📞 Appel audio : Fonctionnalité bientôt disponible (Phase 2)"); }} 
+                        onClick={handleAudioCall}
                         className="w-10 h-10 rounded-full hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone"
-                        title="Appel Audio"
+                        title="Appel Audio (Envoie une sonnerie)"
                     >
                         <i className="fas fa-phone-alt text-lg group-hover/phone:scale-110 transition-transform"></i>
                     </button>
                     <button 
-                        onClick={(e) => { e.stopPropagation(); alert("📹 Appel vidéo : Fonctionnalité bientôt disponible (Phase 3)"); }} 
-                        className="w-10 h-10 rounded-full hover:bg-purple-500/10 text-purple-500 hover:text-purple-400 flex items-center justify-center transition-all border border-transparent hover:border-purple-500/30 group/video"
-                        title="Appel Vidéo"
+                        onClick={(e) => { e.stopPropagation(); alert("📹 Appel vidéo : Fonctionnalité désactivée (Phase 3)"); }} 
+                        className="w-10 h-10 rounded-full hover:bg-purple-500/10 text-gray-600 cursor-not-allowed flex items-center justify-center transition-all border border-transparent group/video opacity-50"
+                        title="Appel Vidéo (Bientôt)"
                     >
-                        <i className="fas fa-video text-lg group-hover/video:scale-110 transition-transform"></i>
+                        <i className="fas fa-video text-lg"></i>
                     </button>
                 </div>
 
