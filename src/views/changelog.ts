@@ -140,7 +140,7 @@ export const changelogHTML = `
                     <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
                 </div>
                 <div class="text-right">
-                    <div class="text-2xl font-bold text-blue-600">v2.10.5</div>
+                    <div class="text-2xl font-bold text-blue-600">v2.14.6</div>
                     <div class="text-sm text-gray-500">Version actuelle</div>
                 </div>
             </div>
@@ -192,7 +192,41 @@ export const changelogHTML = `
 
         <!-- Timeline -->
         <div class="timeline">
-            <!-- Version 2.10.5 - ACTUELLE -->
+            <!-- Version 2.14.6 - ACTUELLE -->
+            <div class="timeline-item" data-version="2.14.6" data-types="feature">
+                <div class="timeline-dot bg-gradient-to-br from-emerald-600 to-emerald-700 text-white">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <div class="version-card">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Version 2.14.6</h2>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">ACTUELLE</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-bold text-gray-700 mb-2 flex items-center">
+                                <i class="fas fa-star text-blue-500 mr-2"></i>
+                                Préparation Appels Audio/Vidéo
+                            </h3>
+                            <ul class="space-y-1 text-gray-600 text-sm ml-6">
+                                <li>• Ajout visuel des icônes d'appel dans l'interface chat</li>
+                                <li>• Phase 1 : Intégration UI (boutons inactifs)</li>
+                                <li>• Préparation architecture "Zero Risk"</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        <span class="badge badge-feature"><i class="fas fa-star"></i> Fonctionnalité</span>
+                        <span class="badge badge-upcoming"><i class="fas fa-clock"></i> Phase 1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version 2.10.5 -->
             <div class="timeline-item" data-version="2.10.5" data-types="fix">
                 <div class="timeline-dot bg-gradient-to-br from-red-600 to-red-700 text-white">
                     <i class="fas fa-bug"></i>
