@@ -1,5 +1,11 @@
 # Historique des Changements
 
+## [2.14.18] - 2025-12-08 (Guest Push Fix)
+### 🐛 Corrections Critiques
+- **Push Notifications** : Résolution de l'erreur 500 lors de l'abonnement push pour les utilisateurs invités (Guest).
+  - Suppression des contraintes de clé étrangère sur `push_subscriptions` et `pending_notifications` pour supporter les IDs négatifs des invités.
+  - Application de la migration `20251208000000_fix_push_subscriptions_fk.sql`.
+
 ## [2.14.1] - 2025-12-04 (Diagnostic Update)
 ### 🔧 Outils
 - **Diagnostic Push** : Ajout d'une route API `/api/push/diagnose/:query` pour vérifier l'état des notifications push d'un utilisateur spécifique (abonnements, logs, tests) en temps réel.
