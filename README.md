@@ -37,6 +37,11 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.16 (8 Décembre 2025) - FIX GUEST PUSH SUBSCRIBE 🐛✨
+- **🐛 FIX CRITIQUE**: Correction de l'erreur 500 lors de la souscription push pour les invités (Guest).
+- **💾 DATABASE**: Migration SQL pour supporter les IDs utilisateurs négatifs dans `push_subscriptions` et `pending_notifications`.
+- **🚀 DEPLOY**: Application de la migration en production pour permettre aux invités de recevoir des notifications.
+
 ### Version 2.14.15 (8 Décembre 2025) - FIX GUEST AUTH ME 🐛✨
 - **🐛 FIX CRITIQUE**: Correction de l'erreur 404 sur `/api/auth/me` pour les invités (Guest).
 - **👥 SUPPORT GUEST**: L'endpoint `/me` supporte désormais correctement les utilisateurs de la table `chatGuests` (IDs négatifs).
