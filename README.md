@@ -37,6 +37,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.19 (8 Décembre 2025) - UI FIX MESSENGER HEADER 📱✨
+- **🐛 FIX UI**: Correction de l'affichage du bouton de déconnexion sur petits écrans (mobile).
+- **🎨 LAYOUT COMPACT**: Réduction des espacements et padding dans l'en-tête de la liste de conversations.
+- **📱 TRUNCATE**: Troncature intelligente du nom d'utilisateur pour éviter le débordement.
+- **✅ IMPACT**: Le bouton de déconnexion est maintenant toujours visible et accessible sur tous les appareils mobiles.
+
 ### Version 2.14.18 (8 Décembre 2025) - FIX GUEST PUSH SUBSCRIBE 🐛✨
 - **🐛 FIX CRITIQUE**: Correction de l'erreur 500 lors de la souscription push pour les invités (Guest).
 - **💾 DATABASE**: Migration SQL pour supporter les IDs utilisateurs négatifs dans `push_subscriptions` et `pending_notifications`.
