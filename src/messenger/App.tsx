@@ -1897,6 +1897,25 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         </div>
                     </div>
                 </div>
+
+                {/* NOUVEAUX ICONES APPEL (VISUEL SEULEMENT - PHASE 1) */}
+                <div className="flex items-center gap-2 md:gap-4 mr-2">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); alert("📞 Appel audio : Fonctionnalité bientôt disponible (Phase 2)"); }} 
+                        className="w-10 h-10 rounded-full hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone"
+                        title="Appel Audio"
+                    >
+                        <i className="fas fa-phone-alt text-lg group-hover/phone:scale-110 transition-transform"></i>
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); alert("📹 Appel vidéo : Fonctionnalité bientôt disponible (Phase 3)"); }} 
+                        className="w-10 h-10 rounded-full hover:bg-purple-500/10 text-purple-500 hover:text-purple-400 flex items-center justify-center transition-all border border-transparent hover:border-purple-500/30 group/video"
+                        title="Appel Vidéo"
+                    >
+                        <i className="fas fa-video text-lg group-hover/video:scale-110 transition-transform"></i>
+                    </button>
+                </div>
+
                 <div className="flex gap-4 text-gray-400">
                     <button onClick={(e) => { e.stopPropagation(); }} className="hidden md:flex hover:text-white transition-colors w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5"><i className="fas fa-search text-lg"></i></button>
                     
