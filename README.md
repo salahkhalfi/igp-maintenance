@@ -37,6 +37,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.6 (8 Décembre 2025) - PRÉPARATION APPELS AUDIO/VIDÉO 📞✨
+- **📞 PRÉPARATION VISUELLE** : Ajout des icônes d'appel audio et vidéo dans l'interface de chat.
+- **🚧 PHASE 1** : Intégration visuelle uniquement (boutons inactifs pour le moment).
+- **🔒 SÉCURITÉ** : Architecture "Zero Risk" validée pour future implémentation (pas d'impact sur existant).
+- **✨ UX** : Positionnement ergonomique dans l'en-tête de conversation.
+
 ### Version 2.14.5 (7 Décembre 2025) - ADMINISTRATION AVANCÉE CHAT 🧹✨
 - **🧹 VIDER DISCUSSION** : Nouvelle fonctionnalité pour les administrateurs permettant de supprimer tous les messages d'un groupe en un clic sans supprimer le groupe lui-même.
 - **🗑️ NETTOYAGE COMPLET** : Suppression en cascade des messages et des fichiers médias associés (R2) pour libérer de l'espace.
