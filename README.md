@@ -37,6 +37,11 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.15 (8 Décembre 2025) - FIX GUEST AUTH ME 🐛✨
+- **🐛 FIX CRITIQUE**: Correction de l'erreur 404 sur `/api/auth/me` pour les invités (Guest).
+- **👥 SUPPORT GUEST**: L'endpoint `/me` supporte désormais correctement les utilisateurs de la table `chatGuests` (IDs négatifs).
+- **✅ IMPACT**: Johanne (Guest) peut maintenant voir son profil et cliquer sur la cloche sans erreur.
+
 ### Version 2.14.14 (8 Décembre 2025) - FIX LOGOUT ERROR 🐛✨
 - **🐛 FIX**: Correction de l'erreur "Auth token missing" lors de la déconnexion.
 - **🛡️ ROBUSTESSE**: Vérification du token avant l'initialisation des notifications push.

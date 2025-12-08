@@ -441,6 +441,39 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
+    // Gérer les invités (Guests)
+    if (userPayload.isGuest || userPayload.userId < 0) {
+        const guestId = Math.abs(userPayload.userId); // ID stocké positif en base
+        const guest = await db
+            .select()
+            .from(chatGuests)
+            .where(eq(chatGuests.id, guestId))
+            .get();
+
+        if (!guest) {
+            return c.json({ error: 'Invité non trouvé' }, 404);
+        }
+
+        // Formater comme un objet user standard pour le frontend
+        return c.json({
+            user: {
+                id: userPayload.userId, // Garder l'ID négatif pour la session
+                email: guest.email,
+                full_name: guest.full_name,
+                first_name: guest.full_name.split(' ')[0],
+                last_name: guest.full_name.split(' ').slice(1).join(' '),
+                role: 'guest',
+                company: guest.company,
+                avatar_key: null, // Pas d'avatar pour les guests pour l'instant
+                created_at: guest.created_at,
+                updated_at: guest.updated_at,
+                last_login: guest.last_login,
+                isGuest: true
+            }
+        });
+    }
+
+    // Gérer les utilisateurs standards
     const user = await db
       .select({
         id: users.id,
