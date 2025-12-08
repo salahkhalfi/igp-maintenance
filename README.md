@@ -37,6 +37,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.17 (8 Décembre 2025) - SECURITY GUEST ISOLATION 🔒✨
+- **🔒 SÉCURITÉ BACKEND**: Application du middleware `internalUserOnly` sur toutes les routes critiques (`tickets`, `machines`, `planning`, `comments`, `media`, `messages`).
+- **🚫 RESTRICTION**: Les invités (Guests) reçoivent désormais une erreur 403 Forbidden s'ils tentent d'accéder aux données de maintenance.
+- **↪️ REDIRECTION FRONTEND**: Détection automatique du rôle 'guest' au login et au chargement : redirection immédiate vers `/messenger`.
+- **✅ IMPACT**: Isolation complète des utilisateurs Messenger (comme Johanne) qui ne peuvent plus accéder, voir ou modifier les tickets et machines.
+
 ### Version 2.14.16 (8 Décembre 2025) - FIX GUEST PUSH SUBSCRIBE 🐛✨
 - **🐛 FIX CRITIQUE**: Correction de l'erreur 500 lors de la souscription push pour les invités (Guest).
 - **💾 DATABASE**: Migration SQL pour supporter les IDs utilisateurs négatifs dans `push_subscriptions` et `pending_notifications`.
