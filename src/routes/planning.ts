@@ -1,7 +1,7 @@
 
 import { Hono } from 'hono';
 import { Bindings } from '../types';
-import { authMiddleware, requirePermission, adminOnly } from '../middlewares/auth';
+import { authMiddleware, requirePermission, adminOnly, internalUserOnly } from '../middlewares/auth';
 import { getDb } from '../db';
 import { messages } from '../db/schema';
 import { sendPushNotification } from './push';
