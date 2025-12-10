@@ -148,9 +148,9 @@ const GlobalStyles = () => (
         }
 
         .message-bubble-them {
-            background: rgba(255, 255, 255, 0.05);
-            color: #e5e7eb;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
         }
 
@@ -245,6 +245,20 @@ const getAvatarGradient = (name: string) => {
     return gradients[Math.abs(hash) % gradients.length];
 };
 
+const getRoleDisplayName = (role: string) => {
+    if (!role) return '';
+    switch(role.toLowerCase()) {
+        case 'admin': return 'Administrateur';
+        case 'supervisor': return 'Superviseur';
+        case 'technician': return 'Technicien';
+        case 'operator': return 'Opérateur';
+        case 'coordinator': return 'Coordinateur';
+        case 'planner': return 'Planificateur';
+        case 'guest': return 'Invité';
+        default: return role;
+    }
+};
+
 const urlBase64ToUint8Array = (base64String: string) => {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -337,8 +351,11 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
             <div className="w-full max-w-md z-10 animate-slide-up px-4">
                 <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl">
                     <div className="flex flex-col items-center mb-10">
-                        <img src="/logo-igp.png" alt="IGP Glass" className="h-20 object-contain mb-6 drop-shadow-2xl" />
-                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">Messenger</h1>
+                        <img src="/logo-igp.png" alt="IGP Glass" className="h-20 object-contain mb-4 drop-shadow-2xl" />
+                        <p className="text-emerald-500/90 text-[10px] font-bold tracking-widest uppercase text-center mb-6 leading-relaxed max-w-[280px] mx-auto">
+                            Les Produits Verriers<br/>International IGP Inc.
+                        </p>
+                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">IGP Connect</h1>
                         <p className="text-gray-400 text-sm mt-2 font-medium tracking-wide uppercase">Connexion Sécurisée</p>
                     </div>
                     
@@ -467,7 +484,7 @@ const UserSelect = ({ onSelect, selectedIds, onClose }: { onSelect: (ids: number
                             </div>
                             <div className="flex-1">
                                 <div className={`font-semibold text-base ${selected.includes(user.id) ? 'text-emerald-400' : 'text-gray-200 group-hover:text-white'}`}>{user.full_name}</div>
-                                <div className="text-gray-500 text-xs uppercase tracking-wider font-bold mt-0.5">{user.role}</div>
+                                <div className="text-gray-500 text-xs uppercase tracking-wider font-bold mt-0.5">{getRoleDisplayName(user.role)}</div>
                             </div>
                         </div>
                     ))}
@@ -657,9 +674,18 @@ const GuestManagementModal = ({ onClose }: { onClose: () => void }) => {
     );
 };
 
-const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName, currentUserAvatarKey, onOpenInfo, onAvatarUpdate }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, currentUserName: string, currentUserAvatarKey: string | null, onOpenInfo: () => void, onAvatarUpdate: () => void }) => {
+const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName, currentUserAvatarKey, onOpenInfo, onAvatarUpdate, initialRecipientId, onRecipientProcessed }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, currentUserName: string, currentUserAvatarKey: string | null, onOpenInfo: () => void, onAvatarUpdate: () => void, initialRecipientId?: number | null, onRecipientProcessed?: () => void }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+    // ...
+    
+    // Auto-Start Direct Chat from URL
+    useEffect(() => {
+        if (initialRecipientId && !loading && conversations) {
+            startDirectChat(initialRecipientId);
+            if (onRecipientProcessed) onRecipientProcessed();
+        }
+    }, [initialRecipientId, loading]);
     const [pushEnabled, setPushEnabled] = useState(false);
     const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
     const [currentUserRole, setCurrentUserRole] = useState<string>('operator');
@@ -668,6 +694,8 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
+
+    const [avatarVersion, setAvatarVersion] = useState(Date.now());
 
     useEffect(() => {
         setAvatarError(false);
@@ -694,6 +722,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 await axios.post('/api/auth/avatar', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
+                setAvatarVersion(Date.now()); // Update version to bust cache ONLY on change
                 onAvatarUpdate(); // Refresh in App
             } catch (err) {
                 alert("Erreur lors de l'upload de l'avatar");
@@ -710,6 +739,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         setUploadingAvatar(true);
         try {
             await axios.delete('/api/auth/avatar');
+            setAvatarVersion(Date.now());
             onAvatarUpdate();
         } catch (err) {
             alert("Erreur lors de la suppression");
@@ -723,6 +753,52 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     const [showCreateGroup, setShowCreateGroup] = useState(false);
     const [showGuestManager, setShowGuestManager] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+    
+    // --- SMART SEARCH LOGIC ---
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isFocused, setIsFocused] = useState(false);
+    const [viewingList, setViewingList] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    
+    useEffect(() => {
+        axios.get('/api/v2/chat/users').then(res => setAllUsers(res.data.users || [])).catch(console.error);
+    }, []);
+
+    const startDirectChat = async (targetUserId: number) => {
+        try {
+            const res = await axios.post('/api/v2/chat/conversations', {
+                type: 'direct',
+                participantIds: [targetUserId]
+            });
+            if (res.data.conversationId) {
+                onSelect(res.data.conversationId);
+                setSearchTerm('');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const createBroadcastGroup = async () => {
+        if (!confirm(`Créer un groupe avec TOUS les ${allUsers.length} utilisateurs ?`)) return;
+        
+        try {
+            const allIds = allUsers.map(u => u.id).filter(id => id !== currentUserId);
+            const res = await axios.post('/api/v2/chat/conversations', {
+                type: 'group',
+                name: `📢 Annonce Générale ${new Date().toLocaleDateString()}`,
+                participantIds: allIds
+            });
+            if (res.data.conversationId) {
+                onSelect(res.data.conversationId);
+                setSearchTerm('');
+            }
+        } catch (err) {
+            alert("Erreur création groupe global");
+        }
+    };
+    // --------------------------
 
     // Sound logic
     // Removed local ref to use global SoundManager
@@ -739,14 +815,33 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             } catch (e) { console.error(e); }
         }
 
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.pushManager.getSubscription().then(subscription => {
-                    setPushEnabled(!!subscription);
+        // Helper to check robust subscription status
+        const checkSubscriptionStatus = () => {
+            if ((window as any).isPushSubscribed) {
+                (window as any).isPushSubscribed().then((isSubscribed: boolean) => {
+                    setPushEnabled(isSubscribed);
+                    // Also update permission state to be in sync
+                    if ('Notification' in window) {
+                        setPushPermission(Notification.permission);
+                    }
                 });
-            });
-        }
+            } else {
+                 // Fallback if script not loaded yet (shouldn't happen often)
+                 if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.pushManager.getSubscription().then(subscription => {
+                             // This is the "naive" check that caused the bug, 
+                             // but better than nothing if script missing.
+                             // Ideally we wait for script.
+                        });
+                    });
+                 }
+            }
+        };
 
+        // Initial check
+        checkSubscriptionStatus();
+        
         // Monitor Push Permission
         if ('Notification' in window) {
             setPushPermission(Notification.permission);
@@ -754,7 +849,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         
         // Listen for custom event from push-notifications.js
         const handlePushChange = () => {
-            if ('Notification' in window) setPushPermission(Notification.permission);
+            checkSubscriptionStatus();
         };
         window.addEventListener('push-notification-changed', handlePushChange);
 
@@ -828,8 +923,22 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     const canCreateGroup = ['admin', 'supervisor', 'technician', 'coordinator', 'planner'].includes(currentUserRole);
     const isAdmin = currentUserRole === 'admin';
 
-    const handleLogout = () => {
-        if (confirm("Voulez-vous vous déconnecter ?")) {
+    const handleLogout = async () => {
+        if (!confirm("Voulez-vous vous déconnecter ?")) return;
+
+        try {
+            // 1. DÉSABONNEMENT PUSH (Nettoyage Serveur)
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    await axios.post('/api/push/unsubscribe', { endpoint: subscription.endpoint });
+                }
+            }
+        } catch (e) {
+            console.error("Erreur désabonnement push", e);
+        } finally {
+            // 2. NETTOYAGE LOCAL (Toujours exécuté)
             localStorage.removeItem('auth_token');
             window.location.reload();
         }
@@ -850,6 +959,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             const res = await (window as any).requestPushPermission();
             if (res && res.success) {
                 setPushPermission('granted');
+                setPushEnabled(true);
                 alert("✅ Notifications activées avec succès !");
             } else {
                 alert("❌ Erreur d'activation: " + (res?.error || "Inconnue"));
@@ -896,91 +1006,255 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             )}
             {showGuestManager && <GuestManagementModal onClose={() => setShowGuestManager(false)} />}
 
-            {/* PREMIUM HEADER */}
-            <div className="px-4 md:px-6 pt-8 pb-6 flex flex-col gap-6 flex-shrink-0 z-30 relative">
-                <div className="flex items-center justify-between">
-                    <div onClick={handleAvatarClick} className="flex items-center gap-3 md:gap-4 bg-white/5 pr-3 md:pr-6 pl-2 py-2 rounded-full border border-white/5 backdrop-blur-md shadow-lg hover:bg-white/10 transition-all cursor-pointer group relative">
-                        <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-                        <div className="relative">
-                            {currentUserAvatarKey && !avatarError ? (
-                                <img 
-                                    src={`/api/auth/avatar/${currentUserId}?t=${Date.now()}`} 
-                                    className="w-10 h-10 rounded-full object-cover shadow-lg shadow-emerald-900/20 border border-white/10"
-                                    alt="Avatar"
-                                    onError={() => setAvatarError(true)}
-                                />
-                            ) : (
-                                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-full flex items-center justify-center shadow-lg shadow-emerald-900/20 text-white font-bold text-sm">
-                                    {getInitials(currentUserName)}
-                                </div>
-                            )}
-                            {uploadingAvatar && (
-                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center z-10">
-                                    <i className="fas fa-spinner fa-spin text-white text-xs"></i>
-                                </div>
-                            )}
-                            {currentUserAvatarKey && (
-                                <div 
-                                    onClick={handleDeleteAvatar}
-                                    className="absolute -bottom-1 -left-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#151515] opacity-0 group-hover:opacity-100 transition-opacity z-30 cursor-pointer hover:bg-red-600 shadow-lg hover:scale-110"
-                                    title="Supprimer la photo"
-                                >
-                                    <i className="fas fa-trash text-[8px] text-white"></i>
-                                </div>
-                            )}
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-800 rounded-full flex items-center justify-center border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                <i className="fas fa-camera text-[8px] text-white"></i>
-                            </div>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-white font-bold text-sm leading-none group-hover:text-emerald-400 transition-colors truncate max-w-[80px] md:max-w-none">{firstName}</span>
-                            <div className="flex items-center gap-1.5 mt-1">
-                                <span className="relative flex h-2 w-2">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </span>
-                                <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">En ligne</span>
-                            </div>
-                        </div>
-                    </div>
+            {/* PREMIUM HEADER - ID CARD STYLE */}
+            <div className="px-4 md:px-6 pt-6 pb-4 flex-shrink-0 z-30 relative">
+                {/* THE GLASS CARD CONTAINER */}
+                <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0f0f0f]/60 backdrop-blur-2xl shadow-2xl group/card transition-all duration-500 hover:border-white/15 hover:shadow-emerald-900/10">
                     
-                    <div className="flex gap-2 md:gap-3">
-                        <button 
-                            onClick={handleSubscribe}
-                            className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
-                                pushPermission === 'granted' 
-                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20' 
-                                : 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 animate-pulse'
-                            }`}
-                            title={pushPermission === 'granted' ? "Notifications actives" : "ACTIVER les notifications"}
-                        >
-                            <i className={`fas ${pushPermission === 'granted' ? 'fa-bell' : 'fa-bell-slash'}`}></i>
-                        </button>
+                    {/* Decorative Background Elements */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-50 pointer-events-none"></div>
 
-                        <button 
-                            onClick={() => {
-                                SoundManager.play().then(() => alert("🔊 Son de test envoyé !")).catch(() => alert("❌ Erreur : Le navigateur bloque le son. Cliquez n'importe où sur la page puis réessayez."));
-                            }}
-                            className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all border border-emerald-500/20 hover:border-emerald-500 shadow-lg"
-                            title="Tester le son"
-                        >
-                            <i className="fas fa-volume-up text-sm"></i>
-                        </button>
-                        {isAdmin && (
-                            <button onClick={() => setShowGuestManager(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gray-800/50 text-gray-400 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all border border-white/5 hover:border-white/20 shadow-lg" title="Gérer les invités">
-                                <i className="fas fa-user-shield text-sm"></i>
+                    <div className="relative z-10 flex flex-col items-center p-6">
+                        
+                        {/* 1. PROFILE SECTION */}
+                        <div className="flex flex-row items-center gap-6 w-full cursor-pointer px-2" onClick={handleAvatarClick}>
+                            <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                            
+                            {/* Avatar with Animated Rings */}
+                            <div className="relative group/avatar flex-shrink-0">
+                                {/* Glow Effect */}
+                                <div className="absolute inset-0 bg-emerald-500 rounded-full blur-md opacity-20 group-hover/avatar:opacity-40 transition-opacity duration-500 animate-pulse"></div>
+                                
+                                <div className="relative w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-emerald-400 via-emerald-600 to-emerald-900 shadow-xl">
+                                    <div className="w-full h-full rounded-full border-[3px] border-[#0a0a0a] overflow-hidden bg-[#0a0a0a] relative">
+                                        {currentUserAvatarKey && !avatarError ? (
+                                            <img 
+                                                src={`/api/auth/avatar/${currentUserId}?t=${avatarVersion}`} 
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110"
+                                                alt="Avatar"
+                                                onError={() => setAvatarError(true)}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center text-white font-bold text-xl">
+                                                {getInitials(currentUserName)}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Camera Overlay on Hover */}
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300">
+                                            <i className="fas fa-camera text-white text-xs"></i>
+                                        </div>
+                                    </div>
+
+                                    {/* Delete Button */}
+                                    {currentUserAvatarKey && (
+                                        <div 
+                                            onClick={handleDeleteAvatar}
+                                            className="absolute top-0 right-0 bg-red-500 w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#0a0a0a] opacity-0 group-hover/avatar:opacity-100 transition-all hover:scale-110 shadow-lg z-20"
+                                        >
+                                            <i className="fas fa-times text-[8px] text-white"></i>
+                                        </div>
+                                    )}
+
+                                    {/* Online Badge */}
+                                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#0a0a0a] rounded-full flex items-center justify-center z-10">
+                                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Name & Role */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                <h2 className="text-white font-display font-bold text-lg tracking-wide leading-tight group-hover/card:text-emerald-400 transition-colors truncate">
+                                    {firstName}
+                                </h2>
+                                <p className="text-emerald-500/70 text-[9px] font-bold uppercase tracking-wide mt-0.5 leading-tight whitespace-normal">Les Produits Verriers International IGP Inc.</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[9px] font-bold text-gray-400 uppercase tracking-wider backdrop-blur-md truncate">
+                                        {getRoleDisplayName(currentUserRole)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-5"></div>
+
+                        {/* 2. DASHBOARD ACTIONS */}
+                        <div className="flex items-center justify-between w-full px-2 gap-2">
+                            <button 
+                                onClick={handleSubscribe}
+                                className={`flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border backdrop-blur-md group/btn ${
+                                    pushPermission === 'granted' && pushEnabled
+                                    ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10' 
+                                    : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                                }`}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform group-hover/btn:scale-110 ${pushPermission === 'granted' && pushEnabled ? 'bg-emerald-500/20' : 'bg-white/5'}`}>
+                                    <i className={`fas ${pushPermission === 'granted' && pushEnabled ? 'fa-bell' : 'fa-bell-slash'} text-sm`}></i>
+                                </div>
                             </button>
-                        )}
-                        <button onClick={handleLogout} className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/20 hover:border-red-500 shadow-lg" title="Déconnexion">
-                            <i className="fas fa-power-off text-sm"></i>
-                        </button>
+
+                            <button 
+                                onClick={() => SoundManager.play()}
+                                className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-emerald-400 hover:bg-white/10 hover:text-white backdrop-blur-md group/btn"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110">
+                                    <i className="fas fa-volume-up text-sm"></i>
+                                </div>
+                            </button>
+
+                            {isAdmin && (
+                                <button 
+                                    onClick={() => setShowGuestManager(true)}
+                                    className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-blue-400 hover:bg-white/10 hover:text-white backdrop-blur-md group/btn"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110">
+                                        <i className="fas fa-user-shield text-sm"></i>
+                                    </div>
+                                </button>
+                            )}
+
+                            <button 
+                                onClick={handleLogout}
+                                className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/20 backdrop-blur-md group/btn"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110 group-hover/btn:rotate-90">
+                                    <i className="fas fa-power-off text-sm"></i>
+                                </div>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
+            </div>
 
-                <div className="flex gap-3">
-                    <div className="flex-1 relative group">
+                <div className="flex gap-3 relative z-50 px-4 md:px-6 mb-4">
+                    <div 
+                        className="flex-1 relative group"
+                        onMouseEnter={() => setIsFocused(true)}
+                        onMouseLeave={() => {
+                            if (document.activeElement !== searchInputRef.current && !searchTerm && !viewingList) {
+                                setIsFocused(false);
+                            }
+                        }}
+                    >
                         <i className="fas fa-search absolute left-4 top-3.5 text-gray-500 group-focus-within:text-emerald-500 transition-colors"></i>
-                        <input type="text" placeholder="Rechercher..." className="w-full bg-white/5 border border-white/5 text-white text-sm rounded-2xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all placeholder-gray-600 shadow-inner font-medium" />
+                        <input 
+                            ref={searchInputRef}
+                            type="text" 
+                            placeholder="Rechercher une personne..." 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onFocus={() => { setIsFocused(true); setViewingList(true); }}
+                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                            className="w-full bg-white/5 border border-white/5 text-white text-sm rounded-2xl py-3.5 pl-11 pr-12 focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all placeholder-gray-600 shadow-inner font-medium" 
+                        />
+                        
+                        {/* CHEVRON "Open List" Button (When collapsed and empty) */}
+                        {(!searchTerm && !viewingList && !isFocused) && (
+                            <button
+                                onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent input focus
+                                    e.stopPropagation();
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingList(true);
+                                    // Do NOT focus input
+                                }}
+                                className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-center text-gray-500 hover:text-white transition-colors z-20"
+                            >
+                                <i className="fas fa-chevron-down"></i>
+                            </button>
+                        )}
+
+                        {/* BOUTON D'ACTION SMART (CLAVIER/FERMER) */}
+                        {(searchTerm || viewingList || isFocused) && (
+                            <button
+                                onMouseDown={(e) => e.preventDefault()} // Prevent blur on click
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (searchTerm) {
+                                        setSearchTerm('');
+                                        searchInputRef.current?.focus();
+                                    } else if (isFocused) {
+                                        // Cas: Focus actif -> On veut fermer le clavier mais garder la liste
+                                        searchInputRef.current?.blur();
+                                        // viewingList reste true grâce au onFocus précédent
+                                    } else {
+                                        // Cas: Pas de focus, liste ouverte -> On veut fermer la liste
+                                        setViewingList(false);
+                                        setIsFocused(false);
+                                    }
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"
+                            >
+                                <i className={`fas ${searchTerm ? 'fa-times' : (isFocused ? 'fa-keyboard' : 'fa-times')}`}></i>
+                            </button>
+                        )}
+                        
+                        {(searchTerm.length > 0 || isFocused || viewingList) && (
+                            <div 
+                                onTouchStart={() => {
+                                    // ZERO FRICTION: Toucher la liste ferme le clavier automatiquement
+                                    if (isFocused) {
+                                        searchInputRef.current?.blur();
+                                    }
+                                }}
+                                className="absolute top-full left-0 right-0 mt-2 bg-[#151515] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl max-h-96 overflow-y-auto custom-scrollbar animate-slide-up z-50"
+                            >
+                                <div className="p-2">
+                                    <div className="px-3 py-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                                        {searchTerm ? 'Résultats' : 'Contacts'}
+                                    </div>
+                                    
+                                    {/* OPTION ADMIN: TOUT LE MONDE */}
+                                    {currentUserRole === 'admin' && (
+                                        <div 
+                                            onClick={createBroadcastGroup}
+                                            className="flex items-center gap-3 p-3 hover:bg-emerald-500/10 rounded-xl cursor-pointer transition-colors group/item border border-transparent hover:border-emerald-500/30 mb-2 bg-emerald-500/5"
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                                <i className="fas fa-bullhorn text-xs"></i>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-emerald-400 font-bold text-sm">📢 TOUT LE MONDE</div>
+                                                <div className="text-gray-500 text-[10px] uppercase font-bold">Créer un groupe avec tous ({allUsers.length})</div>
+                                            </div>
+                                            <i className="fas fa-arrow-right text-gray-600 group-hover/item:text-emerald-500 transition-colors"></i>
+                                        </div>
+                                    )}
+
+                                    {allUsers
+                                        .filter(u => u.id !== currentUserId)
+                                        .filter(u => !searchTerm || u.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                        .map(user => (
+                                        <div 
+                                            key={user.id}
+                                            onClick={() => startDirectChat(user.id)}
+                                            className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors group/item"
+                                        >
+                                            {user.avatar_key ? (
+                                                <img src={`/api/auth/avatar/${user.id}`} className="w-8 h-8 rounded-full object-cover" alt={user.full_name} />
+                                            ) : (
+                                                <div className={`w-8 h-8 rounded-full ${getAvatarGradient(user.full_name)} flex items-center justify-center text-white text-xs font-bold`}>{getInitials(user.full_name)}</div>
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-white font-bold text-sm truncate">{user.full_name}</div>
+                                                <div className="text-gray-500 text-[10px] uppercase font-bold">{getRoleDisplayName(user.role)}</div>
+                                            </div>
+                                            <i className="fas fa-comment-alt text-gray-600 group-hover/item:text-emerald-500 transition-colors"></i>
+                                        </div>
+                                    ))}
+                                    {allUsers.filter(u => u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) && u.id !== currentUserId).length === 0 && (
+                                        <div className="px-3 py-2 text-gray-500 text-xs italic">Aucun utilisateur trouvé</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="relative group">
@@ -1013,7 +1287,6 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                         </div>
                     </div>
                 </div>
-            </div>
             
             {/* LISTE CONVERSATIONS - PREMIUM STYLE */}
             <div className="overflow-y-auto flex-1 custom-scrollbar px-4 pb-4 space-y-2 relative z-10">
@@ -1024,7 +1297,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                         </div>
                         <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Vide pour l'instant</p>
                     </div>
-                ) : conversations.map(conv => {
+                ) : conversations.filter(c => (c.name || '').toLowerCase().includes(searchTerm.toLowerCase())).map(conv => {
                     const avatarGradient = conv.name ? getAvatarGradient(conv.name) : 'bg-gray-800';
                     const isActive = selectedId === conv.id;
                     
@@ -1358,7 +1631,7 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                                                 {p.full_name}
                                                 {p.user_id === currentUserId && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-gray-300 border border-white/5">Moi</span>}
                                             </div>
-                                            <div className="text-gray-500 text-xs font-medium mt-0.5 uppercase tracking-wide">{p.role === 'admin' ? 'Administrateur' : 'Membre'}</div>
+                                            <div className="text-gray-500 text-xs font-medium mt-0.5 uppercase tracking-wide">{getRoleDisplayName(p.role)}</div>
                                         </div>
                                     </div>
 
@@ -1426,11 +1699,106 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
     );
 };
 
-const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void }) => {
+const AudioPlayer = ({ src, isMe }: { src: string, isMe: boolean }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+    const togglePlay = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!audioRef.current) return;
+        
+        if (isPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play().catch(e => console.error("Audio play failed", e));
+        }
+        setIsPlaying(!isPlaying);
+    };
+
+    const formatTime = (time: number) => {
+        if (!time || isNaN(time)) return "0:00";
+        const m = Math.floor(time / 60);
+        const s = Math.floor(time % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    return (
+        // DESIGN UPDATE: Suppression des bordures et fonds intérieurs. Le lecteur "flotte" dans la bulle.
+        <div className="flex items-center gap-4 py-1 pr-2 min-w-[240px] max-w-[300px] select-none">
+            
+            {/* BOUTON PLAY PREMIUM (Inversé pour max contraste) */}
+            <button 
+                onClick={togglePlay}
+                className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all shadow-md active:scale-95 ${
+                    isMe 
+                    ? 'bg-white text-emerald-600' // MOI: Bouton Blanc sur fond Vert (Super clean)
+                    : 'bg-emerald-500 text-white hover:bg-emerald-400' // EUX: Bouton Vert sur fond Gris (Call to action)
+                }`}
+            >
+                <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play ml-1'} text-xl`}></i>
+            </button>
+
+            <div className="flex-1 flex flex-col justify-center gap-1.5">
+                {/* Visualisation Onde Sonore - Organique */}
+                <div className="h-8 flex items-center gap-1">
+                    {[...Array(20)].map((_, i) => (
+                        <div 
+                            key={i} 
+                            // Barres blanches pures pour Moi, Grises/Blanches pour Eux
+                            className={`w-1 rounded-full transition-all duration-300 ${
+                                i/20 * 100 < progress 
+                                    ? (isMe ? 'bg-white/90' : 'bg-emerald-500') // Played part
+                                    : (isMe ? 'bg-emerald-900/30' : 'bg-gray-600') // Unplayed part
+                            }`}
+                            style={{ 
+                                // Onde sonore plus naturelle (sinusoidale simulée)
+                                height: [30, 50, 70, 40, 60, 90, 45, 80, 55, 75, 45, 65, 85, 50, 40, 70, 45, 60, 40, 30][i] + '%',
+                                animation: isPlaying ? `pulse 0.4s infinite alternate ${i * 0.05}s` : 'none'
+                            }}
+                        />
+                    ))}
+                </div>
+                
+                {/* Timer Discret */}
+                <div className={`text-[10px] font-bold font-mono tracking-widest ${isMe ? 'text-emerald-100/80' : 'text-gray-400'}`}>
+                    {isPlaying ? formatTime(audioRef.current?.currentTime || 0) : formatTime(duration)}
+                </div>
+            </div>
+
+            <audio 
+                ref={audioRef} 
+                src={src} 
+                preload="metadata"
+                playsInline
+                onTimeUpdate={() => {
+                    if (audioRef.current && audioRef.current.duration) {
+                        setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
+                    }
+                }}
+                onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
+                onEnded={() => { setIsPlaying(false); setProgress(0); }}
+                className="hidden" 
+            />
+        </div>
+    );
+};
+
+const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo, initialMessage, onMessageConsumed }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void, initialMessage?: string, onMessageConsumed?: () => void }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [conversation, setConversation] = useState<Conversation | null>(null);
-    const [input, setInput] = useState('');
+    const [input, setInput] = useState(initialMessage || ''); // Init with prop
+    
+    useEffect(() => {
+        if (initialMessage && initialMessage !== input) {
+            setInput(initialMessage);
+            setIsInputExpanded(true);
+            if (onMessageConsumed) onMessageConsumed();
+        }
+    }, [initialMessage]);
+
     const [showEmoji, setShowEmoji] = useState(false);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
@@ -1439,6 +1807,18 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [viewImage, setViewImage] = useState<string | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
+    // Search In-Chat Logic
+    const [searchMode, setSearchMode] = useState(false);
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [allUsers, setAllUsers] = useState<User[]>([]); // Pour la navigation rapide
+
+    useEffect(() => {
+        if (searchMode && allUsers.length === 0) {
+            axios.get('/api/v2/chat/users').then(res => setAllUsers(res.data.users || [])).catch(console.error);
+        }
+    }, [searchMode]);
+
     const inputTimeoutRef = useRef<any>(null);
     
     const [isRecording, setIsRecording] = useState(false);
@@ -1631,16 +2011,28 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
     };
 
+    const [isSending, setIsSending] = useState(false);
+
     const sendMessage = async () => {
         if (!input.trim()) return;
+        
+        // Offline check
+        if (!navigator.onLine) {
+            alert("⚠️ Vous êtes hors ligne. Impossible d'envoyer le message.");
+            return;
+        }
+
         const token = localStorage.getItem('auth_token');
         if (!token) return;
+        
+        setIsSending(true);
         try {
             const response = await fetch('/api/v2/chat/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ conversationId, content: input, type: 'text' })
             });
+            
             if (response.ok) { 
                 setInput(''); 
                 setShowEmoji(false); 
@@ -1649,8 +2041,16 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 // Start timeout to collapse after sending
                 if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
                 inputTimeoutRef.current = setTimeout(() => setIsInputExpanded(false), 1000);
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || "Erreur serveur");
             }
-        } catch (err) { console.error(err); }
+        } catch (err: any) { 
+            console.error(err);
+            alert(`❌ Erreur d'envoi: ${err.message || "Problème de connexion"}`);
+        } finally {
+            setIsSending(false);
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -1660,6 +2060,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     const handlePrivateChat = async (targetUserId: number) => {
         if (!targetUserId || targetUserId === currentUserId) return;
+        
+        // Anti-Redondance : Si on est DÉJÀ dans une conversation directe avec cette personne
+        if (conversation?.type === 'direct' && participants.some(p => p.user_id === targetUserId)) {
+            // Optionnel : Focus l'input pour inviter à écrire
+            textareaRef.current?.focus();
+            return;
+        }
+
         try {
             const res = await axios.post('/api/v2/chat/conversations', {
                 type: 'direct',
@@ -1703,7 +2111,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const handleDeleteMessage = async (msgId: string) => {
-        if(!confirm("Admin: Supprimer ce message ?")) return;
+        if(!confirm("Supprimer ce message définitivement ?")) return;
         try {
             await axios.delete(`/api/v2/chat/conversations/${conversationId}/messages/${msgId}`);
             fetchMessages();
@@ -1771,8 +2179,25 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const result = [];
         let lastDate = '';
 
-        for (let i = 0; i < messages.length; i++) {
-            const msg = messages[i];
+        // SEARCH FILTERING
+        const messagesToDisplay = searchMode && searchKeyword.trim() 
+            ? messages.filter(m => m.content.toLowerCase().includes(searchKeyword.toLowerCase()))
+            : messages;
+
+        if (searchMode && messagesToDisplay.length === 0 && searchKeyword.trim()) {
+             return (
+                <div className="flex flex-col items-center justify-center h-full animate-fade-in opacity-50 text-gray-400">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                        <i className="fas fa-search text-2xl"></i>
+                    </div>
+                    <p className="font-bold">Aucun message trouvé</p>
+                    <p className="text-xs mt-1">"{searchKeyword}"</p>
+                </div>
+             );
+        }
+
+        for (let i = 0; i < messagesToDisplay.length; i++) {
+            const msg = messagesToDisplay[i];
             const dateObj = new Date(msg.created_at.endsWith('Z') ? msg.created_at : msg.created_at + 'Z');
             const dateStr = dateObj.toLocaleDateString();
 
@@ -1849,11 +2274,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         )}
                         
                         <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${isMe ? 'message-bubble-me text-white rounded-tr-sm' : 'message-bubble-them text-gray-100 rounded-tl-sm'}`}>
-                            {isGlobalAdmin && (
+                            {(isGlobalAdmin || isMe) && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
                                     className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20 text-xs border-2 border-[#0b141a] hover:scale-110"
-                                    title="Supprimer (Admin)"
+                                    title="Supprimer le message"
                                 >
                                     <i className="fas fa-trash"></i>
                                 </button>
@@ -1868,12 +2293,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                     />
                                 </div>
                             ) : msg.type === 'audio' && msg.media_key ? (
-                                <div className="flex items-center gap-4 pr-2 min-w-[260px]">
-                                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 shadow-inner">
-                                        <i className="fas fa-play text-sm pl-0.5"></i>
-                                    </div>
-                                    <audio controls src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} className="h-8 w-full opacity-90" />
-                                </div>
+                                <AudioPlayer src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} isMe={isMe} />
                             ) : (
                                 <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
                                     {msg.content}
@@ -1940,7 +2360,65 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 </div>
             )}
 
-            <header onClick={() => setShowInfo(true)} className="h-24 glass-header px-6 md:px-8 flex items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-all duration-300 shadow-2xl shadow-black/40 sticky top-0 w-full group/header backdrop-blur-xl border-b border-white/5">
+            <header onClick={() => !searchMode && setShowInfo(true)} className="h-24 glass-header px-6 md:px-8 flex items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-all duration-300 shadow-2xl shadow-black/40 sticky top-0 w-full group/header backdrop-blur-xl border-b border-white/5">
+                {searchMode ? (
+                    <div className="flex-1 flex items-center gap-4 animate-fade-in mr-4">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setSearchMode(false); setSearchKeyword(''); }}
+                            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-500 flex items-center justify-center transition-colors"
+                        >
+                            <i className="fas fa-arrow-left"></i>
+                        </button>
+                        <div className="flex-1 bg-white/5 rounded-xl flex items-center px-4 py-3 border border-emerald-500/30 shadow-inner relative group/search">
+                            <i className="fas fa-search text-gray-500 mr-3"></i>
+                            <input 
+                                autoFocus
+                                type="text" 
+                                placeholder="Chercher message OU utilisateur..." 
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                className="bg-transparent border-none outline-none text-white w-full placeholder-gray-500 font-medium"
+                                onKeyDown={(e) => e.key === 'Escape' && setSearchMode(false)}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                            {searchKeyword && (
+                                <i onClick={(e) => {e.stopPropagation(); setSearchKeyword('');}} className="fas fa-times-circle text-gray-500 hover:text-white cursor-pointer ml-2"></i>
+                            )}
+
+                            {/* SMART USER DROPDOWN (In-Chat) */}
+                            {(searchKeyword || isSearchFocused) && allUsers.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-[#151515] border border-white/10 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl z-50 animate-slide-up max-h-60 overflow-y-auto custom-scrollbar">
+                                    <div className="px-3 py-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-black/20">
+                                        {searchKeyword ? 'Aller vers...' : 'Contacts rapides'}
+                                    </div>
+                                    {allUsers
+                                        .filter(u => u.id !== currentUserId)
+                                        .filter(u => !searchKeyword || u.full_name.toLowerCase().includes(searchKeyword.toLowerCase()))
+                                        .map(user => (
+                                        <div 
+                                            key={user.id}
+                                            onClick={(e) => { e.stopPropagation(); handlePrivateChat(user.id); setSearchMode(false); }}
+                                            className="flex items-center gap-3 p-3 hover:bg-white/10 cursor-pointer transition-colors border-b border-white/5 last:border-0"
+                                        >
+                                            {user.avatar_key ? (
+                                                <img src={`/api/auth/avatar/${user.id}`} className="w-8 h-8 rounded-full object-cover shadow-sm" alt={user.full_name} />
+                                            ) : (
+                                                <div className={`w-8 h-8 rounded-full ${getAvatarGradient(user.full_name)} flex items-center justify-center text-white text-xs font-bold`}>{getInitials(user.full_name)}</div>
+                                            )}
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <div className="text-white font-bold text-sm truncate">{user.full_name}</div>
+                                                <div className="text-gray-500 text-[10px] uppercase font-bold">{getRoleDisplayName(user.role)}</div>
+                                            </div>
+                                            <i className="fas fa-comment-alt text-emerald-500/50"></i>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
                 <div className="flex items-center gap-5">
                     {/* Bouton Retour / Sortir Renforcé */}
                     <button 
@@ -1948,8 +2426,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl px-4 py-2.5 transition-all mr-2 shadow-lg"
                         title="Sortir de la discussion"
                     >
-                        <i className="fas fa-chevron-left text-emerald-500 group-hover:text-white transition-colors text-lg"></i>
-                        <span className="text-sm font-bold text-gray-300 group-hover:text-white hidden sm:inline">RETOUR</span>
+                        <i className="fas fa-chevron-left text-emerald-500 group-hover:text-white transition-colors text-2xl"></i>
+                        <span className="text-sm font-bold text-gray-300 group-hover:text-white hidden sm:inline ml-1">RETOUR</span>
                     </button>
 
                     <div className="relative">
@@ -1962,14 +2440,21 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     </div>
                     
                     <div className="min-w-0">
-                        <div className="text-white font-bold text-lg md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
-                        <div className="text-gray-500 text-xs font-bold truncate flex items-center gap-2 mt-1 tracking-wider uppercase">
+                        <div className="flex items-center gap-3 mb-0.5">
+                            <div className="text-white font-bold text-lg md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
+                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5 flex items-center gap-1.5 shadow-sm" title="Suppression automatique après 7 jours">
+                                <i className="fas fa-history text-[10px] text-orange-400"></i>
+                                <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">7j</span>
+                            </div>
+                        </div>
+                        <div className="text-gray-500 text-xs font-bold truncate flex items-center gap-2 tracking-wider uppercase">
                             <span className="truncate max-w-[200px] md:max-w-md">
                                 {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Chargement...'}
                             </span>
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* NOUVEAUX ICONES APPEL (VISUEL SEULEMENT - PHASE 1) */}
                 <div className="flex items-center gap-2 md:gap-4 mr-2">
@@ -1990,7 +2475,27 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 </div>
 
                 <div className="flex gap-4 text-gray-400">
-                    <button onClick={(e) => { e.stopPropagation(); }} className="hidden md:flex hover:text-white transition-colors w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5"><i className="fas fa-search text-lg"></i></button>
+                    {!searchMode && (
+                        <button 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setSearchMode(true); 
+                                setIsSearchFocused(true);
+                                if (allUsers.length === 0) {
+                                    axios.get('/api/v2/chat/users').then(res => setAllUsers(res.data.users || [])).catch(console.error);
+                                }
+                            }}
+                            onMouseEnter={() => {
+                                if (allUsers.length === 0) {
+                                    axios.get('/api/v2/chat/users').then(res => setAllUsers(res.data.users || [])).catch(console.error);
+                                }
+                            }}
+                            className="flex hover:text-white transition-colors w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5"
+                            title="Rechercher dans la discussion"
+                        >
+                            <i className="fas fa-search text-lg"></i>
+                        </button>
+                    )}
                     
                     {/* Bouton Fermer Explicite (X) */}
                     <button 
@@ -2059,7 +2564,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                     rows={1}
                                     style={{ minHeight: '48px' }}
                                 />
-                                <button onClick={() => setShowEmoji(!showEmoji)} className={`w-10 h-10 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center mb-1 ${showEmoji ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
+                                <button onClick={() => setShowEmoji(!showEmoji)} className={`w-12 h-12 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${showEmoji ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
                                     <i className="far fa-smile text-xl"></i>
                                 </button>
                             </div>
@@ -2067,8 +2572,12 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                             {/* Bouton Envoyer / Micro - Droite */}
                             <div className="pb-1">
                                 {input.trim() ? (
-                                    <button onClick={sendMessage} className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 shadow-lg shadow-emerald-900/30 transition-all transform hover:scale-105 active:scale-95">
-                                        <i className="fas fa-paper-plane text-lg ml-0.5"></i>
+                                    <button 
+                                        onClick={sendMessage} 
+                                        disabled={isSending}
+                                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-emerald-900/30 transition-all transform ${isSending ? 'bg-gray-700 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 hover:scale-105 active:scale-95 text-white'}`}
+                                    >
+                                        {isSending ? <i className="fas fa-circle-notch fa-spin text-lg"></i> : <i className="fas fa-paper-plane text-lg ml-0.5"></i>}
                                     </button>
                                 ) : (
                                     <button onClick={startRecording} className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-white/10 text-gray-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg">
@@ -2104,6 +2613,31 @@ const EmptyState = () => (
     </div>
 );
 
+const OfflineBanner = () => {
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    if (isOnline) return null;
+
+    return (
+        <div className="bg-red-500/90 text-white text-xs font-bold text-center py-1 absolute top-0 left-0 right-0 z-[100] backdrop-blur-md animate-slide-in-right">
+            <i className="fas fa-wifi-slash mr-2"></i> MODE HORS LIGNE
+        </div>
+    );
+};
+
 const App = () => {
     const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -2112,6 +2646,10 @@ const App = () => {
     const [currentUserAvatarKey, setCurrentUserAvatarKey] = useState<string | null>(null);
     const [showLogin, setShowLogin] = useState(true);
     const [autoOpenInfo, setAutoOpenInfo] = useState(false);
+    
+    // Magic Bridge State
+    const [initialRecipientId, setInitialRecipientId] = useState<number | null>(null);
+    const [initialMessage, setInitialMessage] = useState<string>('');
     
     const fetchUserInfo = async () => {
         try {
@@ -2138,13 +2676,49 @@ const App = () => {
             (window as any).initPushNotifications();
         }
 
-        // --- DEEP LINKING ---
+        // --- DEEP LINKING & SSO ---
         const params = new URLSearchParams(window.location.search);
         const conversationId = params.get('conversationId');
+        const recipientId = params.get('recipientId');
+        const message = params.get('message');
+        const tokenParam = params.get('token');
+
+        // SSO: Inject token if provided
+        if (tokenParam) {
+            console.log("🔐 SSO Token detected, auto-login...");
+            localStorage.setItem('auth_token', tokenParam);
+            // Force reload context with new token
+            axios.defaults.headers.common['Authorization'] = 'Bearer ' + tokenParam;
+            
+            // Update state immediately
+            try {
+                const payload = JSON.parse(atob(tokenParam.split('.')[1]));
+                setCurrentUserId(payload.userId);
+                setCurrentUserRole(payload.role || '');
+                setCurrentUserName(payload.full_name || payload.name || 'Utilisateur');
+                fetchUserInfo();
+                setShowLogin(false);
+            } catch(e) {
+                console.error("Invalid SSO Token", e);
+            }
+        }
         
         if (conversationId) {
             console.log("🔗 Deep link detected:", conversationId);
             setSelectedConvId(conversationId);
+        }
+        
+        if (recipientId) {
+            console.log("🔗 Magic Bridge Recipient:", recipientId);
+            setInitialRecipientId(parseInt(recipientId));
+        }
+        
+        if (message) {
+            console.log("🔗 Magic Bridge Message:", message);
+            setInitialMessage(message);
+        }
+
+        if (conversationId || recipientId || message || tokenParam) {
             // Clean URL to prevent loop on refresh, but keep it clean
             window.history.replaceState({}, '', window.location.pathname);
         }
@@ -2190,6 +2764,7 @@ const App = () => {
     return (
         <>
             <GlobalStyles />
+            <OfflineBanner />
             <div className="flex h-[100dvh] bg-[#050505] overflow-hidden font-sans relative" style={{ backgroundImage: 'url(/static/maintenance-bg-premium.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <div className="absolute inset-0 z-0 bg-black/60 backdrop-blur-md pointer-events-none">
                     <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/20 blur-[150px] mix-blend-overlay"></div>
@@ -2205,6 +2780,8 @@ const App = () => {
                         currentUserAvatarKey={currentUserAvatarKey}
                         onOpenInfo={() => setAutoOpenInfo(true)} 
                         onAvatarUpdate={fetchUserInfo}
+                        initialRecipientId={initialRecipientId}
+                        onRecipientProcessed={() => setInitialRecipientId(null)}
                     />
                 </div>
 
@@ -2218,6 +2795,8 @@ const App = () => {
                             onNavigate={setSelectedConvId}
                             initialShowInfo={autoOpenInfo}
                             onConsumeInfo={() => setAutoOpenInfo(false)}
+                            initialMessage={initialMessage}
+                            onMessageConsumed={() => setInitialMessage('')}
                         />
                     </div>
                 ) : (

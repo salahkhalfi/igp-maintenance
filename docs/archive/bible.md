@@ -61,4 +61,5 @@
 *   **[Hygiène de Session]** : Un appareil (Endpoint Push) appartient à un seul utilisateur.
     1.  **Au Login/Subscribe** : Écraser ("voler") l'abonnement si l'appareil est déjà connu.
     2.  **Au Logout** : Désabonner explicitement le Push côté Serveur avant de détruire le token local. Sinon, la tablette continuera de sonner pour l'ancien utilisateur.
+*   **[Feedback Vital]** : Ne jamais laisser l'utilisateur dans le flou. Si une action échoue (ex: envoi message), l'interface doit le dire clairement (alerte, toast) et ne pas nettoyer le champ d'entrée. Si l'utilisateur est hors ligne, l'UI doit l'afficher explicitement (Bannière).
 *   **[Identité Corporative]** : Le logo ou le nom de l'entreprise est un élément de réassurance (Sécurité). Il doit être présent sur les écrans critiques (Login) et le Dashboard principal (sous l'identifiant), visible mais discret (hiérarchie secondaire), pour confirmer à l'utilisateur qu'il est "au bon endroit".
