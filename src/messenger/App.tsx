@@ -1386,7 +1386,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                     </div>
                                     
                                     <div className="flex justify-between items-center">
-                                        <p className={`text-sm truncate w-[85%] font-medium ${isActive ? 'text-gray-300' : 'text-gray-500 group-hover:text-gray-400'} ${conv.unread_count > 0 ? 'text-white font-semibold' : ''}`}>
+                                        <p className={`text-sm truncate w-[75%] font-medium ${isActive ? 'text-gray-300' : 'text-gray-500 group-hover:text-gray-400'} ${conv.unread_count > 0 ? 'text-white font-semibold' : ''}`}>
                                             {conv.last_message ? (
                                                 conv.last_message.startsWith('🎤') ? <span className="text-emerald-400 italic">{conv.last_message}</span> :
                                                 conv.last_message.startsWith('📷') ? <span className="text-blue-400 italic">{conv.last_message}</span> :
@@ -1394,8 +1394,33 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                             ) : <span className="opacity-50 italic">Nouvelle discussion</span>}
                                         </p>
                                         
-                                        {conv.online_count !== undefined && conv.online_count > 0 && (
-                                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></div>
+                                        {/* COMPTEUR PARTICIPANTS (GROUPE) OU ONLINE (DIRECT) */}
+                                        {conv.type === 'group' ? (
+                                            <div className="flex items-center gap-1.5 bg-black/20 rounded-lg px-1.5 py-0.5 border border-white/5">
+                                                {/* Online Count */}
+                                                {conv.online_count !== undefined && conv.online_count > 0 && (
+                                                    <div className="flex items-center gap-1">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_4px_rgba(16,185,129,0.8)]"></div>
+                                                        <span className="text-[9px] font-bold text-emerald-400 font-mono">{conv.online_count}</span>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Separator if both exist */}
+                                                {conv.online_count !== undefined && conv.online_count > 0 && (
+                                                    <div className="w-px h-2 bg-white/10"></div>
+                                                )}
+
+                                                {/* Total Count */}
+                                                <div className="flex items-center gap-1">
+                                                    <i className="fas fa-user text-[8px] text-gray-500"></i>
+                                                    <span className="text-[9px] font-bold text-gray-500 font-mono">{conv.participant_count || 1}</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Pour Direct Message : Juste le point vert si en ligne */
+                                            conv.online_count !== undefined && conv.online_count > 0 && (
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></div>
+                                            )
                                         )}
                                     </div>
                                 </div>
