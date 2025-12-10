@@ -3,8 +3,9 @@
 
 **⚠️ PROTOCOLE DIVIN (À LIRE À CHAQUE DÉMARRAGE) :**
 1.  **Priorité Absolue** : Ce document est la source de vérité.
-2.  **Universalité** : N'ajouter ici que des principes applicables à *n'importe quel projet* Web/SaaS. Pas de spécificités métier.
-3.  **Application** : Appliquer ces règles avant d'écrire le code.
+2.  **Cartographie (Loi de la Boussole)** : Le fichier `docs/STRUCTURE.md` est la carte du territoire. Lire ce fichier est OBLIGATOIRE avant d'explorer le code. Si l'architecture change, ce fichier DOIT être mis à jour.
+3.  **Universalité** : N'ajouter ici que des principes applicables à *n'importe quel projet* Web/SaaS. Pas de spécificités métier.
+4.  **Application** : Appliquer ces règles avant d'écrire le code.
 
 ---
 
