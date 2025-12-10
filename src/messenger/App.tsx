@@ -2443,8 +2443,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                 <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">7j</span>
                             </div>
                         </div>
-                        <div className="text-gray-500 text-xs font-bold truncate flex items-center gap-2 tracking-wider uppercase">
-                            <span className="truncate max-w-[130px] md:max-w-md">
+                        <div className="text-gray-500 text-[10px] md:text-xs font-bold flex items-center gap-2 tracking-wider uppercase leading-none">
+                            <span className="truncate max-w-[100px] md:max-w-md block line-clamp-2 md:line-clamp-1 whitespace-normal md:whitespace-nowrap">
                                 {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Chargement...'}
                             </span>
                         </div>
@@ -2452,15 +2452,15 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 </div>
                 )}
                 
-                {/* NOUVEAUX ICONES APPEL (VISUEL SEULEMENT - PHASE 1) */}
-                <div className="flex gap-3 text-gray-400 items-center pl-2 border-l border-white/5 ml-2">
+                {/* HEADER FIX MOBILE - Phone Icon Force Visible */}
+                <div className="flex gap-2 text-gray-400 items-center pl-1 ml-1 md:pl-2 md:ml-2 md:gap-3 flex-shrink-0 flex-wrap justify-end max-w-[120px]">
                     <button 
                         onClick={handleAudioCall}
-                        className="w-12 h-12 flex-shrink-0 rounded-2xl hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone z-50 relative"
+                        className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-xl md:rounded-2xl hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone z-50 relative"
                         title="Appel Audio (Envoie une sonnerie)"
                         style={{ display: 'flex' }}
                     >
-                        <i className="fas fa-phone-alt text-lg group-hover/phone:scale-110 transition-transform"></i>
+                        <i className="fas fa-phone-alt text-base md:text-lg group-hover/phone:scale-110 transition-transform"></i>
                     </button>
 
                     {!searchMode && (
@@ -2478,20 +2478,20 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                     axios.get('/api/v2/chat/users').then(res => setAllUsers(res.data.users || [])).catch(console.error);
                                 }
                             }}
-                            className="flex hover:text-white transition-colors w-12 h-12 items-center justify-center rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5"
+                            className="flex hover:text-white transition-colors w-10 h-10 md:w-12 md:h-12 items-center justify-center rounded-xl md:rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/5 flex-shrink-0"
                             title="Rechercher dans la discussion"
                         >
-                            <i className="fas fa-search text-lg"></i>
+                            <i className="fas fa-search text-base md:text-lg"></i>
                         </button>
                     )}
                     
                     {/* Bouton Fermer Explicite (X) */}
                     <button 
                         onClick={(e) => { e.stopPropagation(); onBack(); }} 
-                        className="w-12 h-12 rounded-2xl bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/10 hover:border-red-500 flex items-center justify-center transition-all shadow-lg hover:shadow-red-500/20"
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/10 hover:border-red-500 flex items-center justify-center transition-all shadow-lg hover:shadow-red-500/20 flex-shrink-0"
                         title="Fermer la discussion"
                     >
-                        <i className="fas fa-times text-xl"></i>
+                        <i className="fas fa-times text-lg md:text-xl"></i>
                     </button>
                 </div>
             </header>
