@@ -1936,8 +1936,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             setConversation(res.data.conversation || null);
             setMessages(prev => {
                 if (prev.length !== newMessages.length) {
-                    // Play sound if new message from others
-                    if (newMessages.length > prev.length) {
+                    // Play sound if new message from others (ONLY if not initial load)
+                    if (initialFetchDone.current && newMessages.length > prev.length) {
                         const lastMsg = newMessages[newMessages.length - 1];
                         if (lastMsg.sender_id !== currentUserId) {
                             SoundManager.play().catch(e => console.error("Sound error:", e));
@@ -1948,15 +1948,19 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 }
                 return newMessages;
             });
+            initialFetchDone.current = true; // Mark initial fetch as done
         } catch (err) { console.error(err); }
         finally { setLoadingMessages(false); }
     };
+
+    const initialFetchDone = useRef(false);
 
     useEffect(() => {
         setLoadingMessages(true);
         setMessages([]);
         setParticipants([]);
         setShowInfo(false);
+        initialFetchDone.current = false;
         fetchMessages();
         markAsRead();
         const interval = setInterval(fetchMessages, 3000);
