@@ -218,7 +218,7 @@ app.get('/users', async (c) => {
     const employees = await c.env.DB.prepare(`
         SELECT id, full_name, role, email, avatar_key
         FROM users 
-        WHERE id != ? 
+        WHERE id != ? AND id != 0
         ORDER BY first_name ASC
     `).bind(user.userId).all();
 
@@ -371,6 +371,24 @@ app.post('/send', async (c) => {
             return c.json({ error: 'Access denied' }, 403);
         }
 
+        // --- AI ANALYSIS PLACEHOLDER (SAFE MODE) ---
+        // Conformément à la stratégie "Try-Catch Silencieux" (Couche 2)
+        // Si on devait analyser l'image ici, ce serait dans ce bloc try/catch.
+        // Pour l'instant, on laisse mediaMeta tel quel (venant du frontend ou null)
+        let finalMediaMeta = mediaMeta;
+        
+        /* 
+        try {
+            if (type === 'image' && mediaKey) {
+                // Future AI Call goes here
+            }
+        } catch (aiError) {
+            console.error("AI Analysis failed (Non-blocking):", aiError);
+            // On continue sans l'analyse, le message DOIT partir
+        }
+        */
+        // -------------------------------------------
+
         await c.env.DB.prepare(`
             INSERT INTO chat_messages (id, conversation_id, sender_id, type, content, media_key, media_meta)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -381,7 +399,7 @@ app.post('/send', async (c) => {
             type, 
             content, 
             mediaKey || null, 
-            mediaMeta ? JSON.stringify(mediaMeta) : null
+            finalMediaMeta ? JSON.stringify(finalMediaMeta) : null
         ).run();
 
         // Update conversation timestamp
@@ -392,30 +410,39 @@ app.post('/send', async (c) => {
         // Trigger Push Notifications asynchronously
         c.executionCtx.waitUntil((async () => {
             try {
-                // Get other participants
+                // Get other participants WITH NAMES for personalized push titles
                 const { results: participants } = await c.env.DB.prepare(`
-                    SELECT user_id FROM chat_participants 
-                    WHERE conversation_id = ? AND user_id != ?
+                    SELECT 
+                        cp.user_id,
+                        COALESCE(u.first_name, g.full_name) as recipient_name
+                    FROM chat_participants cp
+                    LEFT JOIN users u ON cp.user_id = u.id AND cp.user_id > 0
+                    LEFT JOIN chat_guests g ON ABS(cp.user_id) = g.id AND cp.user_id < 0
+                    WHERE cp.conversation_id = ? AND cp.user_id != ?
                 `).bind(conversationId, user.userId).all();
 
-                // Logic spécial pour les sonneries (Beeper)
-                const pushTitle = isCall 
-                    ? `📞 APPEL DE ${user.first_name ? user.first_name.toUpperCase() : 'UTILISATEUR'}`
-                    : (user.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Nouveau message');
+                const senderName = user.first_name || user.email.split('@')[0];
                 
                 const pushBody = isCall
                     ? "Sonnerie en cours... Appuyez pour répondre"
                     : (type === 'image' ? '📷 Photo envoyée' : content);
 
                 for (const p of participants) {
+                    // PERSONNALISATION DU TITRE: "Laurent pour Ali"
+                    const recipientName = (p as any).recipient_name || 'Utilisateur';
+                    
+                    const dynamicTitle = isCall 
+                        ? `📞 APPEL DE ${senderName.toUpperCase()}`
+                        : `${senderName} pour ${recipientName}`;
+
                     const payload: any = {
-                        title: pushTitle,
+                        title: dynamicTitle,
                         body: pushBody,
                         icon: '/icon-192.png',
                         data: {
                             url: `https://mecanique.igpglass.ca/messenger?conversationId=${conversationId}`,
                             conversationId: conversationId,
-                            isCall: isCall // CRITICAL: This triggers the SW vibrate/sound logic
+                            isCall: isCall 
                         }
                     };
 
@@ -425,7 +452,7 @@ app.post('/send', async (c) => {
                         ];
                     }
 
-                    await sendPushNotification(c.env, p.user_id as number, payload);
+                    await sendPushNotification(c.env, (p as any).user_id as number, payload);
                 }
             } catch (err) {
                 console.error("Push chat error", err);
@@ -755,27 +782,35 @@ app.delete('/conversations/:id', async (c) => {
     return c.json({ success: true });
 });
 
-// 13. DELETE /api/v2/chat/conversations/:id/messages/:messageId - Delete single message (Global Admin only)
+// 13. DELETE /api/v2/chat/conversations/:id/messages/:messageId - Delete single message
 app.delete('/conversations/:id/messages/:messageId', async (c) => {
     const user = c.get('user');
     const conversationId = c.req.param('id');
     const messageId = c.req.param('messageId');
 
-    // Check if Global Admin
-    if (user.role !== 'admin') {
-        return c.json({ error: 'Admin only' }, 403);
-    }
-
-    // 1. Get message media key
+    // 1. Get message metadata to verify ownership
     const message = await c.env.DB.prepare(`
-        SELECT media_key FROM chat_messages WHERE id = ? AND conversation_id = ?
+        SELECT sender_id, media_key FROM chat_messages WHERE id = ? AND conversation_id = ?
     `).bind(messageId, conversationId).first();
 
-    if (message && message.media_key) {
+    if (!message) {
+        return c.json({ error: 'Message introuvable' }, 404);
+    }
+
+    // 2. Check Permissions: Admin OR Author
+    const isAuthor = message.sender_id === user.userId;
+    const isAdmin = user.role === 'admin';
+
+    if (!isAuthor && !isAdmin) {
+        return c.json({ error: 'Action non autorisée' }, 403);
+    }
+
+    // 3. Delete media from R2 if exists
+    if (message.media_key) {
         await c.env.MEDIA_BUCKET.delete(message.media_key as string);
     }
 
-    // 2. Delete message
+    // 4. Delete message from DB
     await c.env.DB.prepare(`DELETE FROM chat_messages WHERE id = ?`).bind(messageId).run();
 
     return c.json({ success: true });
@@ -822,6 +857,97 @@ app.delete('/conversations/:id/messages', async (c) => {
     `).bind(sysId, conversationId, user.userId, 'a vidé la discussion').run();
 
     return c.json({ success: true });
+});
+
+// 15. POST /api/v2/chat/stress-test - Simulate Heavy Load (Admin Only)
+app.post('/stress-test', async (c) => {
+    const user = c.get('user');
+    if (user.role !== 'admin') return c.json({ error: 'Admin only' }, 403);
+    
+    const startTime = Date.now();
+    const results: any = {};
+    const LOG = [];
+    
+    try {
+        // 1. Create Stress Group
+        const conversationId = `stress-test-${Date.now()}`;
+        const t1 = Date.now();
+        await c.env.DB.prepare(`
+            INSERT INTO chat_conversations (id, type, name, created_by)
+            VALUES (?, 'group', '⚡ STRESS TEST', ?)
+        `).bind(conversationId, user.userId).run();
+        
+        // Add current user
+        await c.env.DB.prepare(`
+            INSERT INTO chat_participants (conversation_id, user_id, role)
+            VALUES (?, ?, 'admin')
+        `).bind(conversationId, user.userId).run();
+        
+        results.create_group_ms = Date.now() - t1;
+        LOG.push(`Created group ${conversationId} in ${results.create_group_ms}ms`);
+
+        // 2. Insert 100 Messages (Batch)
+        const t2 = Date.now();
+        const MESSAGES_COUNT = 100;
+        const batchStmts = [];
+        
+        for (let i = 0; i < MESSAGES_COUNT; i++) {
+            const msgId = crypto.randomUUID();
+            batchStmts.push(
+                c.env.DB.prepare(`
+                    INSERT INTO chat_messages (id, conversation_id, sender_id, type, content, created_at)
+                    VALUES (?, ?, ?, 'text', ?, datetime('now', '-${MESSAGES_COUNT - i} seconds'))
+                `).bind(msgId, conversationId, user.userId, `Message stress test #${i}`)
+            );
+        }
+        
+        // D1 Batch Execution (simulate rapid fire)
+        // Cloudflare D1 batch limit is typically ~100 statements
+        await c.env.DB.batch(batchStmts);
+        
+        results.insert_100_msgs_ms = Date.now() - t2;
+        results.write_throughput_msg_per_sec = Math.round(MESSAGES_COUNT / (results.insert_100_msgs_ms / 1000));
+        LOG.push(`Inserted ${MESSAGES_COUNT} messages in ${results.insert_100_msgs_ms}ms (${results.write_throughput_msg_per_sec} msg/s)`);
+
+        // 3. Read History (Simulate 5 users fetching concurrently)
+        const t3 = Date.now();
+        const READ_ITERATIONS = 5;
+        const readPromises = [];
+        
+        for (let i = 0; i < READ_ITERATIONS; i++) {
+            readPromises.push(c.env.DB.prepare(`
+                SELECT * FROM chat_messages 
+                WHERE conversation_id = ? 
+                ORDER BY created_at DESC 
+                LIMIT 50
+            `).bind(conversationId).all());
+        }
+        
+        await Promise.all(readPromises);
+        
+        results.read_5x_history_ms = Date.now() - t3;
+        results.avg_read_latency_ms = Math.round(results.read_5x_history_ms / READ_ITERATIONS);
+        LOG.push(`Read history ${READ_ITERATIONS} times in ${results.read_5x_history_ms}ms (Avg: ${results.avg_read_latency_ms}ms)`);
+
+        // 4. Cleanup
+        const t4 = Date.now();
+        await c.env.DB.prepare(`DELETE FROM chat_messages WHERE conversation_id = ?`).bind(conversationId).run();
+        await c.env.DB.prepare(`DELETE FROM chat_participants WHERE conversation_id = ?`).bind(conversationId).run();
+        await c.env.DB.prepare(`DELETE FROM chat_conversations WHERE id = ?`).bind(conversationId).run();
+        results.cleanup_ms = Date.now() - t4;
+
+        results.total_time_ms = Date.now() - startTime;
+        
+        return c.json({
+            success: true,
+            metrics: results,
+            log: LOG,
+            status: results.avg_read_latency_ms < 200 ? '✅ EXCELLENT' : (results.avg_read_latency_ms < 500 ? '🟡 ACCEPTABLE' : '🔴 SLOW')
+        });
+
+    } catch (e: any) {
+        return c.json({ error: e.message, stack: e.stack }, 500);
+    }
 });
 
 export default app;

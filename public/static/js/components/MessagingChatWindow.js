@@ -1,6 +1,6 @@
 const MessagingChatWindow = ({ 
     messages, 
-    currentUser, 
+    currentUser: propUser, 
     loading, 
     activeTab, 
     selectedContact, 
@@ -12,6 +12,12 @@ const MessagingChatWindow = ({
     onBack,
     onClose
 }) => {
+    // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
+    const currentUser = React.useMemo(() => {
+        if (propUser) return propUser;
+        try { return JSON.parse(localStorage.getItem('user_cache') || '{}'); } catch(e) { return {}; }
+    }, [propUser]);
+
     const messagesEndRef = React.useRef(null);
     const [messageContent, setMessageContent] = React.useState('');
     
@@ -28,6 +34,13 @@ const MessagingChatWindow = ({
     const [isDictating, setIsDictating] = React.useState(false);
     const dictationRef = React.useRef(null);
 
+    // Image Upload State
+    const [selectedImage, setSelectedImage] = React.useState(null);
+    const [imagePreview, setImagePreview] = React.useState(null);
+    const [isUploading, setIsUploading] = React.useState(false);
+    const fileInputRef = React.useRef(null);
+    const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+
     // Selection mode state
     const [selectionMode, setSelectionMode] = React.useState(false);
     const [selectedMessages, setSelectedMessages] = React.useState([]);
@@ -42,8 +55,13 @@ const MessagingChatWindow = ({
         }
     }, [messages, activeTab, selectedContact]);
 
-    // Init Dictation
+    // Init Dictation & Online Status
     React.useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             dictationRef.current = new SpeechRecognition();
@@ -71,6 +89,11 @@ const MessagingChatWindow = ({
                 setIsDictating(false);
             };
         }
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
     }, []);
 
     const toggleDictation = () => {
@@ -158,17 +181,85 @@ const MessagingChatWindow = ({
         }
     };
 
-    const handleSendMessage = () => {
-        if (messageContent.trim()) {
+    const handleSendMessage = async () => {
+        // Mode IMAGE
+        if (selectedImage) {
+            if (!isOnline) {
+                alert("Impossible d'envoyer des images hors ligne.");
+                return;
+            }
+
+            try {
+                setIsUploading(true);
+                const formData = new FormData();
+                formData.append('file', selectedImage);
+
+                // 1. Upload File
+                const uploadRes = await fetch('/api/v2/chat/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                });
+
+                if (!uploadRes.ok) throw new Error('Upload failed');
+                
+                const { key } = await uploadRes.json();
+
+                // 2. Send Message with Attachment
+                onSendMessage(messageContent || '📷 Photo', 'image', key);
+                
+                // Cleanup
+                cancelImageSelection();
+            } catch (error) {
+                console.error("Image upload error:", error);
+                alert("Erreur lors de l'envoi de l'image");
+            } finally {
+                setIsUploading(false);
+            }
+        } 
+        // Mode TEXTE
+        else if (messageContent.trim()) {
             onSendMessage(messageContent);
             setMessageContent('');
         }
     };
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // BIBLE RULE: Strict Validation
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            alert("Format non supporté. Utilisez JPG, PNG ou WEBP.");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert("L'image est trop volumineuse (Max 5MB).");
+            return;
+        }
+        if (file.size === 0) {
+            alert("Fichier vide invalide.");
+            return;
+        }
+
+        setSelectedImage(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const cancelImageSelection = () => {
+        setSelectedImage(null);
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSendMessage();
+            if (!isUploading) handleSendMessage();
         }
     };
 
@@ -436,6 +527,35 @@ const MessagingChatWindow = ({
 
         // Input Zone
         React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
+            // Hidden File Input
+            React.createElement('input', {
+                type: 'file',
+                ref: fileInputRef,
+                onChange: handleImageSelect,
+                accept: 'image/jpeg,image/png,image/gif,image/webp',
+                className: 'hidden'
+            }),
+
+            // IMAGE PREVIEW ZONE
+            selectedImage ? React.createElement('div', { className: 'mb-3 p-3 bg-blue-50 rounded-xl border border-blue-200 relative' },
+                React.createElement('button', {
+                    onClick: cancelImageSelection,
+                    className: 'absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-red-600 z-10',
+                    title: 'Supprimer l\'image'
+                }, React.createElement('i', { className: 'fas fa-times text-xs' })),
+                
+                React.createElement('div', { className: 'flex items-center gap-3' },
+                    React.createElement('img', {
+                        src: imagePreview,
+                        className: 'h-16 w-16 object-cover rounded-lg border border-blue-200 shadow-sm'
+                    }),
+                    React.createElement('div', { className: 'flex-1 min-w-0' },
+                        React.createElement('p', { className: 'text-sm font-medium text-blue-900 truncate' }, selectedImage.name),
+                        React.createElement('p', { className: 'text-xs text-blue-600' }, (selectedImage.size / 1024).toFixed(1) + ' KB')
+                    )
+                )
+            ) : null,
+
             (isRecording || audioBlob) ? React.createElement('div', { className: 'mb-3 p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-xl border-2 border-red-200' },
                 React.createElement('div', { className: 'flex items-center justify-between mb-3' },
                     React.createElement('div', { className: 'flex items-center gap-3' },
@@ -477,15 +597,27 @@ const MessagingChatWindow = ({
                     )
                 )
             ) : null,
-            !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2' },
+            !isRecording && !audioBlob ? React.createElement('div', { className: 'flex gap-2 items-end' },
+                // Bouton PHOTO (Nouveau)
+                React.createElement('button', {
+                    onClick: () => fileInputRef.current?.click(),
+                    disabled: !isOnline || isUploading,
+                    className: 'flex-shrink-0 w-10 h-10 mb-1 rounded-full flex items-center justify-center transition-all ' + 
+                        (isOnline ? 'text-gray-500 hover:text-blue-600 hover:bg-blue-50' : 'text-gray-300 cursor-not-allowed'),
+                    title: isOnline ? 'Envoyer une photo' : 'Photo indisponible hors ligne'
+                },
+                    React.createElement('i', { className: 'fas fa-camera text-lg' })
+                ),
+
                 React.createElement('div', { className: 'flex-1 relative' },
                     React.createElement('textarea', {
                         value: messageContent,
                         onChange: (e) => setMessageContent(e.target.value),
                         onKeyPress: handleKeyPress,
-                        placeholder: 'Écrire un message... (Enter pour envoyer)',
+                        placeholder: selectedImage ? 'Ajouter une légende...' : 'Écrire un message...',
                         className: 'w-full border-2 border-gray-300 rounded-lg px-3 sm:px-4 py-2 pr-10 text-sm sm:text-base focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none transition-all shadow-lg hover:shadow-xl',
-                        rows: 2
+                        rows: 1, // Reduced default height
+                        style: { minHeight: '42px', maxHeight: '120px' }
                     }),
                     dictationRef.current ? React.createElement('button', {
                         onClick: toggleDictation,
@@ -508,11 +640,13 @@ const MessagingChatWindow = ({
                 ),
                 React.createElement('button', {
                     onClick: handleSendMessage,
-                    disabled: !messageContent.trim(),
-                    className: 'flex-shrink-0 px-3 sm:px-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95'
+                    disabled: (!messageContent.trim() && !selectedImage) || isUploading,
+                    className: 'flex-shrink-0 px-3 sm:px-6 h-10 mb-1 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all shadow-xl hover:shadow-2xl disabled:hover:shadow-xl flex items-center justify-center transform hover:scale-105 active:scale-95'
                 },
-                    React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
-                    React.createElement('span', { className: 'ml-2 hidden sm:inline' }, 'Envoyer')
+                    isUploading 
+                        ? React.createElement('i', { className: 'fas fa-spinner fa-spin' })
+                        : React.createElement('i', { className: 'fas fa-paper-plane text-sm sm:text-base' }),
+                    React.createElement('span', { className: 'ml-2 hidden sm:inline' }, isUploading ? 'Envoi...' : 'Envoyer')
                 )
             ) : null
         )
