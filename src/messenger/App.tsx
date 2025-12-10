@@ -911,7 +911,9 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             if (err.response && err.response.status === 403) {
                 alert("⛔ Vous n'avez pas la permission de créer un groupe.");
             } else {
-                alert('Erreur création groupe');
+                console.error("Group creation error:", err);
+                const detail = err.response?.data?.error || err.message || "Inconnue";
+                alert(`Erreur création groupe: ${detail}`);
             }
         }
     };
