@@ -1441,20 +1441,29 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     );
 };
 
-const ImageViewer = ({ src, onClose, onDelete, canDelete }: { src: string, onClose: () => void, onDelete?: () => void, canDelete?: boolean }) => {
+const ImageViewer = ({ src, onClose, onDelete, onDownload, canDelete }: { src: string, onClose: () => void, onDelete?: () => void, onDownload: () => void, canDelete?: boolean }) => {
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col animate-fade-in" onClick={onClose}>
-            <div className="absolute top-6 right-6 flex gap-4 z-50">
+            <div className="absolute top-6 right-6 flex gap-3 z-50">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onDownload(); }}
+                    className="w-12 h-12 rounded-full bg-white/10 hover:bg-emerald-500 hover:text-white text-emerald-400 flex items-center justify-center transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] group"
+                    title="Télécharger l'image"
+                >
+                    <i className="fas fa-download text-lg group-hover:scale-110 transition-transform"></i>
+                </button>
+
                 {canDelete && onDelete && (
                     <button 
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="w-12 h-12 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:shadow-[0_0_25px_rgba(239,68,68,0.6)] group"
+                        className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_25px_rgba(239,68,68,0.4)] group"
                         title="Supprimer cette image"
                     >
-                        <i className="fas fa-trash-alt text-xl group-hover:scale-110 transition-transform"></i>
+                        <i className="fas fa-trash-alt text-lg group-hover:scale-110 transition-transform"></i>
                     </button>
                 )}
-                <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/10 shadow-lg">
+                
+                <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/10 ml-2">
                     <i className="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -1872,7 +1881,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [uploading, setUploading] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [triggerAddMember, setTriggerAddMember] = useState(false);
-    const [viewImage, setViewImage] = useState<{ src: string; msgId: string; canDelete: boolean } | null>(null);
+    const [viewImage, setViewImage] = useState<{ src: string; msgId: string; canDelete: boolean; mediaKey: string } | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
     // Search In-Chat Logic
@@ -2391,13 +2400,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                         onClick={() => setViewImage({
                                             src: `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key!)}`,
                                             msgId: msg.id,
-                                            canDelete: isMe || isGlobalAdmin
+                                            canDelete: isMe || isGlobalAdmin,
+                                            mediaKey: msg.media_key!
                                         })}
                                     />
-                                    {/* Download Button Overlay */}
+                                    {/* Download Button Overlay (Optional now, but kept for quick access without opening) */}
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); handleDownload(msg.media_key!, 'image'); }}
-                                        className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white/80 hover:text-white rounded-full backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover/image:opacity-100 shadow-lg border border-white/10"
+                                        className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white/80 hover:text-white rounded-full backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover/image:opacity-100 shadow-lg border border-white/10 md:hidden"
                                         title="Télécharger l'image"
                                     >
                                         <i className="fas fa-download text-xs"></i>
@@ -2469,6 +2479,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         handleDeleteMessage(viewImage.msgId);
                         setViewImage(null);
                     }}
+                    onDownload={() => handleDownload(viewImage.mediaKey, 'image')}
                 />
             )}
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
