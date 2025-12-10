@@ -1,30 +1,51 @@
 /**
  * Service Worker pour PWA Maintenance IGP
  * Gère le cache offline et les notifications push
+ * Version: v1.1.0 (Offline First)
  */
 
-const CACHE_VERSION = 'v1.0.6';
+const CACHE_VERSION = 'v1.1.0';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
-// Fichiers à mettre en cache pour mode offline (optionnel - désactivé pour éviter erreurs)
-// Le cache dynamique sera utilisé automatiquement lors de la navigation
-const STATIC_CACHE = [];
+// Fichiers critiques à mettre en cache immédiatement pour le mode offline
+const STATIC_ASSETS = [
+    '/',
+    '/static/styles.css',
+    '/static/maintenance-bg-premium.jpg',
+    '/favicon.ico',
+    '/icon-192.png',
+    '/icon-512.png',
+    '/manifest.json',
+    '/static/logo-igp.png',
+    '/static/js/utils.js',
+    '/static/js/offline-sync.js',
+    '/push-notifications.js',
+    '/static/js/components/App.js',
+    '/static/js/components/MainApp.js',
+    '/static/js/components/AppHeader.js',
+    '/static/js/components/LoginForm.js',
+    '/static/js/components/TicketDetailsModal.js',
+    '/static/js/components/CreateTicketModal.js',
+    '/static/js/components/MessagingSidebar.js',
+    '/static/js/components/MessagingChatWindow.js'
+];
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log('[SW] Installing service worker v' + CACHE_VERSION);
   
-  // Pas de cache statique initial - utilisation du cache dynamique uniquement
-  // Cela évite les erreurs si des fichiers n'existent pas
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Cache ready (dynamic caching enabled)');
-      // Ne pas cacher de fichiers au démarrage
-      return Promise.resolve();
+      console.log('[SW] Pre-caching static assets');
+      // Tentative de cache des assets critiques
+      // Utilisation de map + catch pour qu'un seul échec ne bloque pas tout
+      const promises = STATIC_ASSETS.map(url => 
+        cache.add(url).catch(err => console.warn(`[SW] Failed to cache ${url}:`, err))
+      );
+      return Promise.all(promises);
     })
   );
   
-  // Activer immédiatement le nouveau service worker
   self.skipWaiting();
 });
 
@@ -45,57 +66,117 @@ self.addEventListener('activate', (event) => {
     })
   );
   
-  // Prendre le contrôle immédiatement
   return self.clients.claim();
 });
 
-// Stratégie de cache: Network First, fallback to Cache
+// Stratégie de cache:
+// 1. Navigation (HTML) -> Network First, Fallback Cache
+// 2. Assets statiques (JS, CSS, IMG) -> Stale-While-Revalidate (Cache First, puis update background)
+// 3. API -> Network First, Fallback Cache (pour lecture seule)
 self.addEventListener('fetch', (event) => {
-  // Ignorer les requêtes non-GET (POST, PUT, DELETE, etc.)
+  // Ignorer les requêtes non-GET
   if (event.request.method !== 'GET') {
     return;
   }
-  
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Mettre en cache la réponse si succès et type approprié
-        if (response.status === 200 && response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          }).catch((err) => {
-            // Ignorer les erreurs de cache silencieusement
-            console.log('[SW] Cache write failed (non-critical):', err.message);
-          });
-        }
-        return response;
-      })
-      .catch((error) => {
-        // Spécial: Si c'est le logo qui échoue, retourner l'image locale par défaut
-        if (event.request.url.includes('/api/settings/logo')) {
-             return fetch('/static/logo-igp.png').catch(() => {
-                 // Si même le logo par défaut échoue, retourner une réponse vide valide pour l'image
-                 return new Response('', { status: 404 });
-             });
-        }
 
-        // Si réseau échoue, essayer le cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Si pas de cache, retourner une erreur réseau normale
-          // (ne pas afficher de popup d'erreur)
-          console.log('[SW] Network failed, no cache available:', event.request.url);
-          throw error;
+  const url = new URL(event.request.url);
+
+  // 1. NAVIGATION (HTML)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((response) => {
+            if (response) return response;
+            // Fallback générique si offline et pas de cache spécifique (ex: /messenger -> /messenger/index.html)
+            if (url.pathname.startsWith('/messenger')) {
+                return caches.match('/messenger');
+            }
+            return caches.match('/');
+          });
+        })
+    );
+    return;
+  }
+
+  // 2. ASSETS STATIQUES (JS, CSS, Images, Fonts)
+  // Utilisation de Stale-While-Revalidate pour rapidité + mise à jour
+  if (
+    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff2|ico)$/) ||
+    url.pathname.includes('/static/') ||
+    STATIC_ASSETS.includes(url.pathname)
+  ) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+            // Mise à jour du cache si succès
+            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+            }
+            return networkResponse;
+        }).catch(err => {
+            // Erreur silencieuse en background
+            // console.log('[SW] Background update failed', err);
         });
+
+        // Retourner le cache immédiatement s'il existe, sinon attendre le réseau
+        return cachedResponse || fetchPromise;
       })
-  );
+    );
+    return;
+  }
+
+  // 3. API (Network First)
+  if (url.pathname.startsWith('/api/')) {
+      // Pour les méthodes non-GET (POST, PUT, DELETE), on ne peut pas utiliser le cache.
+      // On tente le réseau, et si ça échoue, on retourne une erreur JSON structurée
+      // pour que le frontend puisse l'afficher proprement.
+      if (event.request.method !== 'GET') {
+          event.respondWith(
+              fetch(event.request).catch(err => {
+                  return new Response(JSON.stringify({ 
+                      error: 'Vous êtes hors ligne. Impossible d\'effectuer cette action.',
+                      offline: true 
+                  }), {
+                      status: 503,
+                      headers: { 'Content-Type': 'application/json' }
+                  });
+              })
+          );
+          return;
+      }
+
+      event.respondWith(
+          fetch(event.request)
+            .then((response) => {
+                // Cache les réponses API réussies pour consultation offline
+                if (response.status === 200) {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+                }
+                return response;
+            })
+            .catch(() => {
+                // En offline, essayer de retourner la dernière réponse connue
+                return caches.match(event.request);
+            })
+      );
+      return;
+  }
+
+  // Par défaut: Network Only
+  event.respondWith(fetch(event.request));
 });
 
 // Réception de notifications push
 self.addEventListener('push', (event) => {
+  // ... (Code existant conservé)
   console.log('[SW] Push received');
   
   let data = { title: 'Maintenance IGP', body: 'Nouvelle notification' };
@@ -115,13 +196,7 @@ self.addEventListener('push', (event) => {
     icon: data.icon || '/icon-192.png',
     badge: data.badge || '/icon-192.png',
     data: data.data || {},
-    // Vibrate: Call pattern (long) vs Message pattern (short)
     vibrate: isCall ? [500, 200, 500, 200, 500] : [200, 100, 200],
-    // Use unique tag to prevent notification grouping
-    // - For calls: ALWAYS unique to ensure sound plays
-    // - For tickets: use ticketId (allows grouping per ticket)
-    // - For messages: use messageId (each message separate)
-    // - Fallback: timestamp (always unique)
     tag: isCall 
       ? `call-${Date.now()}`
       : data.data?.ticketId 
@@ -129,17 +204,27 @@ self.addEventListener('push', (event) => {
         : data.data?.messageId 
           ? `message-${data.data.messageId}` 
           : `notif-${Date.now()}`,
-    renotify: true, // Force notification to play sound/vibrate even if tag is same
-    silent: false,  // Ensure sound is not silenced
-    sound: '/static/notification.mp3', // Custom sound (supported on Android/some browsers)
-    timestamp: Date.now(), // Ensure uniqueness for sorting
-    priority: 2, // High priority for older Android
-    requireInteraction: isCall, // Call notification stays until interacted with
+    renotify: true, 
+    silent: false,  
+    sound: '/static/notification.mp3', 
+    timestamp: Date.now(), 
+    priority: 2, 
+    requireInteraction: isCall, 
     actions: data.actions || []
   };
   
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    Promise.all([
+      self.registration.showNotification(data.title, options),
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+          clients.forEach(client => {
+              client.postMessage({
+                  type: 'PLAY_NOTIFICATION_SOUND',
+                  isCall: isCall
+              });
+          });
+      })
+    ])
   );
 });
 
@@ -150,62 +235,44 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
   const notificationData = event.notification.data || {};
-  const action = event.action || notificationData.action; // Handle button click (event.action) or data action
+  const action = event.action || notificationData.action; 
   
-  console.log('[SW] Notification clicked. Action:', action, 'Data:', notificationData);
-
-  // Construire l'URL appropriée selon le type de notification
   let urlToOpen = notificationData.url || '/';
   
-  // Pour les appels et conversations Messenger (Priorité)
   if (notificationData.conversationId) {
     urlToOpen = `/messenger?conversationId=${notificationData.conversationId}`;
   }
-  // Pour les tickets: ouvrir le modal du ticket directement
   else if ((action === 'view_ticket' || action === 'view') && (notificationData.ticketId || notificationData.ticket_id)) {
-    // Support both camelCase and snake_case, and force string conversion
     const tid = notificationData.ticketId || notificationData.ticket_id;
     urlToOpen = `/?ticket=${tid}`;
   }
-  // Action rapide "J'y vais" -> ouvre ticket et change statut auto
   else if (action === 'acknowledge' && notificationData.ticketId) {
     urlToOpen = `/?ticket=${notificationData.ticketId}&auto_action=acknowledge`;
   }
-  // Pour les messages audio, ajouter paramètres pour auto-play
   else if (action === 'new_audio_message' && notificationData.messageId) {
     urlToOpen = `/?openAudioMessage=${notificationData.messageId}&sender=${notificationData.senderId}`;
   }
-  // Pour les messages texte privés
   else if (action === 'new_private_message' && notificationData.senderId) {
     urlToOpen = `/?openMessages=${notificationData.senderId}`;
   }
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Pour les interactions boutons, on préfère TOUJOURS ouvrir une fenêtre
-      // C'est la SEULE méthode fiable pour fermer le panneau de notification sur Android
       if (action === 'view_ticket' || action === 'view' || action === 'acknowledge' || action === 'new_audio_message' || action === 'new_private_message' || action === 'open') {
           if (clients.openWindow) {
               return clients.openWindow(urlToOpen);
           }
       }
 
-      // Comportement standard pour le clic sur le corps (qui ferme déjà le shade nativement)
-      // Chercher un client existant
       const client = clientList.find(c => c.visibilityState === 'visible') || clientList[0];
 
       if (client) {
-        // 1. Naviguer vers l'URL (Action critique)
-        // Note: On ne chaîne PAS après focus() car focus() peut échouer pour les boutons d'action
-        // sur certaines versions d'Android, ce qui bloquerait la navigation.
         const navigatePromise = client.navigate(urlToOpen);
 
-        // 2. Tenter de mettre la fenêtre au premier plan (Best effort)
         if ('focus' in client) {
           client.focus().catch(err => console.log('[SW] Focus denied (non-critical):', err));
         }
         
-        // 3. Envoyer un message (Support legacy/Reactivité immédiate)
         client.postMessage({
             type: 'NOTIFICATION_CLICK',
             action: action,
@@ -218,7 +285,6 @@ self.addEventListener('notificationclick', (event) => {
         return navigatePromise;
       }
 
-      // Sinon, ouvrir nouvelle fenêtre avec URL
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }

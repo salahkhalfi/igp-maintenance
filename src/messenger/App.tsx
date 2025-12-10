@@ -467,7 +467,7 @@ const UserSelect = ({ onSelect, selectedIds, onClose }: { onSelect: (ids: number
                             <div className="relative">
                                 {user.avatar_key ? (
                                     <img 
-                                        src={`/api/auth/avatar/${user.id}?t=${Date.now()}`}
+                                        src={`/api/auth/avatar/${user.id}?v=${user.avatar_key}`}
                                         className="w-12 h-12 rounded-2xl object-cover shadow-lg"
                                         alt={user.full_name}
                                     />
@@ -695,8 +695,6 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
 
-    const [avatarVersion, setAvatarVersion] = useState(Date.now());
-
     useEffect(() => {
         setAvatarError(false);
     }, [currentUserAvatarKey]);
@@ -722,7 +720,6 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 await axios.post('/api/auth/avatar', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                setAvatarVersion(Date.now()); // Update version to bust cache ONLY on change
                 onAvatarUpdate(); // Refresh in App
             } catch (err) {
                 alert("Erreur lors de l'upload de l'avatar");
@@ -739,7 +736,6 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         setUploadingAvatar(true);
         try {
             await axios.delete('/api/auth/avatar');
-            setAvatarVersion(Date.now());
             onAvatarUpdate();
         } catch (err) {
             alert("Erreur lors de la suppression");
@@ -1031,7 +1027,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                     <div className="w-full h-full rounded-full border-[3px] border-[#0a0a0a] overflow-hidden bg-[#0a0a0a] relative">
                                         {currentUserAvatarKey && !avatarError ? (
                                             <img 
-                                                src={`/api/auth/avatar/${currentUserId}?t=${avatarVersion}`} 
+                                                src={`/api/auth/avatar/${currentUserId}?v=${currentUserAvatarKey}`} 
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110"
                                                 alt="Avatar"
                                                 onError={() => setAvatarError(true)}
@@ -1238,7 +1234,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                             className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors group/item"
                                         >
                                             {user.avatar_key ? (
-                                                <img src={`/api/auth/avatar/${user.id}`} className="w-8 h-8 rounded-full object-cover" alt={user.full_name} />
+                                                <img src={`/api/auth/avatar/${user.id}?v=${user.avatar_key}`} className="w-8 h-8 rounded-full object-cover" alt={user.full_name} />
                                             ) : (
                                                 <div className={`w-8 h-8 rounded-full ${getAvatarGradient(user.full_name)} flex items-center justify-center text-white text-xs font-bold`}>{getInitials(user.full_name)}</div>
                                             )}
@@ -2233,7 +2229,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
             // Avatar rendering logic
             const avatarUrl = msg.sender_avatar_key 
-                ? `/api/auth/avatar/${msg.sender_id}` // Use standardized avatar endpoint which handles caching/fallback
+                ? `/api/auth/avatar/${msg.sender_id}?v=${msg.sender_avatar_key}` // Stable cache busting
                 : null;
 
             result.push(
