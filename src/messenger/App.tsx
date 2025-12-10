@@ -2451,26 +2451,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     </div>
                 </div>
                 )}
-
+                
                 {/* NOUVEAUX ICONES APPEL (VISUEL SEULEMENT - PHASE 1) */}
-                <div className="flex items-center gap-2 md:gap-4 mr-2">
+                <div className="flex gap-4 text-gray-400">
                     <button 
                         onClick={handleAudioCall}
-                        className="w-10 h-10 rounded-full hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone"
+                        className="w-12 h-12 rounded-2xl hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone"
                         title="Appel Audio (Envoie une sonnerie)"
                     >
                         <i className="fas fa-phone-alt text-lg group-hover/phone:scale-110 transition-transform"></i>
                     </button>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); alert("📹 Appel vidéo : Fonctionnalité désactivée (Phase 3)"); }} 
-                        className="w-10 h-10 rounded-full hover:bg-purple-500/10 text-gray-600 cursor-not-allowed flex items-center justify-center transition-all border border-transparent group/video opacity-50"
-                        title="Appel Vidéo (Bientôt)"
-                    >
-                        <i className="fas fa-video text-lg"></i>
-                    </button>
-                </div>
 
-                <div className="flex gap-4 text-gray-400">
                     {!searchMode && (
                         <button 
                             onClick={(e) => { 
