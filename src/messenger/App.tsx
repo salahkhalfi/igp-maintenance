@@ -1272,7 +1272,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                             </button>
                             {canCreateGroup && (
                                 <button 
-                                    onClick={() => { setSelectedUsers([]); setShowUserSelect(true); setShowCreateGroup(true); }} 
+                                    onClick={() => { setSelectedUsers([]); setShowUserSelect(true); setShowCreateGroup(false); }} 
                                     className="w-full text-left px-4 py-3.5 hover:bg-white/5 rounded-xl text-white text-sm flex items-center gap-4 transition-colors mt-1 group/item"
                                 >
                                     <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover/item:bg-emerald-500 group-hover/item:text-white transition-all"><i className="fas fa-users"></i></div>
