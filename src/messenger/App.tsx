@@ -2181,6 +2181,33 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         } catch(e) { alert("Erreur suppression"); }
     };
 
+    const handleDownload = async (mediaKey: string, type: 'image' | 'audio') => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            // Fetch as blob to force download and handle auth headers
+            const response = await fetch(`/api/v2/chat/asset?key=${encodeURIComponent(mediaKey)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error("Erreur réseau");
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            // Generate filename: "type-date.ext"
+            const ext = type === 'image' ? 'jpg' : 'webm';
+            a.download = `igp-${type}-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            alert("Impossible de télécharger le fichier.");
+            console.error(e);
+        }
+    };
+
     const formatDuration = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -2347,16 +2374,33 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                 </button>
                             )}
                             {msg.type === 'image' && msg.media_key ? (
-                                <div className="overflow-hidden rounded-xl border border-white/10">
+                                <div className="overflow-hidden rounded-xl border border-white/10 relative group/image">
                                     <img 
                                         src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} 
                                         alt="Photo" 
                                         className="max-h-96 object-cover w-full cursor-pointer hover:scale-105 transition-transform duration-700"
                                         onClick={() => setViewImage(`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`)}
                                     />
+                                    {/* Download Button Overlay */}
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDownload(msg.media_key!, 'image'); }}
+                                        className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white/80 hover:text-white rounded-full backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover/image:opacity-100 shadow-lg border border-white/10"
+                                        title="Télécharger l'image"
+                                    >
+                                        <i className="fas fa-download text-xs"></i>
+                                    </button>
                                 </div>
                             ) : msg.type === 'audio' && msg.media_key ? (
-                                <AudioPlayer src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} isMe={isMe} />
+                                <div className="flex items-center gap-2">
+                                    <AudioPlayer src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} isMe={isMe} />
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDownload(msg.media_key!, 'audio'); }}
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isMe ? 'text-white/50 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-gray-200 hover:bg-black/10'}`}
+                                        title="Télécharger l'audio"
+                                    >
+                                        <i className="fas fa-download text-xs"></i>
+                                    </button>
+                                </div>
                             ) : (
                                 <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
                                     {msg.content}
