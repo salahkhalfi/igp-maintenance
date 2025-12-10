@@ -472,8 +472,8 @@ app.post('/conversations', async (c) => {
         const { type, participantIds, name } = await c.req.json();
         
         // Basic Validation
-        if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
-            return c.json({ error: 'Liste des participants invalide ou vide' }, 400);
+        if (!participantIds || !Array.isArray(participantIds)) {
+            return c.json({ error: 'Format des participants invalide' }, 400);
         }
 
         const conversationId = crypto.randomUUID();
