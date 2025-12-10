@@ -995,7 +995,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     );
 
     return (
-        <div className="glass-sidebar w-full md:w-[420px] flex flex-col h-full z-20 relative bg-[#080808]">
+        <div className="glass-sidebar w-full md:w-[320px] lg:w-[360px] xl:w-[420px] flex flex-col h-full z-20 relative bg-[#080808]">
             <div className="bg-noise absolute inset-0 opacity-10 pointer-events-none"></div>
             
             {showUserSelect && !showCreateGroup && (
