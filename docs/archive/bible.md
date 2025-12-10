@@ -42,6 +42,7 @@
 *   **Effet Papillon** : Mapper les impacts (Mobile ? Push ? TV ?) avant de coder.
 *   **Better Safe than Sorry** : Dans le doute, on simule ou on pose la question.
 *   **Isolation** : Ne pas refactoriser tout le système pour corriger un bug mineur.
+*   **Hygiène Financière** : Surveiller les quotas Cloudflare (R2 < 10GB, D1 < 500MB). Commande : `npx wrangler d1 list`. Pour GitHub (Public), c'est illimité.
 
 ---
 
