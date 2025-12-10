@@ -1,5 +1,7 @@
 # 🔧 Système de Gestion de Maintenance Industrielle
 
+**🤖 AI ASSISTANT: START HERE. READ `docs/STRUCTURE.md` AND `docs/archive/bible.md` BEFORE DOING ANYTHING.**
+
 **Auteur:** Salah Khalfi  
 **Organisation:** Produits Verriers International (IGP) Inc.  
 **Département:** Technologies de l'Information
@@ -36,6 +38,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
     -   **Admin Client** : Gestion de son instance (dans les limites de sa licence).
 
 ## 🆕 Dernières mises à jour
+
+### Version 2.14.20 (9 Décembre 2025) - TRADUCTION RÔLES & UI ✨
+- **🌐 TRADUCTION UI**: Affichage des rôles en français (ex: "TECHNICIAN" -> "Technicien").
+- **🔒 SYSTÈME PRÉSERVÉ**: Les identifiants système (`user.role`) restent inchangés pour garantir la stabilité du code.
+- **🎨 UI POLISH**: Amélioration de l'affichage des titres dans la recherche, le profil et les listes.
+- **✅ IMPACT**: Interface plus conviviale et professionnelle pour les utilisateurs francophones.
 
 ### Version 2.14.19 (8 Décembre 2025) - UI FIX MESSENGER HEADER 📱✨
 - **🐛 FIX UI**: Correction de l'affichage du bouton de déconnexion sur petits écrans (mobile).
