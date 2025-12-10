@@ -12,6 +12,11 @@
     "TV_ACCESS_KEY": "igp_2025_secure_tv_access_key_8842",
     "ENVIRONMENT": "production"
   },
+  "triggers": {
+    "crons": [
+      "0 3 * * *"
+    ]
+  },
   "d1_databases": [
     {
       "binding": "DB",

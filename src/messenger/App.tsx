@@ -1467,8 +1467,14 @@ const ImageViewer = ({ src, onClose, onDelete, onDownload, canDelete }: { src: s
                     <i className="fas fa-times text-xl"></i>
                 </button>
             </div>
-            <div className="flex-1 flex items-center justify-center p-4 md:p-12">
+            <div className="flex-1 flex items-center justify-center p-4 md:p-12 relative">
                 <img src={src} alt="Full view" className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl border border-white/5" onClick={(e) => e.stopPropagation()} />
+                
+                {/* Information de rétention */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 pointer-events-none">
+                    <i className="fas fa-info-circle text-orange-400 text-xs"></i>
+                    <span className="text-gray-300 text-[10px] font-medium uppercase tracking-wide">Conservation : 30 jours</span>
+                </div>
             </div>
         </div>
     );
@@ -2582,8 +2588,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-0.5">
                             <div className="text-white font-bold text-base md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
-                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-full px-1.5 py-0.5 flex-shrink-0 flex items-center gap-1 shadow-sm" title="Suppression automatique après 7 jours">
-                                <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">7j</span>
+                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5 flex-shrink-0 flex items-center gap-1 shadow-sm" title="Suppression automatique des médias après 30 jours">
+                                <i className="fas fa-history text-[9px] text-orange-400"></i>
+                                <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">Médias 30j</span>
                             </div>
                         </div>
                         <div className="text-gray-500 text-[10px] md:text-xs font-bold flex items-center tracking-wider uppercase leading-tight">

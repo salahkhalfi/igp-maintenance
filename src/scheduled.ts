@@ -42,23 +42,23 @@ export default {
  * - Textes > 365 jours -> Supprimés
  */
 async function cleanupOldMessages(env: Bindings): Promise<void> {
-    console.log('🧹 CRON cleanup-old-messages démarré (Mode Optimisation 7 jours)');
+    console.log('🧹 CRON cleanup-old-messages démarré (Mode Hybride 30 jours)');
 
     try {
-        // 1. SUPPRESSION DES MÉDIAS (> 7 jours)
-        // Règle d'optimisation "Snapchat-like" : Rétention courte pour économiser l'espace
+        // 1. SUPPRESSION DES MÉDIAS (> 30 jours)
+        // Règle : Rétention mensuelle pour les fichiers lourds (Images/Audio)
         
         // Récupérer les clés R2 à supprimer
         const { results: mediaToDelete } = await env.DB.prepare(`
             SELECT media_key 
             FROM chat_messages 
             WHERE type IN ('image', 'audio') 
-            AND datetime(created_at) < datetime('now', '-7 days')
+            AND datetime(created_at) < datetime('now', '-30 days')
             AND media_key IS NOT NULL
         `).all();
 
         if (mediaToDelete && mediaToDelete.length > 0) {
-            console.log(`🗑️ CRON: Suppression de ${mediaToDelete.length} média(s) obsolète(s) (>7j)`);
+            console.log(`🗑️ CRON: Suppression de ${mediaToDelete.length} média(s) obsolète(s) (>30j)`);
             
             // Suppression R2 (Best effort)
             for (const item of mediaToDelete as any[]) {
@@ -70,24 +70,31 @@ async function cleanupOldMessages(env: Bindings): Promise<void> {
             }
         }
 
-        // Suppression DB des messages Média
+        // Suppression DB des messages Média (le contenu du message devient "Média expiré")
+        // Au lieu de supprimer la ligne, on peut marquer comme expiré si on veut garder une trace, 
+        // mais pour l'instant on supprime pour nettoyer la DB comme demandé.
         const mediaResult = await env.DB.prepare(`
             DELETE FROM chat_messages 
             WHERE type IN ('image', 'audio') 
-            AND datetime(created_at) < datetime('now', '-7 days')
+            AND datetime(created_at) < datetime('now', '-30 days')
         `).run();
         
-        console.log(`✅ CRON: ${mediaResult.meta.changes} message(s) média supprimé(s) de la DB`);
+        console.log(`✅ CRON: ${mediaResult.meta.changes} message(s) média supprimé(s) de la DB (>30 jours)`);
 
-        // 2. SUPPRESSION DES TEXTES (> 7 jours)
-        // Règle d'optimisation: Tout le chat est éphémère après 1 semaine
+        // 2. SUPPRESSION DES TEXTES (DÉSACTIVÉ / 1 AN)
+        // Règle : On garde le texte pour l'historique de maintenance (Traceabilité)
+        // On supprime seulement l'extrême vieux (> 1 an) pour l'hygiène DB
         const textResult = await env.DB.prepare(`
             DELETE FROM chat_messages 
             WHERE type = 'text' 
-            AND datetime(created_at) < datetime('now', '-7 days')
+            AND datetime(created_at) < datetime('now', '-365 days')
         `).run();
 
-        console.log(`✅ CRON: ${textResult.meta.changes} message(s) texte supprimé(s) (>7 jours)`);
+        if (textResult.meta.changes > 0) {
+            console.log(`✅ CRON: ${textResult.meta.changes} message(s) texte très anciens (>1 an) supprimé(s)`);
+        } else {
+             console.log(`ℹ️ CRON: Aucun message texte >1 an à supprimer.`);
+        }
 
     } catch (error) {
         console.error('❌ CRON: Erreur cleanup-old-messages:', error);
