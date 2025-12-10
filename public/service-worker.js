@@ -132,6 +132,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // 2.5 IMAGES/ASSETS API (Cache First / Stale-While-Revalidate)
+  if (url.pathname.includes('/api/auth/avatar') || url.pathname.includes('/api/v2/chat/asset')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(cache => {
+        return cache.match(event.request).then(cachedResponse => {
+          // Return cached response immediately if available (Cache First)
+          const fetchPromise = fetch(event.request).then(networkResponse => {
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(err => {
+            // Network failed - Just rely on cache or fail gracefully
+            console.log('[SW] Avatar/Asset fetch offline fallback');
+          });
+
+          return cachedResponse || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+
   // 3. API (Network First)
   if (url.pathname.startsWith('/api/')) {
       // Pour les méthodes non-GET (POST, PUT, DELETE), on ne peut pas utiliser le cache.
