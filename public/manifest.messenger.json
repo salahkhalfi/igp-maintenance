@@ -1,18 +1,23 @@
 {
   "id": "/messenger/",
-  "name": "IGP Messenger",
-  "short_name": "Messenger",
+  "name": "IGP Connect",
+  "short_name": "Connect",
   "start_url": "/messenger/",
   "display": "standalone",
-  "background_color": "#111b21",
-  "theme_color": "#128C7E",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "scope": "/messenger/",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/messenger-icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml"
+      "src": "/messenger/messenger-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/messenger/messenger-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
