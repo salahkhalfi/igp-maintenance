@@ -2076,14 +2076,16 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             sender_name: 'Moi',
             content: input,
             created_at: new Date().toISOString(),
-            type: 'text'
+            type: 'text',
+            sender_avatar_key: currentUserAvatarKey
         };
 
-        // Add to UI immediately
-        setMessages(prev => [tempMsg, ...prev]);
+        // Add to UI immediately (Append to end for chronological order)
+        setMessages(prev => [...prev, tempMsg]);
         setInput('');
         setShowEmoji(false);
         setIsInputExpanded(false);
+        setTimeout(scrollToBottom, 50);
 
         // Try Network Send
         if (navigator.onLine && token) {
@@ -2110,6 +2112,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             // Offline Mode: Direct to Queue
             console.log("Offline: Queuing message");
             setPendingMessages(prev => [...prev, { id: tempId, content: tempMsg.content, conversationId }]);
+            // Trigger background sync attempt if SW is active
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SYNC_OUTBOX' });
+            }
         }
     };
 
@@ -2246,8 +2252,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
         // SEARCH FILTERING
         const messagesToDisplay = searchMode && searchKeyword.trim() 
-            ? messages.filter(m => m.content.toLowerCase().includes(searchKeyword.toLowerCase()))
-            : messages;
+            ? allMessages.filter(m => m.content.toLowerCase().includes(searchKeyword.toLowerCase()))
+            : allMessages;
 
         if (searchMode && messagesToDisplay.length === 0 && searchKeyword.trim()) {
              return (
@@ -2721,12 +2727,27 @@ const App = () => {
     
     const fetchUserInfo = async () => {
         try {
-            // Use Cache First strategy via Service Worker (no random timestamp)
+            // 1. Try local storage first for immediate offline support
+            const cachedKey = localStorage.getItem('avatar_key');
+            if (cachedKey) {
+                setCurrentUserAvatarKey(cachedKey);
+            }
+
+            // 2. Network Fetch (Cache First strategy via Service Worker)
             const res = await axios.get(`/api/auth/me`);
             if (res.data.user) {
                  setCurrentUserAvatarKey(res.data.user.avatar_key);
+                 // 3. Persist for next offline usage
+                 if (res.data.user.avatar_key) {
+                     localStorage.setItem('avatar_key', res.data.user.avatar_key);
+                 } else {
+                     localStorage.removeItem('avatar_key');
+                 }
             }
-        } catch (e) { console.error("Error fetching user info", e); }
+        } catch (e) { 
+            console.error("Error fetching user info", e); 
+            // Fallback is already handled by step 1, but safe to keep
+        }
     };
 
     useEffect(() => {
@@ -2735,6 +2756,11 @@ const App = () => {
             setCurrentUserId(getUserIdFromToken(token));
             setCurrentUserRole(getUserRoleFromToken(token));
             setCurrentUserName(getNameFromToken(token));
+            
+            // RESTORE AVATAR IMMEDIATELY (Fix "Avatar disappears offline")
+            const cachedKey = localStorage.getItem('avatar_key');
+            if (cachedKey) setCurrentUserAvatarKey(cachedKey);
+            
             fetchUserInfo();
             setShowLogin(false);
         }
