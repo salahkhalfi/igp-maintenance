@@ -532,7 +532,17 @@ const CreateGroupModal = ({ selectedUserIds, onClose, onCreate }: { selectedUser
                             autoFocus
                         />
                     </div>
-                    <div className="text-gray-500 text-xs font-bold tracking-widest w-full text-right mb-10 opacity-50">{name.length}/25</div>
+                    <div className="text-gray-500 text-xs font-bold tracking-widest w-full text-right mb-6 opacity-50">{name.length}/25</div>
+
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-8 flex gap-3 items-start text-left w-full">
+                        <i className="fas fa-info-circle text-blue-400 mt-0.5 flex-shrink-0"></i>
+                        <div>
+                            <div className="text-blue-400 font-bold text-xs uppercase tracking-wide">Note importante</div>
+                            <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                                Ce groupe sera <strong>public et visible par tous</strong> jusqu'à ce que vous y ajoutiez le premier participant.
+                            </p>
+                        </div>
+                    </div>
 
                     <button 
                         onClick={() => onCreate(name)}
