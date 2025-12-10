@@ -113,20 +113,29 @@ self.addEventListener('fetch', (event) => {
   ) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-            // Mise à jour du cache si succès
+        // Cache First for best performance and offline support
+        if (cachedResponse) {
+            // Update in background if online (Stale-While-Revalidate)
+            if (navigator.onLine) {
+                fetch(event.request).then(networkResponse => {
+                    if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                        const responseClone = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+                    }
+                }).catch(() => {});
+            }
+            return cachedResponse;
+        }
+
+        // If not in cache, go to network
+        return fetch(event.request).then((networkResponse) => {
+            // Cache new assets
             if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
                 const responseClone = networkResponse.clone();
                 caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
             }
             return networkResponse;
-        }).catch(err => {
-            // Erreur silencieuse en background
-            // console.log('[SW] Background update failed', err);
         });
-
-        // Retourner le cache immédiatement s'il existe, sinon attendre le réseau
-        return cachedResponse || fetchPromise;
       })
     );
     return;
@@ -155,16 +164,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. API (Network First)
+  // 3. API (Stratégie Hybride : Read vs Write)
   if (url.pathname.startsWith('/api/')) {
-      // Pour les méthodes non-GET (POST, PUT, DELETE), on ne peut pas utiliser le cache.
-      // On tente le réseau, et si ça échoue, on retourne une erreur JSON structurée
-      // pour que le frontend puisse l'afficher proprement.
+      // 3.1 ÉCRITURE (POST, PUT, DELETE) -> Network Only (l'App gère la queue offline)
       if (event.request.method !== 'GET') {
           event.respondWith(
               fetch(event.request).catch(err => {
+                  // Retourner 503 pour que l'App déclenche la sauvegarde dans IndexedDB
                   return new Response(JSON.stringify({ 
-                      error: 'Vous êtes hors ligne. Impossible d\'effectuer cette action.',
+                      error: 'Offline',
                       offline: true 
                   }), {
                       status: 503,
@@ -175,10 +183,11 @@ self.addEventListener('fetch', (event) => {
           return;
       }
 
+      // 3.2 LECTURE (GET) -> Network First avec Fallback Cache Infini
+      // On veut toujours les données fraîches, mais si offline, on veut voir les vieilles données plutôt que rien.
       event.respondWith(
           fetch(event.request)
             .then((response) => {
-                // Cache les réponses API réussies pour consultation offline
                 if (response.status === 200) {
                     const responseClone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
@@ -186,8 +195,15 @@ self.addEventListener('fetch', (event) => {
                 return response;
             })
             .catch(() => {
-                // En offline, essayer de retourner la dernière réponse connue
-                return caches.match(event.request);
+                return caches.match(event.request).then(cachedResponse => {
+                    if (cachedResponse) return cachedResponse;
+                    
+                    // Si rien en cache et pas de réseau -> 503
+                    return new Response(JSON.stringify({ error: 'Pas de connexion et pas de cache.' }), {
+                        status: 503,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                });
             })
       );
       return;

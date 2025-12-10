@@ -1803,8 +1803,62 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [viewImage, setViewImage] = useState<string | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
-    // Search In-Chat Logic
-    const [searchMode, setSearchMode] = useState(false);
+    // Offline Queue
+    const [pendingMessages, setPendingMessages] = useState<{id: string, content: string, conversationId: string}[]>([]);
+
+    useEffect(() => {
+        // Load pending messages from LocalStorage on mount
+        const saved = localStorage.getItem('pending_messages');
+        if (saved) {
+            try {
+                setPendingMessages(JSON.parse(saved));
+            } catch (e) {}
+        }
+
+        // Listener for online status to flush queue
+        const handleOnline = () => {
+            if (pendingMessages.length > 0) {
+                flushMessageQueue();
+            }
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, []);
+
+    useEffect(() => {
+        // Save pending messages to LocalStorage whenever they change
+        localStorage.setItem('pending_messages', JSON.stringify(pendingMessages));
+    }, [pendingMessages]);
+
+    const flushMessageQueue = async () => {
+        // Clone queue to avoid modification during iteration issues
+        const queue = [...pendingMessages];
+        if (queue.length === 0) return;
+
+        // Try to send each message
+        const remaining = [];
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        for (const msg of queue) {
+            try {
+                await fetch('/api/v2/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ conversationId: msg.conversationId, content: msg.content, type: 'text' })
+                });
+            } catch (e) {
+                console.error("Failed to flush message", msg, e);
+                remaining.push(msg); // Keep in queue if fail
+            }
+        }
+
+        setPendingMessages(remaining);
+        if (remaining.length < queue.length) {
+            fetchMessages(); // Refresh UI if some succeeded
+        }
+    };
+
     const [searchKeyword, setSearchKeyword] = useState('');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [allUsers, setAllUsers] = useState<User[]>([]); // Pour la navigation rapide
@@ -2012,40 +2066,50 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const sendMessage = async () => {
         if (!input.trim()) return;
         
-        // Offline check
-        if (!navigator.onLine) {
-            alert("⚠️ Vous êtes hors ligne. Impossible d'envoyer le message.");
-            return;
-        }
-
         const token = localStorage.getItem('auth_token');
-        if (!token) return;
         
-        setIsSending(true);
-        try {
-            const response = await fetch('/api/v2/chat/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ conversationId, content: input, type: 'text' })
-            });
-            
-            if (response.ok) { 
-                setInput(''); 
-                setShowEmoji(false); 
-                fetchMessages();
+        // Optimistic UI: Create temporary message
+        const tempId = `temp-${Date.now()}`;
+        const tempMsg: Message = {
+            id: tempId,
+            sender_id: currentUserId || 0,
+            sender_name: 'Moi',
+            content: input,
+            created_at: new Date().toISOString(),
+            type: 'text'
+        };
+
+        // Add to UI immediately
+        setMessages(prev => [tempMsg, ...prev]);
+        setInput('');
+        setShowEmoji(false);
+        setIsInputExpanded(false);
+
+        // Try Network Send
+        if (navigator.onLine && token) {
+            setIsSending(true);
+            try {
+                const response = await fetch('/api/v2/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ conversationId, content: tempMsg.content, type: 'text' })
+                });
                 
-                // Start timeout to collapse after sending
-                if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
-                inputTimeoutRef.current = setTimeout(() => setIsInputExpanded(false), 1000);
-            } else {
-                const data = await response.json();
-                throw new Error(data.error || "Erreur serveur");
+                if (!response.ok) throw new Error("Server error");
+                
+                // Success: Refresh real messages
+                fetchMessages(); 
+            } catch (err) { 
+                console.error("Send failed, queuing...", err);
+                // Fallback to Queue
+                setPendingMessages(prev => [...prev, { id: tempId, content: tempMsg.content, conversationId }]);
+            } finally {
+                setIsSending(false);
             }
-        } catch (err: any) { 
-            console.error(err);
-            alert(`❌ Erreur d'envoi: ${err.message || "Problème de connexion"}`);
-        } finally {
-            setIsSending(false);
+        } else {
+            // Offline Mode: Direct to Queue
+            console.log("Offline: Queuing message");
+            setPendingMessages(prev => [...prev, { id: tempId, content: tempMsg.content, conversationId }]);
         }
     };
 
@@ -2121,6 +2185,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const renderMessages = () => {
+        // Merge real messages and pending messages for this conversation
+        // Note: messages state already has optimistic updates, but pendingMessages is the source of truth for persistence
+        // We display what is in `messages` state which includes optimistically added ones.
+        // We can decorate them if they match pending IDs.
+        
         if (loadingMessages) {
              return (
                 <div className="flex justify-center items-center h-full animate-fade-in">
@@ -2229,11 +2298,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
             // Avatar rendering logic
             const avatarUrl = msg.sender_avatar_key 
-                ? `/api/auth/avatar/${msg.sender_id}?v=${msg.sender_avatar_key}` // Stable cache busting
+                ? `/api/auth/avatar/${msg.sender_id}?v=${msg.sender_avatar_key}` // Stable cache busting (v=hash)
                 : null;
 
+            const isPending = pendingMessages.some(pm => pm.id === msg.id) || msg.id.startsWith('temp-');
+
             result.push(
-                <div key={msg.id} className={`flex mb-6 ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in group items-end gap-3`}>
+                <div key={msg.id} className={`flex mb-6 ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in group items-end gap-3 ${isPending ? 'opacity-70' : ''}`}>
                     
                     {/* Avatar for OTHERS (Left) */}
                     {!isMe && (
@@ -2299,6 +2370,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                             <div className={`text-[10px] absolute bottom-1.5 right-3 flex items-center gap-1.5 font-bold tracking-wide ${isMe ? 'text-emerald-100/60' : 'text-gray-500'}`}>
                                 <span>{formatTime(msg.created_at)}</span>
                                 {isMe && (
+                                    isPending ? <i className="fas fa-clock text-[10px] text-yellow-400"></i> :
                                     <i className={`fas fa-check-double text-[10px] ${isRead ? 'text-white' : 'text-emerald-200/40'}`}></i>
                                 )}
                             </div>
@@ -2649,8 +2721,8 @@ const App = () => {
     
     const fetchUserInfo = async () => {
         try {
-            // Force bypass cache with timestamp
-            const res = await axios.get(`/api/auth/me?t=${Date.now()}`);
+            // Use Cache First strategy via Service Worker (no random timestamp)
+            const res = await axios.get(`/api/auth/me`);
             if (res.data.user) {
                  setCurrentUserAvatarKey(res.data.user.avatar_key);
             }
