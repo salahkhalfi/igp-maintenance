@@ -1441,11 +1441,20 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     );
 };
 
-const ImageViewer = ({ src, onClose }: { src: string, onClose: () => void }) => {
+const ImageViewer = ({ src, onClose, onDelete, canDelete }: { src: string, onClose: () => void, onDelete?: () => void, canDelete?: boolean }) => {
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col animate-fade-in" onClick={onClose}>
-            <div className="absolute top-6 right-6">
-                <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/10">
+            <div className="absolute top-6 right-6 flex gap-4 z-50">
+                {canDelete && onDelete && (
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="w-12 h-12 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:shadow-[0_0_25px_rgba(239,68,68,0.6)] group"
+                        title="Supprimer cette image"
+                    >
+                        <i className="fas fa-trash-alt text-xl group-hover:scale-110 transition-transform"></i>
+                    </button>
+                )}
+                <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/10 shadow-lg">
                     <i className="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -1863,7 +1872,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [uploading, setUploading] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [triggerAddMember, setTriggerAddMember] = useState(false);
-    const [viewImage, setViewImage] = useState<string | null>(null);
+    const [viewImage, setViewImage] = useState<{ src: string; msgId: string; canDelete: boolean } | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
     // Search In-Chat Logic
@@ -2379,7 +2388,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                         src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} 
                                         alt="Photo" 
                                         className="max-h-96 object-cover w-full cursor-pointer hover:scale-105 transition-transform duration-700"
-                                        onClick={() => setViewImage(`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`)}
+                                        onClick={() => setViewImage({
+                                            src: `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key!)}`,
+                                            msgId: msg.id,
+                                            canDelete: isMe || isGlobalAdmin
+                                        })}
                                     />
                                     {/* Download Button Overlay */}
                                     <button 
@@ -2447,7 +2460,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             </div>
             <div className="bg-noise absolute inset-0 opacity-[0.03] pointer-events-none z-0"></div>
 
-            {viewImage && <ImageViewer src={viewImage} onClose={() => setViewImage(null)} />}
+            {viewImage && (
+                <ImageViewer 
+                    src={viewImage.src} 
+                    onClose={() => setViewImage(null)} 
+                    canDelete={viewImage.canDelete}
+                    onDelete={() => {
+                        handleDeleteMessage(viewImage.msgId);
+                        setViewImage(null);
+                    }}
+                />
+            )}
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
             
             {previewFile && (
