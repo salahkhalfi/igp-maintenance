@@ -845,12 +845,20 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             }
         };
 
-        // Initial check
-        checkSubscriptionStatus();
-        
-        // Monitor Push Permission
+        // Monitor Push Permission and Check Status
         if ('Notification' in window) {
             setPushPermission(Notification.permission);
+        }
+        checkSubscriptionStatus();
+
+        // SERVICE WORKER SOUND LISTENER (For Background/Lock Screen sounds that SW sends to window if visible)
+        const swSoundListener = (event: MessageEvent) => {
+            if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
+                SoundManager.play().catch(e => console.error("SW triggered sound blocked", e));
+            }
+        };
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', swSoundListener);
         }
         
         // Listen for custom event from push-notifications.js

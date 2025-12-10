@@ -222,14 +222,12 @@ self.addEventListener('push', (event) => {
     vibrate: isCall ? [500, 200, 500, 200, 500] : [200, 100, 200],
     tag: isCall 
       ? `call-${Date.now()}`
-      : data.data?.ticketId 
-        ? `ticket-${data.data.ticketId}` 
-        : data.data?.messageId 
-          ? `message-${data.data.messageId}` 
-          : `notif-${Date.now()}`,
-    renotify: true, 
+      : data.data?.conversationId // Use conversation ID to group messages correctly (prevent stacking issues)
+        ? `conv-${data.data.conversationId}` 
+        : `notif-${Date.now()}`,
+    renotify: true, // IMPORTANT: Allows sound/vibrate for subsequent messages in same conversation
     silent: false,  
-    sound: '/static/notification.mp3', 
+    sound: '/static/notification.mp3', // Note: Only works on some browsers/Android versions
     timestamp: Date.now(), 
     priority: 2, 
     requireInteraction: isCall, 
