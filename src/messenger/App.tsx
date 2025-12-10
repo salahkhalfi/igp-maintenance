@@ -2356,31 +2356,31 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 </div>
             )}
 
-            <header onClick={() => !searchMode && setShowInfo(true)} className="h-24 glass-header px-6 md:px-8 flex items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-all duration-300 shadow-2xl shadow-black/40 sticky top-0 w-full group/header backdrop-blur-xl border-b border-white/5">
+            <header onClick={() => !searchMode && setShowInfo(true)} className="min-h-[5rem] h-auto py-3 glass-header px-4 md:px-8 flex flex-wrap items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-all duration-300 shadow-2xl shadow-black/40 sticky top-0 w-full group/header backdrop-blur-xl border-b border-white/5 gap-y-2">
                 {searchMode ? (
-                    <div className="flex-1 flex items-center gap-4 animate-fade-in mr-4">
+                    <div className="flex-1 flex items-center gap-4 animate-fade-in w-full">
                         <button 
                             onClick={(e) => { e.stopPropagation(); setSearchMode(false); setSearchKeyword(''); }}
-                            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-500 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-500 flex items-center justify-center transition-colors flex-shrink-0"
                         >
                             <i className="fas fa-arrow-left"></i>
                         </button>
-                        <div className="flex-1 bg-white/5 rounded-xl flex items-center px-4 py-3 border border-emerald-500/30 shadow-inner relative group/search">
-                            <i className="fas fa-search text-gray-500 mr-3"></i>
+                        <div className="flex-1 bg-white/5 rounded-xl flex items-center px-4 py-3 border border-emerald-500/30 shadow-inner relative group/search min-w-0">
+                            <i className="fas fa-search text-gray-500 mr-3 flex-shrink-0"></i>
                             <input 
                                 autoFocus
                                 type="text" 
-                                placeholder="Chercher message OU utilisateur..." 
+                                placeholder="Chercher..." 
                                 value={searchKeyword}
                                 onChange={(e) => setSearchKeyword(e.target.value)}
                                 onFocus={() => setIsSearchFocused(true)}
                                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                                className="bg-transparent border-none outline-none text-white w-full placeholder-gray-500 font-medium"
+                                className="bg-transparent border-none outline-none text-white w-full placeholder-gray-500 font-medium min-w-0"
                                 onKeyDown={(e) => e.key === 'Escape' && setSearchMode(false)}
                                 onClick={(e) => e.stopPropagation()}
                             />
                             {searchKeyword && (
-                                <i onClick={(e) => {e.stopPropagation(); setSearchKeyword('');}} className="fas fa-times-circle text-gray-500 hover:text-white cursor-pointer ml-2"></i>
+                                <i onClick={(e) => {e.stopPropagation(); setSearchKeyword('');}} className="fas fa-times-circle text-gray-500 hover:text-white cursor-pointer ml-2 flex-shrink-0"></i>
                             )}
 
                             {/* SMART USER DROPDOWN (In-Chat) */}
@@ -2415,36 +2415,34 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         </div>
                     </div>
                 ) : (
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
                     {/* Bouton Retour / Sortir Renforcé */}
                     <button 
                         onClick={(e) => { e.stopPropagation(); onBack(); }} 
-                        className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl px-4 py-2.5 transition-all mr-2 shadow-lg"
+                        className="group flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl px-3 py-2 transition-all shadow-lg flex-shrink-0"
                         title="Sortir de la discussion"
                     >
-                        <i className="fas fa-chevron-left text-emerald-500 group-hover:text-white transition-colors text-2xl"></i>
-                        <span className="text-sm font-bold text-gray-300 group-hover:text-white hidden sm:inline ml-1">RETOUR</span>
+                        <i className="fas fa-chevron-left text-emerald-500 group-hover:text-white transition-colors text-xl"></i>
                     </button>
 
-                    <div className="relative">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center shadow-xl border border-white/10 group-hover/header:scale-105 transition-transform duration-300">
-                            <i className="fas fa-users text-gray-400 text-lg group-hover/header:text-emerald-400 transition-colors"></i>
+                    <div className="relative flex-shrink-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center shadow-xl border border-white/10 group-hover/header:scale-105 transition-transform duration-300">
+                            <i className="fas fa-users text-gray-400 text-sm md:text-lg group-hover/header:text-emerald-400 transition-colors"></i>
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#050505] rounded-full flex items-center justify-center">
-                            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <div className="absolute -bottom-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-[#050505] rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
                         </div>
                     </div>
                     
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-3 mb-0.5">
-                            <div className="text-white font-bold text-lg md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
-                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5 flex items-center gap-1.5 shadow-sm" title="Suppression automatique après 7 jours">
-                                <i className="fas fa-history text-[10px] text-orange-400"></i>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <div className="text-white font-bold text-base md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
+                            <div className="bg-orange-500/10 border border-orange-500/20 rounded-full px-1.5 py-0.5 flex-shrink-0 flex items-center gap-1 shadow-sm" title="Suppression automatique après 7 jours">
                                 <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">7j</span>
                             </div>
                         </div>
-                        <div className="text-gray-500 text-[10px] md:text-xs font-bold flex items-center gap-2 tracking-wider uppercase leading-none">
-                            <span className="truncate max-w-[100px] md:max-w-md block line-clamp-2 md:line-clamp-1 whitespace-normal md:whitespace-nowrap">
+                        <div className="text-gray-500 text-[10px] md:text-xs font-bold flex items-center tracking-wider uppercase leading-tight">
+                            <span className="truncate w-full block">
                                 {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Chargement...'}
                             </span>
                         </div>
@@ -2452,8 +2450,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 </div>
                 )}
                 
-                {/* HEADER FIX MOBILE - Phone Icon Force Visible */}
-                <div className="flex gap-2 text-gray-400 items-center pl-1 ml-1 md:pl-2 md:ml-2 md:gap-3 flex-shrink-0 flex-wrap justify-end max-w-[120px]">
+                {/* HEADER FIX MOBILE - Phone Icon Force Visible & Button Group */}
+                <div className="flex gap-2 items-center flex-shrink-0">
                     <button 
                         onClick={handleAudioCall}
                         className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-xl md:rounded-2xl hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone z-50 relative"
