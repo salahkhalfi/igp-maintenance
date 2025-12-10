@@ -237,6 +237,33 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     ),
                     React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
                     React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 mb-4 sm:mb-5 leading-relaxed bg-white/60 p-3 sm:p-4 rounded-lg' }, ticket.description),
+                    
+                    // MAGIC BRIDGE: Bouton Discussion
+                    React.createElement('div', { className: 'flex justify-end -mt-3 mb-4' },
+                        React.createElement('button', {
+                            onClick: () => {
+                                const message = `Ref Ticket #${ticket.ticket_id}: ${ticket.title} - `;
+                                let target = '';
+                                
+                                // Logic: Chat with the "Other" party
+                                if (ticket.reported_by && ticket.reported_by !== currentUser?.id) {
+                                    target = `&recipientId=${ticket.reported_by}`;
+                                } else if (ticket.assigned_to && ticket.assigned_to !== 0 && ticket.assigned_to !== currentUser?.id) {
+                                    target = `&recipientId=${ticket.assigned_to}`;
+                                }
+                                
+                                // SSO SIDE-CAR: Pass the token securely
+                                const token = localStorage.getItem('auth_token');
+                                const authParam = token ? `&token=${token}` : '';
+                                
+                                window.open(`/messenger?message=${encodeURIComponent(message)}${target}${authParam}`, '_blank');
+                            },
+                            className: 'text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors border border-blue-200 shadow-sm'
+                        },
+                            React.createElement('i', { className: 'fas fa-comment-alt' }),
+                            (ticket.reported_by && ticket.reported_by !== currentUser?.id) ? 'Discuter avec le demandeur' : 'Ouvrir dans IGP Connect'
+                        )
+                    ),
                     React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4' },
                         React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },

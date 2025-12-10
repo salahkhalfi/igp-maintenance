@@ -1,4 +1,10 @@
-const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser }) => {
+const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser: propUser }) => {
+    // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
+    const currentUser = React.useMemo(() => {
+        if (propUser) return propUser;
+        try { return JSON.parse(localStorage.getItem('user_cache') || '{}'); } catch(e) { return {}; }
+    }, [propUser]);
+
     const [title, setTitle] = React.useState('');
     const [description, setDescription] = React.useState('');
     const [machineId, setMachineId] = React.useState('');
@@ -161,14 +167,19 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
 
             const response = await axios.post(API_URL + '/tickets', requestBody);
 
-            const ticketId = response.data.ticket.id;
+            const isOffline = response.data.offline === true;
+            const ticketId = response.data.ticket ? response.data.ticket.id : (response.data.id || 0);
 
 
             if (mediaFiles.length > 0) {
-                await uploadMediaFiles(ticketId);
+                if (isOffline) {
+                     alert("⚠️ Note : Le ticket a été créé hors-ligne. Les photos/vidéos ne peuvent pas être envoyées sans connexion et devront être ajoutées plus tard.");
+                } else {
+                     await uploadMediaFiles(ticketId);
+                }
             }
 
-            alert('Ticket créé avec succès !' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s) uploadé(s))' : ''));
+            alert((isOffline ? '⚠️ HORS-LIGNE : Ticket sauvegardé !' : 'Ticket créé avec succès !') + (mediaFiles.length > 0 && !isOffline ? ' (' + mediaFiles.length + ' média(s) uploadé(s))' : ''));
 
 
             setTitle('');

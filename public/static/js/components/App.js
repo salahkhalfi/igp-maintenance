@@ -1,6 +1,13 @@
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = React.useState(!!authToken);
-    const [currentUserState, setCurrentUserState] = React.useState(currentUser);
+    const [currentUserState, setCurrentUserState] = React.useState(() => {
+        // Try to load cached user from localStorage
+        try {
+            const cached = localStorage.getItem('user_cache');
+            if (cached) return JSON.parse(cached);
+        } catch (e) {}
+        return currentUser; // Fallback to global var (likely null)
+    });
     const { tickets, loading: ticketsLoading, fetchTickets, moveTicket, deleteTicket } = useTickets();
     const { machines, loading: machinesLoading, fetchMachines } = useMachines();
     const [loading, setLoading] = React.useState(true); // Global loading for initial load
@@ -75,6 +82,8 @@ const App = () => {
 
             currentUser = normalizedUser;
             setCurrentUserState(normalizedUser);
+            // Cache user for offline access
+            localStorage.setItem('user_cache', JSON.stringify(normalizedUser));
 
             // Charger titre et sous-titre personnalisés (public)
             try {
@@ -152,6 +161,8 @@ const App = () => {
             
             // CRITICAL: Redirect GUEST users to Messenger immediately
             if (userData.role === 'guest' || userData.isGuest) {
+                // Also cache guest user!
+                localStorage.setItem('user_cache', JSON.stringify(userData));
                 window.location.href = '/messenger';
                 return;
             }
@@ -161,6 +172,8 @@ const App = () => {
             
             // ✅ Pour backward compatibility: garder le token en localStorage pour API calls
             localStorage.setItem('auth_token', authToken);
+            // Cache user for offline access
+            localStorage.setItem('user_cache', JSON.stringify(userData));
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
             
             setIsLoggedIn(true);
@@ -211,6 +224,7 @@ const App = () => {
         
         // Nettoyage local
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_cache'); // Clear user cache on logout
         delete axios.defaults.headers.common['Authorization'];
         authToken = null;
         currentUser = null;

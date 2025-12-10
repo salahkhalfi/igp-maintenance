@@ -1,4 +1,10 @@
-const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab }) => {
+const MessagingModal = ({ show, onClose, currentUser: propUser, initialContact, initialTab }) => {
+    // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
+    const currentUser = React.useMemo(() => {
+        if (propUser) return propUser;
+        try { return JSON.parse(localStorage.getItem('user_cache') || '{}'); } catch(e) { return {}; }
+    }, [propUser]);
+
     const [activeTab, setActiveTab] = React.useState(initialTab || "public");
     const [publicMessages, setPublicMessages] = React.useState([]);
     const [conversations, setConversations] = React.useState([]);
@@ -7,6 +13,7 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
     const [availableUsers, setAvailableUsers] = React.useState([]);
     const [unreadCount, setUnreadCount] = React.useState(0);
     const [loading, setLoading] = React.useState(false);
+    const [pendingMessages, setPendingMessages] = React.useState([]); // NEW: Store pending messages separately
     const [timestampTick, setTimestampTick] = React.useState(0);
 
     React.useEffect(() => {
@@ -107,20 +114,60 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
     };
 
     const handleSendMessage = async (content) => {
+        // OPTIMISTIC UI: Add to pending messages
+        const tempMsg = {
+            id: 'temp-' + Date.now(),
+            sender_id: currentUser.id || currentUser.userId,
+            sender_name: currentUser.first_name || currentUser.full_name || 'Moi',
+            sender_role: currentUser.role,
+            content: content,
+            created_at: new Date().toISOString(),
+            message_type: activeTab,
+            recipient_id: activeTab === 'private' && selectedContact ? selectedContact.id : null,
+            is_pending: true
+        };
+
+        setPendingMessages(prev => [...prev, tempMsg]);
+
         try {
             const payload = {
                 message_type: activeTab,
                 content: content,
                 recipient_id: activeTab === 'private' && selectedContact ? selectedContact.id : null
             };
-            await axios.post(API_URL + '/messages', payload);
-            refreshCurrentView();
+            const response = await axios.post(API_URL + '/messages', payload);
+            
+            // If online (real success), remove from pending (will be fetched by refresh)
+            if (!response.data.offline) {
+                setPendingMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+                refreshCurrentView();
+            }
+            // If offline, KEEP in pending. It stays visible.
         } catch (error) {
+            // Remove on fatal error
+            setPendingMessages(prev => prev.filter(m => m.id !== tempMsg.id));
             alert('Erreur envoi message: ' + (error.response?.data?.error || 'Erreur'));
         }
     };
 
     const handleSendAudio = async (audioBlob, duration) => {
+        // OPTIMISTIC UI for Audio
+        const tempMsg = {
+            id: 'temp-audio-' + Date.now(),
+            sender_id: currentUser.id || currentUser.userId,
+            sender_name: currentUser.first_name || currentUser.full_name || 'Moi',
+            sender_role: currentUser.role,
+            content: '',
+            audio_file_key: 'pending',
+            audio_duration: duration,
+            created_at: new Date().toISOString(),
+            message_type: activeTab,
+            recipient_id: activeTab === 'private' && selectedContact ? selectedContact.id : null,
+            is_pending: true
+        };
+
+        setPendingMessages(prev => [...prev, tempMsg]);
+
         try {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'audio-message.' + (audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm'));
@@ -129,11 +176,17 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
             if (activeTab === 'private' && selectedContact) {
                 formData.append('recipient_id', selectedContact.id.toString());
             }
-            await axios.post(API_URL + '/messages/audio', formData, {
+            
+            const response = await axios.post(API_URL + '/messages/audio', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            refreshCurrentView();
+
+            if (!response.data.offline) {
+                setPendingMessages(prev => prev.filter(m => m.id !== tempMsg.id));
+                refreshCurrentView();
+            }
         } catch (error) {
+            setPendingMessages(prev => prev.filter(m => m.id !== tempMsg.id));
             alert('Erreur envoi audio: ' + (error.response?.data?.error || 'Erreur'));
         }
     };
@@ -247,7 +300,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
 
                 // Chat Window (For both Public and Private)
                 (activeTab === 'public' || (activeTab === 'private' && selectedContact)) ? React.createElement(window.MessagingChatWindow, {
-                    messages: activeTab === 'public' ? publicMessages : privateMessages,
+                    messages: activeTab === 'public' 
+                        ? [...publicMessages, ...pendingMessages.filter(m => m.message_type === 'public')]
+                        : [...privateMessages, ...pendingMessages.filter(m => m.message_type === 'private' && m.recipient_id === selectedContact.id)],
                     currentUser: currentUser,
                     loading: loading,
                     activeTab: activeTab,
@@ -262,7 +317,9 @@ const MessagingModal = ({ show, onClose, currentUser, initialContact, initialTab
                 }) : 
                 
                 React.createElement(window.MessagingChatWindow, {
-                    messages: activeTab === 'public' ? publicMessages : privateMessages,
+                    messages: activeTab === 'public' 
+                        ? [...publicMessages, ...pendingMessages.filter(m => m.message_type === 'public')]
+                        : [...privateMessages, ...pendingMessages.filter(m => m.message_type === 'private' && selectedContact && m.recipient_id === selectedContact.id)],
                     currentUser: currentUser,
                     loading: loading,
                     activeTab: activeTab,

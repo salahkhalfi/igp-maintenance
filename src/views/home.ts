@@ -21,6 +21,7 @@ export const homeHTML = `
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/static/js/utils.js"></script>
+    <script src="/static/js/offline-sync.js"></script>
     <script src="/static/js/components/MessagingSidebar.js"></script>
     <script src="/static/js/components/MessagingChatWindow.js"></script>
     <script src="/static/js/components/MessagingModal.js"></script>
@@ -511,6 +512,23 @@ export const homeHTML = `
         if (authToken) {
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
+
+        // ✅ INTERCEPTEUR OFFLINE (Background Sync)
+        axios.interceptors.response.use(
+            response => response,
+            error => {
+                // Détecter erreur réseau (pas de réponse ou code 0)
+                const isNetworkError = !error.response && error.code !== 'ERR_CANCELED';
+                
+                // Si c'est une mutation (POST/PUT/PATCH/DELETE) et qu'on est offline
+                if (isNetworkError && ['post', 'put', 'patch', 'delete'].includes(error.config.method?.toLowerCase())) {
+                    console.log('⚡ Interception Offline :', error.config.url);
+                    return window.OfflineSync.queueRequest(error.config);
+                }
+                
+                return Promise.reject(error);
+            }
+        );
 
 
         // getStatusLabel - DÉPLACÉ VERS /static/js/utils.js

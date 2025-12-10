@@ -1,5 +1,5 @@
 const AppHeader = ({
-    currentUser,
+    currentUser: propUser,
     activeTicketsCount,
     unreadMessagesCount,
     headerTitle,
@@ -27,6 +27,12 @@ const AppHeader = ({
     activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true }, // Default
     hasPermission = () => false // Safety fallback
 }) => {
+    // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
+    const currentUser = React.useMemo(() => {
+        if (propUser) return propUser;
+        try { return JSON.parse(localStorage.getItem('user_cache') || '{}'); } catch(e) { return {}; }
+    }, [propUser]);
+
     // Search state
     const [searchQuery, setSearchQuery] = React.useState('');
     const [searchResults, setSearchResults] = React.useState([]);
@@ -35,6 +41,23 @@ const AppHeader = ({
     const [searchKeywordResults, setSearchKeywordResults] = React.useState([]);
     const [searchTextResults, setSearchTextResults] = React.useState([]);
     const [searchDropdownPosition, setSearchDropdownPosition] = React.useState({ top: 0, left: 0, width: 0 });
+    // Smart List: Keep results open when not focused if user is interacting with list
+    const [viewingList, setViewingList] = React.useState(false);
+    // History State
+    const [searchHistory, setSearchHistory] = React.useState(() => {
+        if (typeof localStorage === 'undefined') return [];
+        try { return JSON.parse(localStorage.getItem('search_history') || '[]'); } catch { return []; }
+    });
+
+    const addToHistory = (term) => {
+        if (!term || term.trim().length < 2) return;
+        const cleanTerm = term.trim();
+        setSearchHistory(prev => {
+            const newHistory = [cleanTerm, ...prev.filter(h => h !== cleanTerm)].slice(0, 5);
+            localStorage.setItem('search_history', JSON.stringify(newHistory));
+            return newHistory;
+        });
+    };
     
     const searchTimeoutRef = React.useRef(null);
     const searchInputRef = React.useRef(null);
@@ -42,18 +65,27 @@ const AppHeader = ({
 
     // Push Notification Logic
     const [pushState, setPushState] = React.useState(typeof Notification !== 'undefined' ? Notification.permission : 'default');
-    
+    const [isSubscribed, setIsSubscribed] = React.useState(false); // UI Truthfulness: Actually subscribed on server?
+
     // Stable logo URL to prevent cache flooding and re-render flickering
     // Only updates on full page refresh or explicit update
     const [logoTimestamp] = React.useState(Date.now());
     const logoUrl = '/api/settings/logo?t=' + logoTimestamp;
     
     React.useEffect(() => {
-        const updatePushState = () => {
+        const updatePushState = async () => {
             if (typeof Notification !== 'undefined') {
                 setPushState(Notification.permission);
             }
+            if (window.isPushSubscribed) {
+                const sub = await window.isPushSubscribed();
+                setIsSubscribed(sub);
+            }
         };
+        
+        // Initial check
+        updatePushState();
+
         window.addEventListener('push-notification-changed', updatePushState);
         return () => window.removeEventListener('push-notification-changed', updatePushState);
     }, []);
@@ -64,7 +96,8 @@ const AppHeader = ({
             return;
         }
         
-        if (pushState === 'granted') {
+        // Case: Fully Active
+        if (pushState === 'granted' && isSubscribed) {
             if(confirm('Les notifications sont déjà activées. Voulez-vous tester une notification ?')) {
                  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({
@@ -74,9 +107,25 @@ const AppHeader = ({
                     });
                  }
             }
-        } else {
-            await window.requestPushPermission();
+            return;
         }
+
+        // Case: Permission Granted but Not Subscribed (Broken/Desync)
+        if (pushState === 'granted' && !isSubscribed) {
+             if(confirm('Permission accordée mais abonnement inactif. Réactiver ?')) {
+                 await window.subscribeToPush();
+                 // Update state check
+                 if (window.isPushSubscribed) {
+                     const sub = await window.isPushSubscribed();
+                     setIsSubscribed(sub);
+                     if(sub) alert("✅ Notifications réactivées !");
+                 }
+             }
+             return;
+        }
+
+        // Case: Not Granted
+        await window.requestPushPermission();
     };
 
     const isMobile = window.innerWidth < 768;
@@ -101,18 +150,18 @@ const AppHeader = ({
                 setShowMobileMenu(false);
             }
             // Close search results on resize to prevent positioning errors
-            if (showSearchResults) {
+            if (showSearchResults && !viewingList) {
                 setShowSearchResults(false);
             }
         };
         
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [showMobileMenu, showSearchResults]);
+    }, [showMobileMenu, showSearchResults, viewingList]);
 
     React.useEffect(() => {
         const updatePos = () => {
-            if (searchInputRef.current && showSearchResults) {
+            if (searchInputRef.current && (showSearchResults || viewingList)) {
                 const rect = searchInputRef.current.getBoundingClientRect();
                 setSearchDropdownPosition({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX, width: rect.width });
             }
@@ -122,7 +171,7 @@ const AppHeader = ({
         return () => {
             window.removeEventListener('scroll', updatePos);
         };
-    }, [showSearchResults]);
+    }, [showSearchResults, viewingList]);
 
     // Helper to safely check permissions
     const safeHasPermission = (perm) => {
@@ -155,12 +204,14 @@ const AppHeader = ({
                     setSearchKeywordResults(data.keywordResults || []);
                     setSearchTextResults(data.textResults || []);
                     setShowSearchResults(true);
+                    setViewingList(true); // Auto-keep open if results found
                 } catch (err) { console.error('Search error:', err); } 
                 finally { setSearchLoading(false); }
             }, 300);
         } else {
             setShowSearchResults(false);
             setSearchLoading(false);
+            setViewingList(false);
         }
     };
 
@@ -208,19 +259,61 @@ const AppHeader = ({
                 // SEARCH BAR
                 React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-1.5 md:mt-0 z-50' },
                     React.createElement('div', { className: 'relative flex items-center w-full' },
+                        React.createElement('i', { className: 'fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10' }),
                         React.createElement('input', {
                             ref: searchInputRef, type: 'text', placeholder: searchPlaceholders[placeholderIndex],
-                            className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pr-10 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm bg-white transition-all shadow-inner',
+                            className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pl-9 pr-12 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm bg-white transition-all shadow-inner',
                             value: searchQuery,
                             onChange: handleSearchChange,
-                            onFocus: () => setShowSearchResults(searchQuery.length >= 2),
-                            onBlur: () => setTimeout(() => setShowSearchResults(false), 200)
+                            onFocus: () => { setShowSearchResults(searchQuery.length >= 2); setViewingList(true); },
+                            onBlur: () => setTimeout(() => { if(!viewingList) setShowSearchResults(false); }, 200),
+                            onKeyDown: (e) => {
+                                if (e.key === 'Enter' && searchQuery.length >= 2) {
+                                    addToHistory(searchQuery);
+                                    setShowSearchResults(false);
+                                    setViewingList(false);
+                                    searchInputRef.current?.blur();
+                                }
+                            }
                         }),
-                        searchQuery && React.createElement('button', {
-                            onClick: (e) => { e.stopPropagation(); setSearchQuery(''); setShowSearchResults(false); },
-                            className: 'absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
-                        }, React.createElement('i', { className: 'fas fa-times-circle' })),
-                        React.createElement('i', { className: 'fas ' + (searchLoading ? 'fa-spinner fa-spin' : 'fa-search') + ' absolute right-3 top-1/2 -translate-y-1/2 text-blue-500' })
+                        
+                        // Action Button (Clear / Close Keyboard)
+                        (searchQuery || viewingList) && React.createElement('button', {
+                            onMouseDown: (e) => e.preventDefault(), // Prevent blur
+                            onClick: (e) => { 
+                                e.stopPropagation(); 
+                                if (searchQuery) {
+                                    setSearchQuery(''); 
+                                    setViewingList(false);
+                                    setShowSearchResults(false);
+                                    searchInputRef.current?.focus(); 
+                                } else if (viewingList) {
+                                    setViewingList(false);
+                                    setShowSearchResults(false);
+                                    searchInputRef.current?.blur();
+                                }
+                            },
+                            className: 'absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center',
+                        }, React.createElement('i', { className: 'fas ' + (searchQuery ? 'fa-times-circle' : 'fa-times') })),
+
+                        // Loading Spinner
+                        searchLoading && React.createElement('i', { className: 'fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-500' }),
+                        
+                        // Zero Friction Arrow (Open list without keyboard)
+                        (!searchLoading && !searchQuery && !viewingList) && React.createElement('button', {
+                            onMouseDown: (e) => { e.preventDefault(); e.stopPropagation(); },
+                            onClick: (e) => {
+                                e.stopPropagation();
+                                if (searchQuery.length >= 2) {
+                                    setViewingList(true);
+                                    setShowSearchResults(true);
+                                } else {
+                                    // Maybe show recent history if empty? For now just focus to type
+                                    searchInputRef.current?.focus();
+                                }
+                            },
+                            className: 'absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500'
+                        }, React.createElement('i', { className: 'fas fa-chevron-down' }))
                     )
                 ),
 
@@ -240,10 +333,10 @@ const AppHeader = ({
                         // Push Subscribe Button (Visible for everyone if enabled)
                         activeModules.notifications && React.createElement('button', {
                             className: 'px-2 py-1 rounded-full text-xs font-bold border transition-all ' + 
-                                (pushState === 'granted' ? 'bg-teal-100 text-teal-700 border-teal-300 hover:bg-teal-200' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 animate-pulse'),
+                                (pushState === 'granted' && isSubscribed ? 'bg-teal-100 text-teal-700 border-teal-300 hover:bg-teal-200' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 animate-pulse'),
                             onClick: handlePushClick, 
-                            title: pushState === 'granted' ? 'Notifications activées (Cliquer pour tester)' : 'Activer les notifications'
-                        }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' ? 'fa-bell' : 'fa-bell-slash') + ' mr-1' }), 'Notif'),
+                            title: pushState === 'granted' && isSubscribed ? 'Notifications activées (Cliquer pour tester)' : 'Activer les notifications'
+                        }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell' : 'fa-bell-slash') + ' mr-1' }), 'Notif'),
 
                         // Apps / Appareils Button (Now visible for everyone to manage THEIR devices)
                         // Removed admin/permission check to allow users to see their own devices
@@ -278,15 +371,69 @@ const AppHeader = ({
             ),
 
             // SEARCH PORTAL
-            showSearchResults && (searchKeywordResults.length > 0 || searchTextResults.length > 0) && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
+            (showSearchResults || viewingList) && (searchKeywordResults.length > 0 || searchTextResults.length > 0 || (!searchQuery && viewingList)) && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
                 React.createElement('div', {
                     className: 'bg-white border-2 border-gray-300 rounded-lg shadow-2xl overflow-y-auto',
                     style: { position: 'absolute', zIndex: 99999, top: (searchDropdownPosition.top + 2) + 'px', left: searchDropdownPosition.left + 'px', width: searchDropdownPosition.width + 'px', minWidth: '320px', maxHeight: '400px' },
-                    onMouseDown: (e) => e.stopPropagation()
+                    onMouseDown: (e) => e.stopPropagation(),
+                    onTouchStart: () => {
+                        // Zero Friction: Touch list closes keyboard
+                        if (document.activeElement === searchInputRef.current) {
+                            searchInputRef.current?.blur();
+                        }
+                    }
                 },
-                    React.createElement('button', { onClick: (e) => { e.stopPropagation(); setShowSearchResults(false); }, className: 'sticky top-0 right-0 float-right bg-white p-2 m-2 rounded-full shadow-md' }, React.createElement('i', { className: 'fas fa-times text-sm' })),
-                    searchKeywordResults.map(r => React.createElement('div', { key: 'kw-'+r.id, className: 'p-3 border-b hover:bg-red-50 cursor-pointer', onClick: () => { onOpenDetails(r.id); setShowSearchResults(false); } }, r.title)),
-                    searchTextResults.map(r => React.createElement('div', { key: 'txt-'+r.id, className: 'p-3 border-b hover:bg-gray-50 cursor-pointer', onClick: () => { onOpenDetails(r.id); setShowSearchResults(false); } }, r.title))
+                    React.createElement('div', { className: 'sticky top-0 right-0 float-right bg-white p-2 m-2 rounded-full shadow-md z-10' }, 
+                        React.createElement('button', { onClick: (e) => { e.stopPropagation(); setShowSearchResults(false); setViewingList(false); } }, React.createElement('i', { className: 'fas fa-times text-sm' }))
+                    ),
+                    searchKeywordResults.map(r => React.createElement('div', { key: 'kw-'+r.id, className: 'p-3 border-b hover:bg-red-50 cursor-pointer', onClick: () => { addToHistory(searchQuery); onOpenDetails(r.id); setShowSearchResults(false); setViewingList(false); } }, r.title)),
+                    searchTextResults.map(r => React.createElement('div', { key: 'txt-'+r.id, className: 'p-3 border-b hover:bg-gray-50 cursor-pointer', onClick: () => { addToHistory(searchQuery); onOpenDetails(r.id); setShowSearchResults(false); setViewingList(false); } }, r.title)),
+                    
+                    // Empty State: History & Suggestions
+                    (!searchQuery && viewingList) && React.createElement('div', { className: 'p-2' },
+                        // History Section
+                        React.createElement('div', { className: 'mb-3' },
+                            React.createElement('div', { className: 'px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center' }, 
+                                'Récents',
+                                searchHistory.length > 0 && React.createElement('button', { 
+                                    onClick: (e) => { e.stopPropagation(); setSearchHistory([]); localStorage.removeItem('search_history'); },
+                                    className: 'text-[10px] text-red-400 hover:text-red-600'
+                                }, 'Effacer')
+                            ),
+                            searchHistory.length === 0 
+                                ? React.createElement('div', { className: 'px-3 py-2 text-xs text-gray-400 italic' }, 'Vos dernières recherches apparaîtront ici...')
+                                : searchHistory.map(term => React.createElement('div', {
+                                    key: term,
+                                    onClick: () => { setSearchQuery(term); handleSearchChange({target: {value: term}}); },
+                                    className: 'flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg cursor-pointer group text-gray-600 hover:text-blue-600'
+                                }, 
+                                    React.createElement('i', { className: 'fas fa-history text-gray-300 group-hover:text-blue-400' }),
+                                    React.createElement('span', { className: 'font-medium' }, term)
+                                ))
+                        ),
+                        // Quick Filters
+                        React.createElement('div', {},
+                            React.createElement('div', { className: 'px-2 py-1 text-xs font-bold text-gray-400 uppercase tracking-widest' }, 'Filtres Rapides'),
+                            React.createElement('div', { className: 'grid grid-cols-2 gap-2 mt-1' },
+                                React.createElement('button', {
+                                    onClick: () => { setSearchQuery('urgent'); handleSearchChange({target: {value: 'urgent'}}); },
+                                    className: 'flex items-center justify-center gap-2 p-2 bg-red-50 text-red-600 rounded-lg border border-red-100 hover:bg-red-100 transition'
+                                }, React.createElement('i', { className: 'fas fa-fire' }), 'Urgent'),
+                                React.createElement('button', {
+                                    onClick: () => { setSearchQuery('retard'); handleSearchChange({target: {value: 'retard'}}); },
+                                    className: 'flex items-center justify-center gap-2 p-2 bg-orange-50 text-orange-600 rounded-lg border border-orange-100 hover:bg-orange-100 transition'
+                                }, React.createElement('i', { className: 'fas fa-clock' }), 'Retard'),
+                                React.createElement('button', {
+                                    onClick: () => { setSearchQuery('panne'); handleSearchChange({target: {value: 'panne'}}); },
+                                    className: 'flex items-center justify-center gap-2 p-2 bg-gray-50 text-gray-600 rounded-lg border border-gray-200 hover:bg-gray-100 transition'
+                                }, React.createElement('i', { className: 'fas fa-tools' }), 'Panne'),
+                                React.createElement('button', {
+                                    onClick: () => { setSearchQuery('maintenance'); handleSearchChange({target: {value: 'maintenance'}}); },
+                                    className: 'flex items-center justify-center gap-2 p-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 hover:bg-blue-100 transition'
+                                }, React.createElement('i', { className: 'fas fa-wrench' }), 'Maint.')
+                            )
+                        )
+                    )
                 ), document.body
             ),
 
@@ -298,6 +445,17 @@ const AppHeader = ({
                 activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
                     React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
                     (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
+                ),
+                // NEW IGP CONNECT BUTTON
+                React.createElement('button', { 
+                    onClick: () => window.open('/messenger', '_blank'), 
+                    className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-emerald-50 border-emerald-200' 
+                }, 
+                    React.createElement('div', { className: 'flex items-center' }, 
+                        React.createElement('i', { className: 'fas fa-rocket mr-2 text-emerald-600' }), 
+                        React.createElement('span', { className: 'font-bold text-emerald-700' }, 'IGP Connect')
+                    ),
+                    React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full animate-pulse' }, 'NOUVEAU')
                 ),
                 React.createElement('button', {
                     onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },

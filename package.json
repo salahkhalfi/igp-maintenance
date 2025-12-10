@@ -11,7 +11,7 @@
     "build:css": "tailwindcss -i src/styles.css -o public/static/styles.css --minify",
     "prebuild": "npm run build:css",
     "build:client": "vite build -c vite.client.config.ts",
-    "build:messenger": "vite build -c vite.messenger.config.ts && mv dist/messenger/src/messenger/index.html dist/messenger/index.html && rm -rf dist/messenger/src",
+    "build:messenger": "vite build -c vite.messenger.config.ts && mv dist/messenger/src/messenger/index.html dist/messenger/index.html && rm -rf dist/messenger/src && cp public/messenger/messenger-icon*.png dist/messenger/",
     "build": "vite build && npm run build:client && npm run build:messenger",
     "preview": "wrangler pages dev dist",
     "deploy": "npm run build && wrangler pages deploy dist --project-name webapp",

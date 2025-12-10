@@ -298,3 +298,27 @@ window.initPushNotifications = initPushNotifications;
 window.requestPushPermission = requestPushPermission;
 window.isPushSubscribed = isPushSubscribed;
 window.subscribeToPush = subscribeToPush;
+
+// Écouteur global pour les messages du Service Worker (pour jouer le son en fallback)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
+            console.log('🔊 [SW-MSG] Demande de son reçue du Service Worker');
+            // Tenter de jouer le son via un Audio global
+            try {
+                const audio = new Audio('/static/notification.mp3');
+                audio.volume = 1.0;
+                audio.play().catch(e => {
+                    console.log('❌ [SW-MSG] Impossible de jouer le son (Autoplay bloqué ?):', e);
+                });
+                
+                // Si c'est un appel, vibrer aussi via JS
+                if (event.data.isCall && 'vibrate' in navigator) {
+                    navigator.vibrate([500, 200, 500]);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    });
+}

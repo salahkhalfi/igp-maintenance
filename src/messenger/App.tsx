@@ -2649,7 +2649,8 @@ const App = () => {
     
     const fetchUserInfo = async () => {
         try {
-            const res = await axios.get('/api/auth/me');
+            // Force bypass cache with timestamp
+            const res = await axios.get(`/api/auth/me?t=${Date.now()}`);
             if (res.data.user) {
                  setCurrentUserAvatarKey(res.data.user.avatar_key);
             }

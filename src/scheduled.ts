@@ -25,6 +25,9 @@ export default {
       // TÂCHE #2: Vérification des tickets expirés (existant)
       await checkOverdueTickets(env);
 
+      // TÂCHE #3: Nettoyage des vieux messages et médias (Hygiène)
+      await cleanupOldMessages(env);
+
       console.log('✅ Cloudflare CRON terminé avec succès');
     } catch (error) {
       console.error('❌ Erreur Cloudflare CRON:', error);
@@ -32,6 +35,64 @@ export default {
     }
   },
 };
+
+/**
+ * Nettoyage des vieux messages et médias (Rétention)
+ * - Médias (Images/Audio) > 30 jours -> Supprimés
+ * - Textes > 365 jours -> Supprimés
+ */
+async function cleanupOldMessages(env: Bindings): Promise<void> {
+    console.log('🧹 CRON cleanup-old-messages démarré (Mode Optimisation 7 jours)');
+
+    try {
+        // 1. SUPPRESSION DES MÉDIAS (> 7 jours)
+        // Règle d'optimisation "Snapchat-like" : Rétention courte pour économiser l'espace
+        
+        // Récupérer les clés R2 à supprimer
+        const { results: mediaToDelete } = await env.DB.prepare(`
+            SELECT media_key 
+            FROM chat_messages 
+            WHERE type IN ('image', 'audio') 
+            AND datetime(created_at) < datetime('now', '-7 days')
+            AND media_key IS NOT NULL
+        `).all();
+
+        if (mediaToDelete && mediaToDelete.length > 0) {
+            console.log(`🗑️ CRON: Suppression de ${mediaToDelete.length} média(s) obsolète(s) (>7j)`);
+            
+            // Suppression R2 (Best effort)
+            for (const item of mediaToDelete as any[]) {
+                try {
+                    await env.MEDIA_BUCKET.delete(item.media_key);
+                } catch (e) {
+                    console.error(`❌ Erreur suppression R2 ${item.media_key}:`, e);
+                }
+            }
+        }
+
+        // Suppression DB des messages Média
+        const mediaResult = await env.DB.prepare(`
+            DELETE FROM chat_messages 
+            WHERE type IN ('image', 'audio') 
+            AND datetime(created_at) < datetime('now', '-7 days')
+        `).run();
+        
+        console.log(`✅ CRON: ${mediaResult.meta.changes} message(s) média supprimé(s) de la DB`);
+
+        // 2. SUPPRESSION DES TEXTES (> 7 jours)
+        // Règle d'optimisation: Tout le chat est éphémère après 1 semaine
+        const textResult = await env.DB.prepare(`
+            DELETE FROM chat_messages 
+            WHERE type = 'text' 
+            AND datetime(created_at) < datetime('now', '-7 days')
+        `).run();
+
+        console.log(`✅ CRON: ${textResult.meta.changes} message(s) texte supprimé(s) (>7 jours)`);
+
+    } catch (error) {
+        console.error('❌ CRON: Erreur cleanup-old-messages:', error);
+    }
+}
 
 /**
  * Cleanup des subscriptions push inactives >30 jours

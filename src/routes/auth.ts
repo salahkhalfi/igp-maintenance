@@ -72,7 +72,8 @@ auth.post('/avatar', authMiddleware, async (c) => {
       .set({ avatar_key: fileKey, updated_at: sql`CURRENT_TIMESTAMP` })
       .where(eq(users.id, user.userId));
 
-    // 🧹 CLEANUP: Supprimer l'ancien fichier de R2 (Fire and forget)
+    // 🧹 CLEANUP: Supprimer l'ancien fichier de R2 (Désactivé temporairement pour éviter les 404 côté client si le cache n'est pas à jour)
+    /*
     if (currentUser?.avatar_key) {
         console.log(`Cleaning up old avatar: ${currentUser.avatar_key}`);
         c.executionCtx.waitUntil(
@@ -80,6 +81,7 @@ auth.post('/avatar', authMiddleware, async (c) => {
                 .catch(err => console.error('Failed to delete old avatar:', err))
         );
     }
+    */
 
     return c.json({ success: true, avatar_key: fileKey });
   } catch (error) {
@@ -183,20 +185,16 @@ auth.get('/avatar/:userId', async (c) => {
         const object = await c.env.MEDIA_BUCKET.get(user.avatar_key);
         
         if (object) {
-            return new Response(object.body, {
-            headers: {
-                'Content-Type': object.httpMetadata?.contentType || 'image/jpeg',
-                'Cache-Control': 'public, max-age=31536000',
-                'ETag': object.httpEtag,
-            },
-            });
+            const headers = new Headers();
+            object.writeHttpMetadata(headers);
+            headers.set('etag', object.httpEtag);
+            headers.set('Cache-Control', 'public, max-age=31536000'); // Cache 1 year
+            
+            return new Response(object.body, { headers });
         } else {
-            // 🛠️ SELF-HEALING: Si le fichier R2 est manquant
-            console.log(`Avatar file missing for user ${userId}, clearing avatar_key and serving fallback`);
-            // Nettoyer la DB pour le futur (fire and forget)
-            c.executionCtx.waitUntil(
-                db.update(users).set({ avatar_key: null }).where(eq(users.id, userId))
-            );
+            // 🛠️ LOG ONLY: Si le fichier R2 est manquant, on loggue mais on ne supprime PAS la clé en DB
+            // Cela évite de perdre l'avatar en cas de problème temporaire avec R2
+            console.warn(`Avatar file missing in R2 for user ${userId} (key: ${user.avatar_key}), serving fallback temporarily.`);
         }
     } catch (r2Error) {
         console.error('R2 Fetch Error:', r2Error);
@@ -495,6 +493,7 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
+    c.header('Cache-Control', 'no-store, no-cache, must-revalidate');
     return c.json({ user });
   } catch (error) {
     console.error('Me error:', error);
