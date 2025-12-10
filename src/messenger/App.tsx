@@ -2444,7 +2444,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                             </div>
                         </div>
                         <div className="text-gray-500 text-xs font-bold truncate flex items-center gap-2 tracking-wider uppercase">
-                            <span className="truncate max-w-[200px] md:max-w-md">
+                            <span className="truncate max-w-[130px] md:max-w-md">
                                 {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Chargement...'}
                             </span>
                         </div>
@@ -2453,7 +2453,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 )}
                 
                 {/* NOUVEAUX ICONES APPEL (VISUEL SEULEMENT - PHASE 1) */}
-                <div className="flex gap-4 text-gray-400">
+                <div className="flex gap-3 text-gray-400 items-center pl-2 border-l border-white/5 ml-2">
                     <button 
                         onClick={handleAudioCall}
                         className="w-12 h-12 flex-shrink-0 rounded-2xl hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all border border-transparent hover:border-emerald-500/30 group/phone z-50 relative"
