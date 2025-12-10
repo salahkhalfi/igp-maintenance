@@ -31,14 +31,19 @@
 *   **Explicite > Implicite** : Pas de variables `x` ou `data`. Nommer pour le futur lecteur.
 *   **Clean Build** : Le projet doit tourner avec `npm install && npm run build` sur une machine vierge.
 
-## 5. MÉTHODOLOGIE (Loi de l'Impact)
+## 5. DÉPLOIEMENT & SÉCURITÉ (Loi du Mouvement)
+*   **Preview First** : Toujours proposer un déploiement sur une branche temporaire (ex: `feature-xxx`) avant de toucher à `main`.
+*   **Prod = Confirmation** : Ne jamais pousser sur `main` sans un "GO" explicite de l'utilisateur pour la "Production".
+*   **Rollback Ready** : Le code doit être "Stateless" par rapport à la DB. Séparer strictement les mises à jour de code (sans risque) des migrations de données (risque élevé).
+
+## 6. MÉTHODOLOGIE (Loi de l'Impact)
 *   **Effet Papillon** : Mapper les impacts (Mobile ? Push ? TV ?) avant de coder.
 *   **Better Safe than Sorry** : Dans le doute, on simule ou on pose la question.
 *   **Isolation** : Ne pas refactoriser tout le système pour corriger un bug mineur.
 
 ---
 
-## 6. PRINCIPES UX UNIVERSELS (Leçons Cristallisées)
+## 7. PRINCIPES UX UNIVERSELS (Leçons Cristallisées)
 
 *   **[Zéro Friction]** : L'interface doit anticiper l'intention.
     *   *Exemple* : Une barre de recherche doit afficher les résultats/historique dès le focus (clic/tap), sans attendre que l'utilisateur tape.
