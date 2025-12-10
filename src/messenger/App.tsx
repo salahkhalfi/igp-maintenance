@@ -1359,9 +1359,27 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                 
                                 <div className="flex-1 min-w-0 pt-0.5">
                                     <div className="flex justify-between items-baseline mb-1">
-                                        <h3 className={`font-bold text-base truncate transition-colors ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
-                                            {conv.name || (conv.type === 'group' ? 'Groupe sans nom' : 'Discussion Privée')}
-                                        </h3>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <h3 className={`font-bold text-base truncate transition-colors ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}`}>
+                                                {conv.name || (conv.type === 'group' ? 'Groupe sans nom' : 'Discussion Privée')}
+                                            </h3>
+                                            
+                                            {/* BADGE PREMIUM PUBLIC/PRIVÉ */}
+                                            {conv.type === 'group' && (
+                                                (conv.participant_count && conv.participant_count <= 1) ? (
+                                                    <div className="px-1.5 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 flex items-center gap-1 shrink-0">
+                                                        <i className="fas fa-globe text-[8px] text-cyan-400"></i>
+                                                        <span className="text-[8px] font-bold text-cyan-400 uppercase tracking-wide">Public</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1 shrink-0">
+                                                        <i className="fas fa-lock text-[8px] text-emerald-400"></i>
+                                                        <span className="text-[8px] font-bold text-emerald-400 uppercase tracking-wide">Privé</span>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+
                                         <span className={`text-[10px] font-bold tracking-wide whitespace-nowrap ml-2 ${isActive ? 'text-emerald-400' : 'text-gray-600 group-hover:text-gray-500'}`}>
                                             {formatTime(conv.last_message_time)}
                                         </span>
