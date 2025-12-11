@@ -2113,6 +2113,90 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         renderCanvas();
     }, [annotations]);
 
+    // --- HELPER FUNCTIONS FOR ANNOTATIONS ---
+    const getBounds = (ann: AnnotationObject) => {
+        if (ann.type === 'freehand') {
+            if (ann.points.length === 0) return { x: 0, y: 0, w: 0, h: 0 };
+            const xs = ann.points.map(p => p.x);
+            const ys = ann.points.map(p => p.y);
+            return {
+                x: Math.min(...xs),
+                y: Math.min(...ys),
+                w: Math.max(...xs) - Math.min(...xs),
+                h: Math.max(...ys) - Math.min(...ys)
+            };
+        } else if (ann.type === 'text') {
+            const width = ann.text.length * (ann.fontSize * 0.6);
+            return { x: ann.x, y: ann.y - ann.fontSize, w: width, h: ann.fontSize };
+        } else {
+            // For arrow, rectangle, circle
+            const x = Math.min(ann.start.x, ann.end.x);
+            const y = Math.min(ann.start.y, ann.end.y);
+            const w = Math.abs(ann.end.x - ann.start.x);
+            const h = Math.abs(ann.end.y - ann.start.y);
+            return { x, y, w, h };
+        }
+    };
+
+    const getCenter = (ann: AnnotationObject) => {
+        const b = getBounds(ann);
+        return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+    };
+
+    const drawSelectionHandles = (ctx: CanvasRenderingContext2D, ann: AnnotationObject) => {
+        const b = getBounds(ann);
+        const handleSize = 40; 
+        
+        ctx.save();
+        const center = getCenter(ann);
+        ctx.translate(center.x, center.y);
+        ctx.rotate(ann.rotation || 0);
+        ctx.translate(-center.x, -center.y);
+        
+        ctx.strokeStyle = '#ffffff'; 
+        ctx.lineWidth = 4;
+        ctx.setLineDash([15, 15]);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.setLineDash([]);
+        
+        const handles = [
+            { x: b.x, y: b.y },
+            { x: b.x + b.w, y: b.y },
+            { x: b.x, y: b.y + b.h },
+            { x: b.x + b.w, y: b.y + b.h }
+        ];
+        
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+
+        handles.forEach(h => {
+            ctx.beginPath();
+            ctx.rect(h.x - handleSize/2, h.y - handleSize/2, handleSize, handleSize);
+            ctx.fill();
+            ctx.stroke();
+        });
+        
+        // Rotation handle
+        const rotX = b.x + b.w/2;
+        const rotY = b.y - 150; 
+        
+        ctx.beginPath();
+        ctx.moveTo(rotX, b.y);
+        ctx.lineTo(rotX, rotY);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(rotX, rotY, 25, 0, Math.PI * 2); // Big visible handle
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.restore();
+    };
+
     const renderCanvas = () => {
         if (!annotationCanvasRef.current || !annotationCtxRef.current || !originalImage) return;
         const canvas = annotationCanvasRef.current;
