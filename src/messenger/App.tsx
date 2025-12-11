@@ -2051,10 +2051,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     // --- ADVANCED ANNOTATION ENGINE STATE ---
     type AnnotationTool = 'select' | 'freehand' | 'arrow' | 'rectangle' | 'circle' | 'text';
     type AnnotationObject = 
-        | { id: string, type: 'freehand', points: {x: number, y: number}[], color: string }
-        | { id: string, type: 'arrow', start: {x: number, y: number}, end: {x: number, y: number}, color: string }
-        | { id: string, type: 'rectangle' | 'circle', start: {x: number, y: number}, end: {x: number, y: number}, color: string }
-        | { id: string, type: 'text', x: number, y: number, text: string, color: string };
+        | { id: string, type: 'freehand', points: {x: number, y: number}[], color: string, rotation: number }
+        | { id: string, type: 'arrow', start: {x: number, y: number}, end: {x: number, y: number}, color: string, rotation: number }
+        | { id: string, type: 'rectangle' | 'circle', start: {x: number, y: number}, end: {x: number, y: number}, color: string, rotation: number }
+        | { id: string, type: 'text', x: number, y: number, text: string, color: string, fontSize: number, rotation: number };
 
     const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('freehand');
     const [annotations, setAnnotations] = useState<AnnotationObject[]>([]);
@@ -2062,6 +2062,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
     const [dragStartPos, setDragStartPos] = useState<{x: number, y: number} | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    
+    // Transform State
+    const [transformMode, setTransformMode] = useState<'none' | 'move' | 'resize' | 'rotate'>('none');
+    const [activeHandle, setActiveHandle] = useState<'tl' | 'tr' | 'bl' | 'br' | 'rot' | null>(null);
+    const [initialTransformState, setInitialTransformState] = useState<AnnotationObject | null>(null);
 
     // Initialize Canvas when previewFile changes
     useEffect(() => {
@@ -2095,6 +2100,79 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         renderCanvas();
     }, [annotations, currentAnnotation, selectedAnnotationId, originalImage]);
 
+    const getBounds = (ann: AnnotationObject) => {
+        if (ann.type === 'freehand') {
+            const xs = ann.points.map(p => p.x);
+            const ys = ann.points.map(p => p.y);
+            return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+        } else if (ann.type === 'text') {
+            const width = ann.text.length * (ann.fontSize * 0.6); // Approx width
+            const height = ann.fontSize;
+            return { x: ann.x, y: ann.y - height, w: width, h: height };
+        } else {
+            const x = Math.min(ann.start.x, ann.end.x);
+            const y = Math.min(ann.start.y, ann.end.y);
+            const w = Math.abs(ann.end.x - ann.start.x);
+            const h = Math.abs(ann.end.y - ann.start.y);
+            return { x, y, w, h };
+        }
+    };
+
+    const getCenter = (ann: AnnotationObject) => {
+        const b = getBounds(ann);
+        return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+    };
+
+    const drawSelectionHandles = (ctx: CanvasRenderingContext2D, ann: AnnotationObject) => {
+        ctx.save();
+        const center = getCenter(ann);
+        ctx.translate(center.x, center.y);
+        ctx.rotate(ann.rotation);
+        ctx.translate(-center.x, -center.y);
+        
+        const b = getBounds(ann);
+        const handleSize = 40;
+        
+        ctx.strokeStyle = '#2196F3';
+        ctx.lineWidth = 5;
+        ctx.setLineDash([15, 15]);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = '#2196F3';
+        ctx.lineWidth = 5;
+        
+        // Corners: tl, tr, bl, br
+        const handles = [
+            { x: b.x, y: b.y },
+            { x: b.x + b.w, y: b.y },
+            { x: b.x, y: b.y + b.h },
+            { x: b.x + b.w, y: b.y + b.h }
+        ];
+        
+        handles.forEach(h => {
+            ctx.beginPath();
+            ctx.rect(h.x - handleSize/2, h.y - handleSize/2, handleSize, handleSize);
+            ctx.fill();
+            ctx.stroke();
+        });
+        
+        // Rotation handle
+        const rotHandle = { x: b.x + b.w/2, y: b.y - 100 };
+        ctx.beginPath();
+        ctx.moveTo(b.x + b.w/2, b.y);
+        ctx.lineTo(rotHandle.x, rotHandle.y);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(rotHandle.x, rotHandle.y, 25, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.restore();
+    };
+
     const renderCanvas = () => {
         if (!annotationCanvasRef.current || !annotationCtxRef.current || !originalImage) return;
         const canvas = annotationCanvasRef.current;
@@ -2109,15 +2187,23 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         // 3. Draw All Annotations
         [...annotations, currentAnnotation].forEach(ann => {
             if (!ann) return;
+            ctx.save();
+            
+            // Apply rotation around center
+            const center = getCenter(ann);
+            ctx.translate(center.x, center.y);
+            ctx.rotate(ann.rotation);
+            ctx.translate(-center.x, -center.y);
+
             ctx.beginPath();
             ctx.strokeStyle = ann.color;
             ctx.fillStyle = ann.color;
             ctx.lineWidth = 30;
             
-            // Highlight selected
+            // Highlight selected (shadow only, box handled separately)
             if (ann.id === selectedAnnotationId) {
-                ctx.shadowColor = "white";
-                ctx.shadowBlur = 15;
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 20;
             } else {
                 ctx.shadowBlur = 0;
             }
@@ -2139,13 +2225,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
                 ctx.stroke();
             } else if (ann.type === 'text') {
-                ctx.font = "bold 120px Arial";
+                ctx.font = `bold ${ann.fontSize}px Arial`;
                 ctx.fillText(ann.text, ann.x, ann.y);
             }
+            
+            ctx.restore(); // Restore context (remove rotation) for next item
+
+            // Draw selection handles ON TOP if selected
+            if (ann.id === selectedAnnotationId) {
+                drawSelectionHandles(ctx, ann);
+            }
         });
-        
-        // Reset shadow for next frame
-        ctx.shadowBlur = 0;
     };
 
     const getCanvasPoint = (e: React.MouseEvent | React.TouchEvent) => {
@@ -2171,24 +2261,62 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         };
     };
 
+    const rotatePoint = (x: number, y: number, cx: number, cy: number, angle: number) => {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return {
+            x: (cos * (x - cx)) - (sin * (y - cy)) + cx,
+            y: (sin * (x - cx)) + (cos * (y - cy)) + cy
+        };
+    };
+
+    const hitTestHandles = (x: number, y: number, ann: AnnotationObject): 'tl' | 'tr' | 'bl' | 'br' | 'rot' | null => {
+        const center = getCenter(ann);
+        // Rotate mouse point negatively to align with unrotated object
+        const p = rotatePoint(x, y, center.x, center.y, -ann.rotation);
+        
+        const b = getBounds(ann);
+        const handleSize = 80; // Large hit area
+        
+        const handles = [
+            { id: 'tl', x: b.x, y: b.y },
+            { id: 'tr', x: b.x + b.w, y: b.y },
+            { id: 'bl', x: b.x, y: b.y + b.h },
+            { id: 'br', x: b.x + b.w, y: b.y + b.h },
+            { id: 'rot', x: b.x + b.w/2, y: b.y - 100 }
+        ];
+
+        for (const h of handles) {
+             if (Math.abs(p.x - h.x) < handleSize && Math.abs(p.y - h.y) < handleSize) {
+                 return h.id as any;
+             }
+        }
+        return null;
+    };
+
     const isPointInAnnotation = (x: number, y: number, ann: AnnotationObject): boolean => {
-        // Simple hit detection
-        const HIT_RADIUS = 150;
+        // Rotate point into local space
+        const center = getCenter(ann);
+        const p = rotatePoint(x, y, center.x, center.y, -ann.rotation);
+        const lx = p.x;
+        const ly = p.y;
+
+        const HIT_RADIUS = 50; 
         
         if (ann.type === 'freehand') {
-            return ann.points.some(p => Math.hypot(p.x - x, p.y - y) < HIT_RADIUS);
+            return ann.points.some(pt => Math.hypot(pt.x - lx, pt.y - ly) < HIT_RADIUS);
         } else if (ann.type === 'text') {
-            // Approx text box
-            return x >= ann.x - 50 && x <= ann.x + (ann.text.length * 100) && y >= ann.y - 150 && y <= ann.y + 50;
+            return lx >= ann.x - 50 && lx <= ann.x + (ann.text.length * (ann.fontSize * 0.6)) && ly >= ann.y - ann.fontSize && ly <= ann.y + 50;
         } else if (ann.type === 'rectangle') {
-             return x >= Math.min(ann.start.x, ann.end.x) - HIT_RADIUS && 
-                    x <= Math.max(ann.start.x, ann.end.x) + HIT_RADIUS &&
-                    y >= Math.min(ann.start.y, ann.end.y) - HIT_RADIUS &&
-                    y <= Math.max(ann.start.y, ann.end.y) + HIT_RADIUS;
+            const minX = Math.min(ann.start.x, ann.end.x);
+            const maxX = Math.max(ann.start.x, ann.end.x);
+            const minY = Math.min(ann.start.y, ann.end.y);
+            const maxY = Math.max(ann.start.y, ann.end.y);
+             return lx >= minX - HIT_RADIUS && lx <= maxX + HIT_RADIUS &&
+                    ly >= minY - HIT_RADIUS && ly <= maxY + HIT_RADIUS;
         } else if (ann.type === 'circle' || ann.type === 'arrow') {
-            // Simplified for circle/arrow: check start or end points proximity
-            return Math.hypot(ann.start.x - x, ann.start.y - y) < HIT_RADIUS * 2 ||
-                   Math.hypot(ann.end.x - x, ann.end.y - y) < HIT_RADIUS * 2;
+             return Math.hypot(ann.start.x - lx, ann.start.y - ly) < HIT_RADIUS * 3 ||
+                    Math.hypot(ann.end.x - lx, ann.end.y - ly) < HIT_RADIUS * 3;
         }
         return false;
     };
@@ -2207,14 +2335,31 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const { x, y } = getCanvasPoint(e);
         
         if (annotationTool === 'select') {
-            // Find clicked annotation (reverse to find top-most)
+            if (selectedAnnotationId) {
+                const selectedAnn = annotations.find(a => a.id === selectedAnnotationId);
+                if (selectedAnn) {
+                    const handle = hitTestHandles(x, y, selectedAnn);
+                    if (handle) {
+                        setTransformMode(handle === 'rot' ? 'rotate' : 'resize');
+                        setActiveHandle(handle);
+                        setDragStartPos({ x, y });
+                        setInitialTransformState(JSON.parse(JSON.stringify(selectedAnn)));
+                        setIsDragging(true);
+                        return;
+                    }
+                }
+            }
+
             const clickedAnn = [...annotations].reverse().find(ann => isPointInAnnotation(x, y, ann));
             if (clickedAnn) {
                 setSelectedAnnotationId(clickedAnn.id);
                 setDragStartPos({ x, y });
+                setTransformMode('move');
+                setInitialTransformState(JSON.parse(JSON.stringify(clickedAnn)));
                 setIsDragging(true);
             } else {
                 setSelectedAnnotationId(null);
+                setTransformMode('none');
             }
             return;
         }
@@ -2223,16 +2368,15 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const id = Date.now().toString();
 
         if (annotationTool === 'freehand') {
-            setCurrentAnnotation({ id, type: 'freehand', points: [{x, y}], color: annotationColor });
+            setCurrentAnnotation({ id, type: 'freehand', points: [{x, y}], color: annotationColor, rotation: 0 } as any);
         } else if (annotationTool === 'text') {
              const text = prompt("Entrez le texte:");
              if (text) {
-                 setAnnotations(prev => [...prev, { id, type: 'text', x, y, text, color: annotationColor }]);
+                 setAnnotations(prev => [...prev, { id, type: 'text', x, y, text, color: annotationColor, fontSize: 120, rotation: 0 }]);
              }
              setIsDrawing(false); 
         } else {
-            // Shapes
-            setCurrentAnnotation({ id, type: annotationTool, start: {x, y}, end: {x, y}, color: annotationColor } as any);
+            setCurrentAnnotation({ id, type: annotationTool, start: {x, y}, end: {x, y}, color: annotationColor, rotation: 0 } as any);
         }
     };
 
@@ -2240,23 +2384,61 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         e.preventDefault();
         const { x, y } = getCanvasPoint(e);
 
-        if (annotationTool === 'select' && isDragging && selectedAnnotationId && dragStartPos) {
-            // Move Logic
+        if (annotationTool === 'select' && isDragging && selectedAnnotationId && dragStartPos && initialTransformState) {
             const dx = x - dragStartPos.x;
             const dy = y - dragStartPos.y;
             
             setAnnotations(prev => prev.map(ann => {
                 if (ann.id !== selectedAnnotationId) return ann;
                 
-                if (ann.type === 'freehand') {
-                    return { ...ann, points: ann.points.map(p => ({ x: p.x + dx, y: p.y + dy })) };
-                } else if (ann.type === 'text') {
-                    return { ...ann, x: ann.x + dx, y: ann.y + dy };
-                } else {
-                    return { ...ann, start: { x: ann.start.x + dx, y: ann.start.y + dy }, end: { x: ann.end.x + dx, y: ann.end.y + dy } };
+                if (transformMode === 'move') {
+                    if (ann.type === 'freehand') {
+                        return { ...ann, points: initialTransformState.points.map((p: any) => ({ x: p.x + dx, y: p.y + dy })) };
+                    } else if (ann.type === 'text') {
+                        return { ...ann, x: initialTransformState.x + dx, y: initialTransformState.y + dy };
+                    } else {
+                        return { ...ann, start: { x: initialTransformState.start.x + dx, y: initialTransformState.start.y + dy }, end: { x: initialTransformState.end.x + dx, y: initialTransformState.end.y + dy } };
+                    }
+                } else if (transformMode === 'rotate') {
+                    const center = getCenter(ann);
+                    const angle = Math.atan2(y - center.y, x - center.x);
+                    return { ...ann, rotation: angle + Math.PI / 2 };
+                } else if (transformMode === 'resize') {
+                    const center = getCenter(initialTransformState as any);
+                    const localMouse = rotatePoint(x, y, center.x, center.y, -initialTransformState.rotation);
+                    const localStartClick = rotatePoint(dragStartPos.x, dragStartPos.y, center.x, center.y, -initialTransformState.rotation);
+                    
+                    const ldx = localMouse.x - localStartClick.x;
+                    const ldy = localMouse.y - localStartClick.y;
+                    
+                    if (ann.type === 'text') {
+                         const initialDist = Math.hypot(dragStartPos.x - center.x, dragStartPos.y - center.y);
+                         const currentDist = Math.hypot(x - center.x, y - center.y);
+                         const scale = currentDist / initialDist;
+                         return { ...ann, fontSize: Math.max(20, (initialTransformState as any).fontSize * scale) };
+                    } else if (ann.type === 'freehand') {
+                        return ann; 
+                    } else {
+                        let s = { ...(initialTransformState as any).start };
+                        let e = { ...(initialTransformState as any).end };
+                        const x1 = Math.min(s.x, e.x);
+                        const x2 = Math.max(s.x, e.x);
+                        const y1 = Math.min(s.y, e.y);
+                        const y2 = Math.max(s.y, e.y);
+                        
+                        let nx1 = x1, nx2 = x2, ny1 = y1, ny2 = y2;
+                        if (activeHandle?.includes('l')) nx1 += ldx;
+                        if (activeHandle?.includes('r')) nx2 += ldx;
+                        if (activeHandle?.includes('t')) ny1 += ldy;
+                        if (activeHandle?.includes('b')) ny2 += ldy;
+                        
+                        const newStart = { x: (s.x === x1) ? nx1 : nx2, y: (s.y === y1) ? ny1 : ny2 };
+                        const newEnd = { x: (e.x === x1) ? nx1 : nx2, y: (e.y === y1) ? ny1 : ny2 };
+                        return { ...ann, start: newStart, end: newEnd };
+                    }
                 }
+                return ann;
             }));
-            setDragStartPos({ x, y }); // Reset for next delta
             return;
         }
 
@@ -2265,7 +2447,6 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         if (currentAnnotation.type === 'freehand') {
             setCurrentAnnotation({ ...currentAnnotation, points: [...currentAnnotation.points, {x, y}] });
         } else if (currentAnnotation.type !== 'text') {
-            // Resize shape
             setCurrentAnnotation({ ...currentAnnotation, end: {x, y} } as any);
         }
     };
@@ -2274,6 +2455,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         if (annotationTool === 'select') {
             setIsDragging(false);
             setDragStartPos(null);
+            setTransformMode('none');
             return;
         }
 
