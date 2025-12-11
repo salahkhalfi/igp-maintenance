@@ -2524,8 +2524,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const clearAnnotation = () => {
-        if (confirm("Effacer toutes les annotations ?")) {
-            setAnnotations([]);
+        if (selectedAnnotationId) {
+            setAnnotations(prev => prev.filter(ann => ann.id !== selectedAnnotationId));
+            setSelectedAnnotationId(null);
+            setTransformMode('none');
+        } else {
+            if (confirm("Effacer toutes les annotations ?")) {
+                setAnnotations([]);
+            }
         }
     };
 
@@ -3390,10 +3396,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                             </button>
                             <button 
                                 onClick={clearAnnotation} 
-                                className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 transition-all active:scale-95"
-                                title="Effacer tout"
+                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 ${selectedAnnotationId ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-white/10 text-red-400 hover:bg-red-500/20'}`}
+                                title={selectedAnnotationId ? "Supprimer la sélection" : "Effacer tout"}
                             >
-                                <i className="fas fa-trash-alt text-xl"></i>
+                                <i className={`fas ${selectedAnnotationId ? 'fa-eraser' : 'fa-trash-alt'} text-xl`}></i>
                             </button>
                         </div>
 
