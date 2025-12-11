@@ -2116,8 +2116,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     // --- HELPER FUNCTIONS FOR ANNOTATIONS ---
     
     // Moved up to ensure availability
-    const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number) => {
-        const headlen = 60; // Adjusted size
+    const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number, scaleFactor: number = 1) => {
+        const headlen = 40 * scaleFactor; // Dynamic head size
         const angle = Math.atan2(toY - fromY, toX - fromX);
         // Arrow shaft
         ctx.beginPath();
@@ -2166,9 +2166,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
     };
 
-    const drawSelectionHandles = (ctx: CanvasRenderingContext2D, ann: AnnotationObject) => {
+    const drawSelectionHandles = (ctx: CanvasRenderingContext2D, ann: AnnotationObject, scaleFactor: number = 1) => {
         const b = getBounds(ann);
-        const handleSize = 40; 
+        const handleSize = 30 * scaleFactor; 
         
         ctx.save();
         const center = getCenter(ann);
@@ -2183,8 +2183,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.translate(-center.x, -center.y);
         
         ctx.strokeStyle = '#ffffff'; 
-        ctx.lineWidth = 4;
-        ctx.setLineDash([15, 15]);
+        ctx.lineWidth = 3 * scaleFactor;
+        ctx.setLineDash([10 * scaleFactor, 10 * scaleFactor]);
         ctx.strokeRect(b.x, b.y, b.w, b.h);
         ctx.setLineDash([]);
         
@@ -2197,7 +2197,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 * scaleFactor;
 
         handles.forEach(h => {
             ctx.beginPath();
@@ -2208,17 +2208,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         
         // Rotation handle
         const rotX = b.x + b.w/2;
-        const rotY = b.y - 150; 
+        const rotY = b.y - (100 * scaleFactor); 
         
         ctx.beginPath();
         ctx.moveTo(rotX, b.y);
         ctx.lineTo(rotX, rotY);
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3 * scaleFactor;
         ctx.strokeStyle = 'white';
         ctx.stroke();
         
         ctx.beginPath();
-        ctx.arc(rotX, rotY, 25, 0, Math.PI * 2); 
+        ctx.arc(rotX, rotY, 20 * scaleFactor, 0, Math.PI * 2); 
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.stroke();
@@ -2230,6 +2230,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         if (!annotationCanvasRef.current || !annotationCtxRef.current || !originalImage) return;
         const canvas = annotationCanvasRef.current;
         const ctx = annotationCtxRef.current;
+
+        // Dynamic Scale Factor based on image resolution
+        // Reference: 1000px width = scale 1.0
+        const baseDim = Math.max(canvas.width, canvas.height);
+        const scaleFactor = Math.max(0.5, baseDim / 1000); 
 
         // 1. Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2258,12 +2263,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             ctx.beginPath();
             ctx.strokeStyle = ann.color;
             ctx.fillStyle = ann.color;
-            ctx.lineWidth = 15; // Reduced back to 15 for better visibility on smaller screens
+            // Dynamic Line Width: ~15px at 1000px resolution
+            ctx.lineWidth = 15 * scaleFactor;
             
             // Highlight selected (shadow only, box handled separately)
             if (ann.id === selectedAnnotationId) {
                 ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.shadowBlur = 20;
+                ctx.shadowBlur = 20 * scaleFactor;
             } else {
                 ctx.shadowBlur = 0;
             }
@@ -2277,7 +2283,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     }
                 } else if (ann.type === 'arrow') {
                     if (ann.start && ann.end) {
-                        drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y);
+                        drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y, scaleFactor);
                     }
                 } else if (ann.type === 'rectangle') {
                     if (ann.start && ann.end) {
@@ -2303,7 +2309,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
             // Draw selection handles ON TOP if selected
             if (ann.id === selectedAnnotationId) {
-                drawSelectionHandles(ctx, ann);
+                drawSelectionHandles(ctx, ann, scaleFactor);
             }
         });
     };
