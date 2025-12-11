@@ -221,6 +221,26 @@ const formatTime = (dateStr: string | null) => {
     }
 };
 
+const getRetentionInfo = (createdAt: string) => {
+    const created = new Date(createdAt.endsWith('Z') ? createdAt : createdAt + 'Z');
+    const now = new Date();
+    const retentionDays = 30;
+    const deletionDate = new Date(created.getTime() + retentionDays * 24 * 60 * 60 * 1000);
+    const diffTime = deletionDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffTime <= 0) {
+        return { text: "Suppression imminente", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", icon: "fa-exclamation-triangle" };
+    } else if (diffTime < 24 * 60 * 60 * 1000) {
+        const hours = Math.ceil(diffTime / (1000 * 60 * 60));
+        return { text: `Expire dans ${hours}h`, color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/20", icon: "fa-clock" };
+    } else if (diffDays <= 7) {
+        return { text: `Reste ${diffDays} jours`, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", icon: "fa-hourglass-half" };
+    } else {
+        return { text: `Reste ${diffDays} jours`, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: "fa-shield-alt" };
+    }
+};
+
 const getInitials = (name: string) => {
     if (!name) return '?';
     const initials = name.trim().split(/\s+/).map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -1441,7 +1461,9 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     );
 };
 
-const ImageViewer = ({ src, onClose, onDelete, onDownload, canDelete }: { src: string, onClose: () => void, onDelete?: () => void, onDownload: () => void, canDelete?: boolean }) => {
+const ImageViewer = ({ src, createdAt, onClose, onDelete, onDownload, canDelete }: { src: string, createdAt?: string, onClose: () => void, onDelete?: () => void, onDownload: () => void, canDelete?: boolean }) => {
+    const retention = createdAt ? getRetentionInfo(createdAt) : null;
+
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col animate-fade-in" onClick={onClose}>
             <div className="absolute top-6 right-6 flex gap-3 z-50">
@@ -1470,11 +1492,13 @@ const ImageViewer = ({ src, onClose, onDelete, onDownload, canDelete }: { src: s
             <div className="flex-1 flex items-center justify-center p-4 md:p-12 relative">
                 <img src={src} alt="Full view" className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl border border-white/5" onClick={(e) => e.stopPropagation()} />
                 
-                {/* Information de rétention */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 pointer-events-none">
-                    <i className="fas fa-info-circle text-orange-400 text-xs"></i>
-                    <span className="text-gray-300 text-[10px] font-medium uppercase tracking-wide">Conservation : 30 jours</span>
-                </div>
+                {/* Information de rétention DYNAMIQUE */}
+                {retention && (
+                    <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full border flex items-center gap-2 pointer-events-none backdrop-blur-md shadow-lg ${retention.bg} ${retention.border}`}>
+                        <i className={`fas ${retention.icon} ${retention.color} text-xs`}></i>
+                        <span className={`${retention.color} text-[10px] font-bold uppercase tracking-widest`}>{retention.text}</span>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -1887,7 +1911,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [uploading, setUploading] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [triggerAddMember, setTriggerAddMember] = useState(false);
-    const [viewImage, setViewImage] = useState<{ src: string; msgId: string; canDelete: boolean; mediaKey: string } | null>(null);
+    const [viewImage, setViewImage] = useState<{ src: string; msgId: string; canDelete: boolean; mediaKey: string; createdAt: string } | null>(null);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [isInputExpanded, setIsInputExpanded] = useState(false);
     // Search In-Chat Logic
@@ -2407,7 +2431,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                             src: `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key!)}`,
                                             msgId: msg.id,
                                             canDelete: isMe || isGlobalAdmin,
-                                            mediaKey: msg.media_key!
+                                            mediaKey: msg.media_key!,
+                                            createdAt: msg.created_at
                                         })}
                                     />
                                     {/* Download Button Overlay (Optional now, but kept for quick access without opening) */}
@@ -2479,6 +2504,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             {viewImage && (
                 <ImageViewer 
                     src={viewImage.src} 
+                    createdAt={viewImage.createdAt}
                     onClose={() => setViewImage(null)} 
                     canDelete={viewImage.canDelete}
                     onDelete={() => {
