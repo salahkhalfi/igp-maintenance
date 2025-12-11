@@ -3370,10 +3370,21 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         {/* Header Toolbar */}
                         <div className="bg-black/80 backdrop-blur-md border-b border-white/10 p-4 flex items-center justify-between flex-shrink-0 z-20">
                              <div className="flex items-center gap-4">
-                                <button onClick={() => { setPreviewFile(null); setAnnotatedFile(null); setOriginalImage(null); }} className="text-gray-400 hover:text-white px-2">
-                                    <i className="fas fa-times text-2xl"></i>
+                                <button 
+                                    onClick={() => { 
+                                        if (confirm("Voulez-vous vraiment quitter l'éditeur sans envoyer ?")) {
+                                            setPreviewFile(null); 
+                                            setAnnotatedFile(null); 
+                                            setOriginalImage(null); 
+                                        }
+                                    }} 
+                                    className="text-white hover:text-red-400 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center gap-2 font-bold"
+                                    title="Fermer sans envoyer"
+                                >
+                                    <i className="fas fa-times text-lg"></i>
+                                    <span className="hidden md:inline">Fermer</span>
                                 </button>
-                                <h3 className="text-white font-bold text-lg hidden md:block">Éditeur</h3>
+                                <h3 className="text-white font-bold text-lg hidden lg:block">Éditeur</h3>
                              </div>
 
                              {/* Tools */}
