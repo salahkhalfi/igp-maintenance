@@ -2170,14 +2170,16 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         });
         
         // Rotation handle
-        const rotHandle = { x: b.x + b.w/2, y: b.y - 100 }; // Visual position
+        const rotHandle = { x: b.x + b.w/2, y: b.y - 150 }; // Increased distance
         ctx.beginPath();
         ctx.moveTo(b.x + b.w/2, b.y);
         ctx.lineTo(rotHandle.x, rotHandle.y);
+        ctx.lineWidth = 10; // Thicker connector line
         ctx.stroke();
+        ctx.lineWidth = 5; // Reset
         
         ctx.beginPath();
-        ctx.arc(rotHandle.x, rotHandle.y, 25, 0, 2 * Math.PI);
+        ctx.arc(rotHandle.x, rotHandle.y, 50, 0, 2 * Math.PI); // Radius 25 -> 50
         ctx.fill();
         ctx.stroke();
         
@@ -2294,7 +2296,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             { id: 'tr', x: b.x + b.w, y: b.y },
             { id: 'bl', x: b.x, y: b.y + b.h },
             { id: 'br', x: b.x + b.w, y: b.y + b.h },
-            { id: 'rot', x: b.x + b.w/2, y: b.y - 100 } // Align with visual position
+            { id: 'rot', x: b.x + b.w/2, y: b.y - 150 } // Increased distance
         ];
 
         for (const h of handles) {
