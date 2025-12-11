@@ -39,6 +39,18 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.27 (12 Décembre 2025) - ÉDITEUR PHOTO PLEIN ÉCRAN + UNDO 🔄✨
+- **🖥️ MODE PLEIN ÉCRAN**: L'éditeur photo occupe maintenant 100% de l'écran avec fond noir immersif. Fini les petites modales difficiles à utiliser sur mobile !
+- **🔄 HISTORIQUE INTELLIGENT**: 
+  - Chaque trait, forme ou texte est désormais un objet indépendant.
+  - **Bouton Annuler (Undo)** : Retirez la dernière action sans tout effacer.
+  - **Déplacement (Move)** : Nouvel outil "Main" ✋ pour sélectionner et déplacer n'importe quelle annotation après coup.
+- **✨ ERGONOMIE**:
+  - Barres d'outils flottantes optimisées (Haut: Outils, Bas: Couleurs & Actions).
+  - Zone de dessin maximisée.
+  - Support tactile amélioré pour le déplacement des objets.
+- **✅ IMPACT**: Expérience d'édition professionnelle, fluide et sans frustration.
+
 ### Version 2.14.26 (12 Décembre 2025) - OUTILS DESSIN AVANCÉS 🎨📏
 - **🎨 PALETTE D'OUTILS COMPLÈTE**: Ajout de 5 outils de dessin professionnels :
   - ✏️ **Crayon** (Freehand) : Pour entourer rapidement ou écrire à la main.
