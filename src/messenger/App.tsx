@@ -2135,7 +2135,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.save();
         const center = getCenter(ann);
         ctx.translate(center.x, center.y);
-        ctx.rotate(ann.rotation);
+        ctx.rotate(ann.rotation || 0); // Fallback to 0
         ctx.translate(-center.x, -center.y);
         
         const b = getBounds(ann);
@@ -2170,7 +2170,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         });
         
         // Rotation handle
-        const rotHandle = { x: b.x + b.w/2, y: b.y - 100 };
+        const rotHandle = { x: b.x + b.w/2, y: b.y - 100 }; // Visual position
         ctx.beginPath();
         ctx.moveTo(b.x + b.w/2, b.y);
         ctx.lineTo(rotHandle.x, rotHandle.y);
@@ -2203,7 +2203,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             // Apply rotation around center
             const center = getCenter(ann);
             ctx.translate(center.x, center.y);
-            ctx.rotate(ann.rotation);
+            ctx.rotate(ann.rotation || 0); // Fallback to 0
             ctx.translate(-center.x, -center.y);
 
             ctx.beginPath();
@@ -2284,17 +2284,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const hitTestHandles = (x: number, y: number, ann: AnnotationObject): 'tl' | 'tr' | 'bl' | 'br' | 'rot' | null => {
         const center = getCenter(ann);
         // Rotate mouse point negatively to align with unrotated object
-        const p = rotatePoint(x, y, center.x, center.y, -ann.rotation);
+        const p = rotatePoint(x, y, center.x, center.y, -(ann.rotation || 0)); // Fallback to 0
         
         const b = getBounds(ann);
-        const handleSize = 150; // Increased handle size for better touch
+        const handleSize = 150; 
         
         const handles = [
             { id: 'tl', x: b.x, y: b.y },
             { id: 'tr', x: b.x + b.w, y: b.y },
             { id: 'bl', x: b.x, y: b.y + b.h },
             { id: 'br', x: b.x + b.w, y: b.y + b.h },
-            { id: 'rot', x: b.x + b.w/2, y: b.y - 150 }
+            { id: 'rot', x: b.x + b.w/2, y: b.y - 100 } // Align with visual position
         ];
 
         for (const h of handles) {
@@ -2306,12 +2306,12 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const isPointInAnnotation = (x: number, y: number, ann: AnnotationObject): boolean => {
-        // Rotate point into local space
         const center = getCenter(ann);
-        const p = rotatePoint(x, y, center.x, center.y, -ann.rotation);
+        const p = rotatePoint(x, y, center.x, center.y, -(ann.rotation || 0)); // Fallback to 0
         const lx = p.x;
         const ly = p.y;
-
+        
+        // ... rest of function ...
         // Dynamic HIT_RADIUS based on image size to ensure usability on high-res
         const canvas = annotationCanvasRef.current;
         const baseSize = canvas ? Math.max(canvas.width, canvas.height) : 2000;
