@@ -2081,7 +2081,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     if (ctx) {
                         ctx.lineCap = 'round';
                         ctx.lineJoin = 'round';
-                        ctx.lineWidth = 5; 
+                        ctx.lineWidth = 15; 
                         annotationCtxRef.current = ctx;
                         renderCanvas(); // Initial render
                     }
@@ -2112,7 +2112,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             ctx.beginPath();
             ctx.strokeStyle = ann.color;
             ctx.fillStyle = ann.color;
-            ctx.lineWidth = 5;
+            ctx.lineWidth = 15;
             
             // Highlight selected
             if (ann.id === selectedAnnotationId) {
@@ -2139,7 +2139,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
                 ctx.stroke();
             } else if (ann.type === 'text') {
-                ctx.font = "bold 60px Arial";
+                ctx.font = "bold 120px Arial";
                 ctx.fillText(ann.text, ann.x, ann.y);
             }
         });
@@ -2280,7 +2280,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number) => {
-        const headlen = 40; // larger head for high res
+        const headlen = 80; // larger head for high res
         const angle = Math.atan2(toY - fromY, toX - fromX);
         ctx.beginPath();
         ctx.moveTo(fromX, fromY);
