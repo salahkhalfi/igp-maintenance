@@ -2524,6 +2524,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
         if (isDrawing && currentAnnotation) {
             setAnnotations(prev => [...prev, currentAnnotation]);
+            
+            // Auto-select shapes and text for immediate modification
+            if (currentAnnotation.type !== 'freehand') {
+                setSelectedAnnotationId(currentAnnotation.id);
+                setAnnotationTool('select');
+            }
+            
             setCurrentAnnotation(null);
         }
         setIsDrawing(false);
