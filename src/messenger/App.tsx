@@ -322,6 +322,16 @@ interface Message {
     type: string;
     media_key?: string;
     transcription?: string;
+    action_card?: ActionCard;
+}
+
+interface ActionCard {
+    id: string;
+    status: 'open' | 'in_progress' | 'resolved' | 'cancelled';
+    priority: 'low' | 'normal' | 'high' | 'urgent';
+    assignee_id?: number | null;
+    created_by: number;
+    updated_at: string;
 }
 
 interface Participant {
@@ -1999,6 +2009,57 @@ const AudioPlayer = ({ src, isMe }: { src: string, isMe: boolean }) => {
     );
 };
 
+const ActionCardComponent = ({ card, isSender, onUpdateStatus }: { card: ActionCard, isSender: boolean, onUpdateStatus: (status: 'open' | 'in_progress' | 'resolved') => void }) => {
+    const statusColors: Record<string, string> = {
+        'open': 'bg-red-100 text-red-800 border-red-200',
+        'in_progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        'resolved': 'bg-green-100 text-green-800 border-green-200',
+        'cancelled': 'bg-gray-100 text-gray-800 border-gray-200'
+    };
+
+    const statusLabels: Record<string, string> = {
+        'open': 'À faire',
+        'in_progress': 'En cours',
+        'resolved': 'Terminé',
+        'cancelled': 'Annulé'
+    };
+
+    return (
+        <div className={`mt-2 p-3 rounded-lg border ${statusColors[card.status] || statusColors['open']} flex flex-col gap-2 max-w-sm`}>
+            <div className="flex justify-between items-center border-b border-black/10 pb-2 mb-1">
+                <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm uppercase tracking-wide">
+                        {statusLabels[card.status] || card.status}
+                    </span>
+                    {card.assignee_id && (
+                        <div className="flex items-center gap-1 text-xs opacity-75">
+                            <i className="fas fa-user-circle"></i>
+                            <span>Assigné</span>
+                        </div>
+                    )}
+                </div>
+                <div className="text-xs opacity-50">Action</div>
+            </div>
+            
+            <div className="flex gap-1 justify-between bg-white/50 p-1 rounded">
+                {(['open', 'in_progress', 'resolved'] as const).map((s) => (
+                    <button
+                        key={s}
+                        onClick={() => onUpdateStatus(s)}
+                        className={`flex-1 py-1 px-2 text-xs rounded transition-colors ${
+                            card.status === s 
+                                ? 'bg-white shadow-sm font-bold text-black' 
+                                : 'hover:bg-white/30 text-black/60'
+                        }`}
+                    >
+                        {statusLabels[s]}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo, initialMessage, onMessageConsumed }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void, initialMessage?: string, onMessageConsumed?: () => void }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
@@ -2118,6 +2179,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             const height = ann.fontSize;
             return { x: ann.x, y: ann.y - height, w: width, h: height };
         } else {
+            // Generic Box Logic (Rectangle, Circle/Ellipse, Arrow-ish)
             const x = Math.min(ann.start.x, ann.end.x);
             const y = Math.min(ann.start.y, ann.end.y);
             const w = Math.abs(ann.end.x - ann.start.x);
@@ -2139,6 +2201,12 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.translate(-center.x, -center.y);
         
         const b = getBounds(ann);
+        
+        // VISUAL FIX: Inflate bounds by half stroke width (15px) to enclose the thick ink (30px total)
+        // This prevents the selection frame from appearing "inside" the shape.
+        const pad = 15; 
+        const visualB = { x: b.x - pad, y: b.y - pad, w: b.w + pad*2, h: b.h + pad*2 };
+
         // Adjust handle visual size based on canvas scale to remain visible but not huge
         // Actually, let's keep them fixed logic size but large enough to see
         const handleSize = 40; 
@@ -2146,7 +2214,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.strokeStyle = '#2196F3';
         ctx.lineWidth = 5;
         ctx.setLineDash([15, 15]);
-        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.strokeRect(visualB.x, visualB.y, visualB.w, visualB.h);
         ctx.setLineDash([]);
         
         ctx.fillStyle = 'white';
@@ -2155,10 +2223,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         
         // Corners: tl, tr, bl, br
         const handles = [
-            { x: b.x, y: b.y },
-            { x: b.x + b.w, y: b.y },
-            { x: b.x, y: b.y + b.h },
-            { x: b.x + b.w, y: b.y + b.h }
+            { x: visualB.x, y: visualB.y },
+            { x: visualB.x + visualB.w, y: visualB.y },
+            { x: visualB.x, y: visualB.y + visualB.h },
+            { x: visualB.x + visualB.w, y: visualB.y + visualB.h }
         ];
         
         handles.forEach(h => {
@@ -2170,9 +2238,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         });
         
         // Rotation handle
-        const rotHandle = { x: b.x + b.w/2, y: b.y - 150 }; // Increased distance
+        const rotHandle = { x: visualB.x + visualB.w/2, y: visualB.y - 150 }; // Increased distance
         ctx.beginPath();
-        ctx.moveTo(b.x + b.w/2, b.y);
+        ctx.moveTo(visualB.x + visualB.w/2, visualB.y);
         ctx.lineTo(rotHandle.x, rotHandle.y);
         ctx.lineWidth = 10; // Thicker connector line
         ctx.stroke();
@@ -2186,10 +2254,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.restore();
     };
 
-    const renderCanvas = () => {
+    const renderCanvas = (explicitSelectedId?: string | null) => {
         if (!annotationCanvasRef.current || !annotationCtxRef.current || !originalImage) return;
         const canvas = annotationCanvasRef.current;
         const ctx = annotationCtxRef.current;
+
+        // Determine effective selection (allows forcing null for export)
+        const effectiveSelectionId = explicitSelectedId !== undefined ? explicitSelectedId : selectedAnnotationId;
 
         // 1. Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2214,7 +2285,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             ctx.lineWidth = 30;
             
             // Highlight selected (shadow only, box handled separately)
-            if (ann.id === selectedAnnotationId) {
+            if (ann.id === effectiveSelectionId) {
                 ctx.shadowColor = "rgba(0,0,0,0.5)";
                 ctx.shadowBlur = 20;
             } else {
@@ -2233,9 +2304,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 ctx.rect(ann.start.x, ann.start.y, ann.end.x - ann.start.x, ann.end.y - ann.start.y);
                 ctx.stroke();
             } else if (ann.type === 'circle') {
-                const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
+                // ELLIPSE LOGIC: Fit circle/oval inside the bounding box defined by start/end
+                const centerX = (ann.start.x + ann.end.x) / 2;
+                const centerY = (ann.start.y + ann.end.y) / 2;
+                const radiusX = Math.abs(ann.end.x - ann.start.x) / 2;
+                const radiusY = Math.abs(ann.end.y - ann.start.y) / 2;
+                
                 ctx.beginPath();
-                ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
+                ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
                 ctx.stroke();
             } else if (ann.type === 'text') {
                 ctx.font = `bold ${ann.fontSize}px Arial`;
@@ -2245,7 +2321,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             ctx.restore(); // Restore context (remove rotation) for next item
 
             // Draw selection handles ON TOP if selected
-            if (ann.id === selectedAnnotationId) {
+            if (ann.id === effectiveSelectionId) {
                 drawSelectionHandles(ctx, ann);
             }
         });
@@ -2289,14 +2365,19 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const p = rotatePoint(x, y, center.x, center.y, -(ann.rotation || 0)); // Fallback to 0
         
         const b = getBounds(ann);
+        
+        // VISUAL FIX: Match the inflated bounds from drawSelectionHandles
+        const pad = 15; 
+        const visualB = { x: b.x - pad, y: b.y - pad, w: b.w + pad*2, h: b.h + pad*2 };
+        
         const handleSize = 150; 
         
         const handles = [
-            { id: 'tl', x: b.x, y: b.y },
-            { id: 'tr', x: b.x + b.w, y: b.y },
-            { id: 'bl', x: b.x, y: b.y + b.h },
-            { id: 'br', x: b.x + b.w, y: b.y + b.h },
-            { id: 'rot', x: b.x + b.w/2, y: b.y - 150 } // Increased distance
+            { id: 'tl', x: visualB.x, y: visualB.y },
+            { id: 'tr', x: visualB.x + visualB.w, y: visualB.y },
+            { id: 'bl', x: visualB.x, y: visualB.y + visualB.h },
+            { id: 'br', x: visualB.x + visualB.w, y: visualB.y + visualB.h },
+            { id: 'rot', x: visualB.x + visualB.w/2, y: visualB.y - 150 } // Increased distance
         ];
 
         for (const h of handles) {
@@ -2339,9 +2420,18 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
              return (lx >= minX - HIT_RADIUS && lx <= maxX + HIT_RADIUS &&
                     ly >= minY - HIT_RADIUS && ly <= maxY + HIT_RADIUS);
         } else if (ann.type === 'circle') {
-            const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
-            const dist = Math.hypot(ann.start.x - lx, ann.start.y - ly); 
-            return Math.abs(dist - radius) < HIT_RADIUS || dist < radius; 
+            // ELLIPSE HIT TEST
+            const centerX = (ann.start.x + ann.end.x) / 2;
+            const centerY = (ann.start.y + ann.end.y) / 2;
+            const rx = Math.abs(ann.end.x - ann.start.x) / 2;
+            const ry = Math.abs(ann.end.y - ann.start.y) / 2;
+            
+            // Normalized distance equation for ellipse: (x-h)^2/a^2 + (y-k)^2/b^2 <= 1
+            // We add HIT_RADIUS to radii to make it easier to grab
+            const normX = Math.pow(lx - centerX, 2) / Math.pow(rx + HIT_RADIUS, 2);
+            const normY = Math.pow(ly - centerY, 2) / Math.pow(ry + HIT_RADIUS, 2);
+            
+            return normX + normY <= 1;
         } else if (ann.type === 'arrow') {
             // Check distance to line segment
             const x1 = ann.start.x, y1 = ann.start.y;
@@ -2585,6 +2675,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     // Override sendImage to use annotated file
     const handleSendImage = async () => {
+        // IMPORTANT: Deselect any active annotation to remove handles from the final image
+        renderCanvas(null); 
+        
+        // Wait a tiny bit for the synchronous canvas paint (although it should be instant)
+        // Then save
         await saveAnnotation(); // Ensure latest canvas state is captured
         
         // Wait a tick for state update (or pass directly)
@@ -2986,6 +3081,50 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         }
     };
 
+    const handleUpdateCardStatus = async (messageId: string, newStatus: 'open' | 'in_progress' | 'resolved') => {
+        // Optimistic update
+        setMessages(prev => prev.map(m => {
+            if (m.id === messageId && m.action_card) {
+                return { ...m, action_card: { ...m.action_card, status: newStatus } };
+            }
+            return m;
+        }));
+
+        try {
+            const token = localStorage.getItem('auth_token');
+            await fetch(`/api/v2/chat/conversations/${conversationId}/messages/${messageId}/card/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status: newStatus })
+            });
+        } catch (e) {
+            console.error("Failed to update status", e);
+        }
+    };
+
+    const handleCreateActionCard = async (messageId: string) => {
+        if (!confirm("Transformer ce message en carte d'action (Ticket) ?")) return;
+        
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch(`/api/v2/chat/conversations/${conversationId}/messages/${messageId}/card`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ priority: 'normal' })
+            });
+            
+            if (res.ok) {
+                fetchMessages(); // Refresh to show the new card
+            } else {
+                const data = await res.json();
+                alert(data.error || "Impossible de créer la carte");
+            }
+        } catch (e) {
+            console.error("Failed to create card", e);
+            alert("Erreur réseau");
+        }
+    };
+
     const handleDeleteMessage = async (msgId: string) => {
         if(!confirm("Supprimer ce message définitivement ?")) return;
         try {
@@ -3213,13 +3352,24 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         
                         <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${isMe ? 'message-bubble-me text-white rounded-tr-sm' : 'message-bubble-them text-gray-100 rounded-tl-sm'}`}>
                             {(isGlobalAdmin || isMe) && (
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
-                                    className="absolute -top-3 -right-3 w-7 h-7 bg-red-500 rounded-full text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20 text-xs border-2 border-[#0b141a] hover:scale-110"
-                                    title="Supprimer le message"
-                                >
-                                    <i className="fas fa-trash"></i>
-                                </button>
+                                <div className="absolute -top-3 -right-3 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {!msg.action_card && (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleCreateActionCard(msg.id); }}
+                                            className="w-7 h-7 bg-white text-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-[#0b141a] hover:scale-110"
+                                            title="Créer une action"
+                                        >
+                                            <i className="fas fa-bolt text-xs"></i>
+                                        </button>
+                                    )}
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
+                                        className="w-7 h-7 bg-red-500 rounded-full text-white flex items-center justify-center shadow-lg border-2 border-[#0b141a] hover:scale-110"
+                                        title="Supprimer le message"
+                                    >
+                                        <i className="fas fa-trash text-xs"></i>
+                                    </button>
+                                </div>
                             )}
                             {msg.type === 'image' && msg.media_key ? (
                                 <div className="overflow-hidden rounded-xl border border-white/10 relative group/image">
@@ -3307,6 +3457,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                 <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
                                     {msg.content}
                                 </div>
+                            )}
+
+                            {msg.action_card && (
+                                <ActionCardComponent 
+                                    card={msg.action_card} 
+                                    isSender={isMe} 
+                                    onUpdateStatus={(status) => handleUpdateCardStatus(msg.id, status)} 
+                                />
                             )}
                             
                             <div className={`text-[10px] absolute bottom-1.5 right-3 flex items-center gap-1.5 font-bold tracking-wide ${isMe ? 'text-emerald-100/60' : 'text-gray-500'}`}>
@@ -3412,7 +3570,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         </div>
 
                         {/* Tools Toolbar (Scrollable) */}
-                        <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-2 flex justify-center items-center gap-2 overflow-x-auto z-20 w-full no-scrollbar">
+                        <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-2 flex justify-start md:justify-center items-center gap-2 overflow-x-auto z-20 w-full no-scrollbar px-4">
                             <button onClick={() => setAnnotationTool('select')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'select' ? 'bg-white text-black scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Déplacer"><i className="fas fa-hand-paper text-xl"></i></button>
                             <div className="w-px h-8 bg-white/10 flex-shrink-0 mx-1"></div>
                             <button onClick={() => setAnnotationTool('freehand')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'freehand' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Crayon"><i className="fas fa-pencil-alt text-xl"></i></button>
@@ -3423,7 +3581,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         </div>
 
                         {/* Footer Toolbar (Colors & Undo) */}
-                        <div className="bg-black/80 backdrop-blur-md border-t border-white/5 p-4 flex justify-center items-center gap-4 flex-shrink-0 z-20 overflow-x-auto safe-area-bottom">
+                        <div className="bg-black/80 backdrop-blur-md border-t border-white/5 p-4 flex justify-start md:justify-center items-center gap-3 md:gap-4 flex-shrink-0 z-20 overflow-x-auto safe-area-bottom w-full px-4 no-scrollbar">
                             <button onClick={() => changeColor('#EF4444')} className={`w-10 h-10 rounded-full bg-red-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#EF4444' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
                             <button onClick={() => changeColor('#F59E0B')} className={`w-10 h-10 rounded-full bg-amber-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#F59E0B' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
                             <button onClick={() => changeColor('#10B981')} className={`w-10 h-10 rounded-full bg-emerald-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#10B981' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />

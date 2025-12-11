@@ -158,14 +158,48 @@ app.get('/conversations/:id/messages', async (c) => {
             m.content, 
             m.media_key, 
             m.transcription,
-            m.created_at 
+            m.created_at,
+            ac.id as card_id,
+            ac.status as card_status,
+            ac.priority as card_priority,
+            ac.assignee_id as card_assignee_id,
+            ac.created_by as card_created_by,
+            ac.updated_at as card_updated_at
         FROM chat_messages m
         LEFT JOIN users u ON m.sender_id = u.id AND m.sender_id > 0
         LEFT JOIN chat_guests g ON ABS(m.sender_id) = g.id AND m.sender_id < 0
+        LEFT JOIN chat_action_cards ac ON m.id = ac.message_id
         WHERE m.conversation_id = ?
         ORDER BY m.created_at DESC
         LIMIT ? OFFSET ?
     `).bind(conversationId, limit, offset).all();
+
+    const formattedMessages = (messages.results || []).map((m: any) => {
+        const msg: any = {
+            id: m.id,
+            sender_id: m.sender_id,
+            sender_name: m.sender_name,
+            sender_avatar_key: m.sender_avatar_key,
+            type: m.type,
+            content: m.content,
+            media_key: m.media_key,
+            transcription: m.transcription,
+            created_at: m.created_at
+        };
+        
+        if (m.card_id) {
+            msg.action_card = {
+                id: m.card_id,
+                status: m.card_status,
+                priority: m.card_priority,
+                assignee_id: m.card_assignee_id,
+                created_by: m.card_created_by,
+                updated_at: m.card_updated_at
+            };
+        }
+        
+        return msg;
+    });
 
     // Récupérer le statut de lecture ET les infos des participants
     // Updated Query: Support Guests
@@ -191,7 +225,7 @@ app.get('/conversations/:id/messages', async (c) => {
     `).bind(conversationId).first();
 
     return c.json({ 
-        messages: messages.results.reverse(),
+        messages: formattedMessages.reverse(),
         participants: participants.results,
         conversation: conversation
     });
@@ -1014,6 +1048,71 @@ app.put('/conversations/:id/messages/:messageId/transcription', async (c) => {
         SET transcription = ? 
         WHERE id = ?
     `).bind(transcription, messageId).run();
+
+    return c.json({ success: true });
+});
+
+// 17. POST /api/v2/chat/conversations/:id/messages/:messageId/card
+app.post('/conversations/:id/messages/:messageId/card', async (c) => {
+    const user = c.get('user');
+    const conversationId = c.req.param('id');
+    const messageId = c.req.param('messageId');
+    const { assignee_id, priority = 'normal' } = await c.req.json();
+
+    // Check participation
+    const isParticipant = await c.env.DB.prepare(`
+        SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?
+    `).bind(conversationId, user.userId).first();
+
+    if (!isParticipant) return c.json({ error: 'Access denied' }, 403);
+
+    // Check if card already exists
+    const exists = await c.env.DB.prepare(`SELECT 1 FROM chat_action_cards WHERE message_id = ?`).bind(messageId).first();
+    if (exists) return c.json({ error: 'Une carte existe déjà pour ce message' }, 409);
+
+    const cardId = crypto.randomUUID();
+    
+    await c.env.DB.prepare(`
+        INSERT INTO chat_action_cards (id, message_id, conversation_id, status, priority, created_by, assignee_id)
+        VALUES (?, ?, ?, 'open', ?, ?, ?)
+    `).bind(cardId, messageId, conversationId, priority, user.userId, assignee_id || null).run();
+
+    return c.json({ success: true, cardId });
+});
+
+// 18. PATCH /api/v2/chat/conversations/:id/messages/:messageId/card/status
+app.patch('/conversations/:id/messages/:messageId/card/status', async (c) => {
+    const user = c.get('user');
+    const conversationId = c.req.param('id');
+    const messageId = c.req.param('messageId');
+    const { status } = await c.req.json();
+
+    if (!['open', 'in_progress', 'resolved', 'cancelled'].includes(status)) {
+        return c.json({ error: 'Statut invalide' }, 400);
+    }
+
+    // Check participation
+    const isParticipant = await c.env.DB.prepare(`
+        SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?
+    `).bind(conversationId, user.userId).first();
+
+    if (!isParticipant) return c.json({ error: 'Access denied' }, 403);
+
+    // Update
+    const res = await c.env.DB.prepare(`
+        UPDATE chat_action_cards 
+        SET status = ?, updated_at = CURRENT_TIMESTAMP, resolved_at = ?
+        WHERE message_id = ? AND conversation_id = ?
+    `).bind(
+        status, 
+        status === 'resolved' ? new Date().toISOString() : null,
+        messageId, 
+        conversationId
+    ).run();
+
+    if (res.meta.changes === 0) {
+        return c.json({ error: 'Carte introuvable ou déjà à jour' }, 404);
+    }
 
     return c.json({ success: true });
 });

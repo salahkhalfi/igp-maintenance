@@ -39,6 +39,24 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.15.2 (12 Décembre 2025) - ARCHITECTURE CERCLE ⭕🏗️
+- **🏗️ REFACTORING COMPLET**: L'outil Cercle a été réécrit pour utiliser une logique de "Boîte" (comme Rectangle).
+- **📦 IMPACT**: Le dessin, la sélection et le redimensionnement sont maintenant parfaitement synchronisés.
+- **✅ RÉSULTAT**: Plus de saut de taille étrange lors du redimensionnement. Le cercle reste dans sa boîte.
+- **🐛 FIX**: Résout définitivement le problème de cadre de sélection "trop petit".
+
+### Version 2.15.1 (12 Décembre 2025) - FIX CERCLE BOUNDING BOX ⭕🐛
+- **🐛 FIX CRITIQUE**: Correction du calcul de la zone de sélection pour les cercles.
+- **✅ RÉSULTAT**: Le cadre de sélection englobe désormais tout le cercle, pas seulement un quart.
+- **🎯 ROTATION**: Le centre de rotation est maintenant correctement aligné avec le centre du cercle.
+
+### Version 2.15.0 (12 Décembre 2025) - ACTION CARDS ACTIVATION 🃏✨
+- **🃏 LIVING TASKS**: Feature activée !
+- **⚡ ACTION RAPIDE**: Nouveau bouton "Éclair" ⚡ sur les messages pour créer une carte.
+- **👁️ VISIBILITÉ**: Le bouton apparaît au survol (desktop) ou tap (mobile) à côté du bouton supprimer.
+- **🔄 FLUX**: Clic → Confirmation → Carte créée "À faire".
+- **✅ STATUTS**: Cycle de vie complet : À faire → En cours → Terminé.
+
 ### Version 2.14.30 (12 Décembre 2025) - FIX CURSEUR & SÉLECTION 👆✨
 - **👆 CURSEUR DYNAMIQUE**: L'outil "Main" (Déplacer) affiche maintenant correctement le curseur de déplacement, et non plus une croix de dessin.
 - **🎯 SÉLECTION FACILITÉE**: La zone de détection pour attraper les objets a été massivement agrandie. C'est maintenant beaucoup plus facile d'attraper une flèche ou un trait, même avec des gros doigts.
