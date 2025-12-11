@@ -2112,7 +2112,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             ctx.beginPath();
             ctx.strokeStyle = ann.color;
             ctx.fillStyle = ann.color;
-            ctx.lineWidth = 15;
+            ctx.lineWidth = 30;
             
             // Highlight selected
             if (ann.id === selectedAnnotationId) {
@@ -2191,6 +2191,15 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                    Math.hypot(ann.end.x - x, ann.end.y - y) < HIT_RADIUS * 2;
         }
         return false;
+    };
+
+    const changeColor = (color: string) => {
+        setAnnotationColor(color);
+        if (selectedAnnotationId) {
+            setAnnotations(prev => prev.map(ann => 
+                ann.id === selectedAnnotationId ? { ...ann, color } : ann
+            ));
+        }
     };
 
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
@@ -3141,11 +3150,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
                         {/* Footer Toolbar (Colors & Undo) */}
                         <div className="bg-black/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-center items-center gap-6 flex-shrink-0 z-20 overflow-x-auto safe-area-bottom">
-                            <button onClick={() => setAnnotationColor('#EF4444')} className={`w-10 h-10 rounded-full bg-red-500 border-4 transition-transform ${annotationColor === '#EF4444' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => setAnnotationColor('#F59E0B')} className={`w-10 h-10 rounded-full bg-amber-500 border-4 transition-transform ${annotationColor === '#F59E0B' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => setAnnotationColor('#10B981')} className={`w-10 h-10 rounded-full bg-emerald-500 border-4 transition-transform ${annotationColor === '#10B981' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => setAnnotationColor('#3B82F6')} className={`w-10 h-10 rounded-full bg-blue-500 border-4 transition-transform ${annotationColor === '#3B82F6' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => setAnnotationColor('#FFFFFF')} className={`w-10 h-10 rounded-full bg-white border-4 transition-transform ${annotationColor === '#FFFFFF' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#EF4444')} className={`w-10 h-10 rounded-full bg-red-500 border-4 transition-transform ${annotationColor === '#EF4444' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#F59E0B')} className={`w-10 h-10 rounded-full bg-amber-500 border-4 transition-transform ${annotationColor === '#F59E0B' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#10B981')} className={`w-10 h-10 rounded-full bg-emerald-500 border-4 transition-transform ${annotationColor === '#10B981' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#3B82F6')} className={`w-10 h-10 rounded-full bg-blue-500 border-4 transition-transform ${annotationColor === '#3B82F6' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#FFFFFF')} className={`w-10 h-10 rounded-full bg-white border-4 transition-transform ${annotationColor === '#FFFFFF' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
                             
                             <div className="w-px h-10 bg-white/20 mx-2"></div>
                             

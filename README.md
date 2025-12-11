@@ -39,6 +39,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.29 (12 Décembre 2025) - ÉDITION COULEUR & ÉPAISSEUR MAX 🎨📏
+- **📏 TRAITS XL**: Épaisseur des traits doublée (30px) pour une visibilité maximale.
+- **🎨 CHANGEMENT COULEUR**: Cliquez sur une couleur pour changer instantanément la couleur de l'annotation sélectionnée.
+- **✨ UX FLUIDE**: Sélectionnez une flèche ou un texte, cliquez sur "Jaune", et c'est fait !
+- **✅ IMPACT**: Correction rapide et visibilité parfaite.
+
 ### Version 2.14.28 (12 Décembre 2025) - OPTIMISATION VISIBILITÉ 👁️📏
 - **📏 TRAITS ÉPAISSIS**: L'épaisseur des traits a été triplée (5px -> 15px) pour être parfaitement visible sur les photos haute résolution.
 - **🔤 TEXTE AGRANDI**: La taille du texte a été doublée (60px -> 120px) pour une meilleure lisibilité.
