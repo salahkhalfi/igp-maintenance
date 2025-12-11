@@ -2114,9 +2114,31 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     }, [annotations]);
 
     // --- HELPER FUNCTIONS FOR ANNOTATIONS ---
+    
+    // Moved up to ensure availability
+    const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number) => {
+        const headlen = 60; // Adjusted size
+        const angle = Math.atan2(toY - fromY, toX - fromX);
+        // Arrow shaft
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+        
+        // Arrow head
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.stroke();
+    };
+
     const getBounds = (ann: AnnotationObject) => {
+        if (!ann) return { x: 0, y: 0, w: 0, h: 0 };
+        
         if (ann.type === 'freehand') {
-            if (ann.points.length === 0) return { x: 0, y: 0, w: 0, h: 0 };
+            if (!ann.points || ann.points.length === 0) return { x: 0, y: 0, w: 0, h: 0 };
             const xs = ann.points.map(p => p.x);
             const ys = ann.points.map(p => p.y);
             return {
@@ -2130,6 +2152,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             return { x: ann.x, y: ann.y - ann.fontSize, w: width, h: ann.fontSize };
         } else {
             // For arrow, rectangle, circle
+            if (!ann.start || !ann.end) return { x: 0, y: 0, w: 0, h: 0 };
             const x = Math.min(ann.start.x, ann.end.x);
             const y = Math.min(ann.start.y, ann.end.y);
             const w = Math.abs(ann.end.x - ann.start.x);
@@ -2149,6 +2172,12 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         
         ctx.save();
         const center = getCenter(ann);
+        // Ensure center is valid
+        if (isNaN(center.x) || isNaN(center.y)) {
+            ctx.restore();
+            return;
+        }
+
         ctx.translate(center.x, center.y);
         ctx.rotate(ann.rotation || 0);
         ctx.translate(-center.x, -center.y);
@@ -2189,7 +2218,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.stroke();
         
         ctx.beginPath();
-        ctx.arc(rotX, rotY, 25, 0, Math.PI * 2); // Big visible handle
+        ctx.arc(rotX, rotY, 25, 0, Math.PI * 2); 
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.stroke();
@@ -2601,17 +2630,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         setAnnotations(prev => prev.slice(0, -1));
     };
 
-    const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number) => {
-        const headlen = 80; // larger head for high res
-        const angle = Math.atan2(toY - fromY, toX - fromX);
-        ctx.beginPath();
-        ctx.moveTo(fromX, fromY);
-        ctx.lineTo(toX, toY);
-        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-        ctx.moveTo(toX, toY);
-        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-        ctx.stroke();
-    };
+
 
     const clearAnnotation = () => {
         if (selectedAnnotationId) {
