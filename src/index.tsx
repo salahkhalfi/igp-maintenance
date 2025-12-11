@@ -282,6 +282,29 @@ app.route('/api/audio', audio);
 // Routes CRON - Tâches planifiées (sécurisées par CRON_SECRET)
 app.route('/api/cron', cron);
 
+// Route de Maintenance Manuelle (Pseudo-Cron)
+// Permet de déclencher le nettoyage sans CRON Cloudflare
+app.post('/api/maintenance/force-cleanup', authMiddleware, adminOnly, async (c) => {
+    try {
+        console.log('🧹 Maintenance manuelle déclenchée par Admin');
+        
+        // Mock d'un ScheduledController
+        const mockController = {
+            cron: 'manual',
+            scheduledTime: Date.now(),
+            noRetry: () => {}
+        } as any;
+
+        // Exécuter la logique planifiée
+        await scheduledHandler.scheduled(mockController, c.env, c.executionCtx);
+
+        return c.json({ success: true, message: 'Maintenance exécutée avec succès' });
+    } catch (e) {
+        console.error('Erreur maintenance manuelle:', e);
+        return c.json({ success: false, error: String(e) }, 500);
+    }
+});
+
 // Routes Alerts - Alertes tickets en retard (authentifiées)
 app.route('/api/alerts', alerts);
 

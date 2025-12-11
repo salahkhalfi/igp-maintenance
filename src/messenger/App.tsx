@@ -2795,6 +2795,21 @@ const App = () => {
             const res = await axios.get(`/api/auth/me?t=${Date.now()}`);
             if (res.data.user) {
                  setCurrentUserAvatarKey(res.data.user.avatar_key);
+                 
+                 // --- AUTO-MAINTENANCE (Admin Only) ---
+                 // Remplacement du CRON Cloudflare manquant
+                 if (res.data.user.role === 'admin') {
+                     const lastRun = localStorage.getItem('last_maintenance_run');
+                     const today = new Date().toDateString();
+                     
+                     if (lastRun !== today) {
+                         console.log('🧹 Lancement de la maintenance journalière...');
+                         axios.post('/api/maintenance/force-cleanup').then(() => {
+                             console.log('✅ Maintenance terminée.');
+                             localStorage.setItem('last_maintenance_run', today);
+                         }).catch(err => console.error('Maintenance error:', err));
+                     }
+                 }
             }
         } catch (e) { console.error("Error fetching user info", e); }
     };
