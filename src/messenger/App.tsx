@@ -2247,14 +2247,18 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             
             // Apply rotation around center
             const center = getCenter(ann);
-            ctx.translate(center.x, center.y);
-            ctx.rotate(ann.rotation || 0); // Fallback to 0
-            ctx.translate(-center.x, -center.y);
+            
+            // Safety Check: Only apply rotation if center is valid
+            if (!isNaN(center.x) && !isNaN(center.y)) {
+                ctx.translate(center.x, center.y);
+                ctx.rotate(ann.rotation || 0); // Fallback to 0
+                ctx.translate(-center.x, -center.y);
+            }
 
             ctx.beginPath();
             ctx.strokeStyle = ann.color;
             ctx.fillStyle = ann.color;
-            ctx.lineWidth = 30;
+            ctx.lineWidth = 15; // Reduced back to 15 for better visibility on smaller screens
             
             // Highlight selected (shadow only, box handled separately)
             if (ann.id === selectedAnnotationId) {
@@ -2264,25 +2268,35 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 ctx.shadowBlur = 0;
             }
 
-            if (ann.type === 'freehand') {
-                if (ann.points.length > 0) {
-                    ctx.moveTo(ann.points[0].x, ann.points[0].y);
-                    ann.points.forEach(p => ctx.lineTo(p.x, p.y));
-                    ctx.stroke();
+            try {
+                if (ann.type === 'freehand') {
+                    if (ann.points && ann.points.length > 0) {
+                        ctx.moveTo(ann.points[0].x, ann.points[0].y);
+                        ann.points.forEach(p => ctx.lineTo(p.x, p.y));
+                        ctx.stroke();
+                    }
+                } else if (ann.type === 'arrow') {
+                    if (ann.start && ann.end) {
+                        drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y);
+                    }
+                } else if (ann.type === 'rectangle') {
+                    if (ann.start && ann.end) {
+                        ctx.rect(ann.start.x, ann.start.y, ann.end.x - ann.start.x, ann.end.y - ann.start.y);
+                        ctx.stroke();
+                    }
+                } else if (ann.type === 'circle') {
+                    if (ann.start && ann.end) {
+                        const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
+                        ctx.beginPath();
+                        ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    }
+                } else if (ann.type === 'text') {
+                    ctx.font = `bold ${ann.fontSize}px Arial`;
+                    ctx.fillText(ann.text, ann.x, ann.y);
                 }
-            } else if (ann.type === 'arrow') {
-                drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y);
-            } else if (ann.type === 'rectangle') {
-                ctx.rect(ann.start.x, ann.start.y, ann.end.x - ann.start.x, ann.end.y - ann.start.y);
-                ctx.stroke();
-            } else if (ann.type === 'circle') {
-                const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
-                ctx.beginPath();
-                ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
-                ctx.stroke();
-            } else if (ann.type === 'text') {
-                ctx.font = `bold ${ann.fontSize}px Arial`;
-                ctx.fillText(ann.text, ann.x, ann.y);
+            } catch (e) {
+                console.error("Error drawing annotation", e);
             }
             
             ctx.restore(); // Restore context (remove rotation) for next item
