@@ -3387,17 +3387,6 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                 <h3 className="text-white font-bold text-lg hidden lg:block">Éditeur</h3>
                              </div>
 
-                             {/* Tools */}
-                             <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
-                                <button onClick={() => setAnnotationTool('select')} className={`p-3 rounded-xl transition-all ${annotationTool === 'select' ? 'bg-white text-black scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Déplacer"><i className="fas fa-hand-paper"></i></button>
-                                <div className="w-px h-8 bg-white/10"></div>
-                                <button onClick={() => setAnnotationTool('freehand')} className={`p-3 rounded-xl transition-all ${annotationTool === 'freehand' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Crayon"><i className="fas fa-pencil-alt"></i></button>
-                                <button onClick={() => setAnnotationTool('arrow')} className={`p-3 rounded-xl transition-all ${annotationTool === 'arrow' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Flèche"><i className="fas fa-long-arrow-alt-right"></i></button>
-                                <button onClick={() => setAnnotationTool('rectangle')} className={`p-3 rounded-xl transition-all ${annotationTool === 'rectangle' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Carré"><i className="far fa-square"></i></button>
-                                <button onClick={() => setAnnotationTool('circle')} className={`p-3 rounded-xl transition-all ${annotationTool === 'circle' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Cercle"><i className="far fa-circle"></i></button>
-                                <button onClick={() => setAnnotationTool('text')} className={`p-3 rounded-xl transition-all ${annotationTool === 'text' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Texte"><i className="fas fa-font"></i></button>
-                             </div>
-
                              <button onClick={handleSendImage} disabled={uploading} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all">
                                 {uploading ? <i className="fas fa-circle-notch fa-spin"></i> : <span>ENVOYER <i className="fas fa-paper-plane ml-2"></i></span>}
                              </button>
@@ -3420,26 +3409,37 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                             />
                         </div>
 
+                        {/* Tools Toolbar (Scrollable) */}
+                        <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-2 flex justify-center items-center gap-2 overflow-x-auto z-20 w-full no-scrollbar">
+                            <button onClick={() => setAnnotationTool('select')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'select' ? 'bg-white text-black scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Déplacer"><i className="fas fa-hand-paper text-xl"></i></button>
+                            <div className="w-px h-8 bg-white/10 flex-shrink-0 mx-1"></div>
+                            <button onClick={() => setAnnotationTool('freehand')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'freehand' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Crayon"><i className="fas fa-pencil-alt text-xl"></i></button>
+                            <button onClick={() => setAnnotationTool('arrow')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'arrow' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Flèche"><i className="fas fa-long-arrow-alt-right text-xl"></i></button>
+                            <button onClick={() => setAnnotationTool('rectangle')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'rectangle' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Carré"><i className="far fa-square text-xl"></i></button>
+                            <button onClick={() => setAnnotationTool('circle')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'circle' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Cercle"><i className="far fa-circle text-xl"></i></button>
+                            <button onClick={() => setAnnotationTool('text')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'text' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Texte"><i className="fas fa-font text-xl"></i></button>
+                        </div>
+
                         {/* Footer Toolbar (Colors & Undo) */}
-                        <div className="bg-black/80 backdrop-blur-md border-t border-white/10 p-4 flex justify-center items-center gap-6 flex-shrink-0 z-20 overflow-x-auto safe-area-bottom">
-                            <button onClick={() => changeColor('#EF4444')} className={`w-10 h-10 rounded-full bg-red-500 border-4 transition-transform ${annotationColor === '#EF4444' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#F59E0B')} className={`w-10 h-10 rounded-full bg-amber-500 border-4 transition-transform ${annotationColor === '#F59E0B' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#10B981')} className={`w-10 h-10 rounded-full bg-emerald-500 border-4 transition-transform ${annotationColor === '#10B981' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#3B82F6')} className={`w-10 h-10 rounded-full bg-blue-500 border-4 transition-transform ${annotationColor === '#3B82F6' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#FFFFFF')} className={`w-10 h-10 rounded-full bg-white border-4 transition-transform ${annotationColor === '#FFFFFF' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                        <div className="bg-black/80 backdrop-blur-md border-t border-white/5 p-4 flex justify-center items-center gap-4 flex-shrink-0 z-20 overflow-x-auto safe-area-bottom">
+                            <button onClick={() => changeColor('#EF4444')} className={`w-10 h-10 rounded-full bg-red-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#EF4444' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#F59E0B')} className={`w-10 h-10 rounded-full bg-amber-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#F59E0B' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#10B981')} className={`w-10 h-10 rounded-full bg-emerald-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#10B981' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#3B82F6')} className={`w-10 h-10 rounded-full bg-blue-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#3B82F6' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
+                            <button onClick={() => changeColor('#FFFFFF')} className={`w-10 h-10 rounded-full bg-white border-4 transition-transform flex-shrink-0 ${annotationColor === '#FFFFFF' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
                             
-                            <div className="w-px h-10 bg-white/20 mx-2"></div>
+                            <div className="w-px h-10 bg-white/20 mx-2 flex-shrink-0"></div>
                             
                             <button 
                                 onClick={undoAnnotation} 
-                                className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95"
+                                className="w-12 h-12 rounded-full bg-white/10 flex-shrink-0 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95"
                                 title="Annuler (Ctrl+Z)"
                             >
                                 <i className="fas fa-undo text-xl"></i>
                             </button>
                             <button 
                                 onClick={clearAnnotation} 
-                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 ${selectedAnnotationId ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-white/10 text-red-400 hover:bg-red-500/20'}`}
+                                className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center transition-all active:scale-95 ${selectedAnnotationId ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-white/10 text-red-400 hover:bg-red-500/20'}`}
                                 title={selectedAnnotationId ? "Supprimer la sélection" : "Effacer tout"}
                             >
                                 <i className={`fas ${selectedAnnotationId ? 'fa-eraser' : 'fa-trash-alt'} text-xl`}></i>
