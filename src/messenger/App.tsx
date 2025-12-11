@@ -2231,42 +2231,33 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const canvas = annotationCanvasRef.current;
         const ctx = annotationCtxRef.current;
 
-        // Dynamic Scale Factor based on image resolution
-        // Reference: 1000px width = scale 1.0
+        // 1. Clear & Reset
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 2. Draw Background
+        ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+
+        // 3. Setup Common Scaling
         const baseDim = Math.max(canvas.width, canvas.height);
         const scaleFactor = Math.max(0.5, baseDim / 1000); 
 
-        // 1. Clear
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 2. Draw Background Image
-        ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
-
-        // 3. Draw All Annotations from Refs (Single source of truth during render)
+        // 4. Draw Annotations
         const annsToDraw = [...annotationsRef.current];
         if (currentAnnotationRef.current) annsToDraw.push(currentAnnotationRef.current);
 
         annsToDraw.forEach(ann => {
             if (!ann) return;
-            ctx.save();
             
-            // Apply rotation around center
-            const center = getCenter(ann);
+            ctx.save(); // Isolate state for this annotation
             
-            // Safety Check: Only apply rotation if center is valid
-            if (!isNaN(center.x) && !isNaN(center.y)) {
-                ctx.translate(center.x, center.y);
-                ctx.rotate(ann.rotation || 0); // Fallback to 0
-                ctx.translate(-center.x, -center.y);
-            }
-
-            ctx.beginPath();
-            ctx.strokeStyle = ann.color;
-            ctx.fillStyle = ann.color;
-            // Dynamic Line Width: ~15px at 1000px resolution
+            // Common Styles
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = ann.color || '#EF4444';
+            ctx.fillStyle = ann.color || '#EF4444';
             ctx.lineWidth = 15 * scaleFactor;
             
-            // Highlight selected (shadow only, box handled separately)
+            // Shadow for selection
             if (ann.id === selectedAnnotationId) {
                 ctx.shadowColor = "rgba(0,0,0,0.5)";
                 ctx.shadowBlur = 20 * scaleFactor;
@@ -2274,40 +2265,48 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 ctx.shadowBlur = 0;
             }
 
-            try {
-                if (ann.type === 'freehand') {
-                    if (ann.points && ann.points.length > 0) {
-                        ctx.moveTo(ann.points[0].x, ann.points[0].y);
-                        ann.points.forEach(p => ctx.lineTo(p.x, p.y));
-                        ctx.stroke();
-                    }
-                } else if (ann.type === 'arrow') {
-                    if (ann.start && ann.end) {
-                        drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y, scaleFactor);
-                    }
-                } else if (ann.type === 'rectangle') {
-                    if (ann.start && ann.end) {
-                        ctx.rect(ann.start.x, ann.start.y, ann.end.x - ann.start.x, ann.end.y - ann.start.y);
-                        ctx.stroke();
-                    }
-                } else if (ann.type === 'circle') {
-                    if (ann.start && ann.end) {
-                        const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
-                        ctx.beginPath();
-                        ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
-                        ctx.stroke();
-                    }
-                } else if (ann.type === 'text') {
-                    ctx.font = `bold ${ann.fontSize}px Arial`;
-                    ctx.fillText(ann.text, ann.x, ann.y);
-                }
-            } catch (e) {
-                console.error("Error drawing annotation", e);
+            // Transformation
+            const center = getCenter(ann);
+            if (!isNaN(center.x) && !isNaN(center.y)) {
+                ctx.translate(center.x, center.y);
+                ctx.rotate(ann.rotation || 0);
+                ctx.translate(-center.x, -center.y);
             }
-            
-            ctx.restore(); // Restore context (remove rotation) for next item
 
-            // Draw selection handles ON TOP if selected
+            ctx.beginPath(); // Start fresh path
+
+            if (ann.type === 'freehand') {
+                if (ann.points && ann.points.length > 0) {
+                    ctx.moveTo(ann.points[0].x, ann.points[0].y);
+                    for (let i = 1; i < ann.points.length; i++) {
+                        ctx.lineTo(ann.points[i].x, ann.points[i].y);
+                    }
+                    ctx.stroke();
+                }
+            } else if (ann.type === 'arrow') {
+                 if (ann.start && ann.end) {
+                     drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y, scaleFactor);
+                 }
+            } else if (ann.type === 'rectangle') {
+                if (ann.start && ann.end) {
+                    ctx.rect(ann.start.x, ann.start.y, ann.end.x - ann.start.x, ann.end.y - ann.start.y);
+                    ctx.stroke();
+                }
+            } else if (ann.type === 'circle') {
+                if (ann.start && ann.end) {
+                    const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
+                    ctx.beginPath(); // Reset path for arc specifically
+                    ctx.arc(ann.start.x, ann.start.y, radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            } else if (ann.type === 'text') {
+                ctx.font = `bold ${ann.fontSize}px Arial`;
+                ctx.fillText(ann.text, ann.x, ann.y);
+            }
+
+            ctx.restore(); // Restore state (removes transform, shadow, styles)
+
+            // 5. Draw Handles (On top, untransformed by shape rotation, handles do their own transform)
             if (ann.id === selectedAnnotationId) {
                 drawSelectionHandles(ctx, ann, scaleFactor);
             }
