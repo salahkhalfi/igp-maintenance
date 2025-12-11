@@ -2057,6 +2057,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         | { id: string, type: 'text', x: number, y: number, text: string, color: string, fontSize: number, rotation: number };
 
     const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('freehand');
+    // Cursor style management
+    const [cursorStyle, setCursorStyle] = useState('cursor-crosshair');
+    useEffect(() => {
+        if (annotationTool === 'select') setCursorStyle('cursor-move');
+        else if (annotationTool === 'text') setCursorStyle('cursor-text');
+        else setCursorStyle('cursor-crosshair');
+    }, [annotationTool]);
+
     const [annotations, setAnnotations] = useState<AnnotationObject[]>([]);
     const [currentAnnotation, setCurrentAnnotation] = useState<AnnotationObject | null>(null);
     const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
@@ -2301,9 +2309,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const lx = p.x;
         const ly = p.y;
 
-        const HIT_RADIUS = 50; 
+        const HIT_RADIUS = 100; // Increased from 50 for easier grabbing
         
         if (ann.type === 'freehand') {
+            // Check all points
             return ann.points.some(pt => Math.hypot(pt.x - lx, pt.y - ly) < HIT_RADIUS);
         } else if (ann.type === 'text') {
             return lx >= ann.x - 50 && lx <= ann.x + (ann.text.length * (ann.fontSize * 0.6)) && ly >= ann.y - ann.fontSize && ly <= ann.y + 50;
@@ -2312,11 +2321,43 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             const maxX = Math.max(ann.start.x, ann.end.x);
             const minY = Math.min(ann.start.y, ann.end.y);
             const maxY = Math.max(ann.start.y, ann.end.y);
-             return lx >= minX - HIT_RADIUS && lx <= maxX + HIT_RADIUS &&
-                    ly >= minY - HIT_RADIUS && ly <= maxY + HIT_RADIUS;
-        } else if (ann.type === 'circle' || ann.type === 'arrow') {
-             return Math.hypot(ann.start.x - lx, ann.start.y - ly) < HIT_RADIUS * 3 ||
-                    Math.hypot(ann.end.x - lx, ann.end.y - ly) < HIT_RADIUS * 3;
+            // Check if point is near the border OR inside
+             return (lx >= minX - HIT_RADIUS && lx <= maxX + HIT_RADIUS &&
+                    ly >= minY - HIT_RADIUS && ly <= maxY + HIT_RADIUS);
+        } else if (ann.type === 'circle') {
+            const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
+            const dist = Math.hypot(ann.start.x - lx, ann.start.y - ly); // ann.start is center for circle draw logic? 
+            // Wait, in draw(), circle uses start as center? 
+            // ctx.arc(ann.start.x, ann.start.y, radius, ...) -> Yes, start is center.
+            return Math.abs(dist - radius) < HIT_RADIUS || dist < radius; // Hit border or inside
+        } else if (ann.type === 'arrow') {
+            // Check distance to line segment
+            const x1 = ann.start.x, y1 = ann.start.y;
+            const x2 = ann.end.x, y2 = ann.end.y;
+            
+            const A = lx - x1;
+            const B = ly - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
+            
+            const dot = A * C + B * D;
+            const len_sq = C * C + D * D;
+            let param = -1;
+            if (len_sq !== 0) param = dot / len_sq;
+            
+            let xx, yy;
+            
+            if (param < 0) {
+              xx = x1; yy = y1;
+            } else if (param > 1) {
+              xx = x2; yy = y2;
+            } else {
+              xx = x1 + param * C;
+              yy = y1 + param * D;
+            }
+            
+            const dist = Math.hypot(lx - xx, ly - yy);
+            return dist < HIT_RADIUS;
         }
         return false;
     };
@@ -3315,7 +3356,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         
                         {/* Canvas Area */}
                         <div 
-                            className={`flex-1 bg-[#101010] relative overflow-hidden flex items-center justify-center touch-none ${annotationTool === 'select' ? 'cursor-move' : 'cursor-crosshair'}`}
+                            className={`flex-1 bg-[#101010] relative overflow-hidden flex items-center justify-center touch-none ${cursorStyle}`}
                             onTouchStart={startDrawing}
                             onTouchMove={draw}
                             onTouchEnd={stopDrawing}
