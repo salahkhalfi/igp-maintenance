@@ -2047,6 +2047,12 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [annotationColor, setAnnotationColor] = useState('#EF4444'); // Default Red
     const annotationCtxRef = useRef<CanvasRenderingContext2D | null>(null);
     const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
+    
+    // New Annotation Tools State
+    type AnnotationTool = 'freehand' | 'arrow' | 'rectangle' | 'circle' | 'text';
+    const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('freehand');
+    const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
+    const snapshotRef = useRef<ImageData | null>(null);
 
     // Initialize Canvas when previewFile changes
     useEffect(() => {
@@ -2096,22 +2102,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         }
     }, [annotationColor]);
 
-    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-        setIsDrawing(true);
-        draw(e);
-    };
-
-    const stopDrawing = () => {
-        setIsDrawing(false);
-        if (annotationCtxRef.current) {
-            annotationCtxRef.current.beginPath(); // Reset path
-        }
-    };
-
-    const draw = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!isDrawing || !annotationCanvasRef.current || !annotationCtxRef.current) return;
-        
-        e.preventDefault();
+    const getCanvasPoint = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!annotationCanvasRef.current) return { x: 0, y: 0 };
         const canvas = annotationCanvasRef.current;
         const rect = canvas.getBoundingClientRect();
         
@@ -2124,18 +2116,94 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             clientY = (e as React.MouseEvent).clientY;
         }
 
-        // Map display coordinates to internal canvas coordinates
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         
-        const x = (clientX - rect.left) * scaleX;
-        const y = (clientY - rect.top) * scaleY;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    };
 
-        const ctx = annotationCtxRef.current;
-        ctx.lineTo(x, y);
-        ctx.stroke();
+    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault(); // Prevent scrolling on touch
+        setIsDrawing(true);
+        const { x, y } = getCanvasPoint(e);
+        
+        if (annotationTool === 'freehand') {
+            if (annotationCtxRef.current) {
+                annotationCtxRef.current.beginPath();
+                annotationCtxRef.current.moveTo(x, y);
+            }
+            draw(e);
+        } else if (annotationTool === 'text') {
+             // Handle Text click
+             const text = prompt("Entrez le texte:");
+             if (text && annotationCtxRef.current) {
+                 const ctx = annotationCtxRef.current;
+                 ctx.fillStyle = annotationColor;
+                 ctx.font = "bold 40px Arial";
+                 ctx.fillText(text, x, y);
+             }
+             setIsDrawing(false); // Text is instant
+        } else {
+            // Shapes: Arrow, Rect, Circle
+            setStartPos({ x, y });
+            if (annotationCtxRef.current && annotationCanvasRef.current) {
+                snapshotRef.current = annotationCtxRef.current.getImageData(0, 0, annotationCanvasRef.current.width, annotationCanvasRef.current.height);
+            }
+        }
+    };
+
+    const stopDrawing = () => {
+        setIsDrawing(false);
+        setStartPos(null);
+        snapshotRef.current = null;
+        if (annotationCtxRef.current) {
+            annotationCtxRef.current.beginPath(); // Reset path
+        }
+    };
+
+    const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number) => {
+        const headlen = 25; // length of head in pixels
+        const angle = Math.atan2(toY - fromY, toX - fromX);
         ctx.beginPath();
-        ctx.moveTo(x, y);
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.stroke();
+    };
+
+    const draw = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing || !annotationCanvasRef.current || !annotationCtxRef.current) return;
+        
+        e.preventDefault();
+        const { x, y } = getCanvasPoint(e);
+        const ctx = annotationCtxRef.current;
+
+        if (annotationTool === 'freehand') {
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        } else if (startPos && snapshotRef.current) {
+            // Restore snapshot to erase previous frame of the shape being dragged
+            ctx.putImageData(snapshotRef.current, 0, 0);
+            ctx.beginPath();
+            
+            if (annotationTool === 'rectangle') {
+                ctx.rect(startPos.x, startPos.y, x - startPos.x, y - startPos.y);
+                ctx.stroke();
+            } else if (annotationTool === 'circle') {
+                const radius = Math.sqrt(Math.pow(x - startPos.x, 2) + Math.pow(y - startPos.y, 2));
+                ctx.arc(startPos.x, startPos.y, radius, 0, 2 * Math.PI);
+                ctx.stroke();
+            } else if (annotationTool === 'arrow') {
+                drawArrow(ctx, startPos.x, startPos.y, x, y);
+            }
+        }
     };
 
     const clearAnnotation = () => {
@@ -2966,19 +3034,23 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                             />
                         </div>
 
+                        {/* Tools Toolbar */}
+                        <div className="flex gap-2 w-full mb-4 justify-center flex-wrap">
+                            <button onClick={() => setAnnotationTool('freehand')} className={`p-2 rounded-lg ${annotationTool === 'freehand' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`} title="Crayon"><i className="fas fa-pencil-alt"></i></button>
+                            <button onClick={() => setAnnotationTool('arrow')} className={`p-2 rounded-lg ${annotationTool === 'arrow' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`} title="Flèche"><i className="fas fa-long-arrow-alt-right"></i></button>
+                            <button onClick={() => setAnnotationTool('rectangle')} className={`p-2 rounded-lg ${annotationTool === 'rectangle' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`} title="Carré"><i className="far fa-square"></i></button>
+                            <button onClick={() => setAnnotationTool('circle')} className={`p-2 rounded-lg ${annotationTool === 'circle' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`} title="Cercle"><i className="far fa-circle"></i></button>
+                            <button onClick={() => setAnnotationTool('text')} className={`p-2 rounded-lg ${annotationTool === 'text' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-gray-400'}`} title="Texte"><i className="fas fa-font"></i></button>
+                        </div>
+
+                        {/* Colors Toolbar */}
                         <div className="flex gap-4 w-full mb-4 justify-center">
-                            <button 
-                                onClick={() => setAnnotationColor('#EF4444')} 
-                                className={`w-8 h-8 rounded-full bg-red-500 border-2 ${annotationColor === '#EF4444' ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
-                            />
-                            <button 
-                                onClick={() => setAnnotationColor('#F59E0B')} 
-                                className={`w-8 h-8 rounded-full bg-amber-500 border-2 ${annotationColor === '#F59E0B' ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
-                            />
-                            <button 
-                                onClick={() => setAnnotationColor('#10B981')} 
-                                className={`w-8 h-8 rounded-full bg-emerald-500 border-2 ${annotationColor === '#10B981' ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
-                            />
+                            <button onClick={() => setAnnotationColor('#EF4444')} className={`w-8 h-8 rounded-full bg-red-500 border-2 ${annotationColor === '#EF4444' ? 'border-white scale-110' : 'border-transparent opacity-50'}`} />
+                            <button onClick={() => setAnnotationColor('#F59E0B')} className={`w-8 h-8 rounded-full bg-amber-500 border-2 ${annotationColor === '#F59E0B' ? 'border-white scale-110' : 'border-transparent opacity-50'}`} />
+                            <button onClick={() => setAnnotationColor('#10B981')} className={`w-8 h-8 rounded-full bg-emerald-500 border-2 ${annotationColor === '#10B981' ? 'border-white scale-110' : 'border-transparent opacity-50'}`} />
+                            <button onClick={() => setAnnotationColor('#3B82F6')} className={`w-8 h-8 rounded-full bg-blue-500 border-2 ${annotationColor === '#3B82F6' ? 'border-white scale-110' : 'border-transparent opacity-50'}`} />
+                            <button onClick={() => setAnnotationColor('#FFFFFF')} className={`w-8 h-8 rounded-full bg-white border-2 ${annotationColor === '#FFFFFF' ? 'border-white scale-110' : 'border-transparent opacity-50'}`} />
+                            
                             <div className="w-px h-8 bg-white/10 mx-2"></div>
                             <button 
                                 onClick={clearAnnotation} 

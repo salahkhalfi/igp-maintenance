@@ -39,6 +39,19 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.26 (12 Décembre 2025) - OUTILS DESSIN AVANCÉS 🎨📏
+- **🎨 PALETTE D'OUTILS COMPLÈTE**: Ajout de 5 outils de dessin professionnels :
+  - ✏️ **Crayon** (Freehand) : Pour entourer rapidement ou écrire à la main.
+  - ➡️ **Flèche** : Pour pointer précisément un défaut.
+  - 🔲 **Rectangle** : Pour encadrer une zone d'intérêt.
+  - ⭕ **Cercle** : Pour entourer proprement un élément.
+  - 🔤 **Texte** : Pour ajouter des notes lisibles directement sur l'image.
+- **✨ UX AMÉLIORÉE**:
+  - **Drag & Drop** intuitif pour les formes (Carré, Cercle, Flèche).
+  - **Preview temps réel** : Visualisez la forme pendant que vous la tracez.
+  - **Couleurs étendues** : Ajout du Bleu (#3B82F6) et Blanc (#FFFFFF) pour meilleur contraste sur photos sombres.
+- **📝 IMPACT**: Diagnostics beaucoup plus clairs et professionnels. Plus besoin de gribouiller pour essayer de faire une flèche !
+
 ### Version 2.14.25 (12 Décembre 2025) - ANNOTATION IMAGES EXISTANTES 🖌️✨
 - **🖌️ ÉDITION RÉTROACTIVE**: Possibilité d'annoter une image déjà envoyée ou reçue dans la discussion.
 - **✨ UX FLUIDE**: Nouveau bouton "Plume" 🖊️ dans la visionneuse d'image.
