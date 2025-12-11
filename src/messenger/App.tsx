@@ -2436,6 +2436,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
              const text = prompt("Entrez le texte:");
              if (text) {
                  setAnnotations(prev => [...prev, { id, type: 'text', x, y, text, color: annotationColor, fontSize: 120, rotation: 0 }]);
+                 // Auto-select text for immediate modification
+                 setSelectedAnnotationId(id);
+                 setAnnotationTool('select');
              }
              setIsDrawing(false); 
         } else {
