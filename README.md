@@ -39,6 +39,11 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.30 (12 Décembre 2025) - FIX CURSEUR & SÉLECTION 👆✨
+- **👆 CURSEUR DYNAMIQUE**: L'outil "Main" (Déplacer) affiche maintenant correctement le curseur de déplacement, et non plus une croix de dessin.
+- **🎯 SÉLECTION FACILITÉE**: La zone de détection pour attraper les objets a été massivement agrandie. C'est maintenant beaucoup plus facile d'attraper une flèche ou un trait, même avec des gros doigts.
+- **✨ UX FLUIDE**: Confirmation visuelle immédiate quand on passe en mode déplacement.
+
 ### Version 2.14.29 (12 Décembre 2025) - ÉDITION COULEUR & ÉPAISSEUR MAX 🎨📏
 - **📏 TRAITS XL**: Épaisseur des traits doublée (30px) pour une visibilité maximale.
 - **🎨 CHANGEMENT COULEUR**: Cliquez sur une couleur pour changer instantanément la couleur de l'annotation sélectionnée.

@@ -2173,18 +2173,18 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     const isPointInAnnotation = (x: number, y: number, ann: AnnotationObject): boolean => {
         // Simple hit detection
-        const HIT_RADIUS = 40;
+        const HIT_RADIUS = 150;
         
         if (ann.type === 'freehand') {
             return ann.points.some(p => Math.hypot(p.x - x, p.y - y) < HIT_RADIUS);
         } else if (ann.type === 'text') {
             // Approx text box
-            return x >= ann.x && x <= ann.x + (ann.text.length * 40) && y >= ann.y - 60 && y <= ann.y;
+            return x >= ann.x - 50 && x <= ann.x + (ann.text.length * 100) && y >= ann.y - 150 && y <= ann.y + 50;
         } else if (ann.type === 'rectangle') {
-             return x >= Math.min(ann.start.x, ann.end.x) - 20 && 
-                    x <= Math.max(ann.start.x, ann.end.x) + 20 &&
-                    y >= Math.min(ann.start.y, ann.end.y) - 20 &&
-                    y <= Math.max(ann.start.y, ann.end.y) + 20;
+             return x >= Math.min(ann.start.x, ann.end.x) - HIT_RADIUS && 
+                    x <= Math.max(ann.start.x, ann.end.x) + HIT_RADIUS &&
+                    y >= Math.min(ann.start.y, ann.end.y) - HIT_RADIUS &&
+                    y <= Math.max(ann.start.y, ann.end.y) + HIT_RADIUS;
         } else if (ann.type === 'circle' || ann.type === 'arrow') {
             // Simplified for circle/arrow: check start or end points proximity
             return Math.hypot(ann.start.x - x, ann.start.y - y) < HIT_RADIUS * 2 ||
@@ -3133,7 +3133,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         
                         {/* Canvas Area */}
                         <div 
-                            className="flex-1 bg-[#101010] relative overflow-hidden flex items-center justify-center cursor-crosshair touch-none"
+                            className={`flex-1 bg-[#101010] relative overflow-hidden flex items-center justify-center touch-none ${annotationTool === 'select' ? 'cursor-move' : 'cursor-crosshair'}`}
                             onTouchStart={startDrawing}
                             onTouchMove={draw}
                             onTouchEnd={stopDrawing}
