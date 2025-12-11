@@ -39,6 +39,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.25 (12 Décembre 2025) - ANNOTATION IMAGES EXISTANTES 🖌️✨
+- **🖌️ ÉDITION RÉTROACTIVE**: Possibilité d'annoter une image déjà envoyée ou reçue dans la discussion.
+- **✨ UX FLUIDE**: Nouveau bouton "Plume" 🖊️ dans la visionneuse d'image.
+- **🔄 FLUX**: Clic sur Annoter → Charge l'image dans l'éditeur → Dessin → Envoi comme nouvelle image annotée.
+- **✅ IMPACT**: Idéal pour clarifier un point sur une photo envoyée précédemment par un collègue ("Non, regarde ici 🔴").
+
 ### Version 2.14.24 (12 Décembre 2025) - FIX REFERENCE ERROR 🐛✨
 - **🐛 FIX CRITIQUE**: Correction d'une erreur de référence (`previewFile`) dans l'outil d'annotation photo.
 - **🔄 HOISTING FIX**: Déplacement des déclarations d'état en haut du composant `ChatWindow` pour éviter la Temporal Dead Zone (TDZ).

@@ -1462,7 +1462,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     );
 };
 
-const ImageViewer = ({ src, createdAt, onClose, onDelete, onDownload, canDelete }: { src: string, createdAt?: string, onClose: () => void, onDelete?: () => void, onDownload: () => void, canDelete?: boolean }) => {
+const ImageViewer = ({ src, createdAt, onClose, onDelete, onDownload, onAnnotate, canDelete }: { src: string, createdAt?: string, onClose: () => void, onDelete?: () => void, onDownload: () => void, onAnnotate: () => void, canDelete?: boolean }) => {
     const retention = createdAt ? getRetentionInfo(createdAt) : null;
     
     // État pour le Zoom et Pan
@@ -1541,6 +1541,14 @@ const ImageViewer = ({ src, createdAt, onClose, onDelete, onDownload, canDelete 
             onWheel={handleWheel}
         >
             <div className="absolute top-6 right-6 flex gap-3 z-50">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onAnnotate(); }}
+                    className="w-12 h-12 rounded-full bg-white/10 hover:bg-emerald-500 hover:text-white text-emerald-400 flex items-center justify-center transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] group"
+                    title="Annoter cette image"
+                >
+                    <i className="fas fa-pen text-lg group-hover:scale-110 transition-transform"></i>
+                </button>
+
                 <button 
                     onClick={(e) => { e.stopPropagation(); onDownload(); }}
                     className="w-12 h-12 rounded-full bg-white/10 hover:bg-emerald-500 hover:text-white text-emerald-400 flex items-center justify-center transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] group"
@@ -2615,6 +2623,22 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const handleAnnotateExisting = async (src: string) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(src, {
+                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            const blob = await response.blob();
+            const file = new File([blob], "annotation_edit.jpg", { type: blob.type });
+            
+            setViewImage(null); // Close viewer
+            setPreviewFile(file); // Open editor
+        } catch (e) {
+            alert("Impossible de charger l'image pour l'édition");
+        }
+    };
+
     const renderMessages = () => {
         if (loadingMessages) {
              return (
@@ -2913,6 +2937,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         setViewImage(null);
                     }}
                     onDownload={() => handleDownload(viewImage.mediaKey, 'image')}
+                    onAnnotate={() => handleAnnotateExisting(viewImage.src)}
                 />
             )}
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
