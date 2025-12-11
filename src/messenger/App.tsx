@@ -2139,7 +2139,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         ctx.translate(-center.x, -center.y);
         
         const b = getBounds(ann);
-        const handleSize = 40;
+        // Adjust handle visual size based on canvas scale to remain visible but not huge
+        // Actually, let's keep them fixed logic size but large enough to see
+        const handleSize = 40; 
         
         ctx.strokeStyle = '#2196F3';
         ctx.lineWidth = 5;
@@ -2161,6 +2163,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         
         handles.forEach(h => {
             ctx.beginPath();
+            // Draw larger visual handles
             ctx.rect(h.x - handleSize/2, h.y - handleSize/2, handleSize, handleSize);
             ctx.fill();
             ctx.stroke();
@@ -2284,14 +2287,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const p = rotatePoint(x, y, center.x, center.y, -ann.rotation);
         
         const b = getBounds(ann);
-        const handleSize = 80; // Large hit area
+        const handleSize = 150; // Increased handle size for better touch
         
         const handles = [
             { id: 'tl', x: b.x, y: b.y },
             { id: 'tr', x: b.x + b.w, y: b.y },
             { id: 'bl', x: b.x, y: b.y + b.h },
             { id: 'br', x: b.x + b.w, y: b.y + b.h },
-            { id: 'rot', x: b.x + b.w/2, y: b.y - 100 }
+            { id: 'rot', x: b.x + b.w/2, y: b.y - 150 }
         ];
 
         for (const h of handles) {
@@ -2309,13 +2312,22 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         const lx = p.x;
         const ly = p.y;
 
-        const HIT_RADIUS = 100; // Increased from 50 for easier grabbing
+        // Dynamic HIT_RADIUS based on image size to ensure usability on high-res
+        const canvas = annotationCanvasRef.current;
+        const baseSize = canvas ? Math.max(canvas.width, canvas.height) : 2000;
+        const HIT_RADIUS = Math.max(100, baseSize * 0.05); // Min 100px, or 5% of image size
         
         if (ann.type === 'freehand') {
             // Check all points
             return ann.points.some(pt => Math.hypot(pt.x - lx, pt.y - ly) < HIT_RADIUS);
         } else if (ann.type === 'text') {
-            return lx >= ann.x - 50 && lx <= ann.x + (ann.text.length * (ann.fontSize * 0.6)) && ly >= ann.y - ann.fontSize && ly <= ann.y + 50;
+            const width = ann.text.length * (ann.fontSize * 0.6);
+            const height = ann.fontSize;
+            // More generous text hit box
+            return lx >= ann.x - HIT_RADIUS && 
+                   lx <= ann.x + width + HIT_RADIUS && 
+                   ly >= ann.y - height - HIT_RADIUS && 
+                   ly <= ann.y + HIT_RADIUS;
         } else if (ann.type === 'rectangle') {
             const minX = Math.min(ann.start.x, ann.end.x);
             const maxX = Math.max(ann.start.x, ann.end.x);
@@ -2326,10 +2338,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     ly >= minY - HIT_RADIUS && ly <= maxY + HIT_RADIUS);
         } else if (ann.type === 'circle') {
             const radius = Math.sqrt(Math.pow(ann.end.x - ann.start.x, 2) + Math.pow(ann.end.y - ann.start.y, 2));
-            const dist = Math.hypot(ann.start.x - lx, ann.start.y - ly); // ann.start is center for circle draw logic? 
-            // Wait, in draw(), circle uses start as center? 
-            // ctx.arc(ann.start.x, ann.start.y, radius, ...) -> Yes, start is center.
-            return Math.abs(dist - radius) < HIT_RADIUS || dist < radius; // Hit border or inside
+            const dist = Math.hypot(ann.start.x - lx, ann.start.y - ly); 
+            return Math.abs(dist - radius) < HIT_RADIUS || dist < radius; 
         } else if (ann.type === 'arrow') {
             // Check distance to line segment
             const x1 = ann.start.x, y1 = ann.start.y;
@@ -2372,10 +2382,18 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-        e.preventDefault(); 
+        // Prevent default only if necessary to allow scrolling elsewhere, but here we want to block scroll on canvas
+        // e.preventDefault(); 
+        // Actually, for touch events we must prevent default to avoid scrolling the page while drawing
+        if (e.cancelable) e.preventDefault(); 
+        
         const { x, y } = getCanvasPoint(e);
         
+        // Ensure tool is actually select if we are in select mode
+        // (State is reliable, but let's be explicit in logic flow)
+        
         if (annotationTool === 'select') {
+            // First, try to hit handles of the CURRENTLY selected annotation
             if (selectedAnnotationId) {
                 const selectedAnn = annotations.find(a => a.id === selectedAnnotationId);
                 if (selectedAnn) {
@@ -2391,7 +2409,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 }
             }
 
+            // If no handle hit, check if we clicked on ANY annotation to select/move it
+            // We search in reverse to find top-most first
             const clickedAnn = [...annotations].reverse().find(ann => isPointInAnnotation(x, y, ann));
+            
             if (clickedAnn) {
                 setSelectedAnnotationId(clickedAnn.id);
                 setDragStartPos({ x, y });
@@ -2399,6 +2420,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 setInitialTransformState(JSON.parse(JSON.stringify(clickedAnn)));
                 setIsDragging(true);
             } else {
+                // Deselect if clicked empty space
                 setSelectedAnnotationId(null);
                 setTransformMode('none');
             }
