@@ -24,5 +24,8 @@
       "binding": "MEDIA_BUCKET",
       "bucket_name": "maintenance-media"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }

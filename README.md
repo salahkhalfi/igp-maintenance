@@ -39,6 +39,34 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.14.24 (12 Décembre 2025) - FIX REFERENCE ERROR 🐛✨
+- **🐛 FIX CRITIQUE**: Correction d'une erreur de référence (`previewFile`) dans l'outil d'annotation photo.
+- **🔄 HOISTING FIX**: Déplacement des déclarations d'état en haut du composant `ChatWindow` pour éviter la Temporal Dead Zone (TDZ).
+- **✅ STABILITÉ**: L'application ne plante plus lors de l'initialisation du composant de chat avec l'outil d'annotation actif.
+- **📝 IMPACT**: Restauration de la stabilité de l'application après l'ajout de l'outil de diagnostic visuel.
+
+### Version 2.14.23 (12 Décembre 2025) - ANNOTATION PHOTO & DICTÉE 🎨🎤
+- **🎨 ÉDITEUR PHOTO**: Outil de diagnostic visuel intégré. Dessinez sur les photos avant envoi pour entourer les problèmes.
+- **✏️ ANNOTATION TACTILE**: Support complet du dessin au doigt ou à la souris sur canvas.
+- **🎤 DICTÉE TEXTE**: Nouveau bouton micro dans la barre de saisie pour convertir la parole en texte.
+- **📝 CORRECTION AUTO**: Focus automatique du clavier après la dictée pour correction rapide.
+- **✨ UX**: Distinction claire entre "Message Vocal" (Onde) et "Dictée" (Micro).
+- **✅ IMPACT**: Gain de temps énorme pour les diagnostics terrain et la saisie mains libres.
+
+### Version 2.14.22 (12 Décembre 2025) - ÉDITION DES TRANSCRIPTIONS 📝✨
+- **✏️ ÉDITION MANUELLE**: Ajout de la possibilité d'éditer les transcriptions vocales générées par l'IA.
+- **✨ UX AMÉLIORÉE**: Interface d'édition in-chat avec textarea et boutons Sauvegarder/Annuler.
+- **🔒 PERMISSIONS**: Uniquement l'auteur du message (ou l'admin) peut modifier sa transcription.
+- **🛠️ BACKEND**: Nouvel endpoint `PUT /api/v2/chat/conversations/:id/messages/:messageId/transcription`.
+- **✅ IMPACT**: Permet de corriger les erreurs de l'IA (noms propres, termes techniques) pour une documentation parfaite.
+
+### Version 2.14.21 (12 Décembre 2025) - TRANSCRIPTION VOCALE (AI) 🎤✨
+- **🧠 TRANSCRIPTION AUTOMATIQUE**: Les messages vocaux sont automatiquement transcrits en texte grâce à l'IA Cloudflare Workers AI (`@cf/openai/whisper`).
+- **👀 AFFICHAGE INTUITIF**: Le texte transcrit s'affiche discrètement sous le lecteur audio, avec une icône 🤖.
+- **⚡ PERFORMANCE**: Traitement asynchrone "Fire and Forget" via `ctx.waitUntil` pour ne pas ralentir l'envoi.
+- **💾 MIGRATION BDD**: Ajout de la colonne `transcription` à la table `chat_messages` (Migration `20251212000000`).
+- **✅ IMPACT**: Accessibilité accrue (lecture sans son), recherche facilitée (futur), et gain de productivité énorme pour les environnements bruyants.
+
 ### Version 2.14.20 (9 Décembre 2025) - TRADUCTION RÔLES & UI ✨
 - **🌐 TRADUCTION UI**: Affichage des rôles en français (ex: "TECHNICIAN" -> "Technicien").
 - **🔒 SYSTÈME PRÉSERVÉ**: Les identifiants système (`user.role`) restent inchangés pour garantir la stabilité du code.

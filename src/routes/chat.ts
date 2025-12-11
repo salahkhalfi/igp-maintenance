@@ -157,6 +157,7 @@ app.get('/conversations/:id/messages', async (c) => {
             m.type, 
             m.content, 
             m.media_key, 
+            m.transcription,
             m.created_at 
         FROM chat_messages m
         LEFT JOIN users u ON m.sender_id = u.id AND m.sender_id > 0
@@ -369,6 +370,39 @@ app.post('/send', async (c) => {
         if (!isParticipant) {
             console.warn(`[CHAT-SEND-DENIED] User ${user.userId} denied access to conv ${conversationId}`);
             return c.json({ error: 'Access denied' }, 403);
+        }
+
+        // --- AI TRANSCRIPTION (AUDIO) ---
+        // Fire and Forget strategy via waitUntil
+        if (type === 'audio' && mediaKey) {
+             c.executionCtx.waitUntil((async () => {
+                try {
+                    // 1. Get Audio File
+                    const object = await c.env.MEDIA_BUCKET.get(mediaKey);
+                    if (!object) return;
+                    
+                    const arrayBuffer = await object.arrayBuffer();
+                    const inputs = {
+                        audio: [...new Uint8Array(arrayBuffer)]
+                    };
+
+                    // 2. Run Whisper
+                    const response = await c.env.AI.run('@cf/openai/whisper', inputs);
+                    
+                    // 3. Update DB
+                    if (response && response.text) {
+                        const transcription = "🎤 " + response.text.trim();
+                        await c.env.DB.prepare(`
+                            UPDATE chat_messages 
+                            SET transcription = ? 
+                            WHERE id = ?
+                        `).bind(transcription, messageId).run();
+                        console.log(`[AI] Transcribed message ${messageId}`);
+                    }
+                } catch (e) {
+                    console.error("[AI] Transcription failed", e);
+                }
+             })());
         }
 
         // --- AI ANALYSIS PLACEHOLDER (SAFE MODE) ---
@@ -948,6 +982,40 @@ app.post('/stress-test', async (c) => {
     } catch (e: any) {
         return c.json({ error: e.message, stack: e.stack }, 500);
     }
+});
+
+// 16. PUT /api/v2/chat/conversations/:id/messages/:messageId/transcription - Update transcription
+app.put('/conversations/:id/messages/:messageId/transcription', async (c) => {
+    const user = c.get('user');
+    const conversationId = c.req.param('id');
+    const messageId = c.req.param('messageId');
+    const { transcription } = await c.req.json();
+
+    // 1. Get message metadata to verify ownership
+    const message = await c.env.DB.prepare(`
+        SELECT sender_id FROM chat_messages WHERE id = ? AND conversation_id = ?
+    `).bind(messageId, conversationId).first();
+
+    if (!message) {
+        return c.json({ error: 'Message introuvable' }, 404);
+    }
+
+    // 2. Check Permissions: Author only (or Admin)
+    const isAuthor = message.sender_id === user.userId;
+    const isAdmin = user.role === 'admin';
+
+    if (!isAuthor && !isAdmin) {
+        return c.json({ error: 'Action non autorisée' }, 403);
+    }
+
+    // 3. Update DB
+    await c.env.DB.prepare(`
+        UPDATE chat_messages 
+        SET transcription = ? 
+        WHERE id = ?
+    `).bind(transcription, messageId).run();
+
+    return c.json({ success: true });
 });
 
 export default app;

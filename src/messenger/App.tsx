@@ -321,6 +321,7 @@ interface Message {
     created_at: string;
     type: string;
     media_key?: string;
+    transcription?: string;
 }
 
 interface Participant {
@@ -1463,9 +1464,82 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
 
 const ImageViewer = ({ src, createdAt, onClose, onDelete, onDownload, canDelete }: { src: string, createdAt?: string, onClose: () => void, onDelete?: () => void, onDownload: () => void, canDelete?: boolean }) => {
     const retention = createdAt ? getRetentionInfo(createdAt) : null;
+    
+    // État pour le Zoom et Pan
+    const [scale, setScale] = useState(1);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+    const handleWheel = (e: React.WheelEvent) => {
+        // Zoom avec la molette
+        e.stopPropagation();
+        const delta = e.deltaY * -0.005;
+        const newScale = Math.min(Math.max(1, scale + delta), 5); // Max zoom 5x
+        setScale(newScale);
+        if (newScale === 1) setPosition({ x: 0, y: 0 });
+    };
+
+    const toggleZoom = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (scale > 1) {
+            setScale(1);
+            setPosition({ x: 0, y: 0 });
+        } else {
+            setScale(2.5); // Zoom rapide
+        }
+    };
+
+    // Gestion du déplacement (Pan) - Souris
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (scale > 1) {
+            // Pas de preventDefault ici pour laisser passer le double-clic
+            e.stopPropagation();
+            setIsDragging(true);
+            setStartPos({ x: e.clientX - position.x, y: e.clientY - position.y });
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isDragging && scale > 1) {
+            e.preventDefault();
+            e.stopPropagation();
+            setPosition({
+                x: e.clientX - startPos.x,
+                y: e.clientY - startPos.y
+            });
+        }
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
+
+    // Gestion du déplacement (Pan) - Touch (Mobile)
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (scale > 1 && e.touches.length === 1) {
+            e.stopPropagation();
+            setIsDragging(true);
+            setStartPos({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (isDragging && scale > 1 && e.touches.length === 1) {
+            e.stopPropagation();
+            setPosition({
+                x: e.touches[0].clientX - startPos.x,
+                y: e.touches[0].clientY - startPos.y
+            });
+        }
+    };
+
+    const handleTouchEnd = () => setIsDragging(false);
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col animate-fade-in" onClick={onClose}>
+        <div 
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col animate-fade-in select-none overflow-hidden" 
+            onClick={onClose}
+            onWheel={handleWheel}
+        >
             <div className="absolute top-6 right-6 flex gap-3 z-50">
                 <button 
                     onClick={(e) => { e.stopPropagation(); onDownload(); }}
@@ -1489,14 +1563,39 @@ const ImageViewer = ({ src, createdAt, onClose, onDelete, onDownload, canDelete 
                     <i className="fas fa-times text-xl"></i>
                 </button>
             </div>
-            <div className="flex-1 flex items-center justify-center p-4 md:p-12 relative">
-                <img src={src} alt="Full view" className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl border border-white/5" onClick={(e) => e.stopPropagation()} />
+
+            <div 
+                className="flex-1 flex items-center justify-center relative w-full h-full"
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                <img 
+                    src={src} 
+                    alt="Full view" 
+                    className={`max-h-full max-w-full object-contain transition-transform duration-100 ease-out ${scale === 1 ? 'cursor-zoom-in' : (isDragging ? 'cursor-grabbing' : 'cursor-grab')}`}
+                    style={{ transform: `translate(${position.x}px, ${position.y}px) scale(${scale})` }}
+                    onClick={(e) => e.stopPropagation()} 
+                    onDoubleClick={toggleZoom}
+                    onMouseDown={handleMouseDown}
+                    onTouchStart={handleTouchStart}
+                    onDragStart={(e) => e.preventDefault()} // Empêche le drag natif
+                />
                 
-                {/* Information de rétention DYNAMIQUE */}
-                {retention && (
+                {/* Information de rétention - Masquée si zoomé pour pas gêner */}
+                {retention && scale === 1 && (
                     <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full border flex items-center gap-2 pointer-events-none backdrop-blur-md shadow-lg ${retention.bg} ${retention.border}`}>
                         <i className={`fas ${retention.icon} ${retention.color} text-xs`}></i>
                         <span className={`${retention.color} text-[10px] font-bold uppercase tracking-widest`}>{retention.text}</span>
+                    </div>
+                )}
+
+                {/* Indication visuelle de zoom */}
+                {scale === 1 && (
+                    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/30 text-[9px] uppercase font-bold tracking-widest pointer-events-none animate-pulse">
+                        Double-clic pour zoomer
                     </div>
                 )}
             </div>
@@ -1897,14 +1996,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [input, setInput] = useState(initialMessage || ''); // Init with prop
-    
-    useEffect(() => {
-        if (initialMessage && initialMessage !== input) {
-            setInput(initialMessage);
-            setIsInputExpanded(true);
-            if (onMessageConsumed) onMessageConsumed();
-        }
-    }, [initialMessage]);
+    const [editingTranscriptionId, setEditingTranscriptionId] = useState<string | null>(null);
+    const [editingTranscriptionText, setEditingTranscriptionText] = useState('');
 
     const [showEmoji, setShowEmoji] = useState(false);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -1938,6 +2031,176 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // --- ANNOTATION TOOL ---
+    const [annotatedFile, setAnnotatedFile] = useState<File | null>(null);
+    const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [annotationColor, setAnnotationColor] = useState('#EF4444'); // Default Red
+    const annotationCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+    const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
+
+    // Initialize Canvas when previewFile changes
+    useEffect(() => {
+        if (previewFile && !annotatedFile) {
+            const img = new Image();
+            img.src = URL.createObjectURL(previewFile);
+            img.onload = () => {
+                setOriginalImage(img);
+                if (annotationCanvasRef.current) {
+                    const canvas = annotationCanvasRef.current;
+                    // Max dimension strategy to avoid huge 4k canvas
+                    const MAX_DIM = 1920; 
+                    let width = img.naturalWidth;
+                    let height = img.naturalHeight;
+                    
+                    if (width > MAX_DIM || height > MAX_DIM) {
+                        const ratio = width / height;
+                        if (width > height) {
+                            width = MAX_DIM;
+                            height = MAX_DIM / ratio;
+                        } else {
+                            height = MAX_DIM;
+                            width = MAX_DIM * ratio;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.lineWidth = 5; // Default thickness
+                        ctx.strokeStyle = annotationColor;
+                        annotationCtxRef.current = ctx;
+                    }
+                }
+            };
+        }
+    }, [previewFile]);
+
+    // Update color
+    useEffect(() => {
+        if (annotationCtxRef.current) {
+            annotationCtxRef.current.strokeStyle = annotationColor;
+        }
+    }, [annotationColor]);
+
+    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+        setIsDrawing(true);
+        draw(e);
+    };
+
+    const stopDrawing = () => {
+        setIsDrawing(false);
+        if (annotationCtxRef.current) {
+            annotationCtxRef.current.beginPath(); // Reset path
+        }
+    };
+
+    const draw = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing || !annotationCanvasRef.current || !annotationCtxRef.current) return;
+        
+        e.preventDefault();
+        const canvas = annotationCanvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        
+        let clientX, clientY;
+        if ('touches' in e) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = (e as React.MouseEvent).clientX;
+            clientY = (e as React.MouseEvent).clientY;
+        }
+
+        // Map display coordinates to internal canvas coordinates
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
+
+        const ctx = annotationCtxRef.current;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    };
+
+    const clearAnnotation = () => {
+        if (originalImage && annotationCanvasRef.current && annotationCtxRef.current) {
+            const ctx = annotationCtxRef.current;
+            ctx.clearRect(0, 0, annotationCanvasRef.current.width, annotationCanvasRef.current.height);
+            ctx.drawImage(originalImage, 0, 0, annotationCanvasRef.current.width, annotationCanvasRef.current.height);
+        }
+    };
+
+    const saveAnnotation = async () => {
+        if (annotationCanvasRef.current) {
+            return new Promise<void>((resolve) => {
+                annotationCanvasRef.current?.toBlob((blob) => {
+                    if (blob) {
+                        const newFile = new File([blob], "annotated_image.jpg", { type: "image/jpeg" });
+                        setAnnotatedFile(newFile);
+                        resolve();
+                    }
+                }, 'image/jpeg', 0.85);
+            });
+        }
+    };
+
+    // Override sendImage to use annotated file
+    const handleSendImage = async () => {
+        await saveAnnotation(); // Ensure latest canvas state is captured
+        
+        // Wait a tick for state update (or pass directly)
+        // Better: pass the file directly to upload function logic
+        if (annotationCanvasRef.current) {
+            annotationCanvasRef.current.toBlob(async (blob) => {
+                if (blob) {
+                    const finalFile = new File([blob], "annotated_image.jpg", { type: "image/jpeg" });
+                    
+                    const token = localStorage.getItem('auth_token');
+                    if (!token) return;
+                    setUploading(true);
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', finalFile);
+                        const uploadRes = await fetch('/api/v2/chat/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                        const uploadData = await uploadRes.json();
+                        if (!uploadRes.ok) throw new Error(uploadData.error);
+                        await fetch('/api/v2/chat/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ conversationId, content: '📷 Photo annotée', type: 'image', mediaKey: uploadData.key })
+                        });
+                        setPreviewFile(null);
+                        setAnnotatedFile(null); // Reset
+                        setOriginalImage(null);
+                        fetchMessages();
+                    } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
+                }
+            }, 'image/jpeg', 0.85);
+        }
+    };
+
+    
+    useEffect(() => {
+        if (initialMessage && initialMessage !== input) {
+            setInput(initialMessage);
+            setIsInputExpanded(true);
+            if (onMessageConsumed) onMessageConsumed();
+        }
+    }, [initialMessage]);
+
+
     
     // Sound logic handled by SoundManager
 
@@ -1990,10 +2253,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             const newMessages = res.data.messages || [];
             setParticipants(res.data.participants || []);
             setConversation(res.data.conversation || null);
+            // Capture status BEFORE state update to avoid race condition with React batching
+            const isFirstLoad = !initialFetchDone.current;
+
             setMessages(prev => {
                 if (prev.length !== newMessages.length) {
                     // Play sound if new message from others (ONLY if not initial load)
-                    if (initialFetchDone.current && newMessages.length > prev.length) {
+                    if (!isFirstLoad && newMessages.length > prev.length) {
                         const lastMsg = newMessages[newMessages.length - 1];
                         if (lastMsg.sender_id !== currentUserId) {
                             SoundManager.play().catch(e => console.error("Sound error:", e));
@@ -2004,7 +2270,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 }
                 return newMessages;
             });
-            initialFetchDone.current = true; // Mark initial fetch as done
+            
+            if (isFirstLoad) initialFetchDone.current = true; // Mark initial fetch as done
         } catch (err) { console.error(err); }
         finally { setLoadingMessages(false); }
     };
@@ -2030,8 +2297,71 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         }
     }, [initialShowInfo, onConsumeInfo]);
 
-    // Media handlers same as before, preserving logic
+    // --- DICTATION FEATURE (TEXT) ---
+    const [isDictating, setIsDictating] = useState(false);
+    
+    // Polyfill type for SpeechRecognition
+    const startDictation = () => {
+        if (isRecording) {
+            alert("Impossible de dicter pendant l'enregistrement d'un message vocal.");
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("La dictée vocale n'est pas supportée par votre navigateur.");
+            return;
+        }
+
+        if (isDictating) {
+            // Stop logic is handled by 'end' event or manual toggle off if needed, 
+            // but usually we just let it run. If clicked again, we can stop it.
+            // For now, let's allow toggle off.
+            // Actually, we can't easily access the instance here without a ref. 
+            // Simplified: This button will mainly be a "Start" button. 
+            // The browser usually provides UI to stop, or silence stops it.
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => setIsDictating(true);
+        
+        recognition.onend = () => {
+            setIsDictating(false);
+            // Auto-focus textarea for immediate correction
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                // Optional: set cursor to end
+                textareaRef.current.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length);
+            }
+        };
+        
+        recognition.onerror = (event: any) => {
+            console.error("Dictation error", event.error);
+            setIsDictating(false);
+        };
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setInput(prev => {
+                const space = prev.length > 0 && !prev.endsWith(' ') ? ' ' : '';
+                return prev + space + transcript;
+            });
+            handleInputInteraction(input + " " + transcript); // Update UI size
+        };
+
+        recognition.start();
+    };
+
     const startRecording = async () => {
+        if (isDictating) {
+            alert("Veuillez terminer la dictée de texte avant d'enregistrer un message vocal.");
+            return;
+        }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
@@ -2047,16 +2377,20 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     const stopRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
             mediaRecorderRef.current.onstop = async () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 const audioFile = new File([audioBlob], "voice_message.webm", { type: 'audio/webm' });
-                await sendAudio(audioFile);
+                
+                // UI Update Immediately (Optimistic)
                 setIsRecording(false);
                 setRecordingTime(0);
                 clearInterval(timerRef.current);
                 mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+
+                // Send in background
+                await sendAudio(audioFile);
             };
+            mediaRecorderRef.current.stop();
         }
     };
 
@@ -2209,7 +2543,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     conversationId,
-                    content: '📞 SONNERIE: Je tente de vous joindre par vocal ! (Ouvrez le chat)',
+                    content: '📞 SONNERIE: Je tente de vous joindre sur IGP Connect ! (Ouvrez le chat)',
                     type: 'text',
                     isCall: true // Special flag for Service Worker to boost priority/vibration
                 })
@@ -2227,6 +2561,25 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             await axios.delete(`/api/v2/chat/conversations/${conversationId}/messages/${msgId}`);
             fetchMessages();
         } catch(e) { alert("Erreur suppression"); }
+    };
+
+    const handleSaveTranscription = async (messageId: string, newText: string) => {
+        try {
+            await axios.put(`/api/v2/chat/conversations/${conversationId}/messages/${messageId}/transcription`, {
+                transcription: newText
+            });
+            
+            // Update local state
+            setMessages(prev => prev.map(msg => 
+                msg.id === messageId ? { ...msg, transcription: newText } : msg
+            ));
+            
+            setEditingTranscriptionId(null);
+            setEditingTranscriptionText('');
+        } catch (e) {
+            console.error("Failed to save transcription", e);
+            alert("Erreur lors de la sauvegarde de la transcription");
+        }
     };
 
     const handleDownload = async (mediaKey: string, type: 'image' | 'audio') => {
@@ -2445,15 +2798,63 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                     </button>
                                 </div>
                             ) : msg.type === 'audio' && msg.media_key ? (
-                                <div className="flex items-center gap-2">
-                                    <AudioPlayer src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} isMe={isMe} />
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleDownload(msg.media_key!, 'audio'); }}
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isMe ? 'text-white/50 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-gray-200 hover:bg-black/10'}`}
-                                        title="Télécharger l'audio"
-                                    >
-                                        <i className="fas fa-download text-xs"></i>
-                                    </button>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <AudioPlayer src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} isMe={isMe} />
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleDownload(msg.media_key!, 'audio'); }}
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isMe ? 'text-white/50 hover:text-white hover:bg-white/10' : 'text-gray-400 hover:text-gray-200 hover:bg-black/10'}`}
+                                            title="Télécharger l'audio"
+                                        >
+                                            <i className="fas fa-download text-xs"></i>
+                                        </button>
+                                    </div>
+                                    {msg.transcription && (
+                                        editingTranscriptionId === msg.id ? (
+                                            <div className="flex flex-col gap-2 mt-2 w-full min-w-[200px]">
+                                                <textarea
+                                                    value={editingTranscriptionText}
+                                                    onChange={(e) => setEditingTranscriptionText(e.target.value)}
+                                                    className="w-full bg-black/20 text-white text-xs p-2 rounded-lg border border-white/10 focus:border-emerald-500 outline-none resize-y min-h-[60px]"
+                                                    autoFocus
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <div className="flex justify-end gap-2">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setEditingTranscriptionId(null); }}
+                                                        className="text-[10px] uppercase font-bold text-gray-400 hover:text-white px-2 py-1"
+                                                    >
+                                                        Annuler
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleSaveTranscription(msg.id, editingTranscriptionText); }}
+                                                        className="text-[10px] uppercase font-bold bg-emerald-500 text-white px-3 py-1 rounded hover:bg-emerald-600 shadow-lg"
+                                                    >
+                                                        Enregistrer
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={`text-[11px] italic font-medium tracking-wide flex items-start gap-1.5 p-2 rounded-lg ${isMe ? 'bg-black/10 text-emerald-100/90' : 'bg-white/5 text-gray-300'} relative`}>
+                                                <i className="fas fa-robot text-[10px] mt-0.5 opacity-70 flex-shrink-0"></i>
+                                                <span className="flex-1">{msg.transcription}</span>
+                                                
+                                                {isMe && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingTranscriptionId(msg.id);
+                                                            setEditingTranscriptionText(msg.transcription || '');
+                                                        }}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-white hover:scale-110"
+                                                        title="Éditer la transcription"
+                                                    >
+                                                        <i className="fas fa-pen text-[10px]"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )
+                                    )}
                                 </div>
                             ) : (
                                 <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
@@ -2517,15 +2918,55 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
             
             {previewFile && (
-                <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-fade-in">
+                <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-fade-in select-none">
                     <div className="w-full max-w-xl glass-panel rounded-3xl p-8 flex flex-col items-center border border-white/10 shadow-2xl">
-                        <h3 className="text-white font-bold text-2xl mb-6 font-display">Envoyer une photo</h3>
-                        <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-8 bg-black border border-white/10 shadow-inner">
-                            <img src={URL.createObjectURL(previewFile)} alt="Preview" className="w-full h-full object-contain" />
+                        <h3 className="text-white font-bold text-2xl mb-6 font-display flex items-center gap-2">
+                            <span>Éditeur Photo</span>
+                            <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Diagnostic</span>
+                        </h3>
+                        
+                        <div 
+                            className="relative w-full aspect-video rounded-2xl overflow-hidden mb-8 bg-black border border-white/10 shadow-inner cursor-crosshair touch-none"
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseLeave={stopDrawing}
+                        >
+                            <canvas 
+                                ref={annotationCanvasRef} 
+                                className="w-full h-full object-contain"
+                            />
                         </div>
+
+                        <div className="flex gap-4 w-full mb-4 justify-center">
+                            <button 
+                                onClick={() => setAnnotationColor('#EF4444')} 
+                                className={`w-8 h-8 rounded-full bg-red-500 border-2 ${annotationColor === '#EF4444' ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                            />
+                            <button 
+                                onClick={() => setAnnotationColor('#F59E0B')} 
+                                className={`w-8 h-8 rounded-full bg-amber-500 border-2 ${annotationColor === '#F59E0B' ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                            />
+                            <button 
+                                onClick={() => setAnnotationColor('#10B981')} 
+                                className={`w-8 h-8 rounded-full bg-emerald-500 border-2 ${annotationColor === '#10B981' ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+                            />
+                            <div className="w-px h-8 bg-white/10 mx-2"></div>
+                            <button 
+                                onClick={clearAnnotation} 
+                                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                                title="Effacer tout"
+                            >
+                                <i className="fas fa-undo"></i>
+                            </button>
+                        </div>
+
                         <div className="flex gap-4 w-full">
-                            <button onClick={() => setPreviewFile(null)} className="flex-1 py-4 rounded-xl text-gray-400 hover:bg-white/5 font-bold transition-colors text-sm">ANNULER</button>
-                            <button onClick={sendImage} disabled={uploading} className="flex-1 glass-button-primary text-white font-bold rounded-xl flex justify-center items-center shadow-xl">
+                            <button onClick={() => { setPreviewFile(null); setAnnotatedFile(null); setOriginalImage(null); }} className="flex-1 py-4 rounded-xl text-gray-400 hover:bg-white/5 font-bold transition-colors text-sm">ANNULER</button>
+                            <button onClick={handleSendImage} disabled={uploading} className="flex-1 glass-button-primary text-white font-bold rounded-xl flex justify-center items-center shadow-xl">
                                 {uploading ? <i className="fas fa-circle-notch fa-spin"></i> : <span>ENVOYER <i className="fas fa-paper-plane ml-2"></i></span>}
                             </button>
                         </div>
@@ -2731,6 +3172,15 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                 <button onClick={() => setShowEmoji(!showEmoji)} className={`w-12 h-12 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${showEmoji ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
                                     <i className="far fa-smile text-xl"></i>
                                 </button>
+                                
+                                {/* Dictation Button (Inside Input) */}
+                                <button 
+                                    onClick={startDictation}
+                                    className={`w-10 h-10 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${isDictating ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                                    title="Dictée vocale (Texte)"
+                                >
+                                    <i className="fas fa-microphone text-lg"></i>
+                                </button>
                             </div>
 
                             {/* Bouton Envoyer / Micro - Droite */}
@@ -2744,8 +3194,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                         {isSending ? <i className="fas fa-circle-notch fa-spin text-lg"></i> : <i className="fas fa-paper-plane text-lg ml-0.5"></i>}
                                     </button>
                                 ) : (
-                                    <button onClick={startRecording} className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-white/10 text-gray-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg">
-                                        <i className="fas fa-microphone text-lg"></i>
+                                    <button onClick={startRecording} className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-white/10 text-gray-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg" title="Maintenir pour message vocal">
+                                        <i className="fas fa-wave-square text-lg"></i>
                                     </button>
                                 )}
                             </div>

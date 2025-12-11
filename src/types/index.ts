@@ -121,6 +121,7 @@ export interface ChatGuest {
 export interface Bindings {
   DB: D1Database;
   MEDIA_BUCKET: R2Bucket;
+  AI: any;
   JWT_SECRET?: string;
   CRON_SECRET?: string;
   TV_ACCESS_KEY?: string;
