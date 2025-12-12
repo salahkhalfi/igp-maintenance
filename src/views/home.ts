@@ -499,7 +499,7 @@ export const homeHTML = `
 
     <script>
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.1 (Magic Ticket)');
+        console.log('HOME HTML LOADED v3.0.0-alpha.3 (Magic Ticket)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 
