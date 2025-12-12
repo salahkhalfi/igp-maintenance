@@ -1,6 +1,6 @@
 {
   "id": "/messenger/",
-  "name": "IGP Connect",
+  "name": "Connect",
   "short_name": "Connect",
   "start_url": "/messenger/",
   "display": "standalone",

@@ -14,13 +14,25 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
     // États pour titre/sous-titre (admin uniquement)
     const [companyTitle, setCompanyTitle] = React.useState('Gestion de la maintenance et des réparations');
-    const [companySubtitle, setCompanySubtitle] = React.useState('Les Produits Verriers International (IGP) Inc.');
+    const [companySubtitle, setCompanySubtitle] = React.useState('Système de Maintenance Universel');
     const [editingTitle, setEditingTitle] = React.useState(false);
     const [editingSubtitle, setEditingSubtitle] = React.useState(false);
     const [tempTitle, setTempTitle] = React.useState('');
     const [tempSubtitle, setTempSubtitle] = React.useState('');
     const [savingTitle, setSavingTitle] = React.useState(false);
     const [savingSubtitle, setSavingSubtitle] = React.useState(false);
+
+    // État pour le contexte AI personnalisé
+    const [aiCustomContext, setAiCustomContext] = React.useState('');
+    const [editingAiContext, setEditingAiContext] = React.useState(false);
+    const [tempAiContext, setTempAiContext] = React.useState('');
+    const [savingAiContext, setSavingAiContext] = React.useState(false);
+
+    // États pour le nom de l'application Messagerie (Custom Messenger Name)
+    const [messengerAppName, setMessengerAppName] = React.useState('IGP Connect');
+    const [editingMessengerName, setEditingMessengerName] = React.useState(false);
+    const [tempMessengerName, setTempMessengerName] = React.useState('');
+    const [savingMessengerName, setSavingMessengerName] = React.useState(false);
 
     // États Modules
     const [licenses, setLicenses] = React.useState({
@@ -131,6 +143,24 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     }
                 } catch (error) {
                     // Sous-titre par défaut
+                }
+
+                try {
+                    const aiContextResponse = await axios.get(API_URL + '/settings/ai_custom_context');
+                    if (aiContextResponse.data.setting_value) {
+                        setAiCustomContext(aiContextResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Contexte AI par défaut vide
+                }
+
+                try {
+                    const messengerNameResponse = await axios.get(API_URL + '/settings/messenger_app_name');
+                    if (messengerNameResponse.data.setting_value) {
+                        setMessengerAppName(messengerNameResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Default messenger name
                 }
             }
         } catch (error) {
@@ -333,6 +363,84 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
+    // Fonctions pour gérer le contexte AI
+    const handleStartEditAiContext = () => {
+        setTempAiContext(aiCustomContext);
+        setEditingAiContext(true);
+    };
+
+    const handleCancelEditAiContext = () => {
+        setTempAiContext('');
+        setEditingAiContext(false);
+    };
+
+    const handleSaveAiContext = async () => {
+        if (tempAiContext.length > 2000) {
+            alert('Le contexte AI ne peut pas dépasser 2000 caractères');
+            return;
+        }
+
+        setSavingAiContext(true);
+        try {
+            await axios.put(API_URL + '/settings/ai_custom_context', {
+                value: tempAiContext.trim()
+            });
+
+            setAiCustomContext(tempAiContext.trim());
+            setEditingAiContext(false);
+            setTempAiContext('');
+
+            alert('Contexte AI mis à jour avec succès!');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingAiContext(false);
+        }
+    };
+
+    // Fonctions pour gérer le nom de la messagerie
+    const handleStartEditMessengerName = () => {
+        setTempMessengerName(messengerAppName);
+        setEditingMessengerName(true);
+    };
+
+    const handleCancelEditMessengerName = () => {
+        setTempMessengerName('');
+        setEditingMessengerName(false);
+    };
+
+    const handleSaveMessengerName = async () => {
+        if (!tempMessengerName.trim()) {
+            alert('Le nom ne peut pas être vide');
+            return;
+        }
+        
+        if (tempMessengerName.length > 50) {
+            alert('Le nom ne peut pas dépasser 50 caractères');
+            return;
+        }
+
+        setSavingMessengerName(true);
+        try {
+            await axios.put(API_URL + '/settings/messenger_app_name', {
+                value: tempMessengerName.trim()
+            });
+
+            setMessengerAppName(tempMessengerName.trim());
+            setEditingMessengerName(false);
+            setTempMessengerName('');
+
+            alert('Nom de l\'application messagerie mis à jour ! La page va se recharger...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingMessengerName(false);
+        }
+    };
+
     // Fonction pour lancer le nettoyage (Janitor) manuel
     const [cleaning, setCleaning] = React.useState(false);
     const handleManualCleanup = async () => {
@@ -529,7 +637,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     alt: 'Logo actuel',
                                     className: 'max-h-20 max-w-full object-contain',
                                     onError: (e) => {
-                                        e.target.src = '/static/logo-igp.png';
+                                        e.target.src = '/static/logo.png';
                                     }
                                 })
                             )
@@ -598,23 +706,18 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Titre et Sous-titre (ADMIN UNIQUEMENT)
+                        // Section Titre et Sous-titre (ADMIN UNIQUEMENT)
                     isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-heading text-blue-600 text-xl mt-1' }),
                                 React.createElement('div', {},
                                     React.createElement('h3', { className: 'font-bold text-blue-900 mb-2 flex items-center gap-2' },
-                                        "Titre et Sous-titre de l'application",
+                                        "Personnalisation de l'Interface",
                                         React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-blue-800 mb-2' },
-                                        "Personnalisez le titre et le sous-titre affichés dans l'en-tête de l'application."
-                                    ),
-                                    React.createElement('ul', { className: 'text-sm text-blue-800 space-y-1 list-disc list-inside' },
-                                        React.createElement('li', {}, 'Titre: maximum 100 caractères'),
-                                        React.createElement('li', {}, 'Sous-titre: maximum 150 caractères'),
-                                        React.createElement('li', {}, 'Les caractères spéciaux sont supportés (é, è, à, ç, etc.)')
+                                        "Personnalisez les titres et noms affichés dans l'application."
                                     )
                                 )
                             )
@@ -674,7 +777,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         ),
 
                         // Édition du sous-titre
-                        React.createElement('div', { className: 'mb-0' },
+                        React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
                                 React.createElement('i', { className: 'fas fa-align-left mr-2' }),
                                 'Sous-titre'
@@ -720,6 +823,135 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         },
                                             savingSubtitle && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                             savingSubtitle ? 'Enregistrement...' : 'Enregistrer'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+
+                        // Édition du nom Messagerie
+                        React.createElement('div', { className: 'mb-0' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-comments mr-2' }),
+                                'Nom du bouton "Connect" (Messagerie externe)'
+                            ),
+                            !editingMessengerName ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
+                                    messengerAppName
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleStartEditMessengerName,
+                                    className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                    type: 'button'
+                                },
+                                    React.createElement('i', { className: 'fas fa-edit' }),
+                                    'Modifier'
+                                )
+                            ) : React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: tempMessengerName,
+                                    onChange: (e) => setTempMessengerName(e.target.value),
+                                    placeholder: 'Ex: IGP Connect, Ma Messagerie...',
+                                    maxLength: 50,
+                                    className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                    disabled: savingMessengerName
+                                }),
+                                React.createElement('div', { className: 'flex items-center justify-between' },
+                                    React.createElement('span', { className: 'text-xs text-gray-600' },
+                                        tempMessengerName.length + '/50 caractères'
+                                    ),
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', {
+                                            onClick: handleCancelEditMessengerName,
+                                            disabled: savingMessengerName,
+                                            className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                            type: 'button'
+                                        }, 'Annuler'),
+                                        React.createElement('button', {
+                                            onClick: handleSaveMessengerName,
+                                            disabled: !tempMessengerName.trim() || savingMessengerName,
+                                            className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                            type: 'button'
+                                        },
+                                            savingMessengerName && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            savingMessengerName ? 'Enregistrement...' : 'Enregistrer'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+
+                        // Section Contexte AI Personnalisé (ADMIN UNIQUEMENT)
+                        isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                            React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4' },
+                                React.createElement('div', { className: 'flex items-start gap-3' },
+                                    React.createElement('i', { className: 'fas fa-robot text-green-600 text-xl mt-1' }),
+                                    React.createElement('div', {},
+                                        React.createElement('h3', { className: 'font-bold text-green-900 mb-2 flex items-center gap-2' },
+                                            "Personnalisation de l'IA (À propos)",
+                                            React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
+                                        ),
+                                        React.createElement('p', { className: 'text-sm text-green-800 mb-2' },
+                                            "Définissez un contexte spécifique pour l'IA (ex: règles métier, vocabulaire, ton)."
+                                        ),
+                                        React.createElement('ul', { className: 'text-sm text-green-800 space-y-1 list-disc list-inside' },
+                                            React.createElement('li', {}, 'Utilisé par l\'IA pour analyser les tickets'),
+                                            React.createElement('li', {}, 'Max 2000 caractères'),
+                                            React.createElement('li', {}, 'Conseil : Décrivez votre activité et vos priorités')
+                                        )
+                                    )
+                                )
+                            ),
+
+                            // Édition du contexte AI
+                            React.createElement('div', { className: 'mb-0' },
+                                React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                    React.createElement('i', { className: 'fas fa-file-alt mr-2' }),
+                                    'Contexte "À propos"'
+                                ),
+                                !editingAiContext ? React.createElement('div', { className: 'flex flex-col gap-3' },
+                                    React.createElement('div', { className: 'bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800 whitespace-pre-wrap min-h-[60px]' },
+                                        aiCustomContext || React.createElement('span', { className: 'text-gray-400 italic' }, 'Aucun contexte défini')
+                                    ),
+                                    React.createElement('button', {
+                                        onClick: handleStartEditAiContext,
+                                        className: 'self-start px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                        type: 'button'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-edit' }),
+                                        'Modifier'
+                                    )
+                                ) : React.createElement('div', { className: 'space-y-3' },
+                                    React.createElement('textarea', {
+                                        value: tempAiContext,
+                                        onChange: (e) => setTempAiContext(e.target.value),
+                                        placeholder: 'Ex: Nous sommes une usine de fabrication de verre. Les machines critiques sont les Fours et les CNC. La sécurité est la priorité absolue.',
+                                        maxLength: 2000,
+                                        rows: 6,
+                                        className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                        disabled: savingAiContext
+                                    }),
+                                    React.createElement('div', { className: 'flex items-center justify-between' },
+                                        React.createElement('span', { className: 'text-xs text-gray-600' },
+                                            tempAiContext.length + '/2000 caractères'
+                                        ),
+                                        React.createElement('div', { className: 'flex gap-2' },
+                                            React.createElement('button', {
+                                                onClick: handleCancelEditAiContext,
+                                                disabled: savingAiContext,
+                                                className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                                type: 'button'
+                                            }, 'Annuler'),
+                                            React.createElement('button', {
+                                                onClick: handleSaveAiContext,
+                                                disabled: savingAiContext,
+                                                className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                                type: 'button'
+                                            },
+                                                savingAiContext && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                                savingAiContext ? 'Enregistrement...' : 'Enregistrer'
+                                            )
                                         )
                                     )
                                 )

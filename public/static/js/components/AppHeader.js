@@ -72,6 +72,28 @@ const AppHeader = ({
     const [logoTimestamp] = React.useState(Date.now());
     const logoUrl = '/api/settings/logo?t=' + logoTimestamp;
     
+    // Custom Messenger Name (Default to 'Connect' but can be overridden)
+    // IMPORTANT: Defaults to 'Connect' for generic use, but user can set to 'IGP Connect' via settings
+    const [messengerName, setMessengerName] = React.useState('Connect');
+
+    React.useEffect(() => {
+        try {
+            fetch('/api/settings/messenger_app_name')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.setting_value) {
+                        setMessengerName(data.setting_value);
+                    } else {
+                        // Fallback if not set? We stick to 'Connect' as per code default
+                        // But if we wanted to be super friendly to existing users we could check other things
+                    }
+                })
+                .catch(err => console.warn('Failed to load messenger name', err));
+        } catch (e) {
+            console.warn('Error fetching settings', e);
+        }
+    }, []);
+    
     React.useEffect(() => {
         const updatePushState = async () => {
             if (typeof Notification !== 'undefined') {
@@ -226,8 +248,8 @@ const AppHeader = ({
                             src: logoUrl, alt: 'Logo',
                             className: 'h-8 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
                             onError: (e) => { 
-                                if (e.target.src.includes('logo-igp.png')) return; // Prevent infinite loop
-                                e.target.src = '/static/logo-igp.png'; 
+                                if (e.target.src.includes('logo.png')) return; // Prevent infinite loop
+                                e.target.src = '/static/logo.png'; 
                             }
                         }),
                         React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-black/10' },
@@ -439,21 +461,22 @@ const AppHeader = ({
 
             // MOBILE MENU & DESKTOP ACTIONS
             React.createElement('div', { 
-                className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 mt-4 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'flex flex-col p-4 mx-2 bg-white/95 rounded-2xl shadow-lg border border-gray-100 max-h-[75vh] overflow-y-auto custom-scrollbar' : 'hidden')
+                style: showMobileMenu ? { WebkitOverflowScrolling: 'touch' } : {},
+                className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 md:mt-0 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'absolute top-full left-0 right-0 mx-2 mt-2 p-4 flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 max-h-[calc(100dvh-6rem)] overflow-y-auto custom-scrollbar z-[100] overscroll-contain touch-pan-y' : 'hidden')
             },
 
                 activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
                     React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
                     (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
                 ),
-                // NEW IGP CONNECT BUTTON
+                // NEW CONNECT BUTTON
                 React.createElement('button', { 
                     onClick: () => window.open('/messenger', '_blank'), 
                     className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-emerald-50 border-emerald-200' 
                 }, 
                     React.createElement('div', { className: 'flex items-center' }, 
                         React.createElement('i', { className: 'fas fa-rocket mr-2 text-emerald-600' }), 
-                        React.createElement('span', { className: 'font-bold text-emerald-700' }, 'IGP Connect')
+                        React.createElement('span', { className: 'font-bold text-emerald-700' }, messengerName)
                     ),
                     React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full animate-pulse' }, 'NOUVEAU')
                 ),

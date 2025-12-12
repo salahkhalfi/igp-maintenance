@@ -1,8 +1,8 @@
 
 import { Hono } from 'hono';
 import { getDb } from '../db';
-import { machines, users } from '../db/schema';
-import { inArray } from 'drizzle-orm';
+import { machines, users, systemSettings } from '../db/schema';
+import { inArray, eq } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 
@@ -96,6 +96,9 @@ CONTEXTE UTILISATEUR (Demandeur):
 Nom: ${context.userName}
 Rôle: ${context.userRole}
 DATE ACTUELLE (EST) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
+
+CONTEXTE PERSONNALISÉ (À PROPOS DE L'ENTREPRISE):
+${context.customContext || "Aucun contexte spécifique défini."}
 
 CONTEXTE MACHINES (Liste des équipements):
 ${context.machines}
@@ -245,25 +248,33 @@ app.post('/analyze-ticket', async (c) => {
         const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.name} ${m.model || ''} (${m.location || ''})`).join('\n');
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
+        // 4. Load Custom AI Context
+        const customContextSetting = await db.select({
+            value: systemSettings.setting_value
+        }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
+
+        const customContext = customContextSetting?.value || '';
+
         // Dynamic Vocabulary from Database + Common Terms
         const vocabularyContext = [
             ...machinesList.map(m => m.name),
             ...techsList.map(t => t.name),
-            "Maintenance", "Panne", "Urgent", "Réparation", "Fuite", "Bruit", "Arrêt", "Danger", "Sécurité"
+            "Maintenance", "Panne", "Urgent", "Réparation", "Fuite", "Bruit", "Arrêt", "Danger", "Sécurité",
+            customContext // Inject custom context keywords into vocabulary if relevant (simple append)
         ].join(", ");
 
-        // 4. Transcribe with Dynamic Vocabulary (Groq -> OpenAI)
+        // 5. Transcribe with Dynamic Vocabulary (Groq -> OpenAI)
         const transcript = await transcribeAudio(audioFile, c.env, vocabularyContext);
         if (!transcript) {
             return c.json({ error: "Impossible de transcrire l'audio (Services indisponibles)" }, 502);
         }
         
-        // 5. Analyze (Cascade: DeepSeek -> OpenAI)
+        // 6. Analyze (Cascade: DeepSeek -> OpenAI)
         const ticketData = await analyzeText(transcript, {
-            userName, userRole, machines: machinesContext, techs: techsContext
+            userName, userRole, machines: machinesContext, techs: techsContext, customContext
         }, c.env);
 
-        // 6. Final Polish
+        // 7. Final Polish
         if (ticketData.scheduled_date && !ticketData.scheduled_date.includes('T')) {
             ticketData.scheduled_date = null; // Safety check
         }

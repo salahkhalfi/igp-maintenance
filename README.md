@@ -41,6 +41,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.18.1 (12 Décembre 2025) - FIX SCROLL MOBILE 📱✨
+- **📱 MENU HAMBURGER**: Correction du problème de défilement sur le menu mobile.
+- **↕️ HAUTEUR DYNAMIQUE**: Utilisation de `dvh` pour s'adapter parfaitement à la hauteur d'écran mobile.
+- **👆 TOUCH**: Amélioration de la gestion du scroll tactile (`touch-action: pan-y`).
+- **✅ IMPACT**: Navigation fluide sur tous les appareils mobiles.
+
 ### Version 2.18.0 (12 Décembre 2025) - TICKET MAGIQUE (IA VOCALE) 🎙️✨
 - **🪄 CRÉATION VOCALE INTÉGRALE**: Nouveau bouton flottant (FAB) micro sur le dashboard.
 - **🧠 ANALYSE INTELLIGENTE**: Le technicien parle ("Fuite sur la presse 4, urgent"), l'IA (Whisper V3 + GPT-4o-mini) analyse.

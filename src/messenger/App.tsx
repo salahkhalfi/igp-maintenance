@@ -350,6 +350,13 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [appName, setAppName] = useState('Connect');
+
+    useEffect(() => {
+        axios.get('/api/settings/messenger_app_name').then(res => {
+            if(res.data?.setting_value) setAppName(res.data.setting_value);
+        }).catch(() => {});
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -383,11 +390,11 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
             <div className="w-full max-w-md z-10 animate-slide-up px-4">
                 <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl">
                     <div className="flex flex-col items-center mb-10">
-                        <img src="/logo-igp.png" alt="Logo" className="h-20 object-contain mb-4 drop-shadow-2xl" />
+                        <img src="/static/logo.png" onError={(e) => { e.currentTarget.src = '/logo-igp.png'; }} alt="Logo" className="h-20 object-contain mb-4 drop-shadow-2xl" />
                         <p className="text-emerald-500/90 text-[10px] font-bold tracking-widest uppercase text-center mb-6 leading-relaxed max-w-[280px] mx-auto">
                             Système de<br/>Maintenance Universel
                         </p>
-                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">Connect</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">{appName}</h1>
                         <p className="text-gray-400 text-sm mt-2 font-medium tracking-wide uppercase">Connexion Sécurisée</p>
                     </div>
                     
@@ -407,7 +414,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full glass-input rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-600 focus:outline-none font-medium"
-                                    placeholder="nom@igpglass.ca"
+                                    placeholder="nom@email.com"
                                     required
                                 />
                             </div>
@@ -1053,6 +1060,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 />
             )}
             {showGuestManager && <GuestManagementModal onClose={() => setShowGuestManager(false)} />}
+            {showMessengerSettings && <MessengerSettingsModal onClose={() => setShowMessengerSettings(false)} />}
 
             {/* PREMIUM HEADER - ID CARD STYLE */}
             <div className="px-4 md:px-6 pt-6 pb-4 flex-shrink-0 z-30 relative">
@@ -1155,14 +1163,27 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                             </button>
 
                             {isAdmin && (
-                                <button 
-                                    onClick={() => setShowGuestManager(true)}
-                                    className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-blue-400 hover:bg-white/10 hover:text-white backdrop-blur-md group/btn"
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110">
-                                        <i className="fas fa-user-shield text-sm"></i>
-                                    </div>
-                                </button>
+                                <>
+                                    <button 
+                                        onClick={() => setShowGuestManager(true)}
+                                        className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-blue-400 hover:bg-white/10 hover:text-white backdrop-blur-md group/btn"
+                                        title="Gérer les invités"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110">
+                                            <i className="fas fa-user-shield text-sm"></i>
+                                        </div>
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={() => setShowMessengerSettings(true)}
+                                        className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-purple-400 hover:bg-white/10 hover:text-white backdrop-blur-md group/btn"
+                                        title="Personnaliser Connect"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110">
+                                            <i className="fas fa-cog text-sm"></i>
+                                        </div>
+                                    </button>
+                                </>
                             )}
 
                             <button 
@@ -2083,6 +2104,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [messages, setMessages] = useState<Message[]>([]);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [conversation, setConversation] = useState<Conversation | null>(null);
+    const [messengerName, setMessengerName] = useState('Connect');
+
+    useEffect(() => {
+        axios.get('/api/settings/messenger_app_name').then(res => {
+            if(res.data?.setting_value) setMessengerName(res.data.setting_value);
+        }).catch(() => {});
+    }, []);
     const [input, setInput] = useState(initialMessage || ''); // Init with prop
     const [editingTranscriptionId, setEditingTranscriptionId] = useState<string | null>(null);
     const [editingTranscriptionText, setEditingTranscriptionText] = useState('');
@@ -2629,7 +2657,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     conversationId,
-                    content: '📞 SONNERIE: Je tente de vous joindre sur Connect ! (Ouvrez le chat)',
+                    content: `📞 SONNERIE: Je tente de vous joindre sur ${messengerName} ! (Ouvrez le chat)`,
                     type: 'text',
                     isCall: true // Special flag for Service Worker to boost priority/vibration
                 })
@@ -3416,6 +3444,12 @@ const App = () => {
     const [currentUserAvatarKey, setCurrentUserAvatarKey] = useState<string | null>(null);
     const [showLogin, setShowLogin] = useState(true);
     const [autoOpenInfo, setAutoOpenInfo] = useState(false);
+    
+    useEffect(() => {
+        axios.get('/api/settings/messenger_app_name').then(res => {
+            if(res.data?.setting_value) document.title = res.data.setting_value;
+        }).catch(() => {});
+    }, []);
     
     // Magic Bridge State
     const [initialRecipientId, setInitialRecipientId] = useState<number | null>(null);
