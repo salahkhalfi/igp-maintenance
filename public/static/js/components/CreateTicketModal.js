@@ -228,11 +228,16 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
             };
 
             if (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') {
-                if (assignedTo) {
-                    requestBody.assigned_to = parseInt(assignedTo);
-                }
+                // LOGIC: If Date is set but No Assignee -> Auto-assign to Team (0)
                 if (scheduledDate) {
                     requestBody.scheduled_date = localDateTimeToUTC(scheduledDate);
+                    if (!assignedTo) {
+                        requestBody.assigned_to = 0; // ID 0 = Équipe
+                    }
+                }
+                
+                if (assignedTo) {
+                    requestBody.assigned_to = parseInt(assignedTo);
                 }
             }
 
