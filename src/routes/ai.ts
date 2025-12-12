@@ -138,6 +138,9 @@ RÈGLES STRICTES :
    - Si tu ne trouves PAS l'ID, mets le nom dans 'assigned_to_name'.
 3. DATE : Toutes les dates (demain, lundi, etc.) sont relatives à la DATE ACTUELLE ci-dessus.
    - Format de sortie : ISO 8601 (YYYY-MM-DDTHH:mm:ss).
+4. ASSIGNATION AUTO : Si une DATE est détectée mais qu'aucun TECHNICIEN (nom) n'est identifié explicitement :
+   - Assigne 'assigned_to_id': 0 (C'est l'ID pour "Équipe").
+   - Ne laisse pas 'assigned_to_id' null si une date est présente sans nom.
 
 FORMAT DE SORTIE (JSON PUR) :
 {
