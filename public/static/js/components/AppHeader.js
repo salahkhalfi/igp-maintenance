@@ -470,12 +470,28 @@ const AppHeader = ({
                 ), document.body
             ),
 
-            // MOBILE MENU PORTAL (Fixed Overlay behind header)
+            // MOBILE MENU PORTAL (Full Screen Overlay)
             showMobileMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
                 React.createElement('div', { 
-                    className: 'fixed inset-0 z-[49] flex flex-col bg-white/95 backdrop-blur-xl overflow-y-auto pt-[60px] pb-32 px-4',
-                    style: { WebkitOverflowScrolling: 'touch' } // Native momentum scrolling
+                    className: 'fixed inset-0 z-[100] flex flex-col bg-white animate-fade-in', // z-100 covers everything
                 },
+                    // Internal Header with Close Button
+                    React.createElement('div', { className: 'flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white shadow-sm shrink-0' },
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('img', { src: logoUrl, alt: 'Logo', className: 'h-8 w-auto object-contain' }),
+                            React.createElement('span', { className: 'font-bold text-slate-800' }, 'Menu')
+                        ),
+                        React.createElement('button', {
+                            onClick: () => setShowMobileMenu(false),
+                            className: 'w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 rounded-full border border-red-100 active:scale-95 transition-transform shadow-sm'
+                        }, React.createElement('i', { className: 'fas fa-times text-xl' }))
+                    ),
+
+                    // Scrollable Content
+                    React.createElement('div', { 
+                        className: 'flex-1 overflow-y-auto p-4 pb-32 custom-scrollbar',
+                        style: { WebkitOverflowScrolling: 'touch' }
+                    },
                     activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-gray-50' }, 
                         React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-3 text-blue-500 text-lg' }), 'Messagerie'),
                         (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
@@ -510,6 +526,7 @@ const AppHeader = ({
 
                     React.createElement('button', { onClick: onRefresh, className: 'px-3 py-3 bg-blue-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-blue-700 transition mt-4 font-bold' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser les données'),
                     React.createElement('button', { onClick: onLogout, className: 'px-3 py-3 bg-gray-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-gray-700 transition mt-2 font-bold' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Se déconnecter')
+                    )
                 ), document.body
             )
 
