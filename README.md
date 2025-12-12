@@ -41,6 +41,12 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.18.2 (12 Décembre 2025) - REVERT MENU MOBILE (PORTAL) ⏪✨
+- **⏪ REVERT**: Retour à la version "Portal Overlay" (v2.0.3) pour le menu mobile.
+- **🛠️ RAISON**: Problème de scroll et visibilité sur la version Full Screen Overlay précédente.
+- **📱 COMPORTEMENT**: Le menu s'affiche par-dessus le contenu (z-49) mais sous le header, via un Portal React.
+- **✅ FIX**: Restauration de l'état fonctionnel précédent demandé par l'utilisateur.
+
 ### Version 2.18.1 (12 Décembre 2025) - FIX SCROLL MOBILE 📱✨
 - **📱 MENU HAMBURGER**: Correction du problème de défilement sur le menu mobile.
 - **↕️ HAUTEUR DYNAMIQUE**: Utilisation de `dvh` pour s'adapter parfaitement à la hauteur d'écran mobile.
