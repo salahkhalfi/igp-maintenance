@@ -53,8 +53,8 @@ export async function generateTicketId(db: D1Database, machineType: string): Pro
  * Supporte tous les formats historiques et actuels:
  * - Format actuel: TYPE-MMYY-NNNN (ex: CNC-1125-0001, FOUR-0125-0042)
  * - Format v2.9.4: TYPE-YYYY-NNNN (ex: CNC-2025-0001)
- * - Format v2.9.3: IGP-YYYY-NNNN (ex: IGP-2025-0001)
- * - Format ancien: IGP-XXX-XXX-YYYYMMDD-NNN (ex: IGP-PDE-7500-20231025-001)
+ * - Format v2.9.3: LEGACY-YYYY-NNNN (ex: LEGACY-2025-0001)
+ * - Format ancien: LEGACY-XXX-XXX-YYYYMMDD-NNN (ex: LEGACY-PDE-7500-20231025-001)
  * 
  * @param ticketId - L'ID du ticket à valider
  * @returns boolean - true si le format est valide
@@ -68,11 +68,11 @@ export function isValidTicketId(ticketId: string): boolean {
   // Note: Ce pattern est identique au currentPattern (4 chiffres)
   // Pas besoin de pattern séparé car structure identique
   
-  // Format v2.9.3: IGP-YYYY-NNNN (ex: IGP-2025-0001)
-  const v293Pattern = /^IGP-\d{4}-\d{4}$/;
+  // Format Legacy v2.9.3: ex IGP-2025-0001 (conservé pour compatibilité)
+  const legacyV2Pattern = /^[A-Z]{3}-\d{4}-\d{4}$/;
   
-  // Format ancien: IGP-XXX-XXX-YYYYMMDD-NNN (ex: IGP-PDE-7500-20231025-001)
-  const oldPattern = /^IGP-[A-Z0-9]+-[A-Z0-9]+-\d{8}-\d{3}$/;
+  // Format Legacy Ancien: ex IGP-PDE-7500-20231025-001 (conservé pour compatibilité)
+  const legacyOldPattern = /^[A-Z]{3}-[A-Z0-9]+-[A-Z0-9]+-\d{8}-\d{3}$/;
   
-  return currentPattern.test(ticketId) || v293Pattern.test(ticketId) || oldPattern.test(ticketId);
+  return currentPattern.test(ticketId) || legacyV2Pattern.test(ticketId) || legacyOldPattern.test(ticketId);
 }

@@ -1,26 +1,26 @@
-# 🔧 Système de Gestion de Maintenance Industrielle
+# 🔧 MaintenanceOS - Système de Gestion de Maintenance
 
 **🤖 AI ASSISTANT: START HERE. READ `docs/STRUCTURE.md` AND `docs/archive/bible.md` BEFORE DOING ANYTHING.**
 
 **Auteur:** Salah Khalfi  
-**Organisation:** Produits Verriers International (IGP) Inc.  
+**Projet:** MaintenanceOS (Industry Agnostic)
 **Département:** Technologies de l'Information
 
 > **📖 [BIBLE DU PROJET (BIBLE.md)](BIBLE.md)** - Documentation Technique Critique & Lessons Learned. À lire absolument.
 
-[![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
-[![Version](https://img.shields.io/badge/version-2.9.6-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
-[![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
-[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://mecanique.igpglass.ca)
+[![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://maintenance-os.pages.dev)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge)](https://github.com/maintenance-os/core/releases)
+[![Security](https://img.shields.io/badge/Security-9.5%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange?style=for-the-badge&logo=cloudflare)](https://pages.cloudflare.com)
 [![Hono](https://img.shields.io/badge/Hono-Framework-red?style=for-the-badge)](https://hono.dev)
 
-> **🚀 [Accéder à l'application en direct](https://mecanique.igpglass.ca)** - Système de gestion de maintenance déployé sur Cloudflare Pages
+> **🚀 [Accéder à l'application en direct](https://maintenance-os.pages.dev)** - Système de gestion de maintenance déployé sur Cloudflare Pages
 > 
-> **🧪 [Environnement de test](https://ea1b8169.webapp-test-b59.pages.dev)** - Pour tester les modifications avant production
+> **🧪 [Environnement de test](https://webapp-7t8.pages.dev)** - Pour tester les modifications avant production
 
-Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets et suivi des interventions.
+Application web complète pour la gestion de la maintenance industrielle avec tableau Kanban, système de tickets, IA vocale et suivi des interventions. Conçue pour être agnostique et adaptable à tout secteur industriel.
 
-## 🏗️ Architecture SaaS & Modules (Nouveau v2.13+)
+## 🏗️ Architecture SaaS & Modules (v3.0+)
 
 L'application a évolué vers une architecture **SaaS Multi-Tenant Modulaire**, conçue pour simplifier la maintenance et maximiser la monétisation.
 

@@ -25,7 +25,7 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
             // DYNAMIC CONTEXT (Generic Philosophy):
             // We use the dynamic vocabulary from the database (machines, techs) to guide Groq.
             // This ensures the app works for ANY industry based on the user's data.
-            formData.append('prompt', `Contexte: Maintenance professionnelle. Mots clés: ${vocabulary}`);
+            formData.append('prompt', `Contexte: Maintenance professionnelle (contexte québécois possible). Mots clés: ${vocabulary}`);
             
             const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                 method: 'POST',
@@ -90,7 +90,7 @@ async function analyzeText(transcript: string, context: any, env: Bindings): Pro
     
     const systemPrompt = `
 Tu es un assistant expert en maintenance technique.
-Ta mission : Analyser une demande vocale brute et en extraire les données pour créer un ticket structuré.
+Ta mission : Analyser une demande vocale brute (souvent bruitée ou en français québécois familier) et en extraire les données pour créer un ticket structuré.
 
 CONTEXTE UTILISATEUR (Demandeur):
 Nom: ${context.userName}
@@ -104,17 +104,24 @@ CONTEXTE EQUIPE (Liste des techniciens):
 ${context.techs}
 
 RÈGLES D'EXTRACTION STRICTES :
-1. PRIORITÉ : Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu", "Danger" -> 'priority' = 'critical'.
-2. ASSIGNATION (RÈGLE IMPORTANTE) :
+1. ROBUSTESSE LINGUISTIQUE :
+   - Comprends le français québécois familier ("char" = voiture, "break" = pause, "jammé" = coincé, "fucké" = cassé).
+   - Ignore les bruits de fond, hésitations ("euh", "ben", "tsé") et politesses.
+   - Concentre-toi sur les FAITS TECHNIQUES.
+
+2. PRIORITÉ : Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu", "Danger", "Ça presse" -> 'priority' = 'critical'.
+
+3. ASSIGNATION (RÈGLE IMPORTANTE) :
    - Cherche le nom d'un technicien dans la liste 'CONTEXTE EQUIPE'.
    - Si tu entends un NOM -> 'assigned_to_id' = ID correspondant.
-   - Si tu entends une DATE mais AUCUN NOM -> 'assigned_to_id' = 0 (Cela signifie "Assigner à toute l'équipe").
+   - Si tu entends une DATE (ex: "pour demain", "lundi prochain") mais AUCUN NOM -> 'assigned_to_id' = 0 (Cela signifie "Assigner à toute l'équipe").
    - Si aucun nom et aucune date -> 'assigned_to_id' = null.
-3. DATE : Convertis les termes relatifs ("demain 14h", "lundi matin") en format ISO 8601 (YYYY-MM-DDTHH:mm:ss) basé sur la DATE ACTUELLE.
 
-4. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
-   - Tu es un secrétaire technique. Reformule le texte brut (souvent mal dit ou bruyant) en langage professionnel.
-   - Exemple : "Euh le truc marche pas sur la machine X" -> Titre: "Dysfonctionnement sur Machine X" / Desc: "Problème signalé sur Machine X."
+4. DATE : Convertis les termes relatifs ("demain 14h", "lundi matin") en format ISO 8601 (YYYY-MM-DDTHH:mm:ss) basé sur la DATE ACTUELLE.
+
+5. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
+   - Tu es un secrétaire technique. Reformule le texte brut en langage professionnel standard.
+   - Exemple : "Euh la strappe est pété sur la drill" -> Titre: "Remplacement courroie perceuse" / Desc: "La courroie de la perceuse est brisée, intervention requise."
    - NE PAS INVENTER : N'ajoute pas de détails techniques non mentionnés.
    - Si le texte est incompréhensible mais qu'une MACHINE est identifiée, mets en Titre : "Intervention requise : [Nom Machine]".
 
