@@ -225,7 +225,7 @@ export async function sendPushNotification(
 
     // Valider et nettoyer le payload
     if (!payload.title || payload.title.trim() === '') {
-      payload.title = 'Maintenance IGP';
+      payload.title = 'MaintenanceOS';
     }
     if (payload.title.length > 100) {
       payload.title = payload.title.substring(0, 97) + '...';
@@ -251,7 +251,7 @@ export async function sendPushNotification(
 
     // Configurer les clés VAPID
     const vapid: VapidKeys = {
-      subject: 'mailto:support@igpglass.ca',
+      subject: 'mailto:support@maintenance-app.com',
       publicKey: env.VAPID_PUBLIC_KEY,
       privateKey: env.VAPID_PRIVATE_KEY
     };

@@ -4,7 +4,7 @@ export const changelogHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique des Versions - IGP Maintenance</title>
+    <title>Historique des Versions - MaintenanceOS</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" href="/icon-192.png">
     <link rel="stylesheet" href="/static/styles.css">
@@ -137,7 +137,7 @@ export const changelogHTML = `
                         <i class="fas fa-history text-blue-600 mr-3"></i>
                         Historique des Versions
                     </h1>
-                    <p class="text-gray-600">Système de Gestion de Maintenance IGP</p>
+                    <p class="text-gray-600">Système de Gestion de Maintenance</p>
                 </div>
                 <div class="text-right">
                     <div class="text-2xl font-bold text-blue-600">v2.14.6</div>
@@ -484,7 +484,7 @@ export const changelogHTML = `
                                 <li>• Installation sur écran d'accueil (iOS/Android)</li>
                                 <li>• Mode hors ligne basique (lecture cache)</li>
                                 <li>• Manifest.json avec icônes adaptatives</li>
-                                <li>• Thème couleur IGP intégré</li>
+                                <li>• Thème couleur intégré</li>
                             </ul>
                         </div>
                     </div>
@@ -546,7 +546,7 @@ export const changelogHTML = `
                                 <li>• Colonnes Kanban avec effet vitreux (backdrop-filter blur)</li>
                                 <li>• Cartes tickets redesignées (shadows premium)</li>
                                 <li>• Animations transitions fluides</li>
-                                <li>• Couleurs IGP harmonisées (bleu #1e40af, orange #ea580c)</li>
+                                <li>• Couleurs harmonisées (bleu #1e40af, orange #ea580c)</li>
                             </ul>
                         </div>
                     </div>
@@ -1459,7 +1459,7 @@ export const changelogHTML = `
                                 Améliorations
                             </h3>
                             <ul class="space-y-1 text-gray-600 text-sm ml-6">
-                                <li>• Crédits mis à jour (Département TI IGP Inc.)</li>
+                                <li>• Crédits mis à jour (Département TI)</li>
                                 <li>• Documentation complète (3 guides utilisateur)</li>
                                 <li>• Performance affichage optimisée</li>
                             </ul>
@@ -1657,7 +1657,7 @@ export const changelogHTML = `
                                 <li>• Redesign cartes tickets (shadows, borders premium)</li>
                                 <li>• Animations transitions fluides entre colonnes Kanban</li>
                                 <li>• Icônes priorités redesignées (plus visibles)</li>
-                                <li>• Couleurs IGP harmonisées (bleu #1e40af, orange #ea580c)</li>
+                                <li>• Couleurs harmonisées (bleu #1e40af, orange #ea580c)</li>
                             </ul>
                         </div>
                     </div>
@@ -2088,7 +2088,7 @@ export const changelogHTML = `
         </div>
 
         <div class="mt-6 text-center text-white text-sm">
-            <p>© 2025 - Produits Verriers International (IGP) Inc.</p>
+            <p>© 2025 - MaintenanceOS</p>
             <p class="mt-1 opacity-75">Développé par le Département des Technologies de l'Information</p>
         </div>
     </div>

@@ -14,21 +14,9 @@ import type { D1Database } from '@cloudflare/workers-types';
 function getMachineTypeCode(machineType: string): string {
   const upperType = machineType.toUpperCase();
   
-  // Mapping des types de machines vers leurs codes
-  const typeMap: Record<string, string> = {
-    'CNC': 'CNC',
-    'DÉCOUPE': 'DEC',
-    'DECOUPE': 'DEC',
-    'FOUR': 'FOUR',
-    'LAMINÉ': 'LAM',
-    'LAMINE': 'LAM',
-    'POLISSEUSE': 'POL',
-    'THERMOS': 'THERMO',
-    'WATERJET': 'WJ',
-    'AUTRE': 'AUT'
-  };
-  
-  return typeMap[upperType] || upperType.substring(0, 4).toUpperCase();
+  // Génère un code court à partir du type (3 premières lettres)
+  // Ex: "Camion" -> "CAM", "Ordinateur" -> "ORD", "Polisseuse" -> "POL"
+  return upperType.substring(0, 3).toUpperCase();
 }
 
 /**

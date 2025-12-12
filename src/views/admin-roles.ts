@@ -3,7 +3,7 @@ export const adminRolesHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Rôles - IGP Admin</title>
+    <title>Gestion des Rôles - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -18,7 +18,7 @@ export const adminRolesHTML = `<!DOCTYPE html>
                     <i class="fas fa-shield-alt text-2xl sm:text-3xl"></i>
                     <div>
                         <h1 class="text-xl sm:text-2xl font-bold">Gestion des Rôles</h1>
-                        <p class="text-blue-200 text-xs sm:text-sm">Système RBAC - Administration IGP</p>
+                        <p class="text-blue-200 text-xs sm:text-sm">Système RBAC - Administration</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">

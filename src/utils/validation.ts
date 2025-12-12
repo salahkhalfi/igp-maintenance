@@ -164,7 +164,7 @@ export function validateStatus(status: string): ValidationResult {
 }
 
 /**
- * Valider un rôle utilisateur (14 rôles industriels IGP)
+ * Valider un rôle utilisateur (14 rôles industriels standard)
  */
 export function validateRole(role: string): ValidationResult {
   const validRoles = [

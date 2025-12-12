@@ -3,7 +3,7 @@ export const messengerHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IGP Messenger</title>
+    <title>Messenger</title>
     <meta name="theme-color" content="#128C7E">
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="icon" type="image/png" href="/icon-192.png">
@@ -68,7 +68,7 @@ export const messengerHTML = `<!DOCTYPE html>
         <div class="flex-1 flex items-center justify-center bg-[#111b21]">
             <div class="text-center">
                 <i class="fab fa-whatsapp text-6xl text-[#00a884] mb-4 animate-pulse"></i>
-                <div class="text-[#8696a0] font-medium">Chargement IGP Messenger...</div>
+                <div class="text-[#8696a0] font-medium">Chargement Messenger...</div>
             </div>
         </div>
     </div>

@@ -5,7 +5,7 @@ export const tvHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IGP Vision - Planning Live</title>
+    <title>Vision - Planning Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
@@ -317,7 +317,7 @@ export const tvHTML = `
     <div id="loading" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center">
         <div class="text-center">
             <div class="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-500 mx-auto mb-8"></div>
-            <h2 class="text-4xl font-bold text-blue-400 tracking-wider">IGP VISION</h2>
+            <h2 class="text-4xl font-bold text-blue-400 tracking-wider">VISION</h2>
             <p class="text-slate-500 mt-4 text-xl">Chargement du planning...</p>
         </div>
     </div>
@@ -329,7 +329,7 @@ export const tvHTML = `
                 <i class="fas fa-shield-alt text-5xl"></i>
             </div>
             <h1 class="text-2xl font-bold mb-2 uppercase tracking-wide text-white">Accès Sécurisé</h1>
-            <p class="mb-6 text-sm text-slate-400">Tableau de bord industriel IGP Glass</p>
+            <p class="mb-6 text-sm text-slate-400">Tableau de bord industriel</p>
             <input type="text" id="access-key" placeholder="Clé d'autorisation" 
                 class="w-full rounded-lg p-3 text-center mb-4 focus:outline-none font-mono border bg-slate-800 text-white border-slate-700 focus:border-blue-500 transition-colors">
             <button onclick="saveKey()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg uppercase tracking-wider transition-colors">
@@ -341,10 +341,10 @@ export const tvHTML = `
     <!-- HEADER -->
     <header class="h-16 flex-none bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 lg:px-6 relative z-10 backdrop-blur-md gap-4">
         <div class="flex items-center gap-4 w-auto flex-shrink-0">
-            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="IGP" class="h-8 lg:h-10 w-auto transition-all duration-500">
+            <img src="/api/settings/logo?t=tv" onerror="this.onerror=null; this.src='/static/logo-igp.png'" alt="Logo" class="h-8 lg:h-10 w-auto transition-all duration-500">
             <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
             <div class="hidden sm:block">
-                <h1 class="text-base lg:text-lg font-bold text-white tracking-tight leading-none">PLANNING IGP</h1>
+                <h1 class="text-base lg:text-lg font-bold text-white tracking-tight leading-none">PLANNING</h1>
                 <p class="text-blue-400 text-[10px] font-mono font-bold tracking-widest uppercase leading-none mt-0.5">Dashboard</p>
             </div>
         </div>

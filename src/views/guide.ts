@@ -3,7 +3,7 @@ export const guideHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guide Utilisateur - IGP Maintenance</title>
+    <title>Guide Utilisateur - MaintenanceOS</title>
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -21,7 +21,7 @@ export const guideHTML = `<!DOCTYPE html>
         }
     </script>
     <style>
-        /* Background avec photo d'atelier IGP */
+        /* Background avec photo d'atelier */
         body {
             background-image: url(/static/login-background.jpg);
             background-size: cover;
@@ -853,7 +853,7 @@ export const guideHTML = `<!DOCTYPE html>
                             Guide Utilisateur
                         </h1>
                         <p class="text-xs sm:text-sm md:text-base text-gray-600 mt-1 leading-snug">
-                            Système de Gestion de Maintenance - IGP Glass
+                            Système de Gestion de Maintenance Universel
                         </p>
                         <div class="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-500">
                             <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md whitespace-nowrap">
@@ -1210,7 +1210,7 @@ export const guideHTML = `<!DOCTYPE html>
                         <li>- Safari : Préférences → Sites web → Notifications</li>
                         <li>- Firefox : ☰ → Paramètres → Vie privée → Permissions → Notifications</li>
                     </ul>
-                    <li>• Trouvez <strong>mecanique.igpglass.ca</strong> et activez les notifications</li>
+                    <li>• Trouvez <strong>votre-domaine.com</strong> et activez les notifications</li>
                 </ul>
                 <div class="mt-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-sm text-gray-700">
                     <p class="font-semibold text-amber-800 mb-1">
@@ -1378,7 +1378,7 @@ export const guideHTML = `<!DOCTYPE html>
                     <div>
                         <strong class="text-gray-800">Sur iPhone/iPad (Safari) :</strong>
                         <ol class="mt-2 space-y-1 text-gray-700">
-                            <li>1. Ouvrez mecanique.igpglass.ca dans Safari</li>
+                            <li>1. Ouvrez votre-domaine.com dans Safari</li>
                             <li>2. Appuyez sur l'icône <i class="fas fa-share"></i> <strong>Partager</strong> (en bas)</li>
                             <li>3. Sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
                             <li>4. Appuyez sur <strong>"Ajouter"</strong></li>
@@ -1387,7 +1387,7 @@ export const guideHTML = `<!DOCTYPE html>
                     <div>
                         <strong class="text-gray-800">Sur Android (Chrome) :</strong>
                         <ol class="mt-2 space-y-1 text-gray-700">
-                            <li>1. Ouvrez mecanique.igpglass.ca dans Chrome</li>
+                            <li>1. Ouvrez votre-domaine.com dans Chrome</li>
                             <li>2. Appuyez sur les <strong>trois points</strong> ⋮ en haut à droite</li>
                             <li>3. Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
                             <li>4. Appuyez sur <strong>"Installer"</strong></li>
@@ -1407,7 +1407,7 @@ export const guideHTML = `<!DOCTYPE html>
                     <li>• <strong>Notifications push</strong> : Recevez des alertes même si l'app est fermée</li>
                     <li>• <strong>Fonctionne hors ligne</strong> : Consultez les données récentes sans connexion</li>
                     <li>• <strong>Plus rapide</strong> : Chargement instantané après installation</li>
-                    <li>• <strong>Icône sur l'écran d'accueil</strong> : Logo IGP visible avec vos autres applications</li>
+                    <li>• <strong>Icône sur l'écran d'accueil</strong> : Logo Application visible avec vos autres applications</li>
                 </ul>
                 <div class="mt-3 p-3 bg-purple-50 border-l-4 border-purple-500 rounded text-sm text-gray-700">
                     <p class="font-semibold text-purple-800 mb-2">
@@ -1532,13 +1532,13 @@ export const guideHTML = `<!DOCTYPE html>
             <div class="ml-12 space-y-3 text-gray-700">
                 <p>
                     <i class="fas fa-phone text-green-600 mr-2"></i>
-                    <strong>Salah</strong> : 
+                    <strong>Admin Système</strong> : 
                     <a href="tel:+15144622889" class="text-green-600 hover:underline font-mono">514-462-2889</a>
                 </p>
                 <p>
                     <i class="fas fa-envelope text-blue-600 mr-2"></i>
                     <strong>Support technique</strong> : 
-                    <a href="mailto:support@igpglass.ca" class="text-blue-600 hover:underline">support@igpglass.ca</a>
+                    <a href="mailto:support@maintenance-app.com" class="text-blue-600 hover:underline">support@maintenance-app.com</a>
                 </p>
                 <p>
                     <i class="fas fa-user-tie text-purple-600 mr-2"></i>
@@ -1571,7 +1571,7 @@ export const guideHTML = `<!DOCTYPE html>
                 Retour à l'application
             </button>
             <p class="text-white text-sm mt-4">
-                © 2025 IGP Glass - Système de Gestion de Maintenance v2.8.1
+                © 2025 MaintenanceOS - Système de Gestion de Maintenance v2.8.1
             </p>
         </div>
     </div>
@@ -1753,7 +1753,7 @@ export const guideHTML = `<!DOCTYPE html>
             });
         });
         
-        console.log('📖 Guide Utilisateur IGP - v2.8.1 Premium');
+        console.log('📖 Guide Utilisateur MaintenanceOS - v2.8.1 Premium');
         console.log('⏱️ Temps de lecture estimé:', readingTime, 'minutes');
         console.log('✨ Améliorations premium actives');
     </script>

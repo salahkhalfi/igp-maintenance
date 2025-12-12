@@ -3,7 +3,7 @@ export const historiqueHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique des Améliorations - IGP Maintenance</title>
+    <title>Historique des Améliorations - MaintenanceOS</title>
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -152,7 +152,7 @@ export const historiqueHTML = `<!DOCTYPE html>
                     </div>
                     <div>
                         <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Historique des Améliorations</h1>
-                        <p class="text-sm text-gray-600 mt-1">Évolution chronologique du système IGP Maintenance</p>
+                        <p class="text-sm text-gray-600 mt-1">Évolution chronologique du système MaintenanceOS</p>
                     </div>
                 </div>
                 <button onclick="window.location.href='/'" class="back-button">
@@ -422,7 +422,7 @@ export const historiqueHTML = `<!DOCTYPE html>
                             <li><i class="fas fa-check text-green-600 mr-2"></i>Installable sur écran d'accueil</li>
                             <li><i class="fas fa-check text-green-600 mr-2"></i>Mode plein écran sans barre navigation</li>
                             <li><i class="fas fa-check text-green-600 mr-2"></i>Fonctionne hors ligne (cache)</li>
-                            <li><i class="fas fa-check text-green-600 mr-2"></i>Icône IGP sur écran d'accueil</li>
+                            <li><i class="fas fa-check text-green-600 mr-2"></i>Icône App sur écran d'accueil</li>
                         </ul>
                     </div>
                 </div>
@@ -461,7 +461,7 @@ export const historiqueHTML = `<!DOCTYPE html>
                 Retour à l'application
             </button>
             <p class="text-white text-sm mt-4">
-                © 2025 IGP Glass - Système de Gestion de Maintenance v2.8.1
+                © 2025 MaintenanceOS - Système de Gestion de Maintenance v2.8.1
             </p>
         </div>
     </div>

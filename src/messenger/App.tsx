@@ -383,11 +383,11 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
             <div className="w-full max-w-md z-10 animate-slide-up px-4">
                 <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl">
                     <div className="flex flex-col items-center mb-10">
-                        <img src="/logo-igp.png" alt="IGP Glass" className="h-20 object-contain mb-4 drop-shadow-2xl" />
+                        <img src="/logo-igp.png" alt="Logo" className="h-20 object-contain mb-4 drop-shadow-2xl" />
                         <p className="text-emerald-500/90 text-[10px] font-bold tracking-widest uppercase text-center mb-6 leading-relaxed max-w-[280px] mx-auto">
-                            Les Produits Verriers<br/>International IGP Inc.
+                            Système de<br/>Maintenance Universel
                         </p>
-                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">IGP Connect</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-white font-display">Connect</h1>
                         <p className="text-gray-400 text-sm mt-2 font-medium tracking-wide uppercase">Connexion Sécurisée</p>
                     </div>
                     
@@ -1118,7 +1118,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                 <h2 className="text-white font-display font-bold text-lg tracking-wide leading-tight group-hover/card:text-emerald-400 transition-colors truncate">
                                     {firstName}
                                 </h2>
-                                <p className="text-emerald-500/70 text-[9px] font-bold uppercase tracking-wide mt-0.5 leading-tight whitespace-normal">Les Produits Verriers International IGP Inc.</p>
+                                <p className="text-emerald-500/70 text-[9px] font-bold uppercase tracking-wide mt-0.5 leading-tight whitespace-normal">MaintenanceOS</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[9px] font-bold text-gray-400 uppercase tracking-wider backdrop-blur-md truncate">
                                         {getRoleDisplayName(currentUserRole)}
@@ -2629,7 +2629,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     conversationId,
-                    content: '📞 SONNERIE: Je tente de vous joindre sur IGP Connect ! (Ouvrez le chat)',
+                    content: '📞 SONNERIE: Je tente de vous joindre sur Connect ! (Ouvrez le chat)',
                     type: 'text',
                     isCall: true // Special flag for Service Worker to boost priority/vibration
                 })
@@ -3369,8 +3369,8 @@ const EmptyState = () => (
         <div className="absolute top-[20%] right-[30%] w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none animate-pulse"></div>
         
         <div className="relative z-10 text-center p-12 backdrop-blur-xl bg-white/5 rounded-[3rem] border border-white/5 shadow-2xl max-w-lg transform hover:scale-105 transition-transform duration-700">
-            <img src="/logo-igp.png" alt="IGP Logo" className="h-40 mx-auto mb-10 object-contain drop-shadow-2xl" />
-            <h1 className="text-white text-4xl font-bold mb-6 tracking-tight font-display">IGP Messenger</h1>
+            <img src="/logo-igp.png" alt="Logo" className="h-40 mx-auto mb-10 object-contain drop-shadow-2xl" />
+            <h1 className="text-white text-4xl font-bold mb-6 tracking-tight font-display">Messenger</h1>
             <p className="text-gray-400 text-xl leading-relaxed mb-10 font-light">
                 L'expérience de communication ultime pour les professionnels.
                 <span className="block mt-4 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500 font-bold">Rapide. Sécurisé. Fluide.</span>

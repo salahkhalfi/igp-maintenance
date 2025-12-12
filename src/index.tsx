@@ -1,8 +1,8 @@
 /**
- * Système de Gestion de Maintenance - IGP Glass
+ * Système de Gestion de Maintenance - MaintenanceOS
  *
  * @author Salah Khalfi
- * @organization Produits Verriers International (IGP) Inc.
+ * @organization MaintenanceOS
  * @department Département des Technologies de l'Information
  * @description Application de gestion de maintenance pour équipements industriels
  * @version 2.0.0 - Refactored Architecture

@@ -4,14 +4,14 @@ export const homeHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IGP - Système de Gestion de Maintenance</title>
+    <title>MaintenanceOS - Système de Gestion de Maintenance</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" href="/icon-192.png">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#003B73">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Maintenance IGP">
+    <meta name="apple-mobile-web-app-title" content="MaintenanceOS">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -505,7 +505,7 @@ export const homeHTML = `
 
         // Variables globales pour titre et sous-titre personnalisés
         let companyTitle = 'Gestion de la maintenance et des réparations';
-        let companySubtitle = 'Les Produits Verriers International (IGP) Inc.';
+        let companySubtitle = 'Système de Maintenance Universel';
 
         // ✅ Configure axios to send cookies with every request (for HttpOnly auth_token)
         axios.defaults.withCredentials = true;
