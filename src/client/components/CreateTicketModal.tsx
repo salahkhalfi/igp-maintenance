@@ -380,6 +380,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
           </div>
 
             {/* DEBUG INFO - ALWAYS VISIBLE FOR DIAGNOSIS (REMOVED - MOVED TO TOP) */}
+            <div className="relative">
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
