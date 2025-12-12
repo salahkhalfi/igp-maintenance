@@ -83,33 +83,43 @@ async function analyzeText(transcript: string, context: any, env: Bindings): Pro
     const localDate = new Date(new Date().getTime() - (5 * 60 * 60 * 1000));
     
     const systemPrompt = `
-Tu es un assistant expert en maintenance industrielle (MaintenanceOS).
-Ta mission : Analyser une demande vocale brute et en extraire les données pour créer un ticket structuré.
+RÔLE : Tu es le CERVEAU (Brain) intelligent de MaintenanceOS.
+OBJECTIF : Analyser une demande vocale transcrite pour en extraire des données structurées.
+⚠️ INTERDICTION DE JUSTE RÉPÉTER. TU DOIS DÉDUIRE ET CLASSER.
 
-CONTEXTE UTILISATEUR (Demandeur):
-Nom: ${context.userName}
-Rôle: ${context.userRole}
-DATE ACTUELLE (EST/Montréal) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
+CONTEXTE (Ce que tu sais) :
+- Demandeur : ${context.userName} (${context.userRole})
+- DATE RÉFÉRENCE (Maintenant) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
 
-CONTEXTE MACHINES :
-${context.machines}
+RÈGLES DE DÉCISION (Suis-les strictement) :
 
-CONTEXTE EQUIPE :
-${context.techs}
+1. 🕵️‍♂️ IDENTIFICATION TECHNICIEN (CRITIQUE) :
+   - Cherche les prénoms ci-dessous dans le texte (phonétiquement proche accepté).
+   - LISTE TECHNICIENS : 
+     ${context.techs}
+   - RÈGLE D'OR : Si tu entends une DATE/HEURE mais AUCUN NOM précis -> ASSIGNE À L'ÉQUIPE (ID 0).
+   - Si nom trouvé -> assigned_to_id = ID du technicien.
+   - Si aucun nom et aucune date -> assigned_to_id = null.
 
-RÈGLES STRICTES :
-1. PRIORITÉ : Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency" ou un ton paniqué -> 'priority' = 'critical'.
-2. ASSIGNATION : Mappe le nom entendu à un ID de l'équipe.
-   - Si tu entends une DATE mais AUCUN NOM -> 'assigned_to_id' = 0 (Équipe).
-   - Si tu trouves l'ID -> 'assigned_to_name' = null.
-   - Si nom inconnu -> 'assigned_to_name' = "Nom Entendu".
-3. DATE : Format ISO 8601 (YYYY-MM-DDTHH:mm:ss). Relative à la DATE ACTUELLE.
-4. LANGUE : Si le texte est en Anglais, traduis le Titre et la Description en Français pour le système.
+2. 📅 PLANIFICATION :
+   - Convertis "demain", "lundi", "après-midi" en format ISO précis (YYYY-MM-DDTHH:mm:ss).
+   - Utilise la DATE RÉFÉRENCE.
+   - "Matin" = 08:00, "Midi" = 12:00, "Soir" = 16:00.
 
-FORMAT JSON ATTENDU :
+3. 🚨 PRIORITÉ :
+   - Mots "Urgent", "Panne", "Bloqué", "Feu", "Fuite", "Dangeureux" = "critical".
+   - Maintenance préventive, nettoyage = "low".
+   - Par défaut = "medium".
+
+4. 🏭 MACHINE :
+   - Identifie la machine dans cette liste :
+     ${context.machines}
+   - Si incertain, laisse machine_id = null.
+
+FORMAT DE SORTIE (JSON UNIQUEMENT) :
 {
-  "title": "Titre court",
-  "description": "Description technique",
+  "title": "Titre court et actionnable (ex: 'Fuite Pompe A')",
+  "description": "Texte complet corrigé et professionnel",
   "priority": "low" | "medium" | "high" | "critical",
   "machine_id": number | null,
   "assigned_to_id": number | null,
