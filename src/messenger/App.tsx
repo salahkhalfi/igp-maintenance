@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import AnnotationEditor from './AnnotationEditor';
 
 // --- Sound Manager (Robust Fix) ---
 
@@ -1949,36 +1950,34 @@ const AudioPlayer = ({ src, isMe }: { src: string, isMe: boolean }) => {
     };
 
     return (
-        // DESIGN UPDATE: Suppression des bordures et fonds intérieurs. Le lecteur "flotte" dans la bulle.
-        <div className="flex items-center gap-4 py-1 pr-2 min-w-[240px] max-w-[300px] select-none">
+        // DESIGN UPDATE: Compact mode for mobile
+        <div className="flex items-center gap-2 md:gap-4 py-1 pr-2 min-w-[180px] md:min-w-[240px] max-w-[220px] md:max-w-[300px] select-none">
             
-            {/* BOUTON PLAY PREMIUM (Inversé pour max contraste) */}
+            {/* BOUTON PLAY PREMIUM */}
             <button 
                 onClick={togglePlay}
-                className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all shadow-md active:scale-95 ${
+                className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all shadow-md active:scale-95 ${
                     isMe 
-                    ? 'bg-white text-emerald-600' // MOI: Bouton Blanc sur fond Vert (Super clean)
-                    : 'bg-emerald-500 text-white hover:bg-emerald-400' // EUX: Bouton Vert sur fond Gris (Call to action)
+                    ? 'bg-white text-emerald-600' 
+                    : 'bg-emerald-500 text-white hover:bg-emerald-400'
                 }`}
             >
-                <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play ml-1'} text-xl`}></i>
+                <i className={`fas ${isPlaying ? 'fa-pause' : 'fa-play ml-1'} text-lg md:text-xl`}></i>
             </button>
 
-            <div className="flex-1 flex flex-col justify-center gap-1.5">
-                {/* Visualisation Onde Sonore - Organique */}
-                <div className="h-8 flex items-center gap-1">
-                    {[...Array(20)].map((_, i) => (
+            <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
+                {/* Visualisation Onde Sonore - Compacte (14 barres) */}
+                <div className="h-6 md:h-8 flex items-center gap-0.5 md:gap-1">
+                    {[...Array(14)].map((_, i) => (
                         <div 
                             key={i} 
-                            // Barres blanches pures pour Moi, Grises/Blanches pour Eux
                             className={`w-1 rounded-full transition-all duration-300 ${
-                                i/20 * 100 < progress 
-                                    ? (isMe ? 'bg-white/90' : 'bg-emerald-500') // Played part
-                                    : (isMe ? 'bg-emerald-900/30' : 'bg-gray-600') // Unplayed part
+                                i/14 * 100 < progress 
+                                    ? (isMe ? 'bg-white/90' : 'bg-emerald-500') 
+                                    : (isMe ? 'bg-emerald-900/30' : 'bg-gray-600') 
                             }`}
                             style={{ 
-                                // Onde sonore plus naturelle (sinusoidale simulée)
-                                height: [30, 50, 70, 40, 60, 90, 45, 80, 55, 75, 45, 65, 85, 50, 40, 70, 45, 60, 40, 30][i] + '%',
+                                height: [30, 50, 70, 40, 60, 90, 45, 80, 55, 75, 45, 65, 40, 30][i] + '%',
                                 animation: isPlaying ? `pulse 0.4s infinite alternate ${i * 0.05}s` : 'none'
                             }}
                         />
@@ -1986,7 +1985,7 @@ const AudioPlayer = ({ src, isMe }: { src: string, isMe: boolean }) => {
                 </div>
                 
                 {/* Timer Discret */}
-                <div className={`text-[10px] font-bold font-mono tracking-widest ${isMe ? 'text-emerald-100/80' : 'text-gray-400'}`}>
+                <div className={`text-[9px] md:text-[10px] font-bold font-mono tracking-widest ${isMe ? 'text-emerald-100/80' : 'text-gray-400'}`}>
                     {isPlaying ? formatTime(audioRef.current?.currentTime || 0) : formatTime(duration)}
                 </div>
             </div>
@@ -2009,53 +2008,73 @@ const AudioPlayer = ({ src, isMe }: { src: string, isMe: boolean }) => {
     );
 };
 
-const ActionCardComponent = ({ card, isSender, onUpdateStatus }: { card: ActionCard, isSender: boolean, onUpdateStatus: (status: 'open' | 'in_progress' | 'resolved') => void }) => {
-    const statusColors: Record<string, string> = {
-        'open': 'bg-red-100 text-red-800 border-red-200',
-        'in_progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        'resolved': 'bg-green-100 text-green-800 border-green-200',
-        'cancelled': 'bg-gray-100 text-gray-800 border-gray-200'
+const ActionCardComponent = ({ card, isSender, onUpdateStatus, content, imageUrl }: { card: ActionCard, isSender: boolean, onUpdateStatus: (status: 'open' | 'in_progress' | 'resolved') => void, content?: string, imageUrl?: string }) => {
+    const statusConfig: Record<string, { color: string, icon: string, label: string, bg: string }> = {
+        'open': { color: 'text-red-600', icon: 'fa-exclamation-circle', label: 'À faire', bg: 'bg-red-50 border-l-4 border-red-500' },
+        'in_progress': { color: 'text-amber-600', icon: 'fa-spinner fa-spin', label: 'En cours', bg: 'bg-amber-50 border-l-4 border-amber-500' },
+        'resolved': { color: 'text-emerald-600', icon: 'fa-check-circle', label: 'Terminé', bg: 'bg-emerald-50 border-l-4 border-emerald-500' },
     };
 
-    const statusLabels: Record<string, string> = {
-        'open': 'À faire',
-        'in_progress': 'En cours',
-        'resolved': 'Terminé',
-        'cancelled': 'Annulé'
+    const config = statusConfig[card.status] || statusConfig['open'];
+
+    const handleEscalate = () => {
+        // Approche "Deep Link" simple et élégante
+        // On ouvre l'app principale dans un nouvel onglet pour ne pas perdre le fil de la conversation
+        // Le SSO gère l'authentification automatiquement
+        const params = new URLSearchParams();
+        params.set('createTicket', 'true');
+        // Sécurité : on tronque à 1000 caractères pour éviter que l'URL ne plante le navigateur
+        if (content) params.set('description', content.substring(0, 1000));
+        
+        // Ajout de l'URL de l'image (si présente) pour que l'app principale puisse la télécharger
+        if (imageUrl) params.set('imageUrl', imageUrl);
+        
+        // Ouverture dans un nouvel onglet ('_blank')
+        window.open('/?' + params.toString(), '_blank');
     };
 
     return (
-        <div className={`mt-2 p-3 rounded-lg border ${statusColors[card.status] || statusColors['open']} flex flex-col gap-2 max-w-sm`}>
-            <div className="flex justify-between items-center border-b border-black/10 pb-2 mb-1">
-                <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm uppercase tracking-wide">
-                        {statusLabels[card.status] || card.status}
-                    </span>
-                    {card.assignee_id && (
-                        <div className="flex items-center gap-1 text-xs opacity-75">
-                            <i className="fas fa-user-circle"></i>
-                            <span>Assigné</span>
-                        </div>
-                    )}
+        <div className={`mt-3 p-3 rounded-r-lg shadow-sm ${config.bg} flex flex-col gap-3 min-w-[200px]`}>
+            {/* Header: Statut + Icône */}
+            <div className="flex justify-between items-center">
+                <div className={`flex items-center gap-2 font-bold uppercase text-xs tracking-wider ${config.color}`}>
+                    <i className={`fas ${config.icon}`}></i>
+                    <span>{config.label}</span>
                 </div>
-                <div className="text-xs opacity-50">Action</div>
+                <div className="text-[10px] text-gray-400 font-medium">TICKET #{card.id.slice(0,4)}</div>
             </div>
             
-            <div className="flex gap-1 justify-between bg-white/50 p-1 rounded">
-                {(['open', 'in_progress', 'resolved'] as const).map((s) => (
-                    <button
-                        key={s}
-                        onClick={() => onUpdateStatus(s)}
-                        className={`flex-1 py-1 px-2 text-xs rounded transition-colors ${
-                            card.status === s 
-                                ? 'bg-white shadow-sm font-bold text-black' 
-                                : 'hover:bg-white/30 text-black/60'
-                        }`}
-                    >
-                        {statusLabels[s]}
-                    </button>
-                ))}
+            {/* Actions: Boutons de changement de statut */}
+            <div className="flex gap-1 bg-white/60 p-1 rounded-lg backdrop-blur-sm">
+                {(['open', 'in_progress', 'resolved'] as const).map((s) => {
+                    const isActive = card.status === s;
+                    const btnLabel = statusConfig[s].label;
+                    return (
+                        <button
+                            key={s}
+                            onClick={(e) => { e.stopPropagation(); onUpdateStatus(s); }}
+                            className={`flex-1 py-1.5 px-1 text-[10px] uppercase font-bold rounded transition-all ${
+                                isActive 
+                                    ? 'bg-white text-black shadow-md transform scale-105' 
+                                    : 'text-gray-500 hover:bg-white/50 hover:text-gray-700'
+                            }`}
+                        >
+                            {btnLabel}
+                        </button>
+                    );
+                })}
             </div>
+
+            {/* Escalade vers Ticket (Seulement si non résolu) */}
+            {card.status !== 'resolved' && (
+                <button 
+                    onClick={(e) => { e.stopPropagation(); handleEscalate(); }}
+                    className="w-full py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors shadow-sm"
+                >
+                    <i className="fas fa-file-alt text-blue-500"></i>
+                    Créer un Ticket Complet
+                </button>
+            )}
         </div>
     );
 };
@@ -2095,6 +2114,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<any>(null);
+    const liveTranscriptRef = useRef<string>('');
+    const recognitionRef = useRef<any>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -2717,6 +2738,35 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         }
     };
 
+    const handleNewEditorSend = async (file: File, caption: string) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const uploadRes = await fetch('/api/v2/chat/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadData.error);
+            
+            // Use user caption if provided, otherwise default text
+            const msgContent = caption && caption.trim().length > 0 ? caption : '📷 Photo annotée';
+            
+            await fetch('/api/v2/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ conversationId, content: msgContent, type: 'image', mediaKey: uploadData.key })
+            });
+            setPreviewFile(null);
+            setAnnotatedFile(null);
+            setOriginalImage(null);
+            fetchMessages();
+        } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
+    };
     
     useEffect(() => {
         if (initialMessage && initialMessage !== input) {
@@ -2889,12 +2939,46 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             return;
         }
         try {
+            // 1. Start Audio Recording
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
             audioChunksRef.current = [];
             mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunksRef.current.push(event.data); };
             mediaRecorder.start();
+
+            // 2. Start Parallel Speech Recognition (Hybrid Mode)
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'fr-CA'; // Force Canadian French
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                liveTranscriptRef.current = '';
+
+                recognition.onresult = (event: any) => {
+                   let interimTranscript = '';
+                   let finalTranscript = '';
+                   for (let i = event.resultIndex; i < event.results.length; ++i) {
+                       if (event.results[i].isFinal) {
+                           finalTranscript += event.results[i][0].transcript;
+                       } else {
+                           interimTranscript += event.results[i][0].transcript;
+                       }
+                   }
+                   // Append final results to our ref
+                   if (finalTranscript) {
+                       liveTranscriptRef.current += (liveTranscriptRef.current ? ' ' : '') + finalTranscript;
+                   }
+                };
+
+                // Handle errors silently (fallback to audio only)
+                recognition.onerror = () => {}; 
+                
+                recognition.start();
+                recognitionRef.current = recognition;
+            }
+
             setIsRecording(true);
             setRecordingTime(0);
             timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
@@ -2907,6 +2991,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 const audioFile = new File([audioBlob], "voice_message.webm", { type: 'audio/webm' });
                 
+                // Stop Speech Recognition
+                if (recognitionRef.current) {
+                    try { recognitionRef.current.stop(); } catch(e) {}
+                    recognitionRef.current = null;
+                }
+                const transcription = liveTranscriptRef.current;
+
                 // UI Update Immediately (Optimistic)
                 setIsRecording(false);
                 setRecordingTime(0);
@@ -2914,7 +3005,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
 
                 // Send in background
-                await sendAudio(audioFile);
+                await sendAudio(audioFile, transcription);
             };
             mediaRecorderRef.current.stop();
         }
@@ -2923,6 +3014,13 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const cancelRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
+            
+            if (recognitionRef.current) {
+                try { recognitionRef.current.stop(); } catch(e) {}
+                recognitionRef.current = null;
+            }
+            liveTranscriptRef.current = '';
+
             setIsRecording(false);
             setRecordingTime(0);
             clearInterval(timerRef.current);
@@ -2930,7 +3028,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         }
     };
 
-    const sendAudio = async (file: File) => {
+    const sendAudio = async (file: File, transcription?: string) => {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
         setUploading(true);
@@ -2944,10 +3042,20 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             });
             const uploadData = await uploadRes.json();
             if (!uploadRes.ok) throw new Error(uploadData.error);
+            
+            // If we have a hybrid transcription, prepend a special icon
+            const finalTranscription = transcription ? "🎤 " + transcription : null;
+
             await fetch('/api/v2/chat/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ conversationId, content: '🎤 Message vocal', type: 'audio', mediaKey: uploadData.key })
+                body: JSON.stringify({ 
+                    conversationId, 
+                    content: '🎤 Message vocal', 
+                    type: 'audio', 
+                    mediaKey: uploadData.key,
+                    transcription: finalTranscription
+                })
             });
             fetchMessages();
         } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
@@ -3352,24 +3460,28 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         
                         <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${isMe ? 'message-bubble-me text-white rounded-tr-sm' : 'message-bubble-them text-gray-100 rounded-tl-sm'}`}>
                             {(isGlobalAdmin || isMe) && (
-                                <div className="absolute -top-3 -right-3 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <>
                                     {!msg.action_card && (
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); handleCreateActionCard(msg.id); }}
-                                            className="w-7 h-7 bg-white text-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-[#0b141a] hover:scale-110"
-                                            title="Créer une action"
-                                        >
-                                            <i className="fas fa-bolt text-xs"></i>
-                                        </button>
+                                        <div className="absolute -top-3 -right-2 z-20 transition-all">
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleCreateActionCard(msg.id); }}
+                                                className="w-7 h-7 bg-white text-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-[#0b141a] hover:scale-110 active:scale-95 transition-transform"
+                                                title="Transformer en ticket"
+                                            >
+                                                <i className="fas fa-bolt text-xs"></i>
+                                            </button>
+                                        </div>
                                     )}
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
-                                        className="w-7 h-7 bg-red-500 rounded-full text-white flex items-center justify-center shadow-lg border-2 border-[#0b141a] hover:scale-110"
-                                        title="Supprimer le message"
-                                    >
-                                        <i className="fas fa-trash text-xs"></i>
-                                    </button>
-                                </div>
+                                    <div className="absolute -top-3 -left-2 z-20 transition-all opacity-0 group-hover:opacity-100">
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
+                                            className="w-7 h-7 bg-red-500 rounded-full text-white flex items-center justify-center shadow-lg border-2 border-[#0b141a] hover:scale-110 active:scale-95 transition-transform"
+                                            title="Supprimer le message"
+                                        >
+                                            <i className="fas fa-trash text-xs"></i>
+                                        </button>
+                                    </div>
+                                </>
                             )}
                             {msg.type === 'image' && msg.media_key ? (
                                 <div className="overflow-hidden rounded-xl border border-white/10 relative group/image">
@@ -3434,7 +3546,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                         ) : (
                                             <div className={`text-[11px] italic font-medium tracking-wide flex items-start gap-1.5 p-2 rounded-lg ${isMe ? 'bg-black/10 text-emerald-100/90' : 'bg-white/5 text-gray-300'} relative`}>
                                                 <i className="fas fa-robot text-[10px] mt-0.5 opacity-70 flex-shrink-0"></i>
-                                                <span className="flex-1">{msg.transcription}</span>
+                                                <span className="flex-1 whitespace-pre-wrap">{msg.transcription}</span>
                                                 
                                                 {isMe && (
                                                     <button 
@@ -3464,6 +3576,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                     card={msg.action_card} 
                                     isSender={isMe} 
                                     onUpdateStatus={(status) => handleUpdateCardStatus(msg.id, status)} 
+                                    content={msg.content}
+                                    imageUrl={msg.type === 'image' && msg.media_key ? `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}` : undefined}
                                 />
                             )}
                             
@@ -3524,90 +3638,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
             
             {previewFile && (
-                <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-fade-in select-none">
-                    <div className="w-full h-full flex flex-col relative">
-                        
-                        {/* Header Toolbar */}
-                        <div className="bg-black/80 backdrop-blur-md border-b border-white/10 p-4 flex items-center justify-between flex-shrink-0 z-20">
-                             <div className="flex items-center gap-4">
-                                <button 
-                                    onClick={() => { 
-                                        if (confirm("Voulez-vous vraiment quitter l'éditeur sans envoyer ?")) {
-                                            setPreviewFile(null); 
-                                            setAnnotatedFile(null); 
-                                            setOriginalImage(null); 
-                                        }
-                                    }} 
-                                    className="text-white hover:text-red-400 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center gap-2 font-bold"
-                                    title="Fermer sans envoyer"
-                                >
-                                    <i className="fas fa-times text-lg"></i>
-                                    <span className="hidden md:inline">Fermer</span>
-                                </button>
-                                <h3 className="text-white font-bold text-lg hidden lg:block">Éditeur</h3>
-                             </div>
-
-                             <button onClick={handleSendImage} disabled={uploading} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-all">
-                                {uploading ? <i className="fas fa-circle-notch fa-spin"></i> : <span>ENVOYER <i className="fas fa-paper-plane ml-2"></i></span>}
-                             </button>
-                        </div>
-                        
-                        {/* Canvas Area */}
-                        <div 
-                            className={`flex-1 bg-[#101010] relative overflow-hidden flex items-center justify-center touch-none ${cursorStyle}`}
-                            onTouchStart={startDrawing}
-                            onTouchMove={draw}
-                            onTouchEnd={stopDrawing}
-                            onMouseDown={startDrawing}
-                            onMouseMove={draw}
-                            onMouseUp={stopDrawing}
-                            onMouseLeave={stopDrawing}
-                        >
-                            <canvas 
-                                ref={annotationCanvasRef} 
-                                className="max-w-full max-h-full object-contain shadow-2xl"
-                            />
-                        </div>
-
-                        {/* Tools Toolbar (Scrollable) */}
-                        <div className="bg-black/90 backdrop-blur-md border-t border-white/10 p-2 flex justify-start md:justify-center items-center gap-2 overflow-x-auto z-20 w-full no-scrollbar px-4">
-                            <button onClick={() => setAnnotationTool('select')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'select' ? 'bg-white text-black scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Déplacer"><i className="fas fa-hand-paper text-xl"></i></button>
-                            <div className="w-px h-8 bg-white/10 flex-shrink-0 mx-1"></div>
-                            <button onClick={() => setAnnotationTool('freehand')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'freehand' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Crayon"><i className="fas fa-pencil-alt text-xl"></i></button>
-                            <button onClick={() => setAnnotationTool('arrow')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'arrow' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Flèche"><i className="fas fa-long-arrow-alt-right text-xl"></i></button>
-                            <button onClick={() => setAnnotationTool('rectangle')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'rectangle' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Carré"><i className="far fa-square text-xl"></i></button>
-                            <button onClick={() => setAnnotationTool('circle')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'circle' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Cercle"><i className="far fa-circle text-xl"></i></button>
-                            <button onClick={() => setAnnotationTool('text')} className={`p-3 rounded-xl transition-all flex-shrink-0 ${annotationTool === 'text' ? 'bg-emerald-500 text-white scale-105 shadow-lg' : 'bg-white/10 text-gray-400'}`} title="Texte"><i className="fas fa-font text-xl"></i></button>
-                        </div>
-
-                        {/* Footer Toolbar (Colors & Undo) */}
-                        <div className="bg-black/80 backdrop-blur-md border-t border-white/5 p-4 flex justify-start md:justify-center items-center gap-3 md:gap-4 flex-shrink-0 z-20 overflow-x-auto safe-area-bottom w-full px-4 no-scrollbar">
-                            <button onClick={() => changeColor('#EF4444')} className={`w-10 h-10 rounded-full bg-red-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#EF4444' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#F59E0B')} className={`w-10 h-10 rounded-full bg-amber-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#F59E0B' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#10B981')} className={`w-10 h-10 rounded-full bg-emerald-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#10B981' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#3B82F6')} className={`w-10 h-10 rounded-full bg-blue-500 border-4 transition-transform flex-shrink-0 ${annotationColor === '#3B82F6' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            <button onClick={() => changeColor('#FFFFFF')} className={`w-10 h-10 rounded-full bg-white border-4 transition-transform flex-shrink-0 ${annotationColor === '#FFFFFF' ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-60 hover:opacity-100'}`} />
-                            
-                            <div className="w-px h-10 bg-white/20 mx-2 flex-shrink-0"></div>
-                            
-                            <button 
-                                onClick={undoAnnotation} 
-                                className="w-12 h-12 rounded-full bg-white/10 flex-shrink-0 flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95"
-                                title="Annuler (Ctrl+Z)"
-                            >
-                                <i className="fas fa-undo text-xl"></i>
-                            </button>
-                            <button 
-                                onClick={clearAnnotation} 
-                                className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center transition-all active:scale-95 ${selectedAnnotationId ? 'bg-red-500 text-white shadow-lg scale-110' : 'bg-white/10 text-red-400 hover:bg-red-500/20'}`}
-                                title={selectedAnnotationId ? "Supprimer la sélection" : "Effacer tout"}
-                            >
-                                <i className={`fas ${selectedAnnotationId ? 'fa-eraser' : 'fa-trash-alt'} text-xl`}></i>
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
+                <AnnotationEditor 
+                    file={previewFile} 
+                    onClose={() => {
+                        if (confirm("Quitter sans envoyer ?")) {
+                            setPreviewFile(null);
+                            setAnnotatedFile(null);
+                            setOriginalImage(null);
+                        }
+                    }}
+                    onSend={handleNewEditorSend}
+                />
             )}
 
             <header onClick={() => !searchMode && setShowInfo(true)} className="min-h-[5rem] h-auto py-3 glass-header px-4 md:px-8 flex flex-wrap items-center justify-between z-20 flex-shrink-0 cursor-pointer hover:bg-white/5 transition-all duration-300 shadow-2xl shadow-black/40 sticky top-0 w-full group/header backdrop-blur-xl border-b border-white/5 gap-y-2">

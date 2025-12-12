@@ -1,4 +1,4 @@
-const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket }) => {
+const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl }) => {
     // États globaux de l'interface
     const [selectedTicketId, setSelectedTicketId] = React.useState(null);
     const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -94,6 +94,26 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }
     };
 
+    const [initialTitle, setInitialTitle] = React.useState('');
+    const [initialPriority, setInitialPriority] = React.useState('medium');
+    const [initialMachineId, setInitialMachineId] = React.useState('');
+    // Use local description to allow override from AI
+    const [localDescription, setLocalDescription] = React.useState(initialDescription || '');
+    
+    // Update local description when prop changes (Deep Link)
+    React.useEffect(() => {
+        if (initialDescription) setLocalDescription(initialDescription);
+    }, [initialDescription]);
+
+    const handleTicketDetected = (data) => {
+        if (data.title) setInitialTitle(data.title);
+        if (data.description) setLocalDescription(data.description);
+        if (data.priority) setInitialPriority(data.priority);
+        if (data.machine_id) setInitialMachineId(data.machine_id);
+        
+        setShowCreateModal(true);
+    };
+
     // --- EFFETS (Listeners & Initialisation) ---
 
     React.useEffect(() => {
@@ -171,6 +191,23 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
         return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
     }, [tickets]);
+
+    const handleTicketDetected = (data) => {
+        if (data.title) setInitialTitle(data.title);
+        if (data.description) {
+            // MainApp prop doesn't have setInitialDescription, but CreateTicketModal takes current value.
+            // Wait, MainApp receives initialDescription as PROP (line 1), but we need to update it dynamically.
+            // The prop is likely just for deep links.
+            // We should use a local state that overrides the prop if set, OR just pass a new prop to modal.
+            // Let's rely on CreateTicketModal's internal logic which we updated to listen to props changes.
+        }
+        if (data.priority) setInitialPriority(data.priority);
+        if (data.machine_id) setInitialMachineId(data.machine_id);
+        
+        // Need to set description too. The prop initialDescription is read-only from MainApp's parent (App).
+        // I need to clone it into state or use a separate state.
+        // Let's add local description state in MainApp that defaults to prop.
+    };
 
     // --- FONCTIONS MÉTIER ---
 
@@ -262,7 +299,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         // --- MODALS ---
         React.createElement(CreateTicketModal, {
             show: showCreateModal, onClose: () => setShowCreateModal(false),
-            machines: machines, onTicketCreated: onTicketCreated, currentUser: currentUser
+            machines: machines, onTicketCreated: onTicketCreated, currentUser: currentUser,
+            initialDescription: localDescription, initialImageUrl: initialImageUrl,
+            initialTitle: initialTitle, initialPriority: initialPriority, initialMachineId: initialMachineId
         }),
         React.createElement(TicketDetailsModal, {
             show: showDetailsModal, onClose: () => { setShowDetailsModal(false); setSelectedTicketId(null); },
@@ -371,6 +410,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         showTvModal && React.createElement(window.TVDashboardModal, { isOpen: showTvModal, onClose: () => setShowTvModal(false) }),
 
         // --- FOOTER ---
+        window.VoiceTicketFab ? React.createElement(window.VoiceTicketFab, { onTicketDetected: handleTicketDetected }) : null,
         React.createElement('footer', { className: 'mt-12 py-6 text-center border-t-4 border-igp-blue', style: footerStyle },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4' },
                 React.createElement('p', { className: 'text-sm mb-2', style: { color: '#1a1a1a', fontWeight: '700' } },

@@ -27,11 +27,15 @@
 *   **Soft Delete** : On ne supprime pas (`DELETE`), on désactive (`deleted_at`).
 *   **Notifications** : C'est du "bonus". L'app doit marcher sans.
 *   **Validation IA (Loi de l'Image)** : Avant d'envoyer une image à une IA (Gemini/Vertex), TOUJOURS valider techniquement le fichier (format, encodage Base64, taille > 0). Ne jamais faire confiance à l'upload user pour éviter l'erreur "Provided image is not valid".
+*   **Stratégie Hybride (Loi du Moindre Effort)** : Pour les fonctionnalités IA (ex: Transcription), privilégier le moteur Local/Natif (Web Speech API) en priorité : c'est gratuit, rapide et gère mieux les accents. Le Serveur (Whisper) ne doit servir que de filet de sécurité (Fallback) ou pour l'intelligence contextuelle avancée.
 
 ## 4. DÉVELOPPEMENT (Loi de l'Hygiène)
 *   **Code Mort** : Si c'est commenté, ça dégage. Git est là pour l'historique.
 *   **Explicite > Implicite** : Pas de variables `x` ou `data`. Nommer pour le futur lecteur.
 *   **Clean Build** : Le projet doit tourner avec `npm install && npm run build` sur une machine vierge.
+*   **NE PAS RÉINVENTER LA ROUE (Loi de l'Humilité)** : Avant d'implémenter un moteur complexe (Canvas interactif, Éditeur riche, Graphiques, Calendrier), vérifier TOUJOURS si une librairie éprouvée existe (ex: `react-konva`, `recharts`, `quill`).
+    *   *Cas d'étude (Leçon)* : Nous avons perdu des jours à patcher un moteur de dessin "maison" (géométrie, hit-testing, rotation) qui restait buggé. L'implémentation de `react-konva` a pris 45 minutes pour un résultat parfait, stable et maintenable.
+    *   *Règle* : Code Métier = Custom. Moteur Technique Complexe = Librairie Open Source.
 
 ## 5. DÉPLOIEMENT & SÉCURITÉ (Loi du Mouvement)
 *   **Preview First** : Toujours proposer un déploiement sur une branche temporaire (ex: `feature-xxx`) avant de toucher à `main`.
@@ -63,3 +67,40 @@
     2.  **Au Logout** : Désabonner explicitement le Push côté Serveur avant de détruire le token local. Sinon, la tablette continuera de sonner pour l'ancien utilisateur.
 *   **[Feedback Vital]** : Ne jamais laisser l'utilisateur dans le flou. Si une action échoue (ex: envoi message), l'interface doit le dire clairement (alerte, toast) et ne pas nettoyer le champ d'entrée. Si l'utilisateur est hors ligne, l'UI doit l'afficher explicitement (Bannière).
 *   **[Identité Corporative]** : Le logo ou le nom de l'entreprise est un élément de réassurance (Sécurité). Il doit être présent sur les écrans critiques (Login) et le Dashboard principal (sous l'identifiant), visible mais discret (hiérarchie secondaire), pour confirmer à l'utilisateur qu'il est "au bon endroit".
+
+## 8. JURIDIQUE & OPEN SOURCE (Loi de la Propriété)
+*   **Zone Verte (MIT, Apache 2.0, BSD)** : ✅ **AUTORISÉ**. Ces licences permettent l'utilisation dans une application propriétaire/commerciale fermée sans obligation de partager notre code source.
+*   **Zone Rouge (GPL, AGPL)** : ⛔ **INTERDIT**. Ces licences sont "virales" (Copyleft). Si nous intégrons une librairie GPL, nous pourrions être légalement contraints de rendre **toute notre application Open Source**.
+    *   *Protocole* : Avant chaque `npm install`, vérifier la licence (`npm view <package> license`).
+    *   *Alerte* : L'IA doit explicitement avertir l'utilisateur si une librairie proposée impose des conditions restrictives ou virales.
+*   **Clause de Non-Garantie** : En utilisant de l'Open Source, nous acceptons que le logiciel est fourni "tel quel" (As-Is). La responsabilité du bon fonctionnement en production incombe à **nous**, pas aux auteurs de la librairie.
+
+---
+
+## 9. JOURNAL DE BORD & "LESSONS LEARNED" (MÉMOIRE DU PROJET)
+
+### 2025-12-11 : La Saga de la Transcription (Accent Québécois)
+**Problème** : Les utilisateurs rapportaient des transcriptions absurdes (caractères chinois, "Sous-titres par...") lors de silences ou avec un fort accent québécois.
+**Cause** : Le modèle gratuit "Whisper Base" de Cloudflare Workers hallucine quand il ne comprend pas l'accent ou le bruit de fond.
+**Tentatives & Solutions** :
+1.  **v2.16.22 (Anti-Hallucination)** : Ajout de filtres Regex pour bloquer les "Thank you" et caractères asiatiques. (Partiellement efficace).
+2.  **v2.16.26 (Force French)** : Forcer le paramètre `language: 'fr'` dans l'appel AI Cloudflare. Améliore la détection phonétique mais reste limité par la taille du modèle.
+3.  **v2.16.27 (Mode Hybride - LA SOLUTION ACTUELLE)** : 
+    - Le frontend (App.tsx) tente d'abord une transcription locale via `SpeechRecognition` (Google/Apple engine) configuré en `'fr-CA'`.
+    - Si ça marche, le texte est envoyé directement (rapide, bon accent).
+    - Si ça échoue, on envoie l'audio au serveur qui utilise Whisper (filet de sécurité).
+
+**Leçon apprise** : Pour les accents régionaux forts (Québec), les modèles "Base" gratuits sont insuffisants. Les moteurs natifs des téléphones (Siri/Google) sont meilleurs que les petits modèles serveurs. Le "Must" reste Whisper Large V3 (payant).
+
+### 2025-12-12 : Le Passage à OpenAI Whisper V3 (Server-Side)
+**Problème** : Le "filet de sécurité" serveur (Cloudflare Whisper Base) restait faible pour les accents québécois quand le mode hybride local échouait.
+**Solution (v2.17.0)** : Remplacement de Cloudflare Workers AI par l'API OpenAI Whisper V3 ("whisper-1").
+**Détail Technique** : 
+- Utilisation de `OPENAI_API_KEY` (stocké dans les Secrets Cloudflare).
+- Prompt système ("Secret Weapon") : *"Technicien de maintenance industrielle. Accent québécois..."* pour guider le modèle.
+- Fallback automatique sur Cloudflare si l'API OpenAI échoue.
+**Résultat** : Transcription serveur de qualité "Humaine", même avec du jargon technique et un fort accent.
+
+---
+
+*"N'oublie surtout pas ta bible."*

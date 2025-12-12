@@ -392,7 +392,7 @@ app.post('/conversations/:id/participants', async (c) => {
 // 3. POST /api/v2/chat/send - Send a message
 app.post('/send', async (c) => {
     const user = c.get('user');
-    const { conversationId, content, type = 'text', mediaKey, mediaMeta, isCall } = await c.req.json();
+    const { conversationId, content, type = 'text', mediaKey, mediaMeta, isCall, transcription } = await c.req.json();
     const messageId = crypto.randomUUID();
 
     try {
@@ -408,7 +408,8 @@ app.post('/send', async (c) => {
 
         // --- AI TRANSCRIPTION (AUDIO) ---
         // Fire and Forget strategy via waitUntil
-        if (type === 'audio' && mediaKey) {
+        // Only run Server AI if no client-side transcription is provided
+        if (type === 'audio' && mediaKey && !transcription) {
              c.executionCtx.waitUntil((async () => {
                 try {
                     // 1. Get Audio File
@@ -416,22 +417,126 @@ app.post('/send', async (c) => {
                     if (!object) return;
                     
                     const arrayBuffer = await object.arrayBuffer();
-                    const inputs = {
-                        audio: [...new Uint8Array(arrayBuffer)]
-                    };
+                    // 2. Run Transcription (Priority: OpenAI V3 > Fallback: Cloudflare)
+                    let originalText = "";
 
-                    // 2. Run Whisper
-                    const response = await c.env.AI.run('@cf/openai/whisper', inputs);
+                    if (c.env.OPENAI_API_KEY) {
+                        try {
+                            const formData = new FormData();
+                            const blob = new Blob([arrayBuffer], { type: object.httpMetadata?.contentType || 'audio/webm' });
+                            formData.append('file', blob, 'audio.webm');
+                            formData.append('model', 'whisper-1');
+                            formData.append('language', 'fr');
+                            // Prompt "Secret Weapon" pour l'accent québécois et le contexte industriel
+                            formData.append('prompt', "Technicien de maintenance industrielle. Accent québécois. Termes techniques, milieu bruyant.");
+
+                            const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${c.env.OPENAI_API_KEY}` },
+                                body: formData
+                            });
+
+                            if (resp.ok) {
+                                const data = await resp.json() as any;
+                                originalText = data.text || "";
+                                console.log("[AI] OpenAI Whisper V3 Success");
+                            } else {
+                                console.error("[AI] OpenAI Error:", await resp.text());
+                            }
+                        } catch (e) {
+                            console.error("[AI] OpenAI Exception:", e);
+                        }
+                    }
+
+                    // Fallback to Cloudflare if OpenAI failed or missing key
+                    if (!originalText) {
+                        const inputs = {
+                            audio: [...new Uint8Array(arrayBuffer)],
+                            language: 'fr'
+                        };
+                        try {
+                            const response = await c.env.AI.run('@cf/openai/whisper', inputs);
+                            if (response && response.text) originalText = response.text;
+                        } catch (e) {
+                             console.error("[AI] Cloudflare Whisper failed:", e);
+                        }
+                    }
                     
-                    // 3. Update DB
-                    if (response && response.text) {
-                        const transcription = "🎤 " + response.text.trim();
+                    // 3. Update DB (Step 1: Transcription pure et immédiate)
+                    if (originalText) {
+                        originalText = originalText.trim();
+                        
+                        // Anti-Hallucination Whisper (Simple filter)
+                        const HALLUCINATIONS = [
+                            'Sous-titres réalisés par', 
+                            'Sous-titres par',
+                            'Amara.org',
+                            'MBC',
+                            'Al Jazeera'
+                        ];
+                        
+                        // New: Detect Asian characters (Common Whisper hallucination on silent audio)
+                        const hasAsianChars = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\uac00-\ud7af]/.test(originalText);
+
+                        const isHallucination = !originalText || 
+                                              HALLUCINATIONS.some(h => originalText.includes(h)) || 
+                                              hasAsianChars;
+
+                        if (isHallucination) {
+                             console.log(`[AI] Ignored hallucination: ${originalText}`);
+                             return;
+                        }
+
+                        // Sauvegarde immédiate pour affichage rapide
+                        let baseTranscription = "🎤 " + originalText;
                         await c.env.DB.prepare(`
                             UPDATE chat_messages 
                             SET transcription = ? 
                             WHERE id = ?
-                        `).bind(transcription, messageId).run();
-                        console.log(`[AI] Transcribed message ${messageId}`);
+                        `).bind(baseTranscription, messageId).run();
+
+                        // Step 2: Traduction (En différé)
+                        if (originalText.length > 2) {
+                            try {
+                                // V1 Prompt Strategy (Restored)
+                                const prompt = `Role: Industrial Translator.
+Task: Translate the input text.
+Logic:
+- IF source is French -> Target is English.
+- IF source is NOT French -> Target is French.
+Constraint: Output ONLY the translated text. No "Here is" or quotes.
+
+Input: "${originalText}"`;
+
+                                const translationRes = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+                                    messages: [{ role: 'system', content: prompt }]
+                                });
+
+                                if (translationRes && translationRes.response) {
+                                    const translation = translationRes.response.trim();
+                                    
+                                    // Anti-Hallucination & Repetition Check
+                                    if (
+                                        translation && 
+                                        translation.toLowerCase() !== originalText.toLowerCase() && 
+                                        translation.length > 2 &&
+                                        !translation.startsWith("Here is")
+                                    ) {
+                                        const finalTranscription = baseTranscription + "\n\n🔄 " + translation;
+                                        
+                                        await c.env.DB.prepare(`
+                                            UPDATE chat_messages 
+                                            SET transcription = ? 
+                                            WHERE id = ?
+                                        `).bind(finalTranscription, messageId).run();
+                                    }
+                                }
+                            } catch (aiErr) {
+                                console.error("[AI] Translation failed (silent fail):", aiErr);
+                            }
+                        }
+                        
+                        console.log(`[AI] Processed message ${messageId}`);
                     }
                 } catch (e) {
                     console.error("[AI] Transcription failed", e);
@@ -458,8 +563,8 @@ app.post('/send', async (c) => {
         // -------------------------------------------
 
         await c.env.DB.prepare(`
-            INSERT INTO chat_messages (id, conversation_id, sender_id, type, content, media_key, media_meta)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO chat_messages (id, conversation_id, sender_id, type, content, media_key, media_meta, transcription)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
             messageId, 
             conversationId, 
@@ -467,7 +572,8 @@ app.post('/send', async (c) => {
             type, 
             content, 
             mediaKey || null, 
-            finalMediaMeta ? JSON.stringify(finalMediaMeta) : null
+            finalMediaMeta ? JSON.stringify(finalMediaMeta) : null,
+            transcription || null
         ).run();
 
         // Update conversation timestamp

@@ -73,6 +73,7 @@ import cron from './routes/cron';
 import alerts from './routes/alerts';
 import planning from './routes/planning';
 import chat from './routes/chat';
+import ai from './routes/ai';
 import tv from './routes/tv';
 import stats from './routes/stats';
 import scheduledHandler from './scheduled';
@@ -313,6 +314,10 @@ app.route('/api/planning', planning);
 
 // Routes Messenger (V2) - Indépendantes
 app.route('/api/v2/chat', chat);
+
+// Routes AI (Analyses intelligentes)
+app.use('/api/ai/*', authMiddleware);
+app.route('/api/ai', ai);
 
 // Routes TV - Affichage passif sécurisé par clé (Chromecast/TV)
 app.route('/api/tv', tv);

@@ -12,6 +12,8 @@ const App = () => {
     const { machines, loading: machinesLoading, fetchMachines } = useMachines();
     const [loading, setLoading] = React.useState(true); // Global loading for initial load
     const [showCreateModal, setShowCreateModal] = React.useState(false);
+    const [initialDescription, setInitialDescription] = React.useState('');
+    const [initialImageUrl, setInitialImageUrl] = React.useState('');
     const [contextMenu, setContextMenu] = React.useState(null);
     const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
     const [headerTitle, setHeaderTitle] = React.useState(companyTitle);
@@ -31,6 +33,24 @@ const App = () => {
                         // Valeur par defaut si erreur
                         localStorage.setItem('timezone_offset_hours', '-5');
                     });
+            }
+
+            // Gestion Deep Link: Création de ticket depuis URL
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('createTicket') === 'true') {
+                console.log("Deep Link detected: createTicket");
+                const desc = params.get('description');
+                const img = params.get('imageUrl');
+                
+                if (desc) setInitialDescription(desc);
+                if (img) setInitialImageUrl(img);
+                
+                setShowCreateModal(true);
+                
+                // Nettoyage URL différé pour laisser le temps au state de se propager
+                setTimeout(() => {
+                    window.history.replaceState({}, '', '/');
+                }, 1000);
             }
 
             loadData();
@@ -255,6 +275,8 @@ const App = () => {
             showCreateModal,
             setShowCreateModal,
             onTicketCreated: loadData,
+            initialDescription: initialDescription,
+            initialImageUrl: initialImageUrl,
             unreadMessagesCount: unreadMessagesCount,
             onRefreshMessages: loadUnreadMessagesCount,
             headerTitle: headerTitle,

@@ -1,4 +1,4 @@
-const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser: propUser }) => {
+const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser: propUser, initialDescription, initialImageUrl, initialTitle, initialPriority, initialMachineId }) => {
     // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
     const currentUser = React.useMemo(() => {
         if (propUser) return propUser;
@@ -16,6 +16,71 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     const [uploadProgress, setUploadProgress] = React.useState(0);
     const [isListening, setIsListening] = React.useState(false); // État pour l'écoute vocale
     const [listeningField, setListeningField] = React.useState(null); // Quel champ écoute ? (title ou description)
+
+    // Pré-remplissage depuis le Chat (Deep Link) ou Magic Ticket (AI)
+    React.useEffect(() => {
+        if (show) {
+            if (initialDescription) setDescription(initialDescription);
+            if (initialTitle) setTitle(initialTitle);
+            if (initialPriority) setPriority(initialPriority);
+            if (initialMachineId) setMachineId(initialMachineId);
+            
+            // Legacy: if no title provided but description exists
+            if (initialDescription && !initialTitle && !title) {
+                const shortTitle = initialDescription.length > 50 ? initialDescription.substring(0, 50) + '...' : initialDescription;
+                setTitle(shortTitle);
+            }
+        }
+    }, [show, initialDescription, initialTitle, initialPriority, initialMachineId]);
+
+    React.useEffect(() => {
+        if (show && initialImageUrl && mediaFiles.length === 0) {
+            // HYBRID DOWNLOAD STRATEGY
+            // 1. Detect if URL is absolute (http...) or relative
+            const isAbsolute = initialImageUrl.startsWith('http');
+            
+            const processBlob = (blob) => {
+                const file = new File([blob], "chat-attachment.jpg", { type: blob.type || "image/jpeg" });
+                setMediaFiles([file]);
+                
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setMediaPreviews([{
+                        url: reader.result,
+                        type: file.type,
+                        name: file.name,
+                        size: file.size
+                    }]);
+                };
+                reader.readAsDataURL(file);
+            };
+
+            if (isAbsolute) {
+                // STRATEGY A: External/Absolute URL (e.g., Cloudflare R2, S3)
+                // Use fetch() WITHOUT headers to avoid "403 SignatureDoesNotMatch" 
+                // caused by Axios sending 'Authorization: Bearer ...' to public/signed buckets
+                fetch(initialImageUrl)
+                    .then(res => {
+                        if (!res.ok) throw new Error('Download failed: ' + res.status);
+                        return res.blob();
+                    })
+                    .then(processBlob)
+                    .catch(err => {
+                        console.error("Fetch error:", err);
+                        // Retry with Axios as fallback (in case it IS a protected absolute URL)
+                        axios.get(initialImageUrl, { responseType: 'blob' })
+                            .then(res => processBlob(res.data))
+                            .catch(e => alert("Impossible de récupérer la photo jointe (CORS/Auth)."));
+                    });
+            } else {
+                // STRATEGY B: Internal/Relative URL (e.g., /api/media/...)
+                // Use Axios to AUTOMATICALLY include the 'Authorization' header
+                axios.get(initialImageUrl, { responseType: 'blob' })
+                    .then(response => processBlob(response.data))
+                    .catch(err => console.error("Axios error:", err));
+            }
+        }
+    }, [show, initialImageUrl]);
 
     // Fonction de reconnaissance vocale (Web Speech API - Gratuite)
     const startVoiceInput = (fieldSetter, currentVal, fieldName) => {
@@ -519,64 +584,4 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             ) : null,
 
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
-                                React.createElement('i', { className: 'fas fa-calendar-day mr-2' }),
-                                'Date et heure de maintenance' + (scheduledDate ? ' (modifier)' : ' (optionnelle)'),
-                                React.createElement('span', { className: 'ml-2 text-xs text-gray-500 font-normal' },
-                                    '(heure locale EST/EDT)'
-                                )
-                            ),
-                            React.createElement('div', { className: 'flex gap-2' },
-                                React.createElement('input', {
-                                    type: 'datetime-local',
-                                    id: 'ticketScheduledDate',
-                                    name: 'ticketScheduledDate',
-                                    autoComplete: 'off',
-                                    value: scheduledDate,
-                                    onChange: (e) => setScheduledDate(e.target.value),
-                                    className: 'flex-1 px-4 py-2 border-2 border-gray-300 rounded-md focus:border-blue-600 focus:outline-none'
-                                }),
-                                scheduledDate ? React.createElement('button', {
-                                    type: 'button',
-                                    onClick: () => setScheduledDate(''),
-                                    className: 'px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md font-bold transition-all text-sm'
-                                },
-                                    React.createElement('i', { className: 'fas fa-times mr-1' }),
-                                    'Retirer'
-                                ) : null
-                            ) // Ferme le div flex gap-2 (ligne 2852)
-                        ) // Ferme le div mb-2 (ligne 2824)
-                    )
-                : null,
-
-                null
-            )
-            ),
-            React.createElement('div', { className: 'p-4 border-t border-gray-200 bg-white flex flex-col sm:flex-row justify-end gap-2 sm:gap-4' },
-                React.createElement('button', {
-                    type: 'button',
-                    onClick: onClose,
-                    className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-semibold'
-                },
-                    React.createElement('i', { className: 'fas fa-times mr-2' }),
-                    'Annuler'
-                ),
-                React.createElement('button', {
-                    type: 'submit',
-                    form: 'create-ticket-form',
-                    disabled: submitting,
-                    className: 'w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 shadow-lg transition-all font-semibold'
-                },
-                    submitting
-                        ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-2' })
-                        : React.createElement('i', { className: 'fas fa-check mr-2' }),
-                    submitting
-                        ? (uploadProgress > 0 ? 'Upload: ' + uploadProgress + '%' : 'Création...')
-                        : 'Créer le ticket' + (mediaFiles.length > 0 ? ' (' + mediaFiles.length + ' média(s))' : '')
-                )
-            )
-        )
-    ));
-};
-
-// Make it available globally
-window.CreateTicketModal = CreateTicketModal;
+                                React.createElemen

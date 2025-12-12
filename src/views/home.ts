@@ -58,6 +58,7 @@ export const homeHTML = `
     <script src="/static/js/components/UserForms.js"></script>
     <script src="/static/js/components/UserList.js"></script>
     <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
+    <script src="/static/js/components/VoiceTicketFab.js"></script>
     <script src="/static/js/components/MainApp.js?v=2.8.3"></script>
     <script src="/static/js/components/App.js?v=2.8.3"></script>
     <style>
@@ -498,7 +499,7 @@ export const homeHTML = `
 
     <script>
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.0 FORCE');
+        console.log('HOME HTML LOADED v3.0.1 (Magic Ticket)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 

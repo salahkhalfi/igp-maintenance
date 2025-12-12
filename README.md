@@ -6,6 +6,8 @@
 **Organisation:** Produits Verriers International (IGP) Inc.  
 **Département:** Technologies de l'Information
 
+> **📖 [BIBLE DU PROJET (BIBLE.md)](BIBLE.md)** - Documentation Technique Critique & Lessons Learned. À lire absolument.
+
 [![Application Live](https://img.shields.io/badge/🌐_Application-En_Ligne-success?style=for-the-badge)](https://mecanique.igpglass.ca)
 [![Version](https://img.shields.io/badge/version-2.9.6-blue?style=for-the-badge)](https://github.com/salahkhalfi/igp-maintenance/releases)
 [![Security](https://img.shields.io/badge/Security-9.2%2F10-brightgreen?style=for-the-badge&logo=security)](SECURITY_AUDIT.md)
@@ -38,6 +40,21 @@ Le système intègre désormais 5 modules distincts activables à la carte :
     -   **Admin Client** : Gestion de son instance (dans les limites de sa licence).
 
 ## 🆕 Dernières mises à jour
+
+### Version 2.18.0 (12 Décembre 2025) - TICKET MAGIQUE (IA VOCALE) 🎙️✨
+- **🪄 CRÉATION VOCALE INTÉGRALE**: Nouveau bouton flottant (FAB) micro sur le dashboard.
+- **🧠 ANALYSE INTELLIGENTE**: Le technicien parle ("Fuite sur la presse 4, urgent"), l'IA (Whisper V3 + GPT-4o-mini) analyse.
+- **📝 PRÉ-REMPLISSAGE AUTO**: Titre, Description, Machine, et Priorité sont détectés et remplis automatiquement.
+- **🛡️ ZÉRO ERREUR**: L'utilisateur valide les données avant la création (rien n'est écrit en base sans confirmation).
+- **🏭 CONTEXTE INDUSTRIEL**: L'IA connait la liste des machines (ID/Nom) pour faire le lien exact.
+- **✅ IMPACT**: Réduit le temps de création de ticket de 2 minutes à 15 secondes.
+
+### Version 2.17.0 (12 Décembre 2025) - TRANSCRIPTION OPENAI V3 🤖✨
+- **🤖 TRANSCRIPTION SERVER-SIDE UPGRADE**: Remplacement de Cloudflare Whisper Base par l'API OpenAI Whisper V3 ("whisper-1").
+- **🎯 PRÉCISION QUÉBÉCOISE**: Prompt système spécifique ("Technicien de maintenance industrielle. Accent québécois...") pour une reconnaissance d'accent parfaite.
+- **🛡️ FALLBACK INTELLIGENT**: Bascule automatique sur Cloudflare si l'API OpenAI est indisponible.
+- **🔧 CONFIGURATION**: Utilise `OPENAI_API_KEY` depuis les secrets Cloudflare.
+- **✅ IMPACT**: Transcription de qualité "Humaine" même en milieu industriel bruyant avec fort accent.
 
 ### Version 2.15.2 (12 Décembre 2025) - ARCHITECTURE CERCLE ⭕🏗️
 - **🏗️ REFACTORING COMPLET**: L'outil Cercle a été réécrit pour utiliser une logique de "Boîte" (comme Rectangle).

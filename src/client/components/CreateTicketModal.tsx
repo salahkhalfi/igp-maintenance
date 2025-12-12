@@ -9,14 +9,67 @@ interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserRole?: UserRole;
+  initialDescription?: string;
+  initialImageUrl?: string;
+  initialTitle?: string;
+  initialPriority?: TicketPriority;
+  initialMachineId?: number | null;
 }
 
-export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, currentUserRole }) => {
+export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ 
+    isOpen, 
+    onClose, 
+    currentUserRole, 
+    initialDescription, 
+    initialImageUrl,
+    initialTitle,
+    initialPriority,
+    initialMachineId
+}) => {
   const queryClient = useQueryClient();
   
   // États du formulaire
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState(initialTitle || '');
+  const [description, setDescription] = useState(initialDescription || '');
+  
+  // Reset form when modal opens with new initial data
+  useEffect(() => {
+    if (isOpen) {
+        if (initialTitle) setTitle(initialTitle);
+        if (initialDescription) setDescription(initialDescription);
+        if (initialPriority) setPriority(initialPriority);
+        if (initialMachineId) setMachineId(initialMachineId);
+    }
+  }, [isOpen, initialTitle, initialDescription, initialPriority, initialMachineId]);
+  
+  // Update description if initialDescription changes (e.g. when opening from URL)
+  useEffect(() => {
+    if (initialDescription) {
+        setDescription(initialDescription);
+        // Auto-generate title from first 50 chars if empty
+        if (!title) {
+            setTitle(initialDescription.slice(0, 50) + (initialDescription.length > 50 ? '...' : ''));
+        }
+    }
+  }, [initialDescription]);
+
+  // Handle initial image from URL (Deep Linking from Chat)
+  useEffect(() => {
+    const fetchImage = async () => {
+        if (initialImageUrl && isOpen && selectedFiles.length === 0) {
+            try {
+                const response = await fetch(initialImageUrl);
+                const blob = await response.blob();
+                const filename = 'chat-attachment.jpg'; // Generic name
+                const file = new File([blob], filename, { type: blob.type });
+                setSelectedFiles([file]);
+            } catch (error) {
+                console.error("Failed to fetch initial image from URL", error);
+            }
+        }
+    };
+    fetchImage();
+  }, [initialImageUrl, isOpen]);
   const [machineId, setMachineId] = useState<number | ''>('');
   const [priority, setPriority] = useState<TicketPriority>('medium');
   const [assignedTo, setAssignedTo] = useState<number | ''>('');
@@ -363,9 +416,24 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, on
             Annuler
           </button>
           <button
-            onClick={() => createTicketMutation.mutate()}
-            disabled={createTicketMutation.isPending || !title || !machineId}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+            onClick={() => {
+                if (!title) {
+                    alert("Veuillez entrer un titre.");
+                    return;
+                }
+                if (!machineId) {
+                    alert("Veuillez sélectionner une machine concernée.");
+                    return;
+                }
+                createTicketMutation.mutate();
+            }}
+            disabled={createTicketMutation.isPending}
+            className={`px-6 py-2.5 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2 
+                ${(!title || !machineId) 
+                    ? 'bg-gray-400 text-white cursor-not-allowed opacity-70' 
+                    : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5'
+                }
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none`}
           >
             {createTicketMutation.isPending ? (
               <>
