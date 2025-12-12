@@ -11,7 +11,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 // --- HELPER FUNCTIONS ---
 
 // 1. Audio Transcription (Groq > OpenAI Fallback)
-async function transcribeAudio(audioFile: File, env: Bindings): Promise<string | null> {
+async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: string): Promise<string | null> {
     
     // --- STRATEGY A: GROQ (Fast & Free-ish) ---
     if (env.GROQ_API_KEY) {
@@ -21,8 +21,11 @@ async function transcribeAudio(audioFile: File, env: Bindings): Promise<string |
             formData.append('file', audioFile);
             formData.append('model', 'whisper-large-v3'); // Groq's super fast model
             formData.append('language', 'fr'); // Force French for consistency
-            // L'antisèche pour Groq (Aide à distinguer le bruit des vrais mots)
-            formData.append('prompt', "Contexte: Maintenance industrielle vitre. Bruit usine. Mots clés: Polisseuse, Waterjet, Table de coupe, Four, CNC, Bearing, Roulement, Moteur, Fuite, Panne, Urgent, Laurent, Salah, Maintenance, Réparation, Cassé, Bloqué.");
+            
+            // DYNAMIC CONTEXT (Generic Philosophy):
+            // We use the dynamic vocabulary from the database (machines, techs) to guide Groq.
+            // This ensures the app works for ANY industry based on the user's data.
+            formData.append('prompt', `Contexte: Maintenance professionnelle. Mots clés: ${vocabulary}`);
             
             const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                 method: 'POST',
@@ -53,8 +56,9 @@ async function transcribeAudio(audioFile: File, env: Bindings): Promise<string |
             const formData = new FormData();
             formData.append('file', audioFile, 'voice_ticket.webm');
             formData.append('model', 'whisper-1');
-            formData.append('language', 'fr'); // Force French for OpenAI to help with accent
-            formData.append('prompt', "Technicien maintenance industrielle. Accent québécois. Termes: bearing, moteur, hydraulique.");
+            formData.append('language', 'fr'); 
+            // Generic fallback prompt with dynamic vocabulary if possible, or just general terms
+            formData.append('prompt', `Technicien maintenance. Langue française. Termes: ${vocabulary}`);
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
@@ -85,13 +89,13 @@ async function analyzeText(transcript: string, context: any, env: Bindings): Pro
     const localDate = new Date(new Date().getTime() - (5 * 60 * 60 * 1000));
     
     const systemPrompt = `
-Tu es un assistant expert en maintenance industrielle (MaintenanceOS).
+Tu es un assistant expert en maintenance technique.
 Ta mission : Analyser une demande vocale brute et en extraire les données pour créer un ticket structuré.
 
 CONTEXTE UTILISATEUR (Demandeur):
 Nom: ${context.userName}
 Rôle: ${context.userRole}
-DATE ACTUELLE (EST/Montréal) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
+DATE ACTUELLE (EST) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
 
 CONTEXTE MACHINES (Liste des équipements):
 ${context.machines}
@@ -100,7 +104,7 @@ CONTEXTE EQUIPE (Liste des techniciens):
 ${context.techs}
 
 RÈGLES D'EXTRACTION STRICTES :
-1. PRIORITÉ : Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu" -> 'priority' = 'critical'.
+1. PRIORITÉ : Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu", "Danger" -> 'priority' = 'critical'.
 2. ASSIGNATION (RÈGLE IMPORTANTE) :
    - Cherche le nom d'un technicien dans la liste 'CONTEXTE EQUIPE'.
    - Si tu entends un NOM -> 'assigned_to_id' = ID correspondant.
@@ -110,8 +114,8 @@ RÈGLES D'EXTRACTION STRICTES :
 
 4. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
    - Tu es un secrétaire technique. Reformule le texte brut (souvent mal dit ou bruyant) en langage professionnel.
-   - Exemple : "Euh le truc tourne pas sur la polisseuse" -> Titre: "Arrêt rotation" / Desc: "Problème de rotation signalé sur la Polisseuse."
-   - NE PAS INVENTER : N'ajoute pas de détails techniques (ex: ne dis pas "Roulement cassé" si l'audio dit juste "Bruit").
+   - Exemple : "Euh le truc marche pas sur la machine X" -> Titre: "Dysfonctionnement sur Machine X" / Desc: "Problème signalé sur Machine X."
+   - NE PAS INVENTER : N'ajoute pas de détails techniques non mentionnés.
    - Si le texte est incompréhensible mais qu'une MACHINE est identifiée, mets en Titre : "Intervention requise : [Nom Machine]".
 
 FORMAT JSON ATTENDU (Réponds UNIQUEMENT ce JSON) :
@@ -221,13 +225,7 @@ app.post('/analyze-ticket', async (c) => {
         const audioFile = formData.get('file') as File;
         if (!audioFile) return c.json({ error: "No audio file" }, 400);
 
-        // 3. Transcribe (Cascade: Groq -> OpenAI)
-        const transcript = await transcribeAudio(audioFile, c.env);
-        if (!transcript) {
-            return c.json({ error: "Impossible de transcrire l'audio (Services indisponibles)" }, 502);
-        }
-
-        // 4. Load Database Context
+        // 3. Load Database Context FIRST (For Dynamic AI Vocabulary)
         const db = getDb(c.env);
         const machinesList = await db.select({
             id: machines.id, name: machines.machine_type, model: machines.model, location: machines.location
@@ -240,6 +238,19 @@ app.post('/analyze-ticket', async (c) => {
         const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.name} ${m.model || ''} (${m.location || ''})`).join('\n');
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
+        // Dynamic Vocabulary from Database + Common Terms
+        const vocabularyContext = [
+            ...machinesList.map(m => m.name),
+            ...techsList.map(t => t.name),
+            "Maintenance", "Panne", "Urgent", "Réparation", "Fuite", "Bruit", "Arrêt", "Danger", "Sécurité"
+        ].join(", ");
+
+        // 4. Transcribe with Dynamic Vocabulary (Groq -> OpenAI)
+        const transcript = await transcribeAudio(audioFile, c.env, vocabularyContext);
+        if (!transcript) {
+            return c.json({ error: "Impossible de transcrire l'audio (Services indisponibles)" }, 502);
+        }
+        
         // 5. Analyze (Cascade: DeepSeek -> OpenAI)
         const ticketData = await analyzeText(transcript, {
             userName, userRole, machines: machinesContext, techs: techsContext
