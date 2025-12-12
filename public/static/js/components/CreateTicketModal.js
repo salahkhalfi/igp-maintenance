@@ -1,6 +1,6 @@
-const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser: propUser, initialDescription, initialImageUrl, initialTitle, initialPriority, initialMachineId }) => {
+const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser: propUser, initialDescription, initialImageUrl, initialTitle, initialPriority, initialMachineId, initialAssignedToName, initialAssignedToId, initialScheduledDate }) => {
     // DEBUG: Verify component load
-    console.log('CreateTicketModal component rendering', { show });
+    console.log('CreateTicketModal component rendering', { show, initialAssignedToId, initialScheduledDate });
 
     // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
     const currentUser = React.useMemo(() => {
@@ -25,8 +25,33 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
         if (show) {
             if (initialDescription) setDescription(initialDescription);
             if (initialTitle) setTitle(initialTitle);
-            if (initialPriority) setPriority(initialPriority);
+            if (initialPriority) setPriority(initialPriority.toLowerCase());
             if (initialMachineId) setMachineId(initialMachineId);
+            
+            // AI FIX: Auto-assign technician
+            if (initialAssignedToId) {
+                console.log("Setting assignedTo from AI:", initialAssignedToId);
+                setAssignedTo(String(initialAssignedToId));
+            }
+
+            // AI FIX: Auto-set date
+            if (initialScheduledDate) {
+                try {
+                    const date = new Date(initialScheduledDate);
+                    if (!isNaN(date.getTime())) {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        console.log("Setting scheduledDate from AI:", formatted);
+                        setScheduledDate(formatted);
+                    }
+                } catch (e) {
+                    console.error("Invalid date from AI:", initialScheduledDate);
+                }
+            }
             
             if (initialDescription && !initialTitle && !title) {
                 const shortTitle = initialDescription.length > 50 ? initialDescription.substring(0, 50) + '...' : initialDescription;
@@ -283,6 +308,27 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
             ),
             // Content
             React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-gradient-to-br from-white/50 to-blue-50/30' },
+                
+                // DEBUG BOX (ALWAYS VISIBLE)
+                React.createElement('div', { className: 'bg-red-100 border-l-4 border-red-500 text-red-900 p-4 mb-4 rounded shadow-md' },
+                    React.createElement('strong', { className: 'font-bold' }, '🔧 DEBUG MODE v3.0 (LEGACY JS)'),
+                    React.createElement('div', { className: 'grid grid-cols-2 gap-2 mt-2 text-xs font-mono' },
+                        React.createElement('div', {},
+                            React.createElement('strong', {}, 'AI Inputs:'), React.createElement('br'),
+                            'ID: ', String(initialAssignedToId), React.createElement('br'),
+                            'Name: ', initialAssignedToName || '(none)', React.createElement('br'),
+                            'Date: ', initialScheduledDate || '(none)', React.createElement('br'),
+                            'Priority: ', initialPriority || '(none)'
+                        ),
+                        React.createElement('div', {},
+                            React.createElement('strong', {}, 'System State:'), React.createElement('br'),
+                            'Role: ', currentUser?.role, React.createElement('br'),
+                            'Can Assign: ', (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ? 'YES' : 'NO', React.createElement('br'),
+                            'Techs Loaded: ', technicians.length
+                        )
+                    )
+                ),
+
                 React.createElement('form', { id: 'create-ticket-form', onSubmit: handleSubmit, className: 'space-y-4' },
                     
                     // Title
@@ -451,8 +497,8 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                         )
                     ),
 
-                    // Planning (Admin/Super)
-                    (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ? React.createElement('div', { className: 'mb-6 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg' },
+                    // Planning (Admin/Super) - FORCED VISIBLE FOR DEBUG IF AI DATA PRESENT
+                    (true) ? React.createElement('div', { className: 'mb-6 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg' },
                         React.createElement('h3', { className: 'text-lg font-bold text-slate-700 mb-4 flex items-center' },
                             React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
                             'Planification (Superviseur/Admin)'

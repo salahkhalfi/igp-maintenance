@@ -97,6 +97,10 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [initialTitle, setInitialTitle] = React.useState('');
     const [initialPriority, setInitialPriority] = React.useState('medium');
     const [initialMachineId, setInitialMachineId] = React.useState('');
+    const [initialAssignedToId, setInitialAssignedToId] = React.useState(null);
+    const [initialAssignedToName, setInitialAssignedToName] = React.useState('');
+    const [initialScheduledDate, setInitialScheduledDate] = React.useState('');
+
     // Use local description to allow override from AI
     const [localDescription, setLocalDescription] = React.useState(initialDescription || '');
     
@@ -111,6 +115,11 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         if (data.priority) setInitialPriority(data.priority);
         if (data.machine_id) setInitialMachineId(data.machine_id);
         
+        // AI FIX: Capture assignment and date
+        if (data.assigned_to_id) setInitialAssignedToId(data.assigned_to_id);
+        if (data.assigned_to_name) setInitialAssignedToName(data.assigned_to_name);
+        if (data.scheduled_date) setInitialScheduledDate(data.scheduled_date);
+
         setShowCreateModal(true);
     };
 
