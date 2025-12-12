@@ -309,26 +309,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
             // Content
             React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-gradient-to-br from-white/50 to-blue-50/30' },
                 
-                // DEBUG BOX (ALWAYS VISIBLE)
-                React.createElement('div', { className: 'bg-red-100 border-l-4 border-red-500 text-red-900 p-4 mb-4 rounded shadow-md' },
-                    React.createElement('strong', { className: 'font-bold' }, '🔧 DEBUG MODE v3.0 (LEGACY JS)'),
-                    React.createElement('div', { className: 'grid grid-cols-2 gap-2 mt-2 text-xs font-mono' },
-                        React.createElement('div', {},
-                            React.createElement('strong', {}, 'AI Inputs:'), React.createElement('br'),
-                            'ID: ', String(initialAssignedToId), React.createElement('br'),
-                            'Name: ', initialAssignedToName || '(none)', React.createElement('br'),
-                            'Date: ', initialScheduledDate || '(none)', React.createElement('br'),
-                            'Priority: ', initialPriority || '(none)'
-                        ),
-                        React.createElement('div', {},
-                            React.createElement('strong', {}, 'System State:'), React.createElement('br'),
-                            'Role: ', currentUser?.role, React.createElement('br'),
-                            'Can Assign: ', (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ? 'YES' : 'NO', React.createElement('br'),
-                            'Techs Loaded: ', technicians.length
-                        )
-                    )
-                ),
-
                 React.createElement('form', { id: 'create-ticket-form', onSubmit: handleSubmit, className: 'space-y-4' },
                     
                     // Title
@@ -497,8 +477,8 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                         )
                     ),
 
-                    // Planning (Admin/Super) - FORCED VISIBLE FOR DEBUG IF AI DATA PRESENT
-                    (true) ? React.createElement('div', { className: 'mb-6 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg' },
+                    // Planning (Admin/Super)
+                    (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ? React.createElement('div', { className: 'mb-6 p-4 bg-gray-50 border-2 border-gray-200 rounded-lg' },
                         React.createElement('h3', { className: 'text-lg font-bold text-slate-700 mb-4 flex items-center' },
                             React.createElement('i', { className: 'fas fa-calendar-alt mr-2' }),
                             'Planification (Superviseur/Admin)'
