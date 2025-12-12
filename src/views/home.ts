@@ -22,9 +22,9 @@ export const homeHTML = `
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/static/js/utils.js"></script>
     <script src="/static/js/offline-sync.js"></script>
-    <script src="/static/js/components/MessagingSidebar.js"></script>
-    <script src="/static/js/components/MessagingChatWindow.js"></script>
-    <script src="/static/js/components/MessagingModal.js"></script>
+    <script src="/static/js/components/MessagingSidebar.js?v=3.0.2"></script>
+    <script src="/static/js/components/MessagingChatWindow.js?v=3.0.2"></script>
+    <script src="/static/js/components/MessagingModal.js?v=3.0.2"></script>
     <script src="/static/js/components/NotificationModal.js"></script>
     <script src="/static/js/components/ConfirmModal.js"></script>
     <script src="/static/js/components/Toast.js"></script>
@@ -34,7 +34,7 @@ export const homeHTML = `
     <script src="/static/js/components/PromptModal.js"></script>
     <script src="/static/js/components/LoginForm.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
-    <script src="/static/js/components/CreateTicketModal.js"></script>
+    <script src="/static/js/components/CreateTicketModal.js?v=3.0.3"></script>
     <script src="/static/js/components/TicketDetailsModal.js"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
     <script src="/static/js/components/MachineManagementModal.js"></script>

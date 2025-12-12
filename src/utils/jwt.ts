@@ -60,11 +60,13 @@ export async function signToken(payload: JWTPayload, expiresInSeconds: number = 
 /**
  * Vérifie et décode un token JWT
  * @param token Token JWT à vérifier
+ * @param secret (Optionnel) Secret spécifique à utiliser pour la vérification. Si non fourni, utilise le secret par défaut.
  * @returns Payload du token si valide, null sinon
  */
-export async function verifyToken(token: string): Promise<JWTPayload | null> {
+export async function verifyToken(token: string, secret?: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const key = secret ? new TextEncoder().encode(secret) : JWT_SECRET;
+    const { payload } = await jwtVerify(token, key);
     return payload as JWTPayload;
   } catch (error) {
     // Token invalide, expiré, ou signature incorrecte

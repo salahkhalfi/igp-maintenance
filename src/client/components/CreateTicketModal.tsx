@@ -43,7 +43,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     if (isOpen) {
         if (initialTitle) setTitle(initialTitle);
         if (initialDescription) setDescription(initialDescription);
-        if (initialPriority) setPriority(initialPriority);
+        if (initialPriority) setPriority(initialPriority.toLowerCase() as TicketPriority);
         if (initialMachineId) setMachineId(initialMachineId);
         
         // Handle Scheduled Date (Robust parsing)
@@ -252,7 +252,9 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
 
   if (!isOpen) return null;
 
-  const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
+  // DEBUG: Temporarily allow everyone to see assignment fields to verify AI pre-filling
+  // const canAssign = currentUserRole === 'admin' || currentUserRole === 'supervisor';
+  const canAssign = true;
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 p-4 animate-in fade-in duration-200">
@@ -274,6 +276,27 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
           >
             <X className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* DEBUG INFO - MOVED TO TOP FOR VISIBILITY */}
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-900 p-4 m-4 mb-0 rounded shadow-md">
+             <strong className="font-bold text-lg">🔧 DEBUG MODE v3.0 (FORCE UPDATE)</strong>
+             <div className="grid grid-cols-2 gap-2 mt-2 text-xs font-mono">
+                 <div>
+                    <strong>AI Inputs:</strong><br/>
+                    ID: {String(initialAssignedToId)}<br/>
+                    Name: {initialAssignedToName || '(none)'}<br/>
+                    Date: {initialScheduledDate || '(none)'}<br/>
+                    Priority: {initialPriority || '(none)'}
+                 </div>
+                 <div>
+                    <strong>System State:</strong><br/>
+                    Role: {currentUserRole}<br/>
+                    Can Assign: {canAssign ? 'YES' : 'NO (Role blocked)'}<br/>
+                    Techs Loaded: {technicians.length}<br/>
+                    Current Priority: {priority}
+                 </div>
+             </div>
         </div>
 
         {/* Corps du formulaire (défilable) */}
@@ -356,12 +379,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
             </div>
           </div>
 
-          {/* Description avec reconnaissance vocale */}
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Description détaillée
-            </label>
-            <div className="relative">
+            {/* DEBUG INFO - ALWAYS VISIBLE FOR DIAGNOSIS (REMOVED - MOVED TO TOP) */}
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

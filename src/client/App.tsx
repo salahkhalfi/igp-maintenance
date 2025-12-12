@@ -38,6 +38,9 @@ const AppContent = () => {
   const [initialTicketTitle, setInitialTicketTitle] = useState<string>('');
   const [initialTicketPriority, setInitialTicketPriority] = useState<TicketPriority>('medium');
   const [initialTicketMachineId, setInitialTicketMachineId] = useState<number | null>(null);
+  const [initialAssignedToName, setInitialAssignedToName] = useState<string>('');
+  const [initialAssignedToId, setInitialAssignedToId] = useState<number | null>(null);
+  const [initialScheduledDate, setInitialScheduledDate] = useState<string>('');
   
   // Modal States
   const [notification, setNotification] = useState<{isOpen: boolean, type: 'success'|'error'|'info', message: string} | null>(null);
@@ -72,8 +75,15 @@ const AppContent = () => {
     console.log("🎤 Voice Ticket Detected:", data);
     setInitialTicketTitle(data.title || '');
     setInitialTicketDescription(data.description || '');
-    setInitialTicketPriority(data.priority || 'medium');
+    // Normalize priority to lowercase to ensure UI matches
+    setInitialTicketPriority((data.priority?.toLowerCase() as TicketPriority) || 'medium');
     setInitialTicketMachineId(data.machine_id || null);
+    
+    // New fields
+    if (data.assigned_to_name) setInitialAssignedToName(data.assigned_to_name);
+    if (data.assigned_to_id) setInitialAssignedToId(data.assigned_to_id);
+    if (data.scheduled_date) setInitialScheduledDate(data.scheduled_date);
+    
     setIsCreateTicketOpen(true);
   };
 
@@ -98,13 +108,19 @@ const AppContent = () => {
         setIsCreateTicketOpen(true);
         const description = params.get('description');
         const imageUrl = params.get('imageUrl');
+        const title = params.get('title');
+        const priority = params.get('priority');
+        const machineId = params.get('machineId');
+        const assignedToName = params.get('assignedToName');
+        const scheduledDate = params.get('scheduledDate');
         
-        if (description) {
-            setInitialTicketDescription(description);
-        }
-        if (imageUrl) {
-            setInitialImageUrl(imageUrl);
-        }
+        if (description) setInitialTicketDescription(description);
+        if (imageUrl) setInitialImageUrl(imageUrl);
+        if (title) setInitialTicketTitle(title);
+        if (priority) setInitialTicketPriority(priority as TicketPriority);
+        if (machineId) setInitialTicketMachineId(Number(machineId));
+        if (assignedToName) setInitialAssignedToName(assignedToName);
+        if (scheduledDate) setInitialScheduledDate(scheduledDate);
         
         // On nettoie l'URL proprement
         setTimeout(() => {
@@ -270,6 +286,9 @@ const AppContent = () => {
             initialTitle={initialTicketTitle}
             initialPriority={initialTicketPriority}
             initialMachineId={initialTicketMachineId}
+            initialAssignedToName={initialAssignedToName}
+            initialAssignedToId={initialAssignedToId}
+            initialScheduledDate={initialScheduledDate}
         />
 
         <TicketDetailsModal

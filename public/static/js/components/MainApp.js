@@ -192,23 +192,6 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
     }, [tickets]);
 
-    const handleTicketDetected = (data) => {
-        if (data.title) setInitialTitle(data.title);
-        if (data.description) {
-            // MainApp prop doesn't have setInitialDescription, but CreateTicketModal takes current value.
-            // Wait, MainApp receives initialDescription as PROP (line 1), but we need to update it dynamically.
-            // The prop is likely just for deep links.
-            // We should use a local state that overrides the prop if set, OR just pass a new prop to modal.
-            // Let's rely on CreateTicketModal's internal logic which we updated to listen to props changes.
-        }
-        if (data.priority) setInitialPriority(data.priority);
-        if (data.machine_id) setInitialMachineId(data.machine_id);
-        
-        // Need to set description too. The prop initialDescription is read-only from MainApp's parent (App).
-        // I need to clone it into state or use a separate state.
-        // Let's add local description state in MainApp that defaults to prop.
-    };
-
     // --- FONCTIONS MÉTIER ---
 
     const getActiveTicketsCount = () => {
@@ -326,7 +309,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         React.createElement(MachineManagementModal, { show: showMachineManagement, onClose: () => setShowMachineManagement(false), currentUser: currentUser, machines: machines, onRefresh: onRefresh }),
         React.createElement(MessagingModal, {
             show: showMessaging, onClose: () => { setShowMessaging(false); setMessagingContact(null); setMessagingTab("public"); if (onRefreshMessages) onRefreshMessages(); },
-            currentUser: currentUser, initialContact: messagingContact, initialTab: messagingTab
+            currentUser: currentUser, initialContact: messagingContact, initialTab: messagingTab,
+            onTicketDetected: handleTicketDetected
         }),
         React.createElement(UserGuideModal, { show: showUserGuide, onClose: () => setShowUserGuide(false), currentUser: currentUser }),
 

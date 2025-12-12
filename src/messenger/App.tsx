@@ -2109,6 +2109,75 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     const inputTimeoutRef = useRef<any>(null);
     
+    // --- MAGIC TICKET STATE (IA) ---
+    const [isMagicRecording, setIsMagicRecording] = useState(false);
+    const [isMagicAnalyzing, setIsMagicAnalyzing] = useState(false);
+    const magicMediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const magicChunksRef = useRef<Blob[]>([]);
+
+    const startMagicRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            magicChunksRef.current = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) magicChunksRef.current.push(e.data);
+            };
+
+            recorder.onstop = async () => {
+                const audioBlob = new Blob(magicChunksRef.current, { type: 'audio/webm' });
+                stream.getTracks().forEach(track => track.stop());
+                await analyzeMagicAudio(audioBlob);
+            };
+
+            recorder.start();
+            magicMediaRecorderRef.current = recorder;
+            setIsMagicRecording(true);
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            alert("Impossible d'accéder au microphone. Vérifiez vos permissions.");
+        }
+    };
+
+    const stopMagicRecording = () => {
+        if (magicMediaRecorderRef.current && isMagicRecording) {
+            magicMediaRecorderRef.current.stop();
+            setIsMagicRecording(false);
+            setIsMagicAnalyzing(true);
+        }
+    };
+
+    const analyzeMagicAudio = async (audioBlob: Blob) => {
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'recording.webm');
+
+        try {
+            // Using existing axios instance or fetch
+            const response = await axios.post('/api/ai/analyze-ticket', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (response.data) {
+                const data = response.data;
+                const params = new URLSearchParams();
+                params.set('createTicket', 'true');
+                if (data.title) params.set('title', data.title);
+                if (data.description) params.set('description', data.description);
+                if (data.priority) params.set('priority', data.priority.toLowerCase());
+                if (data.machine_id) params.set('machineId', data.machine_id);
+                
+                // Open in main app (New Tab to preserve chat context)
+                window.open('/?' + params.toString(), '_blank');
+            }
+        } catch (error: any) {
+            console.error("AI Analysis failed:", error);
+            alert("Erreur lors de l'analyse vocale: " + (error.response?.data?.error || error.message));
+        } finally {
+            setIsMagicAnalyzing(false);
+        }
+    };
+    
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -2122,621 +2191,6 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // --- ANNOTATION TOOL ---
-    const [annotatedFile, setAnnotatedFile] = useState<File | null>(null);
-    const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [annotationColor, setAnnotationColor] = useState('#EF4444'); // Default Red
-    const annotationCtxRef = useRef<CanvasRenderingContext2D | null>(null);
-    const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
-    
-    // --- ADVANCED ANNOTATION ENGINE STATE ---
-    type AnnotationTool = 'select' | 'freehand' | 'arrow' | 'rectangle' | 'circle' | 'text';
-    type AnnotationObject = 
-        | { id: string, type: 'freehand', points: {x: number, y: number}[], color: string, rotation: number }
-        | { id: string, type: 'arrow', start: {x: number, y: number}, end: {x: number, y: number}, color: string, rotation: number }
-        | { id: string, type: 'rectangle' | 'circle', start: {x: number, y: number}, end: {x: number, y: number}, color: string, rotation: number }
-        | { id: string, type: 'text', x: number, y: number, text: string, color: string, fontSize: number, rotation: number };
-
-    const [annotationTool, setAnnotationTool] = useState<AnnotationTool>('freehand');
-    // Cursor style management
-    const [cursorStyle, setCursorStyle] = useState('cursor-crosshair');
-    useEffect(() => {
-        if (annotationTool === 'select') setCursorStyle('cursor-move');
-        else if (annotationTool === 'text') setCursorStyle('cursor-text');
-        else setCursorStyle('cursor-crosshair');
-    }, [annotationTool]);
-
-    const [annotations, setAnnotations] = useState<AnnotationObject[]>([]);
-    const [currentAnnotation, setCurrentAnnotation] = useState<AnnotationObject | null>(null);
-    const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
-    const [dragStartPos, setDragStartPos] = useState<{x: number, y: number} | null>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    
-    // Transform State
-    const [transformMode, setTransformMode] = useState<'none' | 'move' | 'resize' | 'rotate'>('none');
-    const [activeHandle, setActiveHandle] = useState<'tl' | 'tr' | 'bl' | 'br' | 'rot' | null>(null);
-    const [initialTransformState, setInitialTransformState] = useState<AnnotationObject | null>(null);
-
-    // Initialize Canvas when previewFile changes
-    useEffect(() => {
-        if (previewFile && !annotatedFile) {
-            const img = new Image();
-            img.src = URL.createObjectURL(previewFile);
-            img.onload = () => {
-                setOriginalImage(img);
-                setAnnotations([]); // Reset annotations for new file
-                if (annotationCanvasRef.current) {
-                    const canvas = annotationCanvasRef.current;
-                    // Full resolution strategy
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        ctx.lineCap = 'round';
-                        ctx.lineJoin = 'round';
-                        ctx.lineWidth = 15; 
-                        annotationCtxRef.current = ctx;
-                        renderCanvas(); // Initial render
-                    }
-                }
-            };
-        }
-    }, [previewFile]);
-
-    // Redraw whenever annotations change or selection changes
-    useEffect(() => {
-        renderCanvas();
-    }, [annotations, currentAnnotation, selectedAnnotationId, originalImage]);
-
-    const getBounds = (ann: AnnotationObject) => {
-        if (ann.type === 'freehand') {
-            const xs = ann.points.map(p => p.x);
-            const ys = ann.points.map(p => p.y);
-            return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
-        } else if (ann.type === 'text') {
-            const width = ann.text.length * (ann.fontSize * 0.6); // Approx width
-            const height = ann.fontSize;
-            return { x: ann.x, y: ann.y - height, w: width, h: height };
-        } else {
-            // Generic Box Logic (Rectangle, Circle/Ellipse, Arrow-ish)
-            const x = Math.min(ann.start.x, ann.end.x);
-            const y = Math.min(ann.start.y, ann.end.y);
-            const w = Math.abs(ann.end.x - ann.start.x);
-            const h = Math.abs(ann.end.y - ann.start.y);
-            return { x, y, w, h };
-        }
-    };
-
-    const getCenter = (ann: AnnotationObject) => {
-        const b = getBounds(ann);
-        return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
-    };
-
-    const drawSelectionHandles = (ctx: CanvasRenderingContext2D, ann: AnnotationObject) => {
-        ctx.save();
-        const center = getCenter(ann);
-        ctx.translate(center.x, center.y);
-        ctx.rotate(ann.rotation || 0); // Fallback to 0
-        ctx.translate(-center.x, -center.y);
-        
-        const b = getBounds(ann);
-        
-        // VISUAL FIX: Inflate bounds by half stroke width (15px) to enclose the thick ink (30px total)
-        // This prevents the selection frame from appearing "inside" the shape.
-        const pad = 15; 
-        const visualB = { x: b.x - pad, y: b.y - pad, w: b.w + pad*2, h: b.h + pad*2 };
-
-        // Adjust handle visual size based on canvas scale to remain visible but not huge
-        // Actually, let's keep them fixed logic size but large enough to see
-        const handleSize = 40; 
-        
-        ctx.strokeStyle = '#2196F3';
-        ctx.lineWidth = 5;
-        ctx.setLineDash([15, 15]);
-        ctx.strokeRect(visualB.x, visualB.y, visualB.w, visualB.h);
-        ctx.setLineDash([]);
-        
-        ctx.fillStyle = 'white';
-        ctx.strokeStyle = '#2196F3';
-        ctx.lineWidth = 5;
-        
-        // Corners: tl, tr, bl, br
-        const handles = [
-            { x: visualB.x, y: visualB.y },
-            { x: visualB.x + visualB.w, y: visualB.y },
-            { x: visualB.x, y: visualB.y + visualB.h },
-            { x: visualB.x + visualB.w, y: visualB.y + visualB.h }
-        ];
-        
-        handles.forEach(h => {
-            ctx.beginPath();
-            // Draw larger visual handles
-            ctx.rect(h.x - handleSize/2, h.y - handleSize/2, handleSize, handleSize);
-            ctx.fill();
-            ctx.stroke();
-        });
-        
-        // Rotation handle
-        const rotHandle = { x: visualB.x + visualB.w/2, y: visualB.y - 150 }; // Increased distance
-        ctx.beginPath();
-        ctx.moveTo(visualB.x + visualB.w/2, visualB.y);
-        ctx.lineTo(rotHandle.x, rotHandle.y);
-        ctx.lineWidth = 10; // Thicker connector line
-        ctx.stroke();
-        ctx.lineWidth = 5; // Reset
-        
-        ctx.beginPath();
-        ctx.arc(rotHandle.x, rotHandle.y, 50, 0, 2 * Math.PI); // Radius 25 -> 50
-        ctx.fill();
-        ctx.stroke();
-        
-        ctx.restore();
-    };
-
-    const renderCanvas = (explicitSelectedId?: string | null) => {
-        if (!annotationCanvasRef.current || !annotationCtxRef.current || !originalImage) return;
-        const canvas = annotationCanvasRef.current;
-        const ctx = annotationCtxRef.current;
-
-        // Determine effective selection (allows forcing null for export)
-        const effectiveSelectionId = explicitSelectedId !== undefined ? explicitSelectedId : selectedAnnotationId;
-
-        // 1. Clear
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 2. Draw Background Image
-        ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
-
-        // 3. Draw All Annotations
-        [...annotations, currentAnnotation].forEach(ann => {
-            if (!ann) return;
-            ctx.save();
-            
-            // Apply rotation around center
-            const center = getCenter(ann);
-            ctx.translate(center.x, center.y);
-            ctx.rotate(ann.rotation || 0); // Fallback to 0
-            ctx.translate(-center.x, -center.y);
-
-            ctx.beginPath();
-            ctx.strokeStyle = ann.color;
-            ctx.fillStyle = ann.color;
-            ctx.lineWidth = 30;
-            
-            // Highlight selected (shadow only, box handled separately)
-            if (ann.id === effectiveSelectionId) {
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.shadowBlur = 20;
-            } else {
-                ctx.shadowBlur = 0;
-            }
-
-            if (ann.type === 'freehand') {
-                if (ann.points.length > 0) {
-                    ctx.moveTo(ann.points[0].x, ann.points[0].y);
-                    ann.points.forEach(p => ctx.lineTo(p.x, p.y));
-                    ctx.stroke();
-                }
-            } else if (ann.type === 'arrow') {
-                drawArrow(ctx, ann.start.x, ann.start.y, ann.end.x, ann.end.y);
-            } else if (ann.type === 'rectangle') {
-                ctx.rect(ann.start.x, ann.start.y, ann.end.x - ann.start.x, ann.end.y - ann.start.y);
-                ctx.stroke();
-            } else if (ann.type === 'circle') {
-                // ELLIPSE LOGIC: Fit circle/oval inside the bounding box defined by start/end
-                const centerX = (ann.start.x + ann.end.x) / 2;
-                const centerY = (ann.start.y + ann.end.y) / 2;
-                const radiusX = Math.abs(ann.end.x - ann.start.x) / 2;
-                const radiusY = Math.abs(ann.end.y - ann.start.y) / 2;
-                
-                ctx.beginPath();
-                ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
-                ctx.stroke();
-            } else if (ann.type === 'text') {
-                ctx.font = `bold ${ann.fontSize}px Arial`;
-                ctx.fillText(ann.text, ann.x, ann.y);
-            }
-            
-            ctx.restore(); // Restore context (remove rotation) for next item
-
-            // Draw selection handles ON TOP if selected
-            if (ann.id === effectiveSelectionId) {
-                drawSelectionHandles(ctx, ann);
-            }
-        });
-    };
-
-    const getCanvasPoint = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!annotationCanvasRef.current) return { x: 0, y: 0 };
-        const canvas = annotationCanvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        
-        let clientX, clientY;
-        if ('touches' in e) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            clientX = (e as React.MouseEvent).clientX;
-            clientY = (e as React.MouseEvent).clientY;
-        }
-
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        
-        return {
-            x: (clientX - rect.left) * scaleX,
-            y: (clientY - rect.top) * scaleY
-        };
-    };
-
-    const rotatePoint = (x: number, y: number, cx: number, cy: number, angle: number) => {
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        return {
-            x: (cos * (x - cx)) - (sin * (y - cy)) + cx,
-            y: (sin * (x - cx)) + (cos * (y - cy)) + cy
-        };
-    };
-
-    const hitTestHandles = (x: number, y: number, ann: AnnotationObject): 'tl' | 'tr' | 'bl' | 'br' | 'rot' | null => {
-        const center = getCenter(ann);
-        // Rotate mouse point negatively to align with unrotated object
-        const p = rotatePoint(x, y, center.x, center.y, -(ann.rotation || 0)); // Fallback to 0
-        
-        const b = getBounds(ann);
-        
-        // VISUAL FIX: Match the inflated bounds from drawSelectionHandles
-        const pad = 15; 
-        const visualB = { x: b.x - pad, y: b.y - pad, w: b.w + pad*2, h: b.h + pad*2 };
-        
-        const handleSize = 150; 
-        
-        const handles = [
-            { id: 'tl', x: visualB.x, y: visualB.y },
-            { id: 'tr', x: visualB.x + visualB.w, y: visualB.y },
-            { id: 'bl', x: visualB.x, y: visualB.y + visualB.h },
-            { id: 'br', x: visualB.x + visualB.w, y: visualB.y + visualB.h },
-            { id: 'rot', x: visualB.x + visualB.w/2, y: visualB.y - 150 } // Increased distance
-        ];
-
-        for (const h of handles) {
-             if (Math.abs(p.x - h.x) < handleSize && Math.abs(p.y - h.y) < handleSize) {
-                 return h.id as any;
-             }
-        }
-        return null;
-    };
-
-    const isPointInAnnotation = (x: number, y: number, ann: AnnotationObject): boolean => {
-        const center = getCenter(ann);
-        const p = rotatePoint(x, y, center.x, center.y, -(ann.rotation || 0)); // Fallback to 0
-        const lx = p.x;
-        const ly = p.y;
-        
-        // ... rest of function ...
-        // Dynamic HIT_RADIUS based on image size to ensure usability on high-res
-        const canvas = annotationCanvasRef.current;
-        const baseSize = canvas ? Math.max(canvas.width, canvas.height) : 2000;
-        const HIT_RADIUS = Math.max(100, baseSize * 0.05); // Min 100px, or 5% of image size
-        
-        if (ann.type === 'freehand') {
-            // Check all points
-            return ann.points.some(pt => Math.hypot(pt.x - lx, pt.y - ly) < HIT_RADIUS);
-        } else if (ann.type === 'text') {
-            const width = ann.text.length * (ann.fontSize * 0.6);
-            const height = ann.fontSize;
-            // More generous text hit box
-            return lx >= ann.x - HIT_RADIUS && 
-                   lx <= ann.x + width + HIT_RADIUS && 
-                   ly >= ann.y - height - HIT_RADIUS && 
-                   ly <= ann.y + HIT_RADIUS;
-        } else if (ann.type === 'rectangle') {
-            const minX = Math.min(ann.start.x, ann.end.x);
-            const maxX = Math.max(ann.start.x, ann.end.x);
-            const minY = Math.min(ann.start.y, ann.end.y);
-            const maxY = Math.max(ann.start.y, ann.end.y);
-            // Check if point is near the border OR inside
-             return (lx >= minX - HIT_RADIUS && lx <= maxX + HIT_RADIUS &&
-                    ly >= minY - HIT_RADIUS && ly <= maxY + HIT_RADIUS);
-        } else if (ann.type === 'circle') {
-            // ELLIPSE HIT TEST
-            const centerX = (ann.start.x + ann.end.x) / 2;
-            const centerY = (ann.start.y + ann.end.y) / 2;
-            const rx = Math.abs(ann.end.x - ann.start.x) / 2;
-            const ry = Math.abs(ann.end.y - ann.start.y) / 2;
-            
-            // Normalized distance equation for ellipse: (x-h)^2/a^2 + (y-k)^2/b^2 <= 1
-            // We add HIT_RADIUS to radii to make it easier to grab
-            const normX = Math.pow(lx - centerX, 2) / Math.pow(rx + HIT_RADIUS, 2);
-            const normY = Math.pow(ly - centerY, 2) / Math.pow(ry + HIT_RADIUS, 2);
-            
-            return normX + normY <= 1;
-        } else if (ann.type === 'arrow') {
-            // Check distance to line segment
-            const x1 = ann.start.x, y1 = ann.start.y;
-            const x2 = ann.end.x, y2 = ann.end.y;
-            
-            const A = lx - x1;
-            const B = ly - y1;
-            const C = x2 - x1;
-            const D = y2 - y1;
-            
-            const dot = A * C + B * D;
-            const len_sq = C * C + D * D;
-            let param = -1;
-            if (len_sq !== 0) param = dot / len_sq;
-            
-            let xx, yy;
-            
-            if (param < 0) {
-              xx = x1; yy = y1;
-            } else if (param > 1) {
-              xx = x2; yy = y2;
-            } else {
-              xx = x1 + param * C;
-              yy = y1 + param * D;
-            }
-            
-            const dist = Math.hypot(lx - xx, ly - yy);
-            return dist < HIT_RADIUS;
-        }
-        return false;
-    };
-
-    const changeColor = (color: string) => {
-        setAnnotationColor(color);
-        if (selectedAnnotationId) {
-            setAnnotations(prev => prev.map(ann => 
-                ann.id === selectedAnnotationId ? { ...ann, color } : ann
-            ));
-        }
-    };
-
-    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-        // Prevent default only if necessary to allow scrolling elsewhere, but here we want to block scroll on canvas
-        // e.preventDefault(); 
-        // Actually, for touch events we must prevent default to avoid scrolling the page while drawing
-        if (e.cancelable) e.preventDefault(); 
-        
-        const { x, y } = getCanvasPoint(e);
-        
-        // Ensure tool is actually select if we are in select mode
-        // (State is reliable, but let's be explicit in logic flow)
-        
-        if (annotationTool === 'select') {
-            // First, try to hit handles of the CURRENTLY selected annotation
-            if (selectedAnnotationId) {
-                const selectedAnn = annotations.find(a => a.id === selectedAnnotationId);
-                if (selectedAnn) {
-                    const handle = hitTestHandles(x, y, selectedAnn);
-                    if (handle) {
-                        setTransformMode(handle === 'rot' ? 'rotate' : 'resize');
-                        setActiveHandle(handle);
-                        setDragStartPos({ x, y });
-                        setInitialTransformState(JSON.parse(JSON.stringify(selectedAnn)));
-                        setIsDragging(true);
-                        return;
-                    }
-                }
-            }
-
-            // If no handle hit, check if we clicked on ANY annotation to select/move it
-            // We search in reverse to find top-most first
-            const clickedAnn = [...annotations].reverse().find(ann => isPointInAnnotation(x, y, ann));
-            
-            if (clickedAnn) {
-                setSelectedAnnotationId(clickedAnn.id);
-                setDragStartPos({ x, y });
-                setTransformMode('move');
-                setInitialTransformState(JSON.parse(JSON.stringify(clickedAnn)));
-                setIsDragging(true);
-            } else {
-                // Deselect if clicked empty space
-                setSelectedAnnotationId(null);
-                setTransformMode('none');
-            }
-            return;
-        }
-
-        setIsDrawing(true);
-        const id = Date.now().toString();
-
-        if (annotationTool === 'freehand') {
-            setCurrentAnnotation({ id, type: 'freehand', points: [{x, y}], color: annotationColor, rotation: 0 } as any);
-        } else if (annotationTool === 'text') {
-             const text = prompt("Entrez le texte:");
-             if (text) {
-                 setAnnotations(prev => [...prev, { id, type: 'text', x, y, text, color: annotationColor, fontSize: 120, rotation: 0 }]);
-                 // Auto-select text for immediate modification
-                 setSelectedAnnotationId(id);
-                 setAnnotationTool('select');
-             }
-             setIsDrawing(false); 
-        } else {
-            setCurrentAnnotation({ id, type: annotationTool, start: {x, y}, end: {x, y}, color: annotationColor, rotation: 0 } as any);
-        }
-    };
-
-    const draw = (e: React.MouseEvent | React.TouchEvent) => {
-        e.preventDefault();
-        const { x, y } = getCanvasPoint(e);
-
-        if (annotationTool === 'select' && isDragging && selectedAnnotationId && dragStartPos && initialTransformState) {
-            const dx = x - dragStartPos.x;
-            const dy = y - dragStartPos.y;
-            
-            setAnnotations(prev => prev.map(ann => {
-                if (ann.id !== selectedAnnotationId) return ann;
-                
-                if (transformMode === 'move') {
-                    if (ann.type === 'freehand') {
-                        return { ...ann, points: initialTransformState.points.map((p: any) => ({ x: p.x + dx, y: p.y + dy })) };
-                    } else if (ann.type === 'text') {
-                        return { ...ann, x: initialTransformState.x + dx, y: initialTransformState.y + dy };
-                    } else {
-                        return { ...ann, start: { x: initialTransformState.start.x + dx, y: initialTransformState.start.y + dy }, end: { x: initialTransformState.end.x + dx, y: initialTransformState.end.y + dy } };
-                    }
-                } else if (transformMode === 'rotate') {
-                    const center = getCenter(ann);
-                    const angle = Math.atan2(y - center.y, x - center.x);
-                    return { ...ann, rotation: angle + Math.PI / 2 };
-                } else if (transformMode === 'resize') {
-                    const center = getCenter(initialTransformState as any);
-                    const localMouse = rotatePoint(x, y, center.x, center.y, -initialTransformState.rotation);
-                    const localStartClick = rotatePoint(dragStartPos.x, dragStartPos.y, center.x, center.y, -initialTransformState.rotation);
-                    
-                    const ldx = localMouse.x - localStartClick.x;
-                    const ldy = localMouse.y - localStartClick.y;
-                    
-                    if (ann.type === 'text') {
-                         const initialDist = Math.hypot(dragStartPos.x - center.x, dragStartPos.y - center.y);
-                         const currentDist = Math.hypot(x - center.x, y - center.y);
-                         const scale = currentDist / initialDist;
-                         return { ...ann, fontSize: Math.max(20, (initialTransformState as any).fontSize * scale) };
-                    } else if (ann.type === 'freehand') {
-                        return ann; 
-                    } else {
-                        let s = { ...(initialTransformState as any).start };
-                        let e = { ...(initialTransformState as any).end };
-                        const x1 = Math.min(s.x, e.x);
-                        const x2 = Math.max(s.x, e.x);
-                        const y1 = Math.min(s.y, e.y);
-                        const y2 = Math.max(s.y, e.y);
-                        
-                        let nx1 = x1, nx2 = x2, ny1 = y1, ny2 = y2;
-                        if (activeHandle?.includes('l')) nx1 += ldx;
-                        if (activeHandle?.includes('r')) nx2 += ldx;
-                        if (activeHandle?.includes('t')) ny1 += ldy;
-                        if (activeHandle?.includes('b')) ny2 += ldy;
-                        
-                        const newStart = { x: (s.x === x1) ? nx1 : nx2, y: (s.y === y1) ? ny1 : ny2 };
-                        const newEnd = { x: (e.x === x1) ? nx1 : nx2, y: (e.y === y1) ? ny1 : ny2 };
-                        return { ...ann, start: newStart, end: newEnd };
-                    }
-                }
-                return ann;
-            }));
-            return;
-        }
-
-        if (!isDrawing || !currentAnnotation) return;
-
-        if (currentAnnotation.type === 'freehand') {
-            setCurrentAnnotation({ ...currentAnnotation, points: [...currentAnnotation.points, {x, y}] });
-        } else if (currentAnnotation.type !== 'text') {
-            setCurrentAnnotation({ ...currentAnnotation, end: {x, y} } as any);
-        }
-    };
-
-    const stopDrawing = () => {
-        if (annotationTool === 'select') {
-            setIsDragging(false);
-            setDragStartPos(null);
-            setTransformMode('none');
-            return;
-        }
-
-        if (isDrawing && currentAnnotation) {
-            setAnnotations(prev => [...prev, currentAnnotation]);
-            
-            // Auto-select shapes and text for immediate modification
-            if (currentAnnotation.type !== 'freehand') {
-                setSelectedAnnotationId(currentAnnotation.id);
-                setAnnotationTool('select');
-            }
-            
-            setCurrentAnnotation(null);
-        }
-        setIsDrawing(false);
-    };
-
-    const undoAnnotation = () => {
-        setAnnotations(prev => prev.slice(0, -1));
-    };
-
-    const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number) => {
-        const headlen = 80; // larger head for high res
-        const angle = Math.atan2(toY - fromY, toX - fromX);
-        ctx.beginPath();
-        ctx.moveTo(fromX, fromY);
-        ctx.lineTo(toX, toY);
-        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-        ctx.moveTo(toX, toY);
-        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-        ctx.stroke();
-    };
-
-    const clearAnnotation = () => {
-        if (selectedAnnotationId) {
-            setAnnotations(prev => prev.filter(ann => ann.id !== selectedAnnotationId));
-            setSelectedAnnotationId(null);
-            setTransformMode('none');
-        } else {
-            if (confirm("Effacer toutes les annotations ?")) {
-                setAnnotations([]);
-            }
-        }
-    };
-
-    const saveAnnotation = async () => {
-        if (annotationCanvasRef.current) {
-            return new Promise<void>((resolve) => {
-                annotationCanvasRef.current?.toBlob((blob) => {
-                    if (blob) {
-                        const newFile = new File([blob], "annotated_image.jpg", { type: "image/jpeg" });
-                        setAnnotatedFile(newFile);
-                        resolve();
-                    }
-                }, 'image/jpeg', 0.85);
-            });
-        }
-    };
-
-    // Override sendImage to use annotated file
-    const handleSendImage = async () => {
-        // IMPORTANT: Deselect any active annotation to remove handles from the final image
-        renderCanvas(null); 
-        
-        // Wait a tiny bit for the synchronous canvas paint (although it should be instant)
-        // Then save
-        await saveAnnotation(); // Ensure latest canvas state is captured
-        
-        // Wait a tick for state update (or pass directly)
-        // Better: pass the file directly to upload function logic
-        if (annotationCanvasRef.current) {
-            annotationCanvasRef.current.toBlob(async (blob) => {
-                if (blob) {
-                    const finalFile = new File([blob], "annotated_image.jpg", { type: "image/jpeg" });
-                    
-                    const token = localStorage.getItem('auth_token');
-                    if (!token) return;
-                    setUploading(true);
-                    try {
-                        const formData = new FormData();
-                        formData.append('file', finalFile);
-                        const uploadRes = await fetch('/api/v2/chat/upload', {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        const uploadData = await uploadRes.json();
-                        if (!uploadRes.ok) throw new Error(uploadData.error);
-                        await fetch('/api/v2/chat/send', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ conversationId, content: '📷 Photo annotée', type: 'image', mediaKey: uploadData.key })
-                        });
-                        setPreviewFile(null);
-                        setAnnotatedFile(null); // Reset
-                        setOriginalImage(null);
-                        fetchMessages();
-                    } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
-                }
-            }, 'image/jpeg', 0.85);
-        }
-    };
 
     const handleNewEditorSend = async (file: File, caption: string) => {
         const token = localStorage.getItem('auth_token');
@@ -2762,8 +2216,6 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 body: JSON.stringify({ conversationId, content: msgContent, type: 'image', mediaKey: uploadData.key })
             });
             setPreviewFile(null);
-            setAnnotatedFile(null);
-            setOriginalImage(null);
             fetchMessages();
         } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
     };
@@ -3796,7 +3248,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             </div>
 
             <footer className="glass-header p-4 md:p-6 z-20 flex-shrink-0 border-t border-white/5">
-                <div className="max-w-5xl mx-auto flex items-end gap-3 relative">
+                <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-end gap-3 relative">
+                    {/* DEBUG FOOTER RENDER */}
+                    {console.log("FOOTER RENDER", { isRecording, showEmoji })}
                     {showEmoji && !isRecording && (
                         <div className="absolute bottom-full right-0 mb-4 bg-[#151515] border border-white/10 rounded-3xl shadow-2xl p-4 grid grid-cols-6 gap-2 w-80 animate-slide-up backdrop-blur-xl z-50">
                             {commonEmojis.map(emoji => (
@@ -3806,7 +3260,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     )}
 
                     {isRecording ? (
-                        <div className="flex-1 flex items-center justify-between px-6 py-3 animate-pulse bg-red-500/10 rounded-[2rem] border border-red-500/20 h-[56px]">
+                        <div className="flex-1 flex items-center justify-between px-6 py-3 animate-pulse bg-red-500/10 rounded-[2rem] border border-red-500/20 h-[56px] w-full">
                             <div className="flex items-center gap-4 text-white">
                                 <div className="w-3 h-3 rounded-full bg-red-500 animate-ping"></div>
                                 <span className="font-mono text-lg text-red-400 font-bold tracking-widest">{formatDuration(recordingTime)}</span>
@@ -3820,61 +3274,86 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         </div>
                     ) : (
                         <>
-                            {/* Bouton Plus (Upload) - Gauche */}
-                            <div 
-                                className={`pb-1 transition-all duration-300 ease-in-out overflow-hidden ${isInputExpanded ? 'w-0 opacity-0 mr-0' : 'w-12 opacity-100 mr-0'}`}
-                            >
-                                <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
-                                <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-full bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all shadow-lg group">
-                                    <i className="fas fa-plus text-lg group-hover:rotate-90 transition-transform duration-300"></i>
-                                </button>
-                            </div>
-
-                            {/* Zone de texte + Emoji - Centre (Style Input) */}
-                            <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-[1.5rem] flex items-end p-1.5 pl-5 gap-2 shadow-inner focus-within:border-emerald-500/50 focus-within:bg-[#202020] transition-all">
-                                <textarea 
-                                    ref={textareaRef}
-                                    value={input}
-                                    onChange={e => {
-                                        setInput(e.target.value);
-                                        handleInputInteraction(e.target.value);
-                                    }}
-                                    onFocus={() => handleInputInteraction()}
-                                    onKeyDown={handleKeyPress}
-                                    placeholder="Message..." 
-                                    className="bg-transparent text-white w-full max-h-32 focus:outline-none placeholder-gray-500 resize-none text-[15px] font-medium leading-relaxed custom-scrollbar py-3"
-                                    rows={1}
-                                    style={{ minHeight: '48px' }}
-                                />
-                                <button onClick={() => setShowEmoji(!showEmoji)} className={`w-12 h-12 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${showEmoji ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
-                                    <i className="far fa-smile text-xl"></i>
-                                </button>
-                                
-                                {/* Dictation Button (Inside Input) */}
-                                <button 
-                                    onClick={startDictation}
-                                    className={`w-10 h-10 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${isDictating ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-white'}`}
-                                    title="Dictée vocale (Texte)"
+                            {/* TOOLS ROW (Mobile: Top, Desktop: Left) */}
+                            <div className="flex gap-2 items-center md:items-end md:pb-1 md:mr-2 w-full md:w-auto">
+                                {/* Bouton Plus (Upload) - Gauche */}
+                                <div 
+                                    className={`transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 ${isInputExpanded ? 'w-0 opacity-0 md:w-12 md:opacity-100' : 'w-12 opacity-100'}`}
                                 >
-                                    <i className="fas fa-microphone text-lg"></i>
-                                </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" className="hidden" />
+                                    <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 rounded-full bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 text-emerald-500 hover:text-emerald-400 flex items-center justify-center transition-all shadow-lg group">
+                                        <i className="fas fa-plus text-lg group-hover:rotate-90 transition-transform duration-300"></i>
+                                    </button>
+                                </div>
+
+                                {/* BOUTON MAGIC TICKET (IA) - TOUJOURS VISIBLE */}
+                                <div className="flex-shrink-0 relative z-50">
+                                    <button 
+                                        onClick={isMagicRecording ? stopMagicRecording : startMagicRecording}
+                                        disabled={isMagicAnalyzing || isRecording}
+                                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95 group ${
+                                            isMagicRecording 
+                                                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 animate-pulse ring-2 ring-violet-300 text-white' 
+                                                : 'bg-[#1a1a1a] border border-white/10 text-violet-500 hover:text-violet-400 hover:bg-[#252525]'
+                                        }`}
+                                        title={isMagicRecording ? 'Arrêter l\'analyse' : 'Créer un ticket (IA)'}
+                                        style={{ display: 'flex' }}
+                                    >
+                                       {isMagicAnalyzing ? <i className="fas fa-spinner fa-spin text-lg text-white"></i> :
+                                       isMagicRecording ? <i className="fas fa-stop text-lg text-white"></i> :
+                                       <i className="fas fa-magic text-lg group-hover:rotate-12 transition-transform"></i>}
+                                    </button>
+                                </div>
                             </div>
 
-                            {/* Bouton Envoyer / Micro - Droite */}
-                            <div className="pb-1">
-                                {input.trim() ? (
+                            {/* INPUT ROW (Mobile: Bottom, Desktop: Right) */}
+                            <div className="flex-1 flex gap-2 w-full md:w-auto items-end">
+                                {/* Zone de texte + Emoji - Centre (Style Input) */}
+                                <div className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-[1.5rem] flex items-end p-1.5 pl-5 gap-2 shadow-inner focus-within:border-emerald-500/50 focus-within:bg-[#202020] transition-all">
+                                    <textarea 
+                                        ref={textareaRef}
+                                        value={input}
+                                        onChange={e => {
+                                            setInput(e.target.value);
+                                            handleInputInteraction(e.target.value);
+                                        }}
+                                        onFocus={() => handleInputInteraction()}
+                                        onKeyDown={handleKeyPress}
+                                        placeholder="Message..." 
+                                        className="bg-transparent text-white w-full max-h-32 focus:outline-none placeholder-gray-500 resize-none text-[15px] font-medium leading-relaxed custom-scrollbar py-3"
+                                        rows={1}
+                                        style={{ minHeight: '48px' }}
+                                    />
+                                    <button onClick={() => setShowEmoji(!showEmoji)} className={`w-12 h-12 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${showEmoji ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
+                                        <i className="far fa-smile text-xl"></i>
+                                    </button>
+                                    
+                                    {/* Dictation Button (Inside Input) */}
                                     <button 
-                                        onClick={sendMessage} 
-                                        disabled={isSending}
-                                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-emerald-900/30 transition-all transform ${isSending ? 'bg-gray-700 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 hover:scale-105 active:scale-95 text-white'}`}
+                                        onClick={startDictation}
+                                        className={`w-10 h-10 flex-shrink-0 rounded-full hover:bg-white/10 transition-all flex items-center justify-center ${isDictating ? 'text-red-500 animate-pulse' : 'text-gray-400 hover:text-white'}`}
+                                        title="Dictée vocale (Texte)"
                                     >
-                                        {isSending ? <i className="fas fa-circle-notch fa-spin text-lg"></i> : <i className="fas fa-paper-plane text-lg ml-0.5"></i>}
+                                        <i className="fas fa-microphone text-lg"></i>
                                     </button>
-                                ) : (
-                                    <button onClick={startRecording} className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-white/10 text-gray-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg" title="Maintenir pour message vocal">
-                                        <i className="fas fa-wave-square text-lg"></i>
-                                    </button>
-                                )}
+                                </div>
+
+                                {/* Bouton Envoyer / Micro - Droite */}
+                                <div className="pb-1 flex-shrink-0">
+                                    {input.trim() ? (
+                                        <button 
+                                            onClick={sendMessage} 
+                                            disabled={isSending}
+                                            className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-emerald-900/30 transition-all transform ${isSending ? 'bg-gray-700 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 hover:scale-105 active:scale-95 text-white'}`}
+                                        >
+                                            {isSending ? <i className="fas fa-circle-notch fa-spin text-lg"></i> : <i className="fas fa-paper-plane text-lg ml-0.5"></i>}
+                                        </button>
+                                    ) : (
+                                        <button onClick={startRecording} className="w-12 h-12 rounded-full bg-[#1a1a1a] border border-white/10 text-gray-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg" title="Maintenir pour message vocal">
+                                            <i className="fas fa-wave-square text-lg"></i>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}

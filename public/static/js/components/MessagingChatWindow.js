@@ -10,7 +10,8 @@ const MessagingChatWindow = ({
     onBulkDelete,
     onOpenPrivateMessage,
     onBack,
-    onClose
+    onClose,
+    onTicketDetected
 }) => {
     // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
     const currentUser = React.useMemo(() => {
@@ -47,6 +48,73 @@ const MessagingChatWindow = ({
 
     // Audio playback state
     const [playingAudio, setPlayingAudio] = React.useState({});
+
+    // MAGIC TICKET STATE
+    const [isMagicRecording, setIsMagicRecording] = React.useState(false);
+    const [isMagicAnalyzing, setIsMagicAnalyzing] = React.useState(false);
+    const magicMediaRecorderRef = React.useRef(null);
+    const magicChunksRef = React.useRef([]);
+
+    const startMagicRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            magicChunksRef.current = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) magicChunksRef.current.push(e.data);
+            };
+
+            recorder.onstop = async () => {
+                const audioBlob = new Blob(magicChunksRef.current, { type: 'audio/webm' });
+                stream.getTracks().forEach(track => track.stop());
+                await analyzeMagicAudio(audioBlob);
+            };
+
+            recorder.start();
+            magicMediaRecorderRef.current = recorder;
+            setIsMagicRecording(true);
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            alert("Impossible d'accéder au microphone. Vérifiez vos permissions.");
+        }
+    };
+
+    const stopMagicRecording = () => {
+        if (magicMediaRecorderRef.current && isMagicRecording) {
+            magicMediaRecorderRef.current.stop();
+            setIsMagicRecording(false);
+            setIsMagicAnalyzing(true);
+        }
+    };
+
+    const analyzeMagicAudio = async (audioBlob) => {
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'recording.webm');
+
+        try {
+            const response = await axios.post('/api/ai/analyze-ticket', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (response.data) {
+                if (response.data.priority) {
+                    response.data.priority = response.data.priority.toLowerCase();
+                }
+                // Call parent callback
+                if (onTicketDetected) {
+                    onTicketDetected(response.data);
+                } else {
+                    console.warn('onTicketDetected prop is missing');
+                }
+            }
+        } catch (error) {
+            console.error("AI Analysis failed:", error);
+            alert("Erreur lors de l'analyse vocale: " + (error.response?.data?.error || error.message));
+        } finally {
+            setIsMagicAnalyzing(false);
+        }
+    };
 
     // Scroll to bottom on new messages
     React.useEffect(() => {
@@ -630,6 +698,19 @@ const MessagingChatWindow = ({
                             : React.createElement('i', { className: 'fas fa-microphone' })
                     ) : null
                 ),
+
+                // BOUTON MAGIC TICKET (IA)
+                React.createElement('button', {
+                    onClick: isMagicRecording ? stopMagicRecording : startMagicRecording,
+                    disabled: isMagicAnalyzing || isRecording,
+                    className: 'flex-shrink-0 w-10 h-10 mb-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 ' + (isMagicRecording ? 'animate-pulse ring-2 ring-violet-300' : ''),
+                    title: isMagicRecording ? 'Arrêter l\'analyse' : 'Créer un ticket (IA)'
+                },
+                   isMagicAnalyzing ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) :
+                   isMagicRecording ? React.createElement('i', { className: 'fas fa-stop' }) :
+                   React.createElement('i', { className: 'fas fa-magic' })
+                ),
+
                 React.createElement('button', {
                     onClick: startRecording,
                     className: 'flex-shrink-0 px-3 sm:px-4 bg-gradient-to-br from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 font-semibold transition-all shadow-xl hover:shadow-2xl flex items-center justify-center transform hover:scale-105 active:scale-95',

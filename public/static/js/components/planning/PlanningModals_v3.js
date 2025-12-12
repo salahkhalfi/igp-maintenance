@@ -149,7 +149,7 @@ const PlanningModals = ({
                                         id: 'show_on_tv',
                                         checked: showTvExtras,
                                         onChange: (e) => setShowTvExtras(e.target.checked),
-                                        className: 'toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 top-1' // Custom toggle style would be better but keeping simple for now
+                                        className: 'toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 top-1',
                                     }),
                                     React.createElement('label', { 
                                         htmlFor: 'show_on_tv', 

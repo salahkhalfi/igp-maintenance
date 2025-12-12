@@ -1,4 +1,4 @@
-const MessagingModal = ({ show, onClose, currentUser: propUser, initialContact, initialTab }) => {
+const MessagingModal = ({ show, onClose, currentUser: propUser, initialContact, initialTab, onTicketDetected }) => {
     // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
     const currentUser = React.useMemo(() => {
         if (propUser) return propUser;
@@ -313,7 +313,8 @@ const MessagingModal = ({ show, onClose, currentUser: propUser, initialContact, 
                     onBulkDelete: handleBulkDelete,
                     onOpenPrivateMessage: openPrivateMessage,
                     onClose: onClose,
-                    onBack: () => setSelectedContact(null)
+                    onBack: () => setSelectedContact(null),
+                    onTicketDetected: onTicketDetected
                 }) : 
                 
                 React.createElement(window.MessagingChatWindow, {
@@ -330,7 +331,8 @@ const MessagingModal = ({ show, onClose, currentUser: propUser, initialContact, 
                     onBulkDelete: handleBulkDelete,
                     onOpenPrivateMessage: openPrivateMessage,
                     onClose: onClose,
-                    onBack: () => setSelectedContact(null)
+                    onBack: () => setSelectedContact(null),
+                    onTicketDetected: onTicketDetected
                 })
             )
         )
