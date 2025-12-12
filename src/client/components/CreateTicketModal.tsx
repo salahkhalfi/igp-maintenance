@@ -14,6 +14,9 @@ interface CreateTicketModalProps {
   initialTitle?: string;
   initialPriority?: TicketPriority;
   initialMachineId?: number | null;
+  initialAssignedToName?: string;
+  initialAssignedToId?: number | null;
+  initialScheduledDate?: string;
 }
 
 export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ 
@@ -24,7 +27,10 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     initialImageUrl,
     initialTitle,
     initialPriority,
-    initialMachineId
+    initialMachineId,
+    initialAssignedToName,
+    initialAssignedToId,
+    initialScheduledDate
 }) => {
   const queryClient = useQueryClient();
   
@@ -39,8 +45,29 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
         if (initialDescription) setDescription(initialDescription);
         if (initialPriority) setPriority(initialPriority);
         if (initialMachineId) setMachineId(initialMachineId);
+        
+        // Handle Scheduled Date (Robust parsing)
+        if (initialScheduledDate) {
+            try {
+                // Force parse assuming ISO string from AI
+                const date = new Date(initialScheduledDate);
+                if (!isNaN(date.getTime())) {
+                    // Manual formatting to YYYY-MM-DDTHH:mm to avoid timezone shifts
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    
+                    const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    setScheduledDate(formatted);
+                }
+            } catch (e) {
+                console.warn("Invalid date format", initialScheduledDate);
+            }
+        }
     }
-  }, [isOpen, initialTitle, initialDescription, initialPriority, initialMachineId]);
+  }, [isOpen, initialTitle, initialDescription, initialPriority, initialMachineId, initialScheduledDate]);
   
   // Update description if initialDescription changes (e.g. when opening from URL)
   useEffect(() => {
@@ -50,6 +77,11 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
         if (!title) {
             setTitle(initialDescription.slice(0, 50) + (initialDescription.length > 50 ? '...' : ''));
         }
+        
+        // DEBUG: Uncomment to see what AI is sending if fields are still empty
+        // if (initialAssignedToName || initialAssignedToId || initialScheduledDate) {
+        //    setDescription(prev => prev + `\n\n[AI DEBUG: ID=${initialAssignedToId}, Name=${initialAssignedToName}, Date=${initialScheduledDate}]`);
+        // }
     }
   }, [initialDescription]);
 
@@ -111,9 +143,44 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
   const { data: technicians = [] } = useQuery({
     queryKey: ['technicians'],
     queryFn: getTechnicians,
-    enabled: isOpen && (currentUserRole === 'admin' || currentUserRole === 'supervisor'),
+    enabled: isOpen, // CHARGEMENT SYSTÉMATIQUE (Comme les machines) - Fixe le bug de l'IA
     staleTime: 1000 * 60 * 5
   });
+
+  // Auto-select technician with Retry/Sync logic
+  // This ensures we set the value ONLY when both the ID is available AND the list is loaded
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // A. Priority: Direct ID
+    if (initialAssignedToId) {
+        // Force number conversion just in case
+        const targetId = Number(initialAssignedToId);
+        
+        // Trust the ID if provided, even if list not fully loaded yet (it will sync)
+        setAssignedTo(targetId);
+        
+        // Double check existence for debug
+        const exists = technicians.find((t: any) => t.id === targetId);
+        if (!exists && technicians.length > 0) {
+             console.warn(`AI provided ID ${targetId} but not found in loaded technicians list.`);
+        }
+    }
+    // B. Fallback: Name matching
+    else if (initialAssignedToName && technicians.length > 0) {
+        const lowerName = initialAssignedToName.toLowerCase();
+        // ... (existing name matching logic)
+        const target = technicians.find((t: any) => {
+            const tFull = (t.full_name || '').toLowerCase();
+            const searchParts = lowerName.split(' ').filter(p => p.length > 1);
+            if (tFull.includes(lowerName)) return true;
+            if (searchParts.length > 0) return searchParts.every(part => tFull.includes(part));
+            return false;
+        });
+
+        if (target) setAssignedTo(target.id);
+    }
+  }, [isOpen, technicians, initialAssignedToName, initialAssignedToId]); // <--- Re-runs when 'technicians' list finally arrives!
 
   // Mutation pour la création
   const createTicketMutation = useMutation({
@@ -333,7 +400,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                     onChange={(e) => setAssignedTo(e.target.value ? Number(e.target.value) : '')}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
                   >
-                    <option value="">Non assigné</option>
+                    <option value="">-- Sélectionner un technicien --</option>
                     {technicians.map(t => (
                       <option key={t.id} value={t.id}>{t.first_name} {t.last_name}</option>
                     ))}
