@@ -293,7 +293,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             show: showCreateModal, onClose: () => setShowCreateModal(false),
             machines: machines, onTicketCreated: onTicketCreated, currentUser: currentUser,
             initialDescription: localDescription, initialImageUrl: initialImageUrl,
-            initialTitle: initialTitle, initialPriority: initialPriority, initialMachineId: initialMachineId
+            initialTitle: initialTitle, initialPriority: initialPriority, initialMachineId: initialMachineId,
+            initialAssignedToId: initialAssignedToId, initialAssignedToName: initialAssignedToName, initialScheduledDate: initialScheduledDate
         }),
         React.createElement(TicketDetailsModal, {
             show: showDetailsModal, onClose: () => { setShowDetailsModal(false); setSelectedTicketId(null); },
