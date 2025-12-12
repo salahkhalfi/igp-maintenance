@@ -21,6 +21,8 @@ async function transcribeAudio(audioFile: File, env: Bindings): Promise<string |
             formData.append('file', audioFile);
             formData.append('model', 'whisper-large-v3'); // Groq's super fast model
             formData.append('language', 'fr'); // Force French for consistency
+            // L'antisèche pour Groq (Aide à distinguer le bruit des vrais mots)
+            formData.append('prompt', "Contexte: Maintenance industrielle vitre. Bruit usine. Mots clés: Polisseuse, Waterjet, Table de coupe, Four, CNC, Bearing, Roulement, Moteur, Fuite, Panne, Urgent, Laurent, Salah, Maintenance, Réparation, Cassé, Bloqué.");
             
             const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                 method: 'POST',
@@ -105,7 +107,12 @@ RÈGLES D'EXTRACTION STRICTES :
    - Si tu entends une DATE mais AUCUN NOM -> 'assigned_to_id' = 0 (Cela signifie "Assigner à toute l'équipe").
    - Si aucun nom et aucune date -> 'assigned_to_id' = null.
 3. DATE : Convertis les termes relatifs ("demain 14h", "lundi matin") en format ISO 8601 (YYYY-MM-DDTHH:mm:ss) basé sur la DATE ACTUELLE.
-4. TITRE/DESCRIPTION : Si la demande est très courte, utilise-la comme titre. La description doit être professionnelle.
+
+4. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
+   - Tu es un secrétaire technique. Reformule le texte brut (souvent mal dit ou bruyant) en langage professionnel.
+   - Exemple : "Euh le truc tourne pas sur la polisseuse" -> Titre: "Arrêt rotation" / Desc: "Problème de rotation signalé sur la Polisseuse."
+   - NE PAS INVENTER : N'ajoute pas de détails techniques (ex: ne dis pas "Roulement cassé" si l'audio dit juste "Bruit").
+   - Si le texte est incompréhensible mais qu'une MACHINE est identifiée, mets en Titre : "Intervention requise : [Nom Machine]".
 
 FORMAT JSON ATTENDU (Réponds UNIQUEMENT ce JSON) :
 {
