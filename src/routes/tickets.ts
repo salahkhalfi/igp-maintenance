@@ -8,6 +8,7 @@ import { getDb } from '../db';
 import { tickets, machines, users, media, ticketTimeline, pushLogs } from '../db/schema';
 import { generateTicketId } from '../utils/ticket-id';
 import { formatUserName } from '../utils/userFormatter';
+import { sendToPabbly } from '../utils/pabbly';
 import { createTicketSchema, updateTicketSchema, ticketIdParamSchema, getTicketsQuerySchema } from '../schemas/tickets';
 import type { Bindings } from '../types';
 
@@ -256,6 +257,14 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
     };
 
     const newTicket = await createTicketWithRetry();
+
+    // WEBHOOK: Send to Pabbly (Shadow Logging)
+    c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_created', {
+      ...newTicket,
+      machine_info: machine,
+      creator_info: user
+    }));
+
     return c.json({ ticket: newTicket }, 201);
 
   } catch (error) {
@@ -321,6 +330,15 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
       .returning();
     
     const updatedTicket = result[0];
+
+    // WEBHOOK: Send to Pabbly (Shadow Logging)
+    c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_updated', {
+      ticket_id: updatedTicket.ticket_id,
+      id: updatedTicket.id,
+      changes: body,
+      new_state: updatedTicket,
+      updater_info: user
+    }));
 
     // Timeline
     await db.insert(ticketTimeline).values({
@@ -466,6 +484,14 @@ ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) 
     }
 
     await db.delete(tickets).where(eq(tickets.id, id));
+
+    // WEBHOOK: Send to Pabbly (Shadow Logging)
+    c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_deleted', {
+      ticket_id: ticket.ticket_id,
+      id: ticket.id,
+      deleted_title: ticket.title,
+      deleter_info: user
+    }));
 
     return c.json({
       message: 'Ticket supprimé avec succès',
