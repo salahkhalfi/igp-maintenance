@@ -473,7 +473,7 @@ const AppHeader = ({
             // MOBILE MENU & DESKTOP ACTIONS
             React.createElement('div', { 
                 style: showMobileMenu ? { WebkitOverflowScrolling: 'touch' } : {},
-                className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 md:mt-0 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'absolute top-full left-0 right-0 mx-2 mt-2 p-4 flex flex-col bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 max-h-[calc(100dvh-5rem)] overflow-y-auto custom-scrollbar z-[100] overscroll-contain touch-pan-y pb-24' : 'hidden')
+                className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 md:mt-0 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'absolute top-full left-0 w-full p-4 flex flex-col bg-white/95 backdrop-blur-xl shadow-2xl border-t border-gray-200 max-h-[calc(100dvh-4rem)] overflow-y-auto custom-scrollbar z-[100] overscroll-contain touch-pan-y pb-24' : 'hidden')
             },
 
                 activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
