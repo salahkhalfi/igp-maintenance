@@ -1,5 +1,14 @@
 # 📖 LA BIBLE DU DÉVELOPPEUR PRAGMATIQUE
-## Le Gros Bon Sens Technique (Version 2.0.0 - Épurée)
+## Le Gros Bon Sens Technique (Version 3.1 - Era of DeepSeek)
+
+# 🏆 BUT ULTIME ET SACRÉ (LA MISSION)
+**Transformer cette application en "MaintenanceOS" : une solution SaaS générique, robuste et prête à l'emploi pour n'importe quelle PME (Garage, Usine, Boulangerie).**
+*   **IGP n'est PAS la finalité**, c'est le **laboratoire de test ("Battle Ground")**.
+*   Si ça marche pour un polisseur IGP (mains occupées, bruit, urgence), ça marchera pour tout le monde.
+*   **Stratégie Technique** : Coût minimal (Cloudflare/D1/DeepSeek/Groq), Robustesse maximale (Zéro maintenance serveur), UX "Bouton Magique" (Vente facile).
+*   **Confidentialité** : Ce but est secret. Le code reste optimisé pour IGP en apparence, mais générique en architecture.
+
+---
 
 **⚠️ PROTOCOLE DIVIN (À LIRE À CHAQUE DÉMARRAGE) :**
 1.  **Priorité Absolue** : Ce document est la source de vérité.
@@ -27,7 +36,7 @@
 *   **Soft Delete** : On ne supprime pas (`DELETE`), on désactive (`deleted_at`).
 *   **Notifications** : C'est du "bonus". L'app doit marcher sans.
 *   **Validation IA (Loi de l'Image)** : Avant d'envoyer une image à une IA (Gemini/Vertex), TOUJOURS valider techniquement le fichier (format, encodage Base64, taille > 0). Ne jamais faire confiance à l'upload user pour éviter l'erreur "Provided image is not valid".
-*   **Stratégie Hybride (Loi du Moindre Effort)** : Pour les fonctionnalités IA (ex: Transcription), privilégier le moteur Local/Natif (Web Speech API) en priorité : c'est gratuit, rapide et gère mieux les accents. Le Serveur (Whisper) ne doit servir que de filet de sécurité (Fallback) ou pour l'intelligence contextuelle avancée.
+*   **Stratégie Hybride (Loi du Moindre Effort)** : Pour les fonctionnalités IA (ex: Transcription), privilégier le moteur Local/Natif (Web Speech API) en priorité : c'est gratuit, rapide et gère mieux les accents. Le Serveur (Groq/Whisper) ne doit servir que de filet de sécurité (Fallback) ou pour l'intelligence contextuelle avancée.
 
 ## 4. DÉVELOPPEMENT (Loi de l'Hygiène)
 *   **Code Mort** : Si c'est commenté, ça dégage. Git est là pour l'historique.
@@ -100,6 +109,16 @@
 - Prompt système ("Secret Weapon") : *"Technicien de maintenance industrielle. Accent québécois..."* pour guider le modèle.
 - Fallback automatique sur Cloudflare si l'API OpenAI échoue.
 **Résultat** : Transcription serveur de qualité "Humaine", même avec du jargon technique et un fort accent.
+
+### 2025-12-12 (Soir) : L'Alliance Groq & DeepSeek (Performance & Coût)
+**Objectif** : Atteindre l'excellence (Whisper Large V3) et l'intelligence supérieure (Reasoning) à coût nul ou dérisoire.
+**Stratégie "Robin des Bois"** :
+1.  **Audio** : Remplacement de OpenAI Whisper (0.006$/min) par **Groq Whisper V3** (Gratuit/Low-cost & 10x plus rapide). Clé : `GROQ_API_KEY`.
+2.  **Cerveau** : Remplacement de GPT-4o-mini par **DeepSeek-V3** (Meilleur que GPT-4 et 10x moins cher). Clé : `DEEPSEEK_API_KEY`.
+3.  **Architecture Cascade** :
+    - Audio : Groq -> Fallback OpenAI.
+    - Logic : DeepSeek -> Fallback OpenAI.
+**Résultat** : Un "Super-Cerveau" avec une ouïe parfaite, tournant sur une infrastructure quasi-gratuite. La base de "MaintenanceOS".
 
 ---
 

@@ -129,6 +129,8 @@ export interface Bindings {
   VAPID_PRIVATE_KEY?: string;
   PUSH_ENABLED?: string;
   ENVIRONMENT?: string; // 'production' | 'development' | 'staging'
-  OPENAI_API_KEY?: string; // Clé API OpenAI pour Whisper V3 (Optionnel, fallback sur Cloudflare AI)
+  OPENAI_API_KEY?: string; // Clé API OpenAI (Fallback)
+  GROQ_API_KEY?: string; // Clé API Groq (Audio)
+  DEEPSEEK_API_KEY?: string; // Clé API DeepSeek (Intelligence)
   ASSETS: Fetcher;
 }
