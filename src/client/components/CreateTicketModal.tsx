@@ -77,11 +77,6 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
         if (!title) {
             setTitle(initialDescription.slice(0, 50) + (initialDescription.length > 50 ? '...' : ''));
         }
-        
-        // DEBUG: Uncomment to see what AI is sending if fields are still empty
-        // if (initialAssignedToName || initialAssignedToId || initialScheduledDate) {
-        //    setDescription(prev => prev + `\n\n[AI DEBUG: ID=${initialAssignedToId}, Name=${initialAssignedToName}, Date=${initialScheduledDate}]`);
-        // }
     }
   }, [initialDescription]);
 
@@ -379,29 +374,27 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
             </div>
           </div>
 
-            {/* DEBUG INFO - ALWAYS VISIBLE FOR DIAGNOSIS (REMOVED - MOVED TO TOP) */}
-            <div className="relative">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Décrivez le problème, les bruits anormaux, ou les circonstances..."
-                rows={4}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
-              />
-              {hasRecognitionSupport && (
-                <button
-                  type="button"
-                  onClick={isListeningDesc ? stopListeningDesc : startListeningDesc}
-                  className={`absolute right-2 top-2 p-2 rounded-full transition-all ${
-                    isListeningDesc 
-                      ? 'bg-red-100 text-red-600 animate-pulse' 
-                      : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  {isListeningDesc ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                </button>
-              )}
-            </div>
+          <div className="relative">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Décrivez le problème, les bruits anormaux, ou les circonstances..."
+              rows={4}
+              className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none"
+            />
+            {hasRecognitionSupport && (
+              <button
+                type="button"
+                onClick={isListeningDesc ? stopListeningDesc : startListeningDesc}
+                className={`absolute right-2 top-2 p-2 rounded-full transition-all ${
+                  isListeningDesc 
+                    ? 'bg-red-100 text-red-600 animate-pulse' 
+                    : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {isListeningDesc ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
+            )}
           </div>
 
           {/* Zone Admin/Superviseur: Assignation */}
@@ -432,7 +425,8 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-                  />
+                  >
+                  </input>
                 </div>
               </div>
             </div>
