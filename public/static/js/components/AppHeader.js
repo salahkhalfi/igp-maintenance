@@ -470,42 +470,49 @@ const AppHeader = ({
                 ), document.body
             ),
 
-            // MOBILE MENU & DESKTOP ACTIONS
-            React.createElement('div', { 
-                style: showMobileMenu ? { WebkitOverflowScrolling: 'touch' } : {},
-                className: 'md:flex md:flex-row md:items-center md:justify-center gap-2 md:mt-0 transition-all duration-300 ease-in-out ' + (showMobileMenu ? 'absolute top-full left-0 w-full p-4 flex flex-col bg-white/95 backdrop-blur-xl shadow-2xl border-t border-gray-200 max-h-[calc(100dvh-4rem)] overflow-y-auto custom-scrollbar z-[100] overscroll-contain touch-pan-y pb-24' : 'hidden')
-            },
-
-                activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-gray-50' }, 
-                    React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-2 text-blue-500' }), 'Messagerie'),
-                    (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
-                ),
-                // NEW CONNECT BUTTON
-                React.createElement('button', { 
-                    onClick: () => window.open('/messenger', '_blank'), 
-                    className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm items-center flex justify-between md:justify-start hover:bg-emerald-50 border-emerald-200' 
-                }, 
-                    React.createElement('div', { className: 'flex items-center' }, 
-                        React.createElement('i', { className: 'fas fa-rocket mr-2 text-emerald-600' }), 
-                        React.createElement('span', { className: 'font-bold text-emerald-700' }, messengerName)
+            // MOBILE MENU PORTAL (Fixed Overlay behind header)
+            showMobileMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
+                React.createElement('div', { 
+                    className: 'fixed inset-0 z-[49] flex flex-col bg-white/95 backdrop-blur-xl overflow-y-auto pt-[60px] pb-32 px-4',
+                    style: { WebkitOverflowScrolling: 'touch' } // Native momentum scrolling
+                },
+                    activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-gray-50' }, 
+                        React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-3 text-blue-500 text-lg' }), 'Messagerie'),
+                        (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
                     ),
-                    React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full animate-pulse' }, 'NOUVEAU')
-                ),
-                React.createElement('button', {
-                    onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
-                    className: 'px-3 py-1.5 text-sm rounded-md shadow-sm flex items-center gap-2 border ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
-                }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') }), showArchived ? 'Masquer' : 'Archivés'),
-                safeHasPermission('users.read') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-users mr-2 text-indigo-600' }), currentUser?.role === 'technician' ? 'Équipe' : 'Utilisateurs'),
-                safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cogs mr-2 text-teal-500' }), 'Machines'),
-                safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-columns mr-2 text-gray-500' }), 'Colonnes'),
-                safeHasPermission('planning.read') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-500' }), 'Planning'),
-                safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-cog mr-2 text-gray-600' }), 'Paramètres'),
-                safeHasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-shield-alt mr-2 text-blue-600' }), 'Rôles'),
-                safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenTv, className: 'px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border shadow-sm flex items-center hover:bg-gray-50' }, React.createElement('i', { className: 'fas fa-tv mr-2 text-purple-600' }), 'Écran TV'),
+                    // NEW CONNECT BUTTON
+                    React.createElement('button', { 
+                        onClick: () => window.open('/messenger', '_blank'), 
+                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-emerald-50 border-emerald-200' 
+                    }, 
+                        React.createElement('div', { className: 'flex items-center' }, 
+                            React.createElement('i', { className: 'fas fa-rocket mr-3 text-emerald-600 text-lg' }), 
+                            React.createElement('span', { className: 'font-bold text-emerald-700' }, messengerName)
+                        ),
+                        React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full animate-pulse' }, 'NOUVEAU')
+                    ),
+                    React.createElement('button', {
+                        onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
+                        className: 'px-3 py-3 text-sm rounded-lg shadow-sm flex items-center gap-2 border mt-2 ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
+                    }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') + ' mr-1 text-lg' }), showArchived ? 'Masquer les tickets archivés' : 'Voir les tickets archivés'),
+                    
+                    React.createElement('div', { className: 'h-px bg-gray-200 my-4' }), // Separator
+                    
+                    safeHasPermission('users.read') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-users mr-3 text-indigo-600 text-lg' }), currentUser?.role === 'technician' ? 'Mon Équipe' : 'Gestion Utilisateurs'),
+                    safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-cogs mr-3 text-teal-500 text-lg' }), 'Gestion Machines'),
+                    safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-columns mr-3 text-gray-500 text-lg' }), 'Colonnes Kanban'),
+                    safeHasPermission('planning.read') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-3 text-blue-500 text-lg' }), 'Planning Production'),
+                    safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-cog mr-3 text-gray-600 text-lg' }), 'Paramètres Système'),
+                    safeHasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-shield-alt mr-3 text-blue-600 text-lg' }), 'Gestion Rôles'),
+                    safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenTv, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-tv mr-3 text-purple-600 text-lg' }), 'Mode Écran TV'),
 
-                React.createElement('button', { onClick: onRefresh, className: 'px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-blue-700 transition' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser'),
-                React.createElement('button', { onClick: onLogout, className: 'px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md shadow-md flex items-center hover:bg-gray-700 transition' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Déconnexion')
+                    React.createElement('div', { className: 'flex-1' }), // Spacer
+
+                    React.createElement('button', { onClick: onRefresh, className: 'px-3 py-3 bg-blue-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-blue-700 transition mt-4 font-bold' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser les données'),
+                    React.createElement('button', { onClick: onLogout, className: 'px-3 py-3 bg-gray-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-gray-700 transition mt-2 font-bold' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Se déconnecter')
+                ), document.body
             )
+
         )
     );
 };
