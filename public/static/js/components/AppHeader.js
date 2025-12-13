@@ -301,10 +301,38 @@ const AppHeader = ({
                             onClick: onOpenPushDevices, title: 'Mes Appareils'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
 
-                        // Mobile Menu Toggle
+                        // --- RESTORED DESKTOP BUTTONS ---
+                        
+                        // User Management (Desktop)
+                        safeHasPermission('users.read') && React.createElement('button', {
+                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all',
+                             onClick: onOpenUserManagement, title: 'Gestion Utilisateurs'
+                        }, React.createElement('i', { className: 'fas fa-users' })),
+
+                        // Machines (Desktop)
+                        safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', {
+                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-teal-600 transition-all',
+                             onClick: onOpenMachineManagement, title: 'Gestion Machines'
+                        }, React.createElement('i', { className: 'fas fa-cogs' })),
+
+                        // Settings (Desktop) - CRITICAL REQUEST
+                        safeHasPermission('settings.manage') && React.createElement('button', {
+                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-gray-700 transition-all',
+                             onClick: onOpenSystemSettings, title: 'Paramètres Système'
+                        }, React.createElement('i', { className: 'fas fa-cog' })),
+
+                        // TV Mode (Desktop)
+                        safeHasPermission('settings.manage') && React.createElement('button', {
+                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
+                             onClick: onOpenTv, title: 'Mode TV'
+                        }, React.createElement('i', { className: 'fas fa-tv' })),
+
+                        // MAIN MENU TOGGLE (Visible on ALL screens)
+                        // This button was missing on Desktop in v2, preventing access to Settings/Admin
                         React.createElement('button', {
-                            className: 'md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100',
-                            onClick: () => setShowMobileMenu(!showMobileMenu)
+                            className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-sm ml-2',
+                            onClick: () => setShowMobileMenu(!showMobileMenu),
+                            title: 'Menu Principal (Paramètres, Admin, etc.)'
                         }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-lg' }))
                     )
                 )
@@ -371,7 +399,12 @@ const AppHeader = ({
                         React.createElement('button', {
                             onClick: onOpenManageColumns,
                             className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors'
-                        }, React.createElement('i', { className: 'fas fa-columns text-slate-400' }), 'Vues')
+                        }, React.createElement('i', { className: 'fas fa-columns text-slate-400' }), 'Vues'),
+
+                        activeModules.planning && React.createElement('button', {
+                            onClick: onOpenPlanning,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors'
+                        }, React.createElement('i', { className: 'fas fa-calendar-alt text-indigo-500' }), 'Planning')
                     ),
 
                     // PRIMARY ACTIONS (Right aligned)
