@@ -91,7 +91,7 @@ const app = new Hono<{ Bindings: Bindings }>();
  * - Configurer CORS_STRICT_MODE=true dans Cloudflare secrets
  */
 const ALLOWED_ORIGINS = [
-  'https://mecanique.igpglass.ca',           // Domaine personnalisé de production
+  'https://app.igpglass.ca',           // Domaine personnalisé de production
   'https://webapp-7t8.pages.dev',            // Domaine Cloudflare Pages
   'https://0d6a8681.webapp-7t8.pages.dev',   // Déploiement v1.8.0
   'https://7644aa30.webapp-7t8.pages.dev',   // Déploiement camera fix

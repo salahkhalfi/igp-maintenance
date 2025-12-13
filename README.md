@@ -320,7 +320,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 **Tag:** v2.9.6  
 **Déployé:** 2025-11-26  
 **URL:** https://af864ba1.webapp-7t8.pages.dev  
-**Domaine:** https://mecanique.igpglass.ca  
+**Domaine:** https://app.igpglass.ca  
 **Score Audit:** 5/5 (100%)
 
 ### Version 2.9.5 (26 novembre 2025) - PRÉCISION MENSUELLE ID TICKETS 📅✨
@@ -359,7 +359,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 **Tag:** v2.9.5  
 **Déployé:** 2025-11-26  
 **URL:** https://cc0d45fb.webapp-7t8.pages.dev  
-**Domaine:** https://mecanique.igpglass.ca
+**Domaine:** https://app.igpglass.ca
 
 ### Version 2.9.4 (26 novembre 2025) - FORMAT ID AVEC TYPE MACHINE 🏭✨
 - **🎯 ÉVOLUTION DU FORMAT** : Remplacement du préfixe `IGP` par le type de machine
@@ -392,7 +392,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 **Tag:** v2.9.4  
 **Déployé:** 2025-11-26  
 **URL:** https://a65e388f.webapp-7t8.pages.dev  
-**Domaine:** https://mecanique.igpglass.ca
+**Domaine:** https://app.igpglass.ca
 
 ### Version 2.9.3 (26 novembre 2025) - FORMAT ID TICKET SIMPLIFIÉ 🎫✨
 - **🎯 NOUVEAU FORMAT** : ID tickets simplifié de `IGP-TYPE-MODEL-YYYYMMDD-NNN` à `IGP-YYYY-NNNN`
@@ -418,7 +418,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 **Tag:** v2.9.3  
 **Déployé:** 2025-11-26  
 **URL:** https://3507bc75.webapp-7t8.pages.dev  
-**Domaine:** https://mecanique.igpglass.ca
+**Domaine:** https://app.igpglass.ca
 
 ### Version 2.9.1 (26 novembre 2025) - RECHERCHE INTELLIGENTE AVEC PLACEHOLDER ANIMÉ 🔍✨
 - **🔍 NOUVELLE FONCTIONNALITÉ** : Placeholder animé avec exemples de mots-clés
@@ -462,7 +462,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 **Commits:** b17c4f2, 1a96c33, 6403e8f, 549f5f7, faf4d72, 347928b  
 **Déployé:** 2025-11-25 (Production)  
 **URL:** https://816310df.webapp-7t8.pages.dev  
-**Domaine:** https://mecanique.igpglass.ca
+**Domaine:** https://app.igpglass.ca
 
 ### Version 2.8.1 (24 novembre 2025) - FIX UI MODAL UTILISATEURS 🖥️✨
 - **🐛 FIX UI** : Formulaire modification utilisateur ne persiste plus après fermeture modal
@@ -479,7 +479,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 **Tag:** v2.8.1  
 **Déployé:** 2025-11-24 15:10 (Production)  
 **URL:** https://8d6184ce.webapp-7t8.pages.dev  
-**Domaine:** https://mecanique.igpglass.ca
+**Domaine:** https://app.igpglass.ca
 
 ### Version 2.8.0 (24 novembre 2025) - CORRECTIONS NOTIFICATIONS PARFAITES 🔔✨
 - **🐛 FIX #1** : Limite exacte déduplication (>= au lieu de >) dans cron.ts
@@ -610,7 +610,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 - Prévention accumulation fichiers orphelins dans storage
 - Logs détaillés opérations cleanup pour audit
 
-> 📖 **[Voir l'historique complet des versions](https://mecanique.igpglass.ca/changelog)** - Timeline professionnelle depuis 2023
+> 📖 **[Voir l'historique complet des versions](https://app.igpglass.ca/changelog)** - Timeline professionnelle depuis 2023
 
 ## 📋 Vue d'ensemble du projet
 
@@ -658,7 +658,7 @@ Android bloque les notifications des sites web en arrière-plan pour économiser
 #### ✅ Solution : Installation PWA (2 minutes)
 
 **Étapes simples** :
-1. Ouvrez https://mecanique.igpglass.ca dans **Chrome Android**
+1. Ouvrez https://app.igpglass.ca dans **Chrome Android**
 2. Cliquez sur le menu (⋮) en haut à droite
 3. Sélectionnez **"Installer l'application"** ou **"Ajouter à l'écran d'accueil"**
 4. Confirmez l'installation
@@ -1596,7 +1596,7 @@ Pour toute question ou assistance, contactez l'équipe de développement.
 
 ### 🚀 Déploiement
 - **URL Production**: https://72950bf9.webapp-7t8.pages.dev
-- **URL Personnalisée**: https://mecanique.igpglass.ca
+- **URL Personnalisée**: https://app.igpglass.ca
 - **Build**: ✅ Succès (498.89 kB)
 - **Tests**: ✅ HTTP 200, toutes fonctions préservées
 - **Backup**: ✅ Tag v2.0.5-colors-harmonized créé

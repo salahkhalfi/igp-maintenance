@@ -37,7 +37,7 @@ const UserGuideModal = ({ show, onClose, currentUser }) => {
             icon: "fa-sign-in-alt",
             color: "green",
             content: [
-                "🌐 mecanique.igpglass.ca",
+                "🌐 app.igpglass.ca",
                 "📧 Votre email",
                 "🔑 Votre mot de passe",
                 "✅ Clic 'Se connecter'",
@@ -292,7 +292,7 @@ const UserGuideModal = ({ show, onClose, currentUser }) => {
                 "💡 Suggestions? Bugs? → Partagez!",
                 "",
                 "🎓 RESSOURCES:",
-                "• 🌐 mecanique.igpglass.ca",
+                "• 🌐 app.igpglass.ca",
                 "• 📖 Ce guide",
                 "• 🏷️ Version 2.8.1"
             ]

@@ -614,7 +614,7 @@ Input: "${originalText}"`;
                         body: pushBody,
                         icon: '/icon-192.png',
                         data: {
-                            url: `https://mecanique.igpglass.ca/messenger?conversationId=${conversationId}`,
+                            url: `https://app.igpglass.ca/messenger?conversationId=${conversationId}`,
                             conversationId: conversationId,
                             isCall: isCall 
                         }
