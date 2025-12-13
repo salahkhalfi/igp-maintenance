@@ -1,3 +1,19 @@
+# ⚡ PROTOCOLE DEEPSEEK : LA RÈGLE DES 100 ANS (IMMUTABLE)
+
+> **"Deux têtes valent mieux qu'une. La logique doit l'emporter."**
+
+À la demande expresse de l'Architecte, ce protocole est gravé ici pour l'éternité. Pour chaque modification technique significative, je dois appliquer ce processus mental :
+
+1.  **THÈSE (Ma proposition)** : Je conçois la solution standard.
+2.  **ANTITHÈSE (L'Audit "Deepseek")** : Je change de casquette pour devenir un auditeur impitoyable. Je cherche :
+    *   🛑 Les failles de sécurité invisibles.
+    *   📉 Les inefficacités (complexité O(n²), re-renders).
+    *   📱 Les oublis UX (Mobile, Accessibilité).
+    *   🐛 Les Edge Cases (Null, Undefined, Réseau coupé).
+3.  **SYNTHÈSE (La Solution)** : J'applique la version corrigée. Pas de boucle infinie.
+
+**Ce processus est NON-NÉGOCIABLE.**
+
 # 📖 LA BIBLE DU DÉVELOPPEUR PRAGMATIQUE
 ## Le Gros Bon Sens Technique (Version 3.1 - Era of DeepSeek)
 

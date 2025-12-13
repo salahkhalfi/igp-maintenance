@@ -1,3 +1,159 @@
+const MessageBubble = React.memo(({ msg, isMe, currentUser, activeTab, selectionMode, isSelected, onToggleSelection, onDelete, onOpenPrivate, onPlayAudio }) => {
+    
+    const roleBadgeClass = (role) => {
+        const colors = {
+            'admin': 'bg-red-100 text-red-700', 'director': 'bg-red-50 text-red-600',
+            'supervisor': 'bg-yellow-100 text-yellow-700', 'coordinator': 'bg-amber-100 text-amber-700',
+            'technician': 'bg-blue-50 text-blue-600', 'operator': 'bg-green-50 text-green-600'
+        };
+        return colors[role] || 'bg-gray-100 text-gray-700';
+    };
+
+    const roleLabel = (role) => {
+        const labels = {
+            'admin': 'Admin', 'supervisor': 'Superviseur', 'technician': 'Technicien', 'operator': 'Opérateur'
+        };
+        return labels[role] || role;
+    };
+
+    const formatTime = (timestamp) => {
+        const isoTimestamp = timestamp.replace(' ', 'T') + (timestamp.includes('Z') ? '' : 'Z');
+        const dateUTC = new Date(isoTimestamp);
+        const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+        // Legacy Fix: Standard logic was causing double offset (UTC-10) or partial shift.
+        // D1 timestamps are UTC.
+        // We want to display LOCAL TIME (e.g. EST).
+        // If we add offset to UTC, we get "Local Time Value" in UTC variable.
+        // e.g. 15:00 UTC + (-5h) = 10:00 UTC.
+        // Then we display it as UTC using toLocaleDateString('...UTC')?
+        // NO! The previous code used `date.toLocaleDateString` WITHOUT timezone option.
+        // This used the BROWSER timezone on the SHIFTED date.
+        // 10:00 UTC -> Browser (EST) -> 05:00. 
+        // THIS IS THE BUG. 10:00 - 5 = 05:00. "UTC - 10".
+        
+        // CORRECTION:
+        // We manually shift the date. 
+        // Then we must force the formatter to treat it as UTC so it doesn't shift it AGAIN.
+        const date = new Date(dateUTC.getTime() + (offset * 60 * 60 * 1000));
+        return date.toLocaleDateString('fr-FR', { 
+            day: 'numeric', 
+            month: 'short', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            timeZone: 'UTC' // <--- CRITICAL FIX: Prevent browser from shifting the already-shifted date
+        });
+    };
+
+    const formatDuration = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+    };
+
+    const formatContent = (content) => {
+        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = linkRegex.exec(content)) !== null) {
+            if (match.index > lastIndex) parts.push(content.substring(lastIndex, match.index));
+            const label = match[1];
+            const url = match[2];
+            parts.push(React.createElement('button', {
+                key: match.index,
+                onClick: (e) => {
+                    e.stopPropagation();
+                    if (url === '/planning') {
+                        setTimeout(() => window.dispatchEvent(new CustomEvent('open-planning')), 100);
+                    } else if (url.startsWith('/')) {
+                        window.location.href = url;
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                },
+                className: 'inline-flex items-center gap-1.5 px-3 py-1 my-1 mx-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold text-xs shadow-sm transform hover:scale-105'
+            }, React.createElement('i', { className: 'fas fa-external-link-alt' }), label));
+            lastIndex = linkRegex.lastIndex;
+        }
+        if (lastIndex < content.length) parts.push(content.substring(lastIndex));
+        return parts.length > 0 ? parts : content;
+    };
+
+    const canDeleteMsg = () => {
+        if (msg.sender_id === currentUser.id) return true;
+        if (currentUser?.role === 'admin') return true;
+        if (currentUser?.role === 'supervisor' && msg.sender_role !== 'admin') return true;
+        return false;
+    };
+
+    return React.createElement('div', {
+        className: 'flex w-full mb-2 ' + (isMe ? 'justify-end pr-4' : 'justify-start pl-1') + ' group px-2 items-end'
+    },
+        selectionMode && canDeleteMsg() ? React.createElement('input', {
+            type: 'checkbox',
+            checked: isSelected,
+            onChange: () => onToggleSelection(msg.id),
+            className: 'w-4 h-4 mx-2 cursor-pointer self-center flex-shrink-0',
+            onClick: (e) => e.stopPropagation()
+        }) : null,
+        
+        React.createElement('div', {
+            className: 'max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 shadow-sm border relative flex flex-col ' +
+                (isMe ? 'bg-blue-100 border-blue-200 rounded-tr-sm items-end' : 'bg-white border-gray-200 rounded-tl-sm items-start')
+        },
+            activeTab === 'public' && !isMe ? React.createElement('div', { className: 'flex items-center gap-2 mb-1 flex-wrap justify-start' },
+                React.createElement('div', {
+                    className: 'w-5 h-5 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm cursor-pointer',
+                    onClick: () => onOpenPrivate(msg.sender_id, msg.sender_name),
+                    title: 'Message privé'
+                }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
+                React.createElement('span', {
+                    className: 'font-bold text-xs text-gray-700 cursor-pointer hover:text-blue-600',
+                    onClick: () => onOpenPrivate(msg.sender_id, msg.sender_name)
+                }, msg.sender_name),
+                React.createElement('span', {
+                    className: 'text-[10px] px-1.5 py-0.5 rounded-full ' + roleBadgeClass(msg.sender_role)
+                }, roleLabel(msg.sender_role)),
+                React.createElement('span', { className: 'text-[10px] text-gray-400' }, formatTime(msg.created_at))
+            ) : null,
+
+            msg.audio_file_key ? React.createElement('div', { className: 'mt-1 w-full' },
+                React.createElement('div', { className: 'flex items-center gap-2 bg-white/50 rounded-lg p-2' },
+                    React.createElement('i', { className: 'fas fa-microphone ' + (isMe ? 'text-blue-600' : 'text-gray-600') }),
+                    React.createElement('audio', {
+                        controls: true,
+                        controlsList: 'nodownload',
+                        preload: 'metadata', // OPTIMISATION: Ne charge pas l'audio tout de suite
+                        className: 'h-8 min-w-[200px] max-w-[220px]',
+                        src: '/api/v2/chat/audio/' + msg.audio_file_key // Use relative path for proxy
+                    })
+                ),
+                msg.audio_duration ? React.createElement('p', { className: 'text-[10px] text-gray-500 mt-1 text-right' }, formatDuration(msg.audio_duration)) : null
+            ) : React.createElement('div', { className: 'flex flex-col ' + (isMe ? 'items-end' : 'items-start') },
+                React.createElement('div', { 
+                    className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
+                }, formatContent(msg.content)),
+                activeTab === 'private' ? React.createElement('span', { className: 'text-[10px] text-gray-400 mt-1 opacity-70' }, formatTime(msg.created_at)) : null
+            ),
+            
+            canDeleteMsg() && !selectionMode ? React.createElement('button', {
+                onClick: (e) => { e.stopPropagation(); onDelete(msg.id); },
+                className: 'absolute -top-2 ' + (isMe ? '-left-2' : '-right-2') + ' bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200 z-10',
+                title: 'Supprimer'
+            }, React.createElement('i', { className: 'fas fa-trash text-[10px]' })) : null
+        )
+    );
+}, (prevProps, nextProps) => {
+    // Custom comparison function for Memo
+    return (
+        prevProps.msg.id === nextProps.msg.id &&
+        prevProps.isSelected === nextProps.isSelected &&
+        prevProps.selectionMode === nextProps.selectionMode &&
+        prevProps.isMe === nextProps.isMe
+    );
+});
+
 const MessagingChatWindow = ({ 
     messages, 
     currentUser: propUser, 
@@ -331,7 +487,6 @@ const MessagingChatWindow = ({
         }
     };
 
-    // Helper functions
     const formatRecordingDuration = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -398,60 +553,14 @@ const MessagingChatWindow = ({
         }
     };
 
-    // Format message content with links/buttons
-    const formatMessageContent = (content) => {
-        // Regex for [Label](/url)
-        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
+    // Memoize handlers to keep MessageBubble props stable
+    const handleToggleSelection = React.useCallback((id) => {
+        toggleMessageSelection(id);
+    }, [toggleMessageSelection]);
 
-        while ((match = linkRegex.exec(content)) !== null) {
-            // Add text before the link
-            if (match.index > lastIndex) {
-                parts.push(content.substring(lastIndex, match.index));
-            }
-
-            const label = match[1];
-            const url = match[2];
-
-            // Add the link as a button
-            parts.push(React.createElement('button', {
-                key: match.index,
-                onClick: (e) => {
-                    e.stopPropagation(); 
-                    // Handle internal actions
-                    if (url === '/planning') {
-                        // Close current modal first
-                        if (onClose) onClose();
-                        // Dispatch event for MainApp
-                        setTimeout(() => {
-                            window.dispatchEvent(new CustomEvent('open-planning'));
-                        }, 100);
-                    } else if (url.startsWith('/')) {
-                        // Other internal links - reload to root with param
-                        window.location.href = url;
-                    } else {
-                        // External links
-                        window.open(url, '_blank');
-                    }
-                },
-                className: 'inline-flex items-center gap-1.5 px-3 py-1 my-1 mx-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all font-semibold text-xs shadow-sm transform hover:scale-105'
-            },
-                React.createElement('i', { className: 'fas fa-external-link-alt' }),
-                label
-            ));
-
-            lastIndex = linkRegex.lastIndex;
-        }
-
-        // Add remaining text
-        if (lastIndex < content.length) {
-            parts.push(content.substring(lastIndex));
-        }
-
-        return parts.length > 0 ? parts : content;
-    };
+    const handleOpenPrivate = React.useCallback((id, name) => {
+        if (onOpenPrivateMessage) onOpenPrivateMessage(id, name);
+    }, [onOpenPrivateMessage]);
 
     // RENDER
     if (activeTab === 'private' && !selectedContact) {
@@ -533,67 +642,24 @@ const MessagingChatWindow = ({
                 React.createElement('p', { className: 'text-base sm:text-lg font-medium' }, 'Aucun message'),
                 React.createElement('p', { className: 'text-xs sm:text-sm text-gray-400 mt-2' }, 'Soyez le premier à envoyer un message!')
             ) : messages.map(msg => {
-                const isMe = msg.sender_id === currentUser.id;
-                return React.createElement('div', {
+                return React.createElement(MessageBubble, {
                     key: msg.id,
-                    className: 'flex w-full mb-2 ' + (isMe ? 'justify-end pr-4' : 'justify-start pl-1') + ' group px-2 items-end'
-                },
-                    selectionMode && canDelete(msg) ? React.createElement('input', {
-                        type: 'checkbox',
-                        checked: selectedMessages.includes(msg.id),
-                        onChange: () => toggleMessageSelection(msg.id),
-                        className: 'w-4 h-4 mx-2 cursor-pointer self-center',
-                        onClick: (e) => e.stopPropagation()
-                    }) : null,
-                    React.createElement('div', {
-                        className: 'max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 shadow-sm border relative flex flex-col ' +
-                            (isMe ? 'bg-blue-100 border-blue-200 rounded-tr-sm items-end' : 'bg-white border-gray-200 rounded-tl-sm items-start')
-                    },
-                        activeTab === 'public' && !isMe ? React.createElement('div', { className: 'flex items-center gap-2 mb-1 flex-wrap justify-start' },
-                            React.createElement('div', {
-                                className: 'w-5 h-5 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center text-white font-bold text-[10px] shadow-sm cursor-pointer',
-                                onClick: () => onOpenPrivateMessage && onOpenPrivateMessage(msg.sender_id, msg.sender_name),
-                                title: 'Message privé'
-                            }, msg.sender_name ? msg.sender_name.charAt(0).toUpperCase() : '?'),
-                            React.createElement('span', {
-                                className: 'font-bold text-xs text-gray-700 cursor-pointer hover:text-blue-600',
-                                onClick: () => onOpenPrivateMessage && onOpenPrivateMessage(msg.sender_id, msg.sender_name)
-                            }, msg.sender_name),
-                            React.createElement('span', {
-                                className: 'text-[10px] px-1.5 py-0.5 rounded-full ' + getRoleBadgeClass(msg.sender_role)
-                            }, getRoleLabel(msg.sender_role)),
-                            React.createElement('span', { className: 'text-[10px] text-gray-400' }, formatMessageTime(msg.created_at))
-                        ) : null,
-
-                        msg.audio_file_key ? React.createElement('div', { className: 'mt-1 w-full' },
-                            React.createElement('div', { className: 'flex items-center gap-2 bg-white/50 rounded-lg p-2' },
-                                React.createElement('i', { className: 'fas fa-microphone ' + (isMe ? 'text-blue-600' : 'text-gray-600') }),
-                                React.createElement('audio', {
-                                    controls: true,
-                                    controlsList: 'nodownload',
-                                    className: 'h-8 min-w-[200px] max-w-[220px]',
-                                    src: API_URL + '/audio/' + msg.audio_file_key
-                                })
-                            ),
-                            msg.audio_duration ? React.createElement('p', { className: 'text-[10px] text-gray-500 mt-1 text-right' }, formatRecordingDuration(msg.audio_duration)) : null
-                        ) : React.createElement('div', { className: 'flex flex-col ' + (isMe ? 'items-end' : 'items-start') },
-                            React.createElement('div', { 
-                                className: 'text-sm whitespace-pre-wrap break-words leading-snug ' + (isMe ? 'text-blue-900 text-right' : 'text-gray-800 text-left')
-                            }, formatMessageContent(msg.content)),
-                            activeTab === 'private' ? React.createElement('span', { className: 'text-[10px] text-gray-400 mt-1 opacity-70' }, formatMessageTime(msg.created_at)) : null
-                        ),
-                        canDelete(msg) && !selectionMode ? React.createElement('button', {
-                            onClick: (e) => { e.stopPropagation(); onDeleteMessage(msg.id); },
-                            className: 'absolute -top-2 ' + (isMe ? '-left-2' : '-right-2') + ' bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity border border-gray-200 z-10',
-                            title: 'Supprimer'
-                        }, React.createElement('i', { className: 'fas fa-trash text-[10px]' })) : null
-                    )
-                );
+                    msg: msg,
+                    isMe: msg.sender_id === currentUser.id,
+                    currentUser: currentUser,
+                    activeTab: activeTab,
+                    selectionMode: selectionMode,
+                    isSelected: selectedMessages.includes(msg.id),
+                    onToggleSelection: handleToggleSelection,
+                    onDelete: onDeleteMessage,
+                    onOpenPrivate: handleOpenPrivate,
+                    onPlayAudio: null
+                });
             }),
             React.createElement('div', { ref: messagesEndRef })
         ),
 
-        // Input Zone
+        // Input Zone (Rest preserved below)
         React.createElement('div', { className: 'border-t border-gray-200 p-2 sm:p-4 bg-white shadow-lg' },
             // Hidden File Input
             React.createElement('input', {
@@ -706,9 +772,9 @@ const MessagingChatWindow = ({
                     className: 'flex-shrink-0 w-10 h-10 mb-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 ' + (isMagicRecording ? 'animate-pulse ring-2 ring-violet-300' : ''),
                     title: isMagicRecording ? 'Arrêter l\'analyse' : 'Créer un ticket (IA)'
                 },
-                   isMagicAnalyzing ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) :
-                   isMagicRecording ? React.createElement('i', { className: 'fas fa-stop' }) :
-                   React.createElement('i', { className: 'fas fa-magic' })
+                    isMagicAnalyzing ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) :
+                    isMagicRecording ? React.createElement('i', { className: 'fas fa-stop' }) :
+                    React.createElement('i', { className: 'fas fa-magic' })
                 ),
 
                 React.createElement('button', {

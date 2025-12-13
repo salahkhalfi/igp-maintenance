@@ -375,8 +375,8 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     };
 
     const handleSaveAiContext = async () => {
-        if (tempAiContext.length > 2000) {
-            alert('Le contexte AI ne peut pas dépasser 2000 caractères');
+        if (tempAiContext.length > 30000) {
+            alert('Le contexte AI ne peut pas dépasser 30000 caractères');
             return;
         }
 
@@ -897,7 +897,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         ),
                                         React.createElement('ul', { className: 'text-sm text-green-800 space-y-1 list-disc list-inside' },
                                             React.createElement('li', {}, 'Utilisé par l\'IA pour analyser les tickets'),
-                                            React.createElement('li', {}, 'Max 2000 caractères'),
+                                            React.createElement('li', {}, 'Max 30000 caractères'),
                                             React.createElement('li', {}, 'Conseil : Décrivez votre activité et vos priorités')
                                         )
                                     )
@@ -927,14 +927,14 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         value: tempAiContext,
                                         onChange: (e) => setTempAiContext(e.target.value),
                                         placeholder: 'Ex: Nous sommes une usine de fabrication de verre. Les machines critiques sont les Fours et les CNC. La sécurité est la priorité absolue.',
-                                        maxLength: 2000,
+                                        maxLength: 30000,
                                         rows: 6,
                                         className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
                                         disabled: savingAiContext
                                     }),
                                     React.createElement('div', { className: 'flex items-center justify-between' },
                                         React.createElement('span', { className: 'text-xs text-gray-600' },
-                                            tempAiContext.length + '/2000 caractères'
+                                            tempAiContext.length + '/30000 caractères'
                                         ),
                                         React.createElement('div', { className: 'flex gap-2' },
                                             React.createElement('button', {

@@ -33,7 +33,7 @@ export const homeHTML = `
     <script src="/static/js/components/PromptModal.js"></script>
     <script src="/static/js/components/LoginForm.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
-    <script src="/static/js/components/CreateTicketModal.js?v=3.0.3"></script>
+    <script src="/static/js/components/CreateTicketModal.js?v=3.0.4"></script>
     <script src="/static/js/components/TicketDetailsModal.js"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
     <script src="/static/js/components/MachineManagementModal.js"></script>
@@ -498,7 +498,7 @@ export const homeHTML = `
 
     <script>
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.0-alpha.3 (Magic Ticket)');
+        console.log('HOME HTML LOADED v3.0.1 (Stable Ticket Modal)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 

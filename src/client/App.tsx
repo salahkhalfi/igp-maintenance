@@ -112,6 +112,7 @@ const AppContent = () => {
         const priority = params.get('priority');
         const machineId = params.get('machineId');
         const assignedToName = params.get('assignedToName');
+        const assignedToId = params.get('assignedToId');
         const scheduledDate = params.get('scheduledDate');
         
         if (description) setInitialTicketDescription(description);
@@ -120,6 +121,7 @@ const AppContent = () => {
         if (priority) setInitialTicketPriority(priority as TicketPriority);
         if (machineId) setInitialTicketMachineId(Number(machineId));
         if (assignedToName) setInitialAssignedToName(assignedToName);
+        if (assignedToId) setInitialAssignedToId(Number(assignedToId));
         if (scheduledDate) setInitialScheduledDate(scheduledDate);
         
         // On nettoie l'URL proprement

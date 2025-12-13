@@ -1,6 +1,8 @@
 const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, currentUser: propUser, initialDescription, initialImageUrl, initialTitle, initialPriority, initialMachineId, initialAssignedToName, initialAssignedToId, initialScheduledDate }) => {
-    // DEBUG: Verify component load
-    console.log('CreateTicketModal component rendering', { show, initialAssignedToId, initialScheduledDate });
+    // VERSION LOG
+    React.useEffect(() => {
+        if (show) console.log('CreateTicketModal loaded v3.0.4 - Stabilization Fix');
+    }, [show]);
 
     // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
     const currentUser = React.useMemo(() => {
@@ -30,7 +32,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
             
             // AI FIX: Auto-assign technician
             if (initialAssignedToId) {
-                console.log("Setting assignedTo from AI:", initialAssignedToId);
                 setAssignedTo(String(initialAssignedToId));
             }
 
@@ -45,7 +46,6 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                         const hours = String(date.getHours()).padStart(2, '0');
                         const minutes = String(date.getMinutes()).padStart(2, '0');
                         const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
-                        console.log("Setting scheduledDate from AI:", formatted);
                         setScheduledDate(formatted);
                     }
                 } catch (e) {
@@ -102,12 +102,18 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     }, [show, initialImageUrl]);
 
     const startVoiceInput = (fieldSetter, currentVal, fieldName) => {
+        // STOP WATCHER: Ensure previous instance is stopped
+        if (window.currentRecognition) {
+            try { window.currentRecognition.stop(); } catch(e) {}
+            window.currentRecognition = null;
+        }
+
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             alert("La reconnaissance vocale n'est pas supportée par ce navigateur. Essayez Chrome ou Safari.");
             return;
         }
 
-        if (isListening) {
+        if (isListening && listeningField === fieldName) {
             setIsListening(false);
             setListeningField(null);
             return;
@@ -115,6 +121,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
+        window.currentRecognition = recognition;
 
         recognition.lang = 'fr-FR';
         recognition.continuous = false;
@@ -128,6 +135,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
         recognition.onend = () => {
             setIsListening(false);
             setListeningField(null);
+            window.currentRecognition = null;
         };
 
         recognition.onresult = (event) => {
@@ -286,18 +294,17 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[2010] p-2 sm:p-4 animate-fadeIn',
+        className: 'fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center z-[2010] p-2 sm:p-4 animate-fadeIn',
+        style: { willChange: 'opacity' }, // GPU hint
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col',
-            onClick: (e) => e.stopPropagation(),
-            style: {
-                transform: 'translateZ(0)'
-            }
+            className: 'bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col transform transition-transform',
+            style: { willChange: 'transform' }, // GPU hint
+            onClick: (e) => e.stopPropagation()
         },
             // Header
-            React.createElement('div', { className: 'sticky top-0 bg-gradient-to-r from-blue-700 to-blue-800 text-white p-3 sm:p-5 flex justify-between items-center shadow-md z-10' },
+            React.createElement('div', { className: 'sticky top-0 bg-blue-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-md z-10' },
                 React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
                     React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-blue-300 flex-shrink-0' }),
                     React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
@@ -312,7 +319,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                 )
             ),
             // Content
-            React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-gradient-to-br from-white/50 to-blue-50/30' },
+            React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-blue-50' },
                 
                 React.createElement('form', { id: 'create-ticket-form', onSubmit: handleSubmit, className: 'space-y-4' },
                     
@@ -326,7 +333,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: () => startVoiceInput(setTitle, title, 'title'),
-                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'title' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'}`
+                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'title' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200'}`
                             },
                                 React.createElement('i', { className: `fas ${isListening && listeningField === 'title' ? 'fa-stop-circle' : 'fa-microphone'}` }),
                                 React.createElement('span', {}, isListening && listeningField === 'title' ? 'Écoute...' : 'Dicter')
@@ -339,8 +346,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             autoComplete: 'off',
                             'data-lpignore': 'true',
                             'data-form-type': 'other',
-                            className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow hover:shadow-xl',
-                            style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
+                            className: 'w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow',
                             value: title,
                             onChange: (e) => handleInputField(e, setTitle),
                             onInvalid: handleInvalidField,
@@ -359,7 +365,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: () => startVoiceInput(setDescription, description, 'desc'),
-                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'desc' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'}`
+                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'desc' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200'}`
                             },
                                 React.createElement('i', { className: `fas ${isListening && listeningField === 'desc' ? 'fa-stop-circle' : 'fa-microphone'}` }),
                                 React.createElement('span', {}, isListening && listeningField === 'desc' ? 'Écoute...' : 'Dicter')
@@ -371,8 +377,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             autoComplete: 'off',
                             'data-lpignore': 'true',
                             'data-form-type': 'other',
-                            className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl resize-none',
-                            style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
+                            className: 'w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none',
                             value: description,
                             onChange: (e) => handleInputField(e, setDescription),
                             onInvalid: handleInvalidField,
@@ -393,8 +398,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                 id: 'ticketMachine',
                                 name: 'ticketMachine',
                                 autoComplete: 'off',
-                                className: 'w-full px-4 py-3 bg-white/95 border-2 border-white/50 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:shadow-xl cursor-pointer flex-1',
-                                style: { boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5)' },
+                                className: 'w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer flex-1',
                                 value: machineId,
                                 onChange: (e) => handleInputField(e, setMachineId),
                                 onInvalid: handleInvalidField,
@@ -500,9 +504,8 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                 autoComplete: 'off',
                                 value: assignedTo,
                                 onChange: (e) => setAssignedTo(e.target.value),
-                                className: "w-full px-4 py-3 bg-white/97 border-2 border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all hover:shadow-xl cursor-pointer font-semibold appearance-none bg-no-repeat pr-10",
+                                className: "w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all cursor-pointer font-semibold appearance-none bg-no-repeat pr-10",
                                 style: { 
-                                    boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)',
                                     backgroundImage: "url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')",
                                     backgroundPosition: 'right 0.5rem center',
                                     backgroundSize: '1.5em 1.5em'
@@ -538,8 +541,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             ),
                             React.createElement('input', {
                                 type: 'datetime-local',
-                                className: 'w-full px-4 py-3 bg-white/97 border-2 border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all hover:shadow-xl font-semibold',
-                                style: { boxShadow: '0 6px 20px rgba(147, 51, 234, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5)' },
+                                className: 'w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all font-semibold',
                                 value: scheduledDate,
                                 onChange: (e) => setScheduledDate(e.target.value)
                             })
@@ -570,5 +572,5 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
 };
 
 // Make it available globally
-console.log('CreateTicketModal script executed');
 window.CreateTicketModal = CreateTicketModal;
+

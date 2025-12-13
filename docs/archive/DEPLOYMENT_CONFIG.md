@@ -7,7 +7,7 @@
 ## 📍 URLS ACTUELLES (Mise à jour: 2025-11-08)
 
 ### Production
-- **URL Principale:** https://mecanique.igpglass.ca
+- **URL Principale:** https://app.igpglass.ca
 - **Déploiement Cloudflare:** https://f74eb9a8.webapp-7t8.pages.dev
 - **Deployment ID:** f74eb9a8-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 - **Commit Git:** 6413b44 (main branch)
@@ -87,7 +87,7 @@
 - [ ] Deploy: `npx wrangler pages deploy dist --project-name webapp --branch main`
 - [ ] **Capturer le nouveau deployment ID**
 - [ ] **Mettre à jour ce fichier (DEPLOYMENT_CONFIG.md)**
-- [ ] Tester production: https://mecanique.igpglass.ca
+- [ ] Tester production: https://app.igpglass.ca
 - [ ] Mettre à jour README.md si nécessaire
 
 ### Après Déploiement:

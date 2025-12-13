@@ -14,22 +14,35 @@ export const getNowEST = () => {
 
 export const formatDateEST = (dateStr: string | undefined, includeTime = true) => {
   if (!dateStr) return '';
-  const date = new Date(dateStr.replace(' ', 'T') + (dateStr.includes('Z') ? '' : 'Z'));
   
-  // Apply offset logic similar to legacy if needed, or just use standard Intl
-  // Legacy code implies manual offset handling for "EST" display.
-  // Ideally we use Intl.DateTimeFormat with 'America/New_York' or user's timezone.
-  // For consistency with legacy visual:
+  // Clean string and standardize
+  let cleanStr = dateStr.replace(' ', 'T');
   
+  // Standard D1/SQLite timestamp from CURRENT_TIMESTAMP is UTC (e.g. 2023-10-27 15:00:00)
+  // But it has no 'Z' suffix.
+  // My previous "Smart Shift" logic FAILED because it assumed "No Z" = "Already Local".
+  // This caused UTC times to be displayed as-is (e.g. 15:00), which users interpreted as wrong.
+  
+  // FIX: We must treat ambiguous strings as UTC if they come from the DB.
+  // We append 'Z' to force UTC interpretation.
+  const isAmbiguous = !cleanStr.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(cleanStr);
+  if (isAmbiguous) {
+    cleanStr += 'Z';
+  }
+  
+  const date = new Date(cleanStr);
+  if (isNaN(date.getTime())) return dateStr;
+  
+  // Always apply offset since we now treat everything as UTC-based
+  // This matches legacy behavior which was correct for DB timestamps
   const offset = typeof window !== 'undefined' 
       ? parseInt(localStorage.getItem('timezone_offset_hours') || '-5') 
       : -5;
 
-  const adjustedDate = new Date(date.getTime() + (offset * 3600000)); // Adjust if server is UTC
+  // Manually shift the UTC time by the offset
+  // Example: 15:00 UTC + (-5h) = 10:00 UTC (Effectively EST)
+  const adjustedDate = new Date(date.getTime() + (offset * 3600000));
 
-  // However, usually standard JS dates handle this better.
-  // Let's stick to a robust formatting that mimics the output: "DD/MM/YYYY HH:mm"
-  
   return new Intl.DateTimeFormat('fr-CA', {
     year: 'numeric',
     month: '2-digit',
@@ -37,8 +50,8 @@ export const formatDateEST = (dateStr: string | undefined, includeTime = true) =
     hour: includeTime ? '2-digit' : undefined,
     minute: includeTime ? '2-digit' : undefined,
     hour12: false,
-    timeZone: 'UTC' // Since we manually adjusted or if raw string is UTC
-  }).format(date); // Using raw date and letting browser/Intl handle it is safer usually, but let's match legacy behavior if it was shifting hours.
+    timeZone: 'UTC' // Restore UTC to respect the manual shift
+  }).format(adjustedDate);
 };
 
 export interface LoginStatus {

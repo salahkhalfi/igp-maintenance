@@ -211,6 +211,116 @@ settings.get('/messenger_app_name', async (c) => {
 });
 
 /**
+ * PUT /api/settings/messenger_app_name - Mettre à jour le nom de l'application Messenger
+ * Accès: Administrateurs (admin role)
+ * Validation: Max 50 caractères
+ */
+settings.put('/messenger_app_name', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (!value || typeof value !== 'string') {
+      return c.json({ error: 'Nom invalide' }, 400);
+    }
+
+    // Validation stricte
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length === 0) {
+      return c.json({ error: 'Le nom ne peut pas être vide' }, 400);
+    }
+
+    if (trimmedValue.length > 50) {
+      return c.json({ error: 'Le nom ne peut pas dépasser 50 caractères' }, 400);
+    }
+
+    // Vérifier si le paramètre existe
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'messenger_app_name'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'messenger_app_name'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('messenger_app_name', ?)
+      `).bind(trimmedValue).run();
+    }
+
+    console.log(`✅ Nom Messenger modifié par user ${user.userId}: "${trimmedValue}"`);
+
+    return c.json({
+      message: 'Nom mis à jour avec succès',
+      setting_value: trimmedValue
+    });
+  } catch (error) {
+    console.error('Update messenger name error:', error);
+    return c.json({ error: 'Erreur lors de la mise à jour du nom' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/ai_custom_context - Mettre à jour le contexte AI
+ * Accès: Administrateurs (admin role)
+ * Validation: Max 30000 caractères
+ */
+settings.put('/ai_custom_context', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (value === undefined || typeof value !== 'string') {
+      return c.json({ error: 'Contexte invalide' }, 400);
+    }
+
+    // Validation stricte
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length > 30000) {
+      return c.json({ error: 'Le contexte ne peut pas dépasser 30000 caractères' }, 400);
+    }
+
+    // Vérifier si le paramètre existe
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'ai_custom_context'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'ai_custom_context'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('ai_custom_context', ?)
+      `).bind(trimmedValue).run();
+    }
+
+    console.log(`✅ Contexte AI modifié par user ${user.userId}`);
+
+    return c.json({
+      message: 'Contexte AI mis à jour avec succès',
+      setting_value: trimmedValue
+    });
+  } catch (error) {
+    console.error('Update AI context error:', error);
+    return c.json({ error: 'Erreur lors de la mise à jour du contexte AI' }, 500);
+  }
+});
+
+/**
  * PUT /api/settings/title - Mettre à jour le titre de l'application
  * Accès: Administrateurs (admin role)
  * Validation: Max 100 caractères, échappement HTML, UTF-8

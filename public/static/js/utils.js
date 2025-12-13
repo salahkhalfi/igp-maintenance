@@ -32,6 +32,7 @@ const formatDateEST = (dateString, includeTime = true) => {
     const dateEST = new Date(dateUTC.getTime() + (offset * 60 * 60 * 1000));
 
     const day = String(dateEST.getUTCDate()).padStart(2, '0');
+    // FIX: getUTCMonth is 0-indexed, so Jan = 0. +1 is correct.
     const month = String(dateEST.getUTCMonth() + 1).padStart(2, '0');
     const year = dateEST.getUTCFullYear();
 

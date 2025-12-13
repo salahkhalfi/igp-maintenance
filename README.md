@@ -41,6 +41,23 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 2.18.4 (13 Décembre 2025) - OPTIMISATION IGP CONNECT ⚡📱
+- **⚡ PERFORMANCE**: Optimisation majeure du composant de chat "IGP Connect".
+- **🧠 MEMOIZATION**: Implémentation de `React.memo` sur les bulles de messages.
+- **❄️ FREEZE**: Les messages passés ne sont plus re-rendus à chaque frappe clavier.
+- **🧹 CLEANUP**: Correction de la structure du fichier `MessagingChatWindow.js` (suppression code dupliqué et définitions imbriquées).
+- **✅ IMPACT**: Fluidité de saisie instantanée, même avec un long historique de conversation. Résolution du problème de "lourdeur" signalé.
+
+### Version 2.18.3 (13 Décembre 2025) - MOBILE UX UPGRADE 📱✨
+- **📱 MENU MOBILE COMPLET**: Ajout des boutons manquants dans le menu hamburger pour une parité 100% avec le desktop.
+- **🚀 ACCÈS RAPIDE**:
+  - **Tickets en Retard** (Quick Filter)
+  - **Statistiques Performance**
+  - **Gestion Appareils Push**
+  - **Notifications Push (ON/OFF)**
+- **✅ IMPACT**: Toutes les fonctionnalités critiques (Filtres, Stats, Config) sont maintenant accessibles sur mobile.
+- **✨ ERGONOMIE**: Boutons stylisés (couleurs, icônes) intégrés harmonieusement dans le menu déroulant.
+
 ### Version 2.18.2 (12 Décembre 2025) - REVERT MENU MOBILE (PORTAL) ⏪✨
 - **⏪ REVERT**: Retour à la version "Portal Overlay" (v2.0.3) pour le menu mobile.
 - **🛠️ RAISON**: Problème de scroll et visibilité sur la version Full Screen Overlay précédente.

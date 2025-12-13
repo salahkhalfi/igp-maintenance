@@ -146,6 +146,9 @@ const GlobalStyles = () => (
             color: white;
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
         }
 
         .message-bubble-them {
@@ -153,6 +156,9 @@ const GlobalStyles = () => (
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
         }
 
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
@@ -204,21 +210,34 @@ const getNameFromToken = (token: string | null) => {
 
 const formatTime = (dateStr: string | null) => {
     if (!dateStr) return '';
+    
+    // 1. Parse as UTC (Backend Standard)
     const date = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
     
+    // 2. Get App-Configured Offset (Default -5 EST)
+    const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+
+    // 3. Shift Date and "Now" to App Timezone
+    // We move the time value so that the UTC slots hold the Local time
+    const shiftedDate = new Date(date.getTime() + (offset * 3600000));
     const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
+    const shiftedNow = new Date(now.getTime() + (offset * 3600000));
+    
+    // 4. Calculate Yesterday relative to App Timezone
+    const shiftedYesterday = new Date(shiftedNow);
+    shiftedYesterday.setDate(shiftedNow.getDate() - 1);
 
-    const isToday = date.toDateString() === now.toDateString();
-    const isYesterday = date.toDateString() === yesterday.toDateString();
+    // 5. Compare using ISO strings (which use UTC values) to check "Same Day"
+    const isToday = shiftedDate.toISOString().slice(0, 10) === shiftedNow.toISOString().slice(0, 10);
+    const isYesterday = shiftedDate.toISOString().slice(0, 10) === shiftedYesterday.toISOString().slice(0, 10);
 
+    // 6. Format using UTC to prevent Browser from applying a second offset
     if (isToday) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return shiftedDate.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
     } else if (isYesterday) {
         return 'Hier';
     } else {
-        return date.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: '2-digit' });
+        return shiftedDate.toLocaleDateString('fr-CA', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' });
     }
 };
 
@@ -2252,6 +2271,9 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 if (data.description) params.set('description', data.description);
                 if (data.priority) params.set('priority', data.priority.toLowerCase());
                 if (data.machine_id) params.set('machineId', data.machine_id);
+                if (data.assigned_to_id) params.set('assignedToId', data.assigned_to_id);
+                if (data.assigned_to_name) params.set('assignedToName', data.assigned_to_name);
+                if (data.scheduled_date) params.set('scheduledDate', data.scheduled_date);
                 
                 // Open in main app (New Tab to preserve chat context)
                 window.open('/?' + params.toString(), '_blank');
@@ -2922,15 +2944,26 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         for (let i = 0; i < messagesToDisplay.length; i++) {
             const msg = messagesToDisplay[i];
             const dateObj = new Date(msg.created_at.endsWith('Z') ? msg.created_at : msg.created_at + 'Z');
-            const dateStr = dateObj.toLocaleDateString();
+            
+            // Timezone Adjustment Logic
+            const offset = parseInt(localStorage.getItem('timezone_offset_hours') || '-5');
+            const shiftedDateObj = new Date(dateObj.getTime() + (offset * 3600000));
+            const dateStr = shiftedDateObj.toLocaleDateString('fr-CA', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' });
 
             if (dateStr !== lastDate) {
                 let displayDate = dateStr;
+                
                 const now = new Date();
-                const yesterday = new Date(now);
-                yesterday.setDate(now.getDate() - 1);
-                if (dateObj.toDateString() === now.toDateString()) displayDate = "Aujourd'hui";
-                else if (dateObj.toDateString() === yesterday.toDateString()) displayDate = "Hier";
+                const shiftedNow = new Date(now.getTime() + (offset * 3600000));
+                const yesterday = new Date(shiftedNow);
+                yesterday.setDate(shiftedNow.getDate() - 1);
+                
+                const shiftedDateISO = shiftedDateObj.toISOString().slice(0, 10);
+                const shiftedNowISO = shiftedNow.toISOString().slice(0, 10);
+                const yesterdayISO = yesterday.toISOString().slice(0, 10);
+
+                if (shiftedDateISO === shiftedNowISO) displayDate = "Aujourd'hui";
+                else if (shiftedDateISO === yesterdayISO) displayDate = "Hier";
 
                 result.push(
                     <div key={`date-${dateStr}`} className="flex justify-center my-8">
@@ -2985,7 +3018,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                         </div>
                     )}
 
-                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[65%]`}>
+                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%] md:max-w-[65%] min-w-0`}>
                         {!isMe && (
                             <div 
                                 onClick={() => handlePrivateChat(msg.sender_id)}

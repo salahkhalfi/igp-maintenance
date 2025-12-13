@@ -251,7 +251,7 @@ const AppHeader = ({
     return React.createElement('header', { className: 'sticky top-0 z-50 bg-transparent transition-all duration-300' },
         
         // --- ROW 1: IDENTITY & NAVIGATION (White Background) ---
-        React.createElement('div', { className: 'bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100' },
+        React.createElement('div', { className: 'bg-white/95 backdrop-blur-sm shadow-sm border-b border-slate-100' },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
                 React.createElement('div', { className: 'flex justify-between items-center h-12' },
                     
@@ -579,7 +579,7 @@ const AppHeader = ({
             // MOBILE MENU PORTAL (Fixed Overlay behind header)
             showMobileMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
                 React.createElement('div', { 
-                    className: 'fixed inset-0 z-[49] flex flex-col bg-white/95 backdrop-blur-xl overflow-y-auto pt-[60px] pb-32 px-4',
+                    className: 'fixed inset-0 md:left-auto md:right-0 md:w-80 md:shadow-2xl md:border-l md:border-gray-200 z-[49] flex flex-col bg-white overflow-y-auto pt-[60px] pb-32 px-4 transition-all duration-300 ease-in-out',
                     style: { WebkitOverflowScrolling: 'touch' } // Native momentum scrolling
                 },
                     activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-gray-50' }, 
@@ -597,6 +597,37 @@ const AppHeader = ({
                         ),
                         React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full animate-pulse' }, 'NOUVEAU')
                     ),
+
+                    // --- ADDED MOBILE QUICK ACTIONS ---
+                    React.createElement('button', {
+                        onClick: onOpenOverdue,
+                        className: 'px-3 py-3 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-200 shadow-sm flex items-center mt-2 hover:bg-orange-100'
+                    }, React.createElement('i', { className: 'fas fa-clock mr-3 text-orange-600 text-lg' }), 'Tickets en Retard'),
+                    
+                    React.createElement('button', {
+                        onClick: onOpenPerformance,
+                        className: 'px-3 py-3 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-200 shadow-sm flex items-center mt-2 hover:bg-blue-100'
+                    }, React.createElement('i', { className: 'fas fa-chart-line mr-3 text-blue-600 text-lg' }), 'Statistiques Performance'),
+
+                    React.createElement('button', {
+                        onClick: handlePushClick,
+                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50 justify-between'
+                    }, 
+                        React.createElement('div', { className: 'flex items-center' },
+                            React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell text-teal-500' : 'fa-bell-slash text-gray-400') + ' mr-3 text-lg' }), 
+                            'Notifications Push'
+                        ),
+                        React.createElement('span', { className: 'text-xs font-bold ' + (pushState === 'granted' && isSubscribed ? 'text-teal-600' : 'text-gray-400') }, 
+                            pushState === 'granted' && isSubscribed ? 'ON' : 'OFF'
+                        )
+                    ),
+
+                    React.createElement('button', {
+                        onClick: onOpenPushDevices,
+                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50'
+                    }, React.createElement('i', { className: 'fas fa-mobile-alt mr-3 text-purple-500 text-lg' }), 'Gérer mes appareils'),
+                    // ----------------------------------
+
                     React.createElement('button', {
                         onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
                         className: 'px-3 py-3 text-sm rounded-lg shadow-sm flex items-center gap-2 border mt-2 ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
