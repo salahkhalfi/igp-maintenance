@@ -2387,24 +2387,38 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         try {
             const res = await axios.get(`/api/v2/chat/conversations/${conversationId}/messages`);
             const newMessages = res.data.messages || [];
-            setParticipants(res.data.participants || []);
-            setConversation(res.data.conversation || null);
+            
+            // OPTIMIZATION: Only update state if data changed (deep comparison)
+            setParticipants(prev => {
+                const newParticipants = res.data.participants || [];
+                return JSON.stringify(prev) !== JSON.stringify(newParticipants) ? newParticipants : prev;
+            });
+
+            setConversation(prev => {
+                const newConv = res.data.conversation || null;
+                return JSON.stringify(prev) !== JSON.stringify(newConv) ? newConv : prev;
+            });
+
             // Capture status BEFORE state update to avoid race condition with React batching
             const isFirstLoad = !initialFetchDone.current;
 
             setMessages(prev => {
-                if (prev.length !== newMessages.length) {
-                    // Play sound if new message from others (ONLY if not initial load)
-                    if (!isFirstLoad && newMessages.length > prev.length) {
-                        const lastMsg = newMessages[newMessages.length - 1];
-                        if (lastMsg.sender_id !== currentUserId) {
-                            SoundManager.play().catch(e => console.error("Sound error:", e));
+                // Optimization: Check if messages actually changed
+                if (JSON.stringify(prev) !== JSON.stringify(newMessages)) {
+                    if (prev.length !== newMessages.length) {
+                        // Play sound if new message from others (ONLY if not initial load)
+                        if (!isFirstLoad && newMessages.length > prev.length) {
+                            const lastMsg = newMessages[newMessages.length - 1];
+                            if (lastMsg.sender_id !== currentUserId) {
+                                SoundManager.play().catch(e => console.error("Sound error:", e));
+                            }
                         }
+                        setTimeout(scrollToBottom, 100);
+                        markAsRead();
                     }
-                    setTimeout(scrollToBottom, 100);
-                    markAsRead();
+                    return newMessages;
                 }
-                return newMessages;
+                return prev;
             });
             
             if (isFirstLoad) initialFetchDone.current = true; // Mark initial fetch as done
@@ -3368,8 +3382,6 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
             <footer className="glass-header p-4 md:p-6 z-20 flex-shrink-0 border-t border-white/5">
                 <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-end gap-3 relative">
-                    {/* DEBUG FOOTER RENDER */}
-                    {console.log("FOOTER RENDER", { isRecording, showEmoji })}
                     {showEmoji && !isRecording && (
                         <div className="absolute bottom-full right-0 mb-4 bg-[#151515] border border-white/10 rounded-3xl shadow-2xl p-4 grid grid-cols-6 gap-2 w-80 animate-slide-up backdrop-blur-xl z-50">
                             {commonEmojis.map(emoji => (
