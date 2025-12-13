@@ -302,12 +302,27 @@ const AppHeader = ({
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
 
                         // --- RESTORED DESKTOP BUTTONS ---
+
+                        // IGP Connect / Messenger (Desktop - Top Row)
+                        activeModules.messaging && React.createElement('button', {
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all relative',
+                            onClick: onOpenMessaging, title: 'IGP Connect (Messagerie)'
+                        }, 
+                            React.createElement('i', { className: 'fas fa-comments' }),
+                            (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white' })
+                        ),
                         
                         // User Management (Desktop)
                         safeHasPermission('users.read') && React.createElement('button', {
                              className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all',
                              onClick: onOpenUserManagement, title: 'Gestion Utilisateurs'
                         }, React.createElement('i', { className: 'fas fa-users' })),
+
+                        // Role Management (Desktop)
+                        safeHasPermission('roles.read') && React.createElement('button', {
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-blue-600 transition-all',
+                            onClick: onOpenAdminRoles, title: 'Gestion des Rôles'
+                       }, React.createElement('i', { className: 'fas fa-shield-alt' })),
 
                         // Machines (Desktop)
                         safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', {
