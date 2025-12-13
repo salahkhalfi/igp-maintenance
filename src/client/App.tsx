@@ -131,7 +131,10 @@ const AppContent = () => {
         if (imageUrl) setInitialImageUrl(imageUrl);
         if (title) setInitialTicketTitle(title);
         if (priority) setInitialTicketPriority(priority as TicketPriority);
-        if (machineId) setInitialTicketMachineId(Number(machineId));
+        if (machineId) {
+            console.log("🎯 [App] Setting Machine ID:", Number(machineId));
+            setInitialTicketMachineId(Number(machineId));
+        }
         if (assignedToName) setInitialAssignedToName(assignedToName);
         if (assignedToId) setInitialAssignedToId(Number(assignedToId));
         if (scheduledDate) setInitialScheduledDate(scheduledDate);

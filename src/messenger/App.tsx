@@ -2255,45 +2255,70 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     const analyzeMagicAudio = async (audioBlob: Blob) => {
         const formData = new FormData();
-        formData.append('file', audioBlob, 'recording.webm');
+        formData.append('file', audioBlob, 'voice_ticket.webm');
 
         try {
-            // Using existing axios instance or fetch
-            const response = await axios.post('/api/ai/analyze-ticket', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+            // AUDIT FIX: Align strict behavior with Main App's VoiceTicketFab
+            // 1. Use fetch instead of axios for consistent FormData handling
+            // 2. Explicitly grab token to ensure Auth Context is passed to AI
+            const token = localStorage.getItem('auth_token');
+            
+            const response = await fetch('/api/ai/analyze-ticket', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}` // Explicit Auth
+                },
+                body: formData
             });
 
-            if (response.data) {
-                const data = response.data;
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Erreur serveur (${response.status}): ${errText}`);
+            }
+
+            const data = await response.json();
+            console.log("🤖 [Messenger] AI Analysis Result:", data);
+
+            if (data) {
                 const params = new URLSearchParams();
                 params.set('createTicket', 'true');
+                
+                // Meticulous mapping (matching src/client/App.tsx expectations)
                 if (data.title) params.set('title', data.title);
                 if (data.description) params.set('description', data.description);
                 if (data.priority) params.set('priority', data.priority.toLowerCase());
-                if (data.machine_id) params.set('machineId', data.machine_id);
-                if (data.assigned_to_id) params.set('assignedToId', data.assigned_to_id);
+                
+                // CRITICAL: Ensure ID is valid before sending
+                if (data.machine_id !== null && data.machine_id !== undefined) {
+                    params.set('machineId', String(data.machine_id));
+                }
+                
+                if (data.assigned_to_id !== null && data.assigned_to_id !== undefined) {
+                    params.set('assignedToId', String(data.assigned_to_id));
+                }
+                
                 if (data.assigned_to_name) params.set('assignedToName', data.assigned_to_name);
                 if (data.scheduled_date) params.set('scheduledDate', data.scheduled_date);
                 
-                // CRITICAL: Pass auth token to ensure context is preserved in PWA/New Window
-                // This prevents "Empty Lists" bug where getMachines fails (401) in the new window
-                const token = localStorage.getItem('auth_token');
+                // Pass Auth Token to prevent session loss
                 if (token) params.set('token', token);
                 
-                // Open in main app (Smart Navigation)
-                // If PWA or Mobile, navigate in same window to keep context. Desktop -> New Tab.
+                // Navigation Strategy
                 const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+                const targetUrl = '/?' + params.toString();
+                console.log("🚀 [Messenger] Handoff URL:", targetUrl);
+
                 if (isPWA || isMobile) {
-                    window.location.href = '/?' + params.toString();
+                    window.location.href = targetUrl;
                 } else {
-                    window.open('/?' + params.toString(), '_blank');
+                    window.open(targetUrl, '_blank');
                 }
             }
         } catch (error: any) {
             console.error("AI Analysis failed:", error);
-            alert("Erreur lors de l'analyse vocale: " + (error.response?.data?.error || error.message));
+            alert("Erreur lors de l'analyse vocale: " + error.message);
         } finally {
             setIsMagicAnalyzing(false);
         }
