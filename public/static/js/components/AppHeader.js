@@ -275,7 +275,7 @@ const AppHeader = ({
                     React.createElement('div', { className: 'flex items-center gap-3' },
                         
                         // User Badge (Desktop)
-                        React.createElement('div', { className: 'hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 hover:bg-white hover:shadow-sm transition-all cursor-pointer', onClick: onOpenUserManagement },
+                        React.createElement('div', { className: 'hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 hover:bg-white hover:shadow-sm transition-all cursor-pointer', onClick: onOpenUserManagement, title: 'Mon profil et gestion des utilisateurs' },
                             React.createElement('div', { className: 'w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2' },
                                 (currentUser?.first_name?.[0] || 'U')
                             ),
@@ -292,13 +292,13 @@ const AppHeader = ({
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full transition-all ' + 
                                 (pushState === 'granted' && isSubscribed ? 'text-teal-600 hover:bg-teal-50' : 'text-slate-400 hover:text-slate-600'),
                             onClick: handlePushClick, 
-                            title: 'Notifications'
+                            title: 'Centre de notifications'
                         }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell' : 'fa-bell-slash') })),
 
                         // Apps Button (Desktop)
                         React.createElement('button', {
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
-                            onClick: onOpenPushDevices, title: 'Mes Appareils'
+                            onClick: onOpenPushDevices, title: 'Connecter un appareil mobile'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
 
                         // --- RESTORED DESKTOP BUTTONS ---
@@ -306,7 +306,7 @@ const AppHeader = ({
                         // IGP Connect / Messenger (Desktop - Top Row)
                         activeModules.messaging && React.createElement('button', {
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all relative',
-                            onClick: onOpenMessaging, title: 'IGP Connect (Messagerie)'
+                            onClick: onOpenMessaging, title: 'Messagerie instantanée (IGP Connect)'
                         }, 
                             React.createElement('i', { className: 'fas fa-comments' }),
                             (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white' })
@@ -315,31 +315,31 @@ const AppHeader = ({
                         // User Management (Desktop)
                         safeHasPermission('users.read') && React.createElement('button', {
                              className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all',
-                             onClick: onOpenUserManagement, title: 'Gestion Utilisateurs'
+                             onClick: onOpenUserManagement, title: 'Gérer les utilisateurs et équipes'
                         }, React.createElement('i', { className: 'fas fa-users' })),
 
                         // Role Management (Desktop)
                         safeHasPermission('roles.read') && React.createElement('button', {
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-blue-600 transition-all',
-                            onClick: onOpenAdminRoles, title: 'Gestion des Rôles'
+                            onClick: onOpenAdminRoles, title: 'Configurer les rôles et permissions'
                        }, React.createElement('i', { className: 'fas fa-shield-alt' })),
 
                         // Machines (Desktop)
                         safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', {
                              className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-teal-600 transition-all',
-                             onClick: onOpenMachineManagement, title: 'Gestion Machines'
+                             onClick: onOpenMachineManagement, title: 'Gérer le parc machines'
                         }, React.createElement('i', { className: 'fas fa-cogs' })),
 
                         // Settings (Desktop) - CRITICAL REQUEST
                         safeHasPermission('settings.manage') && React.createElement('button', {
                              className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-gray-700 transition-all',
-                             onClick: onOpenSystemSettings, title: 'Paramètres Système'
+                             onClick: onOpenSystemSettings, title: 'Paramètres généraux du système'
                         }, React.createElement('i', { className: 'fas fa-cog' })),
 
                         // TV Mode (Desktop)
                         safeHasPermission('settings.manage') && React.createElement('button', {
                              className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
-                             onClick: onOpenTv, title: 'Mode TV'
+                             onClick: onOpenTv, title: 'Passer en mode affichage TV'
                         }, React.createElement('i', { className: 'fas fa-tv' })),
 
                         // MAIN MENU TOGGLE (Visible on ALL screens)
@@ -347,7 +347,7 @@ const AppHeader = ({
                         React.createElement('button', {
                             className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-sm ml-2',
                             onClick: () => setShowMobileMenu(!showMobileMenu),
-                            title: 'Menu Principal (Paramètres, Admin, etc.)'
+                            title: 'Ouvrir le menu complet'
                         }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-lg' }))
                     )
                 )
