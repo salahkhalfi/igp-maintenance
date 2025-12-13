@@ -313,8 +313,13 @@ if ('serviceWorker' in navigator) {
                 });
                 
                 // Si c'est un appel, vibrer aussi via JS
-                if (event.data.isCall && 'vibrate' in navigator) {
-                    navigator.vibrate([500, 200, 500]);
+                if ('vibrate' in navigator) {
+                    if (event.data.isCall) {
+                        navigator.vibrate([500, 200, 500, 200, 500]);
+                    } else {
+                        // Notification standard : Vibrer aussi (Demande utilisateur)
+                        navigator.vibrate([200, 100, 200]);
+                    }
                 }
             } catch (e) {
                 console.error(e);
