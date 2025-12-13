@@ -532,8 +532,6 @@ const AppHeader = ({
                     React.createElement('button', { onClick: onLogout, className: 'px-3 py-3 bg-gray-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-gray-700 transition mt-2 font-bold' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Se déconnecter')
                 ), document.body
             )
-
-        )
     );
 };
 
