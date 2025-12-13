@@ -141,17 +141,32 @@ RÈGLES D'EXTRACTION STRICTES :
    - Ignore les bruits de fond, hésitations ("euh", "ben", "tsé") et politesses.
    - Concentre-toi sur les FAITS TECHNIQUES.
 
-2. PRIORITÉ : Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu", "Danger", "Ça presse" -> 'priority' = 'critical'.
+2. PRIORITÉ (IMPORTANT) :
+   - Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu", "Danger", "Ça presse", "Arrêt complet" -> 'priority' = 'critical'.
+   - Si tu entends "Important", "Besoin rapide", "Dès que possible" -> 'priority' = 'high'.
+   - Si c'est de la maintenance normale ou non spécifiée -> 'priority' = 'medium'.
+   - Si c'est cosmétique ou "quand vous aurez le temps" -> 'priority' = 'low'.
 
-3. ASSIGNATION (RÈGLE IMPORTANTE) :
+3. IDENTIFICATION MACHINE (RÈGLE CRITIQUE) :
+   - Regarde attentivement la liste 'CONTEXTE MACHINES' fournie.
+   - Cherche une correspondance avec ce que dit l'utilisateur (même approximative).
+   - Si l'utilisateur dit "Four Tamglass" et que la liste contient "ID 5: Four Tamglass HTF", ALORS 'machine_id' = 5.
+   - Si l'utilisateur dit juste "La CNC" et qu'il y en a plusieurs, essaie de déduire avec le contexte ou choisis la plus probable/principale si possible, sinon null.
+   - Si tu trouves une machine correspondante, tu DOIS mettre son ID dans 'machine_id'.
+
+4. ASSIGNATION (RÈGLE IMPORTANTE) :
    - Cherche le nom d'un technicien dans la liste 'CONTEXTE EQUIPE'.
    - Si tu entends un NOM -> 'assigned_to_id' = ID correspondant.
    - Si tu entends une DATE (ex: "pour demain", "lundi prochain") mais AUCUN NOM -> 'assigned_to_id' = 0 (Cela signifie "Assigner à toute l'équipe").
    - Si aucun nom et aucune date -> 'assigned_to_id' = null.
 
-4. DATE : Convertis les termes relatifs ("demain 14h", "lundi matin") en format ISO 8601 (YYYY-MM-DDTHH:mm:ss) basé sur la DATE ACTUELLE.
+5. DATE ET HEURE (RÈGLE STRICTE) :
+   - Tu dois extraire toute mention de temps (ex: "demain matin", "lundi à 14h", "dans 2 heures").
+   - Convertis TOUJOURS ces mentions en format ISO 8601 PRECIS (YYYY-MM-DDTHH:mm:ss) en te basant sur la DATE ACTUELLE fournie.
+   - Ex: Si on est le 2023-10-25 10:00 et l'utilisateur dit "demain 14h", 'scheduled_date' = "2023-10-26T14:00:00".
+   - Si aucune heure n'est précisée pour une date ("pour demain"), mets par défaut 08:00:00.
 
-5. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
+6. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
    - Tu es un secrétaire technique. Reformule le texte brut en langage professionnel standard.
    - Exemple : "Euh la strappe est pété sur la drill" -> Titre: "Remplacement courroie perceuse" / Desc: "La courroie de la perceuse est brisée, intervention requise."
    - NE PAS INVENTER : N'ajoute pas de détails techniques non mentionnés.
