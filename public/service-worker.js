@@ -4,7 +4,7 @@
  * Version: v1.1.0 (Offline First)
  */
 
-const CACHE_VERSION = 'v1.1.1';
+const CACHE_VERSION = 'v1.1.2';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache immédiatement pour le mode offline
