@@ -390,7 +390,8 @@ const AppHeader = ({
                             // Clear Button
                             (searchQuery) && React.createElement('button', {
                                 onClick: () => { setSearchQuery(''); setViewingList(false); setShowSearchResults(false); searchInputRef.current?.focus(); },
-                                className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 p-1'
+                                className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 p-1',
+                                title: 'Effacer la recherche'
                             }, React.createElement('i', { className: 'fas fa-times-circle' })),
                             
                             // Spinner
@@ -399,7 +400,8 @@ const AppHeader = ({
                             // Chevron
                             (!searchQuery && !searchLoading) && React.createElement('button', {
                                 onClick: () => { setViewingList(!viewingList); setShowSearchResults(!showSearchResults); },
-                                className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 p-1'
+                                className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 p-1',
+                                title: 'Afficher les filtres rapides et l\'historique'
                             }, React.createElement('i', { className: 'fas fa-chevron-down text-xs' }))
                         )
                     ),
@@ -408,22 +410,26 @@ const AppHeader = ({
                     React.createElement('div', { className: 'flex items-center gap-2 border-l border-slate-200 pl-4 mr-auto' },
                         React.createElement('button', {
                             onClick: onOpenOverdue,
-                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-orange-50 hover:text-orange-700 transition-colors'
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-orange-50 hover:text-orange-700 transition-colors',
+                            title: 'Voir uniquement les tickets en retard'
                         }, React.createElement('i', { className: 'fas fa-clock text-orange-500' }), 'Retard'),
                         
                         React.createElement('button', {
                             onClick: onOpenPerformance,
-                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors'
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors',
+                            title: 'Afficher les statistiques de performance'
                         }, React.createElement('i', { className: 'fas fa-chart-line text-blue-500' }), 'Performance'),
 
                         React.createElement('button', {
                             onClick: onOpenManageColumns,
-                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors'
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors',
+                            title: 'Configurer l\'affichage des colonnes Kanban'
                         }, React.createElement('i', { className: 'fas fa-columns text-slate-400' }), 'Vues'),
 
                         activeModules.planning && React.createElement('button', {
                             onClick: onOpenPlanning,
-                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors'
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors',
+                            title: 'Consulter le planning de production'
                         }, React.createElement('i', { className: 'fas fa-calendar-alt text-indigo-500' }), 'Planning')
                     ),
 
@@ -431,7 +437,10 @@ const AppHeader = ({
                     React.createElement('div', { className: 'flex items-center gap-3' },
                         
                         // Active Tickets Count (Desktop Toolbar)
-                        React.createElement('span', { className: 'hidden xl:inline-block text-xs font-extrabold text-blue-800 mr-2 bg-blue-50 px-2 py-1 rounded-md' }, 
+                        React.createElement('span', { 
+                            className: 'hidden xl:inline-block text-xs font-extrabold text-blue-800 mr-2 bg-blue-50 px-2 py-1 rounded-md',
+                            title: 'Nombre total de tickets en cours de traitement'
+                        }, 
                             activeTicketsCount + " actifs"
                         ),
 
@@ -439,14 +448,14 @@ const AppHeader = ({
                         React.createElement('button', {
                             onClick: onRefresh,
                             className: 'w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-md hover:-translate-y-0.5 transition-all',
-                            title: 'Actualiser'
+                            title: 'Actualiser les données maintenant'
                         }, React.createElement('i', { className: 'fas fa-sync-alt' })),
 
                         // Messenger
                         activeModules.messaging && React.createElement('button', {
                             onClick: onOpenMessaging,
                             className: 'relative w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow-md hover:-translate-y-0.5 transition-all',
-                            title: 'Messagerie'
+                            title: 'Ouvrir la messagerie instantanée'
                         }, 
                             React.createElement('i', { className: 'fas fa-comments' }),
                             (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white' })
@@ -455,7 +464,8 @@ const AppHeader = ({
                         // NEW TICKET (The Big Button)
                         safeHasPermission('tickets.create') && React.createElement('button', {
                             onClick: onOpenCreateModal,
-                            className: 'flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all'
+                            className: 'flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all',
+                            title: 'Créer un nouveau ticket de maintenance ou scanner un QR code'
                         }, 
                             React.createElement('i', { className: 'fas fa-plus-circle text-lg' }),
                             React.createElement('span', {}, 'Nouveau Ticket')
@@ -484,14 +494,16 @@ const AppHeader = ({
             // Mobile Quick Actions
             activeModules.messaging && React.createElement('button', {
                 onClick: onOpenMessaging,
-                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm active:scale-95 relative'
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm active:scale-95 relative',
+                title: 'Messagerie'
             }, 
                 React.createElement('i', { className: 'fas fa-comments' }),
                 (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white' })
             ),
             safeHasPermission('tickets.create') && React.createElement('button', {
                 onClick: onOpenCreateModal,
-                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-md active:scale-95'
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-md active:scale-95',
+                title: 'Nouveau Ticket'
             }, React.createElement('i', { className: 'fas fa-plus' }))
         ),
 
