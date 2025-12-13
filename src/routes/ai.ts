@@ -5,8 +5,20 @@ import { machines, users, systemSettings } from '../db/schema';
 import { inArray, eq } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
+import { z } from 'zod';
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+// --- VALIDATION SCHEMA ---
+const TicketAnalysisSchema = z.object({
+    title: z.string().min(1, "Titre requis"),
+    description: z.string().min(1, "Description requise"),
+    priority: z.enum(['low', 'medium', 'high', 'critical']),
+    machine_id: z.number().nullable(),
+    assigned_to_id: z.number().nullable(),
+    assigned_to_name: z.string().nullable(),
+    scheduled_date: z.string().nullable()
+});
 
 // --- HELPER FUNCTIONS ---
 
@@ -165,7 +177,18 @@ FORMAT JSON ATTENDU (Réponds UNIQUEMENT ce JSON) :
                 const data = await response.json() as any;
                 const content = data.choices[0].message.content;
                 console.log("✅ [AI] DeepSeek Success");
-                return JSON.parse(content);
+                
+                try {
+                    const parsed = JSON.parse(content);
+                    // VERIFICATION (Trust but verify)
+                    const validated = TicketAnalysisSchema.parse(parsed);
+                    return validated;
+                } catch (validationError) {
+                    console.error("⚠️ [AI] DeepSeek Validation Failed:", validationError);
+                    // On pourrait ici tenter de réparer ou renvoyer une erreur,
+                    // mais pour l'instant on laisse le fallback prendre le relais ou on renvoie une erreur explicite.
+                    throw new Error("Format de réponse invalide de DeepSeek");
+                }
             } else {
                 console.warn("⚠️ [AI] DeepSeek Error:", await response.text());
             }
@@ -200,7 +223,16 @@ FORMAT JSON ATTENDU (Réponds UNIQUEMENT ce JSON) :
             if (response.ok) {
                 const data = await response.json() as any;
                 console.log("✅ [AI] OpenAI Success");
-                return JSON.parse(data.choices[0].message.content);
+                
+                try {
+                    const parsed = JSON.parse(data.choices[0].message.content);
+                    // VERIFICATION (Trust but verify)
+                    const validated = TicketAnalysisSchema.parse(parsed);
+                    return validated;
+                } catch (validationError) {
+                     console.error("⚠️ [AI] OpenAI Validation Failed:", validationError);
+                     throw new Error("Format de réponse invalide de OpenAI");
+                }
             }
         } catch (e) {
             console.error("❌ [AI] OpenAI Exception:", e);
