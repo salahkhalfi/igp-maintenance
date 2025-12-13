@@ -41,6 +41,17 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 3.0.0-beta.4 (13 Décembre 2025) - SÉCURITÉ & VIBRATION 🔒📳
+- **🔒 SÉCURISATION**: Sauvegarde complète de la version stable et validation des processus de déploiement.
+- **📳 VIBRATION UNIVERSELLE**: Ajout du support de vibration pour toutes les notifications push (pas seulement les appels).
+  - **Pattern Standard**: Double vibration courte (200ms) pour les messages et tickets.
+  - **Pattern Appel**: Vibration longue et insistante maintenue.
+- **🧠 CONTEXTE IA OPTIMISÉ**: Injection intelligente des détails machines dans le contexte de l'IA.
+  - **Mode Précis**: Fiche technique complète (Fabriquant, Année, Specs) injectée pour la machine concernée par le ticket.
+  - **Mode Global**: Liste allégée (ID, Type, Localisation) des 30 principales machines pour le contexte général, évitant la surcharge de tokens.
+- **🛡️ ROBUSTESSE**: Protection contre la surcharge du contexte IA et gestion des erreurs silencieuses.
+- **✅ IMPACT**: Meilleure réactivité sensorielle pour les techniciens et diagnostics IA plus précis sans compromettre la stabilité.
+
 ### Version 3.0.0 (13 Décembre 2025) - EXPERT INDUSTRIEL IA (30k) 🧠🏭
 - **🧠 INTELLIGENCE CONTEXTUELLE**: Augmentation massive de la fenêtre de contexte IA à 30 000 caractères.
 - **🏭 DÉTAILS MACHINES AVANCÉS**: Ajout des champs Fabricant, Année et Specs Techniques pour chaque machine.

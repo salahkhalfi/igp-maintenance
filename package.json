@@ -1,6 +1,6 @@
 {
   "name": "maintenance-app",
-  "version": "3.0.0-alpha.3",
+  "version": "3.0.0-beta.4",
   "description": "Système de gestion de maintenance pour IGP Glass",
   "author": "Salah Khalfi <salah@igpglass.ca>",
   "type": "module",
