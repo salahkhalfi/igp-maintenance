@@ -159,7 +159,18 @@ self.addEventListener('fetch', (event) => {
   // 3. API (Network Only - No Cache for Online First AI)
   // On ne met JAMAIS en cache les réponses API pour éviter les conflits avec le mode Online
   if (url.pathname.startsWith('/api/')) {
-      event.respondWith(fetch(event.request));
+      event.respondWith(
+        fetch(event.request).catch(error => {
+            console.log('[SW] API Fetch failed (offline):', url.pathname);
+            return new Response(JSON.stringify({ 
+                error: 'offline', 
+                message: 'Vous êtes hors ligne. Veuillez vérifier votre connexion.' 
+            }), {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        })
+      );
       return;
   }
 
