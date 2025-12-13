@@ -251,7 +251,7 @@ const AppHeader = ({
     return React.createElement('header', { className: 'sticky top-0 z-50 bg-transparent transition-all duration-300' },
         
         // --- ROW 1: IDENTITY & NAVIGATION (White Background) ---
-        React.createElement('div', { className: 'bg-white/95 backdrop-blur-sm shadow-sm border-b border-slate-100' },
+        React.createElement('div', { className: 'bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100' },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
                 React.createElement('div', { className: 'flex justify-between items-center h-12' },
                     
@@ -316,7 +316,7 @@ const AppHeader = ({
                             title: (messengerName || 'IGP Connect') + ' (Nouvelle Messagerie)'
                         }, 
                             React.createElement('i', { className: 'fas fa-rocket' }),
-                            React.createElement('span', { className: 'absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse' })
+                            React.createElement('span', { className: 'absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white' })
                         ),
                         
                         // User Management (Desktop)
@@ -363,7 +363,7 @@ const AppHeader = ({
 
         // --- ROW 2: CONTROL BAR (Action Toolbar) ---
         // Hidden on mobile (kept simple), Visible on Desktop
-        React.createElement('div', { className: 'hidden md:block bg-white/80 backdrop-blur-sm border-b border-slate-200/60 shadow-sm' },
+        React.createElement('div', { className: 'hidden md:block bg-white/80 border-b border-slate-200/60 shadow-sm' },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
                 React.createElement('div', { className: 'flex items-center gap-4' },
                     
@@ -586,17 +586,16 @@ const AppHeader = ({
                         React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-3 text-blue-500 text-lg' }), 'Messagerie'),
                         (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
                     ),
-                    // NEW CONNECT BUTTON
-                    React.createElement('button', { 
-                        onClick: () => window.open('/messenger', '_blank'), 
-                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-emerald-50 border-emerald-200' 
-                    }, 
-                        React.createElement('div', { className: 'flex items-center' }, 
-                            React.createElement('i', { className: 'fas fa-rocket mr-3 text-emerald-600 text-lg' }), 
-                            React.createElement('span', { className: 'font-bold text-emerald-700' }, messengerName)
+                        React.createElement('button', { 
+                            onClick: () => window.open('/messenger', '_blank'), 
+                            className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-emerald-50 border-emerald-200' 
+                        }, 
+                            React.createElement('div', { className: 'flex items-center' }, 
+                                React.createElement('i', { className: 'fas fa-rocket mr-3 text-emerald-600 text-lg' }), 
+                                React.createElement('span', { className: 'font-bold text-emerald-700' }, messengerName)
+                            ),
+                            React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full' }, 'NOUVEAU')
                         ),
-                        React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full animate-pulse' }, 'NOUVEAU')
-                    ),
 
                     // --- ADDED MOBILE QUICK ACTIONS ---
                     React.createElement('button', {

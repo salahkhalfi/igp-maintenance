@@ -475,7 +475,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     if (!show) return null;
 
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[10000] p-4',
+        className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm',
         onClick: onClose
     },
         React.createElement('div', {
@@ -889,16 +889,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     React.createElement('i', { className: 'fas fa-robot text-green-600 text-xl mt-1' }),
                                     React.createElement('div', {},
                                         React.createElement('h3', { className: 'font-bold text-green-900 mb-2 flex items-center gap-2' },
-                                            "Personnalisation de l'IA (À propos)",
+                                            "Personnalisation de l'IA (Prompt Principal)",
                                             React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                         ),
                                         React.createElement('p', { className: 'text-sm text-green-800 mb-2' },
-                                            "Définissez un contexte spécifique pour l'IA (ex: règles métier, vocabulaire, ton)."
+                                            "Définissez le prompt principal et le contexte pour l'IA (Règles, Ton, Contexte Usine)."
                                         ),
                                         React.createElement('ul', { className: 'text-sm text-green-800 space-y-1 list-disc list-inside' },
-                                            React.createElement('li', {}, 'Utilisé par l\'IA pour analyser les tickets'),
-                                            React.createElement('li', {}, 'Max 30000 caractères'),
-                                            React.createElement('li', {}, 'Conseil : Décrivez votre activité et vos priorités')
+                                            React.createElement('li', {}, 'Utilisé pour analyser les tickets et le chat expert'),
+                                            React.createElement('li', {}, 'Définissez le Rôle, la Mission et les Règles d\'Or'),
+                                            React.createElement('li', {}, 'Max 30000 caractères')
                                         )
                                     )
                                 )
@@ -908,11 +908,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                             React.createElement('div', { className: 'mb-0' },
                                 React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
                                     React.createElement('i', { className: 'fas fa-file-alt mr-2' }),
-                                    'Contexte "À propos"'
+                                    'Prompt Principal & Contexte'
                                 ),
                                 !editingAiContext ? React.createElement('div', { className: 'flex flex-col gap-3' },
-                                    React.createElement('div', { className: 'bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800 whitespace-pre-wrap min-h-[60px]' },
-                                        aiCustomContext || React.createElement('span', { className: 'text-gray-400 italic' }, 'Aucun contexte défini')
+                                    React.createElement('div', { className: 'bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800 whitespace-pre-wrap min-h-[60px] text-sm font-mono' },
+                                        aiCustomContext || React.createElement('div', { className: 'text-gray-500 italic' }, 
+                                            React.createElement('p', { className: 'font-bold mb-1' }, 'Prompt par défaut actif :'),
+                                            "RÔLE : Expert Industriel Senior chez IGP Inc...",
+                                            React.createElement('br'),
+                                            "(Cliquez sur Modifier pour voir ou personnaliser le prompt complet)"
+                                        )
                                     ),
                                     React.createElement('button', {
                                         onClick: handleStartEditAiContext,
@@ -920,9 +925,30 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         type: 'button'
                                     },
                                         React.createElement('i', { className: 'fas fa-edit' }),
-                                        'Modifier'
+                                        'Modifier / Personnaliser'
                                     )
                                 ) : React.createElement('div', { className: 'space-y-3' },
+                                    React.createElement('div', { className: 'flex justify-end' },
+                                        React.createElement('button', {
+                                            onClick: () => setTempAiContext(`RÔLE : Expert Industriel Senior chez IGP Inc. (Usine de verre)
+
+MISSION :
+Assister les techniciens et administrateurs dans la maintenance, le diagnostic de pannes et l'optimisation de la production.
+
+RÈGLES D'OR :
+1. SÉCURITÉ AVANT TOUT : Rappeler systématiquement les procédures de cadenassage (Lockout/Tagout) avant toute intervention physique.
+2. CONTEXTE INDUSTRIEL : Se concentrer uniquement sur les machines, la maintenance, la production et la sécurité.
+3. TON PROFESSIONNEL : Être direct, précis et factuel. Pas de bavardage inutile.
+4. REFUS HORS-SUJET : Refuser poliment mais fermement toute question non liée au travail.
+
+CONTEXTE DE L'USINE :
+- Nous fabriquons du verre (trempé, laminé, isolant).
+- Les machines critiques incluent : Fours de trempe, CNC, Lignes d'assemblage, Tables de découpe.
+- La production fonctionne 24/7. Chaque minute d'arrêt coûte cher.`),
+                                            className: 'text-xs text-blue-600 hover:text-blue-800 underline',
+                                            type: 'button'
+                                        }, 'Charger le modèle par défaut')
+                                    ),
                                     React.createElement('textarea', {
                                         value: tempAiContext,
                                         onChange: (e) => setTempAiContext(e.target.value),

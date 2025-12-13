@@ -4,7 +4,7 @@
  * Version: v1.1.3 (Online First - Performance Optimized)
  */
 
-const CACHE_VERSION = 'v1.1.3';
+const CACHE_VERSION = 'v3.0.0';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)
@@ -26,7 +26,9 @@ const STATIC_ASSETS = [
     '/static/js/components/TicketDetailsModal.js',
     '/static/js/components/CreateTicketModal.js',
     '/static/js/components/MessagingSidebar.js',
-    '/static/js/components/MessagingChatWindow.js'
+    '/static/js/components/MessagingChatWindow.js',
+    '/static/js/components/MachineManagementModal.js',
+    '/static/js/components/AIChatModal.js'
 ];
 
 // Installation du Service Worker

@@ -9,12 +9,18 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
     const [newModel, setNewModel] = React.useState("");
     const [newSerial, setNewSerial] = React.useState("");
     const [newLocation, setNewLocation] = React.useState("");
+    const [newManufacturer, setNewManufacturer] = React.useState("");
+    const [newYear, setNewYear] = React.useState("");
+    const [newTechnicalSpecs, setNewTechnicalSpecs] = React.useState("");
 
     // Formulaire édition
     const [editType, setEditType] = React.useState("");
     const [editModel, setEditModel] = React.useState("");
     const [editSerial, setEditSerial] = React.useState("");
     const [editLocation, setEditLocation] = React.useState("");
+    const [editManufacturer, setEditManufacturer] = React.useState("");
+    const [editYear, setEditYear] = React.useState("");
+    const [editTechnicalSpecs, setEditTechnicalSpecs] = React.useState("");
     const [editStatus, setEditStatus] = React.useState("");
 
     // Référence pour le scroll
@@ -45,13 +51,19 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                 machine_type: newType,
                 model: newModel || null,
                 serial_number: newSerial || null,
-                location: newLocation || null
+                location: newLocation || null,
+                manufacturer: newManufacturer || null,
+                year: newYear ? parseInt(newYear) : null,
+                technical_specs: newTechnicalSpecs || null
             });
             alert("Machine creee avec succes!");
             setNewType("");
             setNewModel("");
             setNewSerial("");
             setNewLocation("");
+            setNewManufacturer("");
+            setNewYear("");
+            setNewTechnicalSpecs("");
             setShowCreateForm(false);
             onRefresh();
         } catch (error) {
@@ -62,9 +74,12 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
     const handleEdit = (machine) => {
         setEditingMachine(machine);
         setEditType(machine.machine_type);
-        setEditModel(machine.model);
-        setEditSerial(machine.serial_number);
+        setEditModel(machine.model || "");
+        setEditSerial(machine.serial_number || "");
         setEditLocation(machine.location || "");
+        setEditManufacturer(machine.manufacturer || "");
+        setEditYear(machine.year || "");
+        setEditTechnicalSpecs(machine.technical_specs || "");
         setEditStatus(machine.status);
 
         // Scroller vers le haut pour voir le formulaire
@@ -80,9 +95,12 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
         try {
             await axios.patch(API_URL + "/machines/" + editingMachine.id, {
                 machine_type: editType,
-                model: editModel,
-                serial_number: editSerial,
-                location: editLocation,
+                model: editModel || null,
+                serial_number: editSerial || null,
+                location: editLocation || null,
+                manufacturer: editManufacturer || null,
+                year: editYear ? parseInt(editYear) : null,
+                technical_specs: editTechnicalSpecs || null,
                 status: editStatus
             });
             alert("Machine mise a jour!");
@@ -94,7 +112,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
     };
 
     const handleDelete = async (machine) => {
-        if (!confirm("Supprimer " + machine.machine_type + " " + machine.model + " ?")) return;
+        if (!confirm("Supprimer " + machine.machine_type + " " + (machine.model || "") + " ?")) return;
         try {
             await axios.delete(API_URL + "/machines/" + machine.id);
             alert("Machine supprimee!");
@@ -118,53 +136,66 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
 
     if (!show) return null;
 
+    // FIX: Check for null properties to prevent crashes
     const filteredMachines = machines.filter(m =>
         !searchQuery ||
         m.machine_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (m.model && m.model.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (m.serial_number && m.serial_number.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (m.location && m.location.toLowerCase().includes(searchQuery.toLowerCase()))
+        (m.location && m.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (m.manufacturer && m.manufacturer.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     return React.createElement("div", {
-        className: "fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[10000] p-4",
+        className: "fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm",
         onClick: onClose
     },
         React.createElement("div", {
-            className: "bg-white rounded-2xl border border-gray-300 w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col",
+            className: "bg-white rounded-2xl shadow-2xl border border-gray-300 w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col",
             onClick: (e) => e.stopPropagation()
         },
-            React.createElement("div", { className: "bg-gradient-to-r from-teal-600 to-cyan-600 text-white p-3 sm:p-5 flex justify-between items-center" },
-                React.createElement("div", { className: "flex items-center gap-2 sm:gap-3" },
-                    React.createElement("i", { className: "fas fa-cogs text-xl sm:text-2xl" }),
-                    React.createElement("h2", { className: "text-lg sm:text-2xl font-bold" }, "Gestion des Machines")
+            React.createElement("div", { className: "bg-gradient-to-r from-teal-700 to-cyan-700 text-white p-4 sm:p-5 flex justify-between items-center shadow-md" },
+                React.createElement("div", { className: "flex items-center gap-3" },
+                    React.createElement("div", { className: "bg-white/20 p-2 rounded-lg" },
+                         React.createElement("i", { className: "fas fa-server text-xl sm:text-2xl" })
+                    ),
+                    React.createElement("div", {},
+                        React.createElement("h2", { className: "text-lg sm:text-2xl font-bold tracking-tight" }, "Gestion du Parc Machines"),
+                        React.createElement("p", { className: "text-xs sm:text-sm text-cyan-100 font-medium" }, "Inventaire et caractéristiques techniques")
+                    )
                 ),
                 React.createElement("button", {
                     onClick: onClose,
-                    className: "text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 sm:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center transition-all active:scale-95",
+                    className: "text-white hover:bg-white/20 rounded-xl p-2 transition-all active:scale-95",
                     'aria-label': "Fermer"
                 },
-                    React.createElement("i", { className: "fas fa-times text-xl sm:text-2xl" })
+                    React.createElement("i", { className: "fas fa-times text-xl" })
                 )
             ),
-            React.createElement("div", { className: "flex-1 overflow-y-auto p-3 sm:p-6", ref: scrollContainerRef },
-                React.createElement("div", { className: "mb-4 flex flex-col sm:flex-row gap-2 sm:gap-3" },
+            React.createElement("div", { className: "flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50", ref: scrollContainerRef },
+                React.createElement("div", { className: "mb-6 flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
                     currentUser?.role === "admin" ? React.createElement("button", {
                         onClick: () => setShowCreateForm(!showCreateForm),
-                        className: "px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all text-sm sm:text-base"
-                    }, showCreateForm ? "Annuler" : "Nouvelle Machine") : null,
-                    React.createElement("input", {
-                        type: "text",
-                        placeholder: "Rechercher...",
-                        value: searchQuery,
-                        onChange: (e) => setSearchQuery(e.target.value),
-                        className: "flex-1 px-3 sm:px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none text-sm sm:text-base"
-                    })
+                        className: "px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2"
+                    }, 
+                        React.createElement("i", { className: showCreateForm ? "fas fa-minus" : "fas fa-plus" }),
+                        showCreateForm ? "Fermer le formulaire" : "Nouvelle Machine"
+                    ) : null,
+                    React.createElement("div", { className: "relative flex-1" },
+                        React.createElement("i", { className: "fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" }),
+                        React.createElement("input", {
+                            type: "text",
+                            placeholder: "Rechercher une machine (nom, modèle, série, fabricant...)",
+                            value: searchQuery,
+                            onChange: (e) => setSearchQuery(e.target.value),
+                            className: "w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                        })
+                    )
                 ),
 
                 showCreateForm ? React.createElement("form", {
                     onSubmit: handleCreate,
-                    className: "mb-6 p-6 bg-gradient-to-br from-blue-50 to-gray-50 rounded-xl border-2 border-blue-200 shadow-lg"
+                    className: "mb-6 p-6 bg-white rounded-xl border border-blue-200 shadow-lg"
                 },
                     React.createElement("h3", { className: "text-xl font-bold mb-4 text-blue-800" }, "Nouvelle Machine"),
                     React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
@@ -174,7 +205,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: newType,
                                 onChange: (e) => setNewType(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                 placeholder: "Ex: Polisseuse, CNC, Four..."
                             })
                         ),
@@ -184,7 +215,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: newModel,
                                 onChange: (e) => setNewModel(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                 placeholder: "Ex: Bavelloni, Double Edger..."
                             })
                         ),
@@ -194,7 +225,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: newSerial,
                                 onChange: (e) => setNewSerial(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                 placeholder: "Ex: PDE-001"
                             })
                         ),
@@ -204,8 +235,38 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: newLocation,
                                 onChange: (e) => setNewLocation(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
                                 placeholder: "Ex: Atelier Polissage"
+                            })
+                        ),
+                        React.createElement("div", {},
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Fabricant"),
+                            React.createElement("input", {
+                                type: "text",
+                                value: newManufacturer,
+                                onChange: (e) => setNewManufacturer(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                placeholder: "Ex: Intermac"
+                            })
+                        ),
+                        React.createElement("div", {},
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Annee"),
+                            React.createElement("input", {
+                                type: "number",
+                                value: newYear,
+                                onChange: (e) => setNewYear(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                placeholder: "Ex: 2018"
+                            })
+                        ),
+                        React.createElement("div", { className: "md:col-span-2" },
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Specs Techniques"),
+                            React.createElement("textarea", {
+                                value: newTechnicalSpecs,
+                                onChange: (e) => setNewTechnicalSpecs(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
+                                placeholder: "Ex: Puissance 40kW, 5 axes...",
+                                rows: 3
                             })
                         )
                     ),
@@ -217,7 +278,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
 
                 editingMachine ? React.createElement("form", {
                     onSubmit: handleUpdate,
-                    className: "mb-6 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 shadow-lg"
+                    className: "mb-6 p-6 bg-white rounded-xl border border-blue-200 shadow-lg"
                 },
                     React.createElement("h3", { className: "text-xl font-bold mb-4 text-blue-800" }, "Modifier Machine"),
                     React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
@@ -227,7 +288,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: editType,
                                 onChange: (e) => setEditType(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
                             })
                         ),
                         React.createElement("div", {},
@@ -236,7 +297,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: editModel,
                                 onChange: (e) => setEditModel(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
                             })
                         ),
                         React.createElement("div", {},
@@ -245,7 +306,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: editSerial,
                                 onChange: (e) => setEditSerial(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
                             })
                         ),
                         React.createElement("div", {},
@@ -254,7 +315,34 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 type: "text",
                                 value: editLocation,
                                 onChange: (e) => setEditLocation(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            })
+                        ),
+                        React.createElement("div", {},
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Fabricant"),
+                            React.createElement("input", {
+                                type: "text",
+                                value: editManufacturer,
+                                onChange: (e) => setEditManufacturer(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            })
+                        ),
+                        React.createElement("div", {},
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Annee"),
+                            React.createElement("input", {
+                                type: "number",
+                                value: editYear,
+                                onChange: (e) => setEditYear(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                            })
+                        ),
+                        React.createElement("div", { className: "md:col-span-2" },
+                            React.createElement("label", { className: "block font-semibold mb-2" }, "Specs Techniques"),
+                            React.createElement("textarea", {
+                                value: editTechnicalSpecs,
+                                onChange: (e) => setEditTechnicalSpecs(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none",
+                                rows: 3
                             })
                         ),
                         React.createElement("div", {},
@@ -262,7 +350,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                             React.createElement("select", {
                                 value: editStatus,
                                 onChange: (e) => setEditStatus(e.target.value),
-                                className: "w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
                             },
                                 React.createElement("option", { value: "operational" }, "Operationnelle"),
                                 React.createElement("option", { value: "maintenance" }, "En maintenance"),
@@ -284,42 +372,63 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                 ) : null,
 
                 React.createElement("div", { className: "space-y-3" },
-                    React.createElement("p", { className: "text-lg mb-4" },
-                        filteredMachines.length + " machine(s)"
+                    React.createElement("div", { className: "flex justify-between items-center mb-4" },
+                        React.createElement("p", { className: "text-gray-600 font-medium" },
+                            filteredMachines.length + " machine(s) trouvée(s)"
+                        )
                     ),
                     filteredMachines.map(machine =>
                         React.createElement("div", {
                             key: machine.id,
-                            className: "bg-white rounded-xl p-3 sm:p-4 shadow-md border-2 border-gray-200 hover:border-teal-400 hover:shadow-lg transition-all"
+                            className: "bg-white rounded-xl p-4 shadow-sm border border-gray-200 hover:border-teal-400 hover:shadow-md transition-all group"
                         },
-                            React.createElement("div", { className: "flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3" },
+                            React.createElement("div", { className: "flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4" },
                                 React.createElement("div", { className: "flex-1" },
                                     React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2" },
-                                        React.createElement("h4", { className: "font-bold text-base sm:text-lg" }, machine.machine_type + (machine.model ? " - " + machine.model : "")),
+                                        React.createElement("h4", { className: "font-bold text-lg text-gray-800 flex items-center gap-2" }, 
+                                            machine.machine_type,
+                                            machine.model ? React.createElement("span", { className: "text-gray-500 font-normal" }, " - " + machine.model) : null
+                                        ),
                                         React.createElement("span", {
-                                            className: "px-3 py-1 rounded-full text-xs font-semibold " + getStatusColor(machine.status)
+                                            className: "px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide " + getStatusColor(machine.status)
                                         }, getStatusLabel(machine.status))
                                     ),
-                                    React.createElement("p", { className: "text-sm text-gray-600" },
-                                        React.createElement("i", { className: "fas fa-barcode mr-2" }),
-                                        "Serie: " + (machine.serial_number || "N/A")
+                                    
+                                    React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4 mt-2" },
+                                        React.createElement("p", { className: "text-sm text-gray-600 flex items-center gap-2" },
+                                            React.createElement("i", { className: "fas fa-barcode text-gray-400 w-5 text-center" }),
+                                            React.createElement("span", { className: "font-mono" }, machine.serial_number || "N/A")
+                                        ),
+                                        machine.location ? React.createElement("p", { className: "text-sm text-gray-600 flex items-center gap-2" },
+                                            React.createElement("i", { className: "fas fa-map-marker-alt text-gray-400 w-5 text-center" }),
+                                            machine.location
+                                        ) : null,
+                                        (machine.manufacturer || machine.year) ? React.createElement("p", { className: "text-sm text-gray-600 flex items-center gap-2" },
+                                            React.createElement("i", { className: "fas fa-industry text-gray-400 w-5 text-center" }),
+                                            [
+                                                machine.manufacturer,
+                                                machine.year ? `(${machine.year})` : null
+                                            ].filter(Boolean).join(" ")
+                                        ) : null
                                     ),
-                                    machine.location ? React.createElement("p", { className: "text-sm text-gray-600" },
-                                        React.createElement("i", { className: "fas fa-map-marker-alt mr-2" }),
-                                        machine.location
+                                    
+                                    machine.technical_specs ? React.createElement("div", { className: "mt-3 pl-3 border-l-2 border-gray-100" },
+                                        React.createElement("p", { className: "text-xs text-gray-500 italic line-clamp-2" },
+                                            machine.technical_specs
+                                        )
                                     ) : null
                                 ),
                                 currentUser?.role === "admin" || currentUser?.role === "supervisor" ? React.createElement("div", { className: "flex gap-2 self-end sm:self-auto" },
                                     React.createElement("button", {
                                         onClick: () => handleEdit(machine),
-                                        className: "px-3 sm:px-4 py-2 bg-igp-blue-light text-white rounded-lg font-bold hover:bg-igp-blue transition-all text-sm sm:text-base"
+                                        className: "px-3 sm:px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-bold hover:bg-blue-100 transition-all text-sm sm:text-base border border-blue-200"
                                     },
                                         React.createElement("i", { className: "fas fa-edit" }),
                                         React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Modifier")
                                     ),
                                     currentUser?.role === "admin" ? React.createElement("button", {
                                         onClick: () => handleDelete(machine),
-                                        className: "px-3 sm:px-4 py-2 bg-igp-red text-white rounded-lg font-bold hover:bg-red-700 transition-all text-sm sm:text-base"
+                                        className: "px-3 sm:px-4 py-2 bg-red-50 text-red-700 rounded-lg font-bold hover:bg-red-100 transition-all text-sm sm:text-base border border-red-200"
                                     },
                                         React.createElement("i", { className: "fas fa-trash" }),
                                         React.createElement("span", { className: "ml-2 hidden sm:inline" }, "Supprimer")

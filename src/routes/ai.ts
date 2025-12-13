@@ -20,6 +20,23 @@ const TicketAnalysisSchema = z.object({
     scheduled_date: z.string().nullable()
 });
 
+// --- CONSTANTS ---
+const DEFAULT_AI_CONTEXT = `RÔLE : Expert Industriel Senior chez IGP Inc. (Usine de verre)
+
+MISSION :
+Assister les techniciens et administrateurs dans la maintenance, le diagnostic de pannes et l'optimisation de la production.
+
+RÈGLES D'OR :
+1. SÉCURITÉ AVANT TOUT : Rappeler systématiquement les procédures de cadenassage (Lockout/Tagout) avant toute intervention physique.
+2. CONTEXTE INDUSTRIEL : Se concentrer uniquement sur les machines, la maintenance, la production et la sécurité.
+3. TON PROFESSIONNEL : Être direct, précis et factuel. Pas de bavardage inutile.
+4. REFUS HORS-SUJET : Refuser poliment mais fermement toute question non liée au travail.
+
+CONTEXTE DE L'USINE :
+- Nous fabriquons du verre (trempé, laminé, isolant).
+- Les machines critiques incluent : Fours de trempe, CNC, Lignes d'assemblage, Tables de découpe.
+- La production fonctionne 24/7. Chaque minute d'arrêt coûte cher.`;
+
 // --- HELPER FUNCTIONS ---
 
 // 1. Audio Transcription (Groq > OpenAI Fallback)
@@ -270,14 +287,15 @@ app.post('/analyze-ticket', async (c) => {
         // 3. Load Database Context FIRST (For Dynamic AI Vocabulary)
         const db = getDb(c.env);
         const machinesList = await db.select({
-            id: machines.id, name: machines.machine_type, model: machines.model, location: machines.location
+            id: machines.id, 
+            name: machines.machine_type
         }).from(machines).all();
         
         const techsList = await db.select({
             id: users.id, name: users.full_name, role: users.role
         }).from(users).where(inArray(users.role, ['admin', 'supervisor', 'technician', 'senior_technician', 'team_leader'])).all();
 
-        const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.name} ${m.model || ''} (${m.location || ''})`).join('\n');
+        const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.name}`).join('\n');
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
         // 4. Load Custom AI Context
@@ -285,7 +303,7 @@ app.post('/analyze-ticket', async (c) => {
             value: systemSettings.setting_value
         }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
 
-        const customContext = customContextSetting?.value || '';
+        const customContext = customContextSetting?.value || DEFAULT_AI_CONTEXT;
 
         // Dynamic Vocabulary from Database + Common Terms
         const vocabularyContext = [
@@ -344,7 +362,54 @@ app.post('/chat', async (c) => {
             value: systemSettings.setting_value
         }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
 
-        const customContext = customContextSetting?.value || '';
+        const customContext = customContextSetting?.value || DEFAULT_AI_CONTEXT;
+
+        // FETCH MACHINE DETAILS IF AVAILABLE
+        let machineDetails = "";
+        
+        try {
+            // Strategy: Provide specific context if possible to avoid overload, otherwise general summary.
+            if (ticketContext && ticketContext.machine_id) {
+                 const mId = Number(ticketContext.machine_id);
+                 const specificMachine = await db.select().from(machines).where(eq(machines.id, mId)).get();
+                 
+                 if (specificMachine) {
+                     machineDetails = `
+CONTEXTE MACHINE SPÉCIFIQUE (Machine liée au ticket) :
+- ID: ${specificMachine.id}
+- Nom: ${specificMachine.machine_type} ${specificMachine.model || ''}
+- Marque: ${specificMachine.manufacturer || 'N/A'}
+- Localisation: ${specificMachine.location || 'N/A'}
+- Statut: ${specificMachine.status}
+- Spécifications Techniques: ${specificMachine.technical_specs || 'Non spécifiées'}
+`;
+                 }
+            } 
+            
+            if (!machineDetails) {
+                const allMachines = await db.select({
+                    id: machines.id,
+                    type: machines.machine_type,
+                    model: machines.model,
+                    location: machines.location
+                }).from(machines).all();
+
+                if (allMachines.length > 0) {
+                    const limitedMachines = allMachines.slice(0, 30); 
+                    const listStr = limitedMachines.map(m => 
+                        `- [ID ${m.id}] ${m.type} ${m.model || ''} (${m.location || '?'})`
+                    ).join('\n');
+                    
+                    machineDetails = `
+LISTE DES MACHINES DISPONIBLES (Vue d'ensemble) :
+${listStr}
+${allMachines.length > 30 ? `... (+ ${allMachines.length - 30} autres machines)` : ''}
+`;
+                }
+            }
+        } catch (err) {
+            console.warn("⚠️ [AI] Error fetching machine details:", err);
+        }
 
         // Construct System Prompt
         let systemPrompt = `
@@ -360,8 +425,17 @@ Titre: ${ticketContext?.title || 'N/A'}
 Description: ${ticketContext?.description || 'N/A'}
 Machine: ${ticketContext?.machine_name || 'N/A'}
 
+${machineDetails}
+
 CONTEXTE EXPERTISE (À PROPOS DE L'ENTREPRISE) :
 ${customContext}
+
+PHASE 1 : VALIDATION DE LA QUALITÉ (FILTRE ANTI-GASPILLAGE)
+Avant de te lancer dans une analyse, évalue si la description du ticket est exploitable.
+- Si le contenu est INSIGNIFIANT ("test", "asdf", "123", "."), VIDE ou TROP VAGUE ("ça marche pas", "panne") :
+  -> Réponds UNIQUEMENT par une demande de précision professionnelle.
+  -> Exemple : "Je ne dispose pas d'assez d'informations pour établir un diagnostic fiable. Veuillez préciser la marque de la machine, le modèle exact et décrire les symptômes observés (bruit, code d'erreur, fuite...)."
+  -> NE FAIS PAS D'ANALYSE si la qualité est insuffisante.
 
 RÈGLES STRICTES DE COMPORTEMENT (GUARDRAILS) :
 1.  **SUJETS AUTORISÉS UNIQUEMENT** : Tu ne réponds QU'AUX questions liées à l'industrie du verre, la maintenance, la mécanique, l'électricité, la sécurité industrielle ou la gestion de production.

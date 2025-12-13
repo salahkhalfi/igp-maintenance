@@ -14,8 +14,6 @@ import { getTicketDetails, updateTicketStatus, assignTicket, uploadTicketMedia, 
 import { commentService } from '../services/commentService';
 import { Ticket, TicketStatus, TicketPriority, UserRole } from '../types';
 
-import { AIChatModal } from './AIChatModal';
-
 interface TicketDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,7 +35,6 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
-  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Hooks pour audio/vocal
   const { isListening, startListening, stopListening, hasRecognition } = useSpeechRecognition({
@@ -217,13 +214,6 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Description</h3>
-                      <button
-                        onClick={() => setIsAIChatOpen(true)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg text-xs font-bold transition-colors shadow-sm"
-                      >
-                        <Bot className="w-4 h-4" />
-                        Demander conseil
-                      </button>
                     </div>
                     <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                       {ticket.description || "Aucune description fournie."}
@@ -421,15 +411,6 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
 
             </div>
           </>
-        )}
-        
-        {/* Expert Chat Modal */}
-        {ticket && (
-          <AIChatModal 
-            isOpen={isAIChatOpen} 
-            onClose={() => setIsAIChatOpen(false)} 
-            ticket={ticket} 
-          />
         )}
       </div>
     </div>

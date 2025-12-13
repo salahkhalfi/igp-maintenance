@@ -40,6 +40,7 @@ export const homeHTML = `
     <script src="/static/js/components/RoleDropdown.js"></script>
     <script src="/static/js/components/SystemSettingsModal.js"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
+    <script src="/static/js/components/AIChatModal.js"></script>
     <script src="/static/js/components/OverdueTicketsModal.js"></script>
     <script src="/static/js/components/PushDevicesModal.js"></script>
     <!-- MISSING SCRIPTS RESTORED -->
@@ -84,15 +85,15 @@ export const homeHTML = `
         .kanban-column {
             min-height: 400px;
             min-width: 260px;
-            /* REMOVED backdrop-filter to fix Chrome rendering artifacts (flashing/red tints) */
-            background: rgba(255, 255, 255, 0.80); /* Reduced opacity from 0.90 to 0.80 for better transparency */
-            /* backdrop-filter: blur(16px); REMOVED */
-            /* -webkit-backdrop-filter: blur(16px); REMOVED */
+            /* RESTORED backdrop-filter */
+            background: rgba(255, 255, 255, 0.60); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1); /* Simplified shadow */
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.8);
-            transition: transform 0.2s ease; /* Simplified transition */
+            transition: transform 0.2s ease; 
         }
 
         .kanban-column:hover {
@@ -226,7 +227,7 @@ export const homeHTML = `
                 6px 6px 12px rgba(220, 38, 38, 0.2),
                 -3px -3px 8px rgba(255, 255, 255, 0.8),
                 inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            animation: pulse-subtle 3s ease-in-out infinite;
+            /* animation: pulse-subtle 3s ease-in-out infinite; */
         }
 
         @keyframes pulse-subtle {
@@ -720,7 +721,7 @@ export const homeHTML = `
                     overdueElement.textContent = overdueCount + ' retard';
                     // Change color if there are overdue tickets
                     if (overdueWrapper && overdueCount > 0) {
-                        overdueWrapper.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 cursor-pointer hover:bg-red-200 transition-colors animate-pulse';
+                        overdueWrapper.className = 'px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-300 cursor-pointer hover:bg-red-200 transition-colors';
                     } else if (overdueWrapper) {
                         overdueWrapper.className = 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 cursor-pointer hover:bg-orange-200 transition-colors';
                     }

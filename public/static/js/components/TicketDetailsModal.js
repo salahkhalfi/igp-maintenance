@@ -14,6 +14,9 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
     const [editingPriority, setEditingPriority] = React.useState(false);
     const [newPriority, setNewPriority] = React.useState('');
     const [savingPriority, setSavingPriority] = React.useState(false);
+    
+    // État pour le chat AI
+    const [isAIChatOpen, setIsAIChatOpen] = React.useState(false);
 
     React.useEffect(() => {
         if (show && ticketId) {
@@ -178,16 +181,16 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                 ) : ticket ? React.createElement('div', {},
 
-                React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-blue-50 to-gray-50 rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-200/50' },
+                React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gray-50 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200' },
                     React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
                         React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
                         !editingPriority ? React.createElement('div', { className: 'flex items-center gap-2' },
                             React.createElement('span', {
-                                className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-md text-xs sm:text-sm ' +
-                                (ticket.priority === 'critical' ? 'bg-igp-red text-white' :
-                                 ticket.priority === 'high' ? 'bg-igp-yellow text-white' :
+                                className: 'px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl font-bold shadow-sm text-xs sm:text-sm ' +
+                                (ticket.priority === 'critical' ? 'bg-red-500 text-white' :
+                                 ticket.priority === 'high' ? 'bg-orange-500 text-white' :
                                  ticket.priority === 'medium' ? 'bg-yellow-500 text-white' :
-                                 'bg-igp-green text-white')
+                                 'bg-green-500 text-white')
                             },
                                 ticket.priority === 'critical' ? '🔴 CRITIQUE' :
                                 ticket.priority === 'high' ? '🟠 HAUTE' :
@@ -236,7 +239,11 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         )
                     ),
                     React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
-                    React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 mb-4 sm:mb-5 leading-relaxed bg-white/60 p-3 sm:p-4 rounded-lg' }, ticket.description),
+                    
+                    React.createElement('div', { className: 'flex justify-between items-start mb-4 bg-white p-3 sm:p-4 rounded-lg border border-gray-100' },
+                        React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 leading-relaxed flex-1 mr-4' }, ticket.description)
+                        /* REMOVED AI BUTTON */
+                    ),
                     
                     // MAGIC BRIDGE: Bouton Discussion
                     React.createElement('div', { className: 'flex justify-end -mt-3 mb-4' },
@@ -265,21 +272,27 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         )
                     ),
                     React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4' },
-                        React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg shadow-sm border border-gray-200' },
                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                 React.createElement('i', { className: 'fas fa-cog text-blue-600 text-sm' }),
                                 React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Machine:')
                             ),
-                            React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, ticket.machine_type + ' ' + ticket.model)
+                            React.createElement('div', { className: 'pl-6' },
+                                React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block' }, (ticket.machine_type || 'Machine') + (ticket.model ? ' ' + ticket.model : '')),
+                                (ticket.manufacturer || ticket.year) ? React.createElement('span', { className: 'text-gray-500 text-xs block' }, 
+                                    [ticket.manufacturer, ticket.year ? `(${ticket.year})` : ''].filter(Boolean).join(' ')
+                                ) : null,
+                                ticket.serial_number ? React.createElement('span', { className: 'text-gray-400 text-[10px] block' }, 'S/N: ' + ticket.serial_number) : null
+                            )
                         ),
-                        React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg shadow-sm border border-gray-200' },
                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                 React.createElement('i', { className: 'fas fa-tasks text-slate-600 text-sm' }),
                                 React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, 'Statut:')
                             ),
                             React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, getStatusLabel(ticket.status))
                         ),
-                        React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg shadow-sm border border-gray-200' },
                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                 React.createElement('i', { className: 'far fa-calendar text-green-600 text-sm' }),
                                 React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Créé le:")
@@ -288,7 +301,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 formatDateEST(ticket.created_at)
                             )
                         ),
-                        React.createElement('div', { className: 'bg-white/95 p-3 rounded-lg shadow-sm' },
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg shadow-sm border border-gray-200' },
                             React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                 React.createElement('i', { className: 'fas fa-user text-blue-700 text-sm' }),
                                 React.createElement('span', { className: 'font-bold text-gray-700 text-xs sm:text-sm' }, "Rapporté par:")
@@ -300,7 +313,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
 
                 // Badge "En retard" si ticket expiré (visible pour tous)
                 (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived' && parseUTCDate(ticket.scheduled_date) < new Date()) ?
-                    React.createElement('div', { className: 'mb-4 sm:mb-6 bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-400 rounded-xl shadow-lg p-4 sm:p-6' },
+                    React.createElement('div', { className: 'mb-4 sm:mb-6 bg-orange-50 border-2 border-orange-400 rounded-xl shadow-md p-4 sm:p-6' },
                         React.createElement('div', { className: 'flex flex-col sm:flex-row items-start gap-4' },
                             React.createElement('div', { className: 'text-4xl sm:text-5xl flex-shrink-0' }, '⏰'),
                             React.createElement('div', { className: 'flex-1 w-full' },
@@ -346,17 +359,17 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 // Section planification (superviseur/admin seulement)
                 (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') ?
                     React.createElement('div', { 
-                        className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200/50',
+                        className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gray-50 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200',
                         'data-section': 'planning'
                     },
                         React.createElement('div', { className: 'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3 sm:mb-4' },
-                            React.createElement('h4', { className: 'text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-slate-600 to-gray-600 bg-clip-text text-transparent flex items-center' },
+                            React.createElement('h4', { className: 'text-base sm:text-lg md:text-xl font-bold text-gray-800 flex items-center' },
                                 React.createElement('i', { className: 'fas fa-calendar-alt mr-2 text-blue-600 text-sm sm:text-base' }),
                                 'Planification'
                             ),
                             !editingSchedule ? React.createElement('button', {
                                 onClick: () => setEditingSchedule(true),
-                                className: 'px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-xs sm:text-sm transition-all shadow-[0_6px_12px_rgba(147,51,234,0.35),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_8px_16px_rgba(147,51,234,0.45),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_3px_6px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.15)] border-t border-blue-300/50'
+                                className: 'px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs sm:text-sm transition-all shadow-sm'
                             },
                                 React.createElement('i', { className: 'fas fa-edit mr-1' }),
                                 'Modifier'
@@ -366,7 +379,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         !editingSchedule ? (
                             // Affichage lecture seule
                             React.createElement('div', { className: 'space-y-3' },
-                                React.createElement('div', { className: 'bg-white/95 p-4 rounded-lg shadow-sm' },
+                                React.createElement('div', { className: 'bg-white p-4 rounded-lg shadow-sm border border-gray-200' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'fas fa-user-cog text-slate-600' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700' }, "Assigné à:")
@@ -377,7 +390,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                             : '❌ Non assigné'
                                     )
                                 ),
-                                React.createElement('div', { className: 'bg-white/95 p-4 rounded-lg shadow-sm' },
+                                React.createElement('div', { className: 'bg-white p-4 rounded-lg shadow-sm border border-gray-200' },
                                     React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
                                         React.createElement('i', { className: 'far fa-clock text-slate-600' }),
                                         React.createElement('span', { className: 'font-bold text-gray-700' }, "Date planifiée:")
@@ -401,7 +414,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                     React.createElement('select', {
                                         value: scheduledAssignedTo,
                                         onChange: (e) => setScheduledAssignedTo(e.target.value),
-                                        className: 'w-full px-4 py-3 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
+                                        className: 'w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
                                         React.createElement('option', { value: '0' }, '👥 À Équipe'),
@@ -447,7 +460,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                             type: 'datetime-local',
                                             value: scheduledDate,
                                             onChange: (e) => setScheduledDate(e.target.value),
-                                            className: 'flex-1 px-4 py-3 bg-white/95 border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
+                                            className: 'flex-1 px-4 py-3 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                         }),
                                         scheduledDate ? React.createElement('button', {
                                             type: 'button',
@@ -471,7 +484,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                             setScheduledAssignedTo(ticket.assigned_to ? String(ticket.assigned_to) : '');
                                             setScheduledDate(hasScheduledDate(ticket.scheduled_date) ? ticket.scheduled_date.substring(0, 10) : '');
                                         },
-                                        className: 'w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 text-gray-800 rounded-lg font-bold text-sm transition-all shadow-[0_6px_12px_rgba(0,0,0,0.15),0_3px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.5)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.2),0_4px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-[0_2px_4px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(0,0,0,0.1)] border-t border-white/60'
+                                        className: 'w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-gray-200 text-gray-800 rounded-lg font-bold text-sm transition-all hover:bg-gray-300'
                                     },
                                         React.createElement('i', { className: 'fas fa-times mr-1' }),
                                         'Annuler'
@@ -479,7 +492,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                     React.createElement('button', {
                                         onClick: handleSaveSchedule,
                                         disabled: savingSchedule,
-                                        className: 'w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-lg font-bold text-sm transition-all shadow-[0_8px_16px_rgba(147,51,234,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(147,51,234,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(147,51,234,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-t border-blue-300/50'
+                                        className: 'w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all disabled:opacity-50'
                                     },
                                         savingSchedule
                                             ? React.createElement('i', { className: 'fas fa-spinner fa-spin mr-1' })
@@ -518,7 +531,14 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             ) : React.createElement('div', { className: 'text-center py-12' },
                 React.createElement('p', { className: 'text-red-600 font-semibold' }, 'Erreur lors du chargement du ticket'),
                 React.createElement('button', { onClick: onClose, className: 'mt-4 text-blue-600 hover:underline' }, 'Fermer')
-            )
+            ),
+            
+            // Modal Expert AI
+            ticket && React.createElement(window.AIChatModal || (() => null), {
+                isOpen: isAIChatOpen,
+                onClose: () => setIsAIChatOpen(false),
+                ticket: ticket
+            })
         ),
         ),
 

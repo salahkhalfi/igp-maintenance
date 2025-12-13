@@ -76,7 +76,7 @@ machinesRoute.get('/:id', zValidator('param', machineIdParamSchema), async (c) =
 machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), async (c) => {
   try {
     const body = c.req.valid('json');
-    const { machine_type, model, serial_number, location } = body;
+    const { machine_type, model, serial_number, location, manufacturer, year, technical_specs } = body;
 
     const db = getDb(c.env);
     
@@ -85,6 +85,9 @@ machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), asyn
       model: model ? model.trim() : null,
       serial_number: serial_number ? serial_number.trim() : null,
       location: location ? location.trim() : null,
+      manufacturer: manufacturer ? manufacturer.trim() : null,
+      year: year || null,
+      technical_specs: technical_specs ? technical_specs.trim() : null,
       status: 'operational'
     }).returning();
 
@@ -110,6 +113,9 @@ machinesRoute.patch('/:id', adminOnly, zValidator('param', machineIdParamSchema)
     if (body.model !== undefined) updates.model = body.model ? body.model.trim() : null;
     if (body.serial_number !== undefined) updates.serial_number = body.serial_number ? body.serial_number.trim() : null;
     if (body.location !== undefined) updates.location = body.location ? body.location.trim() : null;
+    if (body.manufacturer !== undefined) updates.manufacturer = body.manufacturer ? body.manufacturer.trim() : null;
+    if (body.year !== undefined) updates.year = body.year;
+    if (body.technical_specs !== undefined) updates.technical_specs = body.technical_specs ? body.technical_specs.trim() : null;
     if (body.status !== undefined) updates.status = body.status;
 
     const result = await db.update(machines)

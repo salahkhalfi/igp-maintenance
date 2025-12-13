@@ -41,6 +41,14 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 3.0.0 (13 Décembre 2025) - EXPERT INDUSTRIEL IA (30k) 🧠🏭
+- **🧠 INTELLIGENCE CONTEXTUELLE**: Augmentation massive de la fenêtre de contexte IA à 30 000 caractères.
+- **🏭 DÉTAILS MACHINES AVANCÉS**: Ajout des champs Fabricant, Année et Specs Techniques pour chaque machine.
+- **🎯 SUPPORT CIBLÉ**: L'IA (DeepSeek/OpenAI) reçoit désormais la fiche technique complète de la machine concernée lors de l'analyse vocale et du chat expert.
+- **💬 CHAT EXPERT CONTEXTUEL**: Le bouton "Demander conseil" envoie automatiquement l'ID machine à l'IA, permettant des diagnostics ultra-précis basés sur le modèle et l'année.
+- **🛠️ GESTION AMÉLIORÉE**: Interface de gestion des machines mise à jour avec les nouveaux champs techniques.
+- **✅ IMPACT**: L'IA passe de "Assistant générique" à "Expert Spécialisé" capable de citer les specs techniques et procédures spécifiques à chaque équipement.
+
 ### Version 2.18.4 (13 Décembre 2025) - OPTIMISATION IGP CONNECT ⚡📱
 - **⚡ PERFORMANCE**: Optimisation majeure du composant de chat "IGP Connect".
 - **🧠 MEMOIZATION**: Implémentation de `React.memo` sur les bulles de messages.
