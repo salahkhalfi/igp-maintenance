@@ -377,6 +377,11 @@ const AppHeader = ({
                     // PRIMARY ACTIONS (Right aligned)
                     React.createElement('div', { className: 'flex items-center gap-3' },
                         
+                        // Active Tickets Count (Desktop Toolbar)
+                        React.createElement('span', { className: 'hidden xl:inline-block text-xs font-extrabold text-blue-800 mr-2 bg-blue-50 px-2 py-1 rounded-md' }, 
+                            activeTicketsCount + " actifs"
+                        ),
+
                         // Refresh
                         React.createElement('button', {
                             onClick: onRefresh,
@@ -407,12 +412,14 @@ const AppHeader = ({
             )
         ),
 
-        // --- MOBILE SEARCH BAR (Visible only on mobile) ---
-        React.createElement('div', { className: 'md:hidden px-4 py-2 bg-white border-b border-slate-100' },
-            React.createElement('div', { className: 'relative' },
+        // --- MOBILE HEADER ROW (Action Bar) ---
+        // Visible only on mobile to restore quick access
+        React.createElement('div', { className: 'md:hidden px-4 py-2 bg-white border-b border-slate-100 flex items-center gap-2' },
+            // Search Bar
+            React.createElement('div', { className: 'relative flex-1' },
                 React.createElement('i', { className: 'fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' }),
                 React.createElement('input', {
-                    ref: isMobile ? searchInputRef : null, // Only ref on mobile if mobile
+                    ref: isMobile ? searchInputRef : null,
                     type: 'text',
                     placeholder: 'Rechercher...',
                     className: 'w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500',
@@ -420,7 +427,19 @@ const AppHeader = ({
                     onChange: handleSearchChange,
                     onFocus: () => { setShowSearchResults(true); setViewingList(true); }
                 })
-            )
+            ),
+            // Mobile Quick Actions
+            activeModules.messaging && React.createElement('button', {
+                onClick: onOpenMessaging,
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm active:scale-95 relative'
+            }, 
+                React.createElement('i', { className: 'fas fa-comments' }),
+                (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white' })
+            ),
+            safeHasPermission('tickets.create') && React.createElement('button', {
+                onClick: onOpenCreateModal,
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-md active:scale-95'
+            }, React.createElement('i', { className: 'fas fa-plus' }))
         ),
 
             // SEARCH PORTAL
