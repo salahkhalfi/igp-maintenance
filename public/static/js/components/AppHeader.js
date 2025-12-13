@@ -396,7 +396,7 @@ const AppHeader = ({
                             className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center justify-center border border-blue-500/30 mx-2'
                         }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Nouvelle Demande'),
                         React.createElement('button', {
-                            className: 'md:hidden ml-0 px-3 py-2.5 bg-white text-blue-600 rounded-lg shadow-md border border-blue-100 flex-shrink-0',
+                            className: 'ml-0 px-3 py-2.5 bg-white text-blue-600 rounded-lg shadow-md border border-blue-100 flex-shrink-0',
                             onClick: () => setShowMobileMenu(!showMobileMenu)
                         }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-xl' }))
                     )
