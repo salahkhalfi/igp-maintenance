@@ -18,7 +18,6 @@ const STATIC_ASSETS = [
     '/manifest.json',
     '/static/logo-igp.png',
     '/static/js/utils.js',
-    '/static/js/offline-sync.js',
     '/push-notifications.js',
     '/static/js/components/App.js',
     '/static/js/components/MainApp.js',
