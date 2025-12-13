@@ -298,13 +298,13 @@ const AppHeader = ({
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full transition-all ' + 
                                 (pushState === 'granted' && isSubscribed ? 'text-teal-600 hover:bg-teal-50' : 'text-slate-400 hover:text-slate-600'),
                             onClick: handlePushClick, 
-                            title: 'Centre de notifications'
+                            title: 'Connecter cet appareil aux notifications'
                         }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell' : 'fa-bell-slash') })),
 
                         // Apps Button (Desktop)
                         React.createElement('button', {
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
-                            onClick: onOpenPushDevices, title: 'Connecter un appareil mobile'
+                            onClick: onOpenPushDevices, title: 'Gérer les appareils connectés'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
 
                         // --- RESTORED DESKTOP BUTTONS ---
