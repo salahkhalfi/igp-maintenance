@@ -406,12 +406,18 @@ const KanbanBoard = ({
 
         // GRILLE KANBAN
         React.createElement('div', { className: 'space-y-4' },
-            // 1. Workflow Actif
-            React.createElement('div', { className: 'overflow-x-auto pb-4' },
-                React.createElement('div', { className: 'kanban-grid flex gap-3' },
+            // 1. FLUX PRINCIPAL UNIFIÉ (Workflow + Terminés)
+            // Correction Desktop : "Terminé" est maintenant dans la même ligne que les autres
+            React.createElement('div', { className: 'overflow-x-auto pb-4', style: { minHeight: '500px' } }, // MinHeight pour confort
+                React.createElement('div', { className: 'kanban-grid flex gap-3 items-start' }, // items-start pour alignement propre
+                    
+                    // A. Workflow (Reçue -> En Cours...)
                     workflowStatuses.map(status => renderColumn(status, getTicketsByStatus(status.key))),
                     
-                    // ORPHANED TICKETS COLUMN (Recovery Mode)
+                    // B. Terminés (Maintenant à droite du flux, pas en dessous)
+                    completedStatus ? renderColumn(completedStatus, getTicketsByStatus('completed')) : null,
+
+                    // C. Orphelins (Toujours à la fin si présents)
                     orphanedTickets.length > 0 ? renderColumn({
                         key: 'orphaned',
                         label: '⚠️ Non classés',
@@ -420,16 +426,17 @@ const KanbanBoard = ({
                     }, orphanedTickets) : null
                 )
             ),
-            // 2. Terminés
-            completedStatus ? React.createElement('div', { className: 'overflow-x-auto pb-4' },
-                React.createElement('div', { className: 'kanban-grid flex gap-3' },
-                    renderColumn(completedStatus, getTicketsByStatus('completed'))
-                )
-            ) : null,
-            // 3. Archivés
-            (showArchived && archivedStatus) ? React.createElement('div', { id: 'archived-section', className: 'overflow-x-auto pb-4' },
-                React.createElement('div', { className: 'kanban-grid flex gap-3' },
-                    renderColumn(archivedStatus, getTicketsByStatus('archived'))
+
+            // 2. Archivés (Section séparée en bas)
+            (showArchived && archivedStatus) ? React.createElement('div', { id: 'archived-section', className: 'mt-8 border-t-2 border-dashed border-gray-200 pt-6' },
+                React.createElement('div', { className: 'flex items-center gap-2 mb-4 px-2' },
+                    React.createElement('i', { className: 'fas fa-archive text-gray-400' }),
+                    React.createElement('h3', { className: 'text-gray-500 font-bold uppercase tracking-wider text-xs' }, 'Zone d\'Archives')
+                ),
+                React.createElement('div', { className: 'overflow-x-auto pb-4' },
+                    React.createElement('div', { className: 'kanban-grid flex gap-3' },
+                        renderColumn(archivedStatus, getTicketsByStatus('archived'))
+                    )
                 )
             ) : null
         )
