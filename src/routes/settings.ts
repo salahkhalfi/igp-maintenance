@@ -187,6 +187,30 @@ settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * GET /api/settings/messenger_app_name - Obtenir le nom de l'application Messenger
+ * Accès: Public (ou presque)
+ */
+settings.get('/messenger_app_name', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'messenger_app_name'
+    `).first();
+
+    if (!result) {
+      return c.json({ setting_value: 'Connect', value: 'Connect' });
+    }
+
+    return c.json({ 
+      setting_value: result.setting_value,
+      value: result.setting_value 
+    });
+  } catch (error) {
+    console.error('Get messenger_app_name error:', error);
+    return c.json({ setting_value: 'Connect', value: 'Connect' });
+  }
+});
+
+/**
  * PUT /api/settings/title - Mettre à jour le titre de l'application
  * Accès: Administrateurs (admin role)
  * Validation: Max 100 caractères, échappement HTML, UTF-8
