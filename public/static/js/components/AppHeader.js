@@ -248,160 +248,180 @@ const AppHeader = ({
         }
     };
 
-    return React.createElement('header', { className: 'sticky top-0 z-50 bg-white/75 backdrop-blur-md shadow-sm border-b border-slate-100 transition-all duration-300' },
-        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
-            React.createElement('div', { className: 'flex flex-col md:flex-row md:justify-between md:items-center gap-3' },
-                
-                // LOGO & TITLE
-                React.createElement('div', { className: 'flex justify-between items-center w-full md:w-auto md:min-w-0 group' },
-                    React.createElement('div', { className: 'flex items-center' },
+    return React.createElement('header', { className: 'sticky top-0 z-50 bg-transparent transition-all duration-300' },
+        
+        // --- ROW 1: IDENTITY & NAVIGATION (White Background) ---
+        React.createElement('div', { className: 'bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100' },
+            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
+                React.createElement('div', { className: 'flex justify-between items-center h-12' },
+                    
+                    // LEFT: LOGO & TITLE
+                    React.createElement('div', { className: 'flex items-center group cursor-pointer', onClick: () => window.location.reload() },
                         React.createElement('img', {
                             src: logoUrl, alt: 'Logo',
-                            className: 'h-8 md:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
+                            className: 'h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
                             onError: (e) => { 
-                                if (e.target.src.includes('logo.png')) return; // Prevent infinite loop
+                                if (e.target.src.includes('logo.png')) return;
                                 e.target.src = '/static/logo.png'; 
                             }
                         }),
-                        React.createElement('div', { className: 'pl-3 flex flex-col justify-center ml-3 border-l border-black/10' },
-                            React.createElement('h1', { className: 'text-sm md:text-base font-bold leading-none text-slate-800', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'hidden md:block text-xs font-medium text-slate-500 mt-0.5' }, headerSubtitle),
-                            React.createElement('div', { className: 'md:hidden flex flex-col mt-0.5' },
-                                React.createElement('p', { className: 'text-[10px] font-medium text-slate-500' }, headerSubtitle),
-                                React.createElement('p', { className: 'text-[10px] font-bold text-blue-700' }, '👋 ' + (currentUser?.first_name || 'User'))
-                            )
+                        React.createElement('div', { className: 'hidden md:flex flex-col justify-center ml-3 pl-3 border-l border-slate-200' },
+                            React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 tracking-tight', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[10px] font-medium text-slate-500 mt-0.5' }, headerSubtitle)
                         )
                     ),
-                    // Desktop Greeting
-                    React.createElement('div', { className: 'hidden md:flex items-center ml-4 px-3 py-1 rounded-full bg-blue-50/50 border border-blue-100/50' },
-                        React.createElement('span', { className: 'text-xs font-medium text-blue-700' }, '👋 ' + ((currentUser?.first_name) || (currentUser?.email?.split('@')[0]) || 'Utilisateur'))
-                    ),
-                    // Mobile Messaging Icon & Badge (Always visible IF enabled)
-                    activeModules.messaging && React.createElement('div', { className: 'md:hidden flex items-center gap-2 ml-2 relative' },
-                        React.createElement('button', {
-                            onClick: onOpenMessaging,
-                            className: 'w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100 shadow-sm active:scale-95 transition'
-                        }, React.createElement('i', { className: 'fas fa-envelope' })),
-                        (unreadMessagesCount > 0) && React.createElement('div', {
-                            className: 'absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 bg-red-600 rounded-full shadow-md animate-pulse pointer-events-none',
-                            onClick: onOpenMessaging // Propagate click
-                        }, React.createElement('span', { className: 'text-white text-[9px] font-bold' }, unreadMessagesCount))
-                    )
-                ),
 
-                // SEARCH BAR
-                React.createElement('div', { className: 'relative w-full md:flex-1 md:mx-4 order-3 md:order-none mt-1.5 md:mt-0 z-50' },
-                    React.createElement('div', { className: 'relative flex items-center w-full' },
-                        React.createElement('i', { className: 'fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10' }),
-                        React.createElement('input', {
-                            ref: searchInputRef, type: 'text', placeholder: searchPlaceholders[placeholderIndex],
-                            className: 'w-full px-3 md:px-4 py-1.5 md:py-2 pl-9 pr-12 border-2 border-blue-200/50 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 text-xs md:text-sm bg-white transition-all shadow-inner',
-                            value: searchQuery,
-                            onChange: handleSearchChange,
-                            onFocus: () => { setShowSearchResults(searchQuery.length >= 2); setViewingList(true); },
-                            onBlur: () => setTimeout(() => { if(!viewingList) setShowSearchResults(false); }, 200),
-                            onKeyDown: (e) => {
-                                if (e.key === 'Enter' && searchQuery.length >= 2) {
-                                    addToHistory(searchQuery);
-                                    setShowSearchResults(false);
-                                    setViewingList(false);
-                                    searchInputRef.current?.blur();
-                                }
-                            }
-                        }),
+                    // RIGHT: USER & MOBILE TOGGLE
+                    React.createElement('div', { className: 'flex items-center gap-3' },
                         
-                        // Action Button (Clear / Close Keyboard)
-                        (searchQuery || viewingList) && React.createElement('button', {
-                            onMouseDown: (e) => e.preventDefault(), // Prevent blur
-                            onClick: (e) => { 
-                                e.stopPropagation(); 
-                                if (searchQuery) {
-                                    setSearchQuery(''); 
-                                    setViewingList(false);
-                                    setShowSearchResults(false);
-                                    searchInputRef.current?.focus(); 
-                                } else if (viewingList) {
-                                    setViewingList(false);
-                                    setShowSearchResults(false);
-                                    searchInputRef.current?.blur();
-                                }
-                            },
-                            className: 'absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center',
-                        }, React.createElement('i', { className: 'fas ' + (searchQuery ? 'fa-times-circle' : 'fa-times') })),
+                        // User Badge (Desktop)
+                        React.createElement('div', { className: 'hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 hover:bg-white hover:shadow-sm transition-all cursor-pointer', onClick: onOpenUserManagement },
+                            React.createElement('div', { className: 'w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2' },
+                                (currentUser?.first_name?.[0] || 'U')
+                            ),
+                            React.createElement('span', { className: 'text-xs font-medium text-slate-700' }, 
+                                (currentUser?.first_name || 'Utilisateur')
+                            ),
+                            (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('span', { className: 'ml-2 px-1.5 py-0.5 text-[9px] font-bold bg-slate-200 text-slate-600 rounded uppercase tracking-wide' }, 
+                                currentUser?.role === 'supervisor' ? 'SUP' : 'ADM'
+                            )
+                        ),
 
-                        // Loading Spinner
-                        searchLoading && React.createElement('i', { className: 'fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-500' }),
-                        
-                        // Zero Friction Arrow (Open list without keyboard)
-                        (!searchLoading && !searchQuery && !viewingList) && React.createElement('button', {
-                            onMouseDown: (e) => { e.preventDefault(); e.stopPropagation(); },
-                            onClick: (e) => {
-                                e.stopPropagation();
-                                if (searchQuery.length >= 2) {
-                                    setViewingList(true);
-                                    setShowSearchResults(true);
-                                } else {
-                                    // Maybe show recent history if empty? For now just focus to type
-                                    searchInputRef.current?.focus();
-                                }
-                            },
-                            className: 'absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500'
-                        }, React.createElement('i', { className: 'fas fa-chevron-down' }))
-                    )
-                ),
-
-                // ACTIONS & BADGES
-                React.createElement('div', { className: "flex items-center gap-2 flex-wrap justify-between w-full md:w-auto md:justify-start mt-2 md:mt-0 flex-shrink-0" },
-                    React.createElement('div', { className: "flex items-center gap-2 flex-wrap" },
-                        React.createElement('p', { id: "active-tickets-count", className: "text-xs font-extrabold text-blue-800 hidden lg:block" }, activeTicketsCount + " actifs"),
-                        safeHasPermission('tickets.read') && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200',
-                            onClick: onOpenOverdue, title: 'Tickets en retard'
-                        }, React.createElement('i', { className: 'fas fa-clock mr-1' }), 'Retard'),
-                        safeHasPermission('stats.read') && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200',
-                            onClick: onOpenPerformance, title: 'Performance'
-                        }, React.createElement('i', { className: 'fas fa-users-cog mr-1' }), React.createElement('span', { id: 'technicians-count-badge' }, 'Techs')),
-                        
-                        // Push Subscribe Button (Visible for everyone if enabled)
+                        // Push Notif Bell (Desktop)
                         activeModules.notifications && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold border transition-all ' + 
-                                (pushState === 'granted' && isSubscribed ? 'bg-teal-100 text-teal-700 border-teal-300 hover:bg-teal-200' : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 animate-pulse'),
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full transition-all ' + 
+                                (pushState === 'granted' && isSubscribed ? 'text-teal-600 hover:bg-teal-50' : 'text-slate-400 hover:text-slate-600'),
                             onClick: handlePushClick, 
-                            title: pushState === 'granted' && isSubscribed ? 'Notifications activées (Cliquer pour tester)' : 'Activer les notifications'
-                        }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell' : 'fa-bell-slash') + ' mr-1' }), 'Notif'),
+                            title: 'Notifications'
+                        }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell' : 'fa-bell-slash') })),
 
-                        // Apps / Appareils Button (Now visible for everyone to manage THEIR devices)
-                        // Removed admin/permission check to allow users to see their own devices
-                        activeModules.notifications && React.createElement('button', {
-                            className: 'px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 hover:bg-purple-200',
-                            onClick: onOpenPushDevices, title: 'Gérer mes appareils'
-                        }, React.createElement('i', { className: 'fas fa-mobile-alt mr-1' }), React.createElement('span', { id: 'push-devices-badge' }, 'Apps')),
-                        // Desktop Only Badge IF enabled
-                        (activeModules.messaging && unreadMessagesCount > 0) && React.createElement('div', {
-                            className: "hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full shadow-lg cursor-pointer bg-red-600 animate-pulse hover:bg-red-700",
-                            onClick: onOpenMessaging, title: unreadMessagesCount + " messages"
-                        }, React.createElement('i', { className: "fas fa-envelope text-white text-xs" }), React.createElement('span', { className: "text-white text-xs font-bold" }, unreadMessagesCount))
-                    ),
-                    React.createElement('div', { className: "flex items-center gap-2 flex-1 md:flex-none justify-end" },
-                        
-                        /* 🛑 FIX: Force-show button for technicians */
-                        (safeHasPermission('tickets.create')) && React.createElement('button', {
-                            onClick: onOpenCreateModal,
-                            className: 'hidden md:flex px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg shadow-md items-center hover:bg-blue-700 hover:scale-105 transition-all transform mx-2'
-                        }, React.createElement('i', { className: 'fas fa-plus-circle mr-2' }), 'Nouveau Ticket'),
-
-                        safeHasPermission('tickets.create') && React.createElement('button', {
-                            onClick: onOpenCreateModal,
-                            className: 'md:hidden flex-1 px-3 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold rounded-lg shadow-md flex items-center justify-center border border-blue-500/30 mx-2'
-                        }, React.createElement('i', { className: 'fas fa-plus mr-2' }), 'Nouvelle Demande'),
+                        // Apps Button (Desktop)
                         React.createElement('button', {
-                            className: 'ml-0 px-3 py-2.5 bg-white text-blue-600 rounded-lg shadow-md border border-blue-100 flex-shrink-0',
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
+                            onClick: onOpenPushDevices, title: 'Mes Appareils'
+                        }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
+
+                        // Mobile Menu Toggle
+                        React.createElement('button', {
+                            className: 'md:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100',
                             onClick: () => setShowMobileMenu(!showMobileMenu)
-                        }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-xl' }))
+                        }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-lg' }))
                     )
                 )
-            ),
+            )
+        ),
+
+        // --- ROW 2: CONTROL BAR (Action Toolbar) ---
+        // Hidden on mobile (kept simple), Visible on Desktop
+        React.createElement('div', { className: 'hidden md:block bg-white/80 backdrop-blur-sm border-b border-slate-200/60 shadow-sm' },
+            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-3' },
+                React.createElement('div', { className: 'flex items-center gap-4' },
+                    
+                    // SEARCH BAR (Expanded)
+                    React.createElement('div', { className: 'relative flex-1 max-w-3xl z-40' },
+                        React.createElement('div', { className: 'relative group' },
+                            React.createElement('i', { className: 'fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors' }),
+                            React.createElement('input', {
+                                ref: searchInputRef, 
+                                type: 'text', 
+                                placeholder: searchPlaceholders[placeholderIndex],
+                                className: 'w-full h-11 pl-11 pr-12 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none',
+                                value: searchQuery,
+                                onChange: handleSearchChange,
+                                onFocus: () => { setShowSearchResults(searchQuery.length >= 2); setViewingList(true); },
+                                onBlur: () => setTimeout(() => { if(!viewingList) setShowSearchResults(false); }, 200),
+                                onKeyDown: (e) => {
+                                    if (e.key === 'Enter' && searchQuery.length >= 2) {
+                                        addToHistory(searchQuery);
+                                        setShowSearchResults(false);
+                                        setViewingList(false);
+                                        searchInputRef.current?.blur();
+                                    }
+                                }
+                            }),
+                            // Clear Button
+                            (searchQuery) && React.createElement('button', {
+                                onClick: () => { setSearchQuery(''); setViewingList(false); setShowSearchResults(false); searchInputRef.current?.focus(); },
+                                className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 p-1'
+                            }, React.createElement('i', { className: 'fas fa-times-circle' })),
+                            
+                            // Spinner
+                            searchLoading && React.createElement('i', { className: 'fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-500' }),
+                            
+                            // Chevron
+                            (!searchQuery && !searchLoading) && React.createElement('button', {
+                                onClick: () => { setViewingList(!viewingList); setShowSearchResults(!showSearchResults); },
+                                className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 p-1'
+                            }, React.createElement('i', { className: 'fas fa-chevron-down text-xs' }))
+                        )
+                    ),
+
+                    // QUICK FILTERS (Desktop)
+                    React.createElement('div', { className: 'flex items-center gap-2 border-l border-slate-200 pl-4 mr-auto' },
+                        React.createElement('button', {
+                            onClick: onOpenOverdue,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-orange-50 hover:text-orange-700 transition-colors'
+                        }, React.createElement('i', { className: 'fas fa-clock text-orange-500' }), 'Retard'),
+                        
+                        React.createElement('button', {
+                            onClick: onOpenPerformance,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors'
+                        }, React.createElement('i', { className: 'fas fa-chart-line text-blue-500' }), 'Performance'),
+
+                        React.createElement('button', {
+                            onClick: onOpenManageColumns,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors'
+                        }, React.createElement('i', { className: 'fas fa-columns text-slate-400' }), 'Vues')
+                    ),
+
+                    // PRIMARY ACTIONS (Right aligned)
+                    React.createElement('div', { className: 'flex items-center gap-3' },
+                        
+                        // Refresh
+                        React.createElement('button', {
+                            onClick: onRefresh,
+                            className: 'w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-md hover:-translate-y-0.5 transition-all',
+                            title: 'Actualiser'
+                        }, React.createElement('i', { className: 'fas fa-sync-alt' })),
+
+                        // Messenger
+                        activeModules.messaging && React.createElement('button', {
+                            onClick: onOpenMessaging,
+                            className: 'relative w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow-md hover:-translate-y-0.5 transition-all',
+                            title: 'Messagerie'
+                        }, 
+                            React.createElement('i', { className: 'fas fa-comments' }),
+                            (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white' })
+                        ),
+
+                        // NEW TICKET (The Big Button)
+                        safeHasPermission('tickets.create') && React.createElement('button', {
+                            onClick: onOpenCreateModal,
+                            className: 'flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 hover:scale-105 active:scale-95 transition-all'
+                        }, 
+                            React.createElement('i', { className: 'fas fa-plus-circle text-lg' }),
+                            React.createElement('span', {}, 'Nouveau Ticket')
+                        )
+                    )
+                )
+            )
+        ),
+
+        // --- MOBILE SEARCH BAR (Visible only on mobile) ---
+        React.createElement('div', { className: 'md:hidden px-4 py-2 bg-white border-b border-slate-100' },
+            React.createElement('div', { className: 'relative' },
+                React.createElement('i', { className: 'fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' }),
+                React.createElement('input', {
+                    ref: isMobile ? searchInputRef : null, // Only ref on mobile if mobile
+                    type: 'text',
+                    placeholder: 'Rechercher...',
+                    className: 'w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500',
+                    value: searchQuery,
+                    onChange: handleSearchChange,
+                    onFocus: () => { setShowSearchResults(true); setViewingList(true); }
+                })
+            )
+        ),
 
             // SEARCH PORTAL
             (showSearchResults || viewingList) && (searchKeywordResults.length > 0 || searchTextResults.length > 0 || (!searchQuery && viewingList)) && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
