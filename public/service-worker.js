@@ -4,7 +4,7 @@
  * Version: v1.1.0 (Offline First)
  */
 
-const CACHE_VERSION = 'v1.1.2';
+const CACHE_VERSION = 'v1.1.3';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache immédiatement pour le mode offline
@@ -154,41 +154,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. API (Network First)
+  // 3. API (Network Only - No Cache for Online First AI)
+  // On ne met JAMAIS en cache les réponses API pour éviter les conflits avec le mode Online
   if (url.pathname.startsWith('/api/')) {
-      // Pour les méthodes non-GET (POST, PUT, DELETE), on ne peut pas utiliser le cache.
-      // On tente le réseau, et si ça échoue, on retourne une erreur JSON structurée
-      // pour que le frontend puisse l'afficher proprement.
-      if (event.request.method !== 'GET') {
-          event.respondWith(
-              fetch(event.request).catch(err => {
-                  return new Response(JSON.stringify({ 
-                      error: 'Vous êtes hors ligne. Impossible d\'effectuer cette action.',
-                      offline: true 
-                  }), {
-                      status: 503,
-                      headers: { 'Content-Type': 'application/json' }
-                  });
-              })
-          );
-          return;
-      }
-
-      event.respondWith(
-          fetch(event.request)
-            .then((response) => {
-                // Cache les réponses API réussies pour consultation offline
-                if (response.status === 200) {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-                }
-                return response;
-            })
-            .catch(() => {
-                // En offline, essayer de retourner la dernière réponse connue
-                return caches.match(event.request);
-            })
-      );
+      event.respondWith(fetch(event.request));
       return;
   }
 
