@@ -1,13 +1,13 @@
 /**
  * Service Worker pour PWA Maintenance IGP
- * Gère le cache offline et les notifications push
- * Version: v1.1.0 (Offline First)
+ * Gère le cache des assets statiques et les notifications push
+ * Version: v1.1.3 (Online First - Performance Optimized)
  */
 
 const CACHE_VERSION = 'v1.1.3';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
-// Fichiers critiques à mettre en cache immédiatement pour le mode offline
+// Fichiers critiques à mettre en cache pour la performance (App Shell)
 const STATIC_ASSETS = [
     '/',
     '/static/styles.css',
