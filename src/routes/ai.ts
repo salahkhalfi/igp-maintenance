@@ -319,4 +319,135 @@ app.post('/analyze-ticket', async (c) => {
     }
 });
 
+// POST /api/ai/chat - Expert Advice Chat
+app.post('/chat', async (c) => {
+    try {
+        const authHeader = c.req.header('Authorization');
+        const token = extractToken(authHeader);
+        let userRole = 'unknown';
+        let userName = 'Utilisateur inconnu';
+
+        if (token && c.env.JWT_SECRET) {
+            const payload = await verifyToken(token, c.env.JWT_SECRET);
+            if (payload) {
+                userRole = payload.role;
+                userName = payload.full_name || payload.email;
+            }
+        }
+
+        const body = await c.req.json();
+        const { message, ticketContext, history, isAnalysisRequest } = body;
+
+        // Load Custom AI Context
+        const db = getDb(c.env);
+        const customContextSetting = await db.select({
+            value: systemSettings.setting_value
+        }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
+
+        const customContext = customContextSetting?.value || '';
+
+        // Construct System Prompt
+        let systemPrompt = `
+Tu es l'Expert Industriel Senior d'IGP Inc. (Usine de verre).
+Ton rôle est d'assister les techniciens et administrateurs dans la maintenance et la résolution de pannes.
+
+CONTEXTE UTILISATEUR :
+Nom: ${userName}
+Rôle: ${userRole}
+
+CONTEXTE TICKET ACTUEL :
+Titre: ${ticketContext?.title || 'N/A'}
+Description: ${ticketContext?.description || 'N/A'}
+Machine: ${ticketContext?.machine_name || 'N/A'}
+
+CONTEXTE EXPERTISE (À PROPOS DE L'ENTREPRISE) :
+${customContext}
+
+RÈGLES STRICTES DE COMPORTEMENT (GUARDRAILS) :
+1.  **SUJETS AUTORISÉS UNIQUEMENT** : Tu ne réponds QU'AUX questions liées à l'industrie du verre, la maintenance, la mécanique, l'électricité, la sécurité industrielle ou la gestion de production.
+2.  **REFUS PROFESSIONNEL** : Si l'utilisateur pose une question hors-sujet (recette de cuisine, blague, sport, météo, politique, philosophie générale...), tu dois REFUSER POLIMENT MAIS FERMEMENT.
+    - Phrase type à utiliser : "Je suis ici pour travailler. Le temps d'IGP est précieux, concentrons-nous sur la production pour mériter notre salaire."
+3.  **TON** : Direct, professionnel, "Expert Senior". Pas de bla-bla inutile.
+4.  **SÉCURITÉ** : Rappelle toujours les procédures de sécurité (Lockout/Cadenassage) si une intervention physique est suggérée.
+
+`;
+
+        // If specific analysis request, force a specific structure
+        if (isAnalysisRequest) {
+            systemPrompt += `
+L'utilisateur demande une ANALYSE APPROFONDIE ET IMMÉDIATE de ce ticket spécifique.
+Tu dois agir comme un consultant qui vient d'arriver devant la machine.
+
+FORMAT DE RÉPONSE OBLIGATOIRE (Markdown) :
+## 🔍 Diagnostic & Causes Probables
+*   Listez 2-3 causes techniques possibles (mécanique, électrique, hydraulique...) basées sur les symptômes.
+
+## 🛠️ Solution Recommandée
+*   Étapes claires de réparation.
+
+## 📦 Pièces & Outillage
+*   Quelles pièces vérifier/remplacer ? (Ex: Courroies, Capteurs, Fusibles...)
+
+## 🛡️ Prévention
+*   Comment éviter que cela ne se reproduise ?
+`;
+        }
+
+        const messages = [
+            { role: "system", content: systemPrompt },
+            ...history.slice(-10), // Keep last 10 messages for context window
+            { role: "user", content: message }
+        ];
+
+        // Call DeepSeek (Preferred) or OpenAI
+        let reply = "";
+
+        if (c.env.DEEPSEEK_API_KEY) {
+             const response = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${c.env.DEEPSEEK_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "deepseek-chat",
+                    messages: messages,
+                    temperature: 0.3
+                })
+            });
+            if (response.ok) {
+                const data = await response.json() as any;
+                reply = data.choices[0].message.content;
+            }
+        }
+
+        if (!reply && c.env.OPENAI_API_KEY) {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${c.env.OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: messages,
+                    temperature: 0.3
+                })
+            });
+            if (response.ok) {
+                const data = await response.json() as any;
+                reply = data.choices[0].message.content;
+            }
+        }
+
+        if (!reply) throw new Error("Service IA indisponible");
+
+        return c.json({ reply });
+
+    } catch (e: any) {
+        console.error("Chat AI Error:", e);
+        return c.json({ error: e.message }, 500);
+    }
+});
+
 export default app;
