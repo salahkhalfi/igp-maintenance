@@ -286,16 +286,26 @@ app.post('/analyze-ticket', async (c) => {
 
         // 3. Load Database Context FIRST (For Dynamic AI Vocabulary)
         const db = getDb(c.env);
+        
+        // CRITICAL FIX: Fetch FULL machine details (Type, Model, Manufacturer, Location)
+        // Previous version only fetched 'machine_type', causing the AI to fail at identifying specific machines
         const machinesList = await db.select({
             id: machines.id, 
-            name: machines.machine_type
+            type: machines.machine_type,
+            model: machines.model,
+            manufacturer: machines.manufacturer,
+            location: machines.location
         }).from(machines).all();
         
         const techsList = await db.select({
             id: users.id, name: users.full_name, role: users.role
         }).from(users).where(inArray(users.role, ['admin', 'supervisor', 'technician', 'senior_technician', 'team_leader'])).all();
 
-        const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.name}`).join('\n');
+        // Build a RICH context for the AI
+        const machinesContext = machinesList.map(m => 
+            `ID ${m.id}: ${m.type} ${m.manufacturer || ''} ${m.model || ''} [Loc: ${m.location || '?'}]`
+        ).join('\n');
+        
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
         // 4. Load Custom AI Context
@@ -306,8 +316,9 @@ app.post('/analyze-ticket', async (c) => {
         const customContext = customContextSetting?.value || DEFAULT_AI_CONTEXT;
 
         // Dynamic Vocabulary from Database + Common Terms
+        // Crucial for Whisper to recognize "Tamglass" or "Bottero" instead of random words
         const vocabularyContext = [
-            ...machinesList.map(m => m.name),
+            ...machinesList.map(m => `${m.type} ${m.manufacturer || ''} ${m.model || ''}`),
             ...techsList.map(t => t.name),
             "Maintenance", "Panne", "Urgent", "Réparation", "Fuite", "Bruit", "Arrêt", "Danger", "Sécurité",
             customContext // Inject custom context keywords into vocabulary if relevant (simple append)
