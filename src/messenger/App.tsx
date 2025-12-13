@@ -2293,6 +2293,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                     params.set('machineId', String(data.machine_id));
                 }
                 
+                if (data.machine_name) {
+                    params.set('machineName', data.machine_name);
+                }
+                
                 if (data.assigned_to_id !== null && data.assigned_to_id !== undefined) {
                     params.set('assignedToId', String(data.assigned_to_id));
                 }

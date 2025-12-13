@@ -14,6 +14,7 @@ interface CreateTicketModalProps {
   initialTitle?: string;
   initialPriority?: TicketPriority;
   initialMachineId?: number | null;
+  initialMachineName?: string;
   initialAssignedToName?: string;
   initialAssignedToId?: number | null;
   initialScheduledDate?: string;
@@ -28,6 +29,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     initialTitle,
     initialPriority,
     initialMachineId,
+    initialMachineName,
     initialAssignedToName,
     initialAssignedToId,
     initialScheduledDate
@@ -134,6 +136,44 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     enabled: isOpen,
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
+
+  // ROBUST MACHINE AUTO-SELECTION (ID Priority -> Name Fallback)
+  useEffect(() => {
+    if (!isOpen || !machines || machines.length === 0) return;
+
+    // 1. If we have an ID, try to set it
+    if (initialMachineId) {
+        setMachineId(Number(initialMachineId));
+    }
+
+    // 2. Fallback: Fuzzy Name Match if ID matches nothing or was missing
+    // Logic: If current machineId is set, check if it's in the list.
+    const currentId = initialMachineId ? Number(initialMachineId) : null;
+    const exists = currentId ? machines.find((m: any) => m.id === currentId) : null;
+
+    if (!exists && initialMachineName) {
+        console.warn(`Machine ID ${initialMachineId} not found or missing. Trying fallback with Name: ${initialMachineName}`);
+        const lowerInit = initialMachineName.toLowerCase();
+        
+        // Exact match first
+        let match = machines.find((m: any) => 
+            (m.machine_type + ' ' + (m.model||'')).toLowerCase() === lowerInit
+        );
+        
+        // Then contains match
+        if (!match) {
+            match = machines.find((m: any) => 
+                (m.machine_type + ' ' + (m.model||'')).toLowerCase().includes(lowerInit) ||
+                lowerInit.includes((m.machine_type||'').toLowerCase())
+            );
+        }
+
+        if (match) {
+            console.log("🎯 [Modal] Machine fuzzy matched:", match.id, match.machine_type);
+            setMachineId(match.id);
+        }
+    }
+  }, [isOpen, machines, initialMachineId, initialMachineName]);
 
   const { data: technicians = [] } = useQuery({
     queryKey: ['technicians'],

@@ -15,6 +15,7 @@ const TicketAnalysisSchema = z.object({
     description: z.string().min(1, "Description requise"),
     priority: z.enum(['low', 'medium', 'high', 'critical']),
     machine_id: z.number().nullable(),
+    machine_name: z.string().nullable(),
     assigned_to_id: z.number().nullable(),
     assigned_to_name: z.string().nullable(),
     scheduled_date: z.string().nullable()
@@ -150,9 +151,9 @@ RÈGLES D'EXTRACTION STRICTES :
 3. IDENTIFICATION MACHINE (RÈGLE CRITIQUE) :
    - Regarde attentivement la liste 'CONTEXTE MACHINES' fournie.
    - Cherche une correspondance avec ce que dit l'utilisateur (même approximative).
-   - Si l'utilisateur dit "Four Tamglass" et que la liste contient "ID 5: Four Tamglass HTF", ALORS 'machine_id' = 5.
+   - Si l'utilisateur dit "Four Tamglass" et que la liste contient "ID 5: Four Tamglass HTF", ALORS 'machine_id' = 5 ET 'machine_name' = "Four Tamglass HTF".
    - Si l'utilisateur dit juste "La CNC" et qu'il y en a plusieurs, essaie de déduire avec le contexte ou choisis la plus probable/principale si possible, sinon null.
-   - Si tu trouves une machine correspondante, tu DOIS mettre son ID dans 'machine_id'.
+   - Si tu trouves une machine correspondante, tu DOIS mettre son ID dans 'machine_id' et son Nom Exact dans 'machine_name'.
 
 4. ASSIGNATION (RÈGLE IMPORTANTE) :
    - Cherche le nom d'un technicien dans la liste 'CONTEXTE EQUIPE'.
@@ -178,6 +179,7 @@ FORMAT JSON ATTENDU (Réponds UNIQUEMENT ce JSON) :
   "description": "Description complète",
   "priority": "low" | "medium" | "high" | "critical",
   "machine_id": number | null,
+  "machine_name": "string" | null,
   "assigned_to_id": number | null,
   "assigned_to_name": "string" | null,
   "scheduled_date": "string" | null

@@ -38,6 +38,7 @@ const AppContent = () => {
   const [initialTicketTitle, setInitialTicketTitle] = useState<string>('');
   const [initialTicketPriority, setInitialTicketPriority] = useState<TicketPriority>('medium');
   const [initialTicketMachineId, setInitialTicketMachineId] = useState<number | null>(null);
+  const [initialTicketMachineName, setInitialTicketMachineName] = useState<string>('');
   const [initialAssignedToName, setInitialAssignedToName] = useState<string>('');
   const [initialAssignedToId, setInitialAssignedToId] = useState<number | null>(null);
   const [initialScheduledDate, setInitialScheduledDate] = useState<string>('');
@@ -78,6 +79,7 @@ const AppContent = () => {
     // Normalize priority to lowercase to ensure UI matches
     setInitialTicketPriority((data.priority?.toLowerCase() as TicketPriority) || 'medium');
     setInitialTicketMachineId(data.machine_id || null);
+    if (data.machine_name) setInitialTicketMachineName(data.machine_name);
     
     // New fields
     if (data.assigned_to_name) setInitialAssignedToName(data.assigned_to_name);
@@ -123,6 +125,7 @@ const AppContent = () => {
         const title = params.get('title');
         const priority = params.get('priority');
         const machineId = params.get('machineId');
+        const machineName = params.get('machineName');
         const assignedToName = params.get('assignedToName');
         const assignedToId = params.get('assignedToId');
         const scheduledDate = params.get('scheduledDate');
@@ -135,6 +138,8 @@ const AppContent = () => {
             console.log("🎯 [App] Setting Machine ID:", Number(machineId));
             setInitialTicketMachineId(Number(machineId));
         }
+        if (machineName) setInitialTicketMachineName(machineName);
+
         if (assignedToName) setInitialAssignedToName(assignedToName);
         if (assignedToId) setInitialAssignedToId(Number(assignedToId));
         if (scheduledDate) setInitialScheduledDate(scheduledDate);
@@ -303,6 +308,7 @@ const AppContent = () => {
             initialTitle={initialTicketTitle}
             initialPriority={initialTicketPriority}
             initialMachineId={initialTicketMachineId}
+            initialMachineName={initialTicketMachineName}
             initialAssignedToName={initialAssignedToName}
             initialAssignedToId={initialAssignedToId}
             initialScheduledDate={initialScheduledDate}
