@@ -265,14 +265,19 @@ const AppHeader = ({
                                 e.target.src = '/static/logo.png'; 
                             }
                         }),
-                        React.createElement('div', { className: 'hidden md:flex flex-col justify-center ml-3 pl-3 border-l border-slate-200' },
-                            React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 tracking-tight', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'text-[10px] font-medium text-slate-500 mt-0.5' }, headerSubtitle)
+                        React.createElement('div', { className: 'flex flex-col justify-center ml-2 md:ml-3 pl-2 md:pl-3 border-l border-slate-200' },
+                            React.createElement('h1', { className: 'text-xs md:text-sm font-bold leading-none text-slate-800 tracking-tight max-w-[100px] md:max-w-none truncate', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[9px] md:text-[10px] font-medium text-slate-500 mt-0.5 max-w-[100px] md:max-w-none truncate' }, headerSubtitle)
                         )
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE
-                    React.createElement('div', { className: 'flex items-center gap-3' },
+                    React.createElement('div', { className: 'flex items-center gap-2 md:gap-3' },
+
+                        // Mobile Greeting
+                        React.createElement('span', { className: 'md:hidden text-xs font-bold text-slate-700 mr-1' }, 
+                            "Bonjour, " + (currentUser?.first_name || 'Vous')
+                        ),
                         
                         // User Badge (Desktop)
                         React.createElement('div', { className: 'hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 hover:bg-white hover:shadow-sm transition-all cursor-pointer', onClick: onOpenUserManagement, title: 'Mon profil et gestion des utilisateurs' },
@@ -280,7 +285,7 @@ const AppHeader = ({
                                 (currentUser?.first_name?.[0] || 'U')
                             ),
                             React.createElement('span', { className: 'text-xs font-medium text-slate-700' }, 
-                                (currentUser?.first_name || 'Utilisateur')
+                                "Bonjour, " + (currentUser?.first_name || 'Utilisateur')
                             ),
                             (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('span', { className: 'ml-2 px-1.5 py-0.5 text-[9px] font-bold bg-slate-200 text-slate-600 rounded uppercase tracking-wide' }, 
                                 currentUser?.role === 'supervisor' ? 'SUP' : 'ADM'
