@@ -256,27 +256,28 @@ const AppHeader = ({
                 React.createElement('div', { className: 'flex justify-between items-center h-12' },
                     
                     // LEFT: LOGO & TITLE
-                    React.createElement('div', { className: 'flex items-center group cursor-pointer', onClick: () => window.location.reload() },
+                    React.createElement('div', { className: 'flex items-center group cursor-pointer flex-1 min-w-0', onClick: () => window.location.reload() },
                         React.createElement('img', {
                             src: logoUrl, alt: 'Logo',
-                            className: 'h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105',
+                            className: 'h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105 shrink-0',
                             onError: (e) => { 
                                 if (e.target.src.includes('logo.png')) return;
                                 e.target.src = '/static/logo.png'; 
                             }
                         }),
-                        React.createElement('div', { className: 'flex flex-col justify-center ml-2 md:ml-3 pl-2 md:pl-3 border-l border-slate-200' },
-                            React.createElement('h1', { className: 'text-xs md:text-sm font-bold leading-none text-slate-800 tracking-tight max-w-[100px] md:max-w-none truncate', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'text-[9px] md:text-[10px] font-medium text-slate-500 mt-0.5 max-w-[100px] md:max-w-none truncate' }, headerSubtitle)
+                        React.createElement('div', { className: 'flex flex-col justify-center ml-2 md:ml-3 pl-2 md:pl-3 border-l border-slate-200 flex-1 min-w-0' },
+                            React.createElement('h1', { className: 'text-xs md:text-sm font-bold leading-none text-slate-800 tracking-tight truncate', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[9px] md:text-[10px] font-medium text-slate-500 mt-0.5 truncate' }, headerSubtitle)
                         )
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE
-                    React.createElement('div', { className: 'flex items-center gap-2 md:gap-3' },
+                    React.createElement('div', { className: 'flex items-center gap-2 md:gap-3 shrink-0 ml-2' },
 
-                        // Mobile Greeting
-                        React.createElement('span', { className: 'md:hidden text-xs font-bold text-slate-700 mr-1' }, 
-                            "Bonjour, " + (currentUser?.first_name || 'Vous')
+                        // Mobile Greeting (Optimized for space)
+                        React.createElement('div', { className: 'md:hidden flex flex-col items-end mr-1' },
+                            React.createElement('span', { className: 'text-[10px] text-slate-400 font-medium leading-none' }, 'Bonjour,'),
+                            React.createElement('span', { className: 'text-xs font-bold text-slate-700 leading-none truncate max-w-[80px]' }, (currentUser?.first_name || 'Vous'))
                         ),
                         
                         // User Badge (Desktop)
