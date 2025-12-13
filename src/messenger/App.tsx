@@ -2275,8 +2275,21 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 if (data.assigned_to_name) params.set('assignedToName', data.assigned_to_name);
                 if (data.scheduled_date) params.set('scheduledDate', data.scheduled_date);
                 
-                // Open in main app (New Tab to preserve chat context)
-                window.open('/?' + params.toString(), '_blank');
+                // CRITICAL: Pass auth token to ensure context is preserved in PWA/New Window
+                // This prevents "Empty Lists" bug where getMachines fails (401) in the new window
+                const token = localStorage.getItem('auth_token');
+                if (token) params.set('token', token);
+                
+                // Open in main app (Smart Navigation)
+                // If PWA or Mobile, navigate in same window to keep context. Desktop -> New Tab.
+                const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                if (isPWA || isMobile) {
+                    window.location.href = '/?' + params.toString();
+                } else {
+                    window.open('/?' + params.toString(), '_blank');
+                }
             }
         } catch (error: any) {
             console.error("AI Analysis failed:", error);

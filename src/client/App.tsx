@@ -90,8 +90,20 @@ const AppContent = () => {
   // Handle URL parameters and Service Worker messages
   useEffect(() => {
     console.log("App mounted, checking params:", window.location.search);
-    // 1. Handle URL parameters on load (e.g. from notification click)
     const params = new URLSearchParams(window.location.search);
+
+    // 0. Handle SSO Token (CRITICAL FOR PWA/MAGIC BUTTON)
+    const tokenParam = params.get('token');
+    if (tokenParam) {
+        console.log("🔐 SSO Token detected, restoring session...");
+        localStorage.setItem('auth_token', tokenParam);
+        // Force refetch user
+        queryClient.invalidateQueries({ queryKey: ['me'] });
+        queryClient.invalidateQueries({ queryKey: ['machines'] });
+        queryClient.invalidateQueries({ queryKey: ['technicians'] });
+    }
+
+    // 1. Handle URL parameters on load (e.g. from notification click)
     const ticketId = params.get('ticket');
     const createTicket = params.get('createTicket'); // New param
     const openMessages = params.get('openMessages');
