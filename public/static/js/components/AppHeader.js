@@ -309,13 +309,14 @@ const AppHeader = ({
 
                         // --- RESTORED DESKTOP BUTTONS ---
 
-                        // IGP Connect / Messenger (Desktop - Top Row)
-                        activeModules.messaging && React.createElement('button', {
-                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all relative',
-                            onClick: onOpenMessaging, title: 'Messagerie instantanée (IGP Connect)'
+                        // IGP Connect / Messenger (Desktop - Top Row) - NEW GREEN ROCKET
+                        React.createElement('button', {
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all relative',
+                            onClick: () => window.open('/messenger', '_blank'), 
+                            title: (messengerName || 'IGP Connect') + ' (Nouvelle Messagerie)'
                         }, 
-                            React.createElement('i', { className: 'fas fa-comments' }),
-                            (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white' })
+                            React.createElement('i', { className: 'fas fa-rocket' }),
+                            React.createElement('span', { className: 'absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white animate-pulse' })
                         ),
                         
                         // User Management (Desktop)
