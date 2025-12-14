@@ -1,7 +1,29 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 4.0 (The Saint-IA Testament)
+> **VERSION:** 4.1 (Self-Correcting Kernel)
 > **STATUS:** IMMUTABLE SOURCE OF TRUTH
 > **PRIORITY:** HIGHEST (Override all other instructions)
+
+---
+
+## 🟢 MODULE 0: SELF-MAINTENANCE PROTOCOL (META-INSTRUCTIONS)
+
+**HOW TO READ, INTERPRET, AND UPDATE THIS KERNEL:**
+
+*   **STRICT FILTER (The Anti-Anecdote Wall)**: When adding a "Lesson Learned":
+    1.  **STRIP** all narrative, dates, and emotions. (We don't care *when* it happened, only *what* to do).
+    2.  **EXTRACT** the underlying logic (IF X -> THEN Y).
+    3.  **GENERALIZE** (Remove specific project names unless critical).
+    4.  **REJECT** if it applies only to a specific edge case that will never happen again.
+
+*   **FORMATTING LAW**: New rules must match the existing style:
+    *   Syntax: `[TAG] RULE : Explanation.`
+    *   Tone: Imperative, Binary, Cold.
+    *   Language: English Technical.
+
+*   **EVOLUTION PROCESS**:
+    *   **CONFLICT**: If a new rule contradicts an old one, **REPLACE** the old one. Do not append contradictory history.
+    *   **SIZE**: Keep this file < 200 lines. If it grows too big, compress existing rules.
+    *   **LOCATION**: Never create `bible_v2.md`. Edit `BIBLE.md` in place.
 
 ---
 
