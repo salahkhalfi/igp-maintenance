@@ -13,7 +13,7 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
 
     // Auto-Analyze on open
     React.useEffect(() => {
-        if (isOpen && messages.length === 0) {
+        if (isOpen && messages.length === 0 && ticket) {
             handleAnalysisClick();
         }
     }, [isOpen, ticket]);
@@ -36,12 +36,12 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
             const token = localStorage.getItem('auth_token');
             const response = await axios.post('/api/ai/chat', {
                 message: text,
-                ticketContext: {
+                ticketContext: ticket ? {
                     title: ticket.title,
                     description: ticket.description,
                     machine_id: ticket.machine_id,
                     machine_name: ticket.machine_type + ' ' + (ticket.model || '')
-                },
+                } : null,
                 history: messages.map(m => ({ role: m.role, content: m.content })),
                 isAnalysisRequest
             }, {
@@ -103,8 +103,8 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
                 )
             ),
 
-            // Quick Actions
-            React.createElement('div', { className: 'bg-gray-50 p-3 border-b border-gray-200 flex gap-2 overflow-x-auto' },
+            // Quick Actions (Only show if ticket exists)
+            ticket && React.createElement('div', { className: 'bg-gray-50 p-3 border-b border-gray-200 flex gap-2 overflow-x-auto' },
                 React.createElement('button', {
                     onClick: handleAnalysisClick,
                     disabled: isLoading,

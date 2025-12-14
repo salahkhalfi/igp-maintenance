@@ -22,6 +22,7 @@ const AppHeader = ({
     onOpenSystemSettings,
     onOpenAdminRoles,
     onOpenTv,
+    onOpenAIChat,
     onOpenPlanning,
     onOpenDetails,
     activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true }, // Default
@@ -307,6 +308,12 @@ const AppHeader = ({
                             onClick: onOpenPushDevices, title: 'Gérer les appareils connectés'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
 
+                        // Expert AI Button (Desktop)
+                        React.createElement('button', {
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
+                            onClick: onOpenAIChat, title: 'Expert Industriel (IA)'
+                        }, React.createElement('i', { className: 'fas fa-robot' })),
+
                         // --- RESTORED DESKTOP BUTTONS ---
 
                         // IGP Connect / Messenger (Desktop - Top Row) - NEW GREEN ROCKET
@@ -494,14 +501,35 @@ const AppHeader = ({
                 })
             ),
             // Mobile Quick Actions
+            
+            // 1. EXPERT AI (ROBOT) - NEW
+            React.createElement('button', {
+                onClick: onOpenAIChat,
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-purple-50 text-purple-600 border border-purple-100 shadow-sm active:scale-95 shrink-0',
+                title: 'Expert Industriel'
+            }, React.createElement('i', { className: 'fas fa-robot' })),
+
+            // 2. IGP CONNECT (ROCKET) - NEW
+            React.createElement('button', {
+                onClick: () => window.open('/messenger', '_blank'),
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm active:scale-95 relative shrink-0',
+                title: messengerName
+            }, 
+                React.createElement('i', { className: 'fas fa-rocket' }),
+                React.createElement('span', { className: 'absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white' })
+            ),
+
+            // 3. OLD MESSAGING (Chat Bubble) - Kept for compatibility but prioritized after
             activeModules.messaging && React.createElement('button', {
                 onClick: onOpenMessaging,
-                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm active:scale-95 relative',
-                title: 'Messagerie'
+                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm active:scale-95 relative shrink-0',
+                title: 'Messagerie Interne'
             }, 
                 React.createElement('i', { className: 'fas fa-comments' }),
                 (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white' })
             ),
+
+            // 4. NEW TICKET (+)
             safeHasPermission('tickets.create') && React.createElement('button', {
                 onClick: onOpenCreateModal,
                 className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-md active:scale-95',
@@ -625,6 +653,12 @@ const AppHeader = ({
                         onClick: onOpenPushDevices,
                         className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50'
                     }, React.createElement('i', { className: 'fas fa-mobile-alt mr-3 text-purple-500 text-lg' }), 'Gérer mes appareils'),
+                    
+                    React.createElement('button', {
+                        onClick: onOpenAIChat,
+                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50'
+                    }, React.createElement('i', { className: 'fas fa-robot mr-3 text-purple-600 text-lg' }), 'Expert Industriel (IA)'),
+
                     // ----------------------------------
 
                     React.createElement('button', {

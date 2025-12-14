@@ -18,6 +18,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showAdminRoles, setShowAdminRoles] = React.useState(false);
     const [showProductionPlanning, setShowProductionPlanning] = React.useState(false);
     const [showTvModal, setShowTvModal] = React.useState(false);
+    const [showAIChat, setShowAIChat] = React.useState(false);
 
     // Gestion des modules (Feature Flipping)
     const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
@@ -375,6 +376,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
             onOpenTv: () => { setShowTvModal(true); setShowMobileMenu(false); },
+            onOpenAIChat: () => { setShowAIChat(true); setShowMobileMenu(false); },
             onOpenPlanning: () => { 
                 if (activeModules.planning) {
                     setShowProductionPlanning(true); 
@@ -409,6 +411,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
 
         // --- TV DASHBOARD MODAL ---
         showTvModal && React.createElement(window.TVDashboardModal, { isOpen: showTvModal, onClose: () => setShowTvModal(false) }),
+
+        // --- AI CHAT MODAL ---
+        window.AIChatModal && React.createElement(window.AIChatModal, { isOpen: showAIChat, onClose: () => setShowAIChat(false), ticket: null }),
 
         // --- FOOTER ---
         window.VoiceTicketFab ? React.createElement(window.VoiceTicketFab, { onTicketDetected: handleTicketDetected }) : null,

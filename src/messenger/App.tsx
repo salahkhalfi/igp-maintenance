@@ -1264,6 +1264,17 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                 </>
                             )}
 
+                            {/* BOUTON RETOUR APPLICATION */}
+                            <button 
+                                onClick={() => window.location.href = '/'}
+                                className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/20 backdrop-blur-md group/btn"
+                                title="Retour à l'application principale"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center transition-transform group-hover/btn:scale-110">
+                                    <i className="fas fa-home text-sm"></i>
+                                </div>
+                            </button>
+
                             <button 
                                 onClick={handleLogout}
                                 className="flex-1 h-12 rounded-xl flex items-center justify-center transition-all duration-300 border border-white/5 bg-white/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/20 backdrop-blur-md group/btn"
