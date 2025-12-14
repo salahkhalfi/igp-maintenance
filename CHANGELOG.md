@@ -1,5 +1,12 @@
 # Historique des Changements
 
+## [3.0.0-beta.5] - 2025-12-14 (Industrial Expert AI)
+### 🧠 Intelligence Artificielle
+- **Expert Verre Architectural** : Intégration du modèle DeepSeek V3 avec une base de connaissances encyclopédique spécialisée (Coupe, Trempe, Laminage, Thermos).
+- **Contexte Dynamique** : L'IA reçoit désormais le contexte précis de la machine concernée (Marque, Modèle, Historique) lors de l'analyse.
+- **Support Polyglotte** : Détection et réponse automatique en Français (Québécois) ou Anglais selon l'utilisateur.
+- **Chat Expert** : Nouvelle interface modale `/api/ai/chat` pour poser des questions techniques pointues à l'IA ("L'Ingénieur Senior").
+
 ## [2.14.18] - 2025-12-08 (Guest Push Fix)
 ### 🐛 Corrections Critiques
 - **Push Notifications** : Résolution de l'erreur 500 lors de l'abonnement push pour les utilisateurs invités (Guest).
