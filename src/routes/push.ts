@@ -6,6 +6,7 @@
 import { Hono } from 'hono';
 import type { Bindings } from '../types';
 import { formatUserName } from '../utils/userFormatter';
+import { authMiddleware } from '../middlewares/auth';
 import {
   buildPushPayload,
   type PushSubscription,
@@ -898,6 +899,46 @@ push.get('/diagnose/:query', async (c) => {
       error: 'Erreur interne lors du diagnostic',
       details: error instanceof Error ? error.message : String(error)
     }, 500);
+  }
+});
+
+/**
+ * GET /api/push/subscriptions-list
+ * Récupérer la liste complète des abonnements push (Admin only)
+ */
+push.get('/subscriptions-list', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Only management roles can see subscriptions list
+    const allowedRoles = ['admin', 'supervisor', 'director', 'coordinator', 'planner'];
+    if (!user || !allowedRoles.includes(user.role)) {
+      return c.json({ error: 'Accès refusé' }, 403);
+    }
+
+    // Get all push subscriptions with user info
+    const subscriptions = await c.env.DB.prepare(`
+      SELECT 
+        ps.id,
+        ps.user_id,
+        ps.endpoint,
+        ps.device_type,
+        ps.device_name,
+        ps.created_at,
+        u.full_name as user_full_name,
+        u.email as user_email,
+        u.role as user_role
+      FROM push_subscriptions ps
+      LEFT JOIN users u ON ps.user_id = u.id
+      ORDER BY ps.created_at DESC
+    `).all();
+
+    return c.json({
+      subscriptions: subscriptions.results || []
+    });
+  } catch (error) {
+    console.error('[Push Subscriptions List API] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
 

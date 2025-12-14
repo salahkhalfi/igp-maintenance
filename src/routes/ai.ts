@@ -7,6 +7,7 @@ import { inArray, eq } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 import { z } from 'zod';
+import { GLASS_INDUSTRY_KNOWLEDGE, MAINTENANCE_OS_IDENTITY } from '../ai/knowledge/glass-industry';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -464,8 +465,7 @@ ${allMachines.length > 30 ? `... (+ ${allMachines.length - 30} autres machines)`
 
         // Construct System Prompt
         let systemPrompt = `
-Tu es l'Expert Industriel Senior d'IGP Inc. (Usine de verre).
-Ton rôle est d'assister les techniciens et administrateurs dans la maintenance et la résolution de pannes.
+${MAINTENANCE_OS_IDENTITY}
 
 CONTEXTE UTILISATEUR :
 Nom: ${userName}
@@ -480,6 +480,8 @@ ${machineDetails}
 
 CONTEXTE EXPERTISE (À PROPOS DE L'ENTREPRISE) :
 ${customContext}
+
+${GLASS_INDUSTRY_KNOWLEDGE}
 
 PHASE 1 : VALIDATION DE LA QUALITÉ (FILTRE ANTI-GASPILLAGE)
 Avant de te lancer dans une analyse, évalue si la description du ticket est exploitable.
@@ -576,6 +578,36 @@ FORMAT DE RÉPONSE OBLIGATOIRE (Markdown) :
     } catch (e: any) {
         console.error("Chat AI Error:", e);
         return c.json({ error: e.message }, 500);
+    }
+});
+
+// --- TEMPORARY DIAGNOSTIC PROBE (TO BE REMOVED) ---
+app.get('/test-expert', async (c) => {
+    const question = c.req.query('q') || "Quels sont les EPI obligatoires pour la coupe ?";
+    const systemPrompt = `${MAINTENANCE_OS_IDENTITY}\n${GLASS_INDUSTRY_KNOWLEDGE}\nCONTEXTE: Test technique.`;
+    
+    try {
+        if (!c.env.DEEPSEEK_API_KEY) return c.text("Pas de clé API", 500);
+        
+        const response = await fetch('https://api.deepseek.com/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${c.env.DEEPSEEK_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: question }
+                ],
+                temperature: 0.3
+            })
+        });
+        const data = await response.json() as any;
+        return c.text(data.choices[0].message.content);
+    } catch (e: any) {
+        return c.text("Erreur: " + e.message);
     }
 });
 
