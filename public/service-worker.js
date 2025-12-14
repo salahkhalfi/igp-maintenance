@@ -4,7 +4,7 @@
  * Version: v1.1.3 (Online First - Performance Optimized)
  */
 
-const CACHE_VERSION = 'v3.0.0';
+const CACHE_VERSION = 'v3.0.14';
 const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)

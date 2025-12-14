@@ -119,7 +119,20 @@ const AppContent = () => {
     else if (createTicket) {
         console.log('[App] Opening create ticket from URL');
         
+        // 1. RESET ALL STATES TO DEFAULTS (Fix for Stale State Bug)
+        setInitialTicketDescription('');
+        setInitialImageUrl('');
+        setInitialTicketTitle('');
+        setInitialTicketPriority('medium');
+        setInitialTicketMachineId(null);
+        setInitialTicketMachineName('');
+        setInitialAssignedToName('');
+        setInitialAssignedToId(null);
+        setInitialScheduledDate('');
+
+        // 2. Open Modal
         setIsCreateTicketOpen(true);
+
         const description = params.get('description');
         const imageUrl = params.get('imageUrl');
         const title = params.get('title');

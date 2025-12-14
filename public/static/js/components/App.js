@@ -14,6 +14,12 @@ const App = () => {
     const [showCreateModal, setShowCreateModal] = React.useState(false);
     const [initialDescription, setInitialDescription] = React.useState('');
     const [initialImageUrl, setInitialImageUrl] = React.useState('');
+    // NEW: Deep Link State Support
+    const [initialTitle, setInitialTitle] = React.useState('');
+    const [initialPriority, setInitialPriority] = React.useState('medium');
+    const [initialMachineId, setInitialMachineId] = React.useState('');
+    const [initialAssignedToId, setInitialAssignedToId] = React.useState(null);
+    const [initialScheduledDate, setInitialScheduledDate] = React.useState('');
     const [contextMenu, setContextMenu] = React.useState(null);
     const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
     const [headerTitle, setHeaderTitle] = React.useState(companyTitle);
@@ -41,9 +47,19 @@ const App = () => {
                 console.log("Deep Link detected: createTicket");
                 const desc = params.get('description');
                 const img = params.get('imageUrl');
+                const title = params.get('title');
+                const priority = params.get('priority');
+                const machineId = params.get('machineId');
+                const assignedToId = params.get('assignedToId');
+                const scheduledDate = params.get('scheduledDate');
                 
                 if (desc) setInitialDescription(desc);
                 if (img) setInitialImageUrl(img);
+                if (title) setInitialTitle(title);
+                if (priority) setInitialPriority(priority);
+                if (machineId) setInitialMachineId(machineId);
+                if (assignedToId) setInitialAssignedToId(assignedToId);
+                if (scheduledDate) setInitialScheduledDate(scheduledDate);
                 
                 setShowCreateModal(true);
                 
@@ -277,6 +293,11 @@ const App = () => {
             onTicketCreated: loadData,
             initialDescription: initialDescription,
             initialImageUrl: initialImageUrl,
+            initialTitle: initialTitle,
+            initialPriority: initialPriority,
+            initialMachineId: initialMachineId,
+            initialAssignedToId: initialAssignedToId,
+            initialScheduledDate: initialScheduledDate,
             unreadMessagesCount: unreadMessagesCount,
             onRefreshMessages: loadUnreadMessagesCount,
             headerTitle: headerTitle,

@@ -1,13 +1,17 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, Loader2, StopCircle, Sparkles } from 'lucide-react';
-import { getAuthToken } from '../api';
+
+// Copied helper to ensure independence
+const getAuthToken = () => localStorage.getItem('auth_token');
 
 interface VoiceTicketFabProps {
     onTicketDetected: (data: any) => void;
+    // Added for Messenger integration
+    className?: string;
+    style?: React.CSSProperties;
 }
 
-export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected }) => {
+export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected, className, style }) => {
     const [status, setStatus] = useState<'idle' | 'recording' | 'analyzing' | 'error'>('idle');
     const [timer, setTimer] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -27,6 +31,7 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // STRICT PARITY WITH MAIN APP
             const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
             
             mediaRecorderRef.current = mediaRecorder;
@@ -37,6 +42,7 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
             };
 
             mediaRecorder.onstop = async () => {
+                // STRICT PARITY WITH MAIN APP
                 const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
                 await analyzeAudio(blob);
                 
@@ -70,11 +76,10 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
     const analyzeAudio = async (blob: Blob) => {
         try {
             const formData = new FormData();
+            // STRICT PARITY WITH MAIN APP: filename must be voice_ticket.webm
             formData.append('file', blob, 'voice_ticket.webm');
 
             const token = getAuthToken();
-            // Note: We use relative path assuming this runs on same origin
-            // Adjust base URL if needed (e.g. from api.ts client config)
             const response = await fetch('/api/ai/analyze-ticket', {
                 method: 'POST',
                 headers: {
@@ -84,13 +89,14 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
             });
 
             if (!response.ok) {
-                throw new Error("Erreur serveur");
+                const txt = await response.text();
+                throw new Error("Erreur serveur: " + txt);
             }
 
             const data = await response.json();
             console.log("🤖 AI Analysis Result:", data);
             
-            // Pass the data to parent to open the modal
+            // Pass the data to parent
             onTicketDetected(data);
             setStatus('idle');
 
@@ -108,18 +114,22 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    // Adjusted classNames to allow override for Messenger Footer
+    // If className is provided, we use it instead of fixed positioning
+    const containerClass = className || "fixed bottom-6 right-6 z-[9990]";
+
     return (
-        <div className="fixed bottom-6 right-6 z-[9990]">
-            {/* Status Tooltip */}
+        <div className={containerClass} style={style}>
+            {/* Status Tooltip - Position adjusted relative to button */}
             {status === 'recording' && (
-                <div className="absolute bottom-20 right-0 bg-red-600 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse flex items-center gap-2 whitespace-nowrap">
+                <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse flex items-center gap-2 whitespace-nowrap z-50">
                     <div className="w-3 h-3 bg-white rounded-full animate-ping"></div>
                     Enregistrement... {formatTime(timer)}
                 </div>
             )}
             
             {status === 'analyzing' && (
-                <div className="absolute bottom-20 right-0 bg-blue-600 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 whitespace-nowrap">
+                <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 whitespace-nowrap z-50">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Analyse en cours...
                 </div>
@@ -129,7 +139,7 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
             <button
                 onClick={status === 'recording' ? stopRecording : startRecording}
                 disabled={status === 'analyzing'}
-                className={`w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all transform hover:scale-105 active:scale-95
+                className={`w-12 h-12 md:w-12 md:h-12 rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 border border-white/10
                     ${status === 'recording' 
                         ? 'bg-red-500 hover:bg-red-600 ring-4 ring-red-200' 
                         : status === 'analyzing'
@@ -138,13 +148,16 @@ export const VoiceTicketFab: React.FC<VoiceTicketFabProps> = ({ onTicketDetected
                     }
                 `}
                 title="Créer un ticket par la voix"
+                // Prevent click propagation to chat interface
+                onMouseDown={(e) => e.stopPropagation()} 
+                onTouchStart={(e) => e.stopPropagation()}
             >
                 {status === 'recording' ? (
-                    <StopCircle className="w-8 h-8 text-white" />
+                    <StopCircle className="w-6 h-6 text-white" />
                 ) : status === 'analyzing' ? (
-                    <Sparkles className="w-8 h-8 text-white animate-spin" />
+                    <Sparkles className="w-6 h-6 text-white animate-spin" />
                 ) : (
-                    <Mic className="w-8 h-8 text-white" />
+                    <Sparkles className="w-6 h-6 text-white" /> 
                 )}
             </button>
         </div>

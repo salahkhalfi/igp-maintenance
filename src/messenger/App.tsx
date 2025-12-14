@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import AnnotationEditor from './AnnotationEditor';
+import VoiceTicketFab from './components/VoiceTicketFab';
 
 // --- Sound Manager (Robust Fix) ---
 
@@ -2214,117 +2215,36 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
     const inputTimeoutRef = useRef<any>(null);
     
-    // --- MAGIC TICKET STATE (IA) ---
-    const [isMagicRecording, setIsMagicRecording] = useState(false);
-    const [isMagicAnalyzing, setIsMagicAnalyzing] = useState(false);
-    const magicMediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const magicChunksRef = useRef<Blob[]>([]);
-
-    const startMagicRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const recorder = new MediaRecorder(stream);
-            magicChunksRef.current = [];
-
-            recorder.ondataavailable = (e) => {
-                if (e.data.size > 0) magicChunksRef.current.push(e.data);
-            };
-
-            recorder.onstop = async () => {
-                const audioBlob = new Blob(magicChunksRef.current, { type: 'audio/webm' });
-                stream.getTracks().forEach(track => track.stop());
-                await analyzeMagicAudio(audioBlob);
-            };
-
-            recorder.start();
-            magicMediaRecorderRef.current = recorder;
-            setIsMagicRecording(true);
-        } catch (err) {
-            console.error("Error accessing microphone:", err);
-            alert("Impossible d'accéder au microphone. Vérifiez vos permissions.");
-        }
-    };
-
-    const stopMagicRecording = () => {
-        if (magicMediaRecorderRef.current && isMagicRecording) {
-            magicMediaRecorderRef.current.stop();
-            setIsMagicRecording(false);
-            setIsMagicAnalyzing(true);
-        }
-    };
-
-    const analyzeMagicAudio = async (audioBlob: Blob) => {
-        const formData = new FormData();
-        formData.append('file', audioBlob, 'voice_ticket.webm');
-
-        try {
-            // AUDIT FIX: Align strict behavior with Main App's VoiceTicketFab
-            // 1. Use fetch instead of axios for consistent FormData handling
-            // 2. Explicitly grab token to ensure Auth Context is passed to AI
-            const token = localStorage.getItem('auth_token');
+    // --- MAGIC TICKET HANDLER ---
+    const handleTicketDetected = (data: any) => {
+        if (data) {
+            const params = new URLSearchParams();
+            params.set('createTicket', 'true');
             
-            const response = await fetch('/api/ai/analyze-ticket', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}` // Explicit Auth
-                },
-                body: formData
-            });
+            if (data.title) params.set('title', data.title);
+            if (data.description) params.set('description', data.description);
+            if (data.priority) params.set('priority', data.priority.toLowerCase());
+            
+            if (data.machine_id !== null && data.machine_id !== undefined) params.set('machineId', String(data.machine_id));
+            if (data.machine_name) params.set('machineName', data.machine_name);
+            
+            if (data.assigned_to_id !== null && data.assigned_to_id !== undefined) params.set('assignedToId', String(data.assigned_to_id));
+            if (data.assigned_to_name) params.set('assignedToName', data.assigned_to_name);
+            if (data.scheduled_date) params.set('scheduledDate', data.scheduled_date);
+            
+            const token = localStorage.getItem('auth_token');
+            if (token) params.set('token', token);
+            
+            const targetUrl = '/?' + params.toString();
+            
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Erreur serveur (${response.status}): ${errText}`);
+            if (isPWA || isMobile) {
+                window.location.href = targetUrl;
+            } else {
+                window.open(targetUrl, '_blank');
             }
-
-            const data = await response.json();
-            console.log("🤖 [Messenger] AI Analysis Result:", data);
-
-            if (data) {
-                const params = new URLSearchParams();
-                params.set('createTicket', 'true');
-                
-                // Meticulous mapping (matching src/client/App.tsx expectations)
-                if (data.title) params.set('title', data.title);
-                if (data.description) params.set('description', data.description);
-                if (data.priority) params.set('priority', data.priority.toLowerCase());
-                
-                // CRITICAL: Ensure ID is valid before sending
-                if (data.machine_id !== null && data.machine_id !== undefined) {
-                    params.set('machineId', String(data.machine_id));
-                }
-                
-                if (data.machine_name) {
-                    params.set('machineName', data.machine_name);
-                }
-                
-                if (data.assigned_to_id !== null && data.assigned_to_id !== undefined) {
-                    params.set('assignedToId', String(data.assigned_to_id));
-                }
-                
-                if (data.assigned_to_name) params.set('assignedToName', data.assigned_to_name);
-                if (data.scheduled_date) params.set('scheduledDate', data.scheduled_date);
-                
-                // Pass Auth Token to prevent session loss
-                if (token) params.set('token', token);
-                
-                // Navigation Strategy
-                const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                const targetUrl = '/?' + params.toString();
-                console.log("🚀 [Messenger] Handoff URL:", targetUrl);
-
-                if (isPWA || isMobile) {
-                    window.location.href = targetUrl;
-                } else {
-                    window.open(targetUrl, '_blank');
-                }
-            }
-        } catch (error: any) {
-            console.error("AI Analysis failed:", error);
-            alert("Erreur lors de l'analyse vocale: " + error.message);
-        } finally {
-            setIsMagicAnalyzing(false);
         }
     };
     
@@ -3461,21 +3381,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
                                 {/* BOUTON MAGIC TICKET (IA) - TOUJOURS VISIBLE */}
                                 <div className="flex-shrink-0 relative z-50">
-                                    <button 
-                                        onClick={isMagicRecording ? stopMagicRecording : startMagicRecording}
-                                        disabled={isMagicAnalyzing || isRecording}
-                                        className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95 group ${
-                                            isMagicRecording 
-                                                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 animate-pulse ring-2 ring-violet-300 text-white' 
-                                                : 'bg-[#1a1a1a] border border-white/10 text-violet-500 hover:text-violet-400 hover:bg-[#252525]'
-                                        }`}
-                                        title={isMagicRecording ? 'Arrêter l\'analyse' : 'Créer un ticket (IA)'}
-                                        style={{ display: 'flex' }}
-                                    >
-                                       {isMagicAnalyzing ? <i className="fas fa-spinner fa-spin text-lg text-white"></i> :
-                                       isMagicRecording ? <i className="fas fa-stop text-lg text-white"></i> :
-                                       <i className="fas fa-magic text-lg group-hover:rotate-12 transition-transform"></i>}
-                                    </button>
+                                    <VoiceTicketFab 
+                                        onTicketDetected={handleTicketDetected} 
+                                        className="relative" 
+                                    />
                                 </div>
                             </div>
 
@@ -3550,7 +3459,7 @@ const EmptyState = () => (
             </p>
             <div className="flex items-center justify-center gap-3 text-gray-600 text-xs font-mono border-t border-white/5 pt-8 uppercase tracking-widest">
                 <i className="fas fa-shield-alt text-emerald-500"></i>
-                Chiffré de bout en bout • v3.0.0 Premium
+                Chiffré de bout en bout • v3.0.1 (Fix Audio + Target)
             </div>
         </div>
     </div>

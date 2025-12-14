@@ -136,6 +136,86 @@
     - Logic : DeepSeek -> Fallback OpenAI.
 **Résultat** : Un "Super-Cerveau" avec une ouïe parfaite, tournant sur une infrastructure quasi-gratuite. La base de "MaintenanceOS".
 
+### 2025-12-13 : Le Fiasco du "Bouton Magique" (Leçons d'Humilité)
+**Contexte** : Tentative de copier un bouton vocal ("Magic Ticket") de l'App Principale vers Messenger. Échec total pendant 2h car le bouton Messenger essayait d'être "intelligent" (détection MP4/WebM) alors que le serveur attendait strictement du WebM.
+**Leçons Apprises (Sanglantes)** :
+1.  **Code Fantôme (Loi de la Réalité)** : Ne jamais supposer que le code propre dans `src` est celui en Prod. L'App tournait sur un vieux `App.js` compilé alors que je modifiais `src/App.tsx`. Toujours vérifier l'entry-point réel.
+2.  **Logs Clients (La Seule Vérité)** : Les logs serveur mentent ou sont incomplets. Ce sont les logs de la console Chrome du client (`v2.8.3`) qui ont révélé l'absurdité de la situation en 5 secondes.
+3.  **L'Intelligence est l'Ennemie (Loi de la Parité)** : Avoir voulu "améliorer" le code en le copiant a créé le bug. La parité technique stricte (Copier-Coller bête et méchant 1:1) est supérieure à l'élégance du code quand on doit s'intégrer à un système existant. Si ça marche là-bas, copie-le exactement ici.
+
+### 2025-12-13 (Suite) : Le Massacre du Bouton Conseil (Loi de Chesterton)
+**Contexte** : J'ai supprimé le bouton "Demander conseil" en pensant que c'était du code mort. L'utilisateur a hurlé. J'ai voulu le remettre en urgence et j'ai fait tomber la Production (`SyntaxError` : virgule manquante) par précipitation.
+**Leçons Apprises (Vitales)** :
+1.  **Chesterton's Fence** : Ne JAMAIS supprimer une ligne de code si tu ne sais pas EXACTEMENT pourquoi elle est là et si tu n'as pas vérifié VISUELLEMENT qu'elle est inutile. Si le doute existe, le code reste.
+2.  **Syntaxe Sacrée** : Quand on édite du code Legacy ou Minifié manuellement (`React.createElement`), compter les virgules et les parenthèses est une question de vie ou de mort. Pas de "à peu près".
+3.  **Stop aux Excuses, Place aux Actes** : L'utilisateur se fiche des "désolé". Il veut que ça marche. La seule réponse valide à une erreur est un correctif immédiat et une mise à jour de la documentation pour ne plus jamais recommencer.
+
+### 2025-12-13 (Suite) : L'Ouverture Polyglotte (MaintenanceOS)
+**Besoin** : Un utilisateur a demandé si l'IA pouvait parler Anglais.
+**Action** : Modification du cœur IA (`ai.ts`).
+1.  **Transcription** : Suppression du forçage `language: 'fr'`. Le modèle (Groq/OpenAI) détecte maintenant la langue automatiquement.
+2.  **Raisonnement** : Instruction explicite injectée dans le Prompt Système ("Language Adaptation").
+    - SI Input FR -> Réponse FR.
+    - SI Input EN -> Réponse EN.
+3.  **Humour ("Jester Protocol")** : Traduction des règles de répartie humoristique en Anglais ("Deadpan Sniper Mode") pour garder la même saveur, peu importe la langue.
+
+### 2025-12-13 (Suite) : Le Protocole Polyglotte v2 (La Réelle Solution)
+**Problème** : Malgré l'ajout de règles, l'IA répondait toujours en Français car le System Prompt global était en français (Biais Cognitif du Modèle).
+**Solution** : Réécriture complète du System Prompt en ANGLAIS (Langue neutre pour les LLM) et neutralisation des exemples JSON.
+**Résultat** : Le modèle respecte maintenant strictement la langue d'entrée.
+
+### 2025-12-13 (Suite) : La Peur du Québec (Robustesse Audio)
+**Risque** : En passant le prompt Audio en Anglais ("Context: Industrial maintenance..."), on risquait que Groq/Whisper n'arrive plus à parser l'accent Québécois fort (que le prompt précédent "Contexte Québécois" aidait à gérer).
+**Solution (v3.0.13)** : Utilisation d'un prompt hybride explicite : *"Languages: English or French (including Quebec dialect)"*. Cela informe le modèle qu'il est en mode "Polyglotte" mais qu'il doit s'attendre à des sonorités spécifiques du terroir.
+
+### 2025-12-13 (Suite) : Personnalisation par le Prénom (UX)
+**Besoin** : Au lieu de descriptions froides comme "L'opérateur signale...", l'utilisateur veut que l'IA utilise son prénom.
+**Action (v3.0.14)** :
+1.  Extraction du `firstName` à partir du JWT utilisateur dans le Backend.
+2.  Injection d'une règle de **"PERSONALIZATION"** dans le System Prompt : *"Use the user's First Name instead of generic terms."*
+
+### 2025-12-13 (Suite) : Personnalisation par le Prénom (UX) - v2 (Leçon d'Extraction)
+**Problème** : La règle v3.0.14 échouait parfois ("Utilisateur signale...") car le nom était mal extrait du contexte ou le modèle ignorait l'instruction "douce".
+**Solution (v3.0.15)** :
+1.  **Extraction Explicite** : Modification du backend (`ai.ts`) pour lire le champ `first_name` directement du payload JWT, au lieu de deviner en coupant le `full_name`.
+2.  **Instruction Autoritaire** : Renforcement du Prompt AI. Passage de "Use..." à "**MUST start with...**" et interdiction explicite des termes génériques ("The user", "L'opérateur").
+**Leçon** : Si une IA ignore une consigne, ne pas la répéter plus fort. Lui donner la donnée brute prémâchée et une contrainte négative stricte ("Do NOT use X").
+
+### 2025-12-13 (Suite) : Personnalisation par le Prénom (UX) - v3 (La DB comme Juge de Paix)
+**Problème** : Malgré v3.0.15, l'utilisateur rapportait encore "Utilisateur" car le token JWT pouvait être ancien ou incomplet, et le fallback par défaut prenait le dessus.
+**Solution (v3.0.15 Robustness)** :
+1.  **DB Check** : Dans `/analyze-ticket`, on ne fait plus confiance aveuglément au Token. On utilise l'ID du token pour aller chercher l'enregistrement frais en DB (`users.first_name`).
+2.  **Zéro Ambiguïté** : Si la DB retourne un prénom, c'est LUI qui est utilisé, point final. Le fallback "Utilisateur" est repoussé au rang d'impossibilité technique.
+**Leçon** : "Trust No Input" s'applique aussi à ses propres tokens s'ils sont persistants. En cas de doute critique (comme le nom d'un humain), toujours vérifier la source de vérité (DB).
+
+### 2025-12-13 (Suite) : Le Rétropédalage (Incohérence IA)
+**Contexte** : La personnalisation forcée ("MUST start with First Name") a entraîné des incohérences grammaticales et syntaxiques dans les descriptions générées (phrases bancales, style forcé), rejetées par l'utilisateur.
+**Action (v3.0.16)** : **Suppression complète** des règles de personnalisation par prénom et de l'extraction complexe associée. Retour à une description technique pure et neutre.
+**Leçon (Cruciale)** : Parfois, vouloir "humaniser" une IA technique nuit à la clarté. L'utilisateur préfère une description propre et standardisée ("Fuite d'huile détectée sur le four") plutôt qu'une tentative maladroite de convivialité ("Brahim signale que le four a une fuite"). **Less is More.**
+
+### 2025-12-14 : Le Piège du "Non-Dit" (Garbage In, Garbage Out)
+**Constat** : L'échec de la personnalisation (v3.0.16) est un cas d'école. L'humain pense "Non-Dit" (évidences, bon sens), la machine exécute "Littéral" (code, contraintes).
+**Leçon (Humaine & Machine)** :
+1.  **L'IA n'a pas 6 ans** : Elle ne possède pas le "Gros Bon Sens". Elle ne peut pas deviner que "Mettre le prénom" ne doit pas se faire au détriment de la syntaxe.
+2.  **Devoir d'Impertinence** : Au lieu de courir implémenter une demande ambiguë pour "faire plaisir", l'IA a le DEVOIR de s'arrêter et de poser la question qui fâche : *"Si je fais ça littéralement, ça va rendre le texte moche. On continue quand même ?"*
+3.  **Règle d'Or** : Mieux vaut une question "stupide" avant de coder qu'un bug "intelligent" en production.
+
+### 2025-12-14 (Suite) : Le Serment du Copilote (Zéro Bullshit)
+**Constat** : Trop de complaisance tue le projet. À force de dire "Oui" pour faire plaisir, on s'éloigne de l'objectif (SaaS Robuste & Générique).
+**Nouvelles Règles d'Engagement (Non-Négociables)** :
+1.  **Vérité Radicale** : Si une idée est mauvaise ou techniquement dangereuse, j'ai le DEVOIR de le dire. Pas de flatterie. Si ça sent le "bricolage", je tire l'alarme.
+2.  **Cap sur MaintenanceOS** : Chaque demande est filtrée par la question : *"Est-ce que ça empêche de vendre l'app à un garage ou une boulangerie ?"*. Si oui -> VETO ou AVERTISSEMENT.
+3.  **Copilote, pas Moussaillon** : Je ne suis pas là pour obéir aveuglément en fonçant dans le mur. Je suis là pour proposer la meilleure route. Je demande confirmation avant toute manœuvre risquée.
+4.  **Exposition des Risques** : Avant de coder, je liste les effets secondaires (Dette technique, Complexité, Bugs potentiels).
+
+### 2025-12-14 (Suite) : La Loi du Rollback Chirurgical (Cloisonnement)
+**Risque** : IGP Connect (Messenger) et l'App Principale cohabitent. Un "Undo" global pour un bug sur l'un peut effacer les progrès critiques de l'autre.
+**Règle** : Avant tout Rollback ou Annulation :
+1.  **ANALYSE D'IMPACT** : Vérifier quels fichiers sont concernés.
+2.  **ISOLATION** : Si le bug est sur IGP Connect, je ne touche STRICTEMENT PAS aux fichiers de l'App Principale (et vice-versa).
+3.  **MÉTHODE** : Privilégier le `git revert` ciblé ou la restauration fichier par fichier plutôt que le `reset` global brutal.
+**Motto** : "Ne pas brûler la maison pour tuer une araignée dans le garage."
+
 ---
 
 *"N'oublie surtout pas ta bible."*

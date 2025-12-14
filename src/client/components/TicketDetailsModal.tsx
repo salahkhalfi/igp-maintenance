@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import { AIChatModal } from './AIChatModal';
 import { getTicketDetails, updateTicketStatus, assignTicket, uploadTicketMedia, getTechnicians } from '../services/ticketService';
 import { commentService } from '../services/commentService';
 import { Ticket, TicketStatus, TicketPriority, UserRole } from '../types';
@@ -35,6 +36,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Hooks pour audio/vocal
   const { isListening, startListening, stopListening, hasRecognition } = useSpeechRecognition({
@@ -177,6 +179,13 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                   <span className="flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> {ticket.machine_name}</span>
                 </div>
               </div>
+              <button 
+                onClick={() => setIsAIChatOpen(true)}
+                className="mr-2 flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+              >
+                <Bot className="w-5 h-5" />
+                <span className="text-sm font-bold hidden sm:inline">Demander conseil</span>
+              </button>
               <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                 <X className="w-6 h-6 text-gray-500" />
               </button>
@@ -412,6 +421,11 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
             </div>
           </>
         )}
+        <AIChatModal 
+          isOpen={isAIChatOpen} 
+          onClose={() => setIsAIChatOpen(false)} 
+          ticket={ticket} 
+        />
       </div>
     </div>
   );

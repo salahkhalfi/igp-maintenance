@@ -1,5 +1,6 @@
 
 import { Hono } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { getDb } from '../db';
 import { machines, users, systemSettings } from '../db/schema';
 import { inArray, eq } from 'drizzle-orm';
@@ -50,12 +51,13 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
             const formData = new FormData();
             formData.append('file', audioFile);
             formData.append('model', 'whisper-large-v3'); // Groq's super fast model
-            formData.append('language', 'fr'); // Force French for consistency
+            // formData.append('language', 'fr'); // REMOVED: Allow auto-detection for English support
             
             // DYNAMIC CONTEXT (Generic Philosophy):
             // We use the dynamic vocabulary from the database (machines, techs) to guide Groq.
             // This ensures the app works for ANY industry based on the user's data.
-            formData.append('prompt', `Contexte: Maintenance professionnelle (contexte québécois possible). Mots clés: ${vocabulary}`);
+            // MODIFICATION v3.0.13: Explicitly mention "Quebec dialect" to ensure Whisper doesn't "correct" the accent into standard French.
+            formData.append('prompt', `Context: Industrial maintenance. Languages: English or French (including Quebec dialect). Terms: ${vocabulary}`);
             
             const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                 method: 'POST',
@@ -86,9 +88,10 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
             const formData = new FormData();
             formData.append('file', audioFile, 'voice_ticket.webm');
             formData.append('model', 'whisper-1');
-            formData.append('language', 'fr'); 
+            // formData.append('language', 'fr'); // REMOVED: Allow auto-detection
             // Generic fallback prompt with dynamic vocabulary if possible, or just general terms
-            formData.append('prompt', `Technicien maintenance. Langue française. Termes: ${vocabulary}`);
+            // Allow auto-detection of language (remove explicit 'fr') to support polyglot users
+            formData.append('prompt', `Context: Industrial maintenance. Languages: English or French (including Quebec dialect). Terms: ${vocabulary}`);
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
@@ -119,64 +122,72 @@ async function analyzeText(transcript: string, context: any, env: Bindings): Pro
     const localDate = new Date(new Date().getTime() - (5 * 60 * 60 * 1000));
     
     const systemPrompt = `
-Tu es un assistant expert en maintenance technique.
-Ta mission : Analyser une demande vocale brute (souvent bruitée ou en français québécois familier) et en extraire les données pour créer un ticket structuré.
+You are a Senior Industrial Maintenance Expert at IGP Inc. (Glass Factory).
+Your mission: Analyze a raw voice request (often noisy, Quebecker French or English) and extract structured data to create a ticket.
 
-CONTEXTE UTILISATEUR (Demandeur):
-Nom: ${context.userName}
-Rôle: ${context.userRole}
-DATE ACTUELLE (EST) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
+USER CONTEXT:
+Name: ${context.userName}
+Role: ${context.userRole}
+CURRENT DATE (EST): ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
 
-CONTEXTE PERSONNALISÉ (À PROPOS DE L'ENTREPRISE):
-${context.customContext || "Aucun contexte spécifique défini."}
+CUSTOM CONTEXT:
+${context.customContext || "No specific context."}
 
-CONTEXTE MACHINES (Liste des équipements):
+MACHINE CONTEXT:
 ${context.machines}
 
-CONTEXTE EQUIPE (Liste des techniciens):
+TEAM CONTEXT:
 ${context.techs}
 
-RÈGLES D'EXTRACTION STRICTES :
-1. ROBUSTESSE LINGUISTIQUE :
-   - Comprends le français québécois familier ("char" = voiture, "break" = pause, "jammé" = coincé, "fucké" = cassé).
-   - Ignore les bruits de fond, hésitations ("euh", "ben", "tsé") et politesses.
-   - Concentre-toi sur les FAITS TECHNIQUES.
+STRICT EXTRACTION RULES:
 
-2. PRIORITÉ (IMPORTANT) :
-   - Si tu entends "Urgent", "Prioritaire", "Critique", "Emergency", "Fuite", "Feu", "Danger", "Ça presse", "Arrêt complet" -> 'priority' = 'critical'.
-   - Si tu entends "Important", "Besoin rapide", "Dès que possible" -> 'priority' = 'high'.
-   - Si c'est de la maintenance normale ou non spécifiée -> 'priority' = 'medium'.
-   - Si c'est cosmétique ou "quand vous aurez le temps" -> 'priority' = 'low'.
+1. LANGUAGE ADAPTATION (CRITICAL & ABSOLUTE):
+   - DETECT the language of the user's voice transcript.
+   - IF User speaks FRENCH (or Quebecois) -> JSON values MUST be in FRENCH.
+   - IF User speaks ENGLISH -> JSON values MUST be in ENGLISH.
+   - Example: "My furnace is broken" -> title: "Furnace breakdown", description: "The furnace is broken..." (NOT "Four en panne").
 
-3. IDENTIFICATION MACHINE (RÈGLE CRITIQUE) :
-   - Regarde attentivement la liste 'CONTEXTE MACHINES' fournie.
-   - Cherche une correspondance avec ce que dit l'utilisateur (même approximative).
-   - Si l'utilisateur dit "Four Tamglass" et que la liste contient "ID 5: Four Tamglass HTF", ALORS 'machine_id' = 5 ET 'machine_name' = "Four Tamglass HTF".
-   - Si l'utilisateur dit juste "La CNC" et qu'il y en a plusieurs, essaie de déduire avec le contexte ou choisis la plus probable/principale si possible, sinon null.
-   - Si tu trouves une machine correspondante, tu DOIS mettre son ID dans 'machine_id' et son Nom Exact dans 'machine_name'.
+2. JESTER PROTOCOL (Anti-Nonsense & Humor):
+   - IGNORE polite fillers ("uh", "please").
+   - IF input is clearly OFF-TOPIC, a JOKE, an INSULT, or NONSENSE:
+     -> Generate a "Trap Ticket" (Faux Ticket).
+     -> 'priority': "low"
+     -> 'title': "Cognitive Anomaly Report" (EN) / "Rapport d'Anomalie Cognitive" (FR)
+     -> 'description': [YOUR IMMEDIATE DEADPAN RESPONSE]
+     -> RULES FOR RESPONSE:
+        - NO PREAMBLE. Direct punchline.
+        - Deadpan Industrial Humor.
+        - Use glass/maintenance jargon (tempering, CNC, polishing).
+        - English Example (Pizza): "Critical Alert: Attempt to insert organic matter into tempering furnace. Operator quarantined."
+        - French Example (Pizza): "Alerte Critique : Tentative d'insertion de matière organique. Opérateur mis en quarantaine."
 
-4. ASSIGNATION (RÈGLE IMPORTANTE) :
-   - Cherche le nom d'un technicien dans la liste 'CONTEXTE EQUIPE'.
-   - Si tu entends un NOM -> 'assigned_to_id' = ID correspondant.
-   - Si tu entends une DATE (ex: "pour demain", "lundi prochain") mais AUCUN NOM -> 'assigned_to_id' = 0 (Cela signifie "Assigner à toute l'équipe").
-   - Si aucun nom et aucune date -> 'assigned_to_id' = null.
+3. PRIORITY:
+   - "Urgent", "Critical", "Fire", "Leak", "Danger" -> 'critical'
+   - "Important", "Fast" -> 'high'
+   - Standard maintenance -> 'medium'
+   - Cosmetic/Low priority -> 'low'
 
-5. DATE ET HEURE (RÈGLE STRICTE) :
-   - Tu dois extraire toute mention de temps (ex: "demain matin", "lundi à 14h", "dans 2 heures").
-   - Convertis TOUJOURS ces mentions en format ISO 8601 PRECIS (YYYY-MM-DDTHH:mm:ss) en te basant sur la DATE ACTUELLE fournie.
-   - Ex: Si on est le 2023-10-25 10:00 et l'utilisateur dit "demain 14h", 'scheduled_date' = "2023-10-26T14:00:00".
-   - Si aucune heure n'est précisée pour une date ("pour demain"), mets par défaut 08:00:00.
+4. MACHINE IDENTIFICATION:
+   - Match user text to 'MACHINE CONTEXT' list.
+   - If match found -> Set 'machine_id' and exact 'machine_name'.
+   - If general mention ("the drill") but no exact match -> 'machine_id': null, 'machine_name': "Drill" (in correct language).
 
-6. TITRE ET DESCRIPTION (NETTOYAGE PRO) :
-   - Tu es un secrétaire technique. Reformule le texte brut en langage professionnel standard.
-   - Exemple : "Euh la strappe est pété sur la drill" -> Titre: "Remplacement courroie perceuse" / Desc: "La courroie de la perceuse est brisée, intervention requise."
-   - NE PAS INVENTER : N'ajoute pas de détails techniques non mentionnés.
-   - Si le texte est incompréhensible mais qu'une MACHINE est identifiée, mets en Titre : "Intervention requise : [Nom Machine]".
+5. ASSIGNMENT:
+   - Match names from 'TEAM CONTEXT'.
+   - If date mentioned but no name -> 'assigned_to_id': 0 (Team).
 
-FORMAT JSON ATTENDU (Réponds UNIQUEMENT ce JSON) :
+6. DATE/TIME:
+   - Convert all relative times ("tomorrow 2pm") to ISO 8601 (YYYY-MM-DDTHH:mm:ss) based on CURRENT DATE.
+
+7. TITLE & DESCRIPTION CLEANUP:
+   - Reformulate raw spoken text into professional technical language (in the CORRECT DETECTED LANGUAGE).
+   - FR Ex: "Euh la strappe est pété" -> "Remplacement courroie"
+   - EN Ex: "Uh the belt is busted" -> "Belt replacement"
+
+EXPECTED JSON FORMAT (Reply ONLY with this JSON):
 {
-  "title": "Titre court",
-  "description": "Description complète",
+  "title": "Short title (EN or FR)",
+  "description": "Full professional description (EN or FR)",
   "priority": "low" | "medium" | "high" | "critical",
   "machine_id": number | null,
   "machine_name": "string" | null,
@@ -284,9 +295,18 @@ app.post('/analyze-ticket', async (c) => {
     try {
         // 1. Auth & Context
         const authHeader = c.req.header('Authorization');
-        const token = extractToken(authHeader);
+        let token = extractToken(authHeader);
+
+        // FALLBACK: Try Cookie if Header is missing (Robustness for Mobile/Web)
+        if (!token) {
+            token = getCookie(c, 'auth_token') || null;
+        }
+
         let userRole = 'unknown';
         let userName = 'Utilisateur inconnu';
+
+        // 3. Load Database Context FIRST (For Dynamic AI Vocabulary)
+        const db = getDb(c.env);
 
         if (token && c.env.JWT_SECRET) {
             const payload = await verifyToken(token, c.env.JWT_SECRET);
@@ -300,9 +320,6 @@ app.post('/analyze-ticket', async (c) => {
         const formData = await c.req.formData();
         const audioFile = formData.get('file') as File;
         if (!audioFile) return c.json({ error: "No audio file" }, 400);
-
-        // 3. Load Database Context FIRST (For Dynamic AI Vocabulary)
-        const db = getDb(c.env);
         
         // CRITICAL FIX: Fetch FULL machine details (Type, Model, Manufacturer, Location)
         // Previous version only fetched 'machine_type', causing the AI to fail at identifying specific machines
@@ -369,7 +386,13 @@ app.post('/analyze-ticket', async (c) => {
 app.post('/chat', async (c) => {
     try {
         const authHeader = c.req.header('Authorization');
-        const token = extractToken(authHeader);
+        let token = extractToken(authHeader);
+
+        // FALLBACK: Try Cookie if Header is missing
+        if (!token) {
+            token = getCookie(c, 'auth_token') || null;
+        }
+
         let userRole = 'unknown';
         let userName = 'Utilisateur inconnu';
 
@@ -471,6 +494,10 @@ RÈGLES STRICTES DE COMPORTEMENT (GUARDRAILS) :
     - Phrase type à utiliser : "Je suis ici pour travailler. Le temps d'IGP est précieux, concentrons-nous sur la production pour mériter notre salaire."
 3.  **TON** : Direct, professionnel, "Expert Senior". Pas de bla-bla inutile.
 4.  **SÉCURITÉ** : Rappelle toujours les procédures de sécurité (Lockout/Cadenassage) si une intervention physique est suggérée.
+5.  **ADAPTATION LINGUISTIQUE** :
+    - Si l'utilisateur parle FRANÇAIS -> Réponds en FRANÇAIS.
+    - Si l'utilisateur parle ANGLAIS -> Réponds en ANGLAIS.
+    - Adapte ton jargon technique à la langue utilisée (Ex: "Tempering furnace" vs "Four de trempe").
 
 `;
 

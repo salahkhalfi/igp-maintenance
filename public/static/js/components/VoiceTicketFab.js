@@ -66,8 +66,8 @@ const VoiceTicketFab = ({ onTicketDetected }) => {
     },
         // Status Bubble
         (isRecording || isAnalyzing) ? React.createElement('div', {
-            className: 'bg-white px-4 py-2 rounded-lg shadow-lg mb-2 text-sm font-bold animate-fadeIn border border-gray-200'
-        }, isRecording ? "🔴 Enregistrement..." : "🤖 Analyse IA...") : null,
+            className: 'fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold animate-fadeIn border border-gray-200 z-[2001]'
+        }, isRecording ? "🔴 Enregistrement..." : "🤖 Analyse...") : null,
 
         // FAB Button
         React.createElement('button', {

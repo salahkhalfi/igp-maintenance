@@ -43,10 +43,11 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
   // Reset form when modal opens with new initial data
   useEffect(() => {
     if (isOpen) {
-        if (initialTitle) setTitle(initialTitle);
-        if (initialDescription) setDescription(initialDescription);
-        if (initialPriority) setPriority(initialPriority.toLowerCase() as TicketPriority);
-        if (initialMachineId) setMachineId(initialMachineId);
+        // ALWAYS SYNC STATE with props (handling empty values for resets)
+        setTitle(initialTitle || '');
+        setDescription(initialDescription || '');
+        setPriority((initialPriority?.toLowerCase() as TicketPriority) || 'medium');
+        setMachineId(initialMachineId || '');
         
         // Handle Scheduled Date (Robust parsing)
         if (initialScheduledDate) {
@@ -66,7 +67,10 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                 }
             } catch (e) {
                 console.warn("Invalid date format", initialScheduledDate);
+                setScheduledDate('');
             }
+        } else {
+            setScheduledDate('');
         }
     }
   }, [isOpen, initialTitle, initialDescription, initialPriority, initialMachineId, initialScheduledDate]);

@@ -1,4 +1,4 @@
-const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl }) => {
+const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
     // États globaux de l'interface
     const [selectedTicketId, setSelectedTicketId] = React.useState(null);
     const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -94,12 +94,19 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }
     };
 
-    const [initialTitle, setInitialTitle] = React.useState('');
-    const [initialPriority, setInitialPriority] = React.useState('medium');
-    const [initialMachineId, setInitialMachineId] = React.useState('');
-    const [initialAssignedToId, setInitialAssignedToId] = React.useState(null);
+    const [initialTitle, setInitialTitle] = React.useState(propTitle || '');
+    const [initialPriority, setInitialPriority] = React.useState(propPriority || 'medium');
+    const [initialMachineId, setInitialMachineId] = React.useState(propMachineId || '');
+    const [initialAssignedToId, setInitialAssignedToId] = React.useState(propAssignedToId || null);
     const [initialAssignedToName, setInitialAssignedToName] = React.useState('');
-    const [initialScheduledDate, setInitialScheduledDate] = React.useState('');
+    const [initialScheduledDate, setInitialScheduledDate] = React.useState(propScheduledDate || '');
+
+    // Sync Props to State (Deep Link Support)
+    React.useEffect(() => { if (propTitle) setInitialTitle(propTitle); }, [propTitle]);
+    React.useEffect(() => { if (propPriority) setInitialPriority(propPriority); }, [propPriority]);
+    React.useEffect(() => { if (propMachineId) setInitialMachineId(propMachineId); }, [propMachineId]);
+    React.useEffect(() => { if (propAssignedToId) setInitialAssignedToId(propAssignedToId); }, [propAssignedToId]);
+    React.useEffect(() => { if (propScheduledDate) setInitialScheduledDate(propScheduledDate); }, [propScheduledDate]);
 
     // Use local description to allow override from AI
     const [localDescription, setLocalDescription] = React.useState(initialDescription || '');

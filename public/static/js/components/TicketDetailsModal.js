@@ -241,8 +241,17 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     React.createElement('h3', { className: 'text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3' }, ticket.title),
                     
                     React.createElement('div', { className: 'flex justify-between items-start mb-4 bg-white p-3 sm:p-4 rounded-lg border border-gray-100' },
-                        React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 leading-relaxed flex-1 mr-4' }, ticket.description)
-                        /* REMOVED AI BUTTON */
+                        React.createElement('p', { className: 'text-sm sm:text-base text-gray-700 leading-relaxed flex-1 mr-4' }, ticket.description),
+                        /* AI BUTTON RESTORED */
+                    React.createElement('div', { className: 'mt-3 flex justify-end' },
+                        React.createElement('button', {
+                            onClick: () => setIsAIChatOpen(true),
+                            className: 'flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow-md transition-all transform hover:scale-105 font-bold text-sm'
+                        },
+                            React.createElement('i', { className: 'fas fa-robot mr-1' }),
+                            'Demander conseil'
+                        )
+                    ),
                     ),
                     
                     // MAGIC BRIDGE: Bouton Discussion
