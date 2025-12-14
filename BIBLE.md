@@ -92,6 +92,7 @@
 1.  **PREVIEW FIRST**: Deploy to branch before `main`.
 2.  **PROD = CONFIRMATION**: Explicit "GO" required for Production deploy.
 3.  **URL CHECK**: Verify `src/` vs `build/` entry points. Never assume code maps 1:1 without checking config.
+4.  **INTEGRITY CHECK**: Verify code integrity (compilation, build, lint) BEFORE touching production. No "Quick Fixes".
 
 ### [FINANCIAL HYGIENE]
 *   **QUOTAS**: Monitor R2 (<10GB) and D1 (<500MB).

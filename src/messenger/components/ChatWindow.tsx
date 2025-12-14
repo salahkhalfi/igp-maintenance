@@ -1,0 +1,589 @@
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { Message, Participant, Conversation, User } from '../types';
+import { SoundManager } from '../sound';
+import ImageViewer from './ImageViewer';
+import GroupInfo from './GroupInfo';
+import AnnotationEditor from '../AnnotationEditor';
+
+import ChatHeader from './ChatHeader';
+import MessageList from './MessageList';
+import MessageInput from './MessageInput';
+
+const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo, initialMessage, onMessageConsumed }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void, initialMessage?: string, onMessageConsumed?: () => void }) => {
+    // --- STATE ---
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [conversation, setConversation] = useState<Conversation | null>(null);
+    const [messengerName, setMessengerName] = useState('Connect');
+    
+    const [input, setInput] = useState(initialMessage || '');
+    const [editingTranscriptionId, setEditingTranscriptionId] = useState<string | null>(null);
+    const [editingTranscriptionText, setEditingTranscriptionText] = useState('');
+
+    const [previewFile, setPreviewFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
+    const [triggerAddMember, setTriggerAddMember] = useState(false);
+    const [viewImage, setViewImage] = useState<{ src: string; msgId: string; canDelete: boolean; mediaKey: string; createdAt: string } | null>(null);
+    const [loadingMessages, setLoadingMessages] = useState(true);
+    
+    // Search In-Chat Logic
+    const [searchMode, setSearchMode] = useState(false);
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
+
+    const [isSending, setIsSending] = useState(false);
+
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const initialFetchDone = useRef(false);
+
+    // --- EFFECTS ---
+    useEffect(() => {
+        axios.get('/api/settings/messenger_app_name').then(res => {
+            if(res.data?.setting_value) setMessengerName(res.data.setting_value);
+        }).catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        if (searchMode && allUsers.length === 0) {
+            axios.get('/api/v2/chat/users').then(res => setAllUsers(res.data.users || [])).catch(console.error);
+        }
+    }, [searchMode]);
+
+    useEffect(() => {
+        if (initialMessage && initialMessage !== input) {
+            setInput(initialMessage);
+            if (onMessageConsumed) onMessageConsumed();
+        }
+    }, [initialMessage]);
+
+    useEffect(() => {
+        setLoadingMessages(true);
+        setMessages([]);
+        setParticipants([]);
+        setShowInfo(false);
+        initialFetchDone.current = false;
+
+        // --- EXPERT AI LOGIC ---
+        if (conversationId === 'expert_ai') {
+            const history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
+            setMessages(history);
+            setParticipants([
+                { user_id: 0, full_name: 'Expert IGP (IA)', role: 'ai', last_read_at: new Date().toISOString() },
+                { user_id: currentUserId || 999, full_name: 'Moi', role: currentUserRole, last_read_at: new Date().toISOString() }
+            ]);
+            setConversation({
+                id: 'expert_ai',
+                type: 'direct',
+                name: 'Expert IGP (IA)',
+                avatar_key: 'ai_avatar',
+                last_message: history.length > 0 ? history[history.length - 1].content : 'Bonjour',
+                last_message_time: new Date().toISOString(),
+                unread_count: 0,
+                participant_count: 2,
+                online_count: 1
+            });
+            setLoadingMessages(false);
+            initialFetchDone.current = true;
+            return; // No interval for AI
+        }
+
+        fetchMessages();
+        markAsRead();
+        const interval = setInterval(fetchMessages, 3000);
+        return () => clearInterval(interval);
+    }, [conversationId]);
+
+    useEffect(() => {
+        if (initialShowInfo) {
+            setShowInfo(true);
+            onConsumeInfo();
+        }
+    }, [initialShowInfo, onConsumeInfo]);
+
+    // --- FUNCTIONS ---
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    };
+
+    const markAsRead = async () => {
+        try { await axios.post(`/api/v2/chat/conversations/${conversationId}/read`); } catch (e) { console.error(e); }
+    };
+
+    const fetchMessages = async () => {
+        try {
+            const res = await axios.get(`/api/v2/chat/conversations/${conversationId}/messages`);
+            const newMessages = res.data.messages || [];
+            
+            setParticipants(prev => {
+                const newParticipants = res.data.participants || [];
+                return JSON.stringify(prev) !== JSON.stringify(newParticipants) ? newParticipants : prev;
+            });
+
+            setConversation(prev => {
+                const newConv = res.data.conversation || null;
+                return JSON.stringify(prev) !== JSON.stringify(newConv) ? newConv : prev;
+            });
+
+            const isFirstLoad = !initialFetchDone.current;
+
+            setMessages(prev => {
+                if (JSON.stringify(prev) !== JSON.stringify(newMessages)) {
+                    if (prev.length !== newMessages.length) {
+                        if (!isFirstLoad && newMessages.length > prev.length) {
+                            const lastMsg = newMessages[newMessages.length - 1];
+                            if (lastMsg.sender_id !== currentUserId) {
+                                SoundManager.play().catch(e => console.error("Sound error:", e));
+                            }
+                        }
+                        setTimeout(scrollToBottom, 100);
+                        markAsRead();
+                    }
+                    return newMessages;
+                }
+                return prev;
+            });
+            
+            if (isFirstLoad) initialFetchDone.current = true;
+        } catch (err) { console.error(err); }
+        finally { setLoadingMessages(false); }
+    };
+
+    const handlePrivateChat = async (targetUserId: number) => {
+        if (!targetUserId || targetUserId === currentUserId) return;
+        
+        if (conversation?.type === 'direct' && participants.some(p => p.user_id === targetUserId)) {
+            textareaRef.current?.focus();
+            return;
+        }
+
+        try {
+            const res = await axios.post('/api/v2/chat/conversations', {
+                type: 'direct',
+                participantIds: [targetUserId]
+            });
+            if (res.data.conversationId) {
+                onNavigate(res.data.conversationId);
+                setShowInfo(false);
+            }
+        } catch (err: any) {
+            console.error(err);
+            const errorMsg = err.response?.data?.error || "Impossible d'ouvrir la discussion privée";
+            alert(`Erreur: ${errorMsg}`);
+        }
+    };
+
+    const handleAudioCall = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm("Envoyer une SONNERIE d'appel à ce groupe/utilisateur ?\n\nCela enverra une notification push immédiate.")) return;
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            await fetch('/api/v2/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    conversationId,
+                    content: `📞 SONNERIE: Je tente de vous joindre sur ${messengerName} ! (Ouvrez le chat)`,
+                    type: 'text',
+                    isCall: true 
+                })
+            });
+            alert("📳 Sonnerie envoyée avec succès !");
+            fetchMessages(); 
+        } catch (err) {
+            alert("Erreur lors de l'envoi de la sonnerie");
+        }
+    };
+
+    const handleUpdateCardStatus = async (messageId: string, newStatus: 'open' | 'in_progress' | 'resolved') => {
+        setMessages(prev => prev.map(m => {
+            if (m.id === messageId && m.action_card) {
+                return { ...m, action_card: { ...m.action_card, status: newStatus } };
+            }
+            return m;
+        }));
+
+        try {
+            const token = localStorage.getItem('auth_token');
+            await fetch(`/api/v2/chat/conversations/${conversationId}/messages/${messageId}/card/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status: newStatus })
+            });
+        } catch (e) {
+            console.error("Failed to update status", e);
+        }
+    };
+
+    const handleCreateActionCard = async (messageId: string) => {
+        if (!confirm("Transformer ce message en carte d'action (Ticket) ?")) return;
+        
+        try {
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch(`/api/v2/chat/conversations/${conversationId}/messages/${messageId}/card`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ priority: 'normal' })
+            });
+            
+            if (res.ok) {
+                fetchMessages(); 
+            } else {
+                const data = await res.json();
+                alert(data.error || "Impossible de créer la carte");
+            }
+        } catch (e) {
+            console.error("Failed to create card", e);
+            alert("Erreur réseau");
+        }
+    };
+
+    const handleDeleteMessage = async (msgId: string) => {
+        if(!confirm("Supprimer ce message définitivement ?")) return;
+        try {
+            await axios.delete(`/api/v2/chat/conversations/${conversationId}/messages/${msgId}`);
+            fetchMessages();
+        } catch(e) { alert("Erreur suppression"); }
+    };
+
+    const handleSaveTranscription = async (messageId: string, newText: string) => {
+        try {
+            await axios.put(`/api/v2/chat/conversations/${conversationId}/messages/${messageId}/transcription`, {
+                transcription: newText
+            });
+            
+            setMessages(prev => prev.map(msg => 
+                msg.id === messageId ? { ...msg, transcription: newText } : msg
+            ));
+            
+            setEditingTranscriptionId(null);
+            setEditingTranscriptionText('');
+        } catch (e) {
+            console.error("Failed to save transcription", e);
+            alert("Erreur lors de la sauvegarde de la transcription");
+        }
+    };
+
+    const handleDownload = async (mediaKey: string, type: 'image' | 'audio') => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`/api/v2/chat/asset?key=${encodeURIComponent(mediaKey)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error("Erreur réseau");
+            
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const ext = type === 'image' ? 'jpg' : 'webm';
+            a.download = `igp-${type}-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            alert("Impossible de télécharger le fichier.");
+            console.error(e);
+        }
+    };
+
+    const handleAnnotateExisting = async (src: string) => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(src, {
+                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            const blob = await response.blob();
+            const file = new File([blob], "annotation_edit.jpg", { type: blob.type });
+            
+            setViewImage(null); 
+            setPreviewFile(file); 
+        } catch (e) {
+            alert("Impossible de charger l'image pour l'édition");
+        }
+    };
+
+    // --- MAGIC TICKET HANDLER ---
+    const handleTicketDetected = (data: any) => {
+        if (data) {
+            const params = new URLSearchParams();
+            params.set('createTicket', 'true');
+            if (data.title) params.set('title', data.title);
+            if (data.description) params.set('description', data.description);
+            if (data.priority) params.set('priority', data.priority.toLowerCase());
+            if (data.machine_id) params.set('machineId', String(data.machine_id));
+            if (data.machine_name) params.set('machineName', data.machine_name);
+            if (data.assigned_to_id) params.set('assignedToId', String(data.assigned_to_id));
+            if (data.assigned_to_name) params.set('assignedToName', data.assigned_to_name);
+            if (data.scheduled_date) params.set('scheduledDate', data.scheduled_date);
+            
+            const token = localStorage.getItem('auth_token');
+            if (token) params.set('token', token);
+            
+            const targetUrl = '/?' + params.toString();
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            if (isPWA || isMobile) {
+                window.location.href = targetUrl;
+            } else {
+                window.open(targetUrl, '_blank');
+            }
+        }
+    };
+
+    // --- SENDING LOGIC ---
+    const sendMessage = async () => {
+        if (!input.trim()) return;
+
+        // --- EXPERT AI INTERCEPT ---
+        if (conversationId === 'expert_ai') {
+            const userMsg: Message = {
+                id: Date.now().toString(),
+                sender_id: currentUserId || 999,
+                sender_name: 'Moi',
+                content: input,
+                created_at: new Date().toISOString(),
+                type: 'text'
+            };
+            
+            // Optimistic UI
+            const newHistory = [...messages, userMsg];
+            setMessages(newHistory);
+            localStorage.setItem('ai_chat_history', JSON.stringify(newHistory));
+            setInput('');
+            setIsSending(true);
+
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                // Call AI API with Authorization header
+                const res = await axios.post('/api/ai/chat', { 
+                    message: userMsg.content, 
+                    history: newHistory.map(m => ({ 
+                        role: m.sender_name === 'Expert IGP' ? 'assistant' : 'user', 
+                        content: m.content 
+                    }))
+                }, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const aiMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    sender_id: 0, // AI ID
+                    sender_name: 'Expert IGP',
+                    sender_avatar_key: 'ai_avatar',
+                    content: res.data.reply,
+                    created_at: new Date().toISOString(),
+                    type: 'text'
+                };
+                
+                const finalHistory = [...newHistory, aiMsg];
+                setMessages(finalHistory);
+                localStorage.setItem('ai_chat_history', JSON.stringify(finalHistory));
+                
+            } catch (e) {
+                alert("Erreur AI: Impossible de joindre l'expert.");
+            } finally {
+                setIsSending(false);
+            }
+            return;
+        }
+
+        if (!navigator.onLine) {
+            alert("⚠️ Vous êtes hors ligne. Impossible d'envoyer le message.");
+            return;
+        }
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        
+        setIsSending(true);
+        try {
+            const response = await fetch('/api/v2/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ conversationId, content: input, type: 'text' })
+            });
+            
+            if (response.ok) { 
+                setInput(''); 
+                fetchMessages();
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || "Erreur serveur");
+            }
+        } catch (err: any) { 
+            console.error(err);
+            alert(`❌ Erreur d'envoi: ${err.message || "Problème de connexion"}`);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const sendAudio = async (file: File, transcription?: string) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const uploadRes = await fetch('/api/v2/chat/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadData.error);
+            
+            const finalTranscription = transcription ? "🎤 " + transcription : null;
+
+            await fetch('/api/v2/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ 
+                    conversationId, 
+                    content: '🎤 Message vocal', 
+                    type: 'audio', 
+                    mediaKey: uploadData.key,
+                    transcription: finalTranscription
+                })
+            });
+            fetchMessages();
+        } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
+    };
+
+    const handleNewEditorSend = async (file: File, caption: string) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const uploadRes = await fetch('/api/v2/chat/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadData.error);
+            
+            const msgContent = caption && caption.trim().length > 0 ? caption : '📷 Photo annotée';
+            
+            await fetch('/api/v2/chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ conversationId, content: msgContent, type: 'image', mediaKey: uploadData.key })
+            });
+            setPreviewFile(null);
+            fetchMessages();
+        } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
+    };
+
+    return (
+        <div className="flex-1 flex flex-col bg-[#050505] relative h-full overflow-hidden">
+            <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+                <div className="absolute top-[10%] left-[20%] w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute bottom-[10%] right-[20%] w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px]"></div>
+            </div>
+            <div className="bg-noise absolute inset-0 opacity-[0.03] pointer-events-none z-0"></div>
+
+            {viewImage && (
+                <ImageViewer 
+                    src={viewImage.src} 
+                    createdAt={viewImage.createdAt}
+                    onClose={() => setViewImage(null)} 
+                    canDelete={viewImage.canDelete}
+                    onDelete={() => {
+                        handleDeleteMessage(viewImage.msgId);
+                        setViewImage(null);
+                    }}
+                    onDownload={() => handleDownload(viewImage.mediaKey, 'image')}
+                    onAnnotate={() => handleAnnotateExisting(viewImage.src)}
+                />
+            )}
+            
+            {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
+            
+            {previewFile && (
+                <AnnotationEditor 
+                    file={previewFile} 
+                    onClose={() => {
+                        if (confirm("Quitter sans envoyer ?")) {
+                            setPreviewFile(null);
+                        }
+                    }}
+                    onSend={handleNewEditorSend}
+                />
+            )}
+
+            <ChatHeader 
+                searchMode={searchMode}
+                setSearchMode={setSearchMode}
+                searchKeyword={searchKeyword}
+                setSearchKeyword={setSearchKeyword}
+                isSearchFocused={isSearchFocused}
+                setIsSearchFocused={setIsSearchFocused}
+                allUsers={allUsers}
+                setAllUsers={setAllUsers}
+                currentUserId={currentUserId}
+                handlePrivateChat={handlePrivateChat}
+                onBack={onBack}
+                setShowInfo={setShowInfo}
+                handleAudioCall={handleAudioCall}
+                messengerName={messengerName}
+                participants={participants}
+            />
+
+            <MessageList 
+                messages={messages}
+                participants={participants}
+                currentUserId={currentUserId}
+                currentUserRole={currentUserRole}
+                conversationType={conversation?.type || 'direct'}
+                loadingMessages={loadingMessages}
+                searchMode={searchMode}
+                searchKeyword={searchKeyword}
+                onPrivateChat={handlePrivateChat}
+                onUpdateCardStatus={handleUpdateCardStatus}
+                onCreateActionCard={handleCreateActionCard}
+                onDeleteMessage={handleDeleteMessage}
+                onSaveTranscription={handleSaveTranscription}
+                onDownload={handleDownload}
+                setViewImage={setViewImage}
+                setTriggerAddMember={setTriggerAddMember}
+                setShowInfo={setShowInfo}
+                editingTranscriptionId={editingTranscriptionId}
+                setEditingTranscriptionId={setEditingTranscriptionId}
+                editingTranscriptionText={editingTranscriptionText}
+                setEditingTranscriptionText={setEditingTranscriptionText}
+                messagesContainerRef={messagesContainerRef}
+                messagesEndRef={messagesEndRef}
+            />
+
+            <MessageInput 
+                input={input}
+                setInput={setInput}
+                onSendText={sendMessage}
+                onSendAudio={sendAudio}
+                onFileSelect={setPreviewFile}
+                isSending={isSending}
+                onTicketDetected={handleTicketDetected}
+                textareaRef={textareaRef}
+            />
+        </div>
+    );
+};
+
+export default ChatWindow;

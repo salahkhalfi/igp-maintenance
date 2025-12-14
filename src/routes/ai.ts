@@ -2,8 +2,8 @@
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { getDb } from '../db';
-import { machines, users, systemSettings } from '../db/schema';
-import { inArray, eq } from 'drizzle-orm';
+import { machines, users, systemSettings, tickets } from '../db/schema';
+import { inArray, eq, and, ne, lt, desc, or } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 import { z } from 'zod';
@@ -397,11 +397,14 @@ app.post('/chat', async (c) => {
         let userRole = 'unknown';
         let userName = 'Utilisateur inconnu';
 
+        let userId: number | null = null;
+
         if (token && c.env.JWT_SECRET) {
             const payload = await verifyToken(token, c.env.JWT_SECRET);
             if (payload) {
                 userRole = payload.role;
                 userName = payload.full_name || payload.email;
+                userId = payload.userId;
             }
         }
 
@@ -410,6 +413,61 @@ app.post('/chat', async (c) => {
 
         // Load Custom AI Context
         const db = getDb(c.env);
+        
+        // --- CONTEXTUAL INTELLIGENCE: FETCH TECHNICIAN DOSSIER ---
+        let technicianContext = "";
+        if (userId) {
+            try {
+                // 1. Get Open Tickets (Assigned to user)
+                const openTickets = await db.select({
+                    id: tickets.ticket_id,
+                    title: tickets.title,
+                    status: tickets.status,
+                    priority: tickets.priority
+                }).from(tickets)
+                .where(and(
+                    eq(tickets.assigned_to, userId),
+                    ne(tickets.status, 'resolved'),
+                    ne(tickets.status, 'closed')
+                ))
+                .limit(3);
+
+                // 2. Get Overdue Tickets (Assigned to user)
+                // Note: String date comparison YYYY-MM-DD
+                const today = new Date().toISOString().split('T')[0];
+                const overdueTickets = await db.select({
+                    id: tickets.ticket_id,
+                    title: tickets.title,
+                    date: tickets.scheduled_date
+                }).from(tickets)
+                .where(and(
+                    eq(tickets.assigned_to, userId),
+                    ne(tickets.status, 'resolved'),
+                    ne(tickets.status, 'closed'),
+                    lt(tickets.scheduled_date, today)
+                ))
+                .limit(2);
+
+                if (openTickets.length > 0 || overdueTickets.length > 0) {
+                    technicianContext = `
+DOSSIER CONFIDENTIEL DE L'INTERLOCUTEUR (${userName}) :
+[TICKETS EN COURS] :
+${openTickets.map(t => `- Ticket #${t.id}: "${t.title}" (Priorité: ${t.priority})`).join('\n')}
+
+[TICKETS EN RETARD (URGENT)] :
+${overdueTickets.length > 0 ? overdueTickets.map(t => `- ⚠️ #${t.id}: "${t.title}" (Prévu le: ${t.date})`).join('\n') : "Aucun retard."}
+
+INSTRUCTION SECRÈTE :
+Utilise ces infos pour personnaliser ta réponse. Si un ticket est en retard ou critique, demande subtilement s'il a besoin d'aide pour avancer dessus ("Au fait, comment ça avance pour le ticket #${overdueTickets[0]?.id || openTickets[0]?.id} ?"). Montre que tu suis le dossier.
+`;
+                }
+
+            } catch (err) {
+                console.warn("⚠️ [AI] Failed to fetch technician context:", err);
+                // Fail silently, do not break the chat
+            }
+        }
+
         const customContextSetting = await db.select({
             value: systemSettings.setting_value
         }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
@@ -438,27 +496,75 @@ CONTEXTE MACHINE SPÉCIFIQUE (Machine liée au ticket) :
                  }
             } 
             
-            if (!machineDetails) {
-                const allMachines = await db.select({
-                    id: machines.id,
-                    type: machines.machine_type,
-                    model: machines.model,
-                    location: machines.location
-                }).from(machines).all();
+            // --- GESTION INTELLIGENTE DES ACCÈS (RBAC) ---
+            // "Le Gros Bon Sens" : On ne montre pas tout à tout le monde.
+            
+            const isAdmin = ['admin', 'supervisor', 'super_admin'].includes(userRole);
+            const isTech = ['technician', 'senior_technician', 'team_leader', 'maintenance'].includes(userRole);
+            const isOperator = !isAdmin && !isTech; // Opérateurs, Invités, Stagiaires
 
-                if (allMachines.length > 0) {
-                    const limitedMachines = allMachines.slice(0, 30); 
-                    const listStr = limitedMachines.map(m => 
-                        `- [ID ${m.id}] ${m.type} ${m.model || ''} (${m.location || '?'})`
-                    ).join('\n');
-                    
-                    machineDetails = `
-LISTE DES MACHINES DISPONIBLES (Vue d'ensemble) :
-${listStr}
-${allMachines.length > 30 ? `... (+ ${allMachines.length - 30} autres machines)` : ''}
+            // 1. RÉCUPÉRATION DES DONNÉES (Query)
+            // On récupère toujours les machines et tickets critiques pour la sécurité
+            const allMachines = await db.select({ 
+                id: machines.id, 
+                type: machines.machine_type, 
+                model: machines.model, 
+                status: machines.status 
+            }).from(machines).all();
+            
+            const criticalTickets = await db.select({
+                id: tickets.ticket_id,
+                title: tickets.title,
+                status: tickets.status,
+                priority: tickets.priority
+            }).from(tickets).where(and(eq(tickets.priority, 'critical'), ne(tickets.status, 'resolved'))).limit(5);
+
+            // 2. FILTRAGE DE L'INFORMATION (View Layer)
+            let factoryOverview = "";
+
+            if (isAdmin || isTech) {
+                // --- VUE "CONTRÔLE & MAINTENANCE" (Admins & Techniciens) ---
+                // LIMITATION DE LA LISTE POUR ÉVITER LE TIMEOUT (Optimisation v2)
+                // 50 -> 30 pour réduire la charge du prompt
+                
+                const allTechs = await db.select({ id: users.id, name: users.full_name, role: users.role })
+                    .from(users)
+                    .limit(30) // Réduit de 50 à 30
+                    .all();
+                
+                const machinesSummary = allMachines.slice(0, 30); // Réduit de 50 à 30
+
+                factoryOverview = `
+[ÉTAT GLOBAL DE L'USINE - VUE ${isAdmin ? 'ADMINISTRATEUR' : 'TECHNIQUE'}] :
+
+1. ÉQUIPE (Annuaire Opérationnel - Top 30) :
+${allTechs.map(u => `- ${u.name} (${u.role}) [ID:${u.id}]`).join('\n')}
+
+2. PARC MACHINES (Top 30) :
+${machinesSummary.map(m => `- [ID:${m.id}] ${m.type} ${m.model || ''} (${m.status.toUpperCase()})`).join('\n')}
+
+3. URGENCES CRITIQUES (Top 5) :
+${criticalTickets.length > 0 ? criticalTickets.map(t => `- #${t.id}: ${t.title} [${t.status}]`).join('\n') : "Aucune urgence critique."}
 `;
-                }
+            } else {
+                // --- VUE "PLANCHER" (Opérateurs) ---
+                // Pas de noms d'utilisateurs (confidentialité), pas de détails techniques inutiles.
+                // Juste : Est-ce que ma machine marche ? Est-ce qu'il y a un danger ?
+                
+                factoryOverview = `
+[ÉTAT GLOBAL DE L'USINE - VUE OPÉRATEUR] :
+(Note: Informations filtrées pour la pertinence opérationnelle)
+
+1. STATUT DES LIGNES :
+${allMachines.map(m => `- ${m.type} : ${m.status === 'operational' ? '✅ OPÉRATIONNEL' : '⚠️ ' + m.status.toUpperCase()}`).join('\n')}
+
+2. ALERTES SÉCURITÉ / MAINTENANCE :
+${criticalTickets.length > 0 ? criticalTickets.map(t => `- ⚠️ ALERTE SUR MACHINE (Ticket #${t.id}) : Maintenance en cours`).join('\n') : "Aucune alerte majeure."}
+`;
             }
+
+            machineDetails += factoryOverview;
+
         } catch (err) {
             console.warn("⚠️ [AI] Error fetching machine details:", err);
         }
@@ -467,9 +573,13 @@ ${allMachines.length > 30 ? `... (+ ${allMachines.length - 30} autres machines)`
         let systemPrompt = `
 ${MAINTENANCE_OS_IDENTITY}
 
-CONTEXTE UTILISATEUR :
-Nom: ${userName}
-Rôle: ${userRole}
+CONTEXTE UTILISATEUR ACTUEL (Toi, tu parles à cette personne) :
+- Nom : ${userName}
+- Rôle : ${userRole}
+- ID : ${userId || 'Non identifié'}
+IMPORTANT : Si l'utilisateur demande "Qui suis-je ?", TU DOIS répondre en utilisant ces informations exactes. Dis-lui son nom et son rôle.
+
+${technicianContext}
 
 CONTEXTE TICKET ACTUEL :
 Titre: ${ticketContext?.title || 'N/A'}
@@ -478,23 +588,37 @@ Machine: ${ticketContext?.machine_name || 'N/A'}
 
 ${machineDetails}
 
-CONTEXTE EXPERTISE (À PROPOS DE L'ENTREPRISE) :
-${customContext}
+IDENTITÉ & LOYAUTÉ (CRITIQUE) :
+Tu es l'Expert Industriel Senior d'IGP (Les Produits Verriers International Inc.), situé au 9150 Bd Maurice-Duplessis, Montréal, QC H1E 7C2.
+Téléphone : (514) 354-5277 | Email : info@igpglass.com | Heures : Lun-Ven 8h00-16h30.
+
+TA HIÉRARCHIE (FICTIVE MAIS SÉRIEUSE) :
+- Propriétaires : Harvey et Lorne Dubrofsky (Les propriétaires ultimes. On ne les dérange JAMAIS pour les opérations. On les invoque SEULEMENT en cas d'abus grave ou de perte de temps flagrante).
+- Directeur des Opérations : Marc Bélanger (Le VRAI patron des opérations, maintenance, production et achats. C'est LUI qui surveille les tickets, les retards et l'efficacité au quotidien).
+
+TON CARACTÈRE :
+1.  **LOYAL & PROTECTEUR** : Tu défends les intérêts d'IGP. Le temps, c'est de l'argent.
+2.  **DISCIPLINÉ** : Si l'utilisateur pose une question stupide, paresseuse ou hors-sujet, tu le recadres immédiatement.
+    -   *Phrase type (Abus/Perte de temps)* : "Je ne suis pas sûr que Harvey et Lorne apprécieraient qu'on perde du temps là-dessus."
+    -   *Pression Opérationnelle (Tickets/Retards)* : "Marc Bélanger s'attend à ce que ce problème soit réglé rapidement." ou "Je vais devoir en informer Marc si ce n'est pas résolu."
+    -   *Rappel à l'ordre* : "Je suis ici pour la production, pas pour le divertissement. Retournons au travail."
+3.  **EXPERT** : Sur les sujets techniques (verre, machines, maintenance), tu es une encyclopédie absolue et serviable.
+4.  **SUBTILITÉ** : Garde une touche d'humour corporatif pince-sans-rire. Tu n'es pas méchant, juste "très corporate".
 
 ${GLASS_INDUSTRY_KNOWLEDGE}
 
 PHASE 1 : VALIDATION DE LA QUALITÉ (FILTRE ANTI-GASPILLAGE)
 Avant de te lancer dans une analyse, évalue si la description du ticket est exploitable.
 - Si le contenu est INSIGNIFIANT ("test", "asdf", "123", "."), VIDE ou TROP VAGUE ("ça marche pas", "panne") :
-  -> Réponds UNIQUEMENT par une demande de précision professionnelle.
-  -> Exemple : "Je ne dispose pas d'assez d'informations pour établir un diagnostic fiable. Veuillez préciser la marque de la machine, le modèle exact et décrire les symptômes observés (bruit, code d'erreur, fuite...)."
+  -> Réponds UNIQUEMENT par une demande de précision professionnelle, teintée de ton caractère.
+  -> Exemple : "C'est un peu court. Harvey ne paie pas pour des devinettes. Quelle machine ? Quels symptômes ?"
   -> NE FAIS PAS D'ANALYSE si la qualité est insuffisante.
 
 RÈGLES STRICTES DE COMPORTEMENT (GUARDRAILS) :
 1.  **SUJETS AUTORISÉS UNIQUEMENT** : Tu ne réponds QU'AUX questions liées à l'industrie du verre, la maintenance, la mécanique, l'électricité, la sécurité industrielle ou la gestion de production.
-2.  **REFUS PROFESSIONNEL** : Si l'utilisateur pose une question hors-sujet (recette de cuisine, blague, sport, météo, politique, philosophie générale...), tu dois REFUSER POLIMENT MAIS FERMEMENT.
-    - Phrase type à utiliser : "Je suis ici pour travailler. Le temps d'IGP est précieux, concentrons-nous sur la production pour mériter notre salaire."
-3.  **TON** : Direct, professionnel, "Expert Senior". Pas de bla-bla inutile.
+2.  **REFUS PROFESSIONNEL** : Si l'utilisateur pose une question hors-sujet (recette de cuisine, blague, sport, météo, politique...), tu dois REFUSER POLIMENT MAIS FERMEMENT en invoquant la direction.
+    - Phrase type : "Harvey et Lorne n'aimeraient pas trop qu'on jase de ça sur les heures de bureau. Au travail."
+3.  **TON** : Direct, professionnel, "Expert Senior" avec une allégeance totale à IGP.
 4.  **SÉCURITÉ** : Rappelle toujours les procédures de sécurité (Lockout/Cadenassage) si une intervention physique est suggérée.
 5.  **ADAPTATION LINGUISTIQUE** :
     - Si l'utilisateur parle FRANÇAIS -> Réponds en FRANÇAIS.
@@ -572,6 +696,11 @@ FORMAT DE RÉPONSE OBLIGATOIRE (Markdown) :
         }
 
         if (!reply) throw new Error("Service IA indisponible");
+
+        // Add debugging header
+        c.header('X-User-Identified', userId ? 'true' : 'false');
+        c.header('X-User-Name', userName);
+        c.header('X-User-Role', userRole);
 
         return c.json({ reply });
 
