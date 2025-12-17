@@ -550,7 +550,19 @@ app.post('/chat', async (c) => {
 
             // Helper for French Translation
             const translateStatus = (s: string) => {
-                const map: any = { 'open': 'Ouvert', 'in_progress': 'En cours', 'resolved': 'Résolu', 'closed': 'Fermé', 'pending': 'En attente' };
+                const map: any = { 
+                    'received': 'Nouveau', 
+                    'diagnostic': 'En diagnostic', 
+                    'in_progress': 'En cours', 
+                    'waiting_parts': 'En attente de pièces', 
+                    'completed': 'Terminé', 
+                    'archived': 'Archivé',
+                    // Legacy fallbacks
+                    'open': 'Ouvert', 
+                    'resolved': 'Résolu', 
+                    'closed': 'Fermé', 
+                    'pending': 'En attente' 
+                };
                 return map[s] || s;
             };
             const translatePriority = (p: string) => {
@@ -654,7 +666,18 @@ app.post('/chat', async (c) => {
                         const machineName = m ? `${m.type} ${m.model || ''}` : `Machine #${h.machine_id}`;
                         // USE DISPLAY_ID for talk, Numeric ID for tools
                         const statusFr = (s: string) => {
-                            const map: any = { 'open': 'Ouvert', 'in_progress': 'En cours', 'resolved': 'Résolu', 'closed': 'Fermé', 'pending': 'En attente' };
+                            const map: any = { 
+                                'received': 'Nouveau', 
+                                'diagnostic': 'En diagnostic', 
+                                'in_progress': 'En cours', 
+                                'waiting_parts': 'En attente de pièces', 
+                                'completed': 'Terminé', 
+                                'archived': 'Archivé',
+                                'open': 'Ouvert', 
+                                'resolved': 'Résolu', 
+                                'closed': 'Fermé', 
+                                'pending': 'En attente' 
+                            };
                             return map[s] || s;
                         };
                         return `- [${h.date}] [TICKET #${h.id} | REF: ${h.display_id || h.id}] (${statusFr(h.status)}): ${h.title} sur ${machineName}`;
