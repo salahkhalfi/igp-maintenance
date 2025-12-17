@@ -554,10 +554,43 @@ app.post('/send', async (c) => {
                     if (!object) return;
                     
                     const arrayBuffer = await object.arrayBuffer();
-                    // 2. Run Transcription (Priority: OpenAI V3 > Fallback: Cloudflare)
+                    // 2. Run Transcription (Priority: Groq > OpenAI V3 > Fallback: Cloudflare)
                     let originalText = "";
 
-                    if (c.env.OPENAI_API_KEY) {
+                    // --- STRATEGY A: GROQ (Fast & Free-ish) ---
+                    if (c.env.GROQ_API_KEY) {
+                        try {
+                            const formData = new FormData();
+                            // Groq requires a file object/blob
+                            const blob = new Blob([arrayBuffer], { type: object.httpMetadata?.contentType || 'audio/webm' });
+                            formData.append('file', blob, 'audio.webm');
+                            formData.append('model', 'whisper-large-v3'); 
+                            
+                            // Context prompt matching the industrial/Quebec focus
+                            formData.append('prompt', "Technicien de maintenance industrielle. Accent québécois. Termes techniques, milieu bruyant.");
+                            
+                            const resp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${c.env.GROQ_API_KEY}` },
+                                body: formData
+                            });
+
+                            if (resp.ok) {
+                                const data = await resp.json() as any;
+                                if (data.text && data.text.length > 0) {
+                                    originalText = data.text;
+                                    console.log("[AI] Groq Whisper V3 Success");
+                                }
+                            } else {
+                                console.warn("[AI] Groq Error:", await resp.text());
+                            }
+                        } catch (e) {
+                            console.warn("[AI] Groq Exception:", e);
+                        }
+                    }
+
+                    // --- STRATEGY B: OPENAI (Reliable Fallback) ---
+                    if (!originalText && c.env.OPENAI_API_KEY) {
                         try {
                             const formData = new FormData();
                             const blob = new Blob([arrayBuffer], { type: object.httpMetadata?.contentType || 'audio/webm' });

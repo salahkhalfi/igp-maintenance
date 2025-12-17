@@ -33,7 +33,7 @@ usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
         last_login: users.last_login
       })
       .from(users)
-      .where(ne(users.id, 0))
+      .where(and(ne(users.id, 0), sql`${users.deleted_at} IS NULL`))
       .orderBy(desc(users.role), users.full_name);
 
     return c.json({ users: results });
@@ -63,7 +63,8 @@ usersRoute.get('/', async (c) => {
       .where(
         and(
           or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`),
-          ne(users.id, 0)
+          ne(users.id, 0),
+          sql`${users.deleted_at} IS NULL` // Exclude soft-deleted
         )
       )
       .orderBy(users.full_name);
@@ -305,34 +306,35 @@ usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
       return c.json({ error: 'Impossible de supprimer le dernier administrateur' }, 403);
     }
 
-    // Vérifier tickets
+    // Vérifier tickets (Seulement les tickets actifs empêchent la suppression)
     const ticketCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(tickets)
-      .where(eq(tickets.reported_by, id))
+      .where(and(
+          eq(tickets.assigned_to, id),
+          ne(tickets.status, 'closed'),
+          ne(tickets.status, 'resolved')
+      ))
       .get();
 
     if (ticketCount && ticketCount.count > 0) {
-      return c.json({ error: `Impossible: l'utilisateur a ${ticketCount.count} tickets` }, 400);
+      return c.json({ error: `Impossible: l'utilisateur a ${ticketCount.count} tickets actifs` }, 400);
     }
 
-    // Nettoyage
-    await db.update(tickets).set({ assigned_to: null, updated_at: sql`CURRENT_TIMESTAMP` }).where(eq(tickets.assigned_to, id));
+    // SOFT DELETE: On marque juste l'utilisateur comme supprimé
+    // On ne touche PAS aux relations historiques (messages, media, etc.) car l'utilisateur existe toujours
     
-    // Re-assign media to System User (0) to satisfy NOT NULL constraint
-    await db.update(media).set({ uploaded_by: 0 }).where(eq(media.uploaded_by, id));
-    
-    // Re-assign timeline to System User (0) to satisfy NOT NULL constraint
-    await db.update(ticketTimeline).set({ user_id: 0 }).where(eq(ticketTimeline.user_id, id));
+    // Désassigner des tickets futurs/ouverts
+    await db.update(tickets)
+        .set({ assigned_to: null, updated_at: sql`CURRENT_TIMESTAMP` })
+        .where(and(eq(tickets.assigned_to, id), ne(tickets.status, 'closed')));
 
-    // Re-assign chat messages to System User (0) to prevent FK violation and preserve history
-    // Note: chat_participants is handled automatically by ON DELETE CASCADE in the database schema
-    await c.env.DB.prepare('UPDATE chat_messages SET sender_id = 0 WHERE sender_id = ?').bind(id).run();
-
-    await db.delete(users).where(eq(users.id, id));
+    await db.update(users)
+        .set({ deleted_at: sql`CURRENT_TIMESTAMP`, updated_at: sql`CURRENT_TIMESTAMP` })
+        .where(eq(users.id, id));
 
     return c.json({
-      message: 'Utilisateur supprimé avec succès',
+      message: 'Utilisateur désactivé avec succès (Soft Delete)',
       deleted_user: existingUser
     });
   } catch (error) {

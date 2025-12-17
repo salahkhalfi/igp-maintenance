@@ -13,11 +13,73 @@ export const users = sqliteTable('users', {
   is_super_admin: integer('is_super_admin').default(0), // Added in migration 0015
   last_login: text('last_login'), // Added in migration 0009
   avatar_key: text('avatar_key'), // Added in migration 0007
+  deleted_at: text('deleted_at'), // Soft delete
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
-// --- CHAT GUESTS TABLE ---
+// --- CHAT CONVERSATIONS TABLE ---
+export const chatConversations = sqliteTable('chat_conversations', {
+  id: text('id').primaryKey(), // UUID
+  type: text('type').notNull(), // 'direct' or 'group'
+  name: text('name'),
+  created_by: integer('created_by').references(() => users.id),
+  avatar_key: text('avatar_key'), // Added in migration
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// --- CHAT PARTICIPANTS TABLE ---
+export const chatParticipants = sqliteTable('chat_participants', {
+  conversation_id: text('conversation_id').notNull().references(() => chatConversations.id, { onDelete: 'cascade' }),
+  user_id: integer('user_id').notNull(), // Can be negative for guests, so no strict foreign key to users.id
+  role: text('role').default('member'), // 'admin', 'member'
+  last_read_at: text('last_read_at').default(sql`CURRENT_TIMESTAMP`),
+  display_order: integer('display_order').default(0),
+  joined_at: text('joined_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    pk: index('pk_chat_participants').on(table.conversation_id, table.user_id),
+    userIdx: index('idx_chat_participants_user').on(table.user_id),
+  };
+});
+
+// --- CHAT MESSAGES TABLE ---
+export const chatMessages = sqliteTable('chat_messages', {
+  id: text('id').primaryKey(), // UUID
+  conversation_id: text('conversation_id').notNull().references(() => chatConversations.id, { onDelete: 'cascade' }),
+  sender_id: integer('sender_id').notNull(),
+  type: text('type').default('text'), // 'text', 'image', 'audio', 'system'
+  content: text('content'),
+  media_key: text('media_key'),
+  media_meta: text('media_meta'), // JSON string
+  transcription: text('transcription'),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    convIdx: index('idx_chat_messages_conv').on(table.conversation_id),
+    createdIdx: index('idx_chat_messages_created').on(table.created_at),
+  };
+});
+
+// --- CHAT ACTION CARDS TABLE ---
+export const chatActionCards = sqliteTable('chat_action_cards', {
+  id: text('id').primaryKey(), // UUID
+  message_id: text('message_id').notNull().references(() => chatMessages.id, { onDelete: 'cascade' }),
+  conversation_id: text('conversation_id').notNull(),
+  status: text('status').default('open'), // 'open', 'in_progress', 'resolved', 'cancelled'
+  priority: text('priority').default('normal'),
+  assignee_id: integer('assignee_id'),
+  created_by: integer('created_by').notNull(),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+  resolved_at: text('resolved_at'),
+}, (table) => {
+  return {
+    msgIdx: index('idx_chat_cards_message').on(table.message_id),
+    statusIdx: index('idx_chat_cards_status').on(table.status),
+  };
+});
 export const chatGuests = sqliteTable('chat_guests', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   email: text('email').notNull().unique(),
@@ -45,6 +107,7 @@ export const machines = sqliteTable('machines', {
   location: text('location'),
   technical_specs: text('technical_specs'),
   status: text('status').default('operational'), // 'operational', 'maintenance', 'out_of_service'
+  deleted_at: text('deleted_at'), // Soft delete
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
@@ -64,6 +127,7 @@ export const tickets = sqliteTable('tickets', {
   assignee_name: text('assignee_name'), // Added in migration 0003
   scheduled_date: text('scheduled_date'), // Added in migration 0004
   is_machine_down: integer('is_machine_down', { mode: 'boolean' }).default(false), // Added in migration 20251215000001
+  deleted_at: text('deleted_at'), // Soft delete
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
   completed_at: text('completed_at'),

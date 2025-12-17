@@ -55,7 +55,7 @@ ticketsRoute.get('/', zValidator('query', getTicketsQuerySchema), async (c) => {
       .leftJoin(machines, eq(tickets.machine_id, machines.id))
       .leftJoin(reporter, eq(tickets.reported_by, reporter.id))
       .leftJoin(assignee, eq(tickets.assigned_to, assignee.id))
-      .where(and(...conditions))
+      .where(and(...conditions, sql`${tickets.deleted_at} IS NULL`))
       .orderBy(desc(tickets.created_at));
 
     return c.json({ tickets: results });
@@ -99,7 +99,7 @@ ticketsRoute.get('/:id', zValidator('param', ticketIdParamSchema), async (c) => 
       .leftJoin(machines, eq(tickets.machine_id, machines.id))
       .leftJoin(reporter, eq(tickets.reported_by, reporter.id))
       .leftJoin(assignee, eq(tickets.assigned_to, assignee.id))
-      .where(eq(tickets.id, id))
+      .where(and(eq(tickets.id, id), sql`${tickets.deleted_at} IS NULL`))
       .get();
 
     if (!ticket) {
@@ -513,25 +513,12 @@ ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) 
       return c.json({ error: 'Vous ne pouvez supprimer que vos propres tickets' }, 403);
     }
 
-    // Récupérer les fichiers média avant suppression
-    const mediaFiles = await db
-      .select({ file_key: media.file_key })
-      .from(media)
-      .where(eq(media.ticket_id, id));
-
-    // Supprimer du R2
-    if (mediaFiles.length > 0) {
-      for (const m of mediaFiles) {
-        try {
-          await c.env.MEDIA_BUCKET.delete(m.file_key);
-          console.log(`Fichier supprimé du R2: ${m.file_key}`);
-        } catch (e) {
-          console.error(`Erreur lors de la suppression du fichier R2 ${m.file_key}:`, e);
-        }
-      }
-    }
-
-    await db.delete(tickets).where(eq(tickets.id, id));
+    // SOFT DELETE: On marque juste le ticket comme supprimé
+    // On garde les fichiers R2 et les métadonnées pour historique
+    
+    await db.update(tickets)
+      .set({ deleted_at: sql`CURRENT_TIMESTAMP`, updated_at: sql`CURRENT_TIMESTAMP` })
+      .where(eq(tickets.id, id));
 
     // WEBHOOK: Send to Pabbly (Shadow Logging)
     c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_deleted', {
@@ -542,8 +529,8 @@ ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) 
     }));
 
     return c.json({
-      message: 'Ticket supprimé avec succès',
-      deletedFiles: mediaFiles.length
+      message: 'Ticket supprimé avec succès (Soft Delete)',
+      deletedFiles: 0 // No files deleted
     });
   } catch (error) {
     console.error('Delete ticket error:', error);

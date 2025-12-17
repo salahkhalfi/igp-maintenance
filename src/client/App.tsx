@@ -17,12 +17,12 @@ import { client, getAuthToken } from './api'
 const queryClient = new QueryClient()
 
 const MOCK_USER: User = {
-    id: 1,
-    email: 'admin@example.com',
-    first_name: 'Admin',
-    last_name: 'System',
-    role: 'admin',
-    full_name: 'Admin System'
+    id: 0,
+    email: 'guest@igpglass.ca',
+    first_name: 'Visiteur',
+    last_name: '',
+    role: 'guest', // Safe default
+    full_name: 'Visiteur'
 };
 
 const AppContent = () => {
@@ -205,7 +205,8 @@ const AppContent = () => {
     <>
         {/* CONTROL PANEL & WIDGETS (Bottom Left) */}
         <div className="fixed bottom-4 left-4 z-[9998] group font-sans">
-            {/* DEBUG PANEL */}
+            {/* DEBUG PANEL - DEV ONLY */}
+            {import.meta.env.DEV && (
             <div className="bg-red-100 border-2 border-red-500 p-2 rounded mb-2 text-xs text-red-800 font-bold opacity-50 hover:opacity-100 transition-opacity">
                 <p>DEBUG MODE v2.18.1 (Fix Micro)</p>
                 <p>URL: {window.location.search || '(empty)'}</p>
@@ -220,6 +221,7 @@ const AppContent = () => {
                     FORCE OPEN MODAL
                 </button>
             </div>
+            )}
 
             <div className="bg-white/95 backdrop-blur-md border border-blue-200 p-4 rounded-xl shadow-2xl transition-all hover:shadow-blue-500/20 max-w-sm max-h-[90vh] overflow-y-auto">
                 <div className="mb-3">
@@ -233,7 +235,8 @@ const AppContent = () => {
                     </div>
                 </div>
                 
-                {/* User Management */}
+                {/* User Management - Admin Only */}
+                {currentUser.role === 'admin' && (
                 <div className="mb-2">
                     <button 
                         onClick={() => setIsUserModalOpen(true)}
@@ -243,6 +246,7 @@ const AppContent = () => {
                         User Manager
                     </button>
                 </div>
+                )}
 
                 {/* Messaging */}
                 <div className="mb-2">
@@ -282,7 +286,8 @@ const AppContent = () => {
                     </div>
                 </div>
 
-                {/* Role Dropdown Test */}
+                {/* Role Dropdown Test - Dev Only */}
+                {import.meta.env.DEV && (
                 <div className="mb-4 pt-2 border-t border-slate-100">
                     <RoleDropdown 
                         value={role}
@@ -291,6 +296,7 @@ const AppContent = () => {
                         variant="blue"
                     />
                 </div>
+                )}
             </div>
         </div>
 
