@@ -548,6 +548,16 @@ app.post('/chat', async (c) => {
             const workloadMap = new Map();
             const machineStatusMap = new Map(); // Real-time machine status based on tickets
 
+            // Helper for French Translation
+            const translateStatus = (s: string) => {
+                const map: any = { 'open': 'Ouvert', 'in_progress': 'En cours', 'resolved': 'Résolu', 'closed': 'Fermé', 'pending': 'En attente' };
+                return map[s] || s;
+            };
+            const translatePriority = (p: string) => {
+                const map: any = { 'low': 'Basse', 'medium': 'Moyenne', 'high': 'Haute', 'critical': 'Critique' };
+                return map[p] || p;
+            };
+
             activeTickets.forEach((t: any) => {
                 // Technician Workload
                 if (t.assigned_to) {
@@ -572,7 +582,10 @@ app.post('/chat', async (c) => {
                     const commStr = cCount > 0 ? ` [💬 ${cCount} messages]` : "";
 
                     // INJECT DISPLAY ID (e.g., FOU-1225-001) but KEEP numeric ID for Tools
-                    currentStatus.push(`[TICKET #${t.id} | REF: ${t.display_id}] (${t.status}, ${t.priority}): ${t.title}${mediaStr}${commStr}`);
+                    // TRANSLATE STATUS/PRIORITY for AI Context
+                    const statusFr = translateStatus(t.status);
+                    const priorityFr = translatePriority(t.priority);
+                    currentStatus.push(`[TICKET #${t.id} | REF: ${t.display_id}] (${statusFr}, ${priorityFr}): ${t.title}${mediaStr}${commStr}`);
                     machineStatusMap.set(t.machine_id, currentStatus);
                 }
             });
@@ -640,7 +653,11 @@ app.post('/chat', async (c) => {
                         const m = machinesList.find(m => m.id === h.machine_id);
                         const machineName = m ? `${m.type} ${m.model || ''}` : `Machine #${h.machine_id}`;
                         // USE DISPLAY_ID for talk, Numeric ID for tools
-                        return `- [${h.date}] [TICKET #${h.id} | REF: ${h.display_id || h.id}] (${h.status}): ${h.title} sur ${machineName}`;
+                        const statusFr = (s: string) => {
+                            const map: any = { 'open': 'Ouvert', 'in_progress': 'En cours', 'resolved': 'Résolu', 'closed': 'Fermé', 'pending': 'En attente' };
+                            return map[s] || s;
+                        };
+                        return `- [${h.date}] [TICKET #${h.id} | REF: ${h.display_id || h.id}] (${statusFr(h.status)}): ${h.title} sur ${machineName}`;
                     }).join('\n');
                 }
             }
