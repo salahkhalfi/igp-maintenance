@@ -346,7 +346,10 @@ app.post('/analyze-ticket', async (c) => {
         
         const techsList = await db.select({
             id: users.id, name: users.full_name, role: users.role
-        }).from(users).where(inArray(users.role, ['admin', 'supervisor', 'technician', 'senior_technician', 'team_leader'])).all();
+        }).from(users).where(and(
+            inArray(users.role, ['admin', 'supervisor', 'technician', 'senior_technician', 'team_leader']),
+            sql`deleted_at IS NULL`
+        )).all();
 
         // Build a RICH context for the AI
         const machinesContext = machinesList.map(m => 
@@ -461,7 +464,7 @@ app.post('/chat', async (c) => {
                 type: machines.machine_type,
                 model: machines.model,
                 status: machines.status // Add status to fetch
-            }).from(machines).all() || [];
+            }).from(machines).where(sql`deleted_at IS NULL`).all() || [];
 
             usersList = await db.select({
                 id: users.id,
@@ -469,7 +472,7 @@ app.post('/chat', async (c) => {
                 role: users.role,
                 email: users.email,
                 last_login: users.last_login
-            }).from(users).all() || [];
+            }).from(users).where(sql`deleted_at IS NULL`).all() || [];
 
             // Fetch ACTIVE tickets (not just open/in_progress, but EVERYTHING not closed)
             activeTickets = await db.select({
@@ -482,7 +485,10 @@ app.post('/chat', async (c) => {
                 priority: tickets.priority
             })
             .from(tickets)
-            .where(not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])))
+            .where(and(
+                not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])),
+                sql`deleted_at IS NULL`
+            ))
             .all() || [];
 
             // --- ENRICH CONTEXT WITH MEDIA & COMMENT COUNTS ---

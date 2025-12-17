@@ -14,7 +14,7 @@
     "build:messenger": "vite build -c vite.messenger.config.ts && mv dist/messenger/src/messenger/index.html dist/messenger/index.html && rm -rf dist/messenger/src && cp public/messenger/messenger-icon*.png dist/messenger/",
     "build": "vite build && npm run build:client && npm run build:messenger",
     "preview": "wrangler pages dev dist",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name webapp --branch main",
+    "deploy:safe": "npm run build && wrangler d1 migrations apply maintenance-db --remote && wrangler pages deploy dist --project-name webapp --branch main",
     "deploy:test": "bash scripts/deploy-test.sh",
     "deploy:prod": "bash scripts/deploy-prod.sh",
     "info": "cat DEPLOYMENT_CONFIG.md | head -50",

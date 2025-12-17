@@ -389,7 +389,7 @@ app.get('/users', async (c) => {
     const employees = await c.env.DB.prepare(`
         SELECT id, full_name, role, email, avatar_key
         FROM users 
-        WHERE id != ? AND id != 0
+        WHERE id != ? AND id != 0 AND deleted_at IS NULL
         ORDER BY first_name ASC
     `).bind(user.userId).all();
 
