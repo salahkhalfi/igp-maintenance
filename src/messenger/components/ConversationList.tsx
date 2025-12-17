@@ -12,7 +12,7 @@ import ConversationItem from './ConversationItem';
 const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName, currentUserAvatarKey, onOpenInfo, onAvatarUpdate, initialRecipientId, onRecipientProcessed }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, currentUserName: string, currentUserAvatarKey: string | null, onOpenInfo: () => void, onAvatarUpdate: () => void, initialRecipientId?: number | null, onRecipientProcessed?: () => void }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Auto-Start Direct Chat from URL
     useEffect(() => {
         if (initialRecipientId && !loading && conversations) {
@@ -23,6 +23,41 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
     const [pushEnabled, setPushEnabled] = useState(false);
     const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
     const [currentUserRole, setCurrentUserRole] = useState<string>('operator');
+    const [pinnedIds, setPinnedIds] = useState<string[]>([]);
+
+    useEffect(() => {
+        // Load pinned conversations
+        const savedPinned = localStorage.getItem(`pinned_conversations_${currentUserId}`);
+        if (savedPinned) {
+            try { setPinnedIds(JSON.parse(savedPinned)); } catch (e) {}
+        }
+    }, [currentUserId]);
+
+    const handlePin = (id: string) => {
+        setPinnedIds(prev => {
+            const newPinned = prev.includes(id) 
+                ? prev.filter(p => p !== id) 
+                : [...prev, id];
+            localStorage.setItem(`pinned_conversations_${currentUserId}`, JSON.stringify(newPinned));
+            return newPinned;
+        });
+    };
+
+    // AI Customization State
+    const [aiName, setAiName] = useState('Expert Industriel (IA)');
+    const [aiAvatarKey, setAiAvatarKey] = useState('ai_avatar');
+
+    useEffect(() => {
+        // Fetch AI Name
+        axios.get('/api/settings/ai_expert_name').then(res => {
+            if (res.data?.setting_value) setAiName(res.data.setting_value);
+        }).catch(() => {});
+
+        // Fetch AI Avatar Key
+        axios.get('/api/settings/ai_expert_avatar_key').then(res => {
+            if (res.data?.setting_value) setAiAvatarKey(res.data.setting_value);
+        }).catch(() => {});
+    }, []);
     
     // Avatar upload
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -192,8 +227,12 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         window.addEventListener('push-notification-changed', handlePushChange);
 
         const fetchConversations = async () => {
+            // REMOVED isReordering check
+            // No more grace period needed since reorder is gone
+            
             try {
-                const res = await axios.get('/api/v2/chat/conversations');
+                // Add timestamp to prevent caching
+                const res = await axios.get(`/api/v2/chat/conversations?t=${Date.now()}`);
                 const newConvs = res.data.conversations || [];
                 setConversations(newConvs);
 
@@ -233,6 +272,8 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         const interval = setInterval(fetchConversations, 5000);
         return () => clearInterval(interval);
     }, [selectedId]);
+
+    // REMOVED handleMove and saveOrder for stability
 
     const handleCreateGroup = async (name: string) => {
         try {
@@ -497,15 +538,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
             </div>
 
             <div className="flex gap-3 relative z-50 px-4 md:px-6 mb-4">
-                <div 
-                    className="flex-1 relative group"
-                    onMouseEnter={() => setIsFocused(true)}
-                    onMouseLeave={() => {
-                        if (document.activeElement !== searchInputRef.current && !searchTerm && !viewingList) {
-                            setIsFocused(false);
-                        }
-                    }}
-                >
+                <div className="flex-1 relative group">
                     <i className="fas fa-search absolute left-4 top-3.5 text-gray-500 group-focus-within:text-emerald-500 transition-colors"></i>
                     <input 
                         ref={searchInputRef}
@@ -545,19 +578,16 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                 if (searchTerm) {
                                     setSearchTerm('');
                                     searchInputRef.current?.focus();
-                                } else if (isFocused) {
-                                    // Cas: Focus actif -> On veut fermer le clavier mais garder la liste
-                                    searchInputRef.current?.blur();
-                                    // viewingList reste true grâce au onFocus précédent
                                 } else {
-                                    // Cas: Pas de focus, liste ouverte -> On veut fermer la liste
+                                    // Cas: Fermeture explicite de la liste (Blur + Close)
                                     setViewingList(false);
                                     setIsFocused(false);
+                                    searchInputRef.current?.blur();
                                 }
                             }}
                             className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-all"
                         >
-                            <i className={`fas ${searchTerm ? 'fa-times' : (isFocused ? 'fa-keyboard' : 'fa-times')}`}></i>
+                            <i className="fas fa-times"></i>
                         </button>
                     )}
                     
@@ -621,6 +651,10 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 </div>
 
                 <div className="relative group">
+                    {/* REORDER BUTTON REMOVED FOR STABILITY */}
+                </div>
+
+                <div className="relative group">
                     <button className="w-12 h-full rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white hover:scale-105 flex items-center justify-center transition-all shadow-lg shadow-emerald-900/30 border border-emerald-400/20">
                         <i className="fas fa-plus text-lg"></i>
                     </button>
@@ -651,20 +685,20 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 </div>
             </div>
             
-            {/* LISTE CONVERSATIONS - PREMIUM STYLE */}
+                {/* LISTE CONVERSATIONS - PREMIUM STYLE */}
             <div className="overflow-y-auto flex-1 custom-scrollbar px-4 pb-4 space-y-2 relative z-10">
                 {/* 
                     INTEGRATION EXPERT IA (Pinned Contact) 
-                    Only show if no search OR if search matches "Expert" or "IA"
+                    Only show if no search OR if search matches "Expert" or "IA" or custom name
                 */}
-                {(!searchTerm || "expert igp (ia)".includes(searchTerm.toLowerCase())) && (
+                {(!searchTerm || aiName.toLowerCase().includes(searchTerm.toLowerCase()) || "expert industriel (ia)".includes(searchTerm.toLowerCase())) && (
                     <ConversationItem 
                         key="expert_ai"
                         conversation={{
                             id: 'expert_ai',
                             type: 'direct',
-                            name: 'Expert IGP (IA)',
-                            avatar_key: 'ai_avatar',
+                            name: aiName,
+                            avatar_key: aiAvatarKey,
                             last_message: 'Je suis là pour vous aider.',
                             last_message_time: new Date().toISOString(),
                             unread_count: 0,
@@ -673,6 +707,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                         }}
                         isActive={selectedId === 'expert_ai'}
                         onSelect={onSelect}
+                        isPinned={true} // AI is always pinned visually
                     />
                 )}
 
@@ -683,14 +718,24 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                         </div>
                         <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">Vide pour l'instant</p>
                     </div>
-                ) : conversations.filter(c => (c.name || '').toLowerCase().includes(searchTerm.toLowerCase())).map(conv => (
-                    <ConversationItem 
-                        key={conv.id} 
-                        conversation={conv} 
-                        isActive={selectedId === conv.id} 
-                        onSelect={onSelect} 
-                    />
-                ))}
+                ) : (
+                    <>
+                        {/* NORMAL MODE: Show Pinned + Normal (Sorted by Date) */}
+                        {conversations
+                            .filter(c => (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()))
+                            .map(conv => (
+                                <ConversationItem 
+                                    key={conv.id} 
+                                    conversation={conv} 
+                                    isActive={selectedId === conv.id} 
+                                    onSelect={onSelect} 
+                                    isPinned={pinnedIds.includes(conv.id)} // Visual indicator only
+                                    onPin={handlePin}
+                                />
+                            ))
+                        }
+                    </>
+                )}
             </div>
         </div>
     );

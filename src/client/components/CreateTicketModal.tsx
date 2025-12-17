@@ -105,6 +105,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
   }, [initialImageUrl, isOpen]);
   const [machineId, setMachineId] = useState<number | ''>('');
   const [priority, setPriority] = useState<TicketPriority>('medium');
+  const [isMachineDown, setIsMachineDown] = useState(false);
   const [assignedTo, setAssignedTo] = useState<number | ''>('');
   const [scheduledDate, setScheduledDate] = useState('');
   
@@ -230,6 +231,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
         description,
         machine_id: Number(machineId),
         priority,
+        is_machine_down: isMachineDown,
         assigned_to: assignedTo ? Number(assignedTo) : undefined,
         scheduled_date: scheduledDate || undefined
       });
@@ -261,6 +263,7 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
     setDescription('');
     setMachineId('');
     setPriority('medium');
+    setIsMachineDown(false);
     setAssignedTo('');
     setScheduledDate('');
     setSelectedFiles([]);
@@ -416,6 +419,23 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl border border-red-100">
+            <div className="relative flex items-center">
+              <input
+                type="checkbox"
+                id="isMachineDown"
+                checked={isMachineDown}
+                onChange={(e) => setIsMachineDown(e.target.checked)}
+                className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              />
+            </div>
+            <label htmlFor="isMachineDown" className="flex-1 cursor-pointer">
+              <span className="block text-sm font-bold text-red-900">Machine à l'arrêt ?</span>
+              <span className="block text-xs text-red-700">Cochez si la machine ne peut plus produire</span>
+            </label>
+            <AlertCircle className={`w-6 h-6 ${isMachineDown ? 'text-red-600' : 'text-red-200'}`} />
           </div>
 
           <div className="relative">

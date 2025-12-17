@@ -29,7 +29,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [savingAiContext, setSavingAiContext] = React.useState(false);
 
     // États pour le nom de l'application Messagerie (Custom Messenger Name)
-    const [messengerAppName, setMessengerAppName] = React.useState('IGP Connect');
+    const [messengerAppName, setMessengerAppName] = React.useState('Connect');
     const [editingMessengerName, setEditingMessengerName] = React.useState(false);
     const [tempMessengerName, setTempMessengerName] = React.useState('');
     const [savingMessengerName, setSavingMessengerName] = React.useState(false);
@@ -566,45 +566,45 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                        React.createElement('div', { className: 'bg-yellow-50 border border-yellow-200 rounded-lg p-4' },
+                    React.createElement('div', { className: 'bg-yellow-50 border border-yellow-200 rounded-lg p-4' },
+                        React.createElement('div', { className: 'flex items-start gap-3' },
+                            React.createElement('i', { className: 'fas fa-exclamation-triangle text-yellow-600 text-xl mt-1' }),
+                            React.createElement('div', {},
+                                React.createElement('h3', { className: 'font-bold text-yellow-900 mb-1' }, "Attention"),
+                                React.createElement('p', { className: 'text-sm text-yellow-800' },
+                                    "Changez ce paramètre uniquement lors du changement d'heure (mars et novembre)."
+                                )
+                            )
+                        )
+                    ),
+
+                    // Section Gestion des Modules (Licensing) - REMOVED BY ROLLBACK
+                    // (isSuperAdmin || currentUser?.role === 'admin') && null,
+
+                    React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
-                                React.createElement('i', { className: 'fas fa-exclamation-triangle text-yellow-600 text-xl mt-1' }),
+                                React.createElement('i', { className: 'fas fa-broom text-orange-600 text-xl mt-1' }),
                                 React.createElement('div', {},
-                                    React.createElement('h3', { className: 'font-bold text-yellow-900 mb-1' }, "Attention"),
-                                    React.createElement('p', { className: 'text-sm text-yellow-800' },
-                                        "Changez ce paramètre uniquement lors du changement d'heure (mars et novembre)."
+                                    React.createElement('h3', { className: 'font-bold text-orange-900 mb-2' }, "Maintenance Base de Données"),
+                                    React.createElement('p', { className: 'text-sm text-orange-800 mb-2' },
+                                        "Nettoyage manuel des données obsolètes (Le Concierge)."
+                                    ),
+                                    React.createElement('button', {
+                                        onClick: handleManualCleanup,
+                                        disabled: cleaning,
+                                        className: 'mt-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold text-sm transition shadow-sm flex items-center gap-2 disabled:opacity-50'
+                                    }, 
+                                        cleaning && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                        cleaning ? 'Nettoyage...' : 'Lancer le nettoyage maintenant'
                                     )
                                 )
                             )
-                        ),
+                        )
+                    ),
 
-                        // Section Gestion des Modules (Licensing) - REMOVED BY ROLLBACK
-                        // (isSuperAdmin || currentUser?.role === 'admin') && null,
-
-                        React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
-                            React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4' },
-                                React.createElement('div', { className: 'flex items-start gap-3' },
-                                    React.createElement('i', { className: 'fas fa-broom text-orange-600 text-xl mt-1' }),
-                                    React.createElement('div', {},
-                                        React.createElement('h3', { className: 'font-bold text-orange-900 mb-2' }, "Maintenance Base de Données"),
-                                        React.createElement('p', { className: 'text-sm text-orange-800 mb-2' },
-                                            "Nettoyage manuel des données obsolètes (Le Concierge)."
-                                        ),
-                                        React.createElement('button', {
-                                            onClick: handleManualCleanup,
-                                            disabled: cleaning,
-                                            className: 'mt-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold text-sm transition shadow-sm flex items-center gap-2 disabled:opacity-50'
-                                        }, 
-                                            cleaning && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
-                                            cleaning ? 'Nettoyage...' : 'Lancer le nettoyage maintenant'
-                                        )
-                                    )
-                                )
-                            )
-                        ),
-
-                        // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
-                        isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                    // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-image text-purple-600 text-xl mt-1' }),
@@ -706,7 +706,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                        // Section Titre et Sous-titre (ADMIN UNIQUEMENT)
+                    // Section Titre et Sous-titre (ADMIN UNIQUEMENT)
                     isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
@@ -852,7 +852,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     type: 'text',
                                     value: tempMessengerName,
                                     onChange: (e) => setTempMessengerName(e.target.value),
-                                    placeholder: 'Ex: IGP Connect, Ma Messagerie...',
+                                    placeholder: 'Ex: Connect, Ma Messagerie...',
                                     maxLength: 50,
                                     className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
                                     disabled: savingMessengerName
@@ -880,32 +880,43 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     )
                                 )
                             )
-                        ),
+                        )
+                    ),
 
-                        // Section Contexte AI Personnalisé (ADMIN UNIQUEMENT)
-                        isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
-                            React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4' },
-                                React.createElement('div', { className: 'flex items-start gap-3' },
-                                    React.createElement('i', { className: 'fas fa-robot text-green-600 text-xl mt-1' }),
-                                    React.createElement('div', {},
-                                        React.createElement('h3', { className: 'font-bold text-green-900 mb-2 flex items-center gap-2' },
-                                            "Personnalisation de l'IA (Prompt Principal)",
-                                            React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
-                                        ),
-                                        React.createElement('p', { className: 'text-sm text-green-800 mb-2' },
-                                            "Définissez le prompt principal et le contexte pour l'IA (Règles, Ton, Contexte Usine)."
-                                        ),
-                                        React.createElement('ul', { className: 'text-sm text-green-800 space-y-1 list-disc list-inside' },
-                                            React.createElement('li', {}, 'Utilisé pour analyser les tickets et le chat expert'),
-                                            React.createElement('li', {}, 'Définissez le Rôle, la Mission et les Règles d\'Or'),
-                                            React.createElement('li', {}, 'Max 30000 caractères')
+                    // Section Contexte AI Personnalisé (ADMIN UNIQUEMENT)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-brain text-green-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-green-900 mb-2 flex items-center gap-2' },
+                                        "Cerveau de l'IA & Connaissances",
+                                        React.createElement('span', { className: 'text-xs bg-purple-600 text-white px-2 py-1 rounded' }, 'NOUVEAU')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-green-800 mb-2' },
+                                        "Configurez l'identité, le caractère et les connaissances techniques de l'IA."
+                                    ),
+                                    React.createElement('div', { className: 'mt-3' },
+                                        React.createElement('a', {
+                                            href: '/admin/ai-settings',
+                                            className: 'inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition shadow-sm gap-2',
+                                            target: '_self' // Ouvrir dans la même fenêtre ou _blank
+                                        },
+                                            React.createElement('i', { className: 'fas fa-sliders-h' }),
+                                            "Ouvrir le Configurateur Avancé"
                                         )
                                     )
                                 )
-                            ),
+                            )
+                        ),
 
-                            // Édition du contexte AI
-                            React.createElement('div', { className: 'mb-0' },
+                        // Legacy AI Context (Reduced Visibility)
+                        React.createElement('details', { className: 'mb-0 group' },
+                            React.createElement('summary', { className: 'cursor-pointer text-sm font-semibold text-gray-500 hover:text-gray-700 mb-2 flex items-center select-none' },
+                                React.createElement('i', { className: 'fas fa-chevron-right mr-2 transition-transform group-open:rotate-90' }),
+                                'Voir l\'ancien éditeur de contexte (Legacy)'
+                            ),
+                            React.createElement('div', { className: 'pl-4 border-l-2 border-gray-200 mt-2' },
                                 React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
                                     React.createElement('i', { className: 'fas fa-file-alt mr-2' }),
                                     'Prompt Principal & Contexte'
@@ -914,37 +925,36 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     React.createElement('div', { className: 'bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800 whitespace-pre-wrap min-h-[60px] text-sm font-mono' },
                                         aiCustomContext || React.createElement('div', { className: 'text-gray-500 italic' }, 
                                             React.createElement('p', { className: 'font-bold mb-1' }, 'Prompt par défaut actif :'),
-                                            "RÔLE : Expert Industriel Senior chez IGP Inc...",
+                                            "RÔLE : Expert Industriel Senior...",
                                             React.createElement('br'),
                                             "(Cliquez sur Modifier pour voir ou personnaliser le prompt complet)"
                                         )
                                     ),
                                     React.createElement('button', {
                                         onClick: handleStartEditAiContext,
-                                        className: 'self-start px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                        className: 'self-start px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
                                         type: 'button'
                                     },
                                         React.createElement('i', { className: 'fas fa-edit' }),
-                                        'Modifier / Personnaliser'
+                                        'Modifier (Legacy)'
                                     )
                                 ) : React.createElement('div', { className: 'space-y-3' },
                                     React.createElement('div', { className: 'flex justify-end' },
                                         React.createElement('button', {
-                                            onClick: () => setTempAiContext(`RÔLE : Expert Industriel Senior chez IGP Inc. (Usine de verre)
+                                            onClick: () => setTempAiContext(`RÔLE : Expert Industriel Senior
 
 MISSION :
 Assister les techniciens et administrateurs dans la maintenance, le diagnostic de pannes et l'optimisation de la production.
 
 RÈGLES D'OR :
-1. SÉCURITÉ AVANT TOUT : Rappeler systématiquement les procédures de cadenassage (Lockout/Tagout) avant toute intervention physique.
+1. SÉCURITÉ AVANT TOUT : Rappeler systématiquement les procédures de sécurité avant toute intervention.
 2. CONTEXTE INDUSTRIEL : Se concentrer uniquement sur les machines, la maintenance, la production et la sécurité.
-3. TON PROFESSIONNEL : Être direct, précis et factuel. Pas de bavardage inutile.
-4. REFUS HORS-SUJET : Refuser poliment mais fermement toute question non liée au travail.
+3. TON PROFESSIONNEL : Être direct, précis et factuel.
 
-CONTEXTE DE L'USINE :
-- Nous fabriquons du verre (trempé, laminé, isolant).
-- Les machines critiques incluent : Fours de trempe, CNC, Lignes d'assemblage, Tables de découpe.
-- La production fonctionne 24/7. Chaque minute d'arrêt coûte cher.`),
+CONTEXTE :
+- Nous sommes une entreprise de production industrielle.
+- Les équipements critiques doivent être maintenus en priorité.
+- La production fonctionne en continu.`),
                                             className: 'text-xs text-blue-600 hover:text-blue-800 underline',
                                             type: 'button'
                                         }, 'Charger le modèle par défaut')

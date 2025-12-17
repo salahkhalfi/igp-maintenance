@@ -63,6 +63,7 @@ export const tickets = sqliteTable('tickets', {
   reporter_name: text('reporter_name'), // Added in migration 0003
   assignee_name: text('assignee_name'), // Added in migration 0003
   scheduled_date: text('scheduled_date'), // Added in migration 0004
+  is_machine_down: integer('is_machine_down', { mode: 'boolean' }).default(false), // Added in migration 20251215000001
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
   completed_at: text('completed_at'),
@@ -196,5 +197,49 @@ export const pendingNotifications = sqliteTable('pending_notifications', {
   badge: text('badge'),
   data: text('data'), // JSON string
   sent_to_endpoints: text('sent_to_endpoints'), // JSON string array
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// --- PLANNING CATEGORIES TABLE ---
+export const planningCategories = sqliteTable('planning_categories', {
+  id: text('id').primaryKey(),
+  label: text('label').notNull(),
+  icon: text('icon').notNull(),
+  color: text('color').notNull(),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// --- PLANNING EVENTS TABLE ---
+export const planningEvents = sqliteTable('planning_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  date: text('date').notNull(),
+  type: text('type').notNull().references(() => planningCategories.id),
+  status: text('status').default('confirmed'),
+  title: text('title').notNull(),
+  details: text('details'),
+  time: text('time'),
+  show_on_tv: integer('show_on_tv', { mode: 'boolean' }).default(true),
+  image_url: text('image_url'),
+  is_popup: integer('is_popup', { mode: 'boolean' }).default(false),
+  display_duration: integer('display_duration').default(15),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    dateIdx: index('idx_planning_events_date').on(table.date),
+  };
+});
+
+// --- PLANNER NOTES TABLE ---
+export const plannerNotes = sqliteTable('planner_notes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  text: text('text').notNull(),
+  time: text('time'),
+  end_time: text('end_time'),
+  date: text('date'),
+  done: integer('done', { mode: 'boolean' }).default(false),
+  priority: text('priority').default('medium'),
+  notified: integer('notified', { mode: 'boolean' }).default(false),
+  user_id: integer('user_id'), // Optional, for personal notes
+  is_dashboard: integer('is_dashboard', { mode: 'boolean' }).default(false),
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });

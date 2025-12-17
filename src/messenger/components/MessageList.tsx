@@ -4,6 +4,91 @@ import { getInitials, getAvatarGradient, formatTime } from '../utils';
 import AudioPlayer from './AudioPlayer';
 import ActionCardComponent from './ActionCardComponent';
 
+// --- HELPER: Process content using Markdown (with robust fallback) ---
+// Defined outside component to prevent recreation on every render
+const processMarkdown = (content: string) => {
+        let text = content;
+
+        // 1. SECURITY FIRST: Escape HTML characters from the raw text to prevent XSS
+        // We do this BEFORE generating our own HTML tags so we don't escape our own tables/images.
+        text = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        // 2. Table Parser (Simple & Robust)
+        const tableRegex = /(?:^|\n)(\|.*\|(?:\n|$))(\|[-:| ]+\|(?:\n|$))((?:\|.*\|(?:\n|$))+)/g;
+        const processTable = (match: string, header: string, separator: string, body: string) => {
+            const parseRow = (row: string) => row.trim().split('|').filter(c => c !== '').map(c => c.trim());
+            const headers = parseRow(header);
+            const rows = body.trim().split('\n').map(parseRow);
+            let html = '<div class="overflow-x-auto my-3 rounded-lg border border-gray-200 shadow-sm"><table class="min-w-full divide-y divide-gray-200 text-sm">';
+            html += '<thead class="bg-gray-50"><tr>';
+            headers.forEach(h => {
+                 const safeHeader = h.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                 html += `<th class="px-3 py-3 text-left font-bold text-gray-900 tracking-wider whitespace-nowrap">${safeHeader}</th>`;
+            });
+            html += '</tr></thead><tbody class="bg-white divide-y divide-gray-200">';
+            rows.forEach(row => {
+                html += '<tr class="hover:bg-gray-50 transition-colors">';
+                row.forEach(cell => {
+                    let cellContent = cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+                    html += `<td class="px-3 py-3 whitespace-normal text-gray-700 min-w-[120px] leading-relaxed">${cellContent}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            return html;
+        };
+        // Apply Table Parser
+        text = text.replace(tableRegex, (match, h, s, b) => processTable(match, h, s, b));
+
+        text = text
+            // Bold (**text**)
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic (*text*)
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Headers (H2-H4)
+        .replace(/^#### (.*)$/gm, '<h4 class="font-bold text-base mt-2 mb-1 text-gray-800">$1</h4>')
+        .replace(/^### (.*)$/gm, '<h3 class="font-bold text-lg mt-3 mb-1 text-gray-900">$1</h3>')
+        .replace(/^## (.*)$/gm, '<h2 class="font-bold text-xl mt-4 mb-2 text-gray-900 border-b border-gray-200 pb-1">$1</h2>')
+        // Lists (- or * Item)
+        .replace(/^\s*[-*]\s+(.*)$/gm, '<li class="ml-4 list-disc mb-0.5">$1</li>')
+        // Images ![Alt](URL) - Robust regex to handle spaces and special chars in URL if encoded
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+            let validUrl = url.trim();
+            // Fix AI hallucination of absolute 'api' domain (handles any domain prefix for internal api routes)
+            validUrl = validUrl.replace(/^https?:\/\/(?:www\.)?[\w.-]+\/api\//, '/api/');
+            return `<img src="${validUrl}" alt="${alt}" class="rounded-lg max-w-full h-auto my-2 shadow-md border border-gray-200" />`;
+        })
+        // Links [Text](URL)
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+            let validUrl = url.trim();
+            // Fix AI hallucination of absolute 'api' domain (handles any domain prefix for internal api routes)
+            validUrl = validUrl.replace(/^https?:\/\/(?:www\.)?[\w.-]+\/api\//, '/api/');
+            return `<a href="${validUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">$1</a>`;
+        })
+        // Blockquotes (> text)
+        .replace(/^>\s+(.*)$/gm, '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
+        // Fix: Remove newlines immediately after headers and list items to prevent double spacing (gap reduction)
+        .replace(/(<\/h[2-4]>|<\/li>)\n/g, '$1')
+        // Newlines to BR
+        .replace(/\n/g, '<br/>');
+    return text;
+};
+
+// --- MEMOIZED SUB-COMPONENT: AI Message Content ---
+// This prevents regex reprocessing on every keystroke when parent re-renders
+const AIMessageContent = React.memo(({ content }: { content: string }) => {
+    const html = processMarkdown(content);
+    return (
+        <div 
+            className="text-[15px] leading-snug break-words pr-10 pb-1 font-medium tracking-wide prose-sm"
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
+});
+
 interface MessageListProps {
     messages: Message[];
     participants: Participant[];
@@ -178,21 +263,21 @@ const MessageList: React.FC<MessageListProps> = ({
             const avatarUrl = msg.sender_avatar_key 
                 ? `/api/auth/avatar/${msg.sender_id}?v=${msg.sender_avatar_key}` // Stable cache busting
                 : null;
+            
+            const isAI = msg.sender_avatar_key === 'ai_avatar';
+            const bubbleClass = isMe 
+                ? 'message-bubble-me text-white rounded-tr-sm' 
+                : isAI 
+                    ? 'bg-white text-gray-900 border border-gray-200 shadow-md rounded-tl-sm' // AI Light Mode
+                    : 'message-bubble-them text-gray-100 rounded-tl-sm'; // Dark Mode for humans
 
             result.push(
                 <div key={msg.id} className={`flex mb-6 ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in group items-end gap-3`}>
                     
-                    {/* Avatar for OTHERS (Left) */}
-                    {!isMe && (
+                    {/* Avatar for OTHERS (Left) - HIDDEN FOR AI */ }
+                    {!isMe && !isAI && (
                         <div className="flex-shrink-0 mb-1">
-                            {msg.sender_avatar_key === 'ai_avatar' ? (
-                                <div 
-                                    className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-700 flex items-center justify-center text-white text-sm font-bold shadow-md border border-white/10 cursor-pointer hover:scale-110 transition-transform"
-                                    title="Expert IGP"
-                                >
-                                    <i className="fas fa-robot"></i>
-                                </div>
-                            ) : avatarUrl ? (
+                            {avatarUrl ? (
                                 <img 
                                     src={avatarUrl} 
                                     alt={msg.sender_name}
@@ -212,7 +297,7 @@ const MessageList: React.FC<MessageListProps> = ({
                         </div>
                     )}
 
-                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%] md:max-w-[65%] min-w-0`}>
+                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${isAI ? 'max-w-full w-full pr-4' : 'max-w-[75%] md:max-w-[65%]'} min-w-0`}>
                         {!isMe && (
                             <div 
                                 onClick={() => onPrivateChat(msg.sender_id)}
@@ -223,7 +308,7 @@ const MessageList: React.FC<MessageListProps> = ({
                             </div>
                         )}
                         
-                        <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${isMe ? 'message-bubble-me text-white rounded-tr-sm' : 'message-bubble-them text-gray-100 rounded-tl-sm'}`}>
+                        <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${bubbleClass}`}>
                             {(isGlobalAdmin || isMe) && (
                                 <>
                                     {!msg.action_card && (
@@ -331,9 +416,13 @@ const MessageList: React.FC<MessageListProps> = ({
                                     )}
                                 </div>
                             ) : (
-                                <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
-                                    {msg.content}
-                                </div>
+                                isAI ? (
+                                    <AIMessageContent content={msg.content} />
+                                ) : (
+                                    <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
+                                        {msg.content}
+                                    </div>
+                                )
                             )}
 
                             {msg.action_card && (
@@ -346,7 +435,7 @@ const MessageList: React.FC<MessageListProps> = ({
                                 />
                             )}
                             
-                            <div className={`text-[10px] absolute bottom-1.5 right-3 flex items-center gap-1.5 font-bold tracking-wide ${isMe ? 'text-emerald-100/60' : 'text-gray-500'}`}>
+                            <div className={`text-[10px] absolute bottom-1.5 right-3 flex items-center gap-1.5 font-bold tracking-wide ${isMe ? 'text-emerald-100/60' : isAI ? 'text-gray-400' : 'text-gray-500'}`}>
                                 <span>{formatTime(msg.created_at)}</span>
                                 {isMe && (
                                     <i className={`fas fa-check-double text-[10px] ${isRead ? 'text-white' : 'text-emerald-200/40'}`}></i>

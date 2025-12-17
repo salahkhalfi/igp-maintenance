@@ -15,6 +15,148 @@ interface Message {
   timestamp: Date;
 }
 
+// --- HELPER FUNCTION: PURE PARSING LOGIC ---
+// Extracted outside component to be pure and testable
+const parseAndSanitizeMarkdown = (content: string) => {
+    let clean = content;
+    
+    // 0. DOMAIN SANITIZER (FIREWALL) - FOR EVER FIX
+    // Brutally strip ANY domain that precedes /api/media to prevent hallucinations (igpglass.com, example.com, etc.)
+    // Transforms "https://igpglass.com/api/media/25" -> "/api/media/25"
+    clean = clean.replace(/https?:\/\/(?:www\.)?[\w.-]+\/api\/media/g, '/api/media');
+
+    // 1. Remove code block markers (```html ... ```)
+    if (clean.includes('```')) {
+        clean = clean.replace(/```html/g, '').replace(/```/g, '');
+    }
+    
+    // 2. Unescape escaped HTML entities if needed
+    if (clean.includes('&lt;') && clean.includes('&gt;')) {
+        // Safe DOM parser approach (doesn't execute scripts)
+        const txt = document.createElement('textarea');
+        txt.innerHTML = clean;
+        clean = txt.value;
+    }
+
+    // 3. Simple Markdown Parser (Images, Links, Bold, Newlines)
+    
+    // Images: ![Alt](URL) -> <img src="URL" alt="Alt" ... />
+    clean = clean.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+        let validUrl = url.trim();
+        // Fix AI hallucination of absolute 'api' domain (Redundant check but safe to keep)
+        if (validUrl.startsWith('https://api/') || validUrl.startsWith('http://api/')) {
+            validUrl = validUrl.replace(/^https?:\/\/api\//, '/api/');
+        }
+        return `<img src="${validUrl}" alt="${alt}" class="max-w-full rounded-lg my-2 border border-gray-200 shadow-sm" />`;
+    });
+    
+    // Links: [Text](URL) -> <a href="URL" ...>Text</a>
+    clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
+        let validUrl = url.trim();
+        // Fix AI hallucination of absolute 'api' domain
+        if (validUrl.startsWith('https://api/') || validUrl.startsWith('http://api/')) {
+            validUrl = validUrl.replace(/^https?:\/\/api\//, '/api/');
+        }
+        return `<a href="${validUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-semibold hover:text-blue-800">${text}</a>`;
+    });
+    
+    // 4. Table Parser (Simple & Robust)
+    // Detects blocks of Markdown tables and converts them to responsive HTML tables
+    // Matches: Header row + Separator row + Data rows
+    // | A | B |
+    // |---|---|
+    // | C | D |
+    
+    // Pattern explanation:
+    // (^|\n): Start of string or newline
+    // (\|.*\|(?:\n|$)): Header row
+    // (\|[-:| ]+\|(?:\n|$)): Separator row (must contain dashes)
+    // ((?:\|.*\|(?:\n|$))+): Body rows (one or more)
+    const tableRegex = /(?:^|\n)(\|.*\|(?:\n|$))(\|[-:| ]+\|(?:\n|$))((?:\|.*\|(?:\n|$))+)/g;
+    
+    // Function to process a single table block
+    const processTable = (match: string, header: string, separator: string, body: string) => {
+        const parseRow = (row: string) => row.trim().split('|').filter(c => c !== '').map(c => c.trim());
+        
+        const headers = parseRow(header);
+        const rows = body.trim().split('\n').map(parseRow);
+        
+        let html = '<div class="overflow-x-auto my-3 rounded-lg border border-gray-200 shadow-sm"><table class="min-w-full divide-y divide-gray-200 text-sm">';
+        
+        // Header
+        html += '<thead class="bg-gray-50"><tr>';
+        headers.forEach(h => {
+             // Recursive bold parsing for headers too
+             const safeHeader = h.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+             html += `<th class="px-3 py-3 text-left font-bold text-gray-900 tracking-wider whitespace-nowrap">${safeHeader}</th>`;
+        });
+        html += '</tr></thead>';
+    
+        // Body
+        html += '<tbody class="bg-white divide-y divide-gray-200">';
+        rows.forEach(row => {
+            html += '<tr class="hover:bg-gray-50 transition-colors">';
+            row.forEach(cell => {
+                // Parse bold/links inside cells recursively
+                let cellContent = cell
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+                    
+                html += `<td class="px-3 py-3 whitespace-normal text-gray-700 min-w-[120px] leading-relaxed">${cellContent}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        
+        return html;
+    };
+
+    // Apply Table Parser BEFORE other replacements (to preserve structure)
+    // We loop to find matches because the regex is global and complex
+    // Simple approach: Replace the whole block
+    clean = clean.replace(tableRegex, (match, h, s, b) => processTable(match, h, s, b));
+
+    // Bold: **Text** -> <strong>Text</strong>
+    clean = clean.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Newlines: \n -> <br/>
+    clean = clean.replace(/\n/g, '<br/>');
+    
+    return clean;
+};
+
+// --- OPTIMIZED SUB-COMPONENT: MESSAGE BUBBLE ---
+// Wrapped in React.memo to prevent re-rendering unless message props change
+const ChatMessageItem = React.memo(({ msg }: { msg: Message }) => {
+    return (
+        <div className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+            {msg.role !== 'system' && (
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                    msg.role === 'assistant' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'
+                }`}>
+                    {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
+                </div>
+            )}
+            
+            <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
+                msg.role === 'user' 
+                  ? 'bg-purple-600 text-white rounded-tr-none' 
+                  : msg.role === 'system'
+                  ? 'bg-red-50 text-red-600 border border-red-100 w-full text-center'
+                  : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none whitespace-pre-wrap overflow-hidden'
+            }`}>
+                {msg.role === 'assistant' ? (
+                  /* Render HTML for assistant messages (Optimized: Parsing logic only runs once per message render) */
+                  <div dangerouslySetInnerHTML={{ __html: parseAndSanitizeMarkdown(msg.content) }} />
+                ) : (
+                  msg.content
+                )}
+            </div>
+        </div>
+    );
+});
+
+// --- MAIN COMPONENT ---
 export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose, ticket }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -35,7 +177,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose, ticke
         {
           id: 'init-1',
           role: 'assistant',
-          content: `Bonjour. Je suis l'Expert Industriel IGP. Comment puis-je vous aider concernant le ticket #${ticket.id} : "${ticket.title}" ?`,
+          content: `Bonjour. Je suis l'Expert Industriel. Comment puis-je vous aider concernant le ticket #${ticket.id} : "${ticket.title}" ?`,
           timestamp: new Date()
         }
       ]);
@@ -139,29 +281,9 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose, ticke
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
           {messages.map((msg) => (
-            <div 
-              key={msg.id} 
-              className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-            >
-              {msg.role !== 'system' && (
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                  msg.role === 'assistant' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {msg.role === 'assistant' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
-                </div>
-              )}
-              
-              <div className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-sm ${
-                msg.role === 'user' 
-                  ? 'bg-purple-600 text-white rounded-tr-none' 
-                  : msg.role === 'system'
-                  ? 'bg-red-50 text-red-600 border border-red-100 w-full text-center'
-                  : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none whitespace-pre-wrap'
-              }`}>
-                {msg.content}
-              </div>
-            </div>
+            <ChatMessageItem key={msg.id} msg={msg} />
           ))}
+          
           {isLoading && (
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">

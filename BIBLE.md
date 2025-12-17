@@ -52,6 +52,13 @@
         *   IF YES -> **WARNING/VETO**.
         *   IF NO -> **PROCEED**.
 
+4.  **GLOBAL IMPACT CHECK (The "Right-Left" Principle)**
+    *   **The Trap**: "Fixing Right to Break Left" (Tunnel Vision).
+    *   **The Law**: NEVER apply a technical fix without simulating the **Global User Context**.
+    *   **The Check**: "Does this fix disrupt active states (Audio, Drafts, Scroll, Input)?"
+        *   *Example*: `window.location.reload()` fixes data sync but kills the Audio Player -> **REJECTED**.
+    *   **Sanction**: A fix that breaks UX flow is a REGRESSION.
+
 ---
 
 ## 🟧 MODULE 2: CRITICAL AXIOMS (TECHNICAL LAWS)
@@ -83,6 +90,12 @@
 *   **EXPLICIT > IMPLICIT**: Name variables for the next reader, not for the compiler.
 *   **PARITY OVER ELEGANCE**: When integrating legacy systems, COPY EXACTLY (1:1). Refactor LATER.
 *   **CHESTERTON'S FENCE**: Never delete code you don't fully understand.
+
+### [TECHNICAL DEBT (ZERO TOLERANCE)]
+*   **NO "QUICK HACKS"**: A "temporary fix" is a permanent bug. Do it right or don't do it.
+*   **ARCHITECTURAL INTEGRITY**: Refactor > Patch. Memoize expensive operations. Isolate logic from UI.
+*   **NO REGRETS**: If a solution feels "dirty", it IS dirty. Stop. Rethink. Rewrite.
+*   **FUTURE PROOF**: Code for the maintainer, not the deadline.
 
 ---
 

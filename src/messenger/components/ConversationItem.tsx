@@ -6,23 +6,78 @@ interface ConversationItemProps {
     conversation: Conversation;
     isActive: boolean;
     onSelect: (id: string) => void;
+    isPinned?: boolean;
+    onPin?: (id: string) => void;
+    isReordering?: boolean;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
 }
 
-const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isActive, onSelect }) => {
+const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, isActive, onSelect, isPinned, onPin, isReordering, onMoveUp, onMoveDown }) => {
     const avatarGradient = conversation.name ? getAvatarGradient(conversation.name) : 'bg-gray-800';
+
+    const handlePinClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onPin) onPin(conversation.id);
+    };
+
+    const handleMoveUpClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onMoveUp) onMoveUp();
+    };
+
+    const handleMoveDownClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onMoveDown) onMoveDown();
+    };
 
     return (
         <div 
-            onClick={() => onSelect(conversation.id)} 
+            onClick={() => !isReordering && onSelect(conversation.id)} 
             className={`group relative p-4 rounded-2xl cursor-pointer transition-all duration-500 border backdrop-blur-sm
                 ${isActive 
                     ? 'bg-gradient-to-r from-emerald-900/20 to-emerald-900/5 border-emerald-500/30 shadow-[0_8px_30px_rgba(0,0,0,0.5)] translate-x-2' 
                     : 'bg-[#111111]/90 border-white/5 hover:bg-[#161616] hover:border-white/10 hover:shadow-xl hover:shadow-black/50 hover:-translate-y-1'
-                }`}
+                } ${isReordering ? 'cursor-move border-dashed border-white/20' : ''}`}
         >
+            {/* REORDER OVERLAY */}
+            {isReordering && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-30">
+                    <button 
+                        onClick={handleMoveUpClick}
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-colors"
+                        title="Monter"
+                    >
+                        <i className="fas fa-chevron-up"></i>
+                    </button>
+                    <button 
+                        onClick={handleMoveDownClick}
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-colors"
+                        title="Descendre"
+                    >
+                        <i className="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            )}
+
             {/* Glowing Active Border */}
             {isActive && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1 bg-emerald-500 rounded-r-full shadow-[0_0_15px_rgba(16,185,129,0.6)]"></div>
+            )}
+
+            {/* PIN BUTTON (Visible on Hover or if Pinned) */}
+            {onPin && (
+                <button 
+                    onClick={handlePinClick}
+                    className={`absolute -top-2 -left-2 w-7 h-7 rounded-full flex items-center justify-center border-2 border-[#0a0a0a] shadow-lg z-20 transition-all duration-300
+                        ${isPinned 
+                            ? 'bg-emerald-500 text-white scale-100' 
+                            : 'bg-[#222] text-gray-500 opacity-0 group-hover:opacity-100 hover:bg-white hover:text-black scale-90 group-hover:scale-100'
+                        }`}
+                    title={isPinned ? "Détacher" : "Épingler"}
+                >
+                    <i className="fas fa-thumbtack text-[10px]"></i>
+                </button>
             )}
 
             <div className="flex items-start gap-4">

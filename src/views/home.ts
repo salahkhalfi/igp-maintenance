@@ -19,6 +19,7 @@ export const homeHTML = `
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/static/js/utils.js"></script>
     <script src="/static/js/components/MessagingSidebar.js?v=3.0.2"></script>
@@ -34,13 +35,13 @@ export const homeHTML = `
     <script src="/static/js/components/LoginForm.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js?v=3.0.4"></script>
-    <script src="/static/js/components/TicketDetailsModal.js"></script>
+    <script src="/static/js/components/TicketDetailsModal_v3.js?v=3.2.0"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
     <script src="/static/js/components/MachineManagementModal.js"></script>
     <script src="/static/js/components/RoleDropdown.js"></script>
-    <script src="/static/js/components/SystemSettingsModal.js"></script>
+    <script src="/static/js/components/SystemSettingsModal.js?v=3.0.5"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
-    <script src="/static/js/components/AIChatModal.js"></script>
+    <script src="/static/js/components/AIChatModal_v4.js?v=3.1.0"></script>
     <script src="/static/js/components/OverdueTicketsModal.js"></script>
     <script src="/static/js/components/PushDevicesModal.js"></script>
     <!-- MISSING SCRIPTS RESTORED -->
@@ -59,8 +60,8 @@ export const homeHTML = `
     <script src="/static/js/components/UserList.js"></script>
     <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
     <script src="/static/js/components/VoiceTicketFab.js"></script>
-    <script src="/static/js/components/MainApp.js?v=2.8.3"></script>
-    <script src="/static/js/components/App.js?v=2.8.3"></script>
+    <script src="/static/js/components/MainApp.js?v=3.0.5"></script>
+    <script src="/static/js/components/App.js?v=3.0.5"></script>
     <style>
         /* FIXED BACKGROUND LAYER - Solves mobile/resize glitching */
         #app-background {
@@ -352,6 +353,41 @@ export const homeHTML = `
         .overflow-x-auto::-webkit-scrollbar-thumb:hover {
             background: rgba(148, 163, 184, 0.7);
         }
+
+        /* --- MARKDOWN STYLES FOR AI CHAT --- */
+        .prose-sm { font-size: 0.95rem; line-height: 1.5; }
+        .prose-sm p { margin-bottom: 0.75em; }
+        .prose-sm p:last-child { margin-bottom: 0; }
+        .prose-sm ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .prose-sm ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
+        .prose-sm li { margin-bottom: 0.25em; }
+        .prose-sm strong { font-weight: 700; color: inherit; }
+        .prose-sm em { font-style: italic; }
+        .prose-sm code { background-color: rgba(0,0,0,0.08); padding: 0.1em 0.3em; border-radius: 0.3em; font-family: monospace; font-size: 0.9em; color: #d63384; }
+        .prose-sm pre { background-color: #1e293b; color: #f8fafc; padding: 1em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 1em; font-size: 0.85em; }
+        .prose-sm pre code { background-color: transparent; padding: 0; color: inherit; white-space: pre-wrap; word-break: break-all; }
+        .prose-sm h1, .prose-sm h2, .prose-sm h3, .prose-sm h4 { font-weight: 700; margin-top: 1.2em; margin-bottom: 0.6em; line-height: 1.3; }
+        .prose-sm h1 { font-size: 1.4em; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 0.3em; }
+        .prose-sm h2 { font-size: 1.25em; }
+        .prose-sm h3 { font-size: 1.1em; }
+        .prose-sm blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; font-style: italic; color: #4b5563; margin-bottom: 1em; }
+        .prose-sm a { color: #3b82f6; text-decoration: underline; }
+        .prose-sm a:hover { color: #2563eb; }
+        
+        /* Table Styles */
+        .prose-sm table { width: 100%; border-collapse: collapse; margin-bottom: 1em; font-size: 0.9em; }
+        .prose-sm th, .prose-sm td { border: 1px solid #e2e8f0; padding: 0.5em 0.75em; text-align: left; }
+        .prose-sm th { background-color: #f8fafc; font-weight: 600; }
+        .prose-sm tr:nth-child(even) { background-color: #f1f5f9; }
+
+        /* Dark mode adaptation for user messages */
+        .bg-purple-600 .prose-sm code { background-color: rgba(255,255,255,0.2); color: #fff; }
+        .bg-purple-600 .prose-sm pre { background-color: rgba(0,0,0,0.3); }
+        .bg-purple-600 .prose-sm blockquote { border-left-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.9); }
+        .bg-purple-600 .prose-sm a { color: #bfdbfe; }
+        .bg-purple-600 .prose-sm th { background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .bg-purple-600 .prose-sm td { border-color: rgba(255,255,255,0.2); }
+        .bg-purple-600 .prose-sm tr:nth-child(even) { background-color: rgba(255,255,255,0.05); }
 
         /* MOBILE RESPONSIVE STYLES */
         @media (max-width: 1024px) {

@@ -272,12 +272,25 @@ const MessagingChatWindow = ({
         }
     };
 
-    // Scroll to bottom on new messages
+    // Scroll to bottom logic
     React.useEffect(() => {
-        if (activeTab === 'private' && selectedContact) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        // Initial scroll on mount or tab change (Instant)
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
         }
-    }, [messages, activeTab, selectedContact]);
+    }, [activeTab, selectedContact]);
+
+    React.useEffect(() => {
+        // Scroll on new messages (Smooth)
+        if (messagesEndRef.current) {
+            // Check if we are already near bottom to decide if we should force scroll?
+            // For now, always scroll to latest message as per chat app standard
+            // Use timeout to ensure DOM update is complete (especially for images/layout shifts)
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    }, [messages]);
 
     // Init Dictation & Online Status
     React.useEffect(() => {

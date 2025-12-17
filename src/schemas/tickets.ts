@@ -10,6 +10,7 @@ export const createTicketSchema = z.object({
   }),
   assigned_to: z.coerce.number().int().optional().nullable(),
   scheduled_date: z.string().optional().nullable(),
+  is_machine_down: z.boolean().optional().default(false),
   created_at: z.string().optional()
 });
 
@@ -20,6 +21,7 @@ export const updateTicketSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
   assigned_to: z.coerce.number().int().optional().nullable(),
   scheduled_date: z.string().optional().nullable(),
+  is_machine_down: z.boolean().optional(),
   comment: z.string().optional()
 });
 

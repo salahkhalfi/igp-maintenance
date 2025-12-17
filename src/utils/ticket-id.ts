@@ -68,10 +68,10 @@ export function isValidTicketId(ticketId: string): boolean {
   // Note: Ce pattern est identique au currentPattern (4 chiffres)
   // Pas besoin de pattern séparé car structure identique
   
-  // Format Legacy v2.9.3: ex IGP-2025-0001 (conservé pour compatibilité)
+  // Format Legacy v2.9.3: ex COMP-2025-0001 (conservé pour compatibilité)
   const legacyV2Pattern = /^[A-Z]{3}-\d{4}-\d{4}$/;
   
-  // Format Legacy Ancien: ex IGP-PDE-7500-20231025-001 (conservé pour compatibilité)
+  // Format Legacy Ancien: ex COMP-PDE-7500-20231025-001 (conservé pour compatibilité)
   const legacyOldPattern = /^[A-Z]{3}-[A-Z0-9]+-[A-Z0-9]+-\d{8}-\d{3}$/;
   
   return currentPattern.test(ticketId) || legacyV2Pattern.test(ticketId) || legacyOldPattern.test(ticketId);

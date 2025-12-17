@@ -25,6 +25,8 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
 
     // Référence pour le scroll
     const scrollContainerRef = React.useRef(null);
+    const fileInputRef = React.useRef(null);
+    const [importing, setImporting] = React.useState(false);
 
     // Gestion touche Escape pour fermer le modal
     React.useEffect(() => {
@@ -39,6 +41,98 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
             return () => document.removeEventListener('keydown', handleEscape);
         }
     }, [show, onClose]);
+
+    const handleImportClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!confirm(`Importer les machines depuis "${file.name}" ?\n\nFormat attendu (CSV): type, model, serial, location\nLes doublons de numéro de série seront ignorés.`)) {
+            e.target.value = '';
+            return;
+        }
+
+        setImporting(true);
+        const reader = new FileReader();
+        
+        reader.onload = async (event) => {
+            try {
+                const text = event.target.result;
+                const lines = text.split(/\r\n|\n/);
+                
+                if (lines.length < 2) {
+                    throw new Error("Le fichier semble vide ou sans en-tête.");
+                }
+
+                // Parse headers (flexible mapping)
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/["']/g, ''));
+                
+                let successCount = 0;
+                let errorCount = 0;
+                let skippedCount = 0;
+
+                // Process rows
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    
+                    // Basic CSV split (handling simple commas)
+                    const values = lines[i].split(',').map(v => v.trim().replace(/["']/g, ''));
+                    const row = {};
+                    headers.forEach((h, idx) => {
+                        if (values[idx]) row[h] = values[idx];
+                    });
+
+                    // Map known columns to API payload
+                    // Supports EN and FR headers
+                    const payload = {
+                        machine_type: row['type'] || row['machine_type'] || row['nom'] || row['equipement'],
+                        model: row['model'] || row['modele'],
+                        serial_number: row['serial'] || row['serial_number'] || row['serie'] || row['sn'],
+                        location: row['location'] || row['emplacement'] || row['zone'],
+                        manufacturer: row['manufacturer'] || row['fabricant'] || row['marque'],
+                        year: (row['year'] || row['annee']) ? parseInt(row['year'] || row['annee']) : null,
+                        technical_specs: row['specs'] || row['description'] || row['details']
+                    };
+
+                    if (!payload.machine_type) {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    try {
+                        await axios.post(API_URL + "/machines", payload);
+                        successCount++;
+                    } catch (err) {
+                        console.warn(`Row ${i} failed:`, err);
+                        // If duplicate serial (409 or 500 constraint), count as skipped/error
+                        errorCount++;
+                    }
+                }
+
+                alert(`Import terminé !\n\n✅ Ajoutées: ${successCount}\n❌ Erreurs: ${errorCount}\n⏭️ Ignorées: ${skippedCount}`);
+                onRefresh();
+                
+            } catch (err) {
+                alert("Erreur critique lors de l'import: " + err.message);
+            } finally {
+                setImporting(false);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+        };
+
+        reader.onerror = () => {
+            alert("Erreur de lecture du fichier.");
+            setImporting(false);
+            e.target.value = '';
+        };
+
+        reader.readAsText(file);
+    };
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -174,12 +268,29 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
             ),
             React.createElement("div", { className: "flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50", ref: scrollContainerRef },
                 React.createElement("div", { className: "mb-6 flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl shadow-sm border border-gray-100" },
-                    currentUser?.role === "admin" ? React.createElement("button", {
-                        onClick: () => setShowCreateForm(!showCreateForm),
-                        className: "px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2"
-                    }, 
-                        React.createElement("i", { className: showCreateForm ? "fas fa-minus" : "fas fa-plus" }),
-                        showCreateForm ? "Fermer le formulaire" : "Nouvelle Machine"
+                    currentUser?.role === "admin" ? React.createElement(React.Fragment, {},
+                        React.createElement("button", {
+                            onClick: () => setShowCreateForm(!showCreateForm),
+                            className: "px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2"
+                        }, 
+                            React.createElement("i", { className: showCreateForm ? "fas fa-minus" : "fas fa-plus" }),
+                            showCreateForm ? "Fermer" : "Nouvelle Machine"
+                        ),
+                        React.createElement("button", {
+                            onClick: handleImportClick,
+                            disabled: importing,
+                            className: `px-4 py-2.5 ${importing ? 'bg-gray-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2`
+                        }, 
+                            React.createElement("i", { className: importing ? "fas fa-spinner fa-spin" : "fas fa-file-import" }),
+                            importing ? "Import..." : "Import CSV"
+                        ),
+                        React.createElement("input", {
+                            type: "file",
+                            accept: ".csv",
+                            ref: fileInputRef,
+                            style: { display: 'none' },
+                            onChange: handleFileChange
+                        })
                     ) : null,
                     React.createElement("div", { className: "relative flex-1" },
                         React.createElement("i", { className: "fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" }),

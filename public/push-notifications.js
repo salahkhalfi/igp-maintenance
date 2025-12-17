@@ -304,21 +304,30 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
             console.log('🔊 [SW-MSG] Demande de son reçue du Service Worker');
+            
             // Tenter de jouer le son via un Audio global
             try {
                 const audio = new Audio('/static/notification.mp3');
                 audio.volume = 1.0;
                 audio.play().catch(e => {
-                    console.log('❌ [SW-MSG] Impossible de jouer le son (Autoplay bloqué ?):', e);
+                    if (e.name === 'NotAllowedError') {
+                        console.warn('🔇 [SW-MSG] Son bloqué par le navigateur (Autoplay policy). Attente d\'interaction utilisateur.');
+                    } else {
+                        console.warn('⚠️ [SW-MSG] Erreur lecture audio:', e);
+                    }
                 });
                 
                 // Si c'est un appel, vibrer aussi via JS
                 if ('vibrate' in navigator) {
-                    if (event.data.isCall) {
-                        navigator.vibrate([500, 200, 500, 200, 500]);
-                    } else {
-                        // Notification standard : Vibrer aussi (Demande utilisateur)
-                        navigator.vibrate([200, 100, 200]);
+                    try {
+                        if (event.data.isCall) {
+                            navigator.vibrate([500, 200, 500, 200, 500]);
+                        } else {
+                            // Notification standard : Vibrer aussi (Demande utilisateur)
+                            navigator.vibrate([200, 100, 200]);
+                        }
+                    } catch (vibrateErr) {
+                         // Ignorer silencieusement les erreurs de vibration (souvent bloquées aussi)
                     }
                 }
             } catch (e) {

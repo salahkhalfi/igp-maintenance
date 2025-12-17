@@ -81,6 +81,23 @@ export const assignTicket = async (id: number, techId: number | null): Promise<T
   return data.ticket;
 };
 
+export const updateTicketMachineStatus = async (id: number, isMachineDown: boolean): Promise<Ticket> => {
+  const res = await client.api.tickets[':id'].$patch(
+    { 
+      param: { id: id.toString() },
+      json: { is_machine_down: isMachineDown }
+    },
+    { headers: getAuthHeaders() }
+  );
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error((error as any).error || 'Failed to update machine status');
+  }
+  const data = await res.json();
+  return data.ticket;
+};
+
 export const getTechnicians = async (): Promise<User[]> => {
   // We fetch all users and filter for technical roles
   // Ideally this should be a specific endpoint or filter param in getUsers
@@ -142,6 +159,7 @@ export const ticketService = {
   getById: getTicketDetails,
   create: createTicket,
   updateStatus: updateTicketStatus,
+  updateMachineStatus: updateTicketMachineStatus,
   assign: assignTicket,
   getTechnicians,
   getMachines,

@@ -112,6 +112,16 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
 
     const handleClearChat = async () => {
         if (!confirm("ATTENTION : Voulez-vous supprimer TOUS les messages de cette discussion ? Cette action est irréversible.")) return;
+        
+        // Optimistic UI for AI Chat
+        if (conversationId === 'expert_ai') {
+            localStorage.removeItem(`ai_chat_history_${currentUserId}`);
+            // Force reload because we can't easily reach parent state from here without complex props
+            // The user accepts a reload for a "Reset" action usually.
+            window.location.reload();
+            return;
+        }
+
         try {
             await axios.delete(`/api/v2/chat/conversations/${conversationId}/messages`);
             onClose();

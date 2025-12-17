@@ -11,7 +11,7 @@ import { fr } from 'date-fns/locale';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { AIChatModal } from './AIChatModal';
-import { getTicketDetails, updateTicketStatus, assignTicket, uploadTicketMedia, getTechnicians } from '../services/ticketService';
+import { getTicketDetails, updateTicketStatus, assignTicket, uploadTicketMedia, getTechnicians, updateTicketMachineStatus } from '../services/ticketService';
 import { commentService } from '../services/commentService';
 import { Ticket, TicketStatus, TicketPriority, UserRole } from '../types';
 
@@ -86,6 +86,14 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
     }
   });
 
+  const machineStatusMutation = useMutation({
+    mutationFn: ({ id, isDown }: { id: number, isDown: boolean }) => updateTicketMachineStatus(id, isDown),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    }
+  });
+
   const commentMutation = useMutation({
     mutationFn: async () => {
       // Note: Audio upload logic for comments is simplified here.
@@ -124,11 +132,25 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
   // Helpers pour l'UI
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
-      case 'open': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'received': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'diagnostic': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'in_progress': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'resolved': return 'bg-green-100 text-green-700 border-green-200';
-      case 'closed': return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'waiting_parts': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'completed': return 'bg-green-100 text-green-700 border-green-200';
+      case 'archived': return 'bg-gray-100 text-gray-700 border-gray-200';
       default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const getStatusLabel = (status: TicketStatus) => {
+    switch (status) {
+      case 'received': return 'OUVERT';
+      case 'diagnostic': return 'DIAGNOSTIC';
+      case 'in_progress': return 'EN COURS';
+      case 'waiting_parts': return 'EN ATTENTE';
+      case 'completed': return 'TERMINÉ';
+      case 'archived': return 'ARCHIVÉ';
+      default: return status.toUpperCase();
     }
   };
 
@@ -169,7 +191,7 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                     {ticket.priority.toUpperCase()}
                   </span>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(ticket.status)}`}>
-                    {ticket.status === 'in_progress' ? 'EN COURS' : ticket.status === 'resolved' ? 'RÉSOLU' : ticket.status.toUpperCase()}
+                    {getStatusLabel(ticket.status)}
                   </span>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 line-clamp-1">{ticket.title}</h2>
@@ -272,23 +294,109 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                     </div>
 
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                      <h3 className="text-sm font-bold text-gray-900 mb-4">Statut du ticket</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-gray-900">Statut du ticket</h3>
+                        {currentUserRole === 'operator' && (
+                          <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-md font-medium">
+                            Réservé aux techniciens
+                          </span>
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-2">
-                        {['open', 'in_progress', 'resolved'].map((s) => (
+                        {[
+                          { val: 'received', label: 'OUVERT' },
+                          { val: 'in_progress', label: 'EN COURS' },
+                          { val: 'waiting_parts', label: 'EN ATTENTE' },
+                          { val: 'completed', label: 'TERMINÉ' }
+                        ].map((s) => (
                           <button
-                            key={s}
-                            onClick={() => statusMutation.mutate({ id: ticket.id, status: s as TicketStatus })}
-                            disabled={ticket.status === s || statusMutation.isPending}
+                            key={s.val}
+                            onClick={() => statusMutation.mutate({ id: ticket.id, status: s.val as TicketStatus })}
+                            disabled={ticket.status === s.val || statusMutation.isPending || currentUserRole === 'operator'}
                             className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
-                              ticket.status === s 
-                                ? getStatusColor(s as TicketStatus) + ' ring-2 ring-offset-1 ring-blue-500'
-                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                              ticket.status === s.val 
+                                ? getStatusColor(s.val as TicketStatus) + ' ring-2 ring-offset-1 ring-blue-500'
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
                             }`}
                           >
-                            {s === 'in_progress' ? 'EN COURS' : s === 'resolved' ? 'RÉSOLU' : 'OUVERT'}
+                            {s.label}
                           </button>
                         ))}
                       </div>
+
+                      {/* Machine Status Toggle removed from here - moved to dedicated block below */}
+                    </div>
+                  </div>
+
+                  {/* Machine Status Block - Added explicitly to be visible on ALL tickets */}
+                  <div className={`p-6 rounded-xl shadow-sm border transition-colors duration-300 ${
+                    ticket.is_machine_down 
+                      ? 'bg-red-50 border-red-200' 
+                      : 'bg-white border-gray-100'
+                  }`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className={`text-sm font-bold uppercase tracking-wide flex items-center gap-2 ${ticket.is_machine_down ? 'text-red-800' : 'text-gray-900'}`}>
+                        {ticket.is_machine_down && <AlertTriangle className="w-4 h-4" />}
+                        État de la machine
+                      </h3>
+                      {ticket.is_machine_down ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold animate-pulse border border-red-200">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          MACHINE À L'ARRÊT
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          OPÉRATIONNELLE
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
+                          ticket.is_machine_down ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                        }`}>
+                          {ticket.is_machine_down ? <AlertTriangle className="w-6 h-6" /> : <CheckCircle className="w-6 h-6" />}
+                        </div>
+                        <div>
+                          <p className={`font-bold text-lg ${ticket.is_machine_down ? 'text-red-900' : 'text-gray-900'}`}>
+                            {ticket.is_machine_down ? 'Machine hors service' : 'Machine fonctionnelle'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {ticket.is_machine_down 
+                              ? 'Cette machine est actuellement déclarée en panne.' 
+                              : 'Aucun arrêt machine signalé pour ce ticket.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => machineStatusMutation.mutate({ id: ticket.id, isDown: !ticket.is_machine_down })}
+                        disabled={machineStatusMutation.isPending}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 min-w-[180px] ${
+                          ticket.is_machine_down
+                            ? 'bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 hover:shadow-md'
+                            : 'bg-red-600 text-white border border-red-600 hover:bg-red-700 hover:shadow-md'
+                        }`}
+                      >
+                        {machineStatusMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Traitement...
+                          </>
+                        ) : ticket.is_machine_down ? (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            Remettre en service
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="w-4 h-4" />
+                            Déclarer HS
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>

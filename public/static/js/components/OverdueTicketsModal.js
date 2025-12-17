@@ -133,10 +133,17 @@ const OverdueTicketsModal = ({ show, onClose, currentUser }) => {
                             'Interventions nécessitant une attention immédiate'
                         )
                     ),
-                    React.createElement('button', {
-                        className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-colors',
-                        onClick: onClose
-                    }, React.createElement('i', { className: 'fas fa-times' }))
+                    React.createElement('div', { className: 'flex gap-2' },
+                        React.createElement('button', {
+                            className: 'text-rose-100 hover:text-white hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-colors',
+                            onClick: loadOverdueTickets,
+                            title: 'Actualiser'
+                        }, React.createElement('i', { className: 'fas fa-sync-alt' })),
+                        React.createElement('button', {
+                            className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center transition-colors',
+                            onClick: onClose
+                        }, React.createElement('i', { className: 'fas fa-times' }))
+                    )
                 )
             ),
 
@@ -196,7 +203,17 @@ const OverdueTicketsModal = ({ show, onClose, currentUser }) => {
                                         React.createElement('div', { className: 'flex flex-wrap' },
                                             React.createElement('span', { className: 'text-gray-500' }, 'Date prévue: '),
                                             React.createElement('span', { className: 'font-medium text-red-600 ml-1' }, 
-                                                new Date(ticket.scheduled_date.replace(' ', 'T') + 'Z').toLocaleDateString('fr-FR')
+                                                // Human readable date from UTC string
+                                                (() => {
+                                                    const dateStr = ticket.scheduled_date.replace(' ', 'T') + (ticket.scheduled_date.includes('Z') ? '' : 'Z');
+                                                    return new Date(dateStr).toLocaleString('fr-CA', { 
+                                                        year: 'numeric', 
+                                                        month: '2-digit', 
+                                                        day: '2-digit',
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit'
+                                                    });
+                                                })()
                                             )
                                         ),
                                         React.createElement('div', { className: 'flex flex-wrap' },

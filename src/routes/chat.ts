@@ -1,12 +1,145 @@
 import { Hono } from 'hono';
 import { authMiddleware } from '../middlewares/auth';
+import { getCookie } from 'hono/cookie';
+import { extractToken, verifyToken } from '../utils/jwt';
 import { Bindings } from '../types';
 import { sendPushNotification } from './push';
 import { hashPassword } from '../utils/password';
 import { chatGuests } from '../db/schema'; // Assuming schema export
 import { eq } from 'drizzle-orm';
 
+// Helper for Vision Analysis
+async function analyzeImageWithOpenAI(arrayBuffer: ArrayBuffer, contentType: string, apiKey: string): Promise<string | null> {
+    try {
+        // FIX: Safe Base64 encoding for large files (prevents Stack Overflow)
+        let binary = '';
+        const bytes = new Uint8Array(arrayBuffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64Image = btoa(binary);
+        
+        const dataUrl = `data:${contentType};base64,${base64Image}`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Describe this technical image in detail for a blind industrial expert. Focus on machines, error codes, safety signs, or schematics. Be precise and technical. If it's text/pdf screenshot, transcribe the key parts." },
+                            { type: "image_url", image_url: { url: dataUrl } }
+                        ]
+                    }
+                ],
+                max_tokens: 500
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json() as any;
+            return data.choices[0].message.content;
+        } else {
+            console.error("OpenAI Vision Error:", await response.text());
+            return null;
+        }
+    } catch (e) {
+        console.error("OpenAI Vision Exception:", e);
+        return null;
+    }
+}
+
 const app = new Hono<{ Bindings: Bindings }>();
+
+// 6. GET /api/v2/chat/asset - Securely serve chat assets (Moved up for Public Access to Avatars)
+app.get('/asset', async (c) => {
+    const key = c.req.query('key');
+    if (!key) return c.text('Missing key', 400);
+
+    // Special Case: Default AI Avatar
+    if (key === 'ai_avatar') {
+        const aiAvatarSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <rect width="100" height="100" rx="20" fill="#4F46E5"/>
+                <path d="M50 20a30 30 0 0 1 30 30v20a10 10 0 0 1-10 10H30a10 10 0 0 1-10-10V50a30 30 0 0 1 30-30z" fill="#E0E7FF"/>
+                <circle cx="35" cy="45" r="5" fill="#4F46E5"/>
+                <circle cx="65" cy="45" r="5" fill="#4F46E5"/>
+                <path d="M40 65a10 10 0 0 0 20 0" stroke="#4F46E5" stroke-width="4" fill="none"/>
+            </svg>
+        `;
+        return new Response(aiAvatarSvg, {
+            headers: {
+                'Content-Type': 'image/svg+xml',
+                'Cache-Control': 'public, max-age=31536000'
+            }
+        });
+    }
+
+    // SECURITY CHECK: Resource Isolation
+    // 1. Avatars (User or Group) -> PUBLIC ACCESS (No Auth Required)
+    // This fixes "Avatar images disappeared" issues due to strict auth or cookie policies on images
+    if (key.startsWith('avatars/') || key.startsWith('groups/')) {
+        // Public Access Granted
+    } 
+    // 2. Chat Attachments -> Strict Participant Check (REQUIRES AUTH)
+    else if (key.startsWith('chat/')) {
+        // MANUAL AUTHENTICATION CHECK since this route is now before global middleware
+        const cookieToken = getCookie(c, 'auth_token');
+        const authHeader = c.req.header('Authorization');
+        const token = cookieToken || extractToken(authHeader);
+        
+        if (!token) return c.text('Access Denied: No Token', 401);
+        
+        const user = await verifyToken(token);
+        if (!user) return c.text('Access Denied: Invalid Token', 401);
+
+        // FIX: RACE CONDITION & OWNERSHIP CHECK
+        // If the user is the uploader (based on key path), they own it.
+        // Format: chat/{userId}/...
+        // This solves "Failed to load resource: 403" when image is loaded before message is saved.
+        const keyParts = key.split('/');
+        // keyParts[1] is the userId from the path
+        if (keyParts.length >= 2 && keyParts[1] === String(user.userId)) {
+             // Access Granted (Owner)
+        } else {
+            // FIX: Allow access if user is participant OR if conversation is 'expert_ai'
+            const hasAccess = await c.env.DB.prepare(`
+                SELECT 1 
+                FROM chat_messages m
+                LEFT JOIN chat_participants cp ON m.conversation_id = cp.conversation_id AND cp.user_id = ?
+                WHERE m.media_key = ? 
+                AND (cp.user_id IS NOT NULL OR m.conversation_id = 'expert_ai')
+            `).bind(user.userId, key).first();
+
+            if (!hasAccess) {
+                console.warn(`[SECURITY] Unauthorized asset access attempt by ${user.userId} for ${key}`);
+                return c.text('Access Denied', 403);
+            }
+        }
+    } 
+    // 3. Unknown paths -> Block by default (Paranoid Mode)
+    else {
+        console.warn(`[SECURITY] Blocked access to unknown path format: ${key}`);
+        return c.text('Access Denied', 403);
+    }
+
+    const object = await c.env.MEDIA_BUCKET.get(key);
+    if (!object) return c.text('Not found', 404);
+
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set('etag', object.httpEtag);
+    headers.set('Cache-Control', 'public, max-age=31536000'); // Cache 1 year
+
+    return new Response(object.body, { headers });
+});
 
 // Middleware: All chat routes require authentication
 app.use('*', authMiddleware);
@@ -17,22 +150,22 @@ app.get('/conversations', async (c) => {
     const userId = user.userId;
     let debugLog = `UID: ${userId} (${user.email}). `;
 
-        // AUTO-JOIN and UPDATE LAST_SEEN
-        // Update last_seen for current user (handle guest vs employee)
-        try {
-            const isGuest = user.isGuest || user.is_guest;
-            if (isGuest) {
-                await c.env.DB.prepare(`UPDATE chat_guests SET last_seen = CURRENT_TIMESTAMP WHERE id = ?`).bind(Math.abs(userId)).run();
-            } else {
-                await c.env.DB.prepare(`UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?`).bind(userId).run();
-            }
-        } catch (e) {
-            // Ignore error if column doesn't exist yet or DB is busy
-            console.error("Update last_seen error", e);
+    // AUTO-JOIN and UPDATE LAST_SEEN
+    // Update last_seen for current user (handle guest vs employee)
+    try {
+        const isGuest = user.isGuest || user.is_guest;
+        if (isGuest) {
+            await c.env.DB.prepare(`UPDATE chat_guests SET last_seen = CURRENT_TIMESTAMP WHERE id = ?`).bind(Math.abs(userId)).run();
+        } else {
+            await c.env.DB.prepare(`UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?`).bind(userId).run();
         }
+    } catch (e) {
+        // Ignore error if column doesn't exist yet or DB is busy
+        console.error("Update last_seen error", e);
+    }
 
-        try {
-            // AUTO-JOIN: Si l'utilisateur n'a AUCUNE conversation, on l'ajoute automatiquement au groupe "Général"
+    try {
+        // AUTO-JOIN: Si l'utilisateur n'a AUCUNE conversation, on l'ajoute automatiquement au groupe "Général"
         const countResult = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM chat_participants WHERE user_id = ?`).bind(userId).first();
         const count = countResult ? (countResult.count as number) : 0;
         
@@ -54,82 +187,84 @@ app.get('/conversations', async (c) => {
 
         // Fetch conversations where user is a participant
         // Join with last message for preview
+        
+        // 1. Base Query (Lightweight)
         const conversations = await c.env.DB.prepare(`
             SELECT 
                 c.id, 
+                cp.display_order,
                 c.type, 
-                c.name,
+                c.name, 
                 c.avatar_key, 
                 c.updated_at,
-                (
-                    SELECT content FROM chat_messages 
-                    WHERE conversation_id = c.id 
-                    ORDER BY created_at DESC LIMIT 1
-                ) as last_message,
-                (
-                    SELECT type FROM chat_messages 
-                    WHERE conversation_id = c.id 
-                    ORDER BY created_at DESC LIMIT 1
-                ) as last_message_type,
-                (
-                    SELECT created_at FROM chat_messages 
-                    WHERE conversation_id = c.id 
-                    ORDER BY created_at DESC LIMIT 1
-                ) as last_message_time,
-                (
-                    SELECT COUNT(*) FROM chat_participants cp_count
-                    WHERE cp_count.conversation_id = c.id
-                ) as participant_count,
-                (
-                    SELECT COUNT(*)
-                    FROM chat_participants cp_online
-                    LEFT JOIN users u_online ON cp_online.user_id = u_online.id AND cp_online.user_id > 0
-                    LEFT JOIN chat_guests g_online ON ABS(cp_online.user_id) = g_online.id AND cp_online.user_id < 0
-                    WHERE cp_online.conversation_id = c.id
-                    AND (
-                        u_online.last_seen > datetime('now', '-5 minutes') OR 
-                        g_online.last_seen > datetime('now', '-5 minutes')
-                    )
-                ) as online_count,
-                (
-                    SELECT COUNT(*) FROM chat_messages cm
-                    WHERE cm.conversation_id = c.id 
-                    AND cm.created_at > (
-                        SELECT COALESCE(last_read_at, '1970-01-01') 
-                        FROM chat_participants 
-                        WHERE conversation_id = c.id AND user_id = ?
-                    )
-                ) as unread_count
+                (SELECT content FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+                (SELECT type FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_type,
+                (SELECT created_at FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time
             FROM chat_conversations c
             JOIN chat_participants cp ON c.id = cp.conversation_id
             WHERE cp.user_id = ?
             ORDER BY c.updated_at DESC
-        `).bind(userId, userId).all();
+        `).bind(userId).all();
 
-        // Resolve names/avatars for Direct Chats
+        // 2. Hydrate with Real-Time Counts (Parallel Execution to prevent Timeout)
         const enhancedConversations = await Promise.all((conversations.results || []).map(async (conv: any) => {
-            if (conv.type === 'direct' && !conv.name) {
-                // Find the OTHER participant
-                const otherUser = await c.env.DB.prepare(`
-                    SELECT 
-                        COALESCE(u.full_name, g.full_name) as full_name, 
-                        u.avatar_key 
+            
+            // Execute counts in parallel for max speed
+            const [pCount, online, unread, otherUser] = await Promise.all([
+                // Participant Count
+                c.env.DB.prepare(`SELECT COUNT(*) as c FROM chat_participants WHERE conversation_id = ?`).bind(conv.id).first(),
+                
+                // Online Count (Optimized)
+                c.env.DB.prepare(`
+                    SELECT COUNT(*) as c
                     FROM chat_participants cp
                     LEFT JOIN users u ON cp.user_id = u.id AND cp.user_id > 0
                     LEFT JOIN chat_guests g ON ABS(cp.user_id) = g.id AND cp.user_id < 0
-                    WHERE cp.conversation_id = ? AND cp.user_id != ?
-                `).bind(conv.id, userId).first();
+                    WHERE cp.conversation_id = ?
+                    AND (u.last_seen > datetime('now', '-5 minutes') OR g.last_seen > datetime('now', '-5 minutes'))
+                `).bind(conv.id).first(),
+                
+                // Unread Count
+                c.env.DB.prepare(`
+                    SELECT COUNT(*) as c FROM chat_messages cm
+                    WHERE cm.conversation_id = ? 
+                    AND cm.created_at > (
+                        SELECT COALESCE(last_read_at, '1970-01-01') 
+                        FROM chat_participants 
+                        WHERE conversation_id = ? AND user_id = ?
+                    )
+                `).bind(conv.id, conv.id, userId).first(),
 
-                if (otherUser) {
-                    return { ...conv, name: otherUser.full_name, avatar_key: otherUser.avatar_key };
-                }
+                // Name Resolution (Only for direct chats)
+                (conv.type === 'direct' && !conv.name) 
+                    ? c.env.DB.prepare(`
+                        SELECT COALESCE(u.full_name, g.full_name) as full_name, u.avatar_key 
+                        FROM chat_participants cp
+                        LEFT JOIN users u ON cp.user_id = u.id AND cp.user_id > 0
+                        LEFT JOIN chat_guests g ON ABS(cp.user_id) = g.id AND cp.user_id < 0
+                        WHERE cp.conversation_id = ? AND cp.user_id != ?
+                      `).bind(conv.id, userId).first()
+                    : Promise.resolve(null)
+            ]);
+
+            const finalConv = { 
+                ...conv,
+                participant_count: pCount?.c || 0,
+                online_count: online?.c || 0,
+                unread_count: unread?.c || 0
+            };
+
+            if (otherUser) {
+                finalConv.name = (otherUser as any).full_name;
+                finalConv.avatar_key = (otherUser as any).avatar_key;
             }
-            return conv;
+
+            return finalConv;
         }));
 
         return c.json({ conversations: enhancedConversations, debug: debugLog });
     } catch (e) {
-        return c.json({ error: 'Failed to load conversations', debug: debugLog + ` ERR: ${e}` }, 500);
+        return c.json({ error: `Failed to load conversations: ${e.message || e}`, debug: debugLog + ` ERR: ${e}` }, 500);
     }
 });
 
@@ -145,7 +280,8 @@ app.get('/conversations/:id/messages', async (c) => {
         SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?
     `).bind(conversationId, user.userId).first();
 
-    if (!isParticipant) return c.json({ error: 'Access denied' }, 403);
+    // FIX: Allow expert_ai to be viewed by anyone (Virtual Conversation)
+    if (!isParticipant && conversationId !== 'expert_ai') return c.json({ error: 'Access denied' }, 403);
 
     // Updated Query: Support Guests (Negative IDs)
     const messages = await c.env.DB.prepare(`
@@ -401,7 +537,8 @@ app.post('/send', async (c) => {
             SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?
         `).bind(conversationId, user.userId).first();
 
-        if (!isParticipant) {
+        // EXCEPTION: Allow 'expert_ai' conversation to be used freely (it's virtual/special)
+        if (!isParticipant && conversationId !== 'expert_ai') {
             console.warn(`[CHAT-SEND-DENIED] User ${user.userId} denied access to conv ${conversationId}`);
             return c.json({ error: 'Access denied' }, 403);
         }
@@ -544,24 +681,6 @@ Input: "${originalText}"`;
              })());
         }
 
-        // --- AI ANALYSIS PLACEHOLDER (SAFE MODE) ---
-        // Conformément à la stratégie "Try-Catch Silencieux" (Couche 2)
-        // Si on devait analyser l'image ici, ce serait dans ce bloc try/catch.
-        // Pour l'instant, on laisse mediaMeta tel quel (venant du frontend ou null)
-        let finalMediaMeta = mediaMeta;
-        
-        /* 
-        try {
-            if (type === 'image' && mediaKey) {
-                // Future AI Call goes here
-            }
-        } catch (aiError) {
-            console.error("AI Analysis failed (Non-blocking):", aiError);
-            // On continue sans l'analyse, le message DOIT partir
-        }
-        */
-        // -------------------------------------------
-
         await c.env.DB.prepare(`
             INSERT INTO chat_messages (id, conversation_id, sender_id, type, content, media_key, media_meta, transcription)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -572,7 +691,7 @@ Input: "${originalText}"`;
             type, 
             content, 
             mediaKey || null, 
-            finalMediaMeta ? JSON.stringify(finalMediaMeta) : null,
+            mediaMeta ? JSON.stringify(mediaMeta) : null,
             transcription || null
         ).run();
 
@@ -584,6 +703,10 @@ Input: "${originalText}"`;
         // Trigger Push Notifications asynchronously
         c.executionCtx.waitUntil((async () => {
             try {
+                // EXCEPTION: Pas de push pour le chat avec l'IA (expert_ai)
+                // On évite de spammer l'utilisateur quand l'IA "répond" ou qu'un audio est traité
+                if (conversationId === 'expert_ai') return;
+
                 // Get other participants WITH NAMES for personalized push titles
                 const { results: participants } = await c.env.DB.prepare(`
                     SELECT 
@@ -905,24 +1028,7 @@ app.post('/upload', async (c) => {
     }
 });
 
-// 6. GET /api/v2/chat/asset - Securely serve chat assets
-app.get('/asset', async (c) => {
-    const key = c.req.query('key');
-    if (!key) return c.text('Missing key', 400);
 
-    // TODO: Add permission check (is user part of conversation that has this file?)
-    // For now, relying on AuthMiddleware (valid user) + obscure key
-
-    const object = await c.env.MEDIA_BUCKET.get(key);
-    if (!object) return c.text('Not found', 404);
-
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set('etag', object.httpEtag);
-    headers.set('Cache-Control', 'public, max-age=31536000'); // Cache 1 year
-
-    return new Response(object.body, { headers });
-});
 
 // 12. DELETE /api/v2/chat/conversations/:id - Delete entire conversation (Global Admin only)
 app.delete('/conversations/:id', async (c) => {
@@ -963,9 +1069,10 @@ app.delete('/conversations/:id/messages/:messageId', async (c) => {
     const messageId = c.req.param('messageId');
 
     // 1. Get message metadata to verify ownership
+    // MODIFICATION: We search by ID only, ignoring conversation_id mismatch to fix "ghost" message deletions
     const message = await c.env.DB.prepare(`
-        SELECT sender_id, media_key FROM chat_messages WHERE id = ? AND conversation_id = ?
-    `).bind(messageId, conversationId).first();
+        SELECT sender_id, media_key, conversation_id FROM chat_messages WHERE id = ?
+    `).bind(messageId).first();
 
     if (!message) {
         return c.json({ error: 'Message introuvable' }, 404);
@@ -1023,12 +1130,7 @@ app.delete('/conversations/:id/messages', async (c) => {
     // 3. Delete messages
     await c.env.DB.prepare(`DELETE FROM chat_messages WHERE conversation_id = ?`).bind(conversationId).run();
 
-    // 4. Insert system message
-    const sysId = crypto.randomUUID();
-    await c.env.DB.prepare(`
-        INSERT INTO chat_messages (id, conversation_id, sender_id, type, content)
-        VALUES (?, ?, ?, 'system', ?)
-    `).bind(sysId, conversationId, user.userId, 'a vidé la discussion').run();
+    // 4. System message removed (Silent clear per user request)
 
     return c.json({ success: true });
 });

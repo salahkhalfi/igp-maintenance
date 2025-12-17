@@ -18,7 +18,7 @@ const queryClient = new QueryClient()
 
 const MOCK_USER: User = {
     id: 1,
-    email: 'admin@igpglass.ca',
+    email: 'admin@example.com',
     first_name: 'Admin',
     last_name: 'System',
     role: 'admin',

@@ -44,6 +44,7 @@ export interface CreateTicketRequest {
   reporter_name: string;
   assigned_to?: number;
   scheduled_date?: string;
+  is_machine_down?: boolean;
   created_at: string;
 }
 
@@ -125,4 +126,28 @@ export interface SendAudioRequest {
   recipient_id?: number;
   duration: number;
   audio: Blob;
+}
+
+export interface Ticket {
+  id: number;
+  ticket_id: string;
+  title: string;
+  description: string;
+  machine_id: number;
+  machine_name?: string; // Constructed field
+  status: TicketStatus;
+  priority: TicketPriority;
+  reported_by: number;
+  reporter_name?: string;
+  created_by_name?: string; // Alias for frontend
+  assigned_to: number | null;
+  assigned_to_name?: string;
+  scheduled_date: string | null;
+  is_machine_down: boolean;
+  machine_status?: 'operational' | 'maintenance' | 'out_of_service';
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  media?: any[];
+  timeline?: any[];
 }

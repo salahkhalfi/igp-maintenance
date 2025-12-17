@@ -2,12 +2,57 @@
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { getDb } from '../db';
-import { machines, users, systemSettings, tickets } from '../db/schema';
-import { inArray, eq, and, ne, lt, desc, or } from 'drizzle-orm';
+import { machines, users, systemSettings, tickets, media, ticketComments } from '../db/schema';
+import { inArray, eq, and, ne, lt, desc, or, sql, not, like } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 import { z } from 'zod';
-import { GLASS_INDUSTRY_KNOWLEDGE, MAINTENANCE_OS_IDENTITY } from '../ai/knowledge/glass-industry';
+import { TOOLS, ToolFunctions } from '../ai/tools';
+
+// --- HELPER: VISION RELAY (OpenAI) ---
+async function analyzeImageWithOpenAI(arrayBuffer: ArrayBuffer, contentType: string, apiKey: string): Promise<string | null> {
+    try {
+        // Safe Base64 encoding
+        let binary = '';
+        const bytes = new Uint8Array(arrayBuffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64Image = btoa(binary);
+        const dataUrl = `data:${contentType};base64,${base64Image}`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Describe this technical image in detail for a blind industrial expert. Focus on machines, error codes, safety signs, or schematics. Be precise and technical." },
+                            { type: "image_url", image_url: { url: dataUrl } }
+                        ]
+                    }
+                ],
+                max_tokens: 500
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json() as any;
+            return data.choices[0].message.content;
+        }
+        return null;
+    } catch (e) {
+        console.error("Vision Error:", e);
+        return null;
+    }
+}
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -23,24 +68,34 @@ const TicketAnalysisSchema = z.object({
     scheduled_date: z.string().nullable()
 });
 
-// --- CONSTANTS ---
-const DEFAULT_AI_CONTEXT = `RÔLE : Expert Industriel Senior chez IGP Inc. (Usine de verre)
-
-MISSION :
-Assister les techniciens et administrateurs dans la maintenance, le diagnostic de pannes et l'optimisation de la production.
-
-RÈGLES D'OR :
-1. SÉCURITÉ AVANT TOUT : Rappeler systématiquement les procédures de cadenassage (Lockout/Tagout) avant toute intervention physique.
-2. CONTEXTE INDUSTRIEL : Se concentrer uniquement sur les machines, la maintenance, la production et la sécurité.
-3. TON PROFESSIONNEL : Être direct, précis et factuel. Pas de bavardage inutile.
-4. REFUS HORS-SUJET : Refuser poliment mais fermement toute question non liée au travail.
-
-CONTEXTE DE L'USINE :
-- Nous fabriquons du verre (trempé, laminé, isolant).
-- Les machines critiques incluent : Fours de trempe, CNC, Lignes d'assemblage, Tables de découpe.
-- La production fonctionne 24/7. Chaque minute d'arrêt coûte cher.`;
-
 // --- HELPER FUNCTIONS ---
+
+// Fetch AI Configuration from DB (SaaS-Ready)
+async function getAiConfig(db: any) {
+    const keys = [
+        'ai_identity_block', 
+        'ai_hierarchy_block', 
+        'ai_character_block', 
+        'ai_knowledge_block', 
+        'ai_rules_block', 
+        'ai_custom_context'
+    ];
+    
+    const settings = await db.select().from(systemSettings).where(inArray(systemSettings.setting_key, keys)).all();
+    
+    const config: Record<string, string> = {};
+    settings.forEach((s: any) => config[s.setting_key] = s.setting_value);
+
+    // Fallbacks (Generic Industrial Defaults) if DB is empty
+    return {
+        identity: config['ai_identity_block'] || "RÔLE : Expert Industriel Senior.",
+        hierarchy: config['ai_hierarchy_block'] || "HIÉRARCHIE : Tu réponds au Directeur des Opérations.",
+        character: config['ai_character_block'] || "CARACTÈRE : Professionnel, direct et orienté sécurité.",
+        knowledge: config['ai_knowledge_block'] || "EXPERTISE : Maintenance industrielle générale.",
+        rules: config['ai_rules_block'] || "RÈGLES : Sécurité avant tout (Cadenassage). Pas de hors-sujet.",
+        custom: config['ai_custom_context'] || ""
+    };
+}
 
 // 1. Audio Transcription (Groq > OpenAI Fallback)
 async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: string): Promise<string | null> {
@@ -56,8 +111,6 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
             
             // DYNAMIC CONTEXT (Generic Philosophy):
             // We use the dynamic vocabulary from the database (machines, techs) to guide Groq.
-            // This ensures the app works for ANY industry based on the user's data.
-            // MODIFICATION v3.0.13: Explicitly mention "Quebec dialect" to ensure Whisper doesn't "correct" the accent into standard French.
             formData.append('prompt', `Context: Industrial maintenance. Languages: English or French (including Quebec dialect). Terms: ${vocabulary}`);
             
             const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
@@ -89,9 +142,6 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
             const formData = new FormData();
             formData.append('file', audioFile, 'voice_ticket.webm');
             formData.append('model', 'whisper-1');
-            // formData.append('language', 'fr'); // REMOVED: Allow auto-detection
-            // Generic fallback prompt with dynamic vocabulary if possible, or just general terms
-            // Allow auto-detection of language (remove explicit 'fr') to support polyglot users
             formData.append('prompt', `Context: Industrial maintenance. Languages: English or French (including Quebec dialect). Terms: ${vocabulary}`);
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -116,79 +166,39 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
 }
 
 // 2. Intelligence Analysis (DeepSeek > OpenAI Fallback)
-async function analyzeText(transcript: string, context: any, env: Bindings): Promise<any> {
+async function analyzeText(transcript: string, context: any, env: Bindings, aiConfig: any): Promise<any> {
     
     // Construct System Prompt
     // Note: Cloudflare is in UTC. We simulate EST (UTC-5)
     const localDate = new Date(new Date().getTime() - (5 * 60 * 60 * 1000));
     
     const systemPrompt = `
-You are a Senior Industrial Maintenance Expert at IGP Inc. (Glass Factory).
-Your mission: Analyze a raw voice request (often noisy, Quebecker French or English) and extract structured data to create a ticket.
+RÔLE : Analyste de Données Maintenance (Extraction JSON Stricte).
+OBJECTIF : Convertir la transcription vocale en données structurées pour la base de données.
 
-USER CONTEXT:
-Name: ${context.userName}
-Role: ${context.userRole}
-CURRENT DATE (EST): ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
+CONTEXTE OPÉRATIONNEL :
+- Date (EST) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
+- Auteur : ${context.userName} (${context.userRole})
+- Machines connues : ${context.machines}
+- Équipe connue : ${context.techs}
+- Vocabulaire usine : ${aiConfig.custom}
 
-CUSTOM CONTEXT:
-${context.customContext || "No specific context."}
+RÈGLES D'EXTRACTION STRICTES :
+1. **JSON UNIQUEMENT** : Ta réponse doit être un objet JSON valide et RIEN D'AUTRE. Pas de Markdown, pas de phrases d'intro.
+2. **LANGUE** : Détecte la langue de l'audio. Les valeurs 'title' et 'description' DOIVENT être dans la MÊME langue que l'audio (FR ou EN).
+3. **INTELLIGENCE TECHNIQUE** : Reformule le langage parlé en langage technique professionnel (ex: "ça fuit" -> "Fuite détectée").
+4. **PRIORITÉ** : Déduis la priorité (critical/high/medium/low) selon les mots-clés (Feu, Arrêt, Danger = critical).
+5. **DATES** : Convertis les termes relatifs ("demain 14h") en format ISO 8601 strict basé sur la Date Actuelle.
+6. **ASSIGNATION** : Assigne 'machine_id' ou 'assigned_to_id' SEULEMENT si la correspondance avec le CONTEXTE est parfaite. Sinon null.
 
-MACHINE CONTEXT:
-${context.machines}
+PROTOCOLE DE SÉCURITÉ (INPUT INVALIDE) :
+Si l'audio est une blague, une insulte ou hors-sujet, génère ce JSON spécifique :
+{ "title": "Rapport d'Anomalie Cognitive", "description": "[Réponse humoristique sarcastique et technique de 1 phrase]", "priority": "low" }
 
-TEAM CONTEXT:
-${context.techs}
-
-STRICT EXTRACTION RULES:
-
-1. LANGUAGE ADAPTATION (CRITICAL & ABSOLUTE):
-   - DETECT the language of the user's voice transcript.
-   - IF User speaks FRENCH (or Quebecois) -> JSON values MUST be in FRENCH.
-   - IF User speaks ENGLISH -> JSON values MUST be in ENGLISH.
-   - Example: "My furnace is broken" -> title: "Furnace breakdown", description: "The furnace is broken..." (NOT "Four en panne").
-
-2. JESTER PROTOCOL (Anti-Nonsense & Humor):
-   - IGNORE polite fillers ("uh", "please").
-   - IF input is clearly OFF-TOPIC, a JOKE, an INSULT, or NONSENSE:
-     -> Generate a "Trap Ticket" (Faux Ticket).
-     -> 'priority': "low"
-     -> 'title': "Cognitive Anomaly Report" (EN) / "Rapport d'Anomalie Cognitive" (FR)
-     -> 'description': [YOUR IMMEDIATE DEADPAN RESPONSE]
-     -> RULES FOR RESPONSE:
-        - NO PREAMBLE. Direct punchline.
-        - Deadpan Industrial Humor.
-        - Use glass/maintenance jargon (tempering, CNC, polishing).
-        - English Example (Pizza): "Critical Alert: Attempt to insert organic matter into tempering furnace. Operator quarantined."
-        - French Example (Pizza): "Alerte Critique : Tentative d'insertion de matière organique. Opérateur mis en quarantaine."
-
-3. PRIORITY:
-   - "Urgent", "Critical", "Fire", "Leak", "Danger" -> 'critical'
-   - "Important", "Fast" -> 'high'
-   - Standard maintenance -> 'medium'
-   - Cosmetic/Low priority -> 'low'
-
-4. MACHINE IDENTIFICATION:
-   - Match user text to 'MACHINE CONTEXT' list.
-   - If match found -> Set 'machine_id' and exact 'machine_name'.
-   - If general mention ("the drill") but no exact match -> 'machine_id': null, 'machine_name': "Drill" (in correct language).
-
-5. ASSIGNMENT:
-   - Match names from 'TEAM CONTEXT'.
-   - If date mentioned but no name -> 'assigned_to_id': 0 (Team).
-
-6. DATE/TIME:
-   - Convert all relative times ("tomorrow 2pm") to ISO 8601 (YYYY-MM-DDTHH:mm:ss) based on CURRENT DATE.
-
-7. TITLE & DESCRIPTION CLEANUP:
-   - Reformulate raw spoken text into professional technical language (in the CORRECT DETECTED LANGUAGE).
-   - FR Ex: "Euh la strappe est pété" -> "Remplacement courroie"
-   - EN Ex: "Uh the belt is busted" -> "Belt replacement"
-
-EXPECTED JSON FORMAT (Reply ONLY with this JSON):
+FORMAT DE SORTIE ATTENDU (SCHEMA JSON) :
 {
-  "title": "Short title (EN or FR)",
-  "description": "Full professional description (EN or FR)",
+  "title": "string",
+  "description": "string",
   "priority": "low" | "medium" | "high" | "critical",
   "machine_id": number | null,
   "machine_name": "string" | null,
@@ -231,8 +241,6 @@ EXPECTED JSON FORMAT (Reply ONLY with this JSON):
                     return validated;
                 } catch (validationError) {
                     console.error("⚠️ [AI] DeepSeek Validation Failed:", validationError);
-                    // On pourrait ici tenter de réparer ou renvoyer une erreur,
-                    // mais pour l'instant on laisse le fallback prendre le relais ou on renvoie une erreur explicite.
                     throw new Error("Format de réponse invalide de DeepSeek");
                 }
             } else {
@@ -298,7 +306,6 @@ app.post('/analyze-ticket', async (c) => {
         const authHeader = c.req.header('Authorization');
         let token = extractToken(authHeader);
 
-        // FALLBACK: Try Cookie if Header is missing (Robustness for Mobile/Web)
         if (!token) {
             token = getCookie(c, 'auth_token') || null;
         }
@@ -306,11 +313,13 @@ app.post('/analyze-ticket', async (c) => {
         let userRole = 'unknown';
         let userName = 'Utilisateur inconnu';
 
-        // 3. Load Database Context FIRST (For Dynamic AI Vocabulary)
+        // 3. Load Database Context FIRST
         const db = getDb(c.env);
 
-        if (token && c.env.JWT_SECRET) {
-            const payload = await verifyToken(token, c.env.JWT_SECRET);
+        if (token) {
+            // FIX: Don't pass c.env.JWT_SECRET explicitly to ensure consistency with auth.ts signing
+            // which uses the default secret handling in jwt.ts
+            const payload = await verifyToken(token);
             if (payload) {
                 userRole = payload.role;
                 userName = payload.full_name || payload.email;
@@ -322,14 +331,17 @@ app.post('/analyze-ticket', async (c) => {
         const audioFile = formData.get('file') as File;
         if (!audioFile) return c.json({ error: "No audio file" }, 400);
         
-        // CRITICAL FIX: Fetch FULL machine details (Type, Model, Manufacturer, Location)
-        // Previous version only fetched 'machine_type', causing the AI to fail at identifying specific machines
+        // 3. Load AI Config (SaaS)
+        const aiConfig = await getAiConfig(db);
+
+        // Fetch FULL machine details
         const machinesList = await db.select({
             id: machines.id, 
             type: machines.machine_type,
             model: machines.model,
             manufacturer: machines.manufacturer,
-            location: machines.location
+            location: machines.location,
+            status: machines.status // Add status to fetch
         }).from(machines).all();
         
         const techsList = await db.select({
@@ -338,44 +350,42 @@ app.post('/analyze-ticket', async (c) => {
 
         // Build a RICH context for the AI
         const machinesContext = machinesList.map(m => 
-            `ID ${m.id}: ${m.type} ${m.manufacturer || ''} ${m.model || ''} [Loc: ${m.location || '?'}]`
+            `ID ${m.id}: ${m.type} ${m.manufacturer || ''} ${m.model || ''} [Loc: ${m.location || '?'}] [Status: ${m.status || 'unknown'}]`
         ).join('\n');
         
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
-        // 4. Load Custom AI Context
-        const customContextSetting = await db.select({
-            value: systemSettings.setting_value
-        }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
-
-        const customContext = customContextSetting?.value || DEFAULT_AI_CONTEXT;
-
-        // Dynamic Vocabulary from Database + Common Terms
-        // Crucial for Whisper to recognize "Tamglass" or "Bottero" instead of random words
+        // Dynamic Vocabulary
         const vocabularyContext = [
             ...machinesList.map(m => `${m.type} ${m.manufacturer || ''} ${m.model || ''}`),
             ...techsList.map(t => t.name),
             "Maintenance", "Panne", "Urgent", "Réparation", "Fuite", "Bruit", "Arrêt", "Danger", "Sécurité",
-            customContext // Inject custom context keywords into vocabulary if relevant (simple append)
+            aiConfig.custom // Inject custom context keywords
         ].join(", ");
 
-        // 5. Transcribe with Dynamic Vocabulary (Groq -> OpenAI)
+        // 5. Transcribe
         const transcript = await transcribeAudio(audioFile, c.env, vocabularyContext);
         if (!transcript) {
-            return c.json({ error: "Impossible de transcrire l'audio (Services indisponibles)" }, 502);
+            console.error("❌ [AI] Transcription failed");
+            return c.json({ error: "Impossible de transcrire l'audio. Vérifiez votre micro ou la connexion." }, 502);
         }
         
-        // 6. Analyze (Cascade: DeepSeek -> OpenAI)
-        const ticketData = await analyzeText(transcript, {
-            userName, userRole, machines: machinesContext, techs: techsContext, customContext
-        }, c.env);
+        // 6. Analyze
+        try {
+            const ticketData = await analyzeText(transcript, {
+                userName, userRole, machines: machinesContext, techs: techsContext
+            }, c.env, aiConfig);
 
-        // 7. Final Polish
-        if (ticketData.scheduled_date && !ticketData.scheduled_date.includes('T')) {
-            ticketData.scheduled_date = null; // Safety check
+            // 7. Final Polish
+            if (ticketData.scheduled_date && !ticketData.scheduled_date.includes('T')) {
+                ticketData.scheduled_date = null; // Safety check
+            }
+
+            return c.json(ticketData);
+        } catch (analysisError: any) {
+            console.error("❌ [AI] Analysis failed:", analysisError);
+            return c.json({ error: "L'analyse IA a échoué. Veuillez réessayer." }, 500);
         }
-
-        return c.json(ticketData);
 
     } catch (e: any) {
         console.error("❌ [AI] Critical Error:", e);
@@ -383,326 +393,541 @@ app.post('/analyze-ticket', async (c) => {
     }
 });
 
-// POST /api/ai/chat - Expert Advice Chat
+// POST /api/ai/chat - Expert Advice Chat (Smart Tool-Enabled)
 app.post('/chat', async (c) => {
     try {
         const authHeader = c.req.header('Authorization');
         let token = extractToken(authHeader);
 
-        // FALLBACK: Try Cookie if Header is missing
+        // FIX: Handle "Bearer null" or "Bearer undefined" sent by clients
+        if (token === 'null' || token === 'undefined') {
+            token = null;
+        }
+
         if (!token) {
             token = getCookie(c, 'auth_token') || null;
         }
 
         let userRole = 'unknown';
         let userName = 'Utilisateur inconnu';
-
         let userId: number | null = null;
 
-        if (token && c.env.JWT_SECRET) {
-            const payload = await verifyToken(token, c.env.JWT_SECRET);
+        if (token) {
+            // FIX: Don't pass c.env.JWT_SECRET explicitly to ensure consistency with auth.ts signing
+            // which uses the default secret handling in jwt.ts
+            const payload = await verifyToken(token);
             if (payload) {
                 userRole = payload.role;
                 userName = payload.full_name || payload.email;
                 userId = payload.userId;
+            } else {
+                console.warn("⚠️ [AI] Token verification failed");
             }
         }
 
         const body = await c.req.json();
-        const { message, ticketContext, history, isAnalysisRequest } = body;
+        const { message, ticketContext, history } = body;
 
-        // Load Custom AI Context
         const db = getDb(c.env);
         
-        // --- CONTEXTUAL INTELLIGENCE: FETCH TECHNICIAN DOSSIER ---
-        let technicianContext = "";
-        if (userId) {
-            try {
-                // 1. Get Open Tickets (Assigned to user)
-                const openTickets = await db.select({
-                    id: tickets.ticket_id,
-                    title: tickets.title,
-                    status: tickets.status,
-                    priority: tickets.priority
-                }).from(tickets)
-                .where(and(
-                    eq(tickets.assigned_to, userId),
-                    ne(tickets.status, 'resolved'),
-                    ne(tickets.status, 'closed')
-                ))
-                .limit(3);
-
-                // 2. Get Overdue Tickets (Assigned to user)
-                // Note: String date comparison YYYY-MM-DD
-                const today = new Date().toISOString().split('T')[0];
-                const overdueTickets = await db.select({
-                    id: tickets.ticket_id,
-                    title: tickets.title,
-                    date: tickets.scheduled_date
-                }).from(tickets)
-                .where(and(
-                    eq(tickets.assigned_to, userId),
-                    ne(tickets.status, 'resolved'),
-                    ne(tickets.status, 'closed'),
-                    lt(tickets.scheduled_date, today)
-                ))
-                .limit(2);
-
-                if (openTickets.length > 0 || overdueTickets.length > 0) {
-                    technicianContext = `
-DOSSIER CONFIDENTIEL DE L'INTERLOCUTEUR (${userName}) :
-[TICKETS EN COURS] :
-${openTickets.map(t => `- Ticket #${t.id}: "${t.title}" (Priorité: ${t.priority})`).join('\n')}
-
-[TICKETS EN RETARD (URGENT)] :
-${overdueTickets.length > 0 ? overdueTickets.map(t => `- ⚠️ #${t.id}: "${t.title}" (Prévu le: ${t.date})`).join('\n') : "Aucun retard."}
-
-INSTRUCTION SECRÈTE :
-Utilise ces infos pour personnaliser ta réponse. Si un ticket est en retard ou critique, demande subtilement s'il a besoin d'aide pour avancer dessus ("Au fait, comment ça avance pour le ticket #${overdueTickets[0]?.id || openTickets[0]?.id} ?"). Montre que tu suis le dossier.
-`;
-                }
-
-            } catch (err) {
-                console.warn("⚠️ [AI] Failed to fetch technician context:", err);
-                // Fail silently, do not break the chat
-            }
+        // 1. FETCH AI CONFIG (DB-DRIVEN PERSONA)
+        let aiConfig;
+        try {
+            aiConfig = await getAiConfig(db);
+        } catch (err) {
+            console.error("⚠️ [AI] Config Load Failed:", err);
+            // Fallback config
+            aiConfig = {
+                identity: "RÔLE : Expert Industriel Senior.",
+                hierarchy: "HIÉRARCHIE : Tu réponds au Directeur des Opérations.",
+                character: "CARACTÈRE : Professionnel, direct et orienté sécurité.",
+                knowledge: "EXPERTISE : Maintenance industrielle générale.",
+                rules: "RÈGLES : Sécurité avant tout (Cadenassage). Pas de hors-sujet.",
+                custom: ""
+            };
         }
 
-        const customContextSetting = await db.select({
-            value: systemSettings.setting_value
-        }).from(systemSettings).where(eq(systemSettings.setting_key, 'ai_custom_context')).get();
+        // 2. FETCH FACTORY DIRECTORY & REAL-TIME STATUS (The "Omniscient" Context)
+        let machinesList: any[] = [];
+        let usersList: any[] = [];
+        let activeTickets: any[] = [];
+        let machinesSummary = "Données machines indisponibles.";
+        let usersSummary = "Données équipes indisponibles.";
+        let planningSummary = "Planning indisponible.";
 
-        const customContext = customContextSetting?.value || DEFAULT_AI_CONTEXT;
-
-        // FETCH MACHINE DETAILS IF AVAILABLE
-        let machineDetails = "";
-        
         try {
-            // Strategy: Provide specific context if possible to avoid overload, otherwise general summary.
-            if (ticketContext && ticketContext.machine_id) {
-                 const mId = Number(ticketContext.machine_id);
-                 const specificMachine = await db.select().from(machines).where(eq(machines.id, mId)).get();
-                 
-                 if (specificMachine) {
-                     machineDetails = `
-CONTEXTE MACHINE SPÉCIFIQUE (Machine liée au ticket) :
-- ID: ${specificMachine.id}
-- Nom: ${specificMachine.machine_type} ${specificMachine.model || ''}
-- Marque: ${specificMachine.manufacturer || 'N/A'}
-- Localisation: ${specificMachine.location || 'N/A'}
-- Statut: ${specificMachine.status}
-- Spécifications Techniques: ${specificMachine.technical_specs || 'Non spécifiées'}
-`;
-                 }
-            } 
-            
-            // --- GESTION INTELLIGENTE DES ACCÈS (RBAC) ---
-            // "Le Gros Bon Sens" : On ne montre pas tout à tout le monde.
-            
-            const isAdmin = ['admin', 'supervisor', 'super_admin'].includes(userRole);
-            const isTech = ['technician', 'senior_technician', 'team_leader', 'maintenance'].includes(userRole);
-            const isOperator = !isAdmin && !isTech; // Opérateurs, Invités, Stagiaires
-
-            // 1. RÉCUPÉRATION DES DONNÉES (Query)
-            // On récupère toujours les machines et tickets critiques pour la sécurité
-            const allMachines = await db.select({ 
+            machinesList = await db.select({
                 id: machines.id, 
-                type: machines.machine_type, 
-                model: machines.model, 
-                status: machines.status 
-            }).from(machines).all();
-            
-            const criticalTickets = await db.select({
-                id: tickets.ticket_id,
+                type: machines.machine_type,
+                model: machines.model,
+                status: machines.status // Add status to fetch
+            }).from(machines).all() || [];
+
+            usersList = await db.select({
+                id: users.id,
+                name: users.full_name,
+                role: users.role,
+                email: users.email,
+                last_login: users.last_login
+            }).from(users).all() || [];
+
+            // Fetch ACTIVE tickets (not just open/in_progress, but EVERYTHING not closed)
+            activeTickets = await db.select({
+                id: tickets.id,
+                display_id: tickets.ticket_id, // Fetch Display ID (e.g., FOU-1225-001)
                 title: tickets.title,
                 status: tickets.status,
+                assigned_to: tickets.assigned_to,
+                machine_id: tickets.machine_id,
                 priority: tickets.priority
-            }).from(tickets).where(and(eq(tickets.priority, 'critical'), ne(tickets.status, 'resolved'))).limit(5);
+            })
+            .from(tickets)
+            .where(not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])))
+            .all() || [];
 
-            // 2. FILTRAGE DE L'INFORMATION (View Layer)
-            let factoryOverview = "";
-
-            if (isAdmin || isTech) {
-                // --- VUE "CONTRÔLE & MAINTENANCE" (Admins & Techniciens) ---
-                // LIMITATION DE LA LISTE POUR ÉVITER LE TIMEOUT (Optimisation v2)
-                // 50 -> 30 pour réduire la charge du prompt
+            // --- ENRICH CONTEXT WITH MEDIA & COMMENT COUNTS ---
+            // STRATEGY CHANGE: Don't just count. FETCH THE MEDIA URLS DIRECTLY.
+            // This ensures the AI has the image link in its context immediately, without needing a tool call.
+            const mediaMap = new Map<number, string[]>(); // Store Markdown links
+            const commentMap = new Map<number, number>();
+            const ticketDisplayIdMap = new Map<number, string>(); // ID -> Display ID Map
+            
+            if (activeTickets.length > 0) {
+                const ticketIds = activeTickets.map((t: any) => {
+                    ticketDisplayIdMap.set(t.id, t.display_id);
+                    return t.id;
+                });
                 
-                const allTechs = await db.select({ id: users.id, name: users.full_name, role: users.role })
-                    .from(users)
-                    .limit(30) // Réduit de 50 à 30
-                    .all();
-                
-                const machinesSummary = allMachines.slice(0, 30); // Réduit de 50 à 30
+                // Fetch Actual Media
+                const mediaList = await db.select({
+                    id: media.id, // Fetch ID for robust linking
+                    ticket_id: media.ticket_id,
+                    file_name: media.file_name,
+                    file_key: media.file_key,
+                    file_type: media.file_type,
+                    url: media.url // Fetch URL
+                })
+                .from(media)
+                .where(inArray(media.ticket_id, ticketIds))
+                .all();
 
-                factoryOverview = `
-[ÉTAT GLOBAL DE L'USINE - VUE ${isAdmin ? 'ADMINISTRATEUR' : 'TECHNIQUE'}] :
+                mediaList.forEach((m: any) => {
+                    // USE ROBUST ID-BASED URL (Avoids encoding issues with keys)
+                    const publicUrl = `/api/media/${m.id}`;
+                    
+                    // JUST USE THE FILENAME. The context is already in the ticket description line.
+                    const md = m.file_type.startsWith('image') 
+                        ? `![${m.file_name}](${publicUrl})` 
+                        : `[${m.file_name}](${publicUrl})`;
+                    
+                    const current = mediaMap.get(m.ticket_id) || [];
+                    current.push(md);
+                    mediaMap.set(m.ticket_id, current);
+                });
 
-1. ÉQUIPE (Annuaire Opérationnel - Top 30) :
-${allTechs.map(u => `- ${u.name} (${u.role}) [ID:${u.id}]`).join('\n')}
 
-2. PARC MACHINES (Top 30) :
-${machinesSummary.map(m => `- [ID:${m.id}] ${m.type} ${m.model || ''} (${m.status.toUpperCase()})`).join('\n')}
-
-3. URGENCES CRITIQUES (Top 5) :
-${criticalTickets.length > 0 ? criticalTickets.map(t => `- #${t.id}: ${t.title} [${t.status}]`).join('\n') : "Aucune urgence critique."}
-`;
-            } else {
-                // --- VUE "PLANCHER" (Opérateurs) ---
-                // Pas de noms d'utilisateurs (confidentialité), pas de détails techniques inutiles.
-                // Juste : Est-ce que ma machine marche ? Est-ce qu'il y a un danger ?
-                
-                factoryOverview = `
-[ÉTAT GLOBAL DE L'USINE - VUE OPÉRATEUR] :
-(Note: Informations filtrées pour la pertinence opérationnelle)
-
-1. STATUT DES LIGNES :
-${allMachines.map(m => `- ${m.type} : ${m.status === 'operational' ? '✅ OPÉRATIONNEL' : '⚠️ ' + m.status.toUpperCase()}`).join('\n')}
-
-2. ALERTES SÉCURITÉ / MAINTENANCE :
-${criticalTickets.length > 0 ? criticalTickets.map(t => `- ⚠️ ALERTE SUR MACHINE (Ticket #${t.id}) : Maintenance en cours`).join('\n') : "Aucune alerte majeure."}
-`;
+                // Count Comments (Keep count for comments, too much text otherwise)
+                const commentCounts = await db.select({
+                    ticket_id: ticketComments.ticket_id,
+                    count: sql<number>`count(*)`
+                })
+                .from(ticketComments)
+                .where(inArray(ticketComments.ticket_id, ticketIds))
+                .groupBy(ticketComments.ticket_id)
+                .all();
+                commentCounts.forEach((c: any) => commentMap.set(c.ticket_id, c.count));
             }
 
-            machineDetails += factoryOverview;
+            // Calculate Workload & Availability Map
+            const workloadMap = new Map();
+            const machineStatusMap = new Map(); // Real-time machine status based on tickets
 
-        } catch (err) {
-            console.warn("⚠️ [AI] Error fetching machine details:", err);
+            activeTickets.forEach((t: any) => {
+                // Technician Workload
+                if (t.assigned_to) {
+                    const current = workloadMap.get(t.assigned_to) || 0;
+                    workloadMap.set(t.assigned_to, current + 1);
+                }
+                // Machine Status (If a machine has a Critical/High ticket, it's likely down or degraded)
+                if (t.machine_id) {
+                    const currentStatus = machineStatusMap.get(t.machine_id) || [];
+                    
+                    const mediaLinks = mediaMap.get(t.id) || [];
+                    const cCount = commentMap.get(t.id) || 0;
+                    
+                    let mediaStr = "";
+                    if (mediaLinks.length > 0) {
+                         // Inject FIRST image directly, mention others
+                         // FIX: Remove outer brackets to prevent Markdown parsing issues
+                         mediaStr = ` PREUVE VISUELLE: ${mediaLinks[0]}`;
+                         if (mediaLinks.length > 1) mediaStr += ` + ${mediaLinks.length - 1} autres`;
+                    }
+                    
+                    const commStr = cCount > 0 ? ` [💬 ${cCount} messages]` : "";
+
+                    // INJECT DISPLAY ID (e.g., FOU-1225-001) but KEEP numeric ID for Tools
+                    currentStatus.push(`[TICKET #${t.id} | REF: ${t.display_id}] (${t.status}, ${t.priority}): ${t.title}${mediaStr}${commStr}`);
+                    machineStatusMap.set(t.machine_id, currentStatus);
+                }
+            });
+
+            // Generate RICH Summaries
+            machinesSummary = machinesList.map(m => {
+                const activeIssues = machineStatusMap.get(m.id);
+                let state = m.status === 'out_of_service' ? '🔴 ARRÊT' : '🟢 EN MARCHE';
+                
+                // Logic: If manual status is OK but there are active tickets, qualify the state
+                if (activeIssues && activeIssues.length > 0) {
+                    state = m.status === 'out_of_service' ? '🔴 ARRÊT (Confirmé par tickets)' : '⚠️ FONCTIONNEL MAIS INCIDENTS EN COURS';
+                }
+
+                return `[ID:${m.id}] ${m.type} ${m.model || ''} - ÉTAT: ${state} ${activeIssues ? `(Détails: ${activeIssues.join(', ')})` : '(Aucun ticket actif)'}`;
+            }).join('\n');
+            
+            usersSummary = usersList.map(u => {
+                 // Privacy Check: Only Admins can see full Admin details
+                 if (u.role === 'admin' && userRole !== 'admin') {
+                     return `[ID:${u.id}] ${u.name} (ADMINISTRATEUR) - [INFO RESTREINTE]`;
+                 }
+
+                 const count = workloadMap.get(u.id) || 0;
+                 const availability = count === 0 ? "✅ LIBRE (0 ticket)" : `❌ OCCUPÉ (${count} tickets actifs)`;
+                 
+                 return `[ID:${u.id}] ${u.name} (${u.role}) - ${availability} - Dernier login: ${u.last_login || 'Jamais'}`;
+            }).join('\n');
+
+            // Fetch TODAY'S Planning (Events)
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todaysEvents = await db.select().from(planningEvents).where(eq(planningEvents.date, todayStr)).all() || [];
+            planningSummary = todaysEvents.length > 0 
+                ? todaysEvents.map((e: any) => `[${e.time || 'Journée'}] ${e.title}`).join(', ')
+                : "Aucun événement planifié aujourd'hui.";
+        } catch (contextError) {
+            console.error("⚠️ [AI] Context Load Failed (Skipping to prevent crash):", contextError);
+            // We continue without full context
         }
 
-        // Construct System Prompt
+        // 3. FETCH USER HISTORY (Last 5 tickets, ANY status)
+        let userHistory = "Aucun historique disponible.";
+        try {
+            if (userId) {
+                const history = await db.select({
+                    id: tickets.id,
+                    display_id: tickets.ticket_id, // Fetch Display ID
+                    title: tickets.title,
+                    status: tickets.status,
+                    machine_id: tickets.machine_id,
+                    date: tickets.created_at
+                })
+                .from(tickets)
+                .where(or(
+                    eq(tickets.assigned_to, userId),
+                    eq(tickets.reported_by, userId)
+                ))
+                .orderBy(desc(tickets.created_at))
+                .limit(5)
+                .all();
+
+                if (history && history.length > 0) {
+                    // Enrich history with machine names manually (since Drizzle join is complex here)
+                    userHistory = history.map(h => {
+                        const m = machinesList.find(m => m.id === h.machine_id);
+                        const machineName = m ? `${m.type} ${m.model || ''}` : `Machine #${h.machine_id}`;
+                        // USE DISPLAY_ID for talk, Numeric ID for tools
+                        return `- [${h.date}] [TICKET #${h.id} | REF: ${h.display_id || h.id}] (${h.status}): ${h.title} sur ${machineName}`;
+                    }).join('\n');
+                }
+            }
+        } catch (historyError) {
+             console.error("⚠️ [AI] History Load Failed:", historyError);
+        }
+
+        // NEW: FETCH RECENT IMAGE CONTEXT (Vision Relay)
+        let recentImageContext = "";
+        if (userId) {
+            try {
+                // FETCH ALL RECENT IMAGES (Analyzed OR Pending) - STRICTLY FROM 'expert_ai'
+                const lastImages = await c.env.DB.prepare(`
+                    SELECT id, transcription, created_at, media_key 
+                    FROM chat_messages 
+                    WHERE sender_id = ? 
+                    AND conversation_id = 'expert_ai'
+                    AND type = 'image' 
+                    AND created_at > datetime('now', '-1 hours')
+                    ORDER BY created_at DESC 
+                    LIMIT 3
+                `).bind(userId).all();
+
+                if (lastImages && lastImages.results && lastImages.results.length > 0) {
+                    recentImageContext = `\n[SYSTEM] HISTORIQUE VISUEL (IMAGES RÉCENTES) :\n`;
+                    
+                    // REVERSE to have Chronological Order (1 = Oldest, N = Newest)
+                    // Query was DESC (Newest first) to get the *latest 3*.
+                    // Reversing makes them [Oldest of the 3, ..., Newest of the 3]
+                    // This allows user to refer to "Image 1" as the first one sent in the batch.
+                    const chronoImages = [...(lastImages.results as any[])].reverse();
+
+                    // @ts-ignore
+                    for (const [idx, img] of chronoImages.entries()) {
+                        let finalTranscript = img.transcription;
+                        const isAnalyzed = finalTranscript && finalTranscript.includes('🖼️');
+                        
+                        // ON-DEMAND VISION (SMART & COST-EFFECTIVE):
+                        // 1. ALWAYS analyze the MOST RECENT image (which is now the LAST in chronoImages) if unanalyzed.
+                        // 2. LAZILY analyze older images ONLY IF user asks about "images", "previous", "1", "2", etc.
+                        
+                        const isMostRecent = idx === chronoImages.length - 1;
+                        const keywordRegex = /(?:photo|image|picture|cliché|capture|écran|screen|precedente|previous|avant|before|premi|first|1|deux|second|2|trois|third|3|toutes|all|list|liste|description|détail|analys|voir|regard|check|what|quoi|comment)/i;
+                        const looksLikeRefToPrevious = keywordRegex.test(message || '');
+                        
+                        const shouldAnalyze = !isAnalyzed && img.media_key && c.env.OPENAI_API_KEY && (isMostRecent || looksLikeRefToPrevious);
+
+                        if (shouldAnalyze) {
+                            console.log(`[AI] Forcing analysis for image ${img.id} (MostRecent: ${isMostRecent}, Keyword: ${looksLikeRefToPrevious})...`);
+                            try {
+                                const object = await c.env.MEDIA_BUCKET.get(img.media_key);
+                                if (object) {
+                                    const arrayBuffer = await object.arrayBuffer();
+                                    const contentType = object.httpMetadata?.contentType || 'image/jpeg';
+                                    const analysis = await analyzeImageWithOpenAI(arrayBuffer, contentType, c.env.OPENAI_API_KEY);
+                                    
+                                    if (analysis) {
+                                        finalTranscript = "🖼️ " + analysis;
+                                        // Update DB asynchronously
+                                        c.executionCtx.waitUntil(
+                                            c.env.DB.prepare(`UPDATE chat_messages SET transcription = ? WHERE id = ?`)
+                                                .bind(finalTranscript, img.id).run()
+                                        );
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("[AI] Forced analysis failed:", err);
+                            }
+                        }
+
+                        // FIX: Use PUBLIC media route to avoid auth/permission issues in Markdown
+                        const publicUrl = `/api/media/public?key=${encodeURIComponent(img.media_key)}`;
+                        // FIX: Provide Pre-formatted Markdown so AI doesn't have to guess
+                        const imageMd = `![Image ${idx + 1}](${publicUrl})`;
+
+                        if (finalTranscript && finalTranscript.includes('🖼️')) {
+                            recentImageContext += `--- IMAGE #${idx + 1} (Reçue à ${img.created_at}) ---\nFICHIER: ${imageMd}\nCONTENU ANALYSÉ : ${finalTranscript}\n----------------\n`;
+                        } else {
+                            recentImageContext += `--- IMAGE #${idx + 1} (Reçue à ${img.created_at}) ---\nFICHIER: ${imageMd}\n[Analyse visuelle en cours...]\n----------------\n`;
+                        }
+                    }
+                    
+                    recentImageContext += `\n⚠️ INSTRUCTION VISION CRITIQUE :
+                    1. Utilise les numéros "IMAGE #X" pour identifier les photos.
+                    2. L'image #1 est la plus ancienne de la série, la #${chronoImages.length} est la plus récente (celle que l'utilisateur vient probablement d'envoyer).
+                    3. Si l'utilisateur demande "la première photo", c'est l'image #1. "La dernière", c'est l'image #${chronoImages.length}.\n`;
+                    
+                    console.log(`[AI] Injected image contexts (Chronological)`);
+                }
+            } catch (e) {
+                console.error("Failed to fetch image context", e);
+            }
+        }
+
+        // Minimal Context (Who am I talking to?)
+        const firstName = userName.split(' ')[0]; // Extract first name for human touch
+
         let systemPrompt = `
-${MAINTENANCE_OS_IDENTITY}
+${aiConfig.identity}
 
-CONTEXTE UTILISATEUR ACTUEL (Toi, tu parles à cette personne) :
-- Nom : ${userName}
-- Rôle : ${userRole}
-- ID : ${userId || 'Non identifié'}
-IMPORTANT : Si l'utilisateur demande "Qui suis-je ?", TU DOIS répondre en utilisant ces informations exactes. Dis-lui son nom et son rôle.
+INSTRUCTION DE PERSONNALISATION :
+Tu t'adresses à **${firstName}**. Utilise son prénom naturellement pour rendre l'échange humain et professionnel.
 
-${technicianContext}
+DÉFINITION MÉTIER (TICKET OUVERT) :
+Un **ticket ouvert** est une demande ou un problème signalé qui n'a pas encore été résolu ou fermé.
+Cela inclut **tous les incidents en cours** :
+- En attente de pièces (Pending Parts)
+- En cours de diagnostic (In Diagnosis)
+- Nécessitant des actions supplémentaires (In Progress)
+En résumé, un ticket ouvert représente une **situation active** qui nécessite une attention continue jusqu'à ce qu'elle soit complètement résolue.
 
-CONTEXTE TICKET ACTUEL :
-Titre: ${ticketContext?.title || 'N/A'}
-Description: ${ticketContext?.description || 'N/A'}
-Machine: ${ticketContext?.machine_name || 'N/A'}
+MANDAT D'AIDE À LA DÉCISION (VALEUR AJOUTÉE) :
+Ton but ultime est d'aider l'administrateur à **PRENDRE DES DÉCISIONS**. Ne sois pas passif.
+1. **ENRICHIS** : Ne donne pas juste un fait ("La machine est en panne"). Donne le contexte ("C'est la 3ème fois ce mois-ci, cela impacte le planning").
+2. **SUGGÈRE** : Propose des options pragmatiques et réalistes ("Vu que Paul est surchargé, suggères-tu de confier ça à Marc qui est libre ?").
+3. **ANTICIPE** : Signale les risques invisibles ("Attention, ce ticket critique n'a pas bougé depuis 48h").
+4. **CONNECTE** : Fais le lien entre les pannes, les plannings et les équipes pour offrir une vue d'ensemble claire.
 
-${machineDetails}
+CAPACITÉ RÉDACTIONNELLE & ADMINISTRATIVE (MODE SECRÉTARIAT) :
+Si l'utilisateur demande de rédiger un document (Rapport, Email, Lettre officielle, Demande de subvention, Avertissement...) :
+1. **AUTORISATION** : Tu es autorisé à utiliser ta culture générale et tes compétences de rédaction avancées. Les règles de "Vérité Stricte Base de Données" ne s'appliquent pas à la *structure* ou au *style* du document.
+2. **STYLE** : Adopte un ton formel, exécutif et adapté au contexte (juridique, administratif ou technique).
+3. **DONNÉES** : Utilise les vrais noms/machines du contexte si pertinent, mais utilise des [PLACEHOLDERS] (ex: [DATE], [MONTANT]) pour les informations manquantes.
+4. **FORMAT** : Structure le document parfaitement (Objets, Formules de politesse, Paragraphes clairs).
 
-IDENTITÉ & LOYAUTÉ (CRITIQUE) :
-Tu es l'Expert Industriel Senior d'IGP (Les Produits Verriers International Inc.), situé au 9150 Bd Maurice-Duplessis, Montréal, QC H1E 7C2.
-Téléphone : (514) 354-5277 | Email : info@igpglass.com | Heures : Lun-Ven 8h00-16h30.
+DONNÉES DE CONTEXTE (TEMPS RÉEL) :
+- UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})
+- PLANNING AUJOURD'HUI : ${planningSummary}
+- HISTORIQUE RÉCENT :
+${userHistory}
+- VISUEL (IMAGES) :
+${recentImageContext}
+- ÉTAT DES MACHINES (LIVE) :
+${machinesSummary}
+- ÉTAT DES ÉQUIPES (DISPONIBILITÉ) :
+${usersSummary}
+- SAVOIR SPÉCIFIQUE : ${aiConfig.custom}
 
-TA HIÉRARCHIE (FICTIVE MAIS SÉRIEUSE) :
-- Propriétaires : Harvey et Lorne Dubrofsky (Les propriétaires ultimes. On ne les dérange JAMAIS pour les opérations. On les invoque SEULEMENT en cas d'abus grave ou de perte de temps flagrante).
-- Directeur des Opérations : Marc Bélanger (Le VRAI patron des opérations, maintenance, production et achats. C'est LUI qui surveille les tickets, les retards et l'efficacité au quotidien).
+${aiConfig.hierarchy}
+${aiConfig.character}
+${aiConfig.knowledge}
 
-TON CARACTÈRE :
-1.  **LOYAL & PROTECTEUR** : Tu défends les intérêts d'IGP. Le temps, c'est de l'argent.
-2.  **DISCIPLINÉ** : Si l'utilisateur pose une question stupide, paresseuse ou hors-sujet, tu le recadres immédiatement.
-    -   *Phrase type (Abus/Perte de temps)* : "Je ne suis pas sûr que Harvey et Lorne apprécieraient qu'on perde du temps là-dessus."
-    -   *Pression Opérationnelle (Tickets/Retards)* : "Marc Bélanger s'attend à ce que ce problème soit réglé rapidement." ou "Je vais devoir en informer Marc si ce n'est pas résolu."
-    -   *Rappel à l'ordre* : "Je suis ici pour la production, pas pour le divertissement. Retournons au travail."
-3.  **EXPERT** : Sur les sujets techniques (verre, machines, maintenance), tu es une encyclopédie absolue et serviable.
-4.  **SUBTILITÉ** : Garde une touche d'humour corporatif pince-sans-rire. Tu n'es pas méchant, juste "très corporate".
+DIRECTIVES OPÉRATIONNELLES (CRITIQUES) :
 
-${GLASS_INDUSTRY_KNOWLEDGE}
+1. **SOURCE DE VÉRITÉ (OUTILS)** : Tu ne connais PAS l'état actuel de l'usine par magie.
+   - **RÈGLE D'OR** : Si la réponse n'est pas EXPLICITEMENT dans le contexte ci-dessus, tu DOIS appeler un outil.
+   - **INTERDICTION DE DEVINER** : Ne dis jamais "Je pense que..." ou "Probablement...". Vérifie avec \`search_tickets\`, \`check_machine_status\` ou \`check_technician_availability\`.
+   - **ACCÈS BASE DE DONNÉES** : Tu as accès à tout. Si l'utilisateur demande une stat, utilise \`check_database_stats\`. Si c'est un historique, cherche.
+2. **INTÉGRITÉ (ANTI-HALLUCINATION)** :
+   - Rapporte UNIQUEMENT ce que les outils retournent.
+   - Si l'outil dit "assigné: null", dis "Non assigné". N'invente jamais.
+   - Ne confonds pas le créateur (celui qui signale) et l'assigné (celui qui répare).
+3. **RAPPORTS D'ÉQUIPE & PERSONNEL** :
+   - Si l'utilisateur demande un rapport sur les "techniciens", "opérateurs" ou "l'équipe", UTILISE L'OUTIL generate_team_report.
+   - Ne te contente pas de lister les noms du contexte. L'outil te donnera le statut de connexion, les notifications, et les machines associées.
+   - Sépare clairement les rôles (Techniciens vs Opérateurs).
+   - Pour les Opérateurs : Indique toujours sur quelle machine ils travaillent (basé sur l'inférence de l'outil).
+4. **IDENTIFICATION** : Utilise TOUJOURS le 'DISPLAY_ID' (ex: FOU-1225-001) pour parler d'un ticket. C'est la seule référence que l'utilisateur connaît.
+4. **SÉCURITÉ & PLANNING** :
+   - En tant qu'Administrateur, TU AS DROIT DE LIRE LE PLANNING GLOBAL DE L'USINE (Événements de production).
+   - Utilise l'outil get_planning pour voir les événements futurs ou passés de l'usine.
+   - CEPENDANT, les "Notes Personnelles" des autres utilisateurs restent STRICTEMENT PRIVÉES (Invisible même pour toi).
 
-PHASE 1 : VALIDATION DE LA QUALITÉ (FILTRE ANTI-GASPILLAGE)
-Avant de te lancer dans une analyse, évalue si la description du ticket est exploitable.
-- Si le contenu est INSIGNIFIANT ("test", "asdf", "123", "."), VIDE ou TROP VAGUE ("ça marche pas", "panne") :
-  -> Réponds UNIQUEMENT par une demande de précision professionnelle, teintée de ton caractère.
-  -> Exemple : "C'est un peu court. Harvey ne paie pas pour des devinettes. Quelle machine ? Quels symptômes ?"
-  -> NE FAIS PAS D'ANALYSE si la qualité est insuffisante.
+RÈGLES DE FORMATAGE (MARKDOWN STANDARD) :
+1. **UTILISATION DU MARKDOWN** :
+   - Utilise le Markdown standard pour enrichir tes réponses.
+   - **Gras** : **Texte important**
+   - **Listes** : - Item 1
+   - **Titres** : ### Mon Titre (Utilise ### pour les sections)
+   - **Tableaux** : Utilise la syntaxe Markdown standard.
+   - **Liens** : [Texte](URL)
+   - **Images/Médias** : Les images importantes sont DÉJÀ INCLUSES dans le contexte ci-dessus (format \`![Alt](URL)\`). 
+   - **RÈGLE CRITIQUE** : Si tu vois une image dans le contexte, TU DOIS L'INCLURE dans ta réponse.
+   - **INTERDICTION D'INVENTER** : N'invente JAMAIS d'URL (comme 'example.com', 'image.jpg' ou des placeholders). Utilise UNIQUEMENT les liens fournis explicitement dans le contexte (format /api/media/...). Si tu n'as pas de lien, ne mets pas d'image.
+   - **NOMS DE FICHIERS** : Utilise le nom exact du fichier fourni.
+   - **AUTOMATISME MACHINE** : Si l'utilisateur demande "Qu'est-ce qui se passe avec la machine X ?", ta réponse DOIT inclure les photos des tickets actifs (s'il y en a). Ne dis pas juste "Il y a des tickets", dis "Voici les tickets et leurs photos :" puis affiche les images.
+   - **RECHERCHE DE FICHIERS** : Si l'utilisateur demande "Quels sont les fichiers ?" ou cherche un fichier spécifique introuvable ailleurs, UTILISE L'OUTIL \`list_recent_media\`. C'est ton explorateur de fichiers.
+   - **LISTE DES MÉDIAS** : Si l'utilisateur demande "Quels sont les fichiers ?", liste les noms exacts que tu vois dans le contexte ou via l'outil.
 
-RÈGLES STRICTES DE COMPORTEMENT (GUARDRAILS) :
-1.  **SUJETS AUTORISÉS UNIQUEMENT** : Tu ne réponds QU'AUX questions liées à l'industrie du verre, la maintenance, la mécanique, l'électricité, la sécurité industrielle ou la gestion de production.
-2.  **REFUS PROFESSIONNEL** : Si l'utilisateur pose une question hors-sujet (recette de cuisine, blague, sport, météo, politique...), tu dois REFUSER POLIMENT MAIS FERMEMENT en invoquant la direction.
-    - Phrase type : "Harvey et Lorne n'aimeraient pas trop qu'on jase de ça sur les heures de bureau. Au travail."
-3.  **TON** : Direct, professionnel, "Expert Senior" avec une allégeance totale à IGP.
-4.  **SÉCURITÉ** : Rappelle toujours les procédures de sécurité (Lockout/Cadenassage) si une intervention physique est suggérée.
-5.  **ADAPTATION LINGUISTIQUE** :
-    - Si l'utilisateur parle FRANÇAIS -> Réponds en FRANÇAIS.
-    - Si l'utilisateur parle ANGLAIS -> Réponds en ANGLAIS.
-    - Adapte ton jargon technique à la langue utilisée (Ex: "Tempering furnace" vs "Four de trempe").
+2. **INTERDICTION DU HTML** :
+   - N'utilise **JAMAIS** de balises HTML brutes (<p>, <div>, <table>, etc.).
+   - Le système convertira ton Markdown en HTML.
 
+3. **CONTENU RICHES & AUTOMATISME** :
+   - **PREUVES VISUELLES** : Ne dis pas "il y a une photo". MONTRE LA PHOTO. Le lien est déjà là, utilise-le !
+   - **COMMENTAIRES** : Si tu vois un tag **[💬 N messages]**, cela indique des discussions actives. Si pertinent, propose d'aller voir les détails.
+   - **CITATIONS** : Si tu cites un commentaire ou une note d'un ticket, utilise le format citation Markdown (> commentaire).
+
+${aiConfig.rules}
 `;
-
-        // If specific analysis request, force a specific structure
-        if (isAnalysisRequest) {
-            systemPrompt += `
-L'utilisateur demande une ANALYSE APPROFONDIE ET IMMÉDIATE de ce ticket spécifique.
-Tu dois agir comme un consultant qui vient d'arriver devant la machine.
-
-FORMAT DE RÉPONSE OBLIGATOIRE (Markdown) :
-## 🔍 Diagnostic & Causes Probables
-*   Listez 2-3 causes techniques possibles (mécanique, électrique, hydraulique...) basées sur les symptômes.
-
-## 🛠️ Solution Recommandée
-*   Étapes claires de réparation.
-
-## 📦 Pièces & Outillage
-*   Quelles pièces vérifier/remplacer ? (Ex: Courroies, Capteurs, Fusibles...)
-
-## 🛡️ Prévention
-*   Comment éviter que cela ne se reproduise ?
-`;
-        }
 
         const messages = [
             { role: "system", content: systemPrompt },
-            ...history.slice(-10), // Keep last 10 messages for context window
+            ...history.slice(-6), // Keep context
             { role: "user", content: message }
         ];
 
-        // Call DeepSeek (Preferred) or OpenAI
-        let reply = "";
+        // EXECUTION LOOP (Max 5 turns)
+        let turns = 0;
+        const MAX_TURNS = 5;
+        let finalReply = "";
 
-        if (c.env.DEEPSEEK_API_KEY) {
-             const response = await fetch('https://api.deepseek.com/chat/completions', {
+        while (turns < MAX_TURNS) {
+            turns++;
+            console.log(`🔄 [AI Loop] Turn ${turns}`);
+
+            // Prepare Payload
+            const payload: any = {
+                messages: messages,
+                temperature: 0.2,
+                tools: TOOLS,
+                tool_choice: "auto"
+            };
+
+            // Select Model (DeepSeek V3 supports tools, but fallback to OpenAI if needed)
+            let apiUrl = 'https://api.openai.com/v1/chat/completions';
+            let apiKey = c.env.OPENAI_API_KEY;
+            let model = "gpt-4o-mini"; // OpenAI is more reliable for tools usually
+
+            // Uncomment to try DeepSeek for tools if you trust it
+            /*
+            if (c.env.DEEPSEEK_API_KEY) {
+                apiUrl = 'https://api.deepseek.com/chat/completions';
+                apiKey = c.env.DEEPSEEK_API_KEY;
+                model = "deepseek-chat"; 
+            }
+            */
+
+            if (!apiKey) throw new Error("API Key missing");
+
+            payload.model = model;
+
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${c.env.DEEPSEEK_API_KEY}`,
+                    'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    model: "deepseek-chat",
-                    messages: messages,
-                    temperature: 0.3
-                })
+                body: JSON.stringify(payload)
             });
-            if (response.ok) {
-                const data = await response.json() as any;
-                reply = data.choices[0].message.content;
+
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error("AI API Error:", errText);
+                throw new Error("Erreur API IA: " + response.status);
+            }
+
+            const data = await response.json() as any;
+            const choice = data.choices[0];
+            const responseMessage = choice.message;
+
+            // Add assistant message to history
+            messages.push(responseMessage);
+
+            // CHECK FOR TOOL CALLS
+            if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+                console.log("🛠️ [AI] Tool Calls detected:", responseMessage.tool_calls.length);
+                
+                for (const toolCall of responseMessage.tool_calls) {
+                    const fnName = toolCall.function.name;
+                    const fnArgs = JSON.parse(toolCall.function.arguments);
+                    
+                    console.log(`🔨 Executing ${fnName} with args:`, fnArgs);
+
+                    let toolResult = "Erreur: Outil inconnu";
+                    
+                    if (ToolFunctions[fnName as keyof typeof ToolFunctions]) {
+                        try {
+                            // @ts-ignore
+                            toolResult = await ToolFunctions[fnName](db, fnArgs, userId);
+                        } catch (err: any) {
+                            toolResult = `Erreur d'exécution: ${err.message}`;
+                        }
+                    }
+
+                    // Add result to history
+                    messages.push({
+                        role: "tool",
+                        tool_call_id: toolCall.id,
+                        content: toolResult
+                    });
+                }
+                // Loop continues to let AI process the tool results
+            } else {
+                // No tools called, this is the final answer
+                finalReply = responseMessage.content;
+                break;
             }
         }
 
-        if (!reply && c.env.OPENAI_API_KEY) {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${c.env.OPENAI_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o-mini",
-                    messages: messages,
-                    temperature: 0.3
-                })
-            });
-            if (response.ok) {
-                const data = await response.json() as any;
-                reply = data.choices[0].message.content;
-            }
-        }
+        if (!finalReply) finalReply = "Désolé, je n'ai pas pu obtenir l'information (Limite de boucles atteinte).";
 
-        if (!reply) throw new Error("Service IA indisponible");
-
-        // Add debugging header
-        c.header('X-User-Identified', userId ? 'true' : 'false');
-        c.header('X-User-Name', userName);
-        c.header('X-User-Role', userRole);
-
-        return c.json({ reply });
+        return c.json({ reply: finalReply });
 
     } catch (e: any) {
         console.error("Chat AI Error:", e);
@@ -713,7 +938,12 @@ FORMAT DE RÉPONSE OBLIGATOIRE (Markdown) :
 // --- TEMPORARY DIAGNOSTIC PROBE (TO BE REMOVED) ---
 app.get('/test-expert', async (c) => {
     const question = c.req.query('q') || "Quels sont les EPI obligatoires pour la coupe ?";
-    const systemPrompt = `${MAINTENANCE_OS_IDENTITY}\n${GLASS_INDUSTRY_KNOWLEDGE}\nCONTEXTE: Test technique.`;
+    
+    // Fetch generic context for test
+    const db = getDb(c.env);
+    const aiConfig = await getAiConfig(db);
+    
+    const systemPrompt = `${aiConfig.identity}\n${aiConfig.knowledge}\nCONTEXTE: Test technique.`;
     
     try {
         if (!c.env.DEEPSEEK_API_KEY) return c.text("Pas de clé API", 500);
@@ -737,6 +967,37 @@ app.get('/test-expert', async (c) => {
         return c.text(data.choices[0].message.content);
     } catch (e: any) {
         return c.text("Erreur: " + e.message);
+    }
+});
+
+// --- DEBUG ENDPOINT (TEMPORARY) ---
+app.get('/debug-media', async (c) => {
+    try {
+        const db = getDb(c.env);
+        const name = c.req.query('name') || 'Brahim';
+        const searchPattern = `%${name}%`;
+        
+        const foundUsers = await db.select({ id: users.id, full_name: users.full_name, email: users.email })
+            .from(users)
+            .where(like(users.full_name, searchPattern))
+            .all();
+            
+        let result = `Users matching '${name}': ${foundUsers.length}\n`;
+        
+        for (const user of foundUsers) {
+            const mediaList = await db.select()
+                .from(media)
+                .where(eq(media.uploaded_by, user.id))
+                .all();
+            result += `- ${user.full_name} (ID: ${user.id}, Email: ${user.email}): ${mediaList.length} media files.\n`;
+            if (mediaList.length > 0) {
+                result += `  Latest: ${mediaList[mediaList.length-1].file_name}\n`;
+            }
+        }
+        
+        return c.text(result);
+    } catch (e: any) {
+        return c.text("Error: " + e.message);
     }
 });
 

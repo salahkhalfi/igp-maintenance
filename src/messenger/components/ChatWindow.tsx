@@ -4,7 +4,9 @@ import { Message, Participant, Conversation, User } from '../types';
 import { SoundManager } from '../sound';
 import ImageViewer from './ImageViewer';
 import GroupInfo from './GroupInfo';
-import AnnotationEditor from '../AnnotationEditor';
+
+// Lazy load heavy AnnotationEditor (Konva) to optimize initial bundle size
+const AnnotationEditor = React.lazy(() => import('../AnnotationEditor'));
 
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
@@ -16,6 +18,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messengerName, setMessengerName] = useState('Connect');
+    
+    // AI Customization
+    const [aiName, setAiName] = useState('Expert Industriel (IA)');
+    const [aiAvatarKey, setAiAvatarKey] = useState('ai_avatar');
     
     const [input, setInput] = useState(initialMessage || '');
     const [editingTranscriptionId, setEditingTranscriptionId] = useState<string | null>(null);
@@ -46,6 +52,14 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         axios.get('/api/settings/messenger_app_name').then(res => {
             if(res.data?.setting_value) setMessengerName(res.data.setting_value);
         }).catch(() => {});
+        
+        // Fetch AI Settings
+        axios.get('/api/settings/ai_expert_name').then(res => {
+            if(res.data?.setting_value) setAiName(res.data.setting_value);
+        }).catch(() => {});
+        axios.get('/api/settings/ai_expert_avatar_key').then(res => {
+            if(res.data?.setting_value) setAiAvatarKey(res.data.setting_value);
+        }).catch(() => {});
     }, []);
 
     useEffect(() => {
@@ -70,17 +84,17 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
         // --- EXPERT AI LOGIC ---
         if (conversationId === 'expert_ai') {
-            const history = JSON.parse(localStorage.getItem('ai_chat_history') || '[]');
+            const history = JSON.parse(localStorage.getItem(`ai_chat_history_${currentUserId}`) || '[]');
             setMessages(history);
             setParticipants([
-                { user_id: 0, full_name: 'Expert IGP (IA)', role: 'ai', last_read_at: new Date().toISOString() },
+                { user_id: 0, full_name: aiName, role: 'ai', last_read_at: new Date().toISOString() },
                 { user_id: currentUserId || 999, full_name: 'Moi', role: currentUserRole, last_read_at: new Date().toISOString() }
             ]);
             setConversation({
                 id: 'expert_ai',
                 type: 'direct',
-                name: 'Expert IGP (IA)',
-                avatar_key: 'ai_avatar',
+                name: aiName,
+                avatar_key: aiAvatarKey,
                 last_message: history.length > 0 ? history[history.length - 1].content : 'Bonjour',
                 last_message_time: new Date().toISOString(),
                 unread_count: 0,
@@ -89,6 +103,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             });
             setLoadingMessages(false);
             initialFetchDone.current = true;
+            setTimeout(scrollToBottom, 100);
             return; // No interval for AI
         }
 
@@ -96,7 +111,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         markAsRead();
         const interval = setInterval(fetchMessages, 3000);
         return () => clearInterval(interval);
-    }, [conversationId]);
+    }, [conversationId, aiName, aiAvatarKey]);
 
     useEffect(() => {
         if (initialShowInfo) {
@@ -248,12 +263,61 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     };
 
     const handleDeleteMessage = async (msgId: string) => {
+        // --- MASS DELETION (CLEAR ALL) INTERCEPT ---
+        // If msgId is special flag OR if called from a clear-all button (logic adaptation)
+        // But wait, the UI calls this function for single messages.
+        // Let's check where "Clear All" logic resides.
+        // It seems "Clear All" is likely handled by a different function or missing in this view context.
+        // Actually, looking at GroupInfo.tsx or ChatHeader might be where "Clear Chat" is.
+        // Assuming the user is clicking "Supprimer" on individual messages?
+        // Ah, user said "Vider les interactions" (Clear All).
+        
         if(!confirm("Supprimer ce message définitivement ?")) return;
+        
+        // Optimistic UI update for AI Chat (remove immediately)
+        if (conversationId === 'expert_ai') {
+             const newHistory = messages.filter(m => m.id !== msgId);
+             setMessages(newHistory);
+             localStorage.setItem(`ai_chat_history_${currentUserId}`, JSON.stringify(newHistory));
+             return;
+        }
+
         try {
             await axios.delete(`/api/v2/chat/conversations/${conversationId}/messages/${msgId}`);
             fetchMessages();
-        } catch(e) { alert("Erreur suppression"); }
+        } catch(e: any) { 
+            // If 404, it's already gone, so just refresh
+            if (e.response && e.response.status === 404) {
+                 fetchMessages();
+            } else {
+                 alert("Erreur suppression"); 
+            }
+        }
     };
+
+    // --- NEW FUNCTION: CLEAR AI HISTORY ---
+    // This function needs to be exposed to ChatHeader via props or handled internally if the header emits an event
+    // Inspecting ChatHeader usage... it receives `participants` but likely handles the menu internally.
+    // If ChatHeader triggers a "Clear" action, it likely calls an API.
+    // For AI, we need to intercept that API call or event.
+    
+    // Let's check if there is an existing "Clear All" handler.
+    // Searching for "vide" or "clear" in this file... none found.
+    // It must be in `GroupInfo` or `ChatHeader`.
+    
+    // HYPOTHESIS: The user is using the "Vider la discussion" button in the Group Info menu.
+    // That button probably calls `axios.delete('/api/v2/chat/conversations/:id/messages')`.
+    // Since 'expert_ai' doesn't really exist on the server (or is empty), that call succeeds (200 OK) but does nothing to the LOCAL storage.
+    
+    // FIX STRATEGY: We need to listen for that specific deletion event or hook into the clear action.
+    // Since `GroupInfo` is a child, we can pass a `onClearHistory` prop to it?
+    // Or simpler: We watch the messages list. If the SERVER returns empty list, we clear local?
+    // No, AI messages are local-only.
+    
+    // Let's modify `GroupInfo.tsx` to handle `expert_ai` specifically?
+    // NO, better to keep logic in `ChatWindow`.
+    
+    // Let's check `GroupInfo.tsx` to see how it clears chat.
 
     const handleSaveTranscription = async (messageId: string, newText: string) => {
         try {
@@ -287,7 +351,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             const a = document.createElement('a');
             a.href = url;
             const ext = type === 'image' ? 'jpg' : 'webm';
-            a.download = `igp-${type}-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
+            a.download = `maintenance-${type}-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.${ext}`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -360,19 +424,27 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             
             // Optimistic UI
             const newHistory = [...messages, userMsg];
-            setMessages(newHistory);
-            localStorage.setItem('ai_chat_history', JSON.stringify(newHistory));
+            
+            // OPTIMIZATION: Keep only last 20 messages in local storage to prevent "Heavy" feeling
+            const trimmedHistory = newHistory.length > 20 ? newHistory.slice(newHistory.length - 20) : newHistory;
+            
+            setMessages(trimmedHistory);
+            localStorage.setItem(`ai_chat_history_${currentUserId}`, JSON.stringify(trimmedHistory));
             setInput('');
             setIsSending(true);
+            setTimeout(scrollToBottom, 100);
 
             try {
                 const token = localStorage.getItem('auth_token');
                 
                 // Call AI API with Authorization header
+                // OPTIMIZATION: Only send the last 6 messages as context, not the whole history
+                const contextHistory = newHistory.length > 6 ? newHistory.slice(newHistory.length - 6) : newHistory;
+                
                 const res = await axios.post('/api/ai/chat', { 
                     message: userMsg.content, 
-                    history: newHistory.map(m => ({ 
-                        role: m.sender_name === 'Expert IGP' ? 'assistant' : 'user', 
+                    history: contextHistory.map(m => ({ 
+                        role: (m.sender_id === 0 || m.sender_name === 'Expert Industriel' || m.sender_name === 'Expert Industriel (IA)' || m.sender_name === aiName) ? 'assistant' : 'user', 
                         content: m.content 
                     }))
                 }, {
@@ -382,16 +454,20 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 const aiMsg: Message = {
                     id: (Date.now() + 1).toString(),
                     sender_id: 0, // AI ID
-                    sender_name: 'Expert IGP',
-                    sender_avatar_key: 'ai_avatar',
+                    sender_name: aiName,
+                    sender_avatar_key: aiAvatarKey,
                     content: res.data.reply,
                     created_at: new Date().toISOString(),
                     type: 'text'
                 };
                 
-                const finalHistory = [...newHistory, aiMsg];
-                setMessages(finalHistory);
-                localStorage.setItem('ai_chat_history', JSON.stringify(finalHistory));
+                const finalHistory = [...trimmedHistory, aiMsg];
+                // Double trim to be safe
+                const finalTrimmed = finalHistory.length > 20 ? finalHistory.slice(finalHistory.length - 20) : finalHistory;
+                
+                setMessages(finalTrimmed);
+                localStorage.setItem(`ai_chat_history_${currentUserId}`, JSON.stringify(finalTrimmed));
+                setTimeout(scrollToBottom, 100);
                 
             } catch (e) {
                 alert("Erreur AI: Impossible de joindre l'expert.");
@@ -499,6 +575,15 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             </div>
             <div className="bg-noise absolute inset-0 opacity-[0.03] pointer-events-none z-0"></div>
 
+            {uploading && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+                    <div className="flex flex-col items-center gap-4 p-6 bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl">
+                        <div className="w-12 h-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+                        <div className="text-white font-bold tracking-wider">ENVOI EN COURS...</div>
+                    </div>
+                </div>
+            )}
+
             {viewImage && (
                 <ImageViewer 
                     src={viewImage.src} 
@@ -517,15 +602,24 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
             
             {previewFile && (
-                <AnnotationEditor 
-                    file={previewFile} 
-                    onClose={() => {
-                        if (confirm("Quitter sans envoyer ?")) {
-                            setPreviewFile(null);
-                        }
-                    }}
-                    onSend={handleNewEditorSend}
-                />
+                <React.Suspense fallback={
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="w-12 h-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+                            <div className="text-white font-bold tracking-wider">CHARGEMENT ÉDITEUR...</div>
+                        </div>
+                    </div>
+                }>
+                    <AnnotationEditor 
+                        file={previewFile} 
+                        onClose={() => {
+                            if (confirm("Quitter sans envoyer ?")) {
+                                setPreviewFile(null);
+                            }
+                        }}
+                        onSend={handleNewEditorSend}
+                    />
+                </React.Suspense>
             )}
 
             <ChatHeader 
@@ -577,7 +671,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 setInput={setInput}
                 onSendText={sendMessage}
                 onSendAudio={sendAudio}
-                onFileSelect={setPreviewFile}
+                onFileSelect={(file) => handleNewEditorSend(file, '')}
                 isSending={isSending}
                 onTicketDetected={handleTicketDetected}
                 textareaRef={textareaRef}

@@ -181,6 +181,54 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     React.createElement('p', { className: 'mt-4 text-gray-600' }, 'Chargement...')
                 ) : ticket ? React.createElement('div', {},
 
+                    // --- BLOC ÉTAT MACHINE (MOVED TO TOP - v3.2) ---
+                    React.createElement('div', { className: 'mb-4 sm:mb-6' },
+                        React.createElement('div', { 
+                            className: 'p-4 sm:p-6 rounded-xl border-2 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all ' + 
+                            (ticket.is_machine_down ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200')
+                        },
+                            React.createElement('div', { className: 'flex items-center gap-4' },
+                                React.createElement('div', { 
+                                    className: 'w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-sm ' + 
+                                    (ticket.is_machine_down ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600')
+                                },
+                                    React.createElement('i', { className: ticket.is_machine_down ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle' })
+                                ),
+                                React.createElement('div', {},
+                                    React.createElement('h4', { className: 'font-bold text-lg sm:text-xl ' + (ticket.is_machine_down ? 'text-red-800' : 'text-green-800') },
+                                        ticket.is_machine_down ? "MACHINE À L'ARRÊT" : "MACHINE OPÉRATIONNELLE"
+                                    ),
+                                    React.createElement('p', { className: 'text-sm ' + (ticket.is_machine_down ? 'text-red-700' : 'text-green-700') },
+                                        ticket.is_machine_down 
+                                            ? "Machine déclarée hors service. Intervention requise." 
+                                            : "Machine en état de marche."
+                                    )
+                                )
+                            ),
+                            React.createElement('button', {
+                                onClick: async (e) => {
+                                    e.stopPropagation();
+                                    if(!confirm(ticket.is_machine_down ? "Confirmer la remise en service ?" : "Confirmer l'arrêt de la machine ?")) return;
+                                    try {
+                                        setLoading(true);
+                                        await axios.patch(API_URL + '/tickets/' + ticket.id, { is_machine_down: !ticket.is_machine_down });
+                                        const response = await axios.get(API_URL + '/tickets/' + ticketId);
+                                        setTicket(response.data.ticket);
+                                    } catch(err) {
+                                        alert('Erreur: ' + (err.response?.data?.error || err.message));
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                },
+                                className: 'w-full sm:w-auto px-6 py-3 rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 transition-all transform hover:scale-105 ' +
+                                (ticket.is_machine_down ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' : 'bg-red-600 text-white hover:bg-red-700 shadow-md')
+                            },
+                                React.createElement('i', { className: ticket.is_machine_down ? 'fas fa-check-circle' : 'fas fa-power-off' }),
+                                ticket.is_machine_down ? "Remettre en service" : "Déclarer HS"
+                            )
+                        )
+                    ),
+
                 React.createElement('div', { className: 'mb-4 sm:mb-6 p-3 sm:p-4 md:p-6 bg-gray-50 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200' },
                     React.createElement('div', { className: 'flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4' },
                         React.createElement('span', { className: 'text-sm sm:text-base font-mono font-bold text-blue-700 bg-blue-100/70 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg' }, ticket.ticket_id),
@@ -346,57 +394,6 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     )
                 ),
 
-                // --- BLOC ÉTAT MACHINE (Visible sur tous les tickets - v3.1) ---
-                React.createElement('div', { className: 'mb-4 sm:mb-6' },
-                    React.createElement('div', { 
-                        className: 'p-4 sm:p-6 rounded-xl border-2 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all ' + 
-                        (ticket.is_machine_down ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200')
-                    },
-                        React.createElement('div', { className: 'flex items-center gap-4' },
-                            React.createElement('div', { 
-                                className: 'w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-sm ' + 
-                                (ticket.is_machine_down ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600')
-                            },
-                                React.createElement('i', { className: ticket.is_machine_down ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle' })
-                            ),
-                            React.createElement('div', {},
-                                React.createElement('h4', { className: 'font-bold text-lg sm:text-xl ' + (ticket.is_machine_down ? 'text-red-800' : 'text-gray-800') },
-                                    ticket.is_machine_down ? "MACHINE À L'ARRÊT" : "MACHINE OPÉRATIONNELLE"
-                                ),
-                                React.createElement('p', { className: 'text-sm ' + (ticket.is_machine_down ? 'text-red-700' : 'text-gray-500') },
-                                    ticket.is_machine_down 
-                                        ? "Machine déclarée hors service. Intervention requise." 
-                                        : "Aucun arrêt machine signalé pour ce ticket."
-                                )
-                            )
-                        ),
-                        React.createElement('button', {
-                            onClick: async (e) => {
-                                e.stopPropagation();
-                                if(!confirm(ticket.is_machine_down ? "Confirmer la remise en service ?" : "Confirmer l'arrêt de la machine ?")) return;
-                                try {
-                                    setLoading(true);
-                                    // Utilisation directe de axios pour patcher
-                                    // Utilisation de ticket.id (INT) et non ticket_id (STRING)
-                                    await axios.patch(API_URL + '/tickets/' + ticket.id, { is_machine_down: !ticket.is_machine_down });
-                                    // Recharger les détails
-                                    const response = await axios.get(API_URL + '/tickets/' + ticketId);
-                                    setTicket(response.data.ticket);
-                                } catch(err) {
-                                    alert('Erreur: ' + (err.response?.data?.error || err.message));
-                                } finally {
-                                    setLoading(false);
-                                }
-                            },
-                            className: 'w-full sm:w-auto px-6 py-3 rounded-xl font-bold shadow-sm flex items-center justify-center gap-2 transition-all transform hover:scale-105 ' +
-                            (ticket.is_machine_down ? 'bg-white text-gray-900 border-2 border-gray-200 hover:bg-gray-50' : 'bg-red-600 text-white hover:bg-red-700 shadow-md')
-                        },
-                            React.createElement('i', { className: ticket.is_machine_down ? 'fas fa-check-circle' : 'fas fa-power-off' }),
-                            ticket.is_machine_down ? "Remettre en service" : "Déclarer HS"
-                        )
-                    )
-                ),
-
                 // Badge "En retard" si ticket expiré (visible pour tous)
                 (ticket.scheduled_date && ticket.status !== 'completed' && ticket.status !== 'archived' && parseUTCDate(ticket.scheduled_date) < new Date()) ?
                     React.createElement('div', { className: 'mb-4 sm:mb-6 bg-orange-50 border-2 border-orange-400 rounded-xl shadow-md p-4 sm:p-6' },
@@ -532,7 +529,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                         : React.createElement('div', { className: 'mt-1 text-xs text-orange-700' },
                                             "ℹ️ Aucune date planifiée - Ajoutez-en une pour planifier"
                                         )
-                                    ) : null, // Ferme le badge d'état (ligne 3307)
+                                    ) : null, // Ferme le badge d'état
 
                                     React.createElement('label', { className: 'block font-bold text-gray-700 mb-2 text-sm sm:text-base' },
                                         React.createElement('i', { className: 'fas fa-calendar-day mr-2 text-slate-600 text-xs sm:text-sm' }),
@@ -556,11 +553,11 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                             React.createElement('i', { className: 'fas fa-times mr-1' }),
                                             "Retirer"
                                         ) : null
-                                    ), // Ferme le div flex gap-2 (ligne 3327)
+                                    ), // Ferme le div flex gap-2
                                     scheduledDate ? React.createElement('div', { className: 'mt-2 text-xs text-gray-600 italic' },
                                         '💡 Cliquez sur "Retirer" pour passer de PLANIFIÉ à ASSIGNÉ'
                                     ) : null
-                                ), // Ferme le div principal Date de maintenance (ligne 3305)
+                                ), // Ferme le div principal Date de maintenance
 
                                 // Boutons d'action
                                 React.createElement('div', { className: 'flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3' },

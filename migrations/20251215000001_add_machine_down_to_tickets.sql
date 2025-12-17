@@ -1,0 +1,1 @@
+ALTER TABLE tickets ADD COLUMN is_machine_down INTEGER DEFAULT 0;

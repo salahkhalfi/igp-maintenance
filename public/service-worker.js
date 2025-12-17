@@ -4,8 +4,8 @@
  * Version: v1.1.3 (Online First - Performance Optimized)
  */
 
-const CACHE_VERSION = 'v3.0.14';
-const CACHE_NAME = `maintenance-igp-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v3.1.5-fix-lag';
+const CACHE_NAME = `maintenance-os-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)
 const STATIC_ASSETS = [
@@ -16,7 +16,7 @@ const STATIC_ASSETS = [
     '/icon-192.png',
     '/icon-512.png',
     '/manifest.json',
-    '/static/logo-igp.png',
+    '/static/logo.png',
     '/static/js/utils.js',
     '/push-notifications.js',
     '/static/js/components/App.js',
@@ -28,7 +28,7 @@ const STATIC_ASSETS = [
     '/static/js/components/MessagingSidebar.js',
     '/static/js/components/MessagingChatWindow.js',
     '/static/js/components/MachineManagementModal.js',
-    '/static/js/components/AIChatModal.js'
+    '/static/js/components/AIChatModal_v4.js'
 ];
 
 // Installation du Service Worker
@@ -108,15 +108,16 @@ self.addEventListener('fetch', (event) => {
   // 2. ASSETS STATIQUES (JS, CSS, Images, Fonts)
   // Utilisation de Stale-While-Revalidate pour rapidité + mise à jour
   if (
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff2|ico)$/) ||
+    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff2|ico|mp3|json)$/) ||
     url.pathname.includes('/static/') ||
+    url.pathname.includes('/messenger/') ||
     STATIC_ASSETS.includes(url.pathname)
   ) {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         const fetchPromise = fetch(event.request).then((networkResponse) => {
             // Mise à jour du cache si succès
-            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            if (networkResponse && networkResponse.status === 200) {
                 const responseClone = networkResponse.clone();
                 caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
             }
@@ -124,6 +125,10 @@ self.addEventListener('fetch', (event) => {
         }).catch(err => {
             // Erreur silencieuse en background
             // console.log('[SW] Background update failed', err);
+            
+            // CRITICAL FIX: If both cache and network fail (offline + no cache), return 404 or basic response
+            // This prevents "Failed to convert value to Response"
+            return new Response('', { status: 404, statusText: 'Not Found (Offline)' });
         });
 
         // Retourner le cache immédiatement s'il existe, sinon attendre le réseau
@@ -162,6 +167,7 @@ self.addEventListener('fetch', (event) => {
       event.respondWith(
         fetch(event.request).catch(error => {
             console.log('[SW] API Fetch failed (offline):', url.pathname);
+            // CRITICAL FIX: Ensure we ALWAYS return a Response object
             return new Response(JSON.stringify({ 
                 error: 'offline', 
                 message: 'Vous êtes hors ligne. Veuillez vérifier votre connexion.' 
@@ -175,7 +181,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Par défaut: Network Only
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    fetch(event.request).catch(() => {
+        // Fallback ultime pour éviter le crash "Failed to convert value to Response"
+        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+    })
+  );
 });
 
 // Réception de notifications push
@@ -183,7 +194,7 @@ self.addEventListener('push', (event) => {
   // ... (Code existant conservé)
   console.log('[SW] Push received');
   
-  let data = { title: 'Maintenance IGP', body: 'Nouvelle notification' };
+  let data = { title: 'MaintenanceOS', body: 'Nouvelle notification' };
   
   if (event.data) {
     try {

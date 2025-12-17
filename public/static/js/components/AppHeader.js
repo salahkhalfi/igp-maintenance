@@ -320,7 +320,7 @@ const AppHeader = ({
                         React.createElement('button', {
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all relative',
                             onClick: () => window.open('/messenger', '_blank'), 
-                            title: (messengerName || 'IGP Connect') + ' (Nouvelle Messagerie)'
+                            title: (messengerName || 'Connect') + ' (Nouvelle Messagerie)'
                         }, 
                             React.createElement('i', { className: 'fas fa-rocket' }),
                             React.createElement('span', { className: 'absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white' })
@@ -509,7 +509,7 @@ const AppHeader = ({
                 title: 'Expert Industriel'
             }, React.createElement('i', { className: 'fas fa-robot' })),
 
-            // 2. IGP CONNECT (ROCKET) - NEW
+            // 2. CONNECT (ROCKET) - NEW
             React.createElement('button', {
                 onClick: () => window.open('/messenger', '_blank'),
                 className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm active:scale-95 relative shrink-0',

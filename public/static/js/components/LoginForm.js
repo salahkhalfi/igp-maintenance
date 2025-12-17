@@ -101,10 +101,10 @@ const LoginForm = ({ onLogin }) => {
             React.createElement('div', { className: 'text-center mb-4 sm:mb-8' }, // Reduced margin on mobile
                 React.createElement('img', {
                     src: '/api/settings/logo?t=' + Date.now(),
-                    alt: 'IGP Logo',
+                    alt: 'Logo Entreprise',
                     className: 'h-14 sm:h-20 w-auto mx-auto mb-2 sm:mb-4 drop-shadow-md', // Smaller logo and margin on mobile
                     onError: (e) => {
-                        e.target.src = '/static/logo-igp.png';
+                        e.target.src = '/static/logo.png';
                     }
                 }),
                 React.createElement('h1', {
@@ -175,7 +175,7 @@ const LoginForm = ({ onLogin }) => {
                         value: email,
                         onChange: handleInputEmail,
                         onInvalid: handleInvalidEmail,
-                        placeholder: 'votre.email@igpglass.ca',
+                        placeholder: 'votre.email@entreprise.com',
                         required: true
                     })
                 ),
@@ -236,7 +236,7 @@ const LoginForm = ({ onLogin }) => {
                 React.createElement('p', { className: 'text-[10px] sm:text-xs text-gray-700 font-medium drop-shadow-sm' }, // Smaller text on mobile
                     React.createElement('i', { className: 'fas fa-code mr-1 opacity-70' }),
                     'Conçue par ',
-                    React.createElement('span', { className: 'font-bold text-blue-900' }, "Le département des Technologies de l'Information des Produits Verriers International (IGP) Inc.")
+                    React.createElement('span', { className: 'font-bold text-blue-900' }, "Le département IT")
                 )
             )
         )

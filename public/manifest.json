@@ -1,7 +1,7 @@
 {
-  "name": "Maintenance IGP",
-  "short_name": "Maintenance IGP",
-  "description": "Application de gestion de maintenance - Les Produits Verriers International (IGP) Inc.",
+  "name": "MaintenanceOS",
+  "short_name": "MaintenanceOS",
+  "description": "Application de gestion de maintenance industrielle",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",

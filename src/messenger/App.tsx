@@ -1,17 +1,16 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getUserIdFromToken, getUserRoleFromToken, getNameFromToken } from './utils';
 import { SoundManager } from './sound';
 import GlobalStyles from './components/GlobalStyles';
 import OfflineBanner from './components/OfflineBanner';
 
-// Lazy load components
-const LoginScreen = React.lazy(() => import('./components/LoginScreen'));
-const ConversationList = React.lazy(() => import('./components/ConversationList'));
-const ChatWindow = React.lazy(() => import('./components/ChatWindow'));
-const EmptyState = React.lazy(() => import('./components/EmptyState'));
+import LoginScreen from './components/LoginScreen';
+import ConversationList from './components/ConversationList';
+import ChatWindow from './components/ChatWindow';
+import EmptyState from './components/EmptyState';
 
-// Loading component for Suspense
+// Loading component
 const LoadingScreen = () => (
     <div className="flex items-center justify-center min-h-screen bg-[#050505]">
         <div className="flex flex-col items-center gap-6">
@@ -150,7 +149,7 @@ const App = () => {
 
     if (showLogin) {
         return (
-            <Suspense fallback={<LoadingScreen />}>
+            <>
                 <GlobalStyles />
                 <LoginScreen onLogin={() => {
                     const token = localStorage.getItem('auth_token');
@@ -162,12 +161,12 @@ const App = () => {
                         setShowLogin(false);
                     }
                 }} />
-            </Suspense>
+            </>
         );
     }
 
     return (
-        <Suspense fallback={<LoadingScreen />}>
+        <>
             <GlobalStyles />
             <OfflineBanner />
             <div className="flex h-[100dvh] bg-[#050505] overflow-hidden font-sans relative" style={{ backgroundImage: 'url(/static/maintenance-bg-premium.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -208,7 +207,7 @@ const App = () => {
                     <EmptyState />
                 )}
             </div>
-        </Suspense>
+        </>
     );
 };
 

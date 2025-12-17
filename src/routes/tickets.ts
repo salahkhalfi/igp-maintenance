@@ -45,7 +45,11 @@ ticketsRoute.get('/', zValidator('query', getTicketsQuerySchema), async (c) => {
         reporter_email: reporter.email,
         assignee_name: assignee.first_name,
         assignee_email: assignee.email,
-        media_count: sql<number>`(SELECT COUNT(*) FROM media WHERE media.ticket_id = ${tickets.id})`
+        media_count: sql<number>`(SELECT COUNT(*) FROM media WHERE media.ticket_id = ${tickets.id})`,
+        machine_name: sql<string>`${machines.machine_type} || ' ' || COALESCE(${machines.model}, '')`,
+        machine_status: machines.status,
+        is_machine_down: tickets.is_machine_down,
+        created_by_name: reporter.first_name
       })
       .from(tickets)
       .leftJoin(machines, eq(tickets.machine_id, machines.id))
@@ -85,7 +89,11 @@ ticketsRoute.get('/:id', zValidator('param', ticketIdParamSchema), async (c) => 
         reporter_name: reporter.first_name,
         reporter_email: reporter.email,
         assignee_name: assignee.first_name,
-        assignee_email: assignee.email
+        assignee_email: assignee.email,
+        machine_name: sql<string>`${machines.machine_type} || ' ' || COALESCE(${machines.model}, '')`,
+        machine_status: machines.status,
+        is_machine_down: tickets.is_machine_down,
+        created_by_name: reporter.first_name
       })
       .from(tickets)
       .leftJoin(machines, eq(tickets.machine_id, machines.id))
@@ -135,7 +143,7 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
   try {
     const user = c.get('user') as any;
     const body = c.req.valid('json');
-    const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at } = body;
+    const { title, description, reporter_name, machine_id, priority, assigned_to, scheduled_date, created_at, is_machine_down } = body;
 
     const db = getDb(c.env);
 
@@ -171,6 +179,7 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
           priority,
           assigned_to: assigned_to || null,
           scheduled_date: scheduled_date || null,
+          is_machine_down: is_machine_down || false,
           status: 'received',
           created_at: timestamp,
           updated_at: timestamp
@@ -262,6 +271,16 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
       }
     };
 
+    // AUTOMATIC MACHINE STATUS UPDATE (Prudence logic)
+    if (is_machine_down) {
+      await db.update(machines)
+        .set({ status: 'out_of_service', updated_at: sql`CURRENT_TIMESTAMP` })
+        .where(eq(machines.id, machine_id))
+        .run();
+      
+      console.log(`[Ticket Created] Machine #${machine_id} status set to out_of_service.`);
+    }
+
     const newTicket = await createTicketWithRetry();
 
     // WEBHOOK: Send to Pabbly (Shadow Logging)
@@ -328,12 +347,35 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
     if (body.priority) updates.priority = body.priority;
     if (body.assigned_to !== undefined) updates.assigned_to = body.assigned_to;
     if (body.scheduled_date !== undefined) updates.scheduled_date = body.scheduled_date;
+    if (body.is_machine_down !== undefined) updates.is_machine_down = body.is_machine_down;
 
     // Update ticket
     const result = await db.update(tickets)
       .set(updates)
       .where(eq(tickets.id, id))
       .returning();
+
+    // AUTOMATIC MACHINE STATUS UPDATE (Prudence logic)
+    if (body.is_machine_down !== undefined) {
+      // User explicitly signaled machine status via ticket
+      const newStatus = body.is_machine_down ? 'out_of_service' : 'operational';
+      
+      // Update machine
+      await db.update(machines)
+        .set({ status: newStatus, updated_at: sql`CURRENT_TIMESTAMP` })
+        .where(eq(machines.id, currentTicket.machine_id))
+        .run();
+
+      console.log(`[Ticket Updated] Machine #${currentTicket.machine_id} status set to ${newStatus}.`);
+      
+      // Add to timeline
+      await db.insert(ticketTimeline).values({
+        ticket_id: id,
+        user_id: user.userId,
+        action: body.is_machine_down ? 'Machine mise à l\'arrêt' : 'Machine remise en service',
+        comment: body.is_machine_down ? 'Via case à cocher ticket' : 'Via résolution ticket'
+      });
+    }
     
     const updatedTicket = result[0];
 

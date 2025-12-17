@@ -424,7 +424,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     'Application conçue et développée par ',
                     React.createElement('span', { style: { fontWeight: '900', color: '#003366' } }, "Le département des Technologies de l'Information")
                 ),
-                React.createElement('p', { className: 'text-xs', style: { color: '#1a1a1a', fontWeight: '700' } }, '© ' + new Date().getFullYear() + ' - Produits Verriers International (IGP) Inc.')
+                React.createElement('p', { className: 'text-xs', style: { color: '#1a1a1a', fontWeight: '700' } }, '© ' + new Date().getFullYear() + ' - MaintenanceOS')
             )
         ),
 

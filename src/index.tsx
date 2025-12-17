@@ -48,6 +48,7 @@ import { serveStatic } from 'hono/cloudflare-workers';
 import { authMiddleware, adminOnly, internalUserOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
 import { hasPermission, getRolePermissions } from './utils/permissions';
 import { adminRolesHTML } from './views/admin-roles';
+import { adminAiSettingsHTML } from './views/admin-ai-settings';
 import { guideHTML } from './views/guide';
 import { changelogHTML } from './views/changelog';
 import { homeHTML } from './views/home';
@@ -358,6 +359,11 @@ app.get('/admin/roles', async (c) => {
   // Servir la page telle quelle - l'authentification sera vérifiée par le JS client
   // qui redirigera vers / si pas de token dans localStorage
   return c.html(adminRolesHTML);
+});
+
+// Page d'administration du Cerveau IA (accessible sans auth serveur, auth gérée par JS)
+app.get('/admin/ai-settings', async (c) => {
+  return c.html(adminAiSettingsHTML);
 });
 
 // Servir les fichiers statiques du dossier static/

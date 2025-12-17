@@ -105,6 +105,203 @@ settings.post('/upload-logo', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * POST /api/settings/upload-ai-avatar - Upload de l'avatar de l'Expert IA
+ * Accès: Administrateurs (admin role)
+ */
+settings.post('/upload-ai-avatar', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+
+    const formData = await c.req.formData();
+    const file = formData.get('avatar') as File;
+
+    if (!file) {
+      return c.json({ error: 'Aucun fichier fourni' }, 400);
+    }
+
+    // Validation du type de fichier
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      return c.json({
+        error: `Type de fichier non autorisé. Formats acceptés: ${ALLOWED_LOGO_TYPES.join(', ')}`
+      }, 400);
+    }
+
+    // Validation de la taille (max 2MB pour avatar)
+    const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+    if (file.size > MAX_AVATAR_SIZE) {
+      return c.json({
+        error: `Fichier trop volumineux (max ${MAX_AVATAR_SIZE / 1024 / 1024} MB)`
+      }, 400);
+    }
+
+    // Générer une clé unique pour le fichier
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(7);
+    const extension = file.name.split('.').pop() || 'png';
+    const fileKey = `avatars/ai-avatar-${timestamp}-${randomStr}.${extension}`;
+
+    // Upload vers R2
+    const arrayBuffer = await file.arrayBuffer();
+    await c.env.MEDIA_BUCKET.put(fileKey, arrayBuffer, {
+      httpMetadata: {
+        contentType: file.type,
+      },
+    });
+
+    console.log(`✅ Avatar IA uploadé dans R2: ${fileKey}`);
+
+    // Mettre à jour la DB avec la clé du fichier R2
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'ai_expert_avatar_key'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'ai_expert_avatar_key'
+      `).bind(fileKey).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('ai_expert_avatar_key', ?)
+      `).bind(fileKey).run();
+    }
+
+    return c.json({
+      message: 'Avatar IA uploadé avec succès',
+      fileKey
+    });
+  } catch (error) {
+    console.error('Upload AI avatar error:', error);
+    return c.json({ error: 'Erreur lors de l\'upload de l\'avatar' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/ai_expert_name - Récupérer le nom de l'Expert IA
+ * Accès: Public (authentifié)
+ * Note: Cette route spécifique évite le 404 du routeur générique et fournit une valeur par défaut
+ */
+settings.get('/ai_expert_name', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'ai_expert_name'
+    `).first();
+
+    if (!result) {
+      // Valeur par défaut
+      return c.json({ setting_value: 'Expert Industriel (IA)', value: 'Expert Industriel (IA)' });
+    }
+
+    return c.json({ 
+      setting_value: result.setting_value,
+      value: result.setting_value 
+    });
+  } catch (error) {
+    console.error('Get AI name error:', error);
+    // En cas d'erreur, fallback safe
+    return c.json({ setting_value: 'Expert Industriel (IA)', value: 'Expert Industriel (IA)' });
+  }
+});
+
+/**
+ * PUT /api/settings/ai_expert_name - Mettre à jour le nom de l'Expert IA
+ * Accès: Administrateurs (admin role)
+ */
+settings.put('/ai_expert_name', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (!value || typeof value !== 'string') {
+      return c.json({ error: 'Nom invalide' }, 400);
+    }
+
+    const trimmedValue = value.trim();
+    if (trimmedValue.length === 0) return c.json({ error: 'Le nom ne peut pas être vide' }, 400);
+    if (trimmedValue.length > 50) return c.json({ error: 'Le nom ne peut pas dépasser 50 caractères' }, 400);
+
+    // Update DB
+    const existing = await c.env.DB.prepare(`SELECT id FROM system_settings WHERE setting_key = 'ai_expert_name'`).first();
+    
+    if (existing) {
+      await c.env.DB.prepare(`UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = 'ai_expert_name'`).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`INSERT INTO system_settings (setting_key, setting_value) VALUES ('ai_expert_name', ?)`).bind(trimmedValue).run();
+    }
+
+    return c.json({ success: true, setting_value: trimmedValue });
+  } catch (error) {
+    console.error('Update AI name error:', error);
+    return c.json({ error: 'Erreur mise à jour nom IA' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/ai_expert_avatar_key - Récupérer la clé d'avatar de l'Expert IA
+ * Accès: Public (authentifié)
+ */
+settings.get('/ai_expert_avatar_key', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'ai_expert_avatar_key'
+    `).first();
+
+    if (!result) {
+      // Valeur par défaut
+      return c.json({ setting_value: 'ai_avatar', value: 'ai_avatar' });
+    }
+
+    return c.json({ 
+      setting_value: result.setting_value,
+      value: result.setting_value 
+    });
+  } catch (error) {
+    console.error('Get AI avatar key error:', error);
+    return c.json({ setting_value: 'ai_avatar', value: 'ai_avatar' });
+  }
+});
+
+/**
+ * GET /api/settings/ai-avatar - Récupérer l'avatar de l'Expert IA
+ * Accès: Public
+ */
+settings.get('/ai-avatar', async (c) => {
+  try {
+    // Récupérer la clé depuis la DB
+    const setting = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'ai_expert_avatar_key'
+    `).first() as any;
+
+    if (!setting || !setting.setting_value) {
+       return c.notFound();
+    }
+
+    const fileKey = setting.setting_value;
+
+    // Récupérer le fichier depuis R2
+    const object = await c.env.MEDIA_BUCKET.get(fileKey);
+
+    if (!object) {
+      // Fallback to default icon to avoid 404 console errors
+      return c.redirect('/messenger/messenger-icon.png');
+    }
+
+    // Retourner l'avatar avec cache
+    return new Response(object.body, {
+      headers: {
+        'Content-Type': object.httpMetadata?.contentType || 'image/png',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  } catch (error) {
+    console.error('Get AI avatar error:', error);
+    return c.notFound();
+  }
+});
+
+/**
  * GET /api/settings/logo - Récupérer le logo actuel depuis R2
  * Accès: Public (pour affichage)
  *
