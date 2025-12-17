@@ -9,6 +9,75 @@ import type { Bindings } from '../types';
 import { z } from 'zod';
 import { TOOLS, ToolFunctions } from '../ai/tools';
 
+// --- HELPER: DYNAMIC STATUS/PRIORITY MAPS ---
+async function getTicketMaps(db: any) {
+    // Default Maps (Fallback matching current codebase)
+    let statusMap: Record<string, string> = {
+        'received': 'Nouveau',
+        'diagnostic': 'En diagnostic',
+        'in_progress': 'En cours',
+        'waiting_parts': 'En attente de pièces',
+        'completed': 'Terminé',
+        'archived': 'Archivé',
+        'open': 'Ouvert', // Legacy
+        'resolved': 'Résolu', // Legacy
+        'closed': 'Fermé', // Legacy
+        'pending': 'En attente' // Legacy
+    };
+
+    let priorityMap: Record<string, string> = {
+        'low': 'Basse',
+        'medium': 'Moyenne',
+        'high': 'Haute',
+        'critical': 'Critique'
+    };
+
+    try {
+        // Try to fetch dynamic config from system_settings
+        // Keys: 'ticket_statuses_config' and 'ticket_priorities_config'
+        // Expected JSON format: { "key": "Label", "key2": "Label 2" } or Array [{id, label}]
+        const settings = await db.select().from(systemSettings)
+            .where(inArray(systemSettings.setting_key, ['ticket_statuses_config', 'ticket_priorities_config']))
+            .all();
+
+        settings.forEach((s: any) => {
+            try {
+                const parsed = JSON.parse(s.setting_value);
+                
+                // Handle both Object {key: label} and Array [{id: key, label: label}] formats
+                const normalize = (data: any) => {
+                    if (Array.isArray(data)) {
+                        return data.reduce((acc: any, item: any) => {
+                            if (item.id && item.label) acc[item.id] = item.label;
+                            return acc;
+                        }, {});
+                    }
+                    return data;
+                };
+
+                if (s.setting_key === 'ticket_statuses_config') {
+                    const dynamicStatuses = normalize(parsed);
+                    if (Object.keys(dynamicStatuses).length > 0) {
+                        statusMap = { ...statusMap, ...dynamicStatuses }; // Merge to keep fallbacks
+                    }
+                }
+                if (s.setting_key === 'ticket_priorities_config') {
+                    const dynamicPriorities = normalize(parsed);
+                    if (Object.keys(dynamicPriorities).length > 0) {
+                        priorityMap = { ...priorityMap, ...dynamicPriorities };
+                    }
+                }
+            } catch (e) {
+                console.warn(`[AI] Failed to parse ${s.setting_key}`, e);
+            }
+        });
+    } catch (e) {
+        console.warn("[AI] Failed to load dynamic maps, using defaults", e);
+    }
+
+    return { statusMap, priorityMap };
+}
+
 // --- HELPER: VISION RELAY (OpenAI) ---
 async function analyzeImageWithOpenAI(arrayBuffer: ArrayBuffer, contentType: string, apiKey: string): Promise<string | null> {
     try {
@@ -544,31 +613,12 @@ app.post('/chat', async (c) => {
                 commentCounts.forEach((c: any) => commentMap.set(c.ticket_id, c.count));
             }
 
+            // Fetch Dynamic Maps (Status & Priority)
+            const { statusMap, priorityMap } = await getTicketMaps(db);
+
             // Calculate Workload & Availability Map
             const workloadMap = new Map();
             const machineStatusMap = new Map(); // Real-time machine status based on tickets
-
-            // Helper for French Translation
-            const translateStatus = (s: string) => {
-                const map: any = { 
-                    'received': 'Nouveau', 
-                    'diagnostic': 'En diagnostic', 
-                    'in_progress': 'En cours', 
-                    'waiting_parts': 'En attente de pièces', 
-                    'completed': 'Terminé', 
-                    'archived': 'Archivé',
-                    // Legacy fallbacks
-                    'open': 'Ouvert', 
-                    'resolved': 'Résolu', 
-                    'closed': 'Fermé', 
-                    'pending': 'En attente' 
-                };
-                return map[s] || s;
-            };
-            const translatePriority = (p: string) => {
-                const map: any = { 'low': 'Basse', 'medium': 'Moyenne', 'high': 'Haute', 'critical': 'Critique' };
-                return map[p] || p;
-            };
 
             activeTickets.forEach((t: any) => {
                 // Technician Workload
@@ -594,9 +644,10 @@ app.post('/chat', async (c) => {
                     const commStr = cCount > 0 ? ` [💬 ${cCount} messages]` : "";
 
                     // INJECT DISPLAY ID (e.g., FOU-1225-001) but KEEP numeric ID for Tools
-                    // TRANSLATE STATUS/PRIORITY for AI Context
-                    const statusFr = translateStatus(t.status);
-                    const priorityFr = translatePriority(t.priority);
+                    // TRANSLATE STATUS/PRIORITY using Dynamic Maps
+                    const statusFr = statusMap[t.status] || t.status;
+                    const priorityFr = priorityMap[t.priority] || t.priority;
+                    
                     currentStatus.push(`[TICKET #${t.id} | REF: ${t.display_id}] (${statusFr}, ${priorityFr}): ${t.title}${mediaStr}${commStr}`);
                     machineStatusMap.set(t.machine_id, currentStatus);
                 }
@@ -665,22 +716,10 @@ app.post('/chat', async (c) => {
                         const m = machinesList.find(m => m.id === h.machine_id);
                         const machineName = m ? `${m.type} ${m.model || ''}` : `Machine #${h.machine_id}`;
                         // USE DISPLAY_ID for talk, Numeric ID for tools
-                        const statusFr = (s: string) => {
-                            const map: any = { 
-                                'received': 'Nouveau', 
-                                'diagnostic': 'En diagnostic', 
-                                'in_progress': 'En cours', 
-                                'waiting_parts': 'En attente de pièces', 
-                                'completed': 'Terminé', 
-                                'archived': 'Archivé',
-                                'open': 'Ouvert', 
-                                'resolved': 'Résolu', 
-                                'closed': 'Fermé', 
-                                'pending': 'En attente' 
-                            };
-                            return map[s] || s;
-                        };
-                        return `- [${h.date}] [TICKET #${h.id} | REF: ${h.display_id || h.id}] (${statusFr(h.status)}): ${h.title} sur ${machineName}`;
+                        // REUSE DYNAMIC MAP (Status Only for History to save space)
+                        const statusFr = statusMap[h.status] || h.status;
+                        
+                        return `- [${h.date}] [TICKET #${h.id} | REF: ${h.display_id || h.id}] (${statusFr}): ${h.title} sur ${machineName}`;
                     }).join('\n');
                 }
             }
