@@ -267,7 +267,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose, ticke
             </div>
             <div>
               <h3 className="font-bold text-lg leading-tight">Expert Industriel</h3>
-              <p className="text-xs text-purple-200 opacity-90">Assistant Technique & Maintenance</p>
+              <p className="text-xs text-purple-200 opacity-90">Assistant Technique & Maintenance (v3.0.1)</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
