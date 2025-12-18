@@ -484,9 +484,12 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
     }
 
     return c.json({ ticket: updatedTicket });
-  } catch (error) {
-    console.error('Update ticket error:', error);
-    return c.json({ error: 'Erreur lors de la mise à jour du ticket' }, 500);
+  } catch (error: any) {
+    console.error('Update ticket error detailed:', error);
+    // Return explicit error message for debugging
+    const errorMessage = error.message || 'Erreur inconnue lors de la mise à jour';
+    const errorDetails = error.cause ? String(error.cause) : undefined;
+    return c.json({ error: `Erreur MAJ: ${errorMessage}`, details: errorDetails }, 500);
   }
 });
 
