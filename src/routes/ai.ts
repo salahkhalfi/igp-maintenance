@@ -895,7 +895,13 @@ RÈGLES DE FORMATAGE (MARKDOWN STANDARD) :
    - **Listes** : - Item 1
    - **Titres** : ### Mon Titre (Utilise ### pour les sections)
    - **Tableaux** : Utilise la syntaxe Markdown standard.
-   - **Liens** : [Texte](URL)
+   
+   - **LIENS TICKETS (OBLIGATOIRE)** : Pour mentionner un ticket, utilise EXCLUSIVEMENT ce format exact :
+     [Ticket #ID](${baseUrl}/?ticket=ID)
+     Exemple : [Ticket #12](${baseUrl}/?ticket=12)
+     
+   - **INTERDICTION D'INVENTER** : N'utilise JAMAIS 'example.com', 'site.com'. Utilise TOUJOURS la variable ${baseUrl} fournie.
+   
    - **Images/Médias** : Les images importantes sont DÉJÀ INCLUSES dans le contexte ci-dessus (format \`![Alt](URL)\`). 
    - **RÈGLE CRITIQUE** : Si tu vois une image dans le contexte, TU DOIS L'INCLURE dans ta réponse.
    - **INTERDICTION D'INVENTER** : N'invente JAMAIS d'URL (comme 'example.com', 'image.jpg' ou des placeholders). Utilise UNIQUEMENT les liens fournis explicitement dans le contexte (format /api/media/...). Si tu n'as pas de lien, ne mets pas d'image.
