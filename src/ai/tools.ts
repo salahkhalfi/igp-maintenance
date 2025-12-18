@@ -743,14 +743,14 @@ export const ToolFunctions = {
                     // HARDCODED PRODUCTION URL
                     const ticketUrl = `https://app.igpglass.ca/?ticket=${r.id}`;
                     
+                    // MODIFICATION UX: L'image devient un lien cliquable vers le TICKET, pas vers le fichier.
                     const mdLink = m.file_type.startsWith('image') 
-                        ? `![${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`
-                        : `[Voir ${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`;
+                        ? `[![${m.file_name} (Cliquer pour ouvrir le Ticket)](${publicUrl})](${ticketUrl})`
+                        : `[📄 ${m.file_name} (Voir Fichier)](${publicUrl}) [➡ Ouvrir Ticket](${ticketUrl})`;
                         
                     // FORCE INJECTION INTO DESCRIPTION
-                    // On donne à l'IA le lien vers l'image ET le lien vers le ticket
-                    descriptionWithMedia += `\n\nCONTEXTE TICKET: [Ouvrir Ticket ${r.ticket_id || r.id}](${ticketUrl})`;
-                    descriptionWithMedia += `\nPREUVE VISUELLE: ${mdLink}`;
+                    descriptionWithMedia += `\n\nCONTEXTE: [Ouvrir Ticket #${r.ticket_id || r.id}](${ticketUrl})`;
+                    descriptionWithMedia += `\n${mdLink}`;
 
                     return {
                         name: m.file_name,
