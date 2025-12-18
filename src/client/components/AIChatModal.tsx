@@ -24,6 +24,9 @@ const parseAndSanitizeMarkdown = (content: string) => {
     // Fix explicit "https://api/media/..." (Hallucinated 'api' hostname) which causes 503s
     clean = clean.replace(/https?:\/\/api\/media/g, '/api/media');
     
+    // Fix .com hallucination -> .ca
+    clean = clean.replace(/igpglass\.com/g, 'igpglass.ca');
+    
     // Fix "https://any-domain.com/api/media/..." (Absolute URL to self)
     clean = clean.replace(/https?:\/\/[^\/]+\/api\/media/g, '/api/media');
 
