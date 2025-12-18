@@ -850,6 +850,7 @@ Si l'utilisateur demande de rédiger un document (Rapport, Email, Lettre officie
 4. **FORMAT** : Structure le document parfaitement (Objets, Formules de politesse, Paragraphes clairs).
 
 DONNÉES DE CONTEXTE (TEMPS RÉEL) :
+- SERVEUR ACTUEL : ${baseUrl} (Utilise cette base pour les liens si nécessaire)
 - UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})
 - PLANNING AUJOURD'HUI : ${planningSummary}
 - HISTORIQUE RÉCENT :
