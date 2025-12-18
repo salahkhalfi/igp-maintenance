@@ -739,12 +739,17 @@ export const ToolFunctions = {
                     // USE ROBUST ID-BASED URL
                     const publicUrl = `/api/media/${m.id}`;
                     
+                    // Générer le lien vers le ticket pour le contexte AI
+                    const ticketUrl = `/tickets/${r.id}`;
+                    
                     const mdLink = m.file_type.startsWith('image') 
                         ? `![${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`
                         : `[Voir ${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`;
                         
                     // FORCE INJECTION INTO DESCRIPTION
-                    descriptionWithMedia += `\n\nPREUVE VISUELLE: ${mdLink}`;
+                    // On donne à l'IA le lien vers l'image ET le lien vers le ticket
+                    descriptionWithMedia += `\n\nCONTEXTE TICKET: [Ouvrir Ticket ${r.ticket_id || r.id}](${ticketUrl})`;
+                    descriptionWithMedia += `\nPREUVE VISUELLE: ${mdLink}`;
 
                     return {
                         name: m.file_name,
