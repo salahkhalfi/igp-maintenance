@@ -102,7 +102,11 @@ const parseAndSanitizeMarkdown = (content: string) => {
                 // Parse bold/links inside cells recursively
                 let cellContent = cell
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => `<a href="${url}" target="_blank" class="text-blue-600 underline">${text}</a>`);
+                    .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
+                        const isInternal = url.includes('app.igpglass.ca') || url.startsWith('/');
+                        const target = isInternal ? '_self' : '_blank';
+                        return `<a href="${url}" target="${target}" class="text-blue-600 underline">${text}</a>`;
+                    });
                     
                 html += `<td class="px-3 py-3 whitespace-normal text-gray-700 min-w-[120px] leading-relaxed">${cellContent}</td>`;
             });
