@@ -523,7 +523,7 @@ export const homeHTML = `
                     <circle cx="25" cy="25" r="20" fill="none" stroke="#667eea" stroke-width="4" stroke-dasharray="80" stroke-dashoffset="60" stroke-linecap="round"/>
                 </svg>
                 <h2 style="font-size: 24px; font-weight: bold; color: #333; margin-bottom: 8px;">Chargement de l'application</h2>
-                <p style="color: #666; font-size: 14px;">Veuillez patienter...</p>
+                <p style="color: #666; font-size: 14px;">Mise à jour v3.0.2 en cours...</p>
             </div>
         </div>
         <style>
@@ -782,6 +782,17 @@ export const homeHTML = `
                 console.log('[Stats] Could not load global stats');
             });
         };
+
+        // VERSION: 3.0.2 (Force Cache Clear)
+        // FORCE SERVICE WORKER UNREGISTRATION TO FIX STALE CACHE
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    console.log('🗑️ Unregistering old Service Worker to force update...');
+                    registration.unregister();
+                }
+            });
+        }
 
         // Load stats once after a short delay (let app render first)
         setTimeout(() => {
