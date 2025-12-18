@@ -66,7 +66,13 @@ const processMarkdown = (content: string) => {
             let validUrl = url.trim();
             // Fix AI hallucination of absolute 'api' domain (handles any domain prefix for internal api routes)
             validUrl = validUrl.replace(/^https?:\/\/(?:www\.)?[\w.-]+\/api\//, '/api/');
-            return `<a href="${validUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">$1</a>`;
+            // Fix .com hallucination
+            validUrl = validUrl.replace(/igpglass\.com/g, 'igpglass.ca');
+            
+            const isInternal = validUrl.includes('app.igpglass.ca') || validUrl.startsWith('/');
+            const target = isInternal ? '_self' : '_blank';
+            
+            return `<a href="${validUrl}" target="${target}" class="text-blue-600 hover:underline font-medium">${text}</a>`;
         })
         // Blockquotes (> text)
         .replace(/^>\s+(.*)$/gm, '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
