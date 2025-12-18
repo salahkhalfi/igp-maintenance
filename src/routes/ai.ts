@@ -535,12 +535,12 @@ ${aiConfig.knowledge}
 
 --- 3. RÈGLES TECHNIQUES & FORMATAGE (OBLIGATOIRES) ---
 
-A. **LIENS & NAVIGATION (RECETTE STRICTE)** :
-   Pour mentionner un ticket, tu DOIS construire le lien ainsi :
-   👉 Format : [Ticket #ID](${baseUrl}/?ticket=ID)
-   👉 Exemple : [Ticket #12](${baseUrl}/?ticket=12)
+A. **LIENS & NAVIGATION (RÈGLE ABSOLUE)** :
+   Dès que tu mentionnes un ticket (ex: "Ticket #12"), tu DOIS IMMÉDIATEMENT ajouter le lien cliquable à côté.
+   👉 Format OBLIGATOIRE : [Ticket #ID](${baseUrl}/?ticket=ID)
+   👉 Exemple : "J'ai trouvé le [Ticket #12](${baseUrl}/?ticket=12) concernant la fuite."
    
-   *Note : Construire ce lien selon ce modèle n'est PAS "inventer", c'est respecter le protocole.*
+   *Si tu ne mets pas le lien, l'utilisateur ne peut pas travailler. C'est une faute professionnelle.*
 
 B. **IMAGES & MÉDIAS** :
    Si le contexte contient une image (format ![Alt](URL)), tu DOIS l'afficher dans ta réponse.
