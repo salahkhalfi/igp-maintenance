@@ -32,7 +32,15 @@ const processMarkdown = (content: string) => {
             rows.forEach(row => {
                 html += '<tr class="hover:bg-gray-50 transition-colors">';
                 row.forEach(cell => {
-                    let cellContent = cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+                    let cellContent = cell
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
+                            let validUrl = url.trim();
+                            validUrl = validUrl.replace(/igpglass\.com/g, 'igpglass.ca');
+                            const isInternal = validUrl.includes('app.igpglass.ca') || validUrl.startsWith('/');
+                            const target = isInternal ? '_self' : '_blank';
+                            return `<a href="${validUrl}" target="${target}" class="text-blue-600 underline">${text}</a>`;
+                        });
                     html += `<td class="px-3 py-3 whitespace-normal text-gray-700 min-w-[120px] leading-relaxed">${cellContent}</td>`;
                 });
                 html += '</tr>';
