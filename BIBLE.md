@@ -31,6 +31,11 @@
 
 **BEFORE WRITING ANY CODE, EXECUTE THIS SEQUENCE:**
 
+0.  **CONTEXT LOADING (ANTI-REGRESSION)**
+    *   **PROTOCOL**: `READ` > `GREP` > `PLAN` > `EDIT`.
+    *   **FORBIDDEN**: Blind edits without reading the target file's full context.
+    *   **CHECK**: "Does a similar feature exist?" Use `grep` to find patterns before inventing new ones.
+
 1.  **SIMULATION (The DeepSeek Audit)**
     *   *Input*: Proposed Solution.
     *   *Process*: Audit for hidden flaws.
@@ -63,10 +68,20 @@
 
 ## 🟧 MODULE 2: CRITICAL AXIOMS (TECHNICAL LAWS)
 
+### [PLATFORM PHYSICS (CLOUDFLARE)]
+*   **EDGE PURITY**: Runtime = V8 (Browser-like). Node.js APIs (`fs`, `child_process`, `crypto`) are FORBIDDEN.
+*   **WEB STANDARDS ONLY**: Use `fetch`, `WebCrypto`, `URL` interface. No `npm` packages relying on OS bindings.
+*   **EXTERNAL TRIGGERS**: No native CRON or Persistent Processes. Use external Webhooks for scheduled tasks.
+
 ### [ARCHITECTURE]
 *   **STATELESS**: Serverless (Workers) has NO memory. DB is the ONLY State.
 *   **SINGLE SOURCE**: DB > Backend > Frontend. Never duplicate state (Cookie + LocalStorage = Death).
 *   **IDEMPOTENCY**: A repeated request (network retry) must produce the same result without side effects.
+
+### [DATA & TIME]
+*   **TEMPORAL ABSOLUTISM**: Storage = UTC always. Display = User Local. Logic = UTC. No mixed timezones.
+*   **TRUST NO INPUT**: Validate EVERYTHING. Even your own JWTs (verify against DB for critical data like names).
+*   **SOFT DELETE**: `deleted_at` timestamp. NEVER `DELETE FROM`.
 
 ### [INTERFACE / UX]
 *   **MOBILE FIRST**: Touch target **44x44px MINIMUM**. No exceptions.
@@ -122,10 +137,13 @@
 
 ## 🟦 MODULE 4: THE COPILOT OATH (ZERO BULLSHIT)
 
-1.  **RADICAL TRUTH**: If an idea is technically unsound, I MUST say so. No flattery.
-2.  **IMPERTINENCE**: Better a "stupid" question now than a "smart" bug in production.
-3.  **CENTRALIZATION**: Knowledge lives HERE (`BIBLE.md`). Do not scatter wisdom in random `.md` files.
+1.  **RADICAL TRUTH**: If an idea is technically unsound, I MUST say so. No flattery. Stop "You are right" if I am wrong.
+2.  **OWNERSHIP**: If I make a mistake, admit it immediately. Fix it. Move on. No excuses.
+3.  **UNCERTAINTY PROTOCOL**: If not 100% sure, say "I don't know" or "I need to verify". Never invent.
+4.  **TOKEN ECONOMY**: Be concise. Code > Chat. Action > Promise. Avoid verbosity (<50 lines context unless requested).
+5.  **CENTRALIZATION**: Knowledge lives HERE (`BIBLE.md`). Do not scatter wisdom in random `.md` files.
 
 ---
 
 > **FINAL INSTRUCTION**: This file is the **KERNEL**. If it's not in here, it's just an opinion. If it IS in here, it is **LAW**.
+> **UPDATING**: When adding rules, strip emotion. Keep it binary.

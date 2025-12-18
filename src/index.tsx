@@ -204,49 +204,6 @@ app.route('/api/stats', stats);
 // NOTE: Pas d'authMiddleware global ici car chaque route gère sa propre auth
 app.route('/api/settings', settings);
 
-// Legacy alias for preferences (Explicit mapping to ensure it works)
-app.get('/api/preferences/:key', async (c) => {
-    const key = c.req.param('key');
-    // Forward to settings logic (copy-pasted for reliability)
-    try {
-        const result = await c.env.DB.prepare(`
-          SELECT setting_value FROM system_settings WHERE setting_key = ?
-        `).bind(key).first();
-
-        if (!result) {
-          return c.json({ setting_value: null, value: null });
-        }
-
-        return c.json({ 
-            setting_value: (result as any).setting_value,
-            value: (result as any).setting_value // Alias for frontend compatibility
-        });
-    } catch (error) {
-        console.error('Get preference error:', error);
-        return c.json({ error: 'Erreur serveur' }, 500);
-    }
-});
-app.put('/api/preferences/:key', authMiddleware, async (c) => {
-    const key = c.req.param('key');
-    const body = await c.req.json();
-    const { value } = body;
-    
-    try {
-        const existing = await c.env.DB.prepare(`
-          SELECT id FROM system_settings WHERE setting_key = ?
-        `).bind(key).first();
-        
-        if (existing) {
-          await c.env.DB.prepare(`UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?`).bind(value, key).run();
-        } else {
-          await c.env.DB.prepare(`INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)`).bind(key, value).run();
-        }
-        return c.json({ message: 'Saved', value });
-    } catch (error) {
-        return c.json({ error: 'Error' }, 500);
-    }
-});
-
 // Routes des webhooks pour notifications
 app.use('/api/webhooks/*', authMiddleware, internalUserOnly);
 app.route('/api/webhooks', webhooks);

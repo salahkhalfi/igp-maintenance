@@ -10,7 +10,7 @@
  *   title="Détails du Ticket"
  *   size="large"
  * >
- *   {/* Contenu */}
+ *   Content here
  * </Modal>
  */
 
