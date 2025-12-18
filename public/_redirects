@@ -5,9 +5,10 @@
 /service-worker.js /service-worker.js 200
 /manifest.json /manifest.json 200
 
-# TV View (Direct access, no SPA routing)
+# TV View (Direct access)
 /tv /tv.html 200
 /tv.html /tv.html 200
 
-# SPA Fallback (Must be last)
-/* /index.html 200
+# SPA Fallback SUPPRIMÉ - Hono gère le routing dynamique
+# /* /index.html 200
+
