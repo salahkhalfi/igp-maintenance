@@ -250,10 +250,14 @@ media.get('/ticket/:ticketId', authMiddleware, internalUserOnly, async (c) => {
 });
 
 // GET /api/media/:id - Récupérer un fichier depuis R2 (PUBLIC pour charger les images)
-// MOVED TO BOTTOM: This acts as a catch-all for ID-based lookups
 media.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
+
+    // Validate ID is numeric to prevent DB errors
+    if (!/^\d+$/.test(id)) {
+        return c.json({ error: 'ID invalide' }, 400);
+    }
 
     // Récupérer les infos du média
     const mediaInfo = await c.env.DB.prepare(
@@ -268,19 +272,27 @@ media.get('/:id', async (c) => {
     const object = await c.env.MEDIA_BUCKET.get(mediaInfo.file_key);
 
     if (!object) {
+      console.warn(`[Media] File missing in R2 for DB ID ${id} (Key: ${mediaInfo.file_key})`);
       return c.json({ error: 'Fichier non trouvé dans le stockage' }, 404);
     }
+
+    // Safe filename handling for headers
+    const safeFileName = (mediaInfo.file_name || 'file').replace(/"/g, '');
+    const encodedFileName = encodeURIComponent(mediaInfo.file_name || 'file');
 
     // Retourner le fichier
     return new Response(object.body, {
       headers: {
-        'Content-Type': mediaInfo.file_type,
-        'Content-Disposition': `inline; filename="${mediaInfo.file_name}"`,
+        'Content-Type': mediaInfo.file_type || 'application/octet-stream',
+        // Robust Content-Disposition with UTF-8 support
+        'Content-Disposition': `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'ETag': object.httpEtag,
       },
     });
-  } catch (error) {
-    console.error('Get media error:', error);
-    return c.json({ error: 'Erreur lors de la récupération du fichier' }, 500);
+  } catch (error: any) {
+    console.error(`[Media] Error fetching ID ${c.req.param('id')}:`, error);
+    return c.json({ error: 'Erreur lors de la récupération du fichier', details: error.message }, 500);
   }
 });
 
