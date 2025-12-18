@@ -280,10 +280,23 @@ media.get('/:id', async (c) => {
     const safeFileName = (mediaInfo.file_name || 'file').replace(/"/g, '');
     const encodedFileName = encodeURIComponent(mediaInfo.file_name || 'file');
 
+    // Détection MIME de secours si la DB est vide ou incorrecte
+    let contentType = mediaInfo.file_type;
+    if (!contentType || contentType === 'application/octet-stream') {
+        const ext = safeFileName.split('.').pop()?.toLowerCase();
+        if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+        else if (ext === 'png') contentType = 'image/png';
+        else if (ext === 'webp') contentType = 'image/webp';
+        else if (ext === 'gif') contentType = 'image/gif';
+        else if (ext === 'pdf') contentType = 'application/pdf';
+        // Fallback final
+        if (!contentType) contentType = 'application/octet-stream';
+    }
+
     // Retourner le fichier
     return new Response(object.body, {
       headers: {
-        'Content-Type': mediaInfo.file_type || 'application/octet-stream',
+        'Content-Type': contentType,
         // Robust Content-Disposition with UTF-8 support
         'Content-Disposition': `inline; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`,
         'Cache-Control': 'public, max-age=31536000, immutable',
