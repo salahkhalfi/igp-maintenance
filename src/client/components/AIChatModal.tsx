@@ -21,9 +21,11 @@ const parseAndSanitizeMarkdown = (content: string) => {
     let clean = content;
     
     // 0. DOMAIN SANITIZER (FIREWALL) - FOR EVER FIX
-    // Brutally strip ANY domain that precedes /api/media to prevent hallucinations (igpglass.com, example.com, etc.)
-    // Transforms "https://igpglass.com/api/media/25" -> "/api/media/25"
-    clean = clean.replace(/https?:\/\/(?:www\.)?[\w.-]+\/api\/media/g, '/api/media');
+    // Fix explicit "https://api/media/..." (Hallucinated 'api' hostname) which causes 503s
+    clean = clean.replace(/https?:\/\/api\/media/g, '/api/media');
+    
+    // Fix "https://any-domain.com/api/media/..." (Absolute URL to self)
+    clean = clean.replace(/https?:\/\/[^\/]+\/api\/media/g, '/api/media');
 
     // 1. Remove code block markers (```html ... ```)
     if (clean.includes('```')) {
@@ -43,8 +45,8 @@ const parseAndSanitizeMarkdown = (content: string) => {
     // Images: ![Alt](URL) -> <img src="URL" alt="Alt" ... />
     clean = clean.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
         let validUrl = url.trim();
-        // Fix AI hallucination of absolute 'api' domain (Redundant check but safe to keep)
-        if (validUrl.startsWith('https://api/') || validUrl.startsWith('http://api/')) {
+        // Redundant check: ensure no absolute API links slipped through
+        if (validUrl.match(/^https?:\/\/api\//)) {
             validUrl = validUrl.replace(/^https?:\/\/api\//, '/api/');
         }
         return `<img src="${validUrl}" alt="${alt}" class="max-w-full rounded-lg my-2 border border-gray-200 shadow-sm" />`;
@@ -53,8 +55,8 @@ const parseAndSanitizeMarkdown = (content: string) => {
     // Links: [Text](URL) -> <a href="URL" ...>Text</a>
     clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
         let validUrl = url.trim();
-        // Fix AI hallucination of absolute 'api' domain
-        if (validUrl.startsWith('https://api/') || validUrl.startsWith('http://api/')) {
+        // Redundant check for links too
+        if (validUrl.match(/^https?:\/\/api\//)) {
             validUrl = validUrl.replace(/^https?:\/\/api\//, '/api/');
         }
         return `<a href="${validUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-semibold hover:text-blue-800">${text}</a>`;
