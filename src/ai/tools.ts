@@ -743,14 +743,14 @@ export const ToolFunctions = {
                     // HARDCODED PRODUCTION URL
                     const ticketUrl = `https://app.igpglass.ca/?ticket=${r.id}`;
                     
-                    // MODIFICATION UX: L'image devient un lien cliquable vers le TICKET, pas vers le fichier.
+                    // REVERT UX FIX: Return to side-by-side format to avoid breaking Frontend Regex Parser
+                    // Nested markdown [![Img](Url)](Link) breaks the simple parser in AIChatModal.
                     const mdLink = m.file_type.startsWith('image') 
-                        ? `[![${m.file_name} (Cliquer pour ouvrir le Ticket)](${publicUrl})](${ticketUrl})`
-                        : `[📄 ${m.file_name} (Voir Fichier)](${publicUrl}) [➡ Ouvrir Ticket](${ticketUrl})`;
+                        ? `![${m.file_name}](${publicUrl}) \n\n[➡ Ouvrir Ticket #${r.ticket_id || r.id}](${ticketUrl})`
+                        : `[📄 ${m.file_name}](${publicUrl}) [➡ Ouvrir Ticket](${ticketUrl})`;
                         
                     // FORCE INJECTION INTO DESCRIPTION
-                    descriptionWithMedia += `\n\nCONTEXTE: [Ouvrir Ticket #${r.ticket_id || r.id}](${ticketUrl})`;
-                    descriptionWithMedia += `\n${mdLink}`;
+                    descriptionWithMedia += `\n\n${mdLink}`;
 
                     return {
                         name: m.file_name,
