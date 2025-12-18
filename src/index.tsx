@@ -64,6 +64,7 @@ import search from './routes/search';
 import users from './routes/users';
 import roles from './routes/roles';
 import settings from './routes/settings';
+import preferences from './routes/preferences';
 import webhooks from './routes/webhooks';
 import push from './routes/push';
 import rbac from './routes/rbac';
@@ -203,6 +204,9 @@ app.route('/api/stats', stats);
 // Routes des paramètres système
 // NOTE: Pas d'authMiddleware global ici car chaque route gère sa propre auth
 app.route('/api/settings', settings);
+
+// Routes des préférences utilisateur
+app.route('/api/preferences', preferences);
 
 // Routes des webhooks pour notifications
 app.use('/api/webhooks/*', authMiddleware, internalUserOnly);
