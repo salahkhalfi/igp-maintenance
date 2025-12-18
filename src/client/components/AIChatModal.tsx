@@ -102,7 +102,7 @@ const parseAndSanitizeMarkdown = (content: string) => {
                 // Parse bold/links inside cells recursively
                 let cellContent = cell
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-blue-600 underline">$1</a>');
+                    .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => `<a href="${url}" target="_blank" class="text-blue-600 underline">${text}</a>`);
                     
                 html += `<td class="px-3 py-3 whitespace-normal text-gray-700 min-w-[120px] leading-relaxed">${cellContent}</td>`;
             });

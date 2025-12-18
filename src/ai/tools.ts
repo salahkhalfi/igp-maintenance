@@ -740,8 +740,8 @@ export const ToolFunctions = {
                     const publicUrl = `/api/media/${m.id}`;
                     
                     const mdLink = m.file_type.startsWith('image') 
-                        ? `![${m.file_name} (Ticket ${r.display_id})](${publicUrl})`
-                        : `[Voir ${m.file_name} (Ticket ${r.display_id})](${publicUrl})`;
+                        ? `![${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`
+                        : `[Voir ${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`;
                         
                     // FORCE INJECTION INTO DESCRIPTION
                     descriptionWithMedia += `\n\nPREUVE VISUELLE: ${mdLink}`;
