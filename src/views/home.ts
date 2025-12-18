@@ -783,17 +783,6 @@ export const homeHTML = `
             });
         };
 
-        // VERSION: 3.0.2 (Force Cache Clear)
-        // FORCE SERVICE WORKER UNREGISTRATION TO FIX STALE CACHE
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    console.log('🗑️ Unregistering old Service Worker to force update...');
-                    registration.unregister();
-                }
-            });
-        }
-
         // Load stats once after a short delay (let app render first)
         setTimeout(() => {
             if (window.loadSimpleStats) {
