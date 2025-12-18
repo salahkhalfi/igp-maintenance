@@ -740,7 +740,8 @@ export const ToolFunctions = {
                     const publicUrl = `/api/media/${m.id}`;
                     
                     // Générer le lien vers le ticket pour le contexte AI
-                    const ticketUrl = `/tickets/${r.id}`;
+                    // Format attendu par App.tsx : https://app.igpglass.ca/?ticket=123
+                    const ticketUrl = `https://app.igpglass.ca/?ticket=${r.id}`;
                     
                     const mdLink = m.file_type.startsWith('image') 
                         ? `![${m.file_name} (Ticket ${r.ticket_id || r.id})](${publicUrl})`
