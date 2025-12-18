@@ -369,9 +369,10 @@ app.post('/chat', async (c) => {
         const body = await c.req.json();
         const { message, ticketContext, history } = body;
 
-        // 0. DETECT ENVIRONMENT (Self-Awareness)
-        const requestUrl = new URL(c.req.url);
-        const baseUrl = requestUrl.origin; 
+        // 0. HARDCODE ENVIRONMENT (NUCLEAR OPTION)
+        // Stop guessing. Stop using request headers.
+        // We enforce the ONLY valid production URL.
+        const baseUrl = "https://app.igpglass.ca"; 
 
         const db = getDb(c.env);
         const aiConfig = await getAiConfig(db);
