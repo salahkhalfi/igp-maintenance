@@ -124,17 +124,16 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                     </div>
                 </div>
                 
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                        <div className="text-white font-bold text-base md:text-xl leading-tight truncate font-display tracking-wide group-hover/header:text-emerald-400 transition-colors">Discussion</div>
-                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5 flex-shrink-0 flex items-center gap-1 shadow-sm" title="Suppression automatique des médias après 30 jours">
-                            <i className="fas fa-history text-[9px] text-orange-400"></i>
-                            <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">Médias 30j</span>
-                        </div>
-                    </div>
-                    <div className="text-gray-500 text-[10px] md:text-xs font-bold flex items-center tracking-wider uppercase leading-tight">
-                        <span className="truncate w-full block">
-                            {participants.length > 0 ? participants.map(p => p.full_name.split(' ')[0]).join(', ') : 'Chargement...'}
+                <div className="flex flex-col">
+                    <h1 className="text-lg font-display font-bold text-gray-900 tracking-tight leading-none text-white">
+                        {participants.length > 2 ? 'Groupe' : 'Discussion'}
+                    </h1>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
+                            v3.0.2
+                        </span>
+                        <span className="text-xs text-gray-400 font-medium">
+                            {participants.length} membres
                         </span>
                     </div>
                 </div>
