@@ -534,6 +534,21 @@ export const homeHTML = `
     </div>
 
     <script>
+        // SAFE CACHE RESET v3.0.3 (Execute after load to prevent white screen)
+        window.addEventListener('load', function() {
+            if ('serviceWorker' in navigator) {
+                // 1. Unregister all existing workers to clear "Zombie" cache
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        console.log('🧹 Cleaning up old Service Worker:', registration);
+                        registration.unregister();
+                    }
+                }).catch(function(err) {
+                    console.warn('SW Cleanup warning (non-critical):', err);
+                });
+            }
+        });
+
         // API_URL est défini dans utils.js
         console.log('HOME HTML LOADED v3.0.1 (Stable Ticket Modal)');
         let authToken = localStorage.getItem('auth_token');
