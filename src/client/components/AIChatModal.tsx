@@ -57,6 +57,9 @@ const parseAndSanitizeMarkdown = (content: string) => {
     
     // Links: [Text](URL) -> <a href="URL" ...>Text</a>
     clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
+        // FIX: If text is corrupted as '1$', replace with meaningful text
+        if (text === '1$') text = 'Voir Ticket';
+
         let validUrl = url.trim();
         // Redundant check for links too
         if (validUrl.match(/^https?:\/\/api\//)) {

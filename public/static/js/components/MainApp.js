@@ -7,9 +7,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showSystemSettings, setShowSystemSettings] = React.useState(false);
     const [showUserGuide, setShowUserGuide] = React.useState(false);
     const [showArchived, setShowArchived] = React.useState(false);
-    // const [showMessaging, setShowMessaging] = React.useState(false); // REMOVED
-    // const [messagingContact, setMessagingContact] = React.useState(null); // REMOVED
-    // const [messagingTab, setMessagingTab] = React.useState("public"); // REMOVED
+    // Messaging States Removed
     const [showScrollTop, setShowScrollTop] = React.useState(false);
     const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
     const [showOverdueModal, setShowOverdueModal] = React.useState(false);
@@ -322,7 +320,6 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }),
         React.createElement(SystemSettingsModal, { show: showSystemSettings, onClose: () => setShowSystemSettings(false), currentUser: currentUser }),
         React.createElement(MachineManagementModal, { show: showMachineManagement, onClose: () => setShowMachineManagement(false), currentUser: currentUser, machines: machines, onRefresh: onRefresh }),
-        // MessagingModal REMOVED
         React.createElement(UserGuideModal, { show: showUserGuide, onClose: () => setShowUserGuide(false), currentUser: currentUser }),
 
         // --- HEADER (NOUVEAU COMPOSANT) ---
@@ -358,9 +355,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 }
                 setShowMobileMenu(false); 
             },
-            onOpenPerformance: () => { setShowPerformanceModal(true); setShowMobileMenu(false); },
             onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
-            onOpenPushDevices: () => { setShowPushDevicesModal(true); setShowMobileMenu(false); },
             onOpenUserManagement: () => { setShowUserManagement(true); setShowMobileMenu(false); },
             onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },

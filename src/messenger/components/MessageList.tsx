@@ -71,6 +71,9 @@ const processMarkdown = (content: string) => {
         })
         // Links [Text](URL)
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+            // FIX: If text is corrupted as '1$', replace with meaningful text
+            if (text === '1$') text = 'Voir Ticket';
+            
             let validUrl = url.trim();
             // Fix AI hallucination of absolute 'api' domain (handles any domain prefix for internal api routes)
             validUrl = validUrl.replace(/^https?:\/\/(?:www\.)?[\w.-]+\/api\//, '/api/');
