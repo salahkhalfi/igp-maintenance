@@ -159,5 +159,16 @@
 
 ---
 
+## ⏳ MODULE 6: TEMPORARY MEASURES (TIME-BOMB)
+
+### [SCHEDULED CLEANUP]
+*   **REMOVE CACHE KILLER**: The script in `src/views/home.ts` forces Service Worker unregistration (`registration.unregister()`) on every load.
+    *   **STATUS**: ACTIVE (Deployed 2025-12-18).
+    *   **GOAL**: Kill "Zombie Cache" causing DNS/Regex bugs on mobile.
+    *   **DUE DATE**: 2025-12-25 (1 week post-deploy).
+    *   **ACTION**: Remove the block to restore proper PWA Offline/Caching capabilities.
+
+---
+
 > **FINAL INSTRUCTION**: This file is the **KERNEL**. If it's not in here, it's just an opinion. If it IS in here, it is **LAW**.
 > **UPDATING**: When adding rules, strip emotion. Keep it binary.
