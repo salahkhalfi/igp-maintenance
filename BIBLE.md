@@ -170,5 +170,24 @@
 
 ---
 
+## 🟪 MODULE 7: SANDBOX SURVIVAL GUIDE (LOW RAM PROTOCOL)
+
+### [THE MEMORY TRAP]
+*   **FACT**: The Sandbox environment has limited RAM (~1GB).
+*   **FORBIDDEN**: `npm run build` (The Monolith) will CRASH (Heap Out Of Memory). Use it ONLY in CI/CD (Cloudflare).
+*   **SOLUTION**: Use the **"Divide & Conquer"** modular build strategy.
+
+### [STARTUP SEQUENCE (THE PUZZLE)]
+To initialize a working local environment without crashing:
+1.  `npm run build:client` (Builds Main UI - Heavy - Do once)
+2.  `npm run build:messenger` (Builds Chat - Medium - Do once)
+3.  `npm run build:worker` (Builds Backend/AI - Fast - Do often)
+
+### [DEVELOPMENT LOOP]
+*   **Backend/AI Work**: Edit code -> `npm run build:worker` (10s) -> Test. (UI stays cached).
+*   **Frontend Work**: Edit code -> `npm run build:client` (60s) -> Test.
+
+---
+
 > **FINAL INSTRUCTION**: This file is the **KERNEL**. If it's not in here, it's just an opinion. If it IS in here, it is **LAW**.
 > **UPDATING**: When adding rules, strip emotion. Keep it binary.
