@@ -7,6 +7,19 @@ const preferences = new Hono<{ Bindings: Bindings }>();
 // Middleware d'authentification pour toutes les routes de préférences
 preferences.use('*', authMiddleware);
 
+// Valeurs par défaut robustes pour garantir la stabilité même sans DB initialisée
+const DEFAULT_PREFERENCES: Record<string, any> = {
+  'kanban_columns': [
+    { id: 'received', title: 'Nouveau', color: 'blue' },
+    { id: 'diagnostic', title: 'En Diagnostic', color: 'purple' },
+    { id: 'waiting_parts', title: 'En Attente Pièces', color: 'yellow' },
+    { id: 'in_progress', title: 'En Cours', color: 'orange' },
+    { id: 'completed', title: 'Terminé', color: 'green' }
+  ],
+  'theme': 'light',
+  'notifications': true
+};
+
 /**
  * GET /api/preferences/:key - Récupérer une préférence utilisateur
  */
@@ -15,48 +28,43 @@ preferences.get('/:key', async (c) => {
     const user = c.get('user') as any;
     const key = c.req.param('key');
 
+    // 1. Chercher la personnalisation utilisateur (Priorité 1)
     const result = await c.env.DB.prepare(`
       SELECT pref_value FROM user_preferences 
       WHERE user_id = ? AND pref_key = ?
     `).bind(user.userId, key).first();
 
-    if (!result) {
-      // FALLBACK LEGACY: Si pas de préférence utilisateur, chercher dans system_settings
-      // C'est nécessaire pour MainApp.js qui utilise /preferences/kanban_columns pour la config globale
-      const sysSetting = await c.env.DB.prepare(`
-        SELECT setting_value FROM system_settings WHERE setting_key = ?
-      `).bind(key).first();
-
-      if (sysSetting) {
-         try {
-             // Si c'est du JSON, on parse
-             const val = JSON.parse(sysSetting.setting_value as string);
-             return c.json(val); // Return directly logic value
-         } catch {
-             // Sinon on renvoie la structure attendue par certains composants legacy
-             return c.json({ 
-                 setting_value: sysSetting.setting_value,
-                 value: sysSetting.setting_value
-             });
-         }
+    if (result) {
+      try {
+        return c.json(JSON.parse(result.pref_value as string));
+      } catch (e) {
+        return c.json({ value: result.pref_value });
       }
-
-      // FALLBACK FINAL (Legacy Compatibility)
-      // MainApp.js ne supporte pas les 404. Il faut renvoyer un 200 avec null.
-      return c.json({ 
-          setting_value: null, 
-          value: null 
-      });
     }
 
-    try {
-      // Tenter de parser le JSON si possible
-      const value = JSON.parse(result.pref_value as string);
-      return c.json(value);
-    } catch (e) {
-      // Si ce n'est pas du JSON valide, retourner la chaîne brute
-      return c.json({ value: result.pref_value });
+    // 2. Chercher la configuration système globale (Priorité 2)
+    const sysSetting = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = ?
+    `).bind(key).first();
+
+    if (sysSetting) {
+       try {
+           return c.json(JSON.parse(sysSetting.setting_value as string));
+       } catch {
+           return c.json({ value: sysSetting.setting_value });
+       }
     }
+
+    // 3. Fallback Hardcodé "Usine" (Priorité 3 - Filet de sécurité)
+    // Garantit que l'UI ne plante jamais pour les clés critiques
+    if (key in DEFAULT_PREFERENCES) {
+        console.log(`[Preferences] Serving default value for ${key}`);
+        return c.json(DEFAULT_PREFERENCES[key]);
+    }
+
+    // 4. Vrai 404 (Si la clé est inconnue au bataillon)
+    return c.json({ error: `Préférence '${key}' inexistante.` }, 404);
+
   } catch (error) {
     console.error('Get preference error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
