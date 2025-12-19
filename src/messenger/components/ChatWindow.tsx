@@ -84,7 +84,16 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
 
         // --- EXPERT AI LOGIC ---
         if (conversationId === 'expert_ai') {
-            const history = JSON.parse(localStorage.getItem(`ai_chat_history_${currentUserId}`) || '[]');
+            const rawHistory = JSON.parse(localStorage.getItem(`ai_chat_history_${currentUserId}`) || '[]');
+            
+            // 🛡️ SANITIZE HISTORY ON LOAD (Fix old bad links locally)
+            const history = rawHistory.map((msg: Message) => ({
+                ...msg,
+                content: msg.content
+                    .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, 'https://app.igpglass.ca')
+                    .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1')
+            }));
+
             setMessages(history);
             setParticipants([
                 { user_id: 0, full_name: aiName, role: 'ai', last_read_at: new Date().toISOString() },
