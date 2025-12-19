@@ -21,9 +21,27 @@ preferences.get('/:key', async (c) => {
     `).bind(user.userId, key).first();
 
     if (!result) {
-      // Retourner null ou 404 ? 
-      // Pour éviter les erreurs frontend, on peut retourner null ou un objet vide
-      // Mais le frontend s'attend peut-être à une 404 s'il veut utiliser des valeurs par défaut
+      // FALLBACK LEGACY: Si pas de préférence utilisateur, chercher dans system_settings
+      // C'est nécessaire pour MainApp.js qui utilise /preferences/kanban_columns pour la config globale
+      const sysSetting = await c.env.DB.prepare(`
+        SELECT setting_value FROM system_settings WHERE setting_key = ?
+      `).bind(key).first();
+
+      if (sysSetting) {
+         try {
+             // Si c'est du JSON, on parse
+             const val = JSON.parse(sysSetting.setting_value as string);
+             return c.json(val); // Return directly logic value
+         } catch {
+             // Sinon on renvoie la structure attendue par certains composants legacy
+             return c.json({ 
+                 setting_value: sysSetting.setting_value,
+                 value: sysSetting.setting_value
+             });
+         }
+      }
+
+      // Si toujours rien, 404
       return c.json({ error: 'Préférence non trouvée' }, 404);
     }
 
