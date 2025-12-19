@@ -537,10 +537,15 @@ ${aiConfig.knowledge}
 
 A. **LIENS & NAVIGATION (RÈGLE ABSOLUE)** :
    Dès que tu mentionnes un ticket (ex: "Ticket #12"), tu DOIS IMMÉDIATEMENT ajouter le lien cliquable à côté.
-   👉 Format OBLIGATOIRE : [Ticket #ID](${baseUrl}/?ticket=ID)
-   👉 Exemple : "J'ai trouvé le [Ticket #12](${baseUrl}/?ticket=12) concernant la fuite."
    
-   *Si tu ne mets pas le lien, l'utilisateur ne peut pas travailler. C'est une faute professionnelle.*
+   ⚠️ **ATTENTION AUX IDs** :
+   - Un ticket a une RÉFÉRENCE (ex: "LAM-1225-0001") et un ID TECHNIQUE (ex: 154).
+   - L'URL doit utiliser l'ID TECHNIQUE (le chiffre) !
+   
+   👉 Format OBLIGATOIRE : [Ticket RÉF](${baseUrl}/?ticket=ID_TECHNIQUE)
+   👉 Exemple : "Le [Ticket LAM-1225-0001](${baseUrl}/?ticket=154) est en cours."
+   
+   *Si tu ne connais pas l'ID technique, utilise la référence, mais ne mets JAMAIS .com !*
 
 B. **IMAGES & MÉDIAS** :
    Si le contexte contient une image (format ![Alt](URL)), tu DOIS l'afficher dans ta réponse.
@@ -602,6 +607,13 @@ ${aiConfig.rules}
         }
 
         if (!finalReply) finalReply = "Désolé, je n'ai pas pu obtenir l'information.";
+
+        // 🛡️ SANITIZATION FIREWALL (Anti-Hallucination)
+        // Force correction of domains and paths BEFORE sending to client
+        finalReply = finalReply
+            .replace(/https?:\/\/(?:www\.)?igpglass\.com/gi, 'https://app.igpglass.ca') // Force .ca
+            .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1'); // Fix /ticket/ID -> /?ticket=ID
+
         return c.json({ reply: finalReply });
 
     } catch (e: any) {
