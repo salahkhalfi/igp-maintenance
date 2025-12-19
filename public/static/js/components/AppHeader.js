@@ -460,16 +460,6 @@ const AppHeader = ({
                             title: 'Actualiser les données maintenant'
                         }, React.createElement('i', { className: 'fas fa-sync-alt' })),
 
-                        // Messenger
-                        activeModules.messaging && React.createElement('button', {
-                            onClick: onOpenMessaging,
-                            className: 'relative w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow-md hover:-translate-y-0.5 transition-all',
-                            title: 'Ouvrir la messagerie instantanée'
-                        }, 
-                            React.createElement('i', { className: 'fas fa-comments' }),
-                            (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white' })
-                        ),
-
                         // NEW TICKET (The Big Button)
                         safeHasPermission('tickets.create') && React.createElement('button', {
                             onClick: onOpenCreateModal,
@@ -517,16 +507,6 @@ const AppHeader = ({
             }, 
                 React.createElement('i', { className: 'fas fa-rocket' }),
                 React.createElement('span', { className: 'absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white' })
-            ),
-
-            // 3. OLD MESSAGING (Chat Bubble) - Kept for compatibility but prioritized after
-            activeModules.messaging && React.createElement('button', {
-                onClick: onOpenMessaging,
-                className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm active:scale-95 relative shrink-0',
-                title: 'Messagerie Interne'
-            }, 
-                React.createElement('i', { className: 'fas fa-comments' }),
-                (unreadMessagesCount > 0) && React.createElement('span', { className: 'absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white' })
             ),
 
             // 4. NEW TICKET (+)
@@ -610,10 +590,6 @@ const AppHeader = ({
                     className: 'fixed inset-0 md:left-auto md:right-0 md:w-80 md:shadow-2xl md:border-l md:border-gray-200 z-[49] flex flex-col bg-white overflow-y-auto pt-[60px] pb-32 px-4 transition-all duration-300 ease-in-out',
                     style: { WebkitOverflowScrolling: 'touch' } // Native momentum scrolling
                 },
-                    activeModules.messaging && React.createElement('button', { onClick: onOpenMessaging, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-gray-50' }, 
-                        React.createElement('div', { className: 'flex items-center' }, React.createElement('i', { className: 'fas fa-comments mr-3 text-blue-500 text-lg' }), 'Messagerie'),
-                        (unreadMessagesCount > 0) && React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-xs font-bold text-white bg-red-600 rounded-full' }, unreadMessagesCount)
-                    ),
                         React.createElement('button', { 
                             onClick: () => window.open('/messenger', '_blank'), 
                             className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-emerald-50 border-emerald-200' 
@@ -664,7 +640,7 @@ const AppHeader = ({
                     React.createElement('button', {
                         onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
                         className: 'px-3 py-3 text-sm rounded-lg shadow-sm flex items-center gap-2 border mt-2 ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
-                    }, React.createElement('i', { className: 'fas fa-' + (showArchived ? 'eye-slash' : 'archive') + ' mr-1 text-lg' }), showArchived ? 'Masquer les tickets archivés' : 'Voir les tickets archivés'),
+                    }, React.createElement('i', { className: 'fas fa--' + (showArchived ? 'eye-slash' : 'archive') + ' mr-1 text-lg' }), showArchived ? 'Masquer les tickets archivés' : 'Voir les tickets archivés'),
                     
                     React.createElement('div', { className: 'h-px bg-gray-200 my-4' }), // Separator
                     

@@ -7,9 +7,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     const [showSystemSettings, setShowSystemSettings] = React.useState(false);
     const [showUserGuide, setShowUserGuide] = React.useState(false);
     const [showArchived, setShowArchived] = React.useState(false);
-    const [showMessaging, setShowMessaging] = React.useState(false);
-    const [messagingContact, setMessagingContact] = React.useState(null);
-    const [messagingTab, setMessagingTab] = React.useState("public");
+    // const [showMessaging, setShowMessaging] = React.useState(false); // REMOVED
+    // const [messagingContact, setMessagingContact] = React.useState(null); // REMOVED
+    // const [messagingTab, setMessagingTab] = React.useState("public"); // REMOVED
     const [showScrollTop, setShowScrollTop] = React.useState(false);
     const [showPerformanceModal, setShowPerformanceModal] = React.useState(false);
     const [showOverdueModal, setShowOverdueModal] = React.useState(false);
@@ -162,11 +162,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                 }
             }
         } else if (openMessagesSenderId) {
+            // REDIRECT TO MESSENGER
             const senderId = parseInt(openMessagesSenderId, 10);
-            setMessagingContact({ id: senderId, first_name: 'Chargement...', role: 'unknown' });
-            setMessagingTab('private');
-            setShowMessaging(true);
-            window.history.replaceState({}, '', window.location.pathname);
+            window.location.href = `/messenger?conversationId=direct_${senderId}`;
         }
     }, [tickets]);
 
@@ -199,9 +197,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                         onRefresh();
                     }
                 } else if (action === 'new_private_message' && data.senderId) {
-                    setMessagingContact({ id: data.senderId, first_name: data.senderName || 'Utilisateur', role: 'unknown' });
-                    setMessagingTab('private');
-                    setShowMessaging(true);
+                    // REDIRECT TO MESSENGER
+                    window.location.href = `/messenger?conversationId=direct_${data.senderId}`;
                 }
             }
         };
@@ -278,8 +275,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
     // --- STYLES CONDITIONNELS ---
     const isAnyModalOpen = showCreateModal || showDetailsModal || showPerformanceModal || 
                           showOverdueModal || showPushDevicesModal || showUserManagement || 
-                          showSystemSettings || showMachineManagement || showMessaging || 
-                          showUserGuide;
+                          showSystemSettings || showMachineManagement || 
+                          showUserGuide; // showMessaging removed
 
     const footerStyle = isAnyModalOpen ? {
         background: '#f1f5f9',
@@ -314,7 +311,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         React.createElement(PushDevicesModal, { show: showPushDevicesModal, onClose: () => setShowPushDevicesModal(false) }),
         React.createElement(UserManagementModal, {
             show: showUserManagement, onClose: () => setShowUserManagement(false), currentUser: currentUser,
-            onOpenMessage: (user) => { setShowUserManagement(false); setMessagingContact(user); setMessagingTab("private"); setShowMessaging(true); }
+            onOpenMessage: (user) => { setShowUserManagement(false); window.location.href = `/messenger?conversationId=direct_${user.id}`; }
         }),
         React.createElement(ManageColumnsModal, {
             show: showManageColumns,
@@ -325,11 +322,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         }),
         React.createElement(SystemSettingsModal, { show: showSystemSettings, onClose: () => setShowSystemSettings(false), currentUser: currentUser }),
         React.createElement(MachineManagementModal, { show: showMachineManagement, onClose: () => setShowMachineManagement(false), currentUser: currentUser, machines: machines, onRefresh: onRefresh }),
-        React.createElement(MessagingModal, {
-            show: showMessaging, onClose: () => { setShowMessaging(false); setMessagingContact(null); setMessagingTab("public"); if (onRefreshMessages) onRefreshMessages(); },
-            currentUser: currentUser, initialContact: messagingContact, initialTab: messagingTab,
-            onTicketDetected: handleTicketDetected
-        }),
+        // MessagingModal REMOVED
         React.createElement(UserGuideModal, { show: showUserGuide, onClose: () => setShowUserGuide(false), currentUser: currentUser }),
 
         // --- HEADER (NOUVEAU COMPOSANT) ---
@@ -353,11 +346,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             onSearch: () => {}, // Search géré en interne dans AppHeader
             onOpenCreateModal: () => { setShowCreateModal(true); setShowMobileMenu(false); },
             onOpenMessaging: () => { 
-                if (activeModules.messaging) {
-                    setShowMessaging(true); 
-                } else {
-                    alert("Le module 'Collaboration Pro' (Messagerie) n'est pas activé.");
-                }
+                // Redirect to new messenger
+                window.open('/messenger', '_blank');
                 setShowMobileMenu(false); 
             },
             onOpenMachineManagement: () => { 
@@ -419,11 +409,11 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         window.VoiceTicketFab ? React.createElement(window.VoiceTicketFab, { onTicketDetected: handleTicketDetected }) : null,
         React.createElement('footer', { className: 'mt-12 py-6 text-center border-t-4 border-igp-blue', style: footerStyle },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4' },
-                React.createElement('p', { className: 'text-sm mb-2', style: { color: '#1a1a1a', fontWeight: '700' } },
-                    React.createElement('i', { className: 'fas fa-code mr-2', style: { color: '#003366' } }),
-                    'Application conçue et développée par ',
-                    React.createElement('span', { style: { fontWeight: '900', color: '#003366' } }, "Le département des Technologies de l'Information")
-                ),
+            React.createElement('p', { className: 'text-sm mb-2', style: { color: '#1a1a1a', fontWeight: '700' } },
+                React.createElement('i', { className: 'fas fa-code mr-2', style: { color: '#003366' } }),
+                'Application conçue et développée par ',
+                React.createElement('span', { style: { fontWeight: '900', color: '#003366' } }, "Le département des Technologies de l'Information")
+            ),
                 React.createElement('p', { className: 'text-xs', style: { color: '#1a1a1a', fontWeight: '700' } }, '© ' + new Date().getFullYear() + ' - MaintenanceOS')
             )
         ),

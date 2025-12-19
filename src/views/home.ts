@@ -22,9 +22,7 @@ export const homeHTML = `
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="/static/js/utils.js"></script>
-    <script src="/static/js/components/MessagingSidebar.js?v=3.0.2"></script>
-    <script src="/static/js/components/MessagingChatWindow.js?v=3.0.2"></script>
-    <script src="/static/js/components/MessagingModal.js?v=3.0.2"></script>
+
     <script src="/static/js/components/NotificationModal.js"></script>
     <script src="/static/js/components/ConfirmModal.js"></script>
     <script src="/static/js/components/Toast.js"></script>
