@@ -608,10 +608,10 @@ ${aiConfig.rules}
 
         if (!finalReply) finalReply = "Désolé, je n'ai pas pu obtenir l'information.";
 
-        // 🛡️ SANITIZATION FIREWALL (Anti-Hallucination)
+        // 🛡️ SANITIZATION FIREWALL (Anti-Hallucination) v2
         // Force correction of domains and paths BEFORE sending to client
         finalReply = finalReply
-            .replace(/https?:\/\/(?:www\.)?igpglass\.com/gi, 'https://app.igpglass.ca') // Force .ca
+            .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, 'https://app.igpglass.ca') // Force .ca AND kill example.com
             .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1'); // Fix /ticket/ID -> /?ticket=ID
 
         return c.json({ reply: finalReply });
