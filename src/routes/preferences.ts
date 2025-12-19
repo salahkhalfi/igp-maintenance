@@ -41,8 +41,12 @@ preferences.get('/:key', async (c) => {
          }
       }
 
-      // Si toujours rien, 404
-      return c.json({ error: 'Préférence non trouvée' }, 404);
+      // FALLBACK FINAL (Legacy Compatibility)
+      // MainApp.js ne supporte pas les 404. Il faut renvoyer un 200 avec null.
+      return c.json({ 
+          setting_value: null, 
+          value: null 
+      });
     }
 
     try {
