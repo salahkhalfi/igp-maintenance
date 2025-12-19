@@ -614,7 +614,10 @@ export const ToolFunctions = {
                     status: t.status,
                     assignee: t.assignee_name || "Non assigné",
                     scheduled: localScheduled, // Now human-readable local time
-                    delay_hours: Math.round((now.getTime() - new Date(t.scheduled_date!).getTime()) / 3600000 * 10) / 10
+                    delay_hours: Math.round((now.getTime() - new Date(t.scheduled_date!).getTime()) / 3600000 * 10) / 10,
+                    // LIEN PRÉ-CALCULÉ
+                    url: `https://app.igpglass.ca/?ticket=${t.id}`,
+                    markdown: `[Ticket ${t.display_id}](https://app.igpglass.ca/?ticket=${t.id})`
                 };
             })
         });
