@@ -1,3 +1,19 @@
+# 🚨 SANDBOX WARNING (READ FIRST) 🚨
+
+**⚠️ DO NOT RUN `npm run build` IN SANDBOX ENVIRONMENT ⚠️**
+
+This project is too large for the Sandbox RAM limits (1GB). Running a full build will cause a **Heap Out Of Memory Crash**.
+
+**✅ SAFE COMMANDS FOR LOCAL DEV:**
+- `npm run build:worker` : Build Backend/AI only (Fast & Safe)
+- `npm run build:client` : Build Frontend only
+- `npm run build:messenger` : Build Chat only
+
+**🚀 DEPLOYMENT:**
+- Push to GitHub (`git push`). Cloudflare will handle the full build.
+
+---
+
 # 🔧 MaintenanceOS - Système de Gestion de Maintenance
 
 **🤖 AI ASSISTANT: START HERE. READ `docs/STRUCTURE.md` AND `docs/archive/bible.md` BEFORE DOING ANYTHING.**
@@ -1251,7 +1267,9 @@ npm run db:migrate:local
 npm run db:seed
 
 # 5. Build du projet
-npm run build
+npm run build:worker
+npm run build:client
+npm run build:messenger
 
 # 6. Lancer le serveur de développement
 npm run dev:sandbox
@@ -1418,7 +1436,7 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
 ## 📝 Notes de développement
 
 ### Limitations actuelles
-- Le mot de passe utilise SHA-256 (simple) - à remplacer par bcrypt pour la production
+- Le mot de passe utilise SHA-256 (simple) - à remplacer par bcrypt en production
 - Les URLs R2 sont génériques - configurer un domaine personnalisé
 - Les tests unitaires ne sont pas encore implémentés
 - **Compression d'images** - Pas encore implémentée (recommandé pour réduire la taille des uploads)
@@ -1442,7 +1460,7 @@ Erreur: "Impossible de supprimer cet utilisateur car il a créé X ticket(s)"
   - **Permissions strictes** - Chaque message vérifié individuellement (utilisateur/admin/supervisor)
   - **Nettoyage R2 complet** - Tous les fichiers audio des messages sélectionnés supprimés du bucket
   - **Limite sécurité** - Maximum 100 messages par requête pour éviter timeout
-  - **Confirmation obligatoire** - Dialog "Supprimer X message(s) ?" avant exécution
+  - **Confirmation obligatoire** - Dialog de confirmation avant exécution
   - **Recharge automatique** - Liste mise à jour instantanément après suppression
   - **Gestion erreurs** - Rapport détaillé des erreurs par message si échec partiel
   - **Sans apostrophes** - Tous les textes sans apostrophes pour éviter crash JavaScript
