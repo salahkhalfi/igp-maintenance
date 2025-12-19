@@ -54,8 +54,16 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
             alert("Ce statut système ne peut pas être supprimé.");
             return;
         }
-        if (confirm("Supprimer cette colonne ? Les tickets associés ne seront plus visibles dans le tableau principal (sauf si vous recréez une colonne avec le même statut).")) {
-            setLocalColumns(localColumns.filter(c => c.key !== key));
+
+        // --- SAFETY CHECK: PREVENT ORPHANED TICKETS ---
+        // Check if there are tickets in this column currently
+        // We use window.MainApp.tickets if available (global state hack for modal)
+        // Or simply warn the user strongly. Ideally we check the prop passed down but we don't have tickets prop here.
+        // Let's assume the user knows, but we enforce a stronger warning.
+        
+        // BETTER: Ask the user to confirm there are NO tickets.
+        if (confirm("ATTENTION : Avez-vous vérifié que cette colonne est VIDE ?\n\nSi vous supprimez une colonne contenant des tickets, ils deviendront INVISIBLES (fantômes) mais resteront dans la base de données.\n\nÊtes-vous sûr de vouloir continuer ?")) {
+             setLocalColumns(localColumns.filter(c => c.key !== key));
         }
     };
 

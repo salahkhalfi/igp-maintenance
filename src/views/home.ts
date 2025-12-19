@@ -521,7 +521,7 @@ export const homeHTML = `
                     <circle cx="25" cy="25" r="20" fill="none" stroke="#667eea" stroke-width="4" stroke-dasharray="80" stroke-dashoffset="60" stroke-linecap="round"/>
                 </svg>
                 <h2 style="font-size: 24px; font-weight: bold; color: #333; margin-bottom: 8px;">Chargement de l'application</h2>
-                <p style="color: #666; font-size: 14px;">Mise à jour v3.0.6 (Unified Messenger)...</p>
+                <p style="color: #666; font-size: 14px;">Mise à jour v3.0.7 (Push Notifications Fixed)...</p>
             </div>
         </div>
         <style>
@@ -532,7 +532,8 @@ export const homeHTML = `
     </div>
 
     <script>
-        // SAFE CACHE RESET v3.0.3 (Execute after load to prevent white screen)
+        // SAFE CACHE RESET v3.0.3 - DISABLED (Fixed Push Notification Stability)
+        /*
         window.addEventListener('load', function() {
             if ('serviceWorker' in navigator) {
                 // 1. Unregister all existing workers to clear "Zombie" cache
@@ -546,9 +547,10 @@ export const homeHTML = `
                 });
             }
         });
+        */
 
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.6 (Unified Messenger)');
+        console.log('HOME HTML LOADED v3.0.7 (Push Fixed)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 

@@ -75,8 +75,9 @@ const App = () => {
         }
 
         // --- PUSH NOTIFICATIONS ---
-        // Auto-init on load
+        // Auto-init on load (Fire-and-forget, SAFE)
         if ((window as any).initPushNotifications) {
+            console.log('🔔 [Connect] Initializing push (Verification only)...');
             (window as any).initPushNotifications();
         }
 
