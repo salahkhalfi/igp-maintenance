@@ -58,8 +58,8 @@ export const homeHTML = `
     <script src="/static/js/components/UserList.js"></script>
     <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
     <script src="/static/js/components/VoiceTicketFab.js"></script>
-    <script src="/static/js/components/MainApp.js?v=3.0.5"></script>
-    <script src="/static/js/components/App.js?v=3.0.5"></script>
+    <script src="/static/js/components/MainApp.js?v=3.0.6"></script>
+    <script src="/static/js/components/App.js?v=3.0.6"></script>
     <style>
         /* FIXED BACKGROUND LAYER - Solves mobile/resize glitching */
         #app-background {
@@ -521,7 +521,7 @@ export const homeHTML = `
                     <circle cx="25" cy="25" r="20" fill="none" stroke="#667eea" stroke-width="4" stroke-dasharray="80" stroke-dashoffset="60" stroke-linecap="round"/>
                 </svg>
                 <h2 style="font-size: 24px; font-weight: bold; color: #333; margin-bottom: 8px;">Chargement de l'application</h2>
-                <p style="color: #666; font-size: 14px;">Mise à jour v3.0.2 en cours...</p>
+                <p style="color: #666; font-size: 14px;">Mise à jour v3.0.6 (Unified Messenger)...</p>
             </div>
         </div>
         <style>
@@ -548,7 +548,7 @@ export const homeHTML = `
         });
 
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.1 (Stable Ticket Modal)');
+        console.log('HOME HTML LOADED v3.0.6 (Unified Messenger)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 
