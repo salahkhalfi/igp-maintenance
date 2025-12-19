@@ -145,5 +145,19 @@
 
 ---
 
+## ⬛ MODULE 5: RESTRICTIONS & HYGIENE (NEW)
+
+### [RESTRICTION OF FREEDOM]
+*   **NO BLIND MOVES**: Forbidden to touch ANY code without mapping its dependencies (Imports + Runtime calls).
+*   **LEGACY AWARENESS**: "Dead code" in `src/` might be "Alive" in `public/static/`. NEVER delete a route without checking `grep` on the ENTIRE project (including `dist/` and `public/`).
+*   **CONFIRMATION REQUIRED**: For any logic change or deletion, state the consequences clearly and wait for validation.
+
+### [CODE HYGIENE]
+*   **NO TRASH**: Temporary scripts (.py, .sh, test files) must be deleted immediately after use.
+*   **ARCHIVING**: If code is obsolete but potentially useful for reference, move to `archive/` folder. Do not comment it out in active files.
+*   **VERIFICATION**: Before deleting "trash", verify 3 times it is not imported anywhere.
+
+---
+
 > **FINAL INSTRUCTION**: This file is the **KERNEL**. If it's not in here, it's just an opinion. If it IS in here, it is **LAW**.
 > **UPDATING**: When adding rules, strip emotion. Keep it binary.
