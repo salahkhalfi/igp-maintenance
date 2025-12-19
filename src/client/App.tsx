@@ -5,7 +5,7 @@ import NotificationModal from './components/NotificationModal'
 import ConfirmModal from './components/ConfirmModal'
 import PromptModal from './components/PromptModal'
 import UserManagementModal from './components/UserManagementModal'
-import MessagingModal from './components/MessagingModal'
+// import MessagingModal from './components/MessagingModal' // DEPRECATED: Old Messaging removed
 import { CreateTicketModal } from './components/CreateTicketModal'
 import TicketDetailsModal from './components/TicketDetailsModal'
 import RPCStatus from './components/RPCStatus'
@@ -28,11 +28,11 @@ const MOCK_USER: User = {
 const AppContent = () => {
   const [role, setRole] = useState('operator');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isMsgModalOpen, setIsMsgModalOpen] = useState(false);
+  // const [isMsgModalOpen, setIsMsgModalOpen] = useState(false); // DEPRECATED
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [isTicketDetailsOpen, setIsTicketDetailsOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-  const [initialContactId, setInitialContactId] = useState<number | null>(null);
+  // const [initialContactId, setInitialContactId] = useState<number | null>(null); // DEPRECATED
   const [initialTicketDescription, setInitialTicketDescription] = useState<string>('');
   const [initialImageUrl, setInitialImageUrl] = useState<string>('');
   const [initialTicketTitle, setInitialTicketTitle] = useState<string>('');
@@ -163,18 +163,19 @@ const AppContent = () => {
         }, 500);
     }
     else if (openMessages) {
-       console.log('[App] Opening messages from URL:', openMessages);
-       setInitialContactId(Number(openMessages));
-       setIsMsgModalOpen(true);
-       window.history.replaceState({}, '', '/');
+       console.log('[App] Redirecting to Messenger:', openMessages);
+       // REDIRECT TO MESSENGER
+       window.location.href = `/messenger?conversationId=direct_${openMessages}`;
     }
     else if (openAudio) {
-        // Similar to messages but might want to auto-play in future
-        console.log('[App] Opening audio message from URL:', openAudio);
+        // REDIRECT TO MESSENGER
+        console.log('[App] Redirecting audio to Messenger:', openAudio);
         const senderId = params.get('sender');
-        if (senderId) setInitialContactId(Number(senderId));
-        setIsMsgModalOpen(true);
-        window.history.replaceState({}, '', '/');
+        if (senderId) {
+             window.location.href = `/messenger?conversationId=direct_${senderId}`;
+        } else {
+             window.location.href = '/messenger';
+        }
     }
 
     // 2. Listen for messages from Service Worker (when app is already open)
@@ -187,12 +188,12 @@ const AppContent = () => {
                 openTicketDetails(Number(data.ticketId || data.ticket_id));
             }
             else if (action === 'new_private_message' && data.senderId) {
-                setInitialContactId(Number(data.senderId));
-                setIsMsgModalOpen(true);
+                // REDIRECT TO MESSENGER
+                window.location.href = `/messenger?conversationId=direct_${data.senderId}`;
             }
             else if (action === 'new_audio_message' && data.senderId) {
-                setInitialContactId(Number(data.senderId));
-                setIsMsgModalOpen(true);
+                // REDIRECT TO MESSENGER
+                window.location.href = `/messenger?conversationId=direct_${data.senderId}`;
             }
         }
     };
@@ -248,14 +249,14 @@ const AppContent = () => {
                 </div>
                 )}
 
-                {/* Messaging */}
+                {/* Messaging (REDIRECT TO NEW APP) */}
                 <div className="mb-2">
                     <button 
-                        onClick={() => setIsMsgModalOpen(true)}
+                        onClick={() => window.location.href = '/messenger'}
                         className="w-full py-2 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-all"
                     >
                         <i className="fas fa-comments mr-2"></i>
-                        Messaging
+                        IGP Connect (Messagerie)
                     </button>
                 </div>
 
@@ -304,18 +305,16 @@ const AppContent = () => {
         <VoiceTicketFab onTicketDetected={handleVoiceTicketDetected} />
 
         {/* Render Modals */}
-        <MessagingModal 
-            isOpen={isMsgModalOpen}
-            onClose={() => setIsMsgModalOpen(false)}
-            currentUser={currentUser}
-            initialContactId={initialContactId || undefined}
-        />
+        {/* MESSAGING MODAL REMOVED - REPLACED BY /messenger APP */}
 
         <UserManagementModal 
             isOpen={isUserModalOpen}
             onClose={() => setIsUserModalOpen(false)}
             currentUser={currentUser}
-            onOpenMessage={(user) => setNotification({isOpen: true, type: 'info', message: `Open message for ${user.full_name}`})}
+            onOpenMessage={(user) => {
+                // Redirect to messenger with target user
+                window.location.href = `/messenger?conversationId=direct_${user.id}`;
+            }}
         />
 
         <CreateTicketModal
