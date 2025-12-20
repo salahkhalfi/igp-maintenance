@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, index, primaryKey } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // --- USERS TABLE ---
@@ -262,6 +262,18 @@ export const pendingNotifications = sqliteTable('pending_notifications', {
   data: text('data'), // JSON string
   sent_to_endpoints: text('sent_to_endpoints'), // JSON string array
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+// --- USER PREFERENCES TABLE ---
+export const userPreferences = sqliteTable('user_preferences', {
+  user_id: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  pref_key: text('pref_key').notNull(),
+  pref_value: text('pref_value').notNull(),
+  updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => {
+  return {
+    pk: primaryKey({ columns: [table.user_id, table.pref_key] }),
+  };
 });
 
 // --- PLANNING CATEGORIES TABLE ---

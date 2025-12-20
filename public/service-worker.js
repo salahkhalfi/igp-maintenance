@@ -1,5 +1,5 @@
 /**
- * Service Worker pour PWA Maintenance IGP
+ * Service Worker pour PWA MaintenanceOS
  * Gère le cache des assets statiques et les notifications push
  * Version: v1.1.3 (Online First - Performance Optimized)
  */

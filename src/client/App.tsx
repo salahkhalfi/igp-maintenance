@@ -10,15 +10,28 @@ import { CreateTicketModal } from './components/CreateTicketModal'
 import TicketDetailsModal from './components/TicketDetailsModal'
 import RPCStatus from './components/RPCStatus'
 import VoiceTicketFab from './components/VoiceTicketFab'
+import DataImportModal from './components/DataImportModal'
+import MachineManagementModal from './components/MachineManagementModal'
 import { User, TicketPriority } from './types'
 import { client, getAuthToken } from './api'
 
 // Create a client
 const queryClient = new QueryClient()
 
+// --- LEGACY COMPONENTS BRIDGE ---
+// Ces composants sont chargés via <script> dans index.html et exposés sur window
+const AppHeader = (window as any).AppHeader || (() => null);
+const KanbanBoard = (window as any).KanbanBoard || (() => null);
+const ProductionPlanning = (window as any).ProductionPlanning;
+const AdminRoles = (window as any).AdminRoles;
+const TVDashboardModal = (window as any).TVDashboardModal;
+const AIChatModal = (window as any).AIChatModal;
+const SystemSettingsModal = (window as any).SystemSettingsModal;
+const UserGuideModal = (window as any).UserGuideModal;
+
 const MOCK_USER: User = {
     id: 0,
-    email: 'guest@igpglass.ca',
+    email: 'guest@example.com',
     first_name: 'Visiteur',
     last_name: '',
     role: 'guest', // Safe default
@@ -28,6 +41,9 @@ const MOCK_USER: User = {
 const AppContent = () => {
   const [role, setRole] = useState('operator');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isMachineModalOpen, setIsMachineModalOpen] = useState(false);
+  const [importTab, setImportTab] = useState<'users' | 'machines'>('users');
   // const [isMsgModalOpen, setIsMsgModalOpen] = useState(false); // DEPRECATED
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [isTicketDetailsOpen, setIsTicketDetailsOpen] = useState(false);
@@ -199,11 +215,42 @@ const AppContent = () => {
     };
 
     navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+    
+    // Expose Data Import to Legacy JS
+    (window as any).openDataImport = (type: 'users' | 'machines') => {
+        setImportTab(type);
+        setIsImportModalOpen(true);
+    };
+
+    // Expose Machine Management to Legacy Header
+    (window as any).openMachineManagement = () => {
+        setIsMachineModalOpen(true);
+    };
+
+    // Expose User Management to Legacy Header
+    (window as any).openUserManagement = () => {
+        setIsUserModalOpen(true);
+    };
+
     return () => navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
   }, []);
 
   return (
     <>
+        {/* ADMIN SETTINGS FAB - Top Right (Admin Only) */}
+        {currentUser.role === 'admin' && (
+            <div className="fixed top-4 right-4 z-[9999] flex gap-2">
+                <button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-all border border-emerald-500 hover:scale-105 active:scale-95"
+                    title="Import CSV (Utilisateurs & Machines)"
+                >
+                    <i className="fas fa-file-csv"></i>
+                    <span className="font-bold text-sm">Import</span>
+                </button>
+            </div>
+        )}
+
         {/* CONTROL PANEL & WIDGETS (Bottom Left) */}
         <div className="fixed bottom-4 left-4 z-[9998] group font-sans">
             {/* DEBUG PANEL - DEV ONLY */}
@@ -238,7 +285,7 @@ const AppContent = () => {
                 
                 {/* User Management - Admin Only */}
                 {currentUser.role === 'admin' && (
-                <div className="mb-2">
+                <div className="mb-2 space-y-2">
                     <button 
                         onClick={() => setIsUserModalOpen(true)}
                         className="w-full py-2 bg-white border border-blue-200 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-all"
@@ -256,7 +303,7 @@ const AppContent = () => {
                         className="w-full py-2 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-all"
                     >
                         <i className="fas fa-comments mr-2"></i>
-                        IGP Connect (Messagerie)
+                        Messagerie Connect
                     </button>
                 </div>
 
@@ -315,6 +362,18 @@ const AppContent = () => {
                 // Redirect to messenger with target user
                 window.location.href = `/messenger?conversationId=direct_${user.id}`;
             }}
+        />
+
+        <DataImportModal 
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            initialTab={importTab}
+        />
+
+        <MachineManagementModal
+            isOpen={isMachineModalOpen}
+            onClose={() => setIsMachineModalOpen(false)}
+            currentUser={currentUser}
         />
 
         <CreateTicketModal

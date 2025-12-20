@@ -71,7 +71,7 @@ app.post('/share', adminOnly, async (c) => {
  * GET /api/planning
  * Récupère toutes les données du planning (événements, catégories, notes)
  */
-app.get('/', async (c) => {
+app.get('/', requirePermission('planning', 'read'), async (c) => {
   try {
     const user = c.get('user') as any;
 

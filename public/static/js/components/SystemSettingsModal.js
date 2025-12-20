@@ -34,6 +34,12 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [tempMessengerName, setTempMessengerName] = React.useState('');
     const [savingMessengerName, setSavingMessengerName] = React.useState(false);
 
+    // États pour le Domaine (Base URL)
+    const [baseUrl, setBaseUrl] = React.useState('');
+    const [editingBaseUrl, setEditingBaseUrl] = React.useState(false);
+    const [tempBaseUrl, setTempBaseUrl] = React.useState('');
+    const [savingBaseUrl, setSavingBaseUrl] = React.useState(false);
+
     // États Modules
     const [licenses, setLicenses] = React.useState({
         planning: true,
@@ -161,6 +167,17 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     }
                 } catch (error) {
                     // Default messenger name
+                }
+
+                try {
+                    const baseUrlResponse = await axios.get(API_URL + '/settings/app_base_url');
+                    if (baseUrlResponse.data.value) {
+                        setBaseUrl(baseUrlResponse.data.value);
+                    } else {
+                        setBaseUrl(window.location.origin);
+                    }
+                } catch (error) {
+                    setBaseUrl(window.location.origin);
                 }
             }
         } catch (error) {
@@ -441,6 +458,46 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
+    // Fonctions pour gérer le Domaine
+    const handleStartEditBaseUrl = () => {
+        setTempBaseUrl(baseUrl);
+        setEditingBaseUrl(true);
+    };
+
+    const handleCancelEditBaseUrl = () => {
+        setTempBaseUrl('');
+        setEditingBaseUrl(false);
+    };
+
+    const handleAutoDetectBaseUrl = () => {
+        setTempBaseUrl(window.location.origin);
+    };
+
+    const handleSaveBaseUrl = async () => {
+        let cleanUrl = tempBaseUrl.trim();
+        if (!cleanUrl) {
+            alert('L\'URL ne peut pas être vide');
+            return;
+        }
+        if (cleanUrl.endsWith('/')) cleanUrl = cleanUrl.slice(0, -1);
+        if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+            cleanUrl = 'https://' + cleanUrl;
+        }
+
+        setSavingBaseUrl(true);
+        try {
+            await axios.put(API_URL + '/settings/app_base_url', { value: cleanUrl });
+            setBaseUrl(cleanUrl);
+            setEditingBaseUrl(false);
+            setTempBaseUrl('');
+            alert('Domaine mis à jour avec succès !');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingBaseUrl(false);
+        }
+    };
+
     // Fonction pour lancer le nettoyage (Janitor) manuel
     const [cleaning, setCleaning] = React.useState(false);
     const handleManualCleanup = async () => {
@@ -603,6 +660,81 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
+                    // Section Configuration du Domaine (ADMIN UNIQUEMENT)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-globe text-indigo-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-indigo-900 mb-2 flex items-center gap-2' },
+                                        "Domaine & URL Système",
+                                        React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-1 rounded' }, 'CRITIQUE')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-indigo-800 mb-2' },
+                                        "Définit l'URL de base utilisée par l'IA et les notifications pour générer des liens."
+                                    )
+                                )
+                            )
+                        ),
+
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-link mr-2' }),
+                                'URL de base (Base URL)'
+                            ),
+                            !editingBaseUrl ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800 font-mono text-sm' },
+                                    baseUrl || (typeof window !== 'undefined' ? window.location.origin : '')
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleStartEditBaseUrl,
+                                    className: 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                    type: 'button'
+                                },
+                                    React.createElement('i', { className: 'fas fa-edit' }),
+                                    'Configurer'
+                                )
+                            ) : React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('input', {
+                                        type: 'text',
+                                        value: tempBaseUrl,
+                                        onChange: (e) => setTempBaseUrl(e.target.value),
+                                        placeholder: 'https://votre-domaine.com',
+                                        className: 'flex-1 px-4 py-2.5 border-2 border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 font-mono text-sm',
+                                        disabled: savingBaseUrl
+                                    }),
+                                    React.createElement('button', {
+                                        onClick: handleAutoDetectBaseUrl,
+                                        className: 'px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold text-sm whitespace-nowrap',
+                                        title: 'Auto-détecter l\'URL actuelle',
+                                        type: 'button'
+                                    },
+                                        React.createElement('i', { className: 'fas fa-magic' }),
+                                        ' Auto'
+                                    )
+                                ),
+                                React.createElement('div', { className: 'flex items-center justify-end gap-2' },
+                                    React.createElement('button', {
+                                        onClick: handleCancelEditBaseUrl,
+                                        disabled: savingBaseUrl,
+                                        className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                        type: 'button'
+                                    }, 'Annuler'),
+                                    React.createElement('button', {
+                                        onClick: handleSaveBaseUrl,
+                                        disabled: !tempBaseUrl.trim() || savingBaseUrl,
+                                        className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                        type: 'button'
+                                    },
+                                        savingBaseUrl && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                        savingBaseUrl ? 'Enregistrement...' : 'Enregistrer'
+                                    )
+                                )
+                            )
+                        )
+                    ),
+
                     // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
                     isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
@@ -637,7 +769,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     alt: 'Logo actuel',
                                     className: 'max-h-20 max-w-full object-contain',
                                     onError: (e) => {
-                                        e.target.src = '/static/logo.png';
+                                        e.target.src = '/logo.png';
                                     }
                                 })
                             )

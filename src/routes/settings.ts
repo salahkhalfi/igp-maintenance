@@ -3,6 +3,10 @@
 import { Hono } from 'hono';
 import { adminOnly, authMiddleware } from '../middlewares/auth';
 import type { Bindings } from '../types';
+import { getDb } from '../db';
+import { users, machines } from '../db/schema';
+import { hashPassword } from '../utils/password';
+import { sql } from 'drizzle-orm';
 
 const settings = new Hono<{ Bindings: Bindings }>();
 
@@ -317,7 +321,7 @@ settings.get('/logo', async (c) => {
 
     if (!setting || !setting.setting_value) {
       // Pas de logo personnalisé, retourner le logo par défaut
-      return c.redirect('/static/logo-igp.png');
+      return c.redirect('/logo.png');
     }
 
     const fileKey = setting.setting_value;
@@ -328,7 +332,7 @@ settings.get('/logo', async (c) => {
     if (!object) {
       console.error(`Logo non trouvé dans R2: ${fileKey}`);
       // Fallback sur le logo par défaut
-      return c.redirect('/static/logo-igp.png');
+      return c.redirect('/logo.png');
     }
 
     // Retourner le logo avec cache
@@ -341,7 +345,7 @@ settings.get('/logo', async (c) => {
   } catch (error) {
     console.error('Get logo error:', error);
     // Fallback sur le logo par défaut en cas d'erreur
-    return c.redirect('/static/logo-igp.png');
+    return c.redirect('/logo.png');
   }
 });
 
@@ -375,7 +379,7 @@ settings.delete('/logo', authMiddleware, adminOnly, async (c) => {
 
     return c.json({
       message: 'Logo supprimé avec succès. Le logo par défaut sera utilisé.',
-      defaultLogo: '/static/logo-igp.png'
+      defaultLogo: '/logo.png'
     });
   } catch (error) {
     console.error('Delete logo error:', error);
@@ -823,8 +827,220 @@ settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
 });
 
 // ============================================================================
+// ROUTES D'EXPORTATION DE DONNÉES (JSON -> CSV Client)
+// ============================================================================
+
+settings.get('/export/users', authMiddleware, adminOnly, async (c) => {
+  try {
+    const db = getDb(c.env);
+    const allUsers = await db.select({
+      EMAIL: users.email,
+      PRENOM: users.first_name,
+      NOM: users.last_name,
+      ROLE: users.role
+    }).from(users).where(sql`deleted_at IS NULL`).all();
+    
+    return c.json({ users: allUsers });
+  } catch (error: any) {
+    return c.json({ error: 'Erreur export users: ' + error.message }, 500);
+  }
+});
+
+settings.get('/export/machines', authMiddleware, adminOnly, async (c) => {
+  try {
+    const db = getDb(c.env);
+    const allMachines = await db.select({
+      TYPE: machines.machine_type,
+      MODELE: machines.model,
+      MARQUE: machines.manufacturer,
+      SERIE: machines.serial_number,
+      LIEU: machines.location
+    }).from(machines).where(sql`deleted_at IS NULL`).all();
+    
+    return c.json({ machines: allMachines });
+  } catch (error: any) {
+    return c.json({ error: 'Erreur export machines: ' + error.message }, 500);
+  }
+});
+
+// ============================================================================
+// ROUTES D'IMPORTATION DE DONNÉES (CSV)
+// ============================================================================
+
+/**
+ * POST /api/settings/import/users - Importer des utilisateurs en masse
+ * Input: { users: [...], updateExisting: boolean }
+ */
+settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
+  try {
+    const { users: newUsers, updateExisting } = await c.req.json();
+    if (!Array.isArray(newUsers) || newUsers.length === 0) {
+      return c.json({ error: 'Données invalides ou vides' }, 400);
+    }
+
+    const db = getDb(c.env);
+    const defaultPasswordHash = await hashPassword('123456'); // Default password
+    const results = { success: 0, updated: 0, ignored: 0, errors: 0 };
+
+    for (const u of newUsers) {
+      if (!u.email || !u.role) {
+        results.errors++;
+        continue;
+      }
+
+      try {
+        let role = u.role.toLowerCase().trim();
+        if (!['admin', 'technician', 'operator', 'supervisor', 'manager'].includes(role)) {
+            role = 'operator';
+        }
+
+        const userData = {
+          email: u.email.trim(),
+          full_name: `${u.first_name} ${u.last_name || ''}`.trim(),
+          first_name: u.first_name,
+          last_name: u.last_name || '',
+          role: role,
+          updated_at: sql`CURRENT_TIMESTAMP`
+        };
+
+        // Insert or Update logic
+        let query = db.insert(users).values({
+            ...userData,
+            password_hash: defaultPasswordHash, // Only used for insert
+            created_at: sql`CURRENT_TIMESTAMP`
+        });
+
+        if (updateExisting) {
+            // Upsert: Update fields but KEEP existing password
+            query = query.onConflictDoUpdate({
+                target: users.email,
+                set: userData // Does not include password_hash
+            });
+        } else {
+            // Insert Only
+            query = query.onConflictDoNothing({ target: users.email });
+        }
+
+        const res = await query.run();
+
+        if (res.meta.changes > 0) {
+            // D1/SQLite returns changes=1 for insert OR update usually.
+            // Distinguishing exact action is hard without checking before.
+            // We assume Success if something changed.
+            if (updateExisting) results.updated++; // Approximation
+            else results.success++;
+        } else {
+            results.ignored++;
+        }
+
+      } catch (err) {
+        console.error('Import user error:', err);
+        results.errors++;
+      }
+    }
+
+    return c.json({ 
+      message: 'Import terminé', 
+      stats: results,
+      note: 'Les nouveaux utilisateurs ont le mot de passe par défaut : "123456"'
+    });
+
+  } catch (error: any) {
+    console.error('Import users error:', error);
+    return c.json({ error: 'Erreur lors de l\'import: ' + error.message }, 500);
+  }
+});
+
+/**
+ * POST /api/settings/import/machines - Importer des machines en masse
+ * Input: { machines: [...], updateExisting: boolean }
+ */
+settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
+  try {
+    const { machines: newMachines, updateExisting } = await c.req.json();
+    if (!Array.isArray(newMachines) || newMachines.length === 0) {
+      return c.json({ error: 'Données invalides ou vides' }, 400);
+    }
+
+    const db = getDb(c.env);
+    const results = { success: 0, updated: 0, ignored: 0, errors: 0 };
+
+    for (const m of newMachines) {
+      if (!m.type) {
+        results.errors++;
+        continue;
+      }
+
+      try {
+        const machineData = {
+          machine_type: m.type.trim(),
+          model: m.model ? m.model.trim() : null,
+          manufacturer: m.manufacturer ? m.manufacturer.trim() : null,
+          serial_number: m.serial ? m.serial.trim() : null,
+          location: m.location ? m.location.trim() : null,
+          updated_at: sql`CURRENT_TIMESTAMP`
+        };
+
+        let query = db.insert(machines).values({
+            ...machineData,
+            status: 'operational', // Default for new
+            created_at: sql`CURRENT_TIMESTAMP`
+        });
+        
+        if (machineData.serial_number) {
+            if (updateExisting) {
+                query = query.onConflictDoUpdate({
+                    target: machines.serial_number,
+                    set: machineData // Updates details based on Serial
+                });
+            } else {
+                query = query.onConflictDoNothing({ target: machines.serial_number });
+            }
+        } else {
+            // No serial -> Always Insert (Risk of duplicates, but requested behavior for non-serialized items)
+            // Cannot update without key.
+        }
+
+        const res = await query.run();
+
+        if (res.meta.changes > 0) {
+             if (updateExisting && machineData.serial_number) results.updated++;
+             else results.success++;
+        } else {
+            results.ignored++;
+        }
+
+      } catch (err) {
+        console.error('Import machine error:', err);
+        results.errors++;
+      }
+    }
+
+    return c.json({ message: 'Import terminé', stats: results });
+
+  } catch (error: any) {
+    console.error('Import machines error:', error);
+    return c.json({ error: 'Erreur lors de l\'import: ' + error.message }, 500);
+  }
+});
+
+// ============================================================================
 // ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
 // ============================================================================
+
+/**
+ * GET /api/settings/app_base_url - Récupérer l'URL de base (Safe Handler)
+ * Évite les 404 si non configuré
+ */
+settings.get('/app_base_url', async (c) => {
+  try {
+    const result = await c.env.DB.prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'app_base_url'").first();
+    // Return value or empty string (not 404)
+    return c.json({ value: result?.setting_value || '' });
+  } catch (e) {
+    return c.json({ value: '' });
+  }
+});
 
 /**
  * GET /api/settings/:key - Obtenir une valeur de paramètre
@@ -862,7 +1078,7 @@ settings.get('/:key', async (c) => {
  *
  * Utilisé pour: timezone_offset_hours, etc.
  */
-settings.put('/:key', adminOnly, async (c) => {
+settings.put('/:key', authMiddleware, adminOnly, async (c) => {
   try {
     const key = c.req.param('key');
     const body = await c.req.json();

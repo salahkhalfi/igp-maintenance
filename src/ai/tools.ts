@@ -542,7 +542,7 @@ export const ToolFunctions = {
         });
     },
 
-    async get_overdue_tickets(db: any, args: {}) {
+    async get_overdue_tickets(db: any, args: {}, baseUrl: string) {
         // 1. Get Timezone Offset
         const settings = await db.select().from(systemSettings).where(eq(systemSettings.setting_key, 'timezone_offset_hours')).get();
         const offset = settings ? parseInt(settings.setting_value) : -5; // Default -5 (EST)
@@ -616,14 +616,14 @@ export const ToolFunctions = {
                     scheduled: localScheduled, // Now human-readable local time
                     delay_hours: Math.round((now.getTime() - new Date(t.scheduled_date!).getTime()) / 3600000 * 10) / 10,
                     // LIEN PRÉ-CALCULÉ
-                    url: `https://app.igpglass.ca/?ticket=${t.id}`,
-                    markdown: `[Ticket ${t.display_id}](https://app.igpglass.ca/?ticket=${t.id})`
+                    url: `${baseUrl}/?ticket=${t.id}`,
+                    markdown: `[Ticket ${t.display_id}](${baseUrl}/?ticket=${t.id})`
                 };
             })
         });
     },
 
-    async search_tickets(db: any, args: { query?: string, status?: string, technician?: string, machine?: string, limit?: number }) {
+    async search_tickets(db: any, args: { query?: string, status?: string, technician?: string, machine?: string, limit?: number }, baseUrl: string) {
         const limit = args.limit || 5;
         const conditions = [];
 
@@ -743,8 +743,8 @@ export const ToolFunctions = {
                     const publicUrl = `/api/media/${m.id}`;
                     
                     // Générer le lien vers le ticket pour le contexte AI
-                    // HARDCODED PRODUCTION URL
-                    const ticketUrl = `https://app.igpglass.ca/?ticket=${r.id}`;
+                    // DYNAMIC URL based on passed context
+                    const ticketUrl = `${baseUrl}/?ticket=${r.id}`;
                     
                     // REVERT UX FIX: Return to side-by-side format to avoid breaking Frontend Regex Parser
                     // Nested markdown [![Img](Url)](Link) breaks the simple parser in AIChatModal.

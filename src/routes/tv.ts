@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { Bindings } from '../types';
 import { getDb } from '../db';
 import { tickets, machines, users } from '../db/schema';
-import { eq, and, or, gte, lte, desc, asc, sql } from 'drizzle-orm';
+import { eq, and, or, gte, lte, desc, asc, sql, not, inArray } from 'drizzle-orm';
 import { authMiddleware, adminOnly } from '../middlewares/auth';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -112,17 +112,24 @@ app.get('/data', checkTvKey, async (c) => {
           priority: tickets.priority,
           scheduled_date: tickets.scheduled_date,
           created_at: tickets.created_at,
-          machine_name: sql`${machines.machine_type} || ' ' || ${machines.model}`,
+          machine_name: sql`COALESCE(${machines.machine_type}, 'Machine') || ' ' || COALESCE(${machines.model}, '')`,
           assignee_name: users.first_name
         })
         .from(tickets)
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .leftJoin(users, eq(tickets.assigned_to, users.id))
         .where(
-          or(
-            and(eq(tickets.status, 'in_progress')),
-            and(gte(tickets.scheduled_date, startOfPast), lte(tickets.scheduled_date, endOfFuture)),
-            and(eq(tickets.priority, 'critical'), or(eq(tickets.status, 'received'), eq(tickets.status, 'diagnostic')))
+          and(
+            // 1. Exclure les tickets supprimés (Soft Delete)
+            sql`tickets.deleted_at IS NULL`,
+            // 2. Exclure les tickets terminés/archivés (Pour ne garder que l'actif)
+            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])),
+            // 3. Critères d'affichage TV habituels
+            or(
+              eq(tickets.status, 'in_progress'),
+              and(gte(tickets.scheduled_date, startOfPast), lte(tickets.scheduled_date, endOfFuture)),
+              and(eq(tickets.priority, 'critical'), or(eq(tickets.status, 'received'), eq(tickets.status, 'diagnostic')))
+            )
           )
         )
         .orderBy(

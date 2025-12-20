@@ -96,10 +96,19 @@ const UserList = ({
 
     return React.createElement('div', { className: 'flex-1 overflow-y-auto p-3 sm:p-6' },
         React.createElement('div', { className: 'mb-4 flex flex-col sm:flex-row gap-3' },
-            (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement('button', {
-                onClick: onCreate,
-                className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-blue-300/50'
-            }, "Créer un utilisateur") : null,
+            (currentUser.role === 'admin' || currentUser.role === 'supervisor') ? React.createElement(React.Fragment, null,
+                React.createElement('button', {
+                    onClick: onCreate,
+                    className: 'px-6 py-3 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white rounded-xl font-bold transition-all shadow-[0_8px_16px_rgba(249,115,22,0.4),0_4px_8px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:shadow-[0_12px_24px_rgba(249,115,22,0.5),0_6px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] hover:-translate-y-1 active:translate-y-0 active:shadow-[0_4px_8px_rgba(249,115,22,0.3),inset_0_2px_4px_rgba(0,0,0,0.2)] border-t border-blue-300/50'
+                }, "Créer un utilisateur"),
+                currentUser.role === 'admin' ? React.createElement('button', {
+                    onClick: () => window.openDataImport ? window.openDataImport('users') : alert("Fonction non disponible"),
+                    className: 'px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2'
+                }, 
+                    React.createElement("i", { className: "fas fa-file-import" }),
+                    "Import CSV"
+                ) : null
+            ) : null,
             React.createElement('div', { className: 'flex-1 relative' },
                 React.createElement('input', {
                     type: 'text',

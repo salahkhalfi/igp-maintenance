@@ -2,7 +2,7 @@
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { getDb } from '../db';
-import { machines, users, systemSettings, tickets, media, ticketComments, planningEvents } from '../db/schema';
+import { machines, users, systemSettings, tickets, media, ticketComments, planningEvents, userPreferences } from '../db/schema';
 import { inArray, eq, and, ne, lt, desc, or, sql, not, like } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
@@ -32,18 +32,30 @@ async function getTicketMaps(db: any) {
         'critical': 'Critique'
     };
 
+    // Default Closed Statuses
+    let closedStatuses = ['resolved', 'closed', 'completed', 'cancelled', 'archived'];
+
     try {
         const settings = await db.select().from(systemSettings)
-            .where(inArray(systemSettings.setting_key, ['ticket_statuses_config', 'ticket_priorities_config']))
+            .where(inArray(systemSettings.setting_key, ['ticket_statuses_config', 'ticket_priorities_config', 'ticket_closed_statuses']))
             .all();
 
         settings.forEach((s: any) => {
             try {
                 const parsed = JSON.parse(s.setting_value);
+                
+                if (s.setting_key === 'ticket_closed_statuses' && Array.isArray(parsed)) {
+                    closedStatuses = parsed;
+                }
+
                 const normalize = (data: any) => {
                     if (Array.isArray(data)) {
                         return data.reduce((acc: any, item: any) => {
                             if (item.id && item.label) acc[item.id] = item.label;
+                            // Also try to detect closed status from config if not explicitly set via ticket_closed_statuses
+                            if (item.id && (item.type === 'closed' || item.is_closed)) {
+                                if (!closedStatuses.includes(item.id)) closedStatuses.push(item.id);
+                            }
                             return acc;
                         }, {});
                     }
@@ -70,7 +82,7 @@ async function getTicketMaps(db: any) {
         console.warn("[AI] Failed to load dynamic maps, using defaults", e);
     }
 
-    return { statusMap, priorityMap };
+    return { statusMap, priorityMap, closedStatuses };
 }
 
 // --- HELPER: VISION RELAY (OpenAI) ---
@@ -123,7 +135,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 const TicketAnalysisSchema = z.object({
     title: z.string().min(1, "Titre requis"),
     description: z.string().min(1, "Description requise"),
-    priority: z.enum(['low', 'medium', 'high', 'critical']),
+    priority: z.string().optional(), // Was strict enum, now flexible string to support custom priorities
     machine_id: z.number().nullable(),
     machine_name: z.string().nullable(),
     assigned_to_id: z.number().nullable(),
@@ -211,8 +223,10 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
 }
 
 // 2. Intelligence Analysis
-async function analyzeText(transcript: string, context: any, env: Bindings, aiConfig: any): Promise<any> {
-    const localDate = new Date(new Date().getTime() - (5 * 60 * 60 * 1000));
+async function analyzeText(transcript: string, context: any, env: Bindings, aiConfig: any, timezoneOffset: number = -5): Promise<any> {
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const localDate = new Date(utc + (3600000 * timezoneOffset));
     
     const systemPrompt = `
 RÔLE : Analyste de Données Maintenance (Extraction JSON Stricte).
@@ -317,13 +331,21 @@ app.post('/analyze-ticket', async (c) => {
         
         const aiConfig = await getAiConfig(db);
 
+        // Fetch Timezone Offset
+        let offset = -5;
+        try {
+            const tzSetting = await db.select().from(systemSettings).where(eq(systemSettings.setting_key, 'timezone_offset_hours')).get();
+            if (tzSetting && tzSetting.setting_value) offset = parseInt(tzSetting.setting_value);
+        } catch (e) {}
+
         const machinesList = await db.select({
             id: machines.id, type: machines.machine_type, model: machines.model, manufacturer: machines.manufacturer, location: machines.location, status: machines.status
         }).from(machines).all();
         
+        // Dynamic Tech List: Don't hardcode roles. Fetch all internal users.
         const techsList = await db.select({
             id: users.id, name: users.full_name, role: users.role
-        }).from(users).where(and(inArray(users.role, ['admin', 'supervisor', 'technician', 'senior_technician', 'team_leader']), sql`deleted_at IS NULL`)).all();
+        }).from(users).where(and(ne(users.role, 'guest'), sql`deleted_at IS NULL`)).all();
 
         const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.type} ${m.manufacturer || ''} ${m.model || ''} [Loc: ${m.location || '?'}] [Status: ${m.status || 'unknown'}]`).join('\n');
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
@@ -334,7 +356,7 @@ app.post('/analyze-ticket', async (c) => {
         if (!transcript) return c.json({ error: "Impossible de transcrire l'audio." }, 502);
         
         try {
-            const ticketData = await analyzeText(transcript, { userName, userRole, machines: machinesContext, techs: techsContext }, c.env, aiConfig);
+            const ticketData = await analyzeText(transcript, { userName, userRole, machines: machinesContext, techs: techsContext }, c.env, aiConfig, offset);
             if (ticketData.scheduled_date && !ticketData.scheduled_date.includes('T')) ticketData.scheduled_date = null;
             return c.json(ticketData);
         } catch (analysisError: any) {
@@ -369,12 +391,17 @@ app.post('/chat', async (c) => {
         const body = await c.req.json();
         const { message, ticketContext, history } = body;
 
-        // 0. HARDCODE ENVIRONMENT (NUCLEAR OPTION)
-        // Stop guessing. Stop using request headers.
-        // We enforce the ONLY valid production URL.
-        const baseUrl = "https://app.igpglass.ca"; 
-
         const db = getDb(c.env);
+
+        // Fetch Base URL from settings or default
+        let baseUrl = ""; // Empty by default, must be configured
+        try {
+            const baseSetting = await db.select().from(systemSettings).where(eq(systemSettings.setting_key, 'app_base_url')).get();
+            if (baseSetting && baseSetting.setting_value) baseUrl = baseSetting.setting_value;
+        } catch (e) {
+            console.warn("[AI] Failed to fetch app_base_url", e);
+        } 
+
         const aiConfig = await getAiConfig(db);
 
         // 2. FETCH CONTEXT
@@ -386,11 +413,60 @@ app.post('/chat', async (c) => {
         let planningSummary = "Indisponible.";
 
         try {
-            machinesList = await db.select({ id: machines.id, type: machines.machine_type, model: machines.model, status: machines.status }).from(machines).where(sql`deleted_at IS NULL`).all() || [];
+            // Load Kanban Columns Customization
+            // Try to find user preferences first (if applicable) or system default
+            // Since this is AI context, we should probably look for a system-wide setting or a common convention.
+            // However, Kanban columns are often stored in 'user_preferences' with key 'kanban_columns'.
+            // The AI acts as a general agent, so it should probably know the "standard" flow.
+            // Let's check system_settings for a global override or default.
+            
+            // NOTE: Currently, kanban_columns are stored in `user_preferences`.
+            // There is no `system_settings` key for this yet in the provided code (preferences.ts uses a hardcoded default if not found).
+            // Strategy: We will fetch the hardcoded default map here to match `preferences.ts` logic 
+            // OR if we want to be dynamic, we need to know WHICH user's columns to use. 
+            // Since AI serves the current user, we could look up THEIR preferences.
+            
+            let kanbanColumns = [
+                { id: 'received', title: 'Nouveau' },
+                { id: 'diagnostic', title: 'En Diagnostic' },
+                { id: 'waiting_parts', title: 'En Attente Pièces' },
+                { id: 'in_progress', title: 'En Cours' },
+                { id: 'completed', title: 'Terminé' }
+            ];
+
+            // Attempt to fetch user-specific column names
+            if (userId) {
+                const userPref = await db.select().from(userPreferences)
+                    .where(and(eq(userPreferences.user_id, userId), eq(userPreferences.pref_key, 'kanban_columns')))
+                    .get();
+                
+                if (userPref && userPref.pref_value) {
+                    try {
+                        const parsed = JSON.parse(userPref.pref_value);
+                        if (Array.isArray(parsed)) {
+                            kanbanColumns = parsed;
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // Update statusMap with Kanban column titles
+            // This ensures the AI uses the user's custom terminology (e.g. "À faire" instead of "Nouveau")
+            let { statusMap, priorityMap, closedStatuses } = await getTicketMaps(db);
+            
+            kanbanColumns.forEach(col => {
+                if (col.id && col.title) {
+                    statusMap[col.id] = col.title;
+                }
+            });
+
+            // 1. SELECT * : On récupère TOUTES les colonnes (serial, location, specs, etc.) sans filtrage manuel
+            machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all() || [];
+            
             usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login }).from(users).where(sql`deleted_at IS NULL`).all() || [];
             activeTickets = await db.select({
                 id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
-            }).from(tickets).where(and(not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])), sql`deleted_at IS NULL`)).all() || [];
+            }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), sql`deleted_at IS NULL`)).all() || [];
 
             const mediaMap = new Map<number, string[]>();
             const commentMap = new Map<number, number>();
@@ -413,7 +489,6 @@ app.post('/chat', async (c) => {
                 commentCounts.forEach((c: any) => commentMap.set(c.ticket_id, c.count));
             }
 
-            const { statusMap, priorityMap } = await getTicketMaps(db);
             const workloadMap = new Map();
             const machineStatusMap = new Map();
 
@@ -434,9 +509,29 @@ app.post('/chat', async (c) => {
 
             machinesSummary = machinesList.map(m => {
                 const activeIssues = machineStatusMap.get(m.id);
-                let state = m.status === 'out_of_service' ? '🔴 ARRÊT' : '🟢 EN MARCHE';
-                if (activeIssues && activeIssues.length > 0) state = m.status === 'out_of_service' ? '🔴 ARRÊT (Confirmé)' : '⚠️ INCIDENTS EN COURS';
-                return `[ID:${m.id}] ${m.type} ${m.model || ''} - ÉTAT: ${state} ${activeIssues ? `(Détails: ${activeIssues.join(', ')})` : '(Aucun ticket actif)'}`;
+                
+                // --- ETAT MACHINE (Logique Legacy conservée pour l'instant) ---
+                let stateLabel = m.status;
+                if (m.status === 'out_of_service') stateLabel = '🔴 ARRÊT';
+                else if (m.status === 'operational') stateLabel = '🟢 EN MARCHE';
+                else if (m.status === 'maintenance') stateLabel = '🟠 MAINTENANCE';
+                else stateLabel = `⚪ ${m.status.toUpperCase()}`;
+
+                let state = stateLabel;
+                if (activeIssues && activeIssues.length > 0) {
+                     state = (m.status === 'out_of_service') ? '🔴 ARRÊT (Confirmé)' : '⚠️ INCIDENTS EN COURS';
+                }
+
+                // --- ENRICHISSEMENT DU CONTEXTE (Données Techniques) ---
+                const specs = m.technical_specs ? `\n   [SPECS]: ${m.technical_specs.replace(/\n/g, ' ')}` : '';
+                const details = [
+                    m.manufacturer ? `Fab: ${m.manufacturer}` : null,
+                    m.year ? `Année: ${m.year}` : null,
+                    m.serial_number ? `S/N: ${m.serial_number}` : null,
+                    m.location ? `Loc: ${m.location}` : null
+                ].filter(Boolean).join(' | ');
+
+                return `[ID:${m.id}] ${m.machine_type} ${m.model || ''}\n   [DETAILS]: ${details} - ÉTAT: ${state} ${activeIssues ? `(Tickets: ${activeIssues.join(', ')})` : '(RAS)'}${specs}`;
             }).join('\n');
             
             usersSummary = usersList.map(u => {
@@ -507,8 +602,124 @@ app.post('/chat', async (c) => {
         // --- CONSTRUCT CLEAN SYSTEM PROMPT ---
         const firstName = userName.split(' ')[0];
         
+        // 5. VISION INJECTION (Ticket Attachments)
+        // If ticketContext exists, fetch the latest image to let AI "see" the problem
+        let ticketVisionMessage: any = null;
+        
+        if (ticketContext) {
+            try {
+                // Find the ticket internal ID
+                const matchedTicket = activeTickets.find((t: any) => t.title === ticketContext.title && t.machine_id === ticketContext.machine_id);
+                
+                if (matchedTicket) {
+                    const latestImage = await db.select({ file_key: media.file_key, file_type: media.file_type })
+                        .from(media)
+                        .where(and(eq(media.ticket_id, matchedTicket.id), like(media.file_type, 'image/%')))
+                        .orderBy(desc(media.created_at))
+                        .limit(1)
+                        .first();
+
+                    if (latestImage) {
+                        const object = await c.env.MEDIA_BUCKET.get(latestImage.file_key);
+                        if (object) {
+                            const arrayBuffer = await object.arrayBuffer();
+                            let binary = '';
+                            const bytes = new Uint8Array(arrayBuffer);
+                            const len = bytes.byteLength;
+                            for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
+                            const base64Image = btoa(binary);
+                            
+                            ticketVisionMessage = {
+                                role: "user",
+                                content: [
+                                    { type: "text", text: "Voici la photo la plus récente attachée à ce ticket. Analyse visuellement ce que tu vois (défauts, pannes, état) pour compléter ton diagnostic." },
+                                    { type: "image_url", image_url: { url: `data:${latestImage.file_type};base64,${base64Image}` } }
+                                ]
+                            };
+                            console.log("[AI] Vision injected for ticket attachment");
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("[AI] Failed to inject ticket vision", err);
+            }
+        }
+
+        let ticketContextBlock = "";
+        if (ticketContext) {
+            // 1. Fetch Ticket Comments
+            let commentsText = "Aucun commentaire.";
+            try {
+                // We need to find the ticket ID. ticketContext usually has machine_id, but we need the ticket internal ID.
+                // The frontend passes ticketContext based on the opened ticket.
+                // Optimally, frontend should pass ticket_id. Let's assume it might not be in ticketContext yet or we match by title/desc.
+                // BETTER: The user is asking about "this" ticket. We should look up specific details if we can.
+                // Actually, let's look at activeTickets first to find the one matching the context title/desc if ID isn't passed clearly.
+                // But wait, activeTickets is already fetched above.
+                
+                // Let's refine: We'll filter the 'activeTickets' list or fetch specific data if we can identify the ticket.
+                // Since ticketContext comes from frontend, let's look for a match in activeTickets to get the ID.
+                const matchedTicket = activeTickets.find((t: any) => t.title === ticketContext.title && t.machine_id === ticketContext.machine_id);
+                
+                if (matchedTicket) {
+                    const comments = await db.select({
+                        content: ticketComments.content,
+                        author: users.full_name,
+                        created_at: ticketComments.created_at
+                    })
+                    .from(ticketComments)
+                    .leftJoin(users, eq(ticketComments.user_id, users.id))
+                    .where(eq(ticketComments.ticket_id, matchedTicket.id))
+                    .orderBy(desc(ticketComments.created_at))
+                    .limit(10) // Limit to last 10 comments to save context
+                    .all();
+
+                    if (comments.length > 0) {
+                        commentsText = comments.map((c: any) => `- [${c.created_at}] ${c.author || 'Inconnu'}: ${c.content}`).join('\n');
+                    }
+
+                    // 2. Fetch Ticket Images (Metadata)
+                    const images = await db.select({
+                        file_name: media.file_name,
+                        file_key: media.file_key
+                    })
+                    .from(media)
+                    .where(and(eq(media.ticket_id, matchedTicket.id), like(media.file_type, 'image/%')))
+                    .limit(5)
+                    .all();
+
+                    if (images.length > 0) {
+                        // We add image links so the AI knows there are visuals. 
+                        // Note: The AI can't "see" them unless we pass them as vision content in the message loop, 
+                        // but knowing they exist and their names is helpful.
+                        // Ideally, we would inject the last image into the vision prompt, but for now let's list them.
+                        const imageList = images.map((img: any) => {
+                            const publicUrl = `/api/media/public?key=${encodeURIComponent(img.file_key)}`;
+                            return `![${img.file_name}](${publicUrl})`;
+                        }).join('\n');
+                        commentsText += `\n\nIMAGES DISPONIBLES :\n${imageList}`;
+                    }
+                }
+            } catch (err) {
+                console.warn("[AI] Failed to fetch ticket details for context", err);
+            }
+
+            ticketContextBlock = `
+--- 🚨 TICKET ACTUEL (SUJET PRIORITAIRE) ---
+TITRE : ${ticketContext.title}
+DESCRIPTION : ${ticketContext.description}
+MACHINE : ${ticketContext.machine_name || 'Non spécifiée'} (ID: ${ticketContext.machine_id || '?'})
+HISTORIQUE & COMMENTAIRES :
+${commentsText}
+
+CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analyse la description, les commentaires et les images (si présentes) pour donner des pistes de diagnostic immédiates.
+`;
+        }
+
         let systemPrompt = `
 ${aiConfig.identity}
+
+${ticketContextBlock}
 
 --- 1. CONTEXTE OPÉRATIONNEL ---
 - UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})
@@ -560,11 +771,17 @@ C. **STYLE MARKDOWN** :
 ${aiConfig.rules}
 `;
 
-        const messages = [
+        const messages: any[] = [
             { role: "system", content: systemPrompt },
-            ...history.slice(-6), 
-            { role: "user", content: message }
+            ...history.slice(-6)
         ];
+
+        // Inject vision message if available (BEFORE the user's current question)
+        if (ticketVisionMessage) {
+            messages.push(ticketVisionMessage);
+        }
+
+        messages.push({ role: "user", content: message });
 
         let turns = 0;
         let finalReply = "";
@@ -592,8 +809,19 @@ ${aiConfig.rules}
                     let toolResult = "Erreur: Outil inconnu";
                     if (ToolFunctions[fnName as keyof typeof ToolFunctions]) {
                         try {
-                            // @ts-ignore
-                            toolResult = await ToolFunctions[fnName](db, fnArgs, userId);
+                            // INTELLIGENT ARGUMENT ROUTING
+                            // Some tools need baseUrl (for links), others need userId (for permission/context)
+                            console.log(`[AI] Invoking tool: ${fnName}`);
+                            if (['search_tickets', 'get_overdue_tickets'].includes(fnName)) {
+                                 // These tools signatures were updated to accept baseUrl
+                                 // Pass configured URL or explicit placeholder if missing
+                                 // @ts-ignore
+                                 toolResult = await ToolFunctions[fnName](db, fnArgs, baseUrl || "https://app.example.com");
+                            } else {
+                                 // Standard tools accepting (db, args, userId)
+                                 // @ts-ignore
+                                 toolResult = await ToolFunctions[fnName](db, fnArgs, userId);
+                            }
                         } catch (err: any) {
                             toolResult = `Erreur: ${err.message}`;
                         }
@@ -610,8 +838,12 @@ ${aiConfig.rules}
 
         // 🛡️ SANITIZATION FIREWALL (Anti-Hallucination) v2
         // Force correction of domains and paths BEFORE sending to client
+        if (baseUrl && baseUrl.startsWith('http')) {
+            finalReply = finalReply
+                .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, baseUrl);
+        }
+        
         finalReply = finalReply
-            .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, 'https://app.igpglass.ca') // Force .ca AND kill example.com
             .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1'); // Fix /ticket/ID -> /?ticket=ID
 
         return c.json({ reply: finalReply });

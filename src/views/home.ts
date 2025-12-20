@@ -35,7 +35,7 @@ export const homeHTML = `
     <script src="/static/js/components/CreateTicketModal.js?v=3.0.4"></script>
     <script src="/static/js/components/TicketDetailsModal_v3.js?v=3.2.0"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
-    <script src="/static/js/components/MachineManagementModal.js"></script>
+    <!-- MACHINE MODAL REMOVED (MODERNIZED) -->
     <script src="/static/js/components/RoleDropdown.js"></script>
     <script src="/static/js/components/SystemSettingsModal.js?v=3.0.5"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
@@ -56,10 +56,10 @@ export const homeHTML = `
     <script src="/static/js/components/TicketAttachments.js"></script>
     <script src="/static/js/components/UserForms.js"></script>
     <script src="/static/js/components/UserList.js"></script>
-    <script src="/static/js/components/UserManagementModal.js?v=2.8.3"></script>
+    <!-- USER MANAGEMENT MODAL REMOVED (MODERNIZED) -->
     <script src="/static/js/components/VoiceTicketFab.js"></script>
     <script src="/static/js/components/MainApp.js?v=3.0.6"></script>
-    <script src="/static/js/components/App.js?v=3.0.6"></script>
+    <script type="module" src="/static/client/main.js"></script>
     <style>
         /* FIXED BACKGROUND LAYER - Solves mobile/resize glitching */
         #app-background {
@@ -744,9 +744,9 @@ export const homeHTML = `
         // Expose to window for MainApp to use if needed (though we'll inject it into App)
         window.TVDashboardModal = TVDashboardModal;
 
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(App));
+        // REACT RENDER MOVED TO MODERN MODULE (main.js)
+        // const root = ReactDOM.createRoot(document.getElementById('root'));
+        // root.render(React.createElement(App));
 
         // Simple stats loader - no React state, just direct DOM update
         window.loadSimpleStats = function() {

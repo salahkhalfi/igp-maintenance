@@ -17,20 +17,13 @@ export default defineConfig({
       input: {
         main: 'src/client/main.tsx',
       },
-      // Externalize React for the main app
-      external: (id) => {
-        return ['react', 'react-dom'].includes(id);
-      },
+      // Bundle React internally for stability
       output: {
         // Smart naming: main.js for legacy app
         entryFileNames: (chunkInfo) => {
           return chunkInfo.name === 'main' ? 'main.js' : '[name]-[hash].js';
         },
-        assetFileNames: 'assets/[name].[ext]',
-        globals: {
-          react: 'React',
-          'react-dom': 'ReactDOM'
-        }
+        assetFileNames: 'assets/[name].[ext]'
       }
     }
   },

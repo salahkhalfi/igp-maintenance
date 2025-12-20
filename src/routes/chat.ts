@@ -5,7 +5,7 @@ import { extractToken, verifyToken } from '../utils/jwt';
 import { Bindings } from '../types';
 import { sendPushNotification } from './push';
 import { hashPassword } from '../utils/password';
-import { chatGuests } from '../db/schema'; // Assuming schema export
+import { chatGuests, systemSettings } from '../db/schema'; // Assuming schema export
 import { eq } from 'drizzle-orm';
 
 // Helper for Vision Analysis
@@ -271,9 +271,42 @@ app.get('/conversations', async (c) => {
 // 2. GET /api/v2/chat/conversations/:id - Get messages for a conversation
 app.get('/conversations/:id/messages', async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
+    let conversationId = c.req.param('id');
     const limit = 50; // Pagination limit
     const offset = Number(c.req.query('offset') || 0);
+
+    // --- HANDLE VIRTUAL IDs (direct_XX) ---
+    // Fixes the 403 error when opening a chat from User Management
+    if (conversationId.startsWith('direct_')) {
+        const targetId = parseInt(conversationId.replace('direct_', ''), 10);
+        
+        if (!isNaN(targetId)) {
+            // Try to find the REAL conversation ID
+            const existing = await c.env.DB.prepare(`
+                SELECT c.id 
+                FROM chat_conversations c
+                JOIN chat_participants cp1 ON c.id = cp1.conversation_id
+                JOIN chat_participants cp2 ON c.id = cp2.conversation_id
+                WHERE c.type = 'direct' 
+                AND cp1.user_id = ? 
+                AND cp2.user_id = ?
+            `).bind(user.userId, targetId).first();
+
+            if (existing) {
+                // Found it! Use the real ID
+                conversationId = existing.id as string;
+            } else {
+                // No conversation yet. Return empty list instead of 403.
+                // This allows the UI to load an empty chat window.
+                // The actual conversation will be created on the first POST /send
+                return c.json({ 
+                    messages: [],
+                    participants: [], // Frontend might need basic info here, but empty is safe for now
+                    conversation: { id: conversationId, type: 'direct', name: 'Nouveau message' } // Virtual stub
+                });
+            }
+        }
+    }
 
     // Security: Ensure user is participant
     const isParticipant = await c.env.DB.prepare(`
@@ -528,10 +561,48 @@ app.post('/conversations/:id/participants', async (c) => {
 // 3. POST /api/v2/chat/send - Send a message
 app.post('/send', async (c) => {
     const user = c.get('user');
-    const { conversationId, content, type = 'text', mediaKey, mediaMeta, isCall, transcription } = await c.req.json();
+    let { conversationId, content, type = 'text', mediaKey, mediaMeta, isCall, transcription } = await c.req.json();
     const messageId = crypto.randomUUID();
 
     try {
+        // --- HANDLE VIRTUAL IDs (direct_XX) - LAZY CREATION ---
+        // If sending to a virtual ID, we must create the conversation first
+        if (conversationId.startsWith('direct_')) {
+            const targetId = parseInt(conversationId.replace('direct_', ''), 10);
+            
+            if (!isNaN(targetId)) {
+                // 1. Check if conversation already exists (Race condition check)
+                const existing = await c.env.DB.prepare(`
+                    SELECT c.id 
+                    FROM chat_conversations c
+                    JOIN chat_participants cp1 ON c.id = cp1.conversation_id
+                    JOIN chat_participants cp2 ON c.id = cp2.conversation_id
+                    WHERE c.type = 'direct' 
+                    AND cp1.user_id = ? 
+                    AND cp2.user_id = ?
+                `).bind(user.userId, targetId).first();
+
+                if (existing) {
+                    // Use existing ID
+                    conversationId = existing.id;
+                } else {
+                    // 2. Create NEW conversation on the fly
+                    conversationId = crypto.randomUUID();
+                    console.log(`[CHAT] Auto-creating direct chat between ${user.userId} and ${targetId}`);
+
+                    const batch = [
+                        c.env.DB.prepare(`INSERT INTO chat_conversations (id, type, name, created_by) VALUES (?, 'direct', null, ?)`).bind(conversationId, user.userId),
+                        c.env.DB.prepare(`INSERT INTO chat_participants (conversation_id, user_id, role) VALUES (?, ?, 'admin')`).bind(conversationId, user.userId),
+                        c.env.DB.prepare(`INSERT INTO chat_participants (conversation_id, user_id, role) VALUES (?, ?, 'member')`).bind(conversationId, targetId)
+                    ];
+                    
+                    await c.env.DB.batch(batch);
+                }
+            } else {
+                return c.json({ error: 'Invalid direct target ID' }, 400);
+            }
+        }
+
         // Security check
         const isParticipant = await c.env.DB.prepare(`
             SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?
@@ -740,6 +811,10 @@ Input: "${originalText}"`;
                 // On évite de spammer l'utilisateur quand l'IA "répond" ou qu'un audio est traité
                 if (conversationId === 'expert_ai') return;
 
+                // Fetch Base URL
+                const baseSetting = await c.env.DB.prepare('SELECT setting_value FROM system_settings WHERE setting_key = ?').bind('app_base_url').first();
+                const baseUrl = baseSetting ? baseSetting.setting_value : "https://app.igpglass.ca";
+
                 // Get other participants WITH NAMES for personalized push titles
                 const { results: participants } = await c.env.DB.prepare(`
                     SELECT 
@@ -770,7 +845,7 @@ Input: "${originalText}"`;
                         body: pushBody,
                         icon: '/icon-192.png',
                         data: {
-                            url: `https://app.igpglass.ca/messenger?conversationId=${conversationId}`,
+                            url: `${baseUrl}/messenger?conversationId=${conversationId}`,
                             conversationId: conversationId,
                             isCall: isCall 
                         }

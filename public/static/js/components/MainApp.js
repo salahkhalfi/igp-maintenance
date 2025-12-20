@@ -307,10 +307,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         React.createElement(PerformanceModal, { show: showPerformanceModal, onClose: () => setShowPerformanceModal(false) }),
         React.createElement(OverdueTicketsModal, { show: showOverdueModal, onClose: () => setShowOverdueModal(false), currentUser: currentUser }),
         React.createElement(PushDevicesModal, { show: showPushDevicesModal, onClose: () => setShowPushDevicesModal(false) }),
-        React.createElement(UserManagementModal, {
-            show: showUserManagement, onClose: () => setShowUserManagement(false), currentUser: currentUser,
-            onOpenMessage: (user) => { setShowUserManagement(false); window.location.href = `/messenger?conversationId=direct_${user.id}`; }
-        }),
+        
+        /* MODERN BRIDGE REPLACEMENT - LEGACY MODALS REMOVED */
+
         React.createElement(ManageColumnsModal, {
             show: showManageColumns,
             onClose: () => setShowManageColumns(false),
@@ -319,7 +318,9 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             currentUser: currentUser
         }),
         React.createElement(SystemSettingsModal, { show: showSystemSettings, onClose: () => setShowSystemSettings(false), currentUser: currentUser }),
-        React.createElement(MachineManagementModal, { show: showMachineManagement, onClose: () => setShowMachineManagement(false), currentUser: currentUser, machines: machines, onRefresh: onRefresh }),
+        
+        /* MODERN BRIDGE REPLACEMENT - LEGACY MODALS REMOVED */
+
         React.createElement(UserGuideModal, { show: showUserGuide, onClose: () => setShowUserGuide(false), currentUser: currentUser }),
 
         // --- HEADER (NOUVEAU COMPOSANT) ---
@@ -349,14 +350,27 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             },
             onOpenMachineManagement: () => { 
                 if (activeModules.machines) {
-                    setShowMachineManagement(true); 
+                    // FORCE BRIDGE TO MODERN REACT MODAL
+                    if (window.openMachineManagement) {
+                        window.openMachineManagement();
+                    } else {
+                        console.warn("Module Machines en cours de chargement...");
+                    }
                 } else {
                     alert("Le module 'Gestion Machines' n'est pas activé.");
                 }
                 setShowMobileMenu(false); 
             },
             onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
-            onOpenUserManagement: () => { setShowUserManagement(true); setShowMobileMenu(false); },
+            onOpenUserManagement: () => { 
+                // FORCE BRIDGE TO MODERN REACT MODAL
+                if (window.openUserManagement) {
+                    window.openUserManagement();
+                } else {
+                    console.warn("Module Utilisateurs en cours de chargement...");
+                }
+                setShowMobileMenu(false); 
+            },
             onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },

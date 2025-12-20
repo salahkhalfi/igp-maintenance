@@ -24,9 +24,6 @@ const parseAndSanitizeMarkdown = (content: string) => {
     // Fix explicit "https://api/media/..." (Hallucinated 'api' hostname) which causes 503s
     clean = clean.replace(/https?:\/\/api\/media/g, '/api/media');
     
-    // Fix .com hallucination -> .ca
-    clean = clean.replace(/igpglass\.com/g, 'igpglass.ca');
-    
     // Fix "https://any-domain.com/api/media/..." (Absolute URL to self)
     clean = clean.replace(/https?:\/\/[^\/]+\/api\/media/g, '/api/media');
 
@@ -109,7 +106,7 @@ const parseAndSanitizeMarkdown = (content: string) => {
                 let cellContent = cell
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
-                        const isInternal = url.includes('app.igpglass.ca') || url.startsWith('/');
+                        const isInternal = url.startsWith('/') || (typeof window !== 'undefined' && url.includes(window.location.hostname));
                         const target = isInternal ? '_self' : '_blank';
                         return `<a href="${url}" target="${target}" class="text-blue-600 underline">${text}</a>`;
                     });
