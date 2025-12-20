@@ -51,7 +51,9 @@ const MachineManagementModal: React.FC<MachineManagementModalProps> = ({ isOpen,
                 headers: { 'Authorization': `Bearer ${getAuthToken()}` }
             });
             if (!res.ok) throw new Error('Failed to fetch machines');
-            return res.json();
+            const data = await res.json();
+            // ROBUSTESSE : Extraction explicite du tableau
+            return Array.isArray(data.machines) ? data.machines : [];
         },
         enabled: isOpen
     });

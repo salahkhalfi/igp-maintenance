@@ -18,51 +18,52 @@ import { client, getAuthToken } from './api'
 // Create a client
 const queryClient = new QueryClient()
 
-// --- LEGACY COMPONENTS BRIDGE ---
-// Ces composants sont chargés via <script> dans index.html et exposés sur window
-const AppHeader = (window as any).AppHeader || (() => null);
-const KanbanBoard = (window as any).KanbanBoard || (() => null);
-const ProductionPlanning = (window as any).ProductionPlanning;
-const AdminRoles = (window as any).AdminRoles;
-const TVDashboardModal = (window as any).TVDashboardModal;
-const AIChatModal = (window as any).AIChatModal;
-const SystemSettingsModal = (window as any).SystemSettingsModal;
-const UserGuideModal = (window as any).UserGuideModal;
+// --- LEGACY BRIDGE COMPONENT ---
+// Ce composant sert de pont entre le React Bundlé (Vite) et le React Global (CDN) utilisé par MainApp.js
+const LegacyMainAppBridge = (props: any) => {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (containerRef.current && (window as any).MainApp && (window as any).ReactDOM && (window as any).React) {
+            console.log("🌉 Mounting Legacy MainApp Bridge...");
+            const LegacyReact = (window as any).React;
+            const LegacyReactDOM = (window as any).ReactDOM;
+            const MainApp = (window as any).MainApp;
+
+            // On utilise createElement de la version GLOBALE pour que les Hooks fonctionnent
+            const element = LegacyReact.createElement(MainApp, props);
+            
+            // On rend dans la div conteneur gérée par le React moderne
+            // Note: On utilise render (React 17 style) car c'est ce que le CDN fournit souvent, 
+            // ou createRoot si dispo sur window.
+            if (LegacyReactDOM.createRoot) {
+                const root = LegacyReactDOM.createRoot(containerRef.current);
+                root.render(element);
+                return () => root.unmount();
+            } else {
+                LegacyReactDOM.render(element, containerRef.current);
+                return () => LegacyReactDOM.unmountComponentAtNode(containerRef.current);
+            }
+        }
+    }, [props]); // Re-render si les props changent (ex: tickets mis à jour)
+
+    return <div ref={containerRef} id="legacy-root" style={{ minHeight: '100vh' }} />;
+};
 
 const MOCK_USER: User = {
     id: 0,
     email: 'guest@example.com',
     first_name: 'Visiteur',
     last_name: '',
-    role: 'guest', // Safe default
+    role: 'guest',
     full_name: 'Visiteur'
 };
 
 const AppContent = () => {
-  const [role, setRole] = useState('operator');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isMachineModalOpen, setIsMachineModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importTab, setImportTab] = useState<'users' | 'machines'>('users');
-  // const [isMsgModalOpen, setIsMsgModalOpen] = useState(false); // DEPRECATED
-  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
-  const [isTicketDetailsOpen, setIsTicketDetailsOpen] = useState(false);
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-  // const [initialContactId, setInitialContactId] = useState<number | null>(null); // DEPRECATED
-  const [initialTicketDescription, setInitialTicketDescription] = useState<string>('');
-  const [initialImageUrl, setInitialImageUrl] = useState<string>('');
-  const [initialTicketTitle, setInitialTicketTitle] = useState<string>('');
-  const [initialTicketPriority, setInitialTicketPriority] = useState<TicketPriority>('medium');
-  const [initialTicketMachineId, setInitialTicketMachineId] = useState<number | null>(null);
-  const [initialTicketMachineName, setInitialTicketMachineName] = useState<string>('');
-  const [initialAssignedToName, setInitialAssignedToName] = useState<string>('');
-  const [initialAssignedToId, setInitialAssignedToId] = useState<number | null>(null);
-  const [initialScheduledDate, setInitialScheduledDate] = useState<string>('');
-  
-  // Modal States
-  const [notification, setNotification] = useState<{isOpen: boolean, type: 'success'|'error'|'info', message: string} | null>(null);
-  const [confirm, setConfirm] = useState<{isOpen: boolean, message: string} | null>(null);
-  const [prompt, setPrompt] = useState<{isOpen: boolean, message: string} | null>(null);
 
   // Fetch real user
   const { data: realUser } = useQuery({
@@ -83,291 +84,112 @@ const AppContent = () => {
       full_name: `${realUser.first_name} ${realUser.last_name || ''}`.trim() 
   } as User : MOCK_USER;
 
-  const openTicketDetails = (id: number) => {
-    setSelectedTicketId(id);
-    setIsTicketDetailsOpen(true);
+  // Fetch Tickets
+  const { data: rawTickets, refetch: refetchTickets } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: async () => {
+       try {
+           const res = await fetch('/api/tickets', {
+               headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+           });
+           if (!res.ok) return [];
+           const data = await res.json();
+           // Ensure we extract the array
+           return Array.isArray(data.tickets) ? data.tickets : [];
+       } catch (e) {
+           console.error("Fetch tickets failed", e);
+           return [];
+       }
+    }
+  });
+  
+  // Safe array guarantee
+  const tickets = Array.isArray(rawTickets) ? rawTickets : [];
+
+  // Fetch Machines
+  const { data: rawMachines } = useQuery({
+      queryKey: ['machines'],
+      queryFn: async () => {
+          try {
+              const res = await fetch('/api/machines', {
+                  headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+              });
+              if (!res.ok) return [];
+              const data = await res.json();
+              return Array.isArray(data.machines) ? data.machines : [];
+          } catch (e) {
+              console.error("Fetch machines failed", e);
+              return [];
+          }
+      }
+  });
+
+  // Safe array guarantee
+  const machines = Array.isArray(rawMachines) ? rawMachines : [];
+
+  // Bridge Functions
+  const handleMoveTicket = async (id: number, status: string, log: string) => {
+      await fetch(`/api/tickets/${id}/move`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+          body: JSON.stringify({ status, log })
+      });
+      refetchTickets();
   };
 
-  const handleVoiceTicketDetected = (data: any) => {
-    console.log("🎤 Voice Ticket Detected:", data);
-    setInitialTicketTitle(data.title || '');
-    setInitialTicketDescription(data.description || '');
-    // Normalize priority to lowercase to ensure UI matches
-    setInitialTicketPriority((data.priority?.toLowerCase() as TicketPriority) || 'medium');
-    setInitialTicketMachineId(data.machine_id || null);
-    if (data.machine_name) setInitialTicketMachineName(data.machine_name);
-    
-    // New fields
-    if (data.assigned_to_name) setInitialAssignedToName(data.assigned_to_name);
-    if (data.assigned_to_id) setInitialAssignedToId(data.assigned_to_id);
-    if (data.scheduled_date) setInitialScheduledDate(data.scheduled_date);
-    
-    setIsCreateTicketOpen(true);
+  const handleDeleteTicket = async (id: number) => {
+      await fetch(`/api/tickets/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      refetchTickets();
   };
 
-  // Handle URL parameters and Service Worker messages
+  // Expose Bridges to Window for Legacy Calls
   useEffect(() => {
-    console.log("App mounted, checking params:", window.location.search);
-    const params = new URLSearchParams(window.location.search);
-
-    // 0. Handle SSO Token (CRITICAL FOR PWA/MAGIC BUTTON)
-    const tokenParam = params.get('token');
-    if (tokenParam) {
-        console.log("🔐 SSO Token detected, restoring session...");
-        localStorage.setItem('auth_token', tokenParam);
-        // Force refetch user
-        queryClient.invalidateQueries({ queryKey: ['me'] });
-        queryClient.invalidateQueries({ queryKey: ['machines'] });
-        queryClient.invalidateQueries({ queryKey: ['technicians'] });
-    }
-
-    // 1. Handle URL parameters on load (e.g. from notification click)
-    const ticketId = params.get('ticket');
-    const createTicket = params.get('createTicket'); // New param
-    const openMessages = params.get('openMessages');
-    const openAudio = params.get('openAudioMessage');
-    
-    if (ticketId) {
-      console.log('[App] Opening ticket from URL:', ticketId);
-      openTicketDetails(Number(ticketId));
-      window.history.replaceState({}, '', '/');
-    } 
-    else if (createTicket) {
-        console.log('[App] Opening create ticket from URL');
-        
-        // 1. RESET ALL STATES TO DEFAULTS (Fix for Stale State Bug)
-        setInitialTicketDescription('');
-        setInitialImageUrl('');
-        setInitialTicketTitle('');
-        setInitialTicketPriority('medium');
-        setInitialTicketMachineId(null);
-        setInitialTicketMachineName('');
-        setInitialAssignedToName('');
-        setInitialAssignedToId(null);
-        setInitialScheduledDate('');
-
-        // 2. Open Modal
-        setIsCreateTicketOpen(true);
-
-        const description = params.get('description');
-        const imageUrl = params.get('imageUrl');
-        const title = params.get('title');
-        const priority = params.get('priority');
-        const machineId = params.get('machineId');
-        const machineName = params.get('machineName');
-        const assignedToName = params.get('assignedToName');
-        const assignedToId = params.get('assignedToId');
-        const scheduledDate = params.get('scheduledDate');
-        
-        if (description) setInitialTicketDescription(description);
-        if (imageUrl) setInitialImageUrl(imageUrl);
-        if (title) setInitialTicketTitle(title);
-        if (priority) setInitialTicketPriority(priority as TicketPriority);
-        if (machineId) {
-            console.log("🎯 [App] Setting Machine ID:", Number(machineId));
-            setInitialTicketMachineId(Number(machineId));
-        }
-        if (machineName) setInitialTicketMachineName(machineName);
-
-        if (assignedToName) setInitialAssignedToName(assignedToName);
-        if (assignedToId) setInitialAssignedToId(Number(assignedToId));
-        if (scheduledDate) setInitialScheduledDate(scheduledDate);
-        
-        // On nettoie l'URL proprement
-        setTimeout(() => {
-            window.history.replaceState({}, '', '/');
-        }, 500);
-    }
-    else if (openMessages) {
-       console.log('[App] Redirecting to Messenger:', openMessages);
-       // REDIRECT TO MESSENGER
-       window.location.href = `/messenger?conversationId=direct_${openMessages}`;
-    }
-    else if (openAudio) {
-        // REDIRECT TO MESSENGER
-        console.log('[App] Redirecting audio to Messenger:', openAudio);
-        const senderId = params.get('sender');
-        if (senderId) {
-             window.location.href = `/messenger?conversationId=direct_${senderId}`;
-        } else {
-             window.location.href = '/messenger';
-        }
-    }
-
-    // 2. Listen for messages from Service Worker (when app is already open)
-    const handleSWMessage = (event: MessageEvent) => {
-        if (event.data && event.data.type === 'NOTIFICATION_CLICK') {
-            console.log('[App] Received SW message:', event.data);
-            const { action, data } = event.data;
-            
-            if ((action === 'view_ticket' || action === 'view') && (data.ticketId || data.ticket_id)) {
-                openTicketDetails(Number(data.ticketId || data.ticket_id));
-            }
-            else if (action === 'new_private_message' && data.senderId) {
-                // REDIRECT TO MESSENGER
-                window.location.href = `/messenger?conversationId=direct_${data.senderId}`;
-            }
-            else if (action === 'new_audio_message' && data.senderId) {
-                // REDIRECT TO MESSENGER
-                window.location.href = `/messenger?conversationId=direct_${data.senderId}`;
-            }
-        }
-    };
-
-    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
-    
-    // Expose Data Import to Legacy JS
-    (window as any).openDataImport = (type: 'users' | 'machines') => {
+    (window as any).openUserManagement = () => setIsUserModalOpen(true);
+    (window as any).openMachineManagement = () => setIsMachineModalOpen(true);
+    (window as any).openDataImport = (type: 'users'|'machines') => {
         setImportTab(type);
         setIsImportModalOpen(true);
     };
-
-    // Expose Machine Management to Legacy Header
-    (window as any).openMachineManagement = () => {
-        setIsMachineModalOpen(true);
-    };
-
-    // Expose User Management to Legacy Header
-    (window as any).openUserManagement = () => {
-        setIsUserModalOpen(true);
-    };
-
-    return () => navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
   }, []);
+
+  if (!realUser && !getAuthToken()) {
+      // If not logged in, MainApp usually handles login form or we can redirect
+      // For now let MainApp handle it or show loading
+      // return <div className="flex h-screen items-center justify-center">Veuillez vous connecter...</div>;
+  }
 
   return (
     <>
-        {/* ADMIN SETTINGS FAB - Top Right (Admin Only) */}
-        {currentUser.role === 'admin' && (
-            <div className="fixed top-4 right-4 z-[9999] flex gap-2">
-                <button
-                    onClick={() => setIsImportModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-all border border-emerald-500 hover:scale-105 active:scale-95"
-                    title="Import CSV (Utilisateurs & Machines)"
-                >
-                    <i className="fas fa-file-csv"></i>
-                    <span className="font-bold text-sm">Import</span>
-                </button>
-            </div>
-        )}
+        {/* MAIN DASHBOARD (LEGACY BRIDGE) */}
+        <LegacyMainAppBridge 
+            tickets={tickets}
+            machines={machines}
+            currentUser={currentUser}
+            onRefresh={refetchTickets}
+            onTicketCreated={refetchTickets}
+            moveTicket={handleMoveTicket}
+            deleteTicket={handleDeleteTicket}
+            onLogout={() => {
+                localStorage.removeItem('auth_token');
+                window.location.reload();
+            }}
+            // Legacy props
+            headerTitle="Gestion de la maintenance"
+            headerSubtitle="Système de Maintenance Universel"
+            unreadMessagesCount={0}
+            onRefreshMessages={() => {}}
+            showCreateModal={false} 
+            setShowCreateModal={() => {}} 
+        />
 
-        {/* CONTROL PANEL & WIDGETS (Bottom Left) */}
-        <div className="fixed bottom-4 left-4 z-[9998] group font-sans">
-            {/* DEBUG PANEL - DEV ONLY */}
-            {import.meta.env.DEV && (
-            <div className="bg-red-100 border-2 border-red-500 p-2 rounded mb-2 text-xs text-red-800 font-bold opacity-50 hover:opacity-100 transition-opacity">
-                <p>DEBUG MODE v2.18.1 (Fix Micro)</p>
-                <p>URL: {window.location.search || '(empty)'}</p>
-                <p>Modal Open: {isCreateTicketOpen ? 'YES' : 'NO'}</p>
-                <button 
-                    className="mt-1 bg-red-600 text-white px-2 py-1 rounded w-full hover:bg-red-700"
-                    onClick={() => {
-                        console.log("Force open clicked");
-                        setIsCreateTicketOpen(true);
-                    }}
-                >
-                    FORCE OPEN MODAL
-                </button>
-            </div>
-            )}
-
-            <div className="bg-white/95 backdrop-blur-md border border-blue-200 p-4 rounded-xl shadow-2xl transition-all hover:shadow-blue-500/20 max-w-sm max-h-[90vh] overflow-y-auto">
-                <div className="mb-3">
-                    <RPCStatus />
-                </div>
-                <div className="flex items-center gap-3 mb-3 border-b border-slate-100 pb-3">
-                    <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-                    <div>
-                        <h3 className="font-bold text-slate-800 text-sm">Modern Frontend Active</h3>
-                        <p className="text-xs text-slate-500">Phase 6: Ticket Workflow</p>
-                    </div>
-                </div>
-                
-                {/* User Management - Admin Only */}
-                {currentUser.role === 'admin' && (
-                <div className="mb-2 space-y-2">
-                    <button 
-                        onClick={() => setIsUserModalOpen(true)}
-                        className="w-full py-2 bg-white border border-blue-200 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-50 transition-all"
-                    >
-                        <i className="fas fa-users-cog mr-2"></i>
-                        User Manager
-                    </button>
-                </div>
-                )}
-
-                {/* Messaging (REDIRECT TO NEW APP) */}
-                <div className="mb-2">
-                    <button 
-                        onClick={() => window.location.href = '/messenger'}
-                        className="w-full py-2 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-all"
-                    >
-                        <i className="fas fa-comments mr-2"></i>
-                        Messagerie Connect
-                    </button>
-                </div>
-
-                {/* Ticket Workflow */}
-                <div className="mb-4 space-y-2 pt-2 border-t border-slate-100">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Maintenance Tickets</p>
-                    <button 
-                        onClick={() => setIsCreateTicketOpen(true)}
-                        className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-bold shadow-lg hover:shadow-orange-500/30 transition-all transform hover:-translate-y-0.5"
-                    >
-                        <i className="fas fa-plus-circle mr-2"></i>
-                        Créer un Ticket
-                    </button>
-                    
-                    <div className="flex gap-2">
-                         <button 
-                            onClick={() => openTicketDetails(1)}
-                            className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200"
-                        >
-                            Ticket #1
-                        </button>
-                        <button 
-                            onClick={() => openTicketDetails(2)}
-                            className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200"
-                        >
-                            Ticket #2
-                        </button>
-                    </div>
-                </div>
-
-                {/* Role Dropdown Test - Dev Only */}
-                {import.meta.env.DEV && (
-                <div className="mb-4 pt-2 border-t border-slate-100">
-                    <RoleDropdown 
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        currentUserRole="admin"
-                        variant="blue"
-                    />
-                </div>
-                )}
-            </div>
-        </div>
-
-        {/* VOICE TICKET FAB (Magic Button) - Positioned Independently */}
-        <VoiceTicketFab onTicketDetected={handleVoiceTicketDetected} />
-
-        {/* Render Modals */}
-        {/* MESSAGING MODAL REMOVED - REPLACED BY /messenger APP */}
-
+        {/* MODERN REACT MODALS (Overlay) */}
         <UserManagementModal 
             isOpen={isUserModalOpen}
             onClose={() => setIsUserModalOpen(false)}
             currentUser={currentUser}
-            onOpenMessage={(user) => {
-                // Redirect to messenger with target user
-                window.location.href = `/messenger?conversationId=direct_${user.id}`;
-            }}
-        />
-
-        <DataImportModal 
-            isOpen={isImportModalOpen}
-            onClose={() => setIsImportModalOpen(false)}
-            initialTab={importTab}
         />
 
         <MachineManagementModal
@@ -376,58 +198,10 @@ const AppContent = () => {
             currentUser={currentUser}
         />
 
-        <CreateTicketModal
-            isOpen={isCreateTicketOpen}
-            onClose={() => setIsCreateTicketOpen(false)}
-            currentUserRole={currentUser.role as any}
-            initialDescription={initialTicketDescription}
-            initialImageUrl={initialImageUrl}
-            initialTitle={initialTicketTitle}
-            initialPriority={initialTicketPriority}
-            initialMachineId={initialTicketMachineId}
-            initialMachineName={initialTicketMachineName}
-            initialAssignedToName={initialAssignedToName}
-            initialAssignedToId={initialAssignedToId}
-            initialScheduledDate={initialScheduledDate}
-        />
-
-        <TicketDetailsModal
-            isOpen={isTicketDetailsOpen}
-            onClose={() => setIsTicketDetailsOpen(false)}
-            ticketId={selectedTicketId}
-            currentUserRole={currentUser.role as any}
-            currentUserId={currentUser.id}
-        />
-
-        <NotificationModal 
-            isOpen={!!notification?.isOpen} 
-            onClose={() => setNotification(null)}
-            type={notification?.type || 'info'}
-            message={notification?.message || ''}
-        />
-        
-        <ConfirmModal
-            isOpen={!!confirm?.isOpen}
-            onClose={() => setConfirm(null)}
-            onConfirm={() => {
-                setConfirm(null);
-                setTimeout(() => setNotification({isOpen: true, type: 'success', message: 'Action confirmed!'}), 300);
-            }}
-            title="Confirmation Needed"
-            message={confirm?.message || ''}
-            isDestructive={true}
-        />
-
-        <PromptModal
-            isOpen={!!prompt?.isOpen}
-            onClose={() => setPrompt(null)}
-            onConfirm={(val) => {
-                setPrompt(null);
-                setTimeout(() => setNotification({isOpen: true, type: 'info', message: `Input: ${val}`}), 300);
-            }}
-            title="Input Required"
-            message={prompt?.message || ''}
-            placeholder="Type something..."
+        <DataImportModal 
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            initialTab={importTab}
         />
     </>
   )

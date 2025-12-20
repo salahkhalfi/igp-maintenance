@@ -1,4 +1,8 @@
-const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
+const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
+    // Sécurité : Garantir que tickets est un tableau
+    const safeTickets = Array.isArray(tickets) ? tickets : [];
+    const safeMachines = Array.isArray(machines) ? machines : [];
+
     // États globaux de l'interface
     const [selectedTicketId, setSelectedTicketId] = React.useState(null);
     const [showDetailsModal, setShowDetailsModal] = React.useState(false);
@@ -140,7 +144,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         return () => window.removeEventListener('scroll', handleScroll);
     }, [showArchived]);
 
-    // Gestion URL (Deep linking)
+        // --- URL (Deep linking) ---
     React.useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const ticketIdFromUrl = urlParams.get('ticket');
@@ -152,8 +156,8 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             if (!isNaN(ticketId)) {
                 setSelectedTicketId(ticketId);
                 setShowDetailsModal(true);
-                if (tickets.length > 0) {
-                    const ticket = tickets.find(t => t.id === ticketId);
+                if (safeTickets.length > 0) {
+                    const ticket = safeTickets.find(t => t.id === ticketId);
                     if (ticket && autoAction === 'acknowledge' && ticket.status === 'received') {
                         setTimeout(() => moveTicketToStatus(ticket, 'in_progress'), 1500);
                     }
@@ -164,7 +168,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
             const senderId = parseInt(openMessagesSenderId, 10);
             window.location.href = `/messenger?conversationId=direct_${senderId}`;
         }
-    }, [tickets]);
+    }, [safeTickets]);
 
     // Listener for 'open-planning' event
     React.useEffect(() => {
@@ -188,7 +192,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
                     const ticketId = parseInt(data.ticketId, 10);
                     setSelectedTicketId(ticketId);
                     setShowDetailsModal(true);
-                    const ticket = tickets.find(t => t.id === ticketId);
+                    const ticket = safeTickets.find(t => t.id === ticketId);
                     if (ticket && data.auto_action === 'acknowledge' && ticket.status === 'received') {
                         setTimeout(() => moveTicketToStatus(ticket, 'in_progress'), 1500);
                     } else if (!ticket && onRefresh) {
@@ -202,12 +206,15 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         };
         navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
         return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
-    }, [tickets]);
+    }, [safeTickets]);
 
     // --- FONCTIONS MÉTIER ---
 
     const getActiveTicketsCount = () => {
-        let activeTickets = tickets.filter(t => t.status !== 'completed' && t.status !== 'archived' && t.status !== 'cancelled');
+        // Double check just in case
+        if (!safeTickets || !safeTickets.filter) return 0;
+        
+        let activeTickets = safeTickets.filter(t => t.status !== 'completed' && t.status !== 'archived' && t.status !== 'cancelled');
         if (currentUser && currentUser.role === 'operator') {
             activeTickets = activeTickets.filter(t => t.reported_by === currentUser.id);
         }
@@ -393,7 +400,7 @@ const MainApp = ({ tickets, machines, currentUser, onLogout, onRefresh, showCrea
         // --- KANBAN BOARD ---
         React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
             React.createElement(KanbanBoard, {
-                tickets: tickets,
+                tickets: safeTickets,
                 currentUser: currentUser,
                 columns: columns,
                 showArchived: showArchived,

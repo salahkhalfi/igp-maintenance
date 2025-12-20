@@ -48,7 +48,9 @@ const UserManagementModal: React.FC<UserManagementModalProps> = ({ isOpen, onClo
             const res = await client.api.users.team.$get();
             if (!res.ok) throw new Error('Failed to fetch users');
             const data = await res.json();
-            return data.users;
+            // ROBUSTESSE : Extraction explicite
+            // L'API users.team renvoie { users: [...] }
+            return Array.isArray(data.users) ? data.users : [];
         },
         enabled: isOpen
     });
