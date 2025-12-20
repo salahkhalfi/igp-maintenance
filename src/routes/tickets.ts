@@ -162,6 +162,30 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
       return c.json({ error: 'Machine non trouvée' }, 404);
     }
 
+    // 🛡️ PROTECTION INDUSTRIELLE : Anti-Doublon (Debounce Backend)
+    // Vérifie si un ticket identique a été créé par cet utilisateur pour cette machine dans les 60 dernières secondes
+    try {
+      const recentDuplicate = await db
+        .select({ id: tickets.id, ticket_id: tickets.ticket_id })
+        .from(tickets)
+        .where(and(
+          eq(tickets.reported_by, user.userId),
+          eq(tickets.machine_id, machine_id),
+          eq(tickets.title, title),
+          sql`${tickets.created_at} > datetime('now', '-60 seconds')`
+        ))
+        .get();
+
+      if (recentDuplicate) {
+        console.log(`🛡️ Doublon évité : Ticket #${recentDuplicate.ticket_id} existe déjà (créé < 60s).`);
+        // On retourne le ticket existant comme si c'était le nouveau (Idempotence)
+        const fullDuplicate = await db.select().from(tickets).where(eq(tickets.id, recentDuplicate.id)).get();
+        return c.json({ ticket: fullDuplicate }, 201); // 201 Created (virtuellement)
+      }
+    } catch (debounceError) {
+      console.error('Erreur lors de la vérification anti-doublon (ignoré):', debounceError);
+    }
+
     const timestamp = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     // Retry logic pour l'ID unique
