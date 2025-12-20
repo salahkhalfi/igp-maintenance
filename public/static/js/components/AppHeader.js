@@ -109,6 +109,10 @@ const AppHeader = ({
         // Initial check
         updatePushState();
 
+        // RETRY LOGIC: Check again after SW wakes up (Race condition fix)
+        setTimeout(updatePushState, 1000);
+        setTimeout(updatePushState, 3000);
+
         window.addEventListener('push-notification-changed', updatePushState);
         return () => window.removeEventListener('push-notification-changed', updatePushState);
     }, []);
