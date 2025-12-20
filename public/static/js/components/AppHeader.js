@@ -253,6 +253,10 @@ const AppHeader = ({
         }
     };
 
+    const isSupervisor = currentUser?.role === 'supervisor';
+    const isAdmin = currentUser?.role === 'admin';
+    const canViewStats = isAdmin || isSupervisor;
+
     return React.createElement('header', { className: 'sticky top-0 z-50 bg-transparent transition-all duration-300' },
         
         // --- ROW 1: IDENTITY & NAVIGATION (White Background) ---
@@ -307,7 +311,7 @@ const AppHeader = ({
                         }, React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell' : 'fa-bell-slash') })),
 
                         // Apps Button (Desktop)
-                        React.createElement('button', {
+                        isAdmin && React.createElement('button', {
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
                             onClick: onOpenPushDevices, title: 'Gérer les appareils connectés'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
@@ -427,13 +431,13 @@ const AppHeader = ({
                             title: 'Voir uniquement les tickets en retard'
                         }, React.createElement('i', { className: 'fas fa-clock text-orange-500' }), 'Retard'),
                         
-                        React.createElement('button', {
+                        canViewStats && React.createElement('button', {
                             onClick: onOpenPerformance,
                             className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors',
                             title: 'Afficher les statistiques de performance'
                         }, React.createElement('i', { className: 'fas fa-chart-line text-blue-500' }), 'Performance'),
 
-                        React.createElement('button', {
+                        isAdmin && React.createElement('button', {
                             onClick: onOpenManageColumns,
                             className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors',
                             title: 'Configurer l\'affichage des colonnes Kanban'
@@ -611,7 +615,7 @@ const AppHeader = ({
                         className: 'px-3 py-3 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-200 shadow-sm flex items-center mt-2 hover:bg-orange-100'
                     }, React.createElement('i', { className: 'fas fa-clock mr-3 text-orange-600 text-lg' }), 'Tickets en Retard'),
                     
-                    React.createElement('button', {
+                    canViewStats && React.createElement('button', {
                         onClick: onOpenPerformance,
                         className: 'px-3 py-3 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-200 shadow-sm flex items-center mt-2 hover:bg-blue-100'
                     }, React.createElement('i', { className: 'fas fa-chart-line mr-3 text-blue-600 text-lg' }), 'Statistiques Performance'),
@@ -629,7 +633,7 @@ const AppHeader = ({
                         )
                     ),
 
-                    React.createElement('button', {
+                    isAdmin && React.createElement('button', {
                         onClick: onOpenPushDevices,
                         className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50'
                     }, React.createElement('i', { className: 'fas fa-mobile-alt mr-3 text-purple-500 text-lg' }), 'Gérer mes appareils'),
@@ -650,7 +654,7 @@ const AppHeader = ({
                     
                     safeHasPermission('users.read') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-users mr-3 text-indigo-600 text-lg' }), currentUser?.role === 'technician' ? 'Mon Équipe' : 'Gestion Utilisateurs'),
                     safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-cogs mr-3 text-teal-500 text-lg' }), 'Gestion Machines'),
-                    safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-columns mr-3 text-gray-500 text-lg' }), 'Colonnes Kanban'),
+                    isAdmin && safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-columns mr-3 text-gray-500 text-lg' }), 'Colonnes Kanban'),
                     safeHasPermission('planning.read') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-3 text-blue-500 text-lg' }), 'Planning Production'),
                     safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-cog mr-3 text-gray-600 text-lg' }), 'Paramètres Système'),
                     safeHasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-shield-alt mr-3 text-blue-600 text-lg' }), 'Gestion Rôles'),
