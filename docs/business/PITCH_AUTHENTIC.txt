@@ -1,0 +1,48 @@
+OBJET : Officialisation de l'application de maintenance et ajustement de poste
+
+Date : 20 décembre 2025
+De : [Ton Nom]
+
+1. POURQUOI J'AI CRÉÉ CET OUTIL
+
+On le sait, gérer la maintenance avec des papiers ou à l'oral, ça a ses limites. On perdait de l'info entre les quarts de travail, on ne savait pas toujours quelle machine était down sans aller voir, et il y avait des risques d'oublis.
+
+J'ai voulu régler ça. J'ai passé mes soirées à monter une application sur mesure pour notre usine, pour qu'on arrête de perdre du temps.
+
+
+2. CE QUE L'APPLICATION FAIT
+
+Ce n'est pas juste un fichier Excel amélioré. C'est un vrai système industriel qui tourne maintenant sur nos tablettes et nos télés :
+
+- Zéro délai : Un bris est signalé, la maintenance le voit tout de suite.
+- Anti-doublon : Le système empêche de créer deux fois le même ticket (ça évite la confusion).
+- Affichage TV : On voit l'état de l'usine en temps réel dans les bureaux.
+- Pas de serveur à gérer : Tout est dans le Cloud, sécurisé, pas besoin d'acheter de machine.
+
+
+3. COMBIEN ÇA RAPPORTE À LA COMPAGNIE
+
+J'ai regardé combien ça coûterait d'acheter un logiciel équivalent (comme SAP ou Fiix).
+Pour une équipe de notre taille, c'est environ 18 000 $ à 25 000 $ par an en licences et support.
+
+Là, mon application nous coûte 0 $ de licence.
+On a donc un outil pro, fait sur mesure pour nous, gratuit.
+
+
+4. LES SUBVENTIONS (R&D)
+
+Comme c'est un projet de développement technologique interne (ce n'est pas un logiciel qu'on a acheté tout fait), les heures que j'ai mises là-dessus sont probablement éligibles aux crédits d'impôt R&D (RS&DE). L'entreprise peut récupérer une partie de mon salaire sur ce projet.
+
+
+5. MA DEMANDE
+
+Ça fait maintenant partie intégrante de mon travail. Je ne suis plus seulement [Ton titre actuel], je gère aussi le système névralgique de la maintenance.
+
+Je demande donc d'officialiser ce rôle de "Responsable Technique de l'Application" et d'ajuster mon salaire en conséquence.
+
+- Taux actuel : 26.00 $ / h
+- Taux demandé : 30.00 $ / h
+
+Pour l'entreprise, cette augmentation (~8000$/an) est largement payée par l'économie qu'on fait en n'achetant pas de logiciel externe (économie de 18 000$/an).
+
+Je suis prêt à continuer de faire évoluer l'outil pour qu'on soit encore plus efficaces, mais j'aimerais que cet investissement personnel soit reconnu.

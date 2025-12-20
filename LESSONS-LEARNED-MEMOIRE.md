@@ -1,13 +1,11 @@
-# MÉMOIRE TECHNIQUE DU PROJET (V5.1-BETA)
-*Dernière mise à jour : 18 Décembre 2025*
+# MÉMOIRE TECHNIQUE DU PROJET (V5.2-STABLE)
+*Dernière mise à jour : 20 Décembre 2025*
 
-Ce document résume les décisions architecturales critiques prises pour stabiliser l'application.
-**TOUTE IA TRAVAILLANT SUR CE PROJET DOIT LIRE CE DOCUMENT EN PRIORITÉ.**
+## ⚠️ DOCUMENT D'HISTORIQUE UNIQUEMENT
+**POUR LES RÈGLES ET PROCÉDURES, CONSULTER IMPÉRATIVEMENT `BIBLE.md` À LA RACINE.**
+**CE FICHIER NE CONTIENT QUE DES DÉTAILS D'IMPLÉMENTATION SPÉCIFIQUES.**
 
-## 0. **RÈGLE ABSOLUE : LA BIBLE DU PROJET**
-- Le fichier `BIBLE.md` (à la racine) contient la Constitution du projet (Version 4.1).
-- Il définit les règles non-négociables : Zéro Dette Technique, Stratégie IA Hybride, Architecture Autonome.
-- **ACTION OBLIGATOIRE :** Lire `BIBLE.md` avant toute modification de code ou prise de décision architecturale.
+---
 
 ## 1. Architecture "Soft Delete" (Protection des Données)
 - **Règle :** Ne jamais utiliser `DELETE FROM` sur les tables `users`, `tickets`, ou `machines`.

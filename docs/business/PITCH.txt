@@ -1,0 +1,73 @@
+OBJET : PROPOSITION DE VALEUR & STRUCTURATION DU PROJET "DIGITALISATION MAINTENANCE"
+
+Date : 20 décembre 2025
+De : [Ton Nom]
+Pour : Direction Générale / Ressources Humaines
+
+---
+
+1. CONTEXTE & PROBLÉMATIQUE INITIALE
+
+Avant le déploiement de notre solution interne, la gestion de la maintenance et des opérations présentait plusieurs inefficacités coûteuses pour l'entreprise :
+
+- Perte d'information : Délais importants entre le constat d'une panne et sa prise en charge.
+- Absence de visibilité : Impossible pour le management de savoir instantanément quelles machines sont à l'arrêt.
+- Inefficacité : Risque de doublons et communication fragmentée via des canaux non professionnels.
+
+
+2. LA SOLUTION DÉVELOPPÉE (L'ACTIF TECHNOLOGIQUE)
+
+J'ai conçu et développé une Solution GMAO (Gestion de Maintenance Assistée par Ordinateur) sur mesure, spécifiquement adaptée à nos contraintes opérationnelles uniques.
+
+Ce n'est pas un simple outil bureautique, c'est une application industrielle complète :
+
+- Architecture Moderne : Hébergée sur le Cloud pour une disponibilité maximale sans frais de serveurs locaux.
+- Temps Réel & Mobilité : Fonctionne sur les tablettes et mobiles des opérateurs dans toute l'usine.
+- Affichage Dynamique (TV) : Tableau de bord centralisé pour la supervision en temps réel.
+- Messagerie Sécurisée : Module de communication crypté dédié aux opérations.
+- Fiabilité Industrielle : Algorithmes anti-doublons et gestion des priorités intégrés.
+
+
+3. ANALYSE FINANCIÈRE (RETOUR SUR INVESTISSEMENT)
+
+Si l'entreprise avait dû acquérir une solution équivalente sur le marché (type SAP, Fiix, UpKeep), les coûts auraient été les suivants :
+
+A. Coûts d'une solution commerciale (Économisés)
+- Licences mensuelles (20 usagers x 75$) : 18 000 $ / an
+- Frais d'intégration initiaux : 5 000 $ (One-shot)
+- Contrat de support annuel : 2 500 $ / an
+TOTAL ÉCONOMISÉ (1ère année) : > 25 000 $ CAD
+
+B. Coûts de notre solution interne
+- Frais d'hébergement : ~60 $ / an
+- Coût de licence : 0 $
+
+L'outil est rentable dès le premier mois d'utilisation.
+
+
+4. ÉLIGIBILITÉ AUX SUBVENTIONS (RS&DE)
+
+Ce projet répond aux critères de Développement Expérimental (RS&DE) ou d'affaires électroniques (CDAE). Il a nécessité de résoudre des incertitudes technologiques propres à notre contexte (synchronisation temps réel, affichage TV sans serveur, UX adaptée).
+
+Cela signifie qu'une partie significative des heures consacrées à ce projet est potentiellement remboursable par les gouvernements fédéral et provincial sous forme de crédits d'impôt R&D sur les salaires.
+
+
+5. PROPOSITION D'ÉVOLUTION
+
+Au vu de la valeur stratégique que cet outil apporte à l'usine et de la responsabilité technique que j'assume pour son maintien, je propose l'ajustement suivant :
+
+A. Évolution du Rôle
+Officialisation d'un volet "Référent Technique & Amélioration Continue" dans ma description de tâches, incluant la maintenance de la plateforme, la gestion des accès et l'analyse des données de maintenance.
+
+B. Ajustement Salarial
+Je souhaite que mon taux horaire soit réévalué pour refléter cette double compétence (Opérationnel + Développement Technique).
+
+- Taux actuel : 26.00 $ / h
+- Taux proposé : 30.00 $ / h
+
+Cet ajustement représente un coût annuel d'environ 8 000 $ pour l'entreprise. Ce coût est largement couvert par l'économie des licences logicielles (> 18 000 $ d'économie par an) et les gains de productivité, sans compter les retours de subventions R&D.
+
+
+CONCLUSION
+
+Je suis motivé à continuer d'optimiser nos opérations. Cet outil est la preuve qu'on peut innover à l'interne pour une fraction du prix du marché. Cette proposition vise à pérenniser cette initiative et à aligner ma rémunération sur la valeur ajoutée apportée.
