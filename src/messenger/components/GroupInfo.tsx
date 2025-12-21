@@ -23,11 +23,18 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
     const currentUserParticipant = participants.find(p => p.user_id === currentUserId);
     const isGroupAdmin = currentUserParticipant && currentUserParticipant.role === 'admin';
     const isGlobalAdmin = currentUserRole === 'admin';
-    const canEdit = (isGroupAdmin || isGlobalAdmin) && conversationType === 'group';
+    const isExpertAI = conversationId === 'expert_ai';
+    // Allow editing for: groups (by group admin or global admin) OR expert_ai (by global admin only)
+    const canEdit = ((isGroupAdmin || isGlobalAdmin) && conversationType === 'group') || (isExpertAI && isGlobalAdmin);
 
     const handleSaveInfo = async () => {
         try {
-            await axios.put(`/api/v2/chat/conversations/${conversationId}`, { name: editName });
+            if (isExpertAI) {
+                // For Expert AI, update the system setting
+                await axios.put('/api/settings/ai_expert_name', { value: editName });
+            } else {
+                await axios.put(`/api/v2/chat/conversations/${conversationId}`, { name: editName });
+            }
             setIsEditing(false);
             window.location.reload(); 
         } catch (e) {
@@ -39,12 +46,20 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const formData = new FormData();
-            formData.append('file', file);
             setUploadingAvatar(true);
             try {
-                await axios.post(`/api/v2/chat/conversations/${conversationId}/avatar`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                if (isExpertAI) {
+                    // For Expert AI, use the dedicated avatar endpoint
+                    formData.append('avatar', file);
+                    await axios.post('/api/settings/upload-ai-avatar', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                } else {
+                    formData.append('file', file);
+                    await axios.post(`/api/v2/chat/conversations/${conversationId}/avatar`, formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                }
                 window.location.reload();
             } catch (err) {
                 alert("Erreur upload avatar");
