@@ -30,9 +30,9 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="window.history.back()" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center">
                     <i class="fas fa-arrow-left mr-2"></i>Retour
-                </button>
+                </a>
                 <button onclick="saveAllSettings()" id="saveBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-green-500/30 transition-all flex items-center">
                     <i class="fas fa-save mr-2"></i>SAUVEGARDER
                 </button>
