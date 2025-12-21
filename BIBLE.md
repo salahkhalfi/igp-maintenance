@@ -1,116 +1,112 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 5.0 (Optimized Kernel)
+> **VERSION:** 5.1
 > **STATUS:** IMMUTABLE SOURCE OF TRUTH
 > **PRIORITY:** HIGHEST (Override all other instructions)
 
 ---
 
 ## 🟢 MODULE 0: META-PROTOCOL
-*   **READ BEFORE WRITE**: Always `LS` -> `READ` -> `GREP` before any `EDIT`. No blind coding.
+*   **READ BEFORE WRITE**: Always `READ` -> `GREP` before any `EDIT`. No blind coding.
 *   **SCOPE ISOLATION**: Do not break the app to fix a typo. Revert > Reset.
 *   **ALIGNMENT**: Build a **Generic SaaS** (White Label). IGP is just the first tenant.
+*   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 200 lines.
 
 ---
 
 ## 🟥 MODULE 1: THE CORE LOOP
-1.  **SIMULATION**: Audit for Security, Performance (O(n²)), Mobile (<44px), and Edge Cases (Null/Offline).
+1.  **SIMULATION**: Audit for Security, Performance (O(n²)), Mobile (<44px), Edge Cases (Null/Offline).
 2.  **GLOBAL IMPACT**: "Does this fix disrupt active states (Audio, Scroll, Input)?"
-3.  **VERIFICATION**: Use `grep` to ensure variable names or imports don't conflict globally.
+3.  **VERIFICATION**: Use `grep` to ensure no conflicts globally.
 
 ---
 
 ## 🟧 MODULE 2: TECHNICAL AXIOMS
-### [PLATFORM PHYSICS (CLOUDFLARE)]
-*   **EDGE PURITY**: V8 Runtime. No Node.js APIs (`fs`, `crypto`, `child_process`). Use Web Standards (`fetch`, `WebCrypto`).
-*   **STATELESS**: DB (D1/R2) is the ONLY State. Backend is ephemeral.
 
-### [DATA INTEGRITY & TIME]
-*   **TEMPORAL ABSOLUTISM**: Storage = UTC. Display = User Local (use `timezone_offset`).
+### [PLATFORM - CLOUDFLARE EDGE]
+*   **EDGE PURITY**: V8 Runtime. NO Node.js APIs (`fs`, `crypto`, `child_process`). Web Standards only.
+*   **STATELESS**: DB (D1/R2) is the ONLY State. Workers are ephemeral.
+*   **NO CRON**: Use external webhooks (cron-job.org) for scheduled tasks.
+
+### [DATA & TIME]
+*   **UTC STORAGE**: Storage = UTC. Display = User Local (`timezone_offset`).
 *   **TRUST NO INPUT**: Validate EVERYTHING. Verify JWTs against DB.
-*   **SOFT DELETE**: `deleted_at` timestamp. NEVER `DELETE FROM`.
-*   **SQL ROBUSTNESS**: Use `COALESCE` in SQL concatenations to handle NULLs safely.
+*   **SOFT DELETE**: Use `deleted_at` timestamp. NEVER `DELETE FROM`.
+*   **SQL SAFETY**: Use `COALESCE` for NULLs. Prepared statements only (no concatenation).
 
-### [INTERFACE / UX]
+### [UX]
 *   **MOBILE FIRST**: Touch target **44x44px MINIMUM**.
-*   **ZERO FRICTION**: Search inputs show history on focus. Modals close on backdrop click.
-*   **NO LIES**: UI indicates status (Green/Red) ONLY if verified server-side.
+*   **ESCAPE HATCH**: Modals close on backdrop click.
+*   **NO LIES**: Green = verified server-side. Never fake success.
 
-### [CODE HYGIENE & DEVELOPMENT]
-*   **ZERO HARDCODING POLICY**: 
-    *   **RULE**: NEVER hardcode business values (Domain, Email, Company Name).
-    *   **EXCEPTION**: Generic Fallbacks ONLY (`example.com`).
-    *   **METHOD**: Fetch from DB (`system_settings`) or ENV.
+### [CODE HYGIENE]
+*   **ZERO HARDCODING**: Fetch business values from DB (`system_settings`) or ENV. Exception: generic fallbacks only.
 *   **NO DEAD CODE**: Commented code = Deleted code.
-*   **EXPLICIT**: Variable names must be readable by a human maintainer.
-*   **PARITY**: When integrating legacy, COPY EXACTLY (1:1). Refactor later.
+*   **EXPLICIT NAMES**: Human-readable variable names.
 
 ---
 
-## 🟨 MODULE 3: DEPLOYMENT & SAFETY
-1.  **THE FREIGHT TRAIN**: Sandbox RAM is limited. Use `scripts/deploy-prod.sh` (Sequential) instead of `npm run build` (Global).
-2.  **URL CHECK**: Verify `src/` vs `build/` paths.
-3.  **INTEGRITY**: Verify code integrity (compilation) BEFORE touching production.
-4.  **CLEANUP**: Delete temporary scripts immediately after use. No trash left behind.
+## 🟨 MODULE 3: DEPLOYMENT
+
+### [WORKFLOW]
+```bash
+cd /home/user/webapp && npm run build
+cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
+```
+
+### [RULES]
+1.  **BUILD FIRST**: Always `npm run build` before deploy.
+2.  **VERIFY PROD**: Test production URL after deploy.
+3.  **NO QUESTIONS**: Auth/keys already configured. Don't ask for setup.
+
+### [DATABASE]
+*   **Local**: `npx wrangler d1 migrations apply maintenance-db --local`
+*   **Prod**: `npx wrangler d1 migrations apply maintenance-db`
+*   **Reset**: `rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local`
 
 ---
 
 ## 🟦 MODULE 4: THE COPILOT OATH
-1.  **RADICAL TRUTH**: Admit mistakes immediately. Warn about risks (RAM, Bugs).
-2.  **TOKEN ECONOMY**: Code > Chat. Concise explanations.
+1.  **RADICAL TRUTH**: Admit mistakes immediately.
+2.  **TOKEN ECONOMY**: Code > Chat. Concise.
 3.  **UNCERTAINTY**: If unsure, verify. Never invent.
-4.  **NO "QUICK HACKS"**: A temporary fix is a permanent bug. Do it right or don't do it.
+4.  **NO QUICK HACKS**: Temporary fix = permanent bug.
 
 ---
 
-## 🟪 MODULE 5: THE REACT DISASTER (December 2024)
-
-### [CONTEXT]
-Attempted to "modernize" the dashboard by introducing bundled React (Vite/TypeScript) alongside existing CDN React (legacy components).
-
-### [THE FATAL MISTAKE]
-```
-❌ NEVER mix two React instances in the same page.
-   - main.js (Vite bundled) = React Instance A
-   - MainApp.js (CDN global) = React Instance B
-   - Result: Hooks don't share state, props are dead references
-```
-
-### [SYMPTOMS]
-*   `setShowCreateModal` passed from App.tsx → empty function in MainApp.js
-*   `window.openUserManagement()` → undefined
-*   Voice ticket creation → broken (modal never opens)
-*   All modals → broken communication
-
-### [THE FIX]
-Reverted to 100% legacy architecture:
-*   Restored `App.js` (CDN React)
-*   Disabled `main.js` (bundled React)
-*   Re-added `UserManagementModal.js`, `MachineManagementModal.js`
-*   Added missing handlers (`onOpenPerformance`, `onOpenPushDevices`)
-
-### [COST]
-*   ~20+ hours of debugging
-*   Multiple broken deployments
-*   User frustration
+## 🟪 MODULE 5: THE REACT DISASTER
 
 ### [THE LAW]
 ```
 ⚠️ REACT ISOLATION PRINCIPLE:
    - ONE React instance per page. No exceptions.
-   - Either ALL legacy (CDN) or ALL modern (bundled).
-   - "Bridge" components between two Reacts = GUARANTEED FAILURE.
-   
-✅ PROOF IT WORKS:
-   - IGP Connect (/messenger) uses modern React (bundled, isolated).
-   - It works perfectly because it's SEPARATE, not mixed.
+   - Either ALL legacy (CDN) OR ALL modern (bundled).
+   - "Bridge" between two Reacts = GUARANTEED FAILURE.
 ```
 
-### [FUTURE MODERNIZATION PATH]
-If modernizing the dashboard:
-1. Create SEPARATE build (like /messenger)
-2. Migrate route by route (e.g., /dashboard-v2)
-3. When 100% migrated, swap routes
-4. NEVER inject modern React into legacy pages
+### [CURRENT ARCHITECTURE]
+| Component | Type | Status |
+|-----------|------|--------|
+| Dashboard (`/`) | Legacy React (CDN) | ✅ Stable |
+| Messenger (`/messenger`) | Modern React (Vite) | ✅ Stable |
+| Backend | Hono + TypeScript | ✅ Stable |
+
+### [FUTURE MODERNIZATION]
+1. Create `/dashboard-v2` with SEPARATE build (like `/messenger`)
+2. Migrate route by route
+3. When 100% done, swap routes
+4. NEVER inject bundled React into legacy pages
+
+---
+
+## 🟫 MODULE 6: COMMON ERRORS
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| SyntaxError in JSX | Unescaped apostrophe | Use template literals |
+| Infinite loading | Missing local DB | `npm run db:reset` |
+| Push not received (Android) | Background restrictions | Install PWA |
+| N+1 queries | Loop DB calls | Use JOIN or IN clause |
+| Node API error | `fs`/`path` in Worker | Use Web APIs only |
 
 ---
 
