@@ -1,10 +1,59 @@
-# 🚀 PLAN DE MODERNISATION v1.0
+# 🚀 PLAN DE MODERNISATION v1.1
 
 ## 📋 OBJECTIFS
 - Application stable, moderne, maintenable
 - Zéro valeur hardcodée (y compris prompts IA)
 - Multi-tenant : personnalisable par secteur industriel
 - Architecture cohérente (fin du legacy React CDN)
+
+---
+
+## 🛡️ FONCTIONS CRITIQUES - NE JAMAIS CASSER
+
+### Liste des fonctions INTOUCHABLES pendant migration :
+
+| Fonction | Fichiers | Criticité |
+|----------|----------|-----------|
+| **Création vocale tickets** | `VoiceTicketFab.js`, `ai.ts` (whisper) | 🔴 CRITIQUE |
+| **Bouton "Demander conseil"** | `AIChatModal_v4.js`, `ai.ts` | 🔴 CRITIQUE |
+| **Push notifications** | `AppHeader.js`, `push.ts`, `App.js` | 🔴 CRITIQUE |
+| **Sons/Audio** | `MainApp.js` (audioContext), `sound.ts` | 🟠 IMPORTANT |
+| **Kanban drag & drop** | `KanbanBoard.js` | 🟠 IMPORTANT |
+| **Login/Auth** | `LoginForm.js`, `auth.ts` | 🔴 CRITIQUE |
+| **Création ticket standard** | `CreateTicketModal.js` | 🔴 CRITIQUE |
+| **Détails ticket** | `TicketDetailsModal_v3.js` | 🟠 IMPORTANT |
+
+### Règle absolue :
+```
+⚠️ AVANT de migrer un composant :
+   1. Lister TOUTES ses dépendances (grep)
+   2. Tester la fonction en production
+   3. Migrer avec tests de non-régression
+   4. Valider en staging AVANT merge
+   5. Garder legacy fonctionnel jusqu'à validation complète
+```
+
+### Composants legacy (35 fichiers) :
+```
+public/static/js/components/
+├── CRITIQUES (migrer en dernier)
+│   ├── VoiceTicketFab.js      # Création vocale
+│   ├── AIChatModal_v4.js      # IA conseil
+│   ├── AppHeader.js           # Push + navigation
+│   ├── App.js                 # State global + push init
+│   ├── LoginForm.js           # Auth
+│   └── CreateTicketModal.js   # Création ticket
+├── IMPORTANTS
+│   ├── KanbanBoard.js         # Vue principale
+│   ├── MainApp.js             # Layout + sons
+│   ├── TicketDetailsModal_v3.js
+│   └── TicketComments.js      # Audio comments
+└── SECONDAIRES (migrer en premier)
+    ├── ConfirmModal.js
+    ├── Toast.js
+    ├── PromptModal.js
+    └── ... (25 autres)
+```
 
 ---
 
@@ -107,17 +156,46 @@ src/
 | Build | Vite (séparé) | Isolation du legacy |
 | Icons | Lucide React | Consistant, tree-shakable |
 
-### 2.3 Migration progressive
+### 2.3 Migration progressive (ORDRE SÉCURISÉ)
 
 ```
-Étape 1: /dashboard-v2 accessible en parallèle
-Étape 2: Migrer Kanban (composant principal)
-Étape 3: Migrer Modals (Create, Details, User, Machine)
-Étape 4: Migrer Header + Navigation
-Étape 5: Tests utilisateurs
-Étape 6: Swap routes (/ → legacy, /v1 → legacy, / → moderne)
-Étape 7: Supprimer legacy après 2 semaines stable
+PHASE A - Composants simples (risque faible)
+   Étape 1: /dashboard-v2 accessible en parallèle (legacy intact)
+   Étape 2: Migrer Toast, ConfirmModal, PromptModal
+   Étape 3: Migrer UserList, RoleDropdown
+   Étape 4: Migrer ManageColumnsModal, SystemSettingsModal
+   ✓ Validation : fonctions critiques toujours sur legacy
+
+PHASE B - Composants visuels (risque moyen)
+   Étape 5: Migrer KanbanBoard (avec tests drag & drop)
+   Étape 6: Migrer TicketDetailsModal, TicketHistory
+   Étape 7: Migrer TicketComments (ATTENTION: audio recording)
+   ✓ Validation : création vocale + push toujours fonctionnels
+
+PHASE C - Composants critiques (risque élevé)
+   Étape 8: Migrer CreateTicketModal (tester formulaire complet)
+   Étape 9: Migrer MainApp + sons (tester audioContext)
+   Étape 10: Migrer AppHeader + Push (tester notifications)
+   Étape 11: Migrer VoiceTicketFab (tester Whisper E2E)
+   Étape 12: Migrer AIChatModal (tester conversation IA)
+   ✓ Validation COMPLÈTE par utilisateurs réels
+
+PHASE D - Swap final
+   Étape 13: Feature flag pour basculer legacy ↔ moderne
+   Étape 14: Tests utilisateurs 1 semaine
+   Étape 15: Swap routes (/ → moderne, /legacy → ancien)
+   Étape 16: Supprimer legacy après 2 semaines stable
 ```
+
+### 2.4 Tests de non-régression obligatoires
+
+| Fonction | Test manuel | Test auto |
+|----------|-------------|-----------|
+| Création vocale | Enregistrer → ticket créé | API whisper mock |
+| Push notification | Activer → recevoir test | Service worker check |
+| Sons alerte | Ticket urgent → son joué | AudioContext mock |
+| IA conseil | Question → réponse cohérente | API streaming test |
+| Drag & drop | Déplacer ticket → status changé | E2E Playwright |
 
 ---
 
@@ -317,3 +395,37 @@ jobs:
 3. **Migrations réversibles** (down migrations)
 4. **Feature flags** pour rollback rapide
 5. **Un tenant ne voit JAMAIS les données d'un autre**
+6. **NE PAS casser à droite pour fixer à gauche** - tester TOUT après chaque changement
+7. **Fonctions critiques testées AVANT et APRÈS chaque migration**
+8. **Legacy reste fonctionnel jusqu'à validation complète du moderne**
+
+---
+
+## 🔄 PROCÉDURE DE MIGRATION SÉCURISÉE
+
+```
+Pour CHAQUE composant migré :
+
+1. AVANT migration
+   [ ] Tester composant legacy en prod (screenshot/vidéo)
+   [ ] Lister toutes dépendances (grep imports)
+   [ ] Identifier APIs backend utilisées
+   [ ] Documenter comportement attendu
+
+2. PENDANT migration
+   [ ] Créer composant moderne SANS toucher legacy
+   [ ] Implémenter 100% des fonctionnalités
+   [ ] Tests unitaires
+   [ ] Review code
+
+3. APRÈS migration
+   [ ] Tester en /dashboard-v2 (staging)
+   [ ] Comparer avec legacy (même comportement?)
+   [ ] Tester fonctions critiques (voix, push, IA)
+   [ ] Validation utilisateur
+
+4. ROLLBACK PLAN
+   [ ] Feature flag prêt
+   [ ] Legacy toujours accessible
+   [ ] Procédure rollback documentée
+```
