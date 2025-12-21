@@ -1,0 +1,464 @@
+
+import { systemSettings, machines, users, tickets, media, ticketComments, planningEvents, userPreferences } from '../db/schema';
+import { inArray, eq, and, ne, lt, desc, or, sql, not, like } from 'drizzle-orm';
+import type { Bindings } from '../types';
+
+// --- TYPE DEFINITIONS ---
+export interface AiConfig {
+    identity: string;
+    hierarchy: string;
+    character: string;
+    knowledge: string;
+    rules: string;
+    custom: string;
+}
+
+export interface ApiKeys {
+    openai?: string;
+    deepseek?: string;
+    groq?: string;
+}
+
+// --- HELPER: DYNAMIC STATUS/PRIORITY MAPS ---
+export async function getTicketMaps(db: any) {
+    // Default Maps (Fallback matching current codebase)
+    let statusMap: Record<string, string> = {
+        'received': 'Nouveau',
+        'diagnostic': 'En diagnostic',
+        'in_progress': 'En cours',
+        'waiting_parts': 'En attente de pièces',
+        'completed': 'Terminé',
+        'archived': 'Archivé',
+        'open': 'Ouvert', // Legacy
+        'resolved': 'Résolu', // Legacy
+        'closed': 'Fermé', // Legacy
+        'pending': 'En attente' // Legacy
+    };
+
+    let priorityMap: Record<string, string> = {
+        'low': 'Basse',
+        'medium': 'Moyenne',
+        'high': 'Haute',
+        'critical': 'Critique'
+    };
+
+    // Default Closed Statuses
+    let closedStatuses = ['resolved', 'closed', 'completed', 'cancelled', 'archived'];
+
+    try {
+        const settings = await db.select().from(systemSettings)
+            .where(inArray(systemSettings.setting_key, ['ticket_statuses_config', 'ticket_priorities_config', 'ticket_closed_statuses']))
+            .all();
+
+        settings.forEach((s: any) => {
+            try {
+                const parsed = JSON.parse(s.setting_value);
+                
+                if (s.setting_key === 'ticket_closed_statuses' && Array.isArray(parsed)) {
+                    closedStatuses = parsed;
+                }
+
+                const normalize = (data: any) => {
+                    if (Array.isArray(data)) {
+                        return data.reduce((acc: any, item: any) => {
+                            if (item.id && item.label) acc[item.id] = item.label;
+                            // Also try to detect closed status from config if not explicitly set via ticket_closed_statuses
+                            if (item.id && (item.type === 'closed' || item.is_closed)) {
+                                if (!closedStatuses.includes(item.id)) closedStatuses.push(item.id);
+                            }
+                            return acc;
+                        }, {});
+                    }
+                    return data;
+                };
+
+                if (s.setting_key === 'ticket_statuses_config') {
+                    const dynamicStatuses = normalize(parsed);
+                    if (Object.keys(dynamicStatuses).length > 0) {
+                        statusMap = { ...statusMap, ...dynamicStatuses };
+                    }
+                }
+                if (s.setting_key === 'ticket_priorities_config') {
+                    const dynamicPriorities = normalize(parsed);
+                    if (Object.keys(dynamicPriorities).length > 0) {
+                        priorityMap = { ...priorityMap, ...dynamicPriorities };
+                    }
+                }
+            } catch (e) {
+                console.warn(`[AI] Failed to parse ${s.setting_key}`, e);
+            }
+        });
+    } catch (e) {
+        console.warn("[AI] Failed to load dynamic maps, using defaults", e);
+    }
+
+    return { statusMap, priorityMap, closedStatuses };
+}
+
+// --- HELPER: GET AI CONFIG ---
+export async function getAiConfig(db: any): Promise<AiConfig> {
+    const keys = [
+        'ai_identity_block', 
+        'ai_hierarchy_block', 
+        'ai_character_block', 
+        'ai_knowledge_block', 
+        'ai_rules_block', 
+        'ai_custom_context'
+    ];
+    
+    const settings = await db.select().from(systemSettings).where(inArray(systemSettings.setting_key, keys)).all();
+    
+    const config: Record<string, string> = {};
+    settings.forEach((s: any) => config[s.setting_key] = s.setting_value);
+
+    return {
+        identity: config['ai_identity_block'] || "RÔLE : Expert Industriel Senior.",
+        hierarchy: config['ai_hierarchy_block'] || "HIÉRARCHIE : Tu réponds au Directeur des Opérations.",
+        character: config['ai_character_block'] || "CARACTÈRE : Professionnel, direct et orienté sécurité.",
+        knowledge: config['ai_knowledge_block'] || "EXPERTISE : Maintenance industrielle générale.",
+        rules: config['ai_rules_block'] || "RÈGLES : Sécurité avant tout (Cadenassage). Pas de hors-sujet.",
+        custom: config['ai_custom_context'] || ""
+    };
+}
+
+// --- HELPER: GET API KEYS (BYOK) ---
+export async function getApiKeys(env: Bindings, db: any): Promise<ApiKeys> {
+    // 1. Check System Settings first (DB Override)
+    const settings = await db.select()
+        .from(systemSettings)
+        .where(inArray(systemSettings.setting_key, ['openai_api_key', 'deepseek_api_key', 'groq_api_key']))
+        .all();
+
+    const dbKeys: Record<string, string> = {};
+    settings.forEach((s: any) => {
+        if (s.setting_value && s.setting_value.length > 5) {
+            dbKeys[s.setting_key] = s.setting_value;
+        }
+    });
+
+    // 2. Fallback to Env Vars (Global Config)
+    // DB keys take precedence allowing per-tenant overrides if we had multi-tenant logic here
+    // (For now it's single tenant SaaS, but this prepares for BYOK)
+    
+    return {
+        openai: dbKeys['openai_api_key'] || env.OPENAI_API_KEY,
+        deepseek: dbKeys['deepseek_api_key'] || env.DEEPSEEK_API_KEY,
+        groq: dbKeys['groq_api_key'] || env.GROQ_API_KEY
+    };
+}
+
+// --- HELPER: BUILD DYNAMIC CONTEXT (RAG LÉGER) ---
+export interface ContextOptions {
+    userId?: number;
+    userName?: string;
+    userRole?: string;
+    baseUrl?: string;
+    ticketContext?: any;
+    message?: string; // For vision search relevance
+}
+
+export async function buildDynamicContext(db: any, env: Bindings, options: ContextOptions = {}) {
+    const { userId, userName = 'Utilisateur', userRole = 'unknown', baseUrl = '', ticketContext, message } = options;
+
+    const aiConfig = await getAiConfig(db);
+    
+    // 2. FETCH CONTEXT
+    let machinesList: any[] = [];
+    let usersList: any[] = [];
+    let activeTickets: any[] = [];
+    let machinesSummary = "Indisponible.";
+    let usersSummary = "Indisponible.";
+    let planningSummary = "Indisponible.";
+
+    try {
+        // Load Maps
+        let { statusMap, priorityMap, closedStatuses } = await getTicketMaps(db);
+        
+        // Load Kanban Columns if available for user
+        if (userId) {
+            const userPref = await db.select().from(userPreferences)
+                .where(and(eq(userPreferences.user_id, userId), eq(userPreferences.pref_key, 'kanban_columns')))
+                .get();
+            
+            if (userPref && userPref.pref_value) {
+                try {
+                    const parsed = JSON.parse(userPref.pref_value);
+                    if (Array.isArray(parsed)) {
+                         parsed.forEach((col: any) => {
+                            if (col.id && col.title) statusMap[col.id] = col.title;
+                        });
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // 1. SELECT DATA
+        machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all() || [];
+        usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login }).from(users).where(sql`deleted_at IS NULL`).all() || [];
+        activeTickets = await db.select({
+            id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
+        }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), sql`deleted_at IS NULL`)).all() || [];
+
+        const mediaMap = new Map<number, string[]>();
+        const commentMap = new Map<number, number>();
+        
+        if (activeTickets.length > 0) {
+            const ticketIds = activeTickets.map((t: any) => t.id);
+            const mediaList = await db.select({
+                id: media.id, ticket_id: media.ticket_id, file_name: media.file_name, file_key: media.file_key, file_type: media.file_type
+            }).from(media).where(inArray(media.ticket_id, ticketIds)).all();
+
+            mediaList.forEach((m: any) => {
+                const publicUrl = `/api/media/${m.id}`;
+                const md = m.file_type.startsWith('image') ? `![${m.file_name}](${publicUrl})` : `[${m.file_name}](${publicUrl})`;
+                const current = mediaMap.get(m.ticket_id) || [];
+                current.push(md);
+                mediaMap.set(m.ticket_id, current);
+            });
+
+            const commentCounts = await db.select({ ticket_id: ticketComments.ticket_id, count: sql<number>`count(*)` }).from(ticketComments).where(inArray(ticketComments.ticket_id, ticketIds)).groupBy(ticketComments.ticket_id).all();
+            commentCounts.forEach((c: any) => commentMap.set(c.ticket_id, c.count));
+        }
+
+        const workloadMap = new Map();
+        const machineStatusMap = new Map();
+
+        activeTickets.forEach((t: any) => {
+            if (t.assigned_to) workloadMap.set(t.assigned_to, (workloadMap.get(t.assigned_to) || 0) + 1);
+            if (t.machine_id) {
+                const currentStatus = machineStatusMap.get(t.machine_id) || [];
+                const mediaLinks = mediaMap.get(t.id) || [];
+                const cCount = commentMap.get(t.id) || 0;
+                let mediaStr = mediaLinks.length > 0 ? ` PREUVE VISUELLE: ${mediaLinks[0]}` : "";
+                const commStr = cCount > 0 ? ` [💬 ${cCount} messages]` : "";
+                const statusFr = statusMap[t.status] || t.status;
+                const priorityFr = priorityMap[t.priority] || t.priority;
+                currentStatus.push(`[TICKET #${t.id} | REF: ${t.display_id}] (${statusFr}, ${priorityFr}): ${t.title}${mediaStr}${commStr}`);
+                machineStatusMap.set(t.machine_id, currentStatus);
+            }
+        });
+
+        machinesSummary = machinesList.map(m => {
+            const activeIssues = machineStatusMap.get(m.id);
+            
+            // --- ETAT MACHINE ---
+            let stateLabel = m.status;
+            if (m.status === 'out_of_service') stateLabel = '🔴 ARRÊT';
+            else if (m.status === 'operational') stateLabel = '🟢 EN MARCHE';
+            else if (m.status === 'maintenance') stateLabel = '🟠 MAINTENANCE';
+            else stateLabel = `⚪ ${m.status.toUpperCase()}`;
+
+            let state = stateLabel;
+            if (activeIssues && activeIssues.length > 0) {
+                 state = (m.status === 'out_of_service') ? '🔴 ARRÊT (Confirmé)' : '⚠️ INCIDENTS EN COURS';
+            }
+
+            // --- ENRICHISSEMENT DU CONTEXTE (Données Techniques) ---
+            const specs = m.technical_specs ? `\n   [SPECS]: ${m.technical_specs.replace(/\n/g, ' ')}` : '';
+            const details = [
+                m.manufacturer ? `Fab: ${m.manufacturer}` : null,
+                m.year ? `Année: ${m.year}` : null,
+                m.serial_number ? `S/N: ${m.serial_number}` : null,
+                m.location ? `Loc: ${m.location}` : null
+            ].filter(Boolean).join(' | ');
+
+            return `[ID:${m.id}] ${m.machine_type} ${m.model || ''}\n   [DETAILS]: ${details} - ÉTAT: ${state} ${activeIssues ? `(Tickets: ${activeIssues.join(', ')})` : '(RAS)'}${specs}`;
+        }).join('\n');
+        
+        usersSummary = usersList.map(u => {
+             if (u.role === 'admin' && userRole !== 'admin') return `[ID:${u.id}] ${u.name} (ADMINISTRATEUR) - [INFO RESTREINTE]`;
+             const count = workloadMap.get(u.id) || 0;
+             return `[ID:${u.id}] ${u.name} (${u.role}) - ${count === 0 ? "✅ LIBRE" : `❌ OCCUPÉ (${count} tickets)`} - Login: ${u.last_login || 'Jamais'}`;
+        }).join('\n');
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todaysEvents = await db.select().from(planningEvents).where(eq(planningEvents.date, todayStr)).all() || [];
+        planningSummary = todaysEvents.length > 0 ? todaysEvents.map((e: any) => `[${e.time || 'Journée'}] ${e.title}`).join(', ') : "Aucun événement.";
+    } catch (contextError) {
+        console.error("⚠️ [AI] Context Load Failed:", contextError);
+    }
+
+    // 3. FETCH USER HISTORY
+    let userHistory = "Aucun historique.";
+    if (userId) {
+        try {
+            const history = await db.select({ id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, machine_id: tickets.machine_id, date: tickets.created_at })
+            .from(tickets).where(or(eq(tickets.assigned_to, userId), eq(tickets.reported_by, userId))).orderBy(desc(tickets.created_at)).limit(5).all();
+            if (history.length > 0) {
+                const { statusMap } = await getTicketMaps(db);
+                userHistory = history.map((h: any) => {
+                    const m = machinesList.find(m => m.id === h.machine_id);
+                    return `- [${h.date}] [TICKET #${h.id}] (${statusMap[h.status] || h.status}): ${h.title} sur ${m ? m.type : '?'}`;
+                }).join('\n');
+            }
+        } catch (e) {}
+    }
+
+    // 4. VISION CONTEXT (Recent Images)
+    let recentImageContext = "";
+    if (userId) {
+        try {
+            // Need the DB binding to update transcription if needed
+            // But here we are just building string. Transcription update happens in ai.ts.
+            // We'll just read what's there.
+            const lastImages = await db.prepare(`SELECT id, transcription, created_at, media_key FROM chat_messages WHERE sender_id = ? AND conversation_id = 'expert_ai' AND type = 'image' AND created_at > datetime('now', '-1 hours') ORDER BY created_at DESC LIMIT 3`).bind(userId).all();
+            
+            if (lastImages && lastImages.results && lastImages.results.length > 0) {
+                recentImageContext = `\n[SYSTEM] HISTORIQUE VISUEL (IMAGES RÉCENTES) :\n`;
+                const chronoImages = [...(lastImages.results as any[])].reverse();
+                // @ts-ignore
+                for (const [idx, img] of chronoImages.entries()) {
+                     const publicUrl = `/api/media/public?key=${encodeURIComponent(img.media_key)}`;
+                    const imageMd = `![Image ${idx + 1}](${publicUrl})`;
+                    recentImageContext += `--- IMAGE #${idx + 1} ---\nFICHIER: ${imageMd}\nCONTENU: ${img.transcription || "Analyse en cours..."}\n`;
+                }
+            }
+        } catch (e) {}
+    }
+
+    // 5. TICKET CONTEXT SPECIFIC
+    let ticketContextBlock = "";
+    let ticketVisionMessage = null;
+
+    if (ticketContext) {
+        try {
+            const matchedTicket = activeTickets.find((t: any) => t.title === ticketContext.title && t.machine_id === ticketContext.machine_id);
+            
+            if (matchedTicket) {
+                 // Fetch Comments
+                let commentsText = "Aucun commentaire.";
+                const comments = await db.select({
+                    content: ticketComments.content,
+                    author: users.full_name,
+                    created_at: ticketComments.created_at
+                })
+                .from(ticketComments)
+                .leftJoin(users, eq(ticketComments.user_id, users.id))
+                .where(eq(ticketComments.ticket_id, matchedTicket.id))
+                .orderBy(desc(ticketComments.created_at))
+                .limit(10)
+                .all();
+
+                if (comments.length > 0) {
+                    commentsText = comments.map((c: any) => `- [${c.created_at}] ${c.author || 'Inconnu'}: ${c.content}`).join('\n');
+                }
+
+                // Fetch Images (Metadata)
+                const images = await db.select({
+                    file_name: media.file_name,
+                    file_key: media.file_key,
+                    file_type: media.file_type
+                })
+                .from(media)
+                .where(and(eq(media.ticket_id, matchedTicket.id), like(media.file_type, 'image/%')))
+                .limit(5)
+                .all();
+
+                let imageList = "";
+                if (images.length > 0) {
+                    imageList = images.map((img: any) => {
+                        const publicUrl = `/api/media/public?key=${encodeURIComponent(img.file_key)}`;
+                        return `![${img.file_name}](${publicUrl})`;
+                    }).join('\n');
+                    commentsText += `\n\nIMAGES DISPONIBLES :\n${imageList}`;
+                }
+
+                ticketContextBlock = `
+--- 🚨 TICKET ACTUEL (SUJET PRIORITAIRE) ---
+TITRE : ${ticketContext.title}
+DESCRIPTION : ${ticketContext.description}
+MACHINE : ${ticketContext.machine_name || 'Non spécifiée'} (ID: ${ticketContext.machine_id || '?'})
+HISTORIQUE & COMMENTAIRES :
+${commentsText}
+
+CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analyse la description, les commentaires et les images (si présentes) pour donner des pistes de diagnostic immédiates.
+`;
+
+                // VISION PREP (Latest Image)
+                // We return this separately because it needs to be injected as a USER message with image_url, not system prompt text
+                if (images.length > 0) {
+                     // Sort descending by implicit created_at (we don't have it in images select above, let's trust default sort or re-fetch if critical)
+                     // Actually we just took top 5. Let's assume the first one is relevant enough or fetch latest explicitly.
+                     const latestImage = await db.select({ file_key: media.file_key, file_type: media.file_type })
+                        .from(media)
+                        .where(and(eq(media.ticket_id, matchedTicket.id), like(media.file_type, 'image/%')))
+                        .orderBy(desc(media.created_at))
+                        .limit(1)
+                        .first();
+
+                     if (latestImage) {
+                         // We need to return the object details so the caller can fetch the blob and encode it
+                         // context.ts cannot easily access R2 bucket without passing c.env.R2 which is 'env.MEDIA_BUCKET'
+                         // So we will return the KEY and let the caller handle the heavy lifting of R2 -> Base64
+                         ticketVisionMessage = {
+                             file_key: latestImage.file_key,
+                             file_type: latestImage.file_type
+                         };
+                     }
+                }
+            }
+        } catch (err) {
+            console.warn("[AI] Failed to fetch ticket details for context", err);
+        }
+    }
+
+    const systemPrompt = `
+${aiConfig.identity}
+
+${ticketContextBlock}
+
+--- 1. CONTEXTE OPÉRATIONNEL ---
+- UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})
+- SERVEUR (BASE URL) : ${baseUrl}
+- PLANNING AUJOURD'HUI : ${planningSummary}
+- HISTORIQUE RÉCENT :
+${userHistory}
+- VISUEL (IMAGES) :
+${recentImageContext}
+- ÉTAT DES MACHINES (LIVE) :
+${machinesSummary}
+- ÉTAT DES ÉQUIPES (DISPONIBILITÉ) :
+${usersSummary}
+- SAVOIR SPÉCIFIQUE : ${aiConfig.custom}
+
+${aiConfig.hierarchy}
+${aiConfig.character}
+${aiConfig.knowledge}
+
+--- 2. DIRECTIVES STRATÉGIQUES ---
+1. **AIDE À LA DÉCISION** : Ne sois pas passif. Suggère, anticipe, connecte les faits.
+2. **SOURCE DE VÉRITÉ** : Utilise les outils (search_tickets, check_machine) pour vérifier les faits non présents dans le contexte.
+3. **INTÉGRITÉ** : N'invente jamais de données. Si un outil retourne "null", dis "inconnu".
+
+--- 3. RÈGLES TECHNIQUES & FORMATAGE (OBLIGATOIRES) ---
+
+A. **LIENS & NAVIGATION (RÈGLE ABSOLUE)** :
+   Dès que tu mentionnes un ticket (ex: "Ticket #12"), tu DOIS IMMÉDIATEMENT ajouter le lien cliquable à côté.
+   
+   ⚠️ **ATTENTION AUX IDs** :
+   - Un ticket a une RÉFÉRENCE (ex: "LAM-1225-0001") et un ID TECHNIQUE (ex: 154).
+   - L'URL doit utiliser l'ID TECHNIQUE (le chiffre) !
+   
+   👉 Format OBLIGATOIRE : [Ticket RÉF](${baseUrl}/?ticket=ID_TECHNIQUE)
+   👉 Exemple : "Le [Ticket LAM-1225-0001](${baseUrl}/?ticket=154) est en cours."
+   
+   *Si tu ne connais pas l'ID technique, utilise la référence, mais ne mets JAMAIS .com !*
+
+B. **IMAGES & MÉDIAS** :
+   Si le contexte contient une image (format ![Alt](URL)), tu DOIS l'afficher dans ta réponse.
+   C'est la preuve visuelle que l'utilisateur attend.
+
+C. **STYLE MARKDOWN** :
+   - Utilise **Gras** pour l'important.
+   - Utilise des Listes pour la clarté.
+   - Pas de HTML brut.
+
+--- 4. DIRECTIVES ADMINISTRATEUR ---
+${aiConfig.rules}
+`;
+
+    return {
+        systemPrompt,
+        ticketVisionMessage // Contains { file_key, file_type } if available
+    };
+}

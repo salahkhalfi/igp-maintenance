@@ -148,6 +148,7 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  media_count?: number; // Count for UI
   media?: any[];
   timeline?: any[];
 }

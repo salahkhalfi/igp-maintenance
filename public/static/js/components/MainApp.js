@@ -1,4 +1,4 @@
-const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
+const MainApp = ({ hideKanban = false, tickets = [], machines = [], currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
     // Sécurité : Garantir que tickets est un tableau
     const safeTickets = Array.isArray(tickets) ? tickets : [];
     const safeMachines = Array.isArray(machines) ? machines : [];
@@ -398,7 +398,7 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
         showProductionPlanning && React.createElement(window.ProductionPlanning, { onClose: () => setShowProductionPlanning(false) }),
 
         // --- KANBAN BOARD ---
-        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
+        !hideKanban && React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
             React.createElement(KanbanBoard, {
                 tickets: safeTickets,
                 currentUser: currentUser,

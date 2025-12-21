@@ -30,7 +30,6 @@ export const homeHTML = `
     <script src="/static/js/components/ScheduledCountdown.js"></script>
     <script src="/static/js/components/UserGuideModal.js"></script>
     <script src="/static/js/components/PromptModal.js"></script>
-    <script src="/static/js/components/LoginForm.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js?v=3.0.4"></script>
     <script src="/static/js/components/TicketDetailsModal_v3.js?v=3.2.0"></script>
@@ -59,7 +58,7 @@ export const homeHTML = `
     <!-- USER MANAGEMENT MODAL REMOVED (MODERNIZED) -->
     <script src="/static/js/components/VoiceTicketFab.js"></script>
     <script src="/static/js/components/MainApp.js?v=3.0.6"></script>
-    <script type="module" src="/static/client/main.js"></script>
+    <script type="module" src="/static/client/main.js?v=3.0.11"></script>
     <style>
         /* FIXED BACKGROUND LAYER - Solves mobile/resize glitching */
         #app-background {
@@ -532,8 +531,7 @@ export const homeHTML = `
     </div>
 
     <script>
-        // SAFE CACHE RESET v3.0.3 - DISABLED (Fixed Push Notification Stability)
-        /*
+        // SAFE CACHE RESET v3.0.11 - FORCED
         window.addEventListener('load', function() {
             if ('serviceWorker' in navigator) {
                 // 1. Unregister all existing workers to clear "Zombie" cache
@@ -547,10 +545,9 @@ export const homeHTML = `
                 });
             }
         });
-        */
 
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.7 (Push Fixed)');
+        console.log('HOME HTML LOADED v3.0.11 (SW Cleanup)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 

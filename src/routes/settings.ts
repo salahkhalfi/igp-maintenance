@@ -554,12 +554,23 @@ settings.put('/title', authMiddleware, adminOnly, async (c) => {
     // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
     // Protection XSS: React échappe automatiquement dans createElement()
 
-    // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
-    await c.env.DB.prepare(`
-      UPDATE system_settings
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE setting_key = 'company_title'
-    `).bind(trimmedValue).run();
+    // Vérifier si le paramètre existe (Upsert)
+    const existing = await c.env.DB.prepare(`
+        SELECT id FROM system_settings WHERE setting_key = 'company_title'
+    `).first();
+
+    if (existing) {
+        await c.env.DB.prepare(`
+          UPDATE system_settings
+          SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE setting_key = 'company_title'
+        `).bind(trimmedValue).run();
+    } else {
+        await c.env.DB.prepare(`
+          INSERT INTO system_settings (setting_key, setting_value)
+          VALUES ('company_title', ?)
+        `).bind(trimmedValue).run();
+    }
 
     console.log(`✅ Titre modifié par user ${user.userId}: "${trimmedValue}"`);
 
@@ -606,12 +617,23 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
     // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
     // Protection XSS: React échappe automatiquement dans createElement()
 
-    // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
-    await c.env.DB.prepare(`
-      UPDATE system_settings
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE setting_key = 'company_subtitle'
-    `).bind(trimmedValue).run();
+    // Vérifier si le paramètre existe (Upsert)
+    const existing = await c.env.DB.prepare(`
+        SELECT id FROM system_settings WHERE setting_key = 'company_subtitle'
+    `).first();
+
+    if (existing) {
+        await c.env.DB.prepare(`
+          UPDATE system_settings
+          SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE setting_key = 'company_subtitle'
+        `).bind(trimmedValue).run();
+    } else {
+        await c.env.DB.prepare(`
+          INSERT INTO system_settings (setting_key, setting_value)
+          VALUES ('company_subtitle', ?)
+        `).bind(trimmedValue).run();
+    }
 
     console.log(`✅ Sous-titre modifié par user ${user.userId}: "${trimmedValue}"`);
 
@@ -826,6 +848,79 @@ settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+/**
+ * GET /api/settings/api-keys - Obtenir le statut des clés API (Masquées)
+ * Accès: Administrateurs (admin role)
+ */
+settings.get('/api-keys', authMiddleware, adminOnly, async (c) => {
+  try {
+    // Check DB for keys
+    const results = await c.env.DB.prepare(`
+        SELECT setting_key, setting_value 
+        FROM system_settings 
+        WHERE setting_key IN ('openai_api_key', 'deepseek_api_key', 'groq_api_key')
+    `).all();
+    
+    const dbKeys: Record<string, boolean> = {};
+    (results.results || []).forEach((r: any) => {
+        const provider = r.setting_key.replace('_api_key', '');
+        if (r.setting_value && r.setting_value.length > 5) {
+            dbKeys[provider] = true;
+        }
+    });
+
+    const keyStatus = {
+        openai: dbKeys['openai'] || !!c.env.OPENAI_API_KEY,
+        deepseek: dbKeys['deepseek'] || !!c.env.DEEPSEEK_API_KEY,
+        groq: dbKeys['groq'] || !!c.env.GROQ_API_KEY
+    };
+
+    return c.json({ 
+        status: keyStatus,
+        message: "Les clés sont masquées pour sécurité. 'true' signifie qu'une clé est configurée (DB ou Env)." 
+    });
+  } catch (error) {
+    console.error('Get API keys status error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/api-keys - Mettre à jour les clés API
+ * Accès: Administrateurs (admin role)
+ */
+settings.put('/api-keys', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const { openai, deepseek, groq } = body;
+
+    const updates = [];
+    if (openai !== undefined) updates.push({ key: 'openai_api_key', value: openai });
+    if (deepseek !== undefined) updates.push({ key: 'deepseek_api_key', value: deepseek });
+    if (groq !== undefined) updates.push({ key: 'groq_api_key', value: groq });
+
+    for (const update of updates) {
+        // If empty string -> Delete (Clear)
+        if (update.value === "") {
+            await c.env.DB.prepare(`DELETE FROM system_settings WHERE setting_key = ?`).bind(update.key).run();
+        } else if (update.value && update.value.length > 5) {
+            // Upsert
+            const existing = await c.env.DB.prepare(`SELECT id FROM system_settings WHERE setting_key = ?`).bind(update.key).first();
+            if (existing) {
+                await c.env.DB.prepare(`UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?`).bind(update.value, update.key).run();
+            } else {
+                await c.env.DB.prepare(`INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)`).bind(update.key, update.value).run();
+            }
+        }
+    }
+
+    return c.json({ success: true, message: "Clés API mises à jour." });
+  } catch (error) {
+    console.error('Update API keys error:', error);
+    return c.json({ error: 'Erreur mise à jour clés' }, 500);
+  }
+});
+
 // ============================================================================
 // ROUTES D'EXPORTATION DE DONNÉES (JSON -> CSV Client)
 // ============================================================================
@@ -1031,6 +1126,7 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
 /**
  * GET /api/settings/app_base_url - Récupérer l'URL de base (Safe Handler)
  * Évite les 404 si non configuré
+ * Accès: Public (requis pour login)
  */
 settings.get('/app_base_url', async (c) => {
   try {
@@ -1044,7 +1140,7 @@ settings.get('/app_base_url', async (c) => {
 
 /**
  * GET /api/settings/:key - Obtenir une valeur de paramètre
- * Accès: Tous les utilisateurs authentifiés
+ * Accès: Public (Lecture seule) pour permettre l'affichage du titre/logo sur la page de login
  *
  * Utilisé pour: timezone_offset_hours, etc.
  * NOTE: Cette route est déclarée APRÈS les routes spécifiques (/logo, /upload-logo)
@@ -1053,6 +1149,25 @@ settings.get('/app_base_url', async (c) => {
 settings.get('/:key', async (c) => {
   try {
     const key = c.req.param('key');
+
+    // Sécurité: Si la clé contient "key" ou "secret" ou "password", on exige l'auth admin
+    // Sauf pour les clés publiques whitelistées explicitement
+    const PUBLIC_KEYS = [
+        'company_title', 
+        'company_subtitle', 
+        'company_logo_key', 
+        'messenger_app_name', 
+        'ai_expert_name', 
+        'ai_expert_avatar_key',
+        'timezone_offset_hours'
+    ];
+
+    if (!PUBLIC_KEYS.includes(key)) {
+        // Pour tout le reste, on vérifie l'auth
+        const authCheck = await authMiddleware(c, async ()=> {});
+        // Si authMiddleware retourne une Response (erreur 401), on arrête
+        if (authCheck instanceof Response) return authCheck;
+    }
 
     const result = await c.env.DB.prepare(`
       SELECT setting_value FROM system_settings WHERE setting_key = ?
