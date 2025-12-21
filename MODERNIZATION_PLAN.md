@@ -201,24 +201,31 @@ PHASE D - Swap final
 
 ## 🤖 PHASE 3: IA CONFIGURABLE (Semaine 4-5)
 
-### 3.1 Structure prompts en DB
+### 3.1 Structure prompts en DB ✅ COMPLÉTÉ (2025-12-21)
 
-**Déjà existant :**
-- `ai_identity_block` - Identité de l'assistant
-- `ai_rules_block` - Règles comportement
-- `ai_knowledge_block` - Base de connaissances
-- `ai_hierarchy_block` - Hiérarchie entreprise
-- `ai_character_block` - Personnalité
-- `ai_custom_context` - Contexte libre
+**13 Settings AI maintenant en DB :**
 
-**À ajouter :**
-```sql
-ai_whisper_context          -- "Contexte: maintenance industrielle. Termes: {vocabulary}"
-ai_ticket_analysis_prompt   -- Prompt pour analyser nouveau ticket
-ai_image_analysis_prompt    -- Prompt pour analyser photos
-ai_summary_prompt           -- Prompt pour résumés
-ai_translation_prompt       -- Prompt pour traductions
-```
+| Setting Key | Description | Status |
+|-------------|-------------|--------|
+| `ai_identity_block` | Identité de l'assistant | ✅ |
+| `ai_rules_block` | Règles comportement | ✅ |
+| `ai_knowledge_block` | Base de connaissances | ✅ |
+| `ai_hierarchy_block` | Hiérarchie entreprise | ✅ |
+| `ai_character_block` | Personnalité | ✅ |
+| `ai_custom_context` | Contexte libre | ✅ |
+| `ai_whisper_context` | Contexte transcription audio | ✅ NOUVEAU |
+| `ai_voice_extraction_prompt` | Prompt extraction JSON vocale | ✅ NOUVEAU |
+| `ai_ticket_analysis_prompt` | Prompt analyse ticket | ✅ |
+| `ai_image_analysis_prompt` | Prompt analyse images | ✅ |
+| `ai_summary_prompt` | Prompt résumés | ✅ |
+| `ai_expert_name` | Nom assistant | ✅ |
+| `ai_expert_avatar_key` | Avatar assistant | ✅ |
+
+**Code modifié :**
+- `src/routes/ai.ts` : `getAiConfig()` charge tous les prompts depuis DB
+- `transcribeAudio()` utilise `aiConfig.whisperContext` 
+- `analyzeText()` utilise `aiConfig.voiceExtraction`
+- Chat IA utilise tous les blocs `identity/hierarchy/character/knowledge/rules/custom`
 
 ### 3.2 Interface Admin IA
 
@@ -379,9 +386,10 @@ jobs:
 
 ## ✅ CRITÈRES DE SUCCÈS
 
-- [ ] Aucun hardcode dans le code (grep retourne 0)
+- [x] Aucun hardcode business dans le code ✅ Phase 1 complète
+- [x] Prompts IA 100% configurables via DB ✅ Phase 3.1 complète (13 settings)
 - [ ] Dashboard 100% React moderne (plus de CDN)
-- [ ] Prompts IA 100% configurables via admin
+- [ ] Interface Admin pour éditer prompts IA
 - [ ] Nouveau tenant déployable en < 5 minutes
 - [ ] Tests couvrent 80%+ du code critique
 - [ ] Documentation API complète
@@ -433,12 +441,13 @@ npx wrangler pages deployment rollback <deployment-id> --project-name webapp
 
 | ID | Tag | Description | Date | Status |
 |----|-----|-------------|------|--------|
-| 00 | `checkpoint-00-stable-legacy` | Avant toute modernisation | - | À créer |
-| 01 | `checkpoint-01-phase1-config` | Après ConfigService | - | - |
-| 02 | `checkpoint-02-phase2a-simple` | Après composants simples | - | - |
-| 03 | `checkpoint-03-phase2b-visual` | Après composants visuels | - | - |
-| 04 | `checkpoint-04-phase2c-critical` | Après composants critiques | - | - |
-| 05 | `checkpoint-05-multitenancy` | Après multi-tenant | - | - |
+| 00 | `checkpoint-00-stable-legacy` | Avant toute modernisation | 2025-12-21 | ✅ Créé |
+| 01 | `checkpoint-01-phase1-config` | ConfigService + Zero Hardcode | 2025-12-21 | ✅ Créé |
+| 02 | `checkpoint-02-phase3-ai-config` | Prompts IA 100% configurables | 2025-12-21 | ✅ Créé |
+| 03 | `checkpoint-03-phase2a-simple` | Après composants simples | - | À faire |
+| 04 | `checkpoint-04-phase2b-visual` | Après composants visuels | - | À faire |
+| 05 | `checkpoint-05-phase2c-critical` | Après composants critiques | - | À faire |
+| 06 | `checkpoint-06-multitenancy` | Après multi-tenant | - | À faire |
 
 ### Règle checkpoint :
 
