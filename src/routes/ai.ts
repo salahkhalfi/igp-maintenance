@@ -152,7 +152,9 @@ async function getAiConfig(db: any) {
         'ai_character_block', 
         'ai_knowledge_block', 
         'ai_rules_block', 
-        'ai_custom_context'
+        'ai_custom_context',
+        'ai_voice_extraction_prompt',
+        'ai_whisper_context'
     ];
     
     const settings = await db.select().from(systemSettings).where(inArray(systemSettings.setting_key, keys)).all();
@@ -166,19 +168,32 @@ async function getAiConfig(db: any) {
         character: config['ai_character_block'] || "CARACTÈRE : Professionnel, direct et orienté sécurité.",
         knowledge: config['ai_knowledge_block'] || "EXPERTISE : Maintenance industrielle générale.",
         rules: config['ai_rules_block'] || "RÈGLES : Sécurité avant tout (Cadenassage). Pas de hors-sujet.",
-        custom: config['ai_custom_context'] || ""
+        custom: config['ai_custom_context'] || "",
+        voiceExtraction: config['ai_voice_extraction_prompt'] || `RÔLE : Analyste de Données Maintenance (Extraction JSON Stricte).
+OBJECTIF : Convertir la transcription vocale en données structurées pour la base de données.
+
+RÈGLES D'EXTRACTION STRICTES :
+1. **JSON UNIQUEMENT** : Ta réponse doit être un objet JSON valide et RIEN D'AUTRE.
+2. **LANGUE** : Détecte la langue de l'audio. Les valeurs title et description DOIVENT être dans la MÊME langue que l'audio.
+3. **INTELLIGENCE TECHNIQUE** : Reformule le langage parlé en langage technique professionnel.
+4. **PRIORITÉ** : Déduis la priorité (critical/high/medium/low) selon les mots-clés.
+5. **DATES** : Convertis les termes relatifs en format ISO 8601 strict basé sur la Date Actuelle.
+6. **ASSIGNATION** : Assigne machine_id ou assigned_to_id SEULEMENT si la correspondance est parfaite.`,
+        whisperContext: config['ai_whisper_context'] || "Context: Industrial maintenance. Languages: English or French (including Quebec dialect)."
     };
 }
 
 // 1. Audio Transcription
-async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: string): Promise<string | null> {
+async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: string, whisperContext: string): Promise<string | null> {
+    const whisperPrompt = `${whisperContext} Terms: ${vocabulary}`;
+    
     if (env.GROQ_API_KEY) {
         try {
             console.log("🎤 [AI] Trying Groq Whisper...");
             const formData = new FormData();
             formData.append('file', audioFile);
             formData.append('model', 'whisper-large-v3');
-            formData.append('prompt', `Context: Industrial maintenance. Languages: English or French (including Quebec dialect). Terms: ${vocabulary}`);
+            formData.append('prompt', whisperPrompt);
             
             const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                 method: 'POST',
@@ -203,7 +218,7 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
             const formData = new FormData();
             formData.append('file', audioFile, 'voice_ticket.webm');
             formData.append('model', 'whisper-1');
-            formData.append('prompt', `Context: Industrial maintenance. Languages: English or French (including Quebec dialect). Terms: ${vocabulary}`);
+            formData.append('prompt', whisperPrompt);
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
@@ -228,24 +243,14 @@ async function analyzeText(transcript: string, context: any, env: Bindings, aiCo
     const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
     const localDate = new Date(utc + (3600000 * timezoneOffset));
     
-    const systemPrompt = `
-RÔLE : Analyste de Données Maintenance (Extraction JSON Stricte).
-OBJECTIF : Convertir la transcription vocale en données structurées pour la base de données.
-
+    // Build context block dynamically
+    const contextBlock = `
 CONTEXTE OPÉRATIONNEL :
 - Date (EST) : ${localDate.toISOString().replace('T', ' ').substring(0, 16)}
 - Auteur : ${context.userName} (${context.userRole})
 - Machines connues : ${context.machines}
 - Équipe connue : ${context.techs}
 - Vocabulaire usine : ${aiConfig.custom}
-
-RÈGLES D'EXTRACTION STRICTES :
-1. **JSON UNIQUEMENT** : Ta réponse doit être un objet JSON valide et RIEN D'AUTRE.
-2. **LANGUE** : Détecte la langue de l'audio. Les valeurs 'title' et 'description' DOIVENT être dans la MÊME langue que l'audio.
-3. **INTELLIGENCE TECHNIQUE** : Reformule le langage parlé en langage technique professionnel.
-4. **PRIORITÉ** : Déduis la priorité (critical/high/medium/low) selon les mots-clés.
-5. **DATES** : Convertis les termes relatifs en format ISO 8601 strict basé sur la Date Actuelle.
-6. **ASSIGNATION** : Assigne 'machine_id' ou 'assigned_to_id' SEULEMENT si la correspondance est parfaite.
 
 FORMAT DE SORTIE ATTENDU (SCHEMA JSON) :
 {
@@ -257,8 +262,12 @@ FORMAT DE SORTIE ATTENDU (SCHEMA JSON) :
   "assigned_to_id": number | null,
   "assigned_to_name": "string" | null,
   "scheduled_date": "string" | null
-}
-`;
+}`;
+
+    // Use configurable prompt from DB + dynamic context
+    const systemPrompt = `${aiConfig.voiceExtraction}
+
+${contextBlock}`;
 
     if (env.DEEPSEEK_API_KEY) {
         try {
@@ -352,7 +361,7 @@ app.post('/analyze-ticket', async (c) => {
 
         const vocabularyContext = [...machinesList.map(m => `${m.type} ${m.manufacturer || ''} ${m.model || ''}`), ...techsList.map(t => t.name), "Maintenance", "Panne", "Urgent", "Réparation", aiConfig.custom].join(", ");
 
-        const transcript = await transcribeAudio(audioFile, c.env, vocabularyContext);
+        const transcript = await transcribeAudio(audioFile, c.env, vocabularyContext, aiConfig.whisperContext);
         if (!transcript) return c.json({ error: "Impossible de transcrire l'audio." }, 502);
         
         try {
