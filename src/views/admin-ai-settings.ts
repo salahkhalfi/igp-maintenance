@@ -147,6 +147,93 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
                 </div>
             </section>
 
+            <!-- SECTION 5: PROMPTS TECHNIQUES -->
+            <section>
+                <div class="flex items-center gap-2 mb-4 pt-4 border-t border-gray-100">
+                    <span class="bg-cyan-100 text-cyan-700 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">5</span>
+                    <h2 class="text-xl font-bold text-gray-800">Prompts Techniques (Création Vocale & Analyse)</h2>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-microphone mr-2 text-cyan-500"></i>Contexte Whisper (Transcription Audio)</span>
+                            <span class="text-xs text-gray-400 font-normal">Aide à la reconnaissance vocale</span>
+                        </label>
+                        <textarea id="ai_whisper_context" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all h-20"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">Ex: "Contexte: maintenance industrielle. Langues: Français québécois et anglais."</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-waveform mr-2 text-cyan-500"></i>Extraction Vocale → JSON</span>
+                            <span class="text-xs text-gray-400 font-normal">Convertit la voix en ticket structuré</span>
+                        </label>
+                        <textarea id="ai_voice_extraction_prompt" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all h-48"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">⚠️ CRITIQUE : Ce prompt définit comment la création vocale de tickets fonctionne. Doit retourner du JSON valide.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: PROMPTS ANALYSE -->
+            <section>
+                <div class="flex items-center gap-2 mb-4 pt-4 border-t border-gray-100">
+                    <span class="bg-pink-100 text-pink-700 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">6</span>
+                    <h2 class="text-xl font-bold text-gray-800">Prompts d'Analyse</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-ticket mr-2 text-pink-500"></i>Analyse de Ticket</span>
+                            <span class="text-xs text-gray-400 font-normal">Suggestion priorité/actions</span>
+                        </label>
+                        <textarea id="ai_ticket_analysis_prompt" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all h-24"></textarea>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-image mr-2 text-pink-500"></i>Analyse d'Image</span>
+                            <span class="text-xs text-gray-400 font-normal">Vision IA sur photos</span>
+                        </label>
+                        <textarea id="ai_image_analysis_prompt" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all h-24"></textarea>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-file-alt mr-2 text-pink-500"></i>Résumé</span>
+                            <span class="text-xs text-gray-400 font-normal">Pour générer des synthèses</span>
+                        </label>
+                        <textarea id="ai_summary_prompt" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all h-20"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 7: IDENTITÉ ASSISTANT -->
+            <section>
+                <div class="flex items-center gap-2 mb-4 pt-4 border-t border-gray-100">
+                    <span class="bg-violet-100 text-violet-700 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">7</span>
+                    <h2 class="text-xl font-bold text-gray-800">Identité de l'Assistant</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-robot mr-2 text-violet-500"></i>Nom de l'Assistant</span>
+                        </label>
+                        <input type="text" id="ai_expert_name" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Ex: L'Assistant IGP">
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
+                        <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
+                            <span><i class="fas fa-user-circle mr-2 text-violet-500"></i>Clé Avatar (R2)</span>
+                        </label>
+                        <input type="text" id="ai_expert_avatar_key" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="avatars/ai-avatar-xxx.jpeg" readonly>
+                        <p class="text-xs text-gray-400 mt-1">Modifiable via IGP Connect → Info groupe</p>
+                    </div>
+                </div>
+            </section>
+
         </form>
 
     </main>
@@ -154,12 +241,23 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
     <script>
         const API_URL = '/api/settings';
         const KEYS = [
+            // Section 1-4: Identité & Comportement
             'ai_identity_block', 
             'ai_hierarchy_block', 
             'ai_character_block', 
             'ai_knowledge_block', 
             'ai_rules_block', 
-            'ai_custom_context'
+            'ai_custom_context',
+            // Section 5: Prompts Techniques
+            'ai_whisper_context',
+            'ai_voice_extraction_prompt',
+            // Section 6: Prompts Analyse
+            'ai_ticket_analysis_prompt',
+            'ai_image_analysis_prompt',
+            'ai_summary_prompt',
+            // Section 7: Identité Assistant
+            'ai_expert_name',
+            'ai_expert_avatar_key'
         ];
 
         // Auth Check
@@ -238,5 +336,24 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
         loadSettings();
 
     </script>
+
+    <!-- Footer avec stats -->
+    <footer class="bg-gray-100 border-t border-gray-200 mt-12 py-6">
+        <div class="container mx-auto px-4 max-w-5xl">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-database text-gray-400"></i>
+                    <span>13 paramètres IA configurables</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-shield-alt text-green-500"></i>
+                    <span>Modifications sauvegardées en temps réel dans la base de données</span>
+                </div>
+                <div class="text-xs text-gray-400">
+                    Phase 3.2 - Architecture Zero Hardcode
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>`;
