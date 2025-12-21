@@ -11,10 +11,17 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    // Process CSS imports from components
+    modules: {
+      localsConvention: 'camelCase'
+    }
+  },
   build: {
     outDir: 'dist/static/dashboard-v2',
     emptyOutDir: true,
     manifest: true,
+    cssCodeSplit: false, // Bundle all CSS together
     rollupOptions: {
       input: {
         main: 'src/dashboard-v2/main.tsx',

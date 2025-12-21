@@ -1,0 +1,354 @@
+/* Dashboard V2 - Glassmorphism Design System
+ * Reproduit le design premium du legacy avec effects modernes
+ */
+
+/* === VARIABLES === */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.60);
+  --glass-bg-hover: rgba(255, 255, 255, 0.90);
+  --glass-blur: 16px;
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --shadow-soft: 0 4px 12px 0 rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 6px 16px 0 rgba(0, 0, 0, 0.12);
+  
+  /* Priority colors */
+  --priority-critical: #dc2626;
+  --priority-high: #ef4444;
+  --priority-medium: #f59e0b;
+  --priority-low: #10b981;
+  
+  /* Status colors */
+  --status-pending: #f59e0b;
+  --status-in-progress: #3b82f6;
+  --status-completed: #10b981;
+  --status-on-hold: #6b7280;
+}
+
+/* === FIXED BACKGROUND LAYER === */
+#app-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url(/static/maintenance-bg-premium.jpg);
+  background-size: cover;
+  background-position: center;
+  z-index: -1;
+  will-change: transform;
+}
+
+/* === GLASSMORPHISM CARD === */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+}
+
+.glass-card:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* === KANBAN COLUMN === */
+.kanban-column {
+  min-height: 400px;
+  min-width: 260px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+}
+
+.kanban-column:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Column states */
+.kanban-column.empty {
+  flex: 0 0 auto;
+  width: 200px;
+}
+
+.kanban-column.has-tickets {
+  flex: 1 1 280px;
+  max-width: 320px;
+}
+
+.kanban-column.drag-over {
+  background: #dbeafe;
+  border: 3px dashed #3b82f6;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.1);
+  transform: scale(1.02);
+}
+
+/* === TICKET CARD - NEUMORPHISM PREMIUM === */
+.ticket-card {
+  background: linear-gradient(145deg, #ffffff, #f1f5f9);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-shadow:
+    6px 6px 16px rgba(71, 85, 105, 0.30),
+    -3px -3px 10px rgba(255, 255, 255, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: grab;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid rgba(203, 213, 225, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.8);
+  border-left: 1px solid rgba(255, 255, 255, 0.5);
+  position: relative;
+}
+
+/* Top highlight */
+.ticket-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.9) 20%,
+    rgba(255, 255, 255, 0.9) 80%,
+    transparent
+  );
+  border-radius: 10px 10px 0 0;
+}
+
+/* Inner border gradient */
+.ticket-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  padding: 1px;
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.1) 30%,
+    transparent 50%,
+    rgba(71, 85, 105, 0.1)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.ticket-card:hover {
+  box-shadow:
+    8px 8px 24px rgba(71, 85, 105, 0.35),
+    -4px -4px 14px rgba(255, 255, 255, 1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.20);
+  transform: translateY(-3px) translateZ(10px);
+}
+
+.ticket-card:active {
+  cursor: grabbing;
+  box-shadow:
+    4px 4px 10px rgba(71, 85, 105, 0.35),
+    -2px -2px 8px rgba(255, 255, 255, 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.ticket-card.dragging {
+  opacity: 0.7;
+  cursor: grabbing;
+  transform: rotate(3deg) scale(1.05);
+  box-shadow:
+    12px 12px 32px rgba(71, 85, 105, 0.40),
+    -6px -6px 18px rgba(255, 255, 255, 0.7),
+    0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* === PRIORITY STYLES === */
+.priority-critical {
+  border-left: 5px solid var(--priority-critical);
+  box-shadow:
+    6px 6px 12px rgba(220, 38, 38, 0.2),
+    -3px -3px 8px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.priority-high {
+  border-left: 5px solid var(--priority-high);
+  box-shadow:
+    6px 6px 12px rgba(239, 68, 68, 0.15),
+    -3px -3px 8px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.priority-medium {
+  border-left: 5px solid var(--priority-medium);
+  box-shadow:
+    6px 6px 12px rgba(245, 158, 11, 0.12),
+    -3px -3px 8px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.priority-low {
+  border-left: 5px solid var(--priority-low);
+  box-shadow:
+    6px 6px 12px rgba(16, 185, 129, 0.1),
+    -3px -3px 8px rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* === PRIORITY BADGES === */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-critical {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.badge-high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-low {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* === STATUS BADGES === */
+.status-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.status-in-progress {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.status-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.status-on-hold {
+  background: rgba(107, 114, 128, 0.15);
+  color: #4b5563;
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow:
+      6px 6px 12px rgba(220, 38, 38, 0.2),
+      -3px -3px 8px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    box-shadow:
+      6px 6px 16px rgba(220, 38, 38, 0.3),
+      -3px -3px 8px rgba(255, 255, 255, 0.8);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* === HEADER GLASS === */
+.header-glass {
+  background: rgba(0, 59, 115, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === SCROLLBAR CUSTOM === */
+.custom-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+/* === UTILITY CLASSES === */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 640px) {
+  .kanban-column {
+    min-width: 240px;
+    min-height: 300px;
+  }
+  
+  .ticket-card {
+    padding: 8px;
+  }
+}
