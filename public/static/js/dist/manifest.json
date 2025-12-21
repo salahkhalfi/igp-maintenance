@@ -1,0 +1,186 @@
+{
+  "generated": "2025-12-21T19:06:26.062Z",
+  "files": [
+    {
+      "original": "AIChatModal_v4.js",
+      "minified": "AIChatModal_v4.min.js",
+      "savings": "50.9%"
+    },
+    {
+      "original": "AdminRoles.js",
+      "minified": "AdminRoles.min.js",
+      "savings": "44.6%"
+    },
+    {
+      "original": "App.js",
+      "minified": "App.min.js",
+      "savings": "67.4%"
+    },
+    {
+      "original": "AppHeader.js",
+      "minified": "AppHeader.min.js",
+      "savings": "45.2%"
+    },
+    {
+      "original": "BarcodeScanner.js",
+      "minified": "BarcodeScanner.min.js",
+      "savings": "51.2%"
+    },
+    {
+      "original": "ConfirmModal.js",
+      "minified": "ConfirmModal.min.js",
+      "savings": "35.6%"
+    },
+    {
+      "original": "CreateTicketModal.js",
+      "minified": "CreateTicketModal.min.js",
+      "savings": "49.5%"
+    },
+    {
+      "original": "ErrorBoundary.js",
+      "minified": "ErrorBoundary.min.js",
+      "savings": "36.8%"
+    },
+    {
+      "original": "KanbanBoard.js",
+      "minified": "KanbanBoard.min.js",
+      "savings": "51.5%"
+    },
+    {
+      "original": "LoginForm.js",
+      "minified": "LoginForm.min.js",
+      "savings": "49.5%"
+    },
+    {
+      "original": "MachineManagementModal.js",
+      "minified": "MachineManagementModal.min.js",
+      "savings": "54.7%"
+    },
+    {
+      "original": "MainApp.js",
+      "minified": "MainApp.min.js",
+      "savings": "57.1%"
+    },
+    {
+      "original": "ManageColumnsModal.js",
+      "minified": "ManageColumnsModal.min.js",
+      "savings": "52.9%"
+    },
+    {
+      "original": "MoveTicketBottomSheet.js",
+      "minified": "MoveTicketBottomSheet.min.js",
+      "savings": "50.9%"
+    },
+    {
+      "original": "NotificationModal.js",
+      "minified": "NotificationModal.min.js",
+      "savings": "44.5%"
+    },
+    {
+      "original": "OverdueTicketsModal.js",
+      "minified": "OverdueTicketsModal.min.js",
+      "savings": "55.8%"
+    },
+    {
+      "original": "PerformanceModal.js",
+      "minified": "PerformanceModal.min.js",
+      "savings": "49.0%"
+    },
+    {
+      "original": "ProductionPlanning_v3.js",
+      "minified": "ProductionPlanning_v3.min.js",
+      "savings": "49.4%"
+    },
+    {
+      "original": "PromptModal.js",
+      "minified": "PromptModal.min.js",
+      "savings": "38.0%"
+    },
+    {
+      "original": "PushDevicesModal.js",
+      "minified": "PushDevicesModal.min.js",
+      "savings": "49.4%"
+    },
+    {
+      "original": "RoleDropdown.js",
+      "minified": "RoleDropdown.min.js",
+      "savings": "55.6%"
+    },
+    {
+      "original": "ScheduledCountdown.js",
+      "minified": "ScheduledCountdown.min.js",
+      "savings": "66.6%"
+    },
+    {
+      "original": "SystemSettingsModal.js",
+      "minified": "SystemSettingsModal.min.js",
+      "savings": "54.8%"
+    },
+    {
+      "original": "TicketAttachments.js",
+      "minified": "TicketAttachments.min.js",
+      "savings": "45.5%"
+    },
+    {
+      "original": "TicketComments.js",
+      "minified": "TicketComments.min.js",
+      "savings": "48.4%"
+    },
+    {
+      "original": "TicketDetailsModal.js",
+      "minified": "TicketDetailsModal.min.js",
+      "savings": "52.1%"
+    },
+    {
+      "original": "TicketDetailsModal_v3.js",
+      "minified": "TicketDetailsModal_v3.min.js",
+      "savings": "52.0%"
+    },
+    {
+      "original": "TicketHistory.js",
+      "minified": "TicketHistory.min.js",
+      "savings": "36.3%"
+    },
+    {
+      "original": "TicketTimer.js",
+      "minified": "TicketTimer.min.js",
+      "savings": "47.3%"
+    },
+    {
+      "original": "Toast.js",
+      "minified": "Toast.min.js",
+      "savings": "40.8%"
+    },
+    {
+      "original": "UserForms.js",
+      "minified": "UserForms.min.js",
+      "savings": "44.1%"
+    },
+    {
+      "original": "UserGuideModal.js",
+      "minified": "UserGuideModal.min.js",
+      "savings": "42.5%"
+    },
+    {
+      "original": "UserList.js",
+      "minified": "UserList.min.js",
+      "savings": "43.2%"
+    },
+    {
+      "original": "UserManagementModal.js",
+      "minified": "UserManagementModal.min.js",
+      "savings": "52.2%"
+    },
+    {
+      "original": "VoiceTicketFab.js",
+      "minified": "VoiceTicketFab.min.js",
+      "savings": "49.4%"
+    },
+    {
+      "original": "utils.js",
+      "minified": "utils.min.js",
+      "savings": "65.7%"
+    }
+  ],
+  "totalSavings": "50.8%"
+}
