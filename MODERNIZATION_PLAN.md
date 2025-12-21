@@ -401,12 +401,70 @@ jobs:
 
 ---
 
+## 🔄 SYSTÈME DE CHECKPOINTS (ROLLBACK GARANTI)
+
+### Principe : Chaque étape = 1 checkpoint réversible
+
+```
+CHECKPOINT = git tag + backup + deploy fonctionnel testé
+```
+
+### Commandes checkpoint :
+
+```bash
+# CRÉER checkpoint avant modification
+git tag -a checkpoint-XX-description -m "État stable avant [modification]"
+git push origin checkpoint-XX-description
+
+# BACKUP complet (optionnel pour étapes majeures)
+# Utiliser ProjectBackup tool → génère tar.gz téléchargeable
+
+# ROLLBACK si problème
+git checkout checkpoint-XX-description
+npm run build
+npx wrangler pages deploy dist --project-name webapp
+
+# OU rollback Cloudflare (plus rapide)
+npx wrangler pages deployment list --project-name webapp
+npx wrangler pages deployment rollback <deployment-id> --project-name webapp
+```
+
+### Registre des checkpoints :
+
+| ID | Tag | Description | Date | Status |
+|----|-----|-------------|------|--------|
+| 00 | `checkpoint-00-stable-legacy` | Avant toute modernisation | - | À créer |
+| 01 | `checkpoint-01-phase1-config` | Après ConfigService | - | - |
+| 02 | `checkpoint-02-phase2a-simple` | Après composants simples | - | - |
+| 03 | `checkpoint-03-phase2b-visual` | Après composants visuels | - | - |
+| 04 | `checkpoint-04-phase2c-critical` | Après composants critiques | - | - |
+| 05 | `checkpoint-05-multitenancy` | Après multi-tenant | - | - |
+
+### Règle checkpoint :
+
+```
+⚠️ AVANT chaque étape de migration :
+   1. Vérifier que l'app fonctionne (toutes fonctions critiques)
+   2. Créer checkpoint : git tag checkpoint-XX-description
+   3. Push le tag : git push origin checkpoint-XX-description
+   4. Noter dans le registre ci-dessus
+   
+⚠️ SI problème après modification :
+   1. STOP - ne pas essayer de "fixer"
+   2. Rollback immédiat au dernier checkpoint
+   3. Analyser ce qui a cassé
+   4. Réessayer avec approche différente
+```
+
+---
+
 ## 🔄 PROCÉDURE DE MIGRATION SÉCURISÉE
 
 ```
 Pour CHAQUE composant migré :
 
 1. AVANT migration
+   [ ] Créer checkpoint (git tag)
    [ ] Tester composant legacy en prod (screenshot/vidéo)
    [ ] Lister toutes dépendances (grep imports)
    [ ] Identifier APIs backend utilisées
@@ -423,9 +481,46 @@ Pour CHAQUE composant migré :
    [ ] Comparer avec legacy (même comportement?)
    [ ] Tester fonctions critiques (voix, push, IA)
    [ ] Validation utilisateur
+   [ ] SI OK → nouveau checkpoint
+   [ ] SI KO → rollback checkpoint précédent
 
-4. ROLLBACK PLAN
-   [ ] Feature flag prêt
-   [ ] Legacy toujours accessible
-   [ ] Procédure rollback documentée
+4. ROLLBACK IMMÉDIAT SI :
+   - Création vocale ne fonctionne plus
+   - Push notifications cassées
+   - IA ne répond plus
+   - Sons ne jouent plus
+   - Login impossible
+   - Erreur console bloquante
 ```
+
+---
+
+## 🚨 PROCÉDURE D'URGENCE (ROLLBACK RAPIDE)
+
+```bash
+# Option 1: Rollback Git (complet)
+git fetch --tags
+git checkout checkpoint-XX-description
+npm run build
+npx wrangler pages deploy dist --project-name webapp
+
+# Option 2: Rollback Cloudflare (plus rapide, code inchangé)
+npx wrangler pages deployment list --project-name webapp
+# Copier l'ID du déploiement stable
+npx wrangler pages deployment rollback <deployment-id> --project-name webapp
+
+# Option 3: Restaurer backup tar.gz
+# Télécharger depuis URL backup
+tar -xzf backup.tar.gz -C /home/user/
+cd /home/user/webapp
+npm install
+npm run build
+npx wrangler pages deploy dist --project-name webapp
+```
+
+### Temps de rollback estimé :
+| Méthode | Temps | Quand utiliser |
+|---------|-------|----------------|
+| Cloudflare rollback | 30 sec | Bug mineur, code OK |
+| Git checkout + deploy | 3 min | Bug code, besoin ancienne version |
+| Restore backup | 10 min | Catastrophe, corruption |
