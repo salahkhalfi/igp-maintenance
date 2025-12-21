@@ -524,3 +524,94 @@ npx wrangler pages deploy dist --project-name webapp
 | Cloudflare rollback | 30 sec | Bug mineur, code OK |
 | Git checkout + deploy | 3 min | Bug code, besoin ancienne version |
 | Restore backup | 10 min | Catastrophe, corruption |
+
+---
+
+## 💾 GESTION MÉMOIRE & RESSOURCES SANDBOX
+
+### Limites connues :
+- RAM sandbox limitée (~2GB)
+- `npm install` peut saturer la mémoire
+- `npm run build` compile 3 builds (worker + client + messenger)
+- Trop de fichiers ouverts = freeze
+
+### Commandes anti-blocage :
+
+```bash
+# AVANT toute opération lourde - libérer mémoire
+pm2 delete all 2>/dev/null || true
+fuser -k 3000/tcp 2>/dev/null || true
+
+# Build séquentiel (moins de RAM que parallèle)
+cd /home/user/webapp
+npm run build:worker   # Attendre fin
+npm run build:client   # Attendre fin  
+npm run build:messenger # Attendre fin
+
+# OU utiliser le script séquentiel
+npm run build:sequential
+
+# Si npm install bloque
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install --prefer-offline
+
+# Si sandbox freeze total
+# Utiliser ResetSandbox tool (fichiers préservés)
+```
+
+### Scripts à ajouter dans package.json :
+
+```json
+{
+  "scripts": {
+    "build:sequential": "npm run build:worker && npm run build:client && npm run build:messenger",
+    "clean": "rm -rf dist .wrangler/tmp node_modules/.cache",
+    "clean:full": "rm -rf node_modules dist .wrangler package-lock.json",
+    "memory:free": "pm2 delete all; fuser -k 3000/tcp 2>/dev/null || true"
+  }
+}
+```
+
+### Règles pendant modernisation :
+
+```
+⚠️ ÉVITER :
+- npm install de grosses dépendances en une fois
+- Build complet après chaque petit changement
+- Plusieurs terminaux/processus simultanés
+- Garder pm2 running pendant build
+
+✅ FAIRE :
+- Commits fréquents (petits changements)
+- Build seulement quand nécessaire
+- Tuer pm2 avant build lourd
+- Une opération à la fois
+- Tester localement avant build complet
+```
+
+### Si blocage pendant modernisation :
+
+```
+1. STOP - ne pas forcer
+2. Attendre 30 sec (timeout automatique possible)
+3. Si toujours bloqué → ResetSandbox
+4. Après reset:
+   cd /home/user/webapp
+   npm run build:sequential
+   npm run deploy:prod
+5. Vérifier que checkpoint fonctionne
+```
+
+### Installation nouvelles dépendances (safe) :
+
+```bash
+# UNE dépendance à la fois
+npm install zustand --save
+# Attendre fin
+npm install @tanstack/react-query --save
+# Attendre fin
+
+# JAMAIS tout d'un coup
+# ❌ npm install zustand @tanstack/react-query lucide-react ...
+```
