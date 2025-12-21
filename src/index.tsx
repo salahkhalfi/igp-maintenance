@@ -49,7 +49,8 @@ import { authMiddleware, adminOnly, internalUserOnly, technicianOrAdmin, technic
 import { hasPermission, getRolePermissions } from './utils/permissions';
 import { adminRolesHTML } from './views/admin-roles';
 import { adminAiSettingsHTML } from './views/admin-ai-settings';
-import { guideHTML } from './views/guide';
+import { generateGuideHTML } from './views/guide';
+import { createConfigService } from './services/config';
 import { changelogHTML } from './views/changelog';
 import { homeHTML } from './views/home';
 import { historiqueHTML } from './views/historique';
@@ -339,9 +340,11 @@ app.get("/", (c) => {
 
 
 
-// Route du guide utilisateur
-app.get('/guide', (c) => {
-  return c.html(guideHTML);
+// Route du guide utilisateur (dynamic baseUrl from config)
+app.get('/guide', async (c) => {
+  const config = createConfigService(c.env.DB);
+  const baseUrl = await config.getBaseUrl();
+  return c.html(generateGuideHTML(baseUrl));
 });
 
 // Route historique (redirection vers changelog)

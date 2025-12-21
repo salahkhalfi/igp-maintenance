@@ -230,6 +230,20 @@ app.get('/data', checkTvKey, async (c) => {
         console.error('TV: Error fetching broadcast messages:', e);
     }
 
+    // Get location settings for weather (from DB, no hardcoding)
+    let location = { latitude: '45.5017', longitude: '-73.5673', timezone: 'America/Toronto' };
+    try {
+      const locSettings = await c.env.DB.prepare(`
+        SELECT setting_key, setting_value FROM system_settings 
+        WHERE setting_key IN ('location_latitude', 'location_longitude', 'location_timezone')
+      `).all();
+      for (const s of locSettings.results || []) {
+        if (s.setting_key === 'location_latitude') location.latitude = s.setting_value as string;
+        if (s.setting_key === 'location_longitude') location.longitude = s.setting_value as string;
+        if (s.setting_key === 'location_timezone') location.timezone = s.setting_value as string;
+      }
+    } catch (e) { /* use defaults */ }
+
     return c.json({
       meta: {
         generated_at: new Date().toISOString(),
@@ -241,7 +255,8 @@ app.get('/data', checkTvKey, async (c) => {
       categories,
       message: dashboardMessage, // Legacy support
       broadcast_notes: dashboardNotes, // Notes textuelles
-      broadcast_messages: broadcastMessages // Riche contenu (Images/Galeries)
+      broadcast_messages: broadcastMessages, // Riche contenu (Images/Galeries)
+      location // Weather location from config
     });
 
   } catch (error) {

@@ -838,9 +838,10 @@ ${aiConfig.rules}
 
         // 🛡️ SANITIZATION FIREWALL (Anti-Hallucination) v2
         // Force correction of domains and paths BEFORE sending to client
+        // Replaces any domain that looks like a placeholder or wrong domain with actual baseUrl
         if (baseUrl && baseUrl.startsWith('http')) {
             finalReply = finalReply
-                .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, baseUrl);
+                .replace(/https?:\/\/(?:www\.)?(?:example\.com|localhost:\d+)/gi, baseUrl);
         }
         
         finalReply = finalReply

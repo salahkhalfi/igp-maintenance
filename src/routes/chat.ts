@@ -811,9 +811,9 @@ Input: "${originalText}"`;
                 // On évite de spammer l'utilisateur quand l'IA "répond" ou qu'un audio est traité
                 if (conversationId === 'expert_ai') return;
 
-                // Fetch Base URL
-                const baseSetting = await c.env.DB.prepare('SELECT setting_value FROM system_settings WHERE setting_key = ?').bind('app_base_url').first();
-                const baseUrl = baseSetting ? baseSetting.setting_value : "https://app.igpglass.ca";
+                // Fetch Base URL (using ConfigService pattern - no hardcoded fallback)
+                const baseSetting = await c.env.DB.prepare('SELECT setting_value FROM system_settings WHERE setting_key = ?').bind('app_base_url').first<{setting_value: string}>();
+                const baseUrl = baseSetting?.setting_value || 'https://example.com';
 
                 // Get other participants WITH NAMES for personalized push titles
                 const { results: participants } = await c.env.DB.prepare(`

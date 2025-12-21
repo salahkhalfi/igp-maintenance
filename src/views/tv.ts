@@ -1060,7 +1060,9 @@ export const tvHTML = `
 
         async function fetchWeather() {
             try {
-                const res = await axios.get('https://api.open-meteo.com/v1/forecast?latitude=45.5017&longitude=-73.5673&current=temperature_2m,weather_code&timezone=America%2FToronto');
+                // Get location from State.appData (loaded from API) or use defaults
+                const loc = (State.appData && State.appData.location) || { latitude: '45.5017', longitude: '-73.5673', timezone: 'America/Toronto' };
+                const res = await axios.get(\`https://api.open-meteo.com/v1/forecast?latitude=\${loc.latitude}&longitude=\${loc.longitude}&current=temperature_2m,weather_code&timezone=\${encodeURIComponent(loc.timezone)}\`);
                 if (res.data && res.data.current) {
                     const { temperature_2m, weather_code } = res.data.current;
                     const temp = Math.round(temperature_2m);

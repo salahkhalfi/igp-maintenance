@@ -1,4 +1,9 @@
-export const guideHTML = `<!DOCTYPE html>
+// Guide HTML generator - accepts baseUrl to avoid hardcoding
+export const generateGuideHTML = (baseUrl: string = 'https://example.com'): string => {
+  // Extract domain from baseUrl for display
+  const domain = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  
+  return `<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -1210,7 +1215,7 @@ export const guideHTML = `<!DOCTYPE html>
                         <li>- Safari : Préférences → Sites web → Notifications</li>
                         <li>- Firefox : ☰ → Paramètres → Vie privée → Permissions → Notifications</li>
                     </ul>
-                    <li>• Trouvez <strong>app.igpglass.ca</strong> et activez les notifications</li>
+                    <li>• Trouvez <strong>\${domain}</strong> et activez les notifications</li>
                 </ul>
                 <div class="mt-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-sm text-gray-700">
                     <p class="font-semibold text-amber-800 mb-1">
@@ -1378,7 +1383,7 @@ export const guideHTML = `<!DOCTYPE html>
                     <div>
                         <strong class="text-gray-800">Sur iPhone/iPad (Safari) :</strong>
                         <ol class="mt-2 space-y-1 text-gray-700">
-                            <li>1. Ouvrez app.igpglass.ca dans Safari</li>
+                            <li>1. Ouvrez \${domain} dans Safari</li>
                             <li>2. Appuyez sur l'icône <i class="fas fa-share"></i> <strong>Partager</strong> (en bas)</li>
                             <li>3. Sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
                             <li>4. Appuyez sur <strong>"Ajouter"</strong></li>
@@ -1387,7 +1392,7 @@ export const guideHTML = `<!DOCTYPE html>
                     <div>
                         <strong class="text-gray-800">Sur Android (Chrome) :</strong>
                         <ol class="mt-2 space-y-1 text-gray-700">
-                            <li>1. Ouvrez app.igpglass.ca dans Chrome</li>
+                            <li>1. Ouvrez \${domain} dans Chrome</li>
                             <li>2. Appuyez sur les <strong>trois points</strong> ⋮ en haut à droite</li>
                             <li>3. Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
                             <li>4. Appuyez sur <strong>"Installer"</strong></li>
@@ -1759,3 +1764,7 @@ export const guideHTML = `<!DOCTYPE html>
     </script>
 </body>
 </html>`;
+};
+
+// Legacy export for backward compatibility (uses generic placeholder)
+export const guideHTML = generateGuideHTML('https://example.com');

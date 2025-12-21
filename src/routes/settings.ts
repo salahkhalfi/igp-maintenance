@@ -7,6 +7,7 @@ import { getDb } from '../db';
 import { users, machines } from '../db/schema';
 import { hashPassword } from '../utils/password';
 import { sql } from 'drizzle-orm';
+import { createConfigService } from '../services/config';
 
 const settings = new Hono<{ Bindings: Bindings }>();
 
@@ -1111,6 +1112,74 @@ settings.put('/:key', authMiddleware, adminOnly, async (c) => {
     return c.json({ message: 'Paramètre mis à jour avec succès', setting_value: value });
   } catch (error) {
     console.error('Update setting error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+// ============================================================================
+// CONFIG SERVICE ROUTES (Public & Admin)
+// ============================================================================
+
+/**
+ * GET /api/settings/config/public - Get public config (branding, app info)
+ * Accès: Public (no auth required)
+ * Used by frontend for theming and branding
+ */
+settings.get('/config/public', async (c) => {
+  try {
+    const config = createConfigService(c.env.DB);
+    const values = await config.getMany([
+      'app_name',
+      'app_tagline', 
+      'app_base_url',
+      'company_title',
+      'company_subtitle',
+      'company_logo_url',
+      'primary_color',
+      'secondary_color',
+      'timezone_offset_hours',
+      'industry_type'
+    ]);
+    return c.json(values);
+  } catch (error) {
+    console.error('Get public config error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/config/ai - Get AI configuration
+ * Accès: Authenticated users
+ */
+settings.get('/config/ai', authMiddleware, async (c) => {
+  try {
+    const config = createConfigService(c.env.DB);
+    const aiConfig = await config.getAIConfig();
+    return c.json(aiConfig);
+  } catch (error) {
+    console.error('Get AI config error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/config/bulk - Update multiple settings at once
+ * Accès: Admin only
+ * Body: { key1: value1, key2: value2, ... }
+ */
+settings.put('/config/bulk', authMiddleware, adminOnly, async (c) => {
+  try {
+    const config = createConfigService(c.env.DB);
+    const updates = await c.req.json<Record<string, string>>();
+    
+    const results: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      results[key] = await config.set(key, value);
+    }
+    
+    return c.json({ success: true, results });
+  } catch (error) {
+    console.error('Bulk update config error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
