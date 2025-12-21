@@ -7,8 +7,6 @@ import { sendPushNotification } from './push';
 import { hashPassword } from '../utils/password';
 import { chatGuests, systemSettings } from '../db/schema'; // Assuming schema export
 import { eq } from 'drizzle-orm';
-import { getApiKeys } from '../ai/context';
-import { getDb } from '../db';
 
 // Helper for Vision Analysis
 async function analyzeImageWithOpenAI(arrayBuffer: ArrayBuffer, contentType: string, apiKey: string): Promise<string | null> {
@@ -622,10 +620,6 @@ app.post('/send', async (c) => {
         if (type === 'audio' && mediaKey && !transcription) {
              c.executionCtx.waitUntil((async () => {
                 try {
-                    // 0. Fetch Keys
-                    const db = getDb(c.env);
-                    const keys = await getApiKeys(c.env, db);
-
                     // 1. Get Audio File
                     const object = await c.env.MEDIA_BUCKET.get(mediaKey);
                     if (!object) return;
@@ -635,7 +629,7 @@ app.post('/send', async (c) => {
                     let originalText = "";
 
                     // --- STRATEGY A: GROQ (Fast & Free-ish) ---
-                    if (keys.groq) {
+                    if (c.env.GROQ_API_KEY) {
                         try {
                             const formData = new FormData();
                             // Groq requires a file object/blob
@@ -648,7 +642,7 @@ app.post('/send', async (c) => {
                             
                             const resp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
                                 method: 'POST',
-                                headers: { 'Authorization': `Bearer ${keys.groq}` },
+                                headers: { 'Authorization': `Bearer ${c.env.GROQ_API_KEY}` },
                                 body: formData
                             });
 
@@ -667,7 +661,7 @@ app.post('/send', async (c) => {
                     }
 
                     // --- STRATEGY B: OPENAI (Reliable Fallback) ---
-                    if (!originalText && keys.openai) {
+                    if (!originalText && c.env.OPENAI_API_KEY) {
                         try {
                             const formData = new FormData();
                             const blob = new Blob([arrayBuffer], { type: object.httpMetadata?.contentType || 'audio/webm' });
@@ -679,7 +673,7 @@ app.post('/send', async (c) => {
 
                             const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                                 method: 'POST',
-                                headers: { 'Authorization': `Bearer ${keys.openai}` },
+                                headers: { 'Authorization': `Bearer ${c.env.OPENAI_API_KEY}` },
                                 body: formData
                             });
 

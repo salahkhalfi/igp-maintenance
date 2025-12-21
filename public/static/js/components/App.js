@@ -24,6 +24,16 @@ const App = () => {
     const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
     const [headerTitle, setHeaderTitle] = React.useState(companyTitle);
     const [headerSubtitle, setHeaderSubtitle] = React.useState(companySubtitle);
+    
+    // Modal states for User and Machine Management
+    const [showUserModal, setShowUserModal] = React.useState(false);
+    const [showMachineModal, setShowMachineModal] = React.useState(false);
+    
+    // Expose modal openers to window for MainApp buttons
+    React.useEffect(() => {
+        window.openUserManagement = () => setShowUserModal(true);
+        window.openMachineManagement = () => setShowMachineModal(true);
+    }, []);
 
     React.useEffect(() => {
         if (isLoggedIn) {
@@ -282,29 +292,46 @@ const App = () => {
     }
 
     return React.createElement(ErrorBoundary, null,
-        React.createElement(MainApp, {
-            tickets,
-            machines,
-            currentUser: currentUserState,
-            onLogout: logout,
-            onRefresh: loadData,
-            showCreateModal,
-            setShowCreateModal,
-            onTicketCreated: loadData,
-            initialDescription: initialDescription,
-            initialImageUrl: initialImageUrl,
-            initialTitle: initialTitle,
-            initialPriority: initialPriority,
-            initialMachineId: initialMachineId,
-            initialAssignedToId: initialAssignedToId,
-            initialScheduledDate: initialScheduledDate,
-            unreadMessagesCount: unreadMessagesCount,
-            onRefreshMessages: loadUnreadMessagesCount,
-            headerTitle: headerTitle,
-            headerSubtitle: headerSubtitle,
-            // Pass actions down
-            moveTicket: moveTicket,
-            deleteTicket: deleteTicket
-        })
+        React.createElement(React.Fragment, null,
+            // Main Application
+            React.createElement(MainApp, {
+                tickets,
+                machines,
+                currentUser: currentUserState,
+                onLogout: logout,
+                onRefresh: loadData,
+                showCreateModal,
+                setShowCreateModal,
+                onTicketCreated: loadData,
+                initialDescription: initialDescription,
+                initialImageUrl: initialImageUrl,
+                initialTitle: initialTitle,
+                initialPriority: initialPriority,
+                initialMachineId: initialMachineId,
+                initialAssignedToId: initialAssignedToId,
+                initialScheduledDate: initialScheduledDate,
+                unreadMessagesCount: unreadMessagesCount,
+                onRefreshMessages: loadUnreadMessagesCount,
+                headerTitle: headerTitle,
+                headerSubtitle: headerSubtitle,
+                // Pass actions down
+                moveTicket: moveTicket,
+                deleteTicket: deleteTicket
+            }),
+            // User Management Modal
+            React.createElement(UserManagementModal, {
+                show: showUserModal,
+                onClose: () => setShowUserModal(false),
+                currentUser: currentUserState
+            }),
+            // Machine Management Modal
+            React.createElement(MachineManagementModal, {
+                show: showMachineModal,
+                onClose: () => setShowMachineModal(false),
+                currentUser: currentUserState,
+                machines: machines,
+                onRefresh: fetchMachines
+            })
+        )
     );
 };

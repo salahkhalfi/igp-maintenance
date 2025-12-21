@@ -62,4 +62,56 @@
 
 ---
 
+## 🟪 MODULE 5: THE REACT DISASTER (December 2024)
+
+### [CONTEXT]
+Attempted to "modernize" the dashboard by introducing bundled React (Vite/TypeScript) alongside existing CDN React (legacy components).
+
+### [THE FATAL MISTAKE]
+```
+❌ NEVER mix two React instances in the same page.
+   - main.js (Vite bundled) = React Instance A
+   - MainApp.js (CDN global) = React Instance B
+   - Result: Hooks don't share state, props are dead references
+```
+
+### [SYMPTOMS]
+*   `setShowCreateModal` passed from App.tsx → empty function in MainApp.js
+*   `window.openUserManagement()` → undefined
+*   Voice ticket creation → broken (modal never opens)
+*   All modals → broken communication
+
+### [THE FIX]
+Reverted to 100% legacy architecture:
+*   Restored `App.js` (CDN React)
+*   Disabled `main.js` (bundled React)
+*   Re-added `UserManagementModal.js`, `MachineManagementModal.js`
+*   Added missing handlers (`onOpenPerformance`, `onOpenPushDevices`)
+
+### [COST]
+*   ~20+ hours of debugging
+*   Multiple broken deployments
+*   User frustration
+
+### [THE LAW]
+```
+⚠️ REACT ISOLATION PRINCIPLE:
+   - ONE React instance per page. No exceptions.
+   - Either ALL legacy (CDN) or ALL modern (bundled).
+   - "Bridge" components between two Reacts = GUARANTEED FAILURE.
+   
+✅ PROOF IT WORKS:
+   - IGP Connect (/messenger) uses modern React (bundled, isolated).
+   - It works perfectly because it's SEPARATE, not mixed.
+```
+
+### [FUTURE MODERNIZATION PATH]
+If modernizing the dashboard:
+1. Create SEPARATE build (like /messenger)
+2. Migrate route by route (e.g., /dashboard-v2)
+3. When 100% migrated, swap routes
+4. NEVER inject modern React into legacy pages
+
+---
+
 ## 🏁 END OF KERNEL

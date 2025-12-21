@@ -1,4 +1,4 @@
-const MainApp = ({ hideKanban = false, tickets = [], machines = [], currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
+const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh, showCreateModal, setShowCreateModal, onTicketCreated, unreadMessagesCount, onRefreshMessages, headerTitle, headerSubtitle, moveTicket, deleteTicket, initialDescription, initialImageUrl, initialTitle: propTitle, initialPriority: propPriority, initialMachineId: propMachineId, initialAssignedToId: propAssignedToId, initialScheduledDate: propScheduledDate }) => {
     // Sécurité : Garantir que tickets est un tableau
     const safeTickets = Array.isArray(tickets) ? tickets : [];
     const safeMachines = Array.isArray(machines) ? machines : [];
@@ -369,6 +369,7 @@ const MainApp = ({ hideKanban = false, tickets = [], machines = [], currentUser,
                 setShowMobileMenu(false); 
             },
             onOpenOverdue: () => { setShowOverdueModal(true); setShowMobileMenu(false); },
+            onOpenPushDevices: () => { setShowPushDevicesModal(true); setShowMobileMenu(false); },
             onOpenUserManagement: () => { 
                 // FORCE BRIDGE TO MODERN REACT MODAL
                 if (window.openUserManagement) {
@@ -378,6 +379,7 @@ const MainApp = ({ hideKanban = false, tickets = [], machines = [], currentUser,
                 }
                 setShowMobileMenu(false); 
             },
+            onOpenPerformance: () => { setShowPerformanceModal(true); setShowMobileMenu(false); },
             onOpenManageColumns: () => { setShowManageColumns(true); setShowMobileMenu(false); },
             onOpenSystemSettings: () => { setShowSystemSettings(true); setShowMobileMenu(false); },
             onOpenAdminRoles: () => { setShowAdminRoles(true); setShowMobileMenu(false); },
@@ -398,7 +400,7 @@ const MainApp = ({ hideKanban = false, tickets = [], machines = [], currentUser,
         showProductionPlanning && React.createElement(window.ProductionPlanning, { onClose: () => setShowProductionPlanning(false) }),
 
         // --- KANBAN BOARD ---
-        !hideKanban && React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
+        React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },
             React.createElement(KanbanBoard, {
                 tickets: safeTickets,
                 currentUser: currentUser,

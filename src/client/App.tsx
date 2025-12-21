@@ -12,14 +12,8 @@ import RPCStatus from './components/RPCStatus'
 import VoiceTicketFab from './components/VoiceTicketFab'
 import DataImportModal from './components/DataImportModal'
 import MachineManagementModal from './components/MachineManagementModal'
-import AppHeader from './components/AppHeader'
-import KanbanBoard from './components/KanbanBoard'
-import LoginForm from './components/LoginForm'
 import { User, TicketPriority } from './types'
 import { client, getAuthToken } from './api'
-import { useTickets, useTicketMutations } from './hooks/useTickets'
-import { useMachines } from './hooks/useMachines'
-import { useSettings } from './hooks/useSettings'
 
 // Create a client
 const queryClient = new QueryClient()
@@ -35,10 +29,6 @@ const LegacyMainAppBridge = (props: any) => {
             const LegacyReact = (window as any).React;
             const LegacyReactDOM = (window as any).ReactDOM;
             const MainApp = (window as any).MainApp;
-
-            // STRANGLER PATTERN: Disable Legacy Header by replacing it with a null component
-            // This forces MainApp to render without its internal header
-            // (window as any).AppHeader = () => null; // ROLLBACK: Re-enable Legacy Header
 
             // On utilise createElement de la version GLOBALE pour que les Hooks fonctionnent
             const element = LegacyReact.createElement(MainApp, props);
@@ -57,7 +47,7 @@ const LegacyMainAppBridge = (props: any) => {
         }
     }, [props]); // Re-render si les props changent (ex: tickets mis à jour)
 
-    return <div ref={containerRef} id="legacy-root" />;
+    return <div ref={containerRef} id="legacy-root" style={{ minHeight: '100vh' }} />;
 };
 
 const MOCK_USER: User = {
@@ -73,24 +63,8 @@ const AppContent = () => {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isMachineModalOpen, setIsMachineModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
   const [importTab, setImportTab] = useState<'users' | 'machines'>('users');
-  
-  // Ticket Modals State
-  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
-  const [isTicketDetailsOpen, setIsTicketDetailsOpen] = useState(false);
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-  
-  // Create Ticket Initial State
-  const [initialTicketDescription, setInitialTicketDescription] = useState<string>('');
-  const [initialImageUrl, setInitialImageUrl] = useState<string>('');
-  const [initialTicketTitle, setInitialTicketTitle] = useState<string>('');
-  const [initialTicketPriority, setInitialTicketPriority] = useState<TicketPriority>('medium');
-  const [initialTicketMachineId, setInitialTicketMachineId] = useState<number | null>(null);
-  const [initialTicketMachineName, setInitialTicketMachineName] = useState<string>('');
-  const [initialAssignedToName, setInitialAssignedToName] = useState<string>('');
-  const [initialAssignedToId, setInitialAssignedToId] = useState<number | null>(null);
-  const [initialScheduledDate, setInitialScheduledDate] = useState<string>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fetch real user
   const { data: realUser } = useQuery({
@@ -98,47 +72,78 @@ const AppContent = () => {
     queryFn: async () => {
       const token = getAuthToken();
       if (!token) return null;
-      try {
-          const res = await client.api.auth.me.$get();
-          if (!res.ok) return null;
-          const data = await res.json();
-          return data.user;
-      } catch (e) {
-          return null;
-      }
+      const res = await client.api.auth.me.$get();
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.user;
     },
     retry: false
   });
 
-  // FIX: currentUser est null si pas connecté (Pas de MOCK_USER qui force le dashboard)
   const currentUser = realUser ? { 
       ...realUser, 
       full_name: `${realUser.first_name} ${realUser.last_name || ''}`.trim() 
-  } as User : null;
+  } as User : MOCK_USER;
 
-  // --- MODERN DATA LAYER (PHASE 1) ---
-  const { data: tickets = [], refetch: refetchTickets } = useTickets();
-  const { data: machines = [] } = useMachines();
-  const { data: settings } = useSettings();
-  const { moveTicket, deleteTicket } = useTicketMutations();
+  // Fetch Tickets
+  const { data: rawTickets, refetch: refetchTickets } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: async () => {
+       try {
+           const res = await fetch('/api/tickets', {
+               headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+           });
+           if (!res.ok) return [];
+           const data = await res.json();
+           // Ensure we extract the array
+           return Array.isArray(data.tickets) ? data.tickets : [];
+       } catch (e) {
+           console.error("Fetch tickets failed", e);
+           return [];
+       }
+    }
+  });
+  
+  // Safe array guarantee
+  const tickets = Array.isArray(rawTickets) ? rawTickets : [];
 
-  // Bridge Functions (Wrappers for Mutations)
-  const handleMoveTicket = async (id: number, status: string, log: string) => {
-      try {
-        await moveTicket.mutateAsync({ id, status, log });
-      } catch (e) {
-          console.error("Move ticket failed", e);
-          alert("Erreur lors du déplacement du ticket");
+  // Fetch Machines
+  const { data: rawMachines } = useQuery({
+      queryKey: ['machines'],
+      queryFn: async () => {
+          try {
+              const res = await fetch('/api/machines', {
+                  headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+              });
+              if (!res.ok) return [];
+              const data = await res.json();
+              return Array.isArray(data.machines) ? data.machines : [];
+          } catch (e) {
+              console.error("Fetch machines failed", e);
+              return [];
+          }
       }
+  });
+
+  // Safe array guarantee
+  const machines = Array.isArray(rawMachines) ? rawMachines : [];
+
+  // Bridge Functions
+  const handleMoveTicket = async (id: number, status: string, log: string) => {
+      await fetch(`/api/tickets/${id}/move`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+          body: JSON.stringify({ status, log })
+      });
+      refetchTickets();
   };
 
   const handleDeleteTicket = async (id: number) => {
-      try {
-        await deleteTicket.mutateAsync(id);
-      } catch (e) {
-          console.error("Delete ticket failed", e);
-          alert("Erreur lors de la suppression");
-      }
+      await fetch(`/api/tickets/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      refetchTickets();
   };
 
   // Expose Bridges to Window for Legacy Calls
@@ -151,50 +156,16 @@ const AppContent = () => {
     };
   }, []);
 
-  if (!currentUser && !getAuthToken()) {
-      return <LoginForm onLogin={() => window.location.reload()} />;
+  if (!realUser && !getAuthToken()) {
+      // If not logged in, MainApp usually handles login form or we can redirect
+      // For now let MainApp handle it or show loading
+      // return <div className="flex h-screen items-center justify-center">Veuillez vous connecter...</div>;
   }
 
   return (
     <>
-        {/* MODERN HEADER (DISABLED FOR ROLLBACK) */}
-        {/* <AppHeader 
-            currentUser={currentUser}
-            activeTicketsCount={tickets.filter((t: any) => t.status !== 'completed' && t.status !== 'archived').length}
-            
-            // Dynamic Settings
-            headerTitle={settings?.title}
-            headerSubtitle={settings?.subtitle}
-            messengerName={settings?.messengerName}
-            activeModules={settings?.modules}
-            logoUrl={settings?.logoUrl}
-
-            onRefresh={refetchTickets}
-            onLogout={() => {
-                localStorage.removeItem('auth_token');
-                window.location.reload();
-            }}
-            onOpenCreateModal={() => setIsCreateTicketOpen(true)}
-            onOpenUserManagement={() => setIsUserModalOpen(true)}
-            onOpenMachineManagement={() => setIsMachineModalOpen(true)}
-            // State
-            showArchived={showArchived}
-            setShowArchived={setShowArchived}
-            // Legacy placeholders
-            onOpenOverdue={() => alert("Module 'Retard' en cours de migration...")}
-            onOpenPerformance={() => alert("Module 'Performance' en cours de migration...")}
-            onOpenPlanning={() => alert("Module 'Planning' en cours de migration...")}
-            onOpenManageColumns={() => alert("Configuration Colonnes : Bientôt disponible")}
-            onOpenSystemSettings={() => alert("Paramètres Système : Bientôt disponible")}
-            onOpenAdminRoles={() => alert("Gestion Rôles : Bientôt disponible")}
-            onOpenTv={() => window.open('/tv', '_blank')}
-            onOpenAIChat={() => alert("Assistant IA : Utilisez le bouton flottant")}
-            onOpenPushDevices={() => alert("Gestion Appareils : Bientôt disponible")}
-        /> */}
-
-        {/* MAIN DASHBOARD (LEGACY BRIDGE - FULL RESTORE) */}
+        {/* MAIN DASHBOARD (LEGACY BRIDGE) */}
         <LegacyMainAppBridge 
-            hideKanban={false} // ROLLBACK: Show Legacy Kanban
             tickets={tickets}
             machines={machines}
             currentUser={currentUser}
@@ -202,28 +173,18 @@ const AppContent = () => {
             onTicketCreated={refetchTickets}
             moveTicket={handleMoveTicket}
             deleteTicket={handleDeleteTicket}
-            // Sync State with Legacy
-            showArchived={showArchived}
-            setShowArchived={setShowArchived}
-            
             onLogout={() => {
                 localStorage.removeItem('auth_token');
                 window.location.reload();
             }}
-            // Legacy props - FULLY DYNAMIC
-            headerTitle={settings?.title || "Gestion de la maintenance"}
-            headerSubtitle={settings?.subtitle || "Système de Maintenance Universel"}
-            activeModules={settings?.modules} 
+            // Legacy props
+            headerTitle="Gestion de la maintenance"
+            headerSubtitle="Système de Maintenance Universel"
             unreadMessagesCount={0}
             onRefreshMessages={() => {}}
-            showCreateModal={isCreateTicketOpen} // Sync with App state
-            setShowCreateModal={setIsCreateTicketOpen} 
+            showCreateModal={showCreateModal} 
+            setShowCreateModal={setShowCreateModal} 
         />
-
-        {/* MODERN KANBAN (DISABLED FOR ROLLBACK) */}
-        {/* <div className="max-w-[1600px] mx-auto px-4 py-6">
-            <KanbanBoard ... />
-        </div> */}
 
         {/* MODERN REACT MODALS (Overlay) */}
         <UserManagementModal 

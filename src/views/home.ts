@@ -30,11 +30,12 @@ export const homeHTML = `
     <script src="/static/js/components/ScheduledCountdown.js"></script>
     <script src="/static/js/components/UserGuideModal.js"></script>
     <script src="/static/js/components/PromptModal.js"></script>
+    <script src="/static/js/components/LoginForm.js"></script>
     <script src="/static/js/components/MoveTicketBottomSheet.js"></script>
     <script src="/static/js/components/CreateTicketModal.js?v=3.0.4"></script>
     <script src="/static/js/components/TicketDetailsModal_v3.js?v=3.2.0"></script>
     <script src="/static/js/components/ErrorBoundary.js"></script>
-    <!-- MACHINE MODAL REMOVED (MODERNIZED) -->
+    <script src="/static/js/components/MachineManagementModal.js?v=3.0.6"></script>
     <script src="/static/js/components/RoleDropdown.js"></script>
     <script src="/static/js/components/SystemSettingsModal.js?v=3.0.5"></script>
     <script src="/static/js/components/PerformanceModal.js"></script>
@@ -55,10 +56,12 @@ export const homeHTML = `
     <script src="/static/js/components/TicketAttachments.js"></script>
     <script src="/static/js/components/UserForms.js"></script>
     <script src="/static/js/components/UserList.js"></script>
-    <!-- USER MANAGEMENT MODAL REMOVED (MODERNIZED) -->
+    <script src="/static/js/components/UserManagementModal.js?v=3.0.6"></script>
     <script src="/static/js/components/VoiceTicketFab.js"></script>
     <script src="/static/js/components/MainApp.js?v=3.0.6"></script>
-    <script type="module" src="/static/client/main.js?v=3.0.11"></script>
+    <script src="/static/js/components/App.js?v=3.0.6"></script>
+    <!-- DISABLED: main.js conflicts with CDN React - uses bundled React which breaks Legacy MainApp hooks -->
+    <!-- <script type="module" src="/static/client/main.js"></script> -->
     <style>
         /* FIXED BACKGROUND LAYER - Solves mobile/resize glitching */
         #app-background {
@@ -531,7 +534,8 @@ export const homeHTML = `
     </div>
 
     <script>
-        // SAFE CACHE RESET v3.0.11 - FORCED
+        // SAFE CACHE RESET v3.0.3 - DISABLED (Fixed Push Notification Stability)
+        /*
         window.addEventListener('load', function() {
             if ('serviceWorker' in navigator) {
                 // 1. Unregister all existing workers to clear "Zombie" cache
@@ -545,9 +549,10 @@ export const homeHTML = `
                 });
             }
         });
+        */
 
         // API_URL est défini dans utils.js
-        console.log('HOME HTML LOADED v3.0.11 (SW Cleanup)');
+        console.log('HOME HTML LOADED v3.0.7 (Push Fixed)');
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
 
@@ -741,9 +746,9 @@ export const homeHTML = `
         // Expose to window for MainApp to use if needed (though we'll inject it into App)
         window.TVDashboardModal = TVDashboardModal;
 
-        // REACT RENDER MOVED TO MODERN MODULE (main.js)
-        // const root = ReactDOM.createRoot(document.getElementById('root'));
-        // root.render(React.createElement(App));
+        // REACT RENDER - Uses CDN React + Legacy App.js
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(App));
 
         // Simple stats loader - no React state, just direct DOM update
         window.loadSimpleStats = function() {
