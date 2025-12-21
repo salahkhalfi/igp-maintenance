@@ -30,10 +30,13 @@ export interface Ticket {
   machine_name?: string;
   assigned_to?: number;
   assigned_name?: string;
-  created_by: number;
+  assignee_name?: string;
+  created_by?: number;
+  reported_by?: number;
   created_at: string;
   updated_at: string;
   due_date?: string;
+  is_machine_down?: boolean;
 }
 
 export interface Machine {
