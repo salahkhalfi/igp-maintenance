@@ -201,7 +201,7 @@ export default function App() {
           
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">
-              Bonjour, <strong>{user?.display_name || user?.username}</strong>
+              Bonjour, <strong>{user?.first_name || user?.full_name || user?.email}</strong>
             </span>
             <a
               href="/"
@@ -355,7 +355,7 @@ export default function App() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-xs text-gray-500 uppercase">Utilisateur</p>
-              <p className="font-medium text-gray-800">{user?.username}</p>
+              <p className="font-medium text-gray-800">{user?.first_name} {user?.last_name}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500 uppercase">Rôle</p>
