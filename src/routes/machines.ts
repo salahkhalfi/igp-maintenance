@@ -127,6 +127,60 @@ machinesRoute.patch('/:id', adminOnly, zValidator('param', machineIdParamSchema)
       return c.json({ error: 'Machine non trouvée' }, 404);
     }
 
+    // === SYNC: Machine status → Tickets is_machine_down ===
+    // When machine status changes from Machine Management, sync to all active tickets
+    if (body.status !== undefined) {
+      const isMachineDown = body.status === 'out_of_service';
+      const machineName = `${result[0].machine_type || 'Machine'} ${result[0].model || ''}`.trim();
+      
+      // Update all non-closed tickets for this machine
+      await db.update(tickets)
+        .set({ 
+          is_machine_down: isMachineDown,
+          updated_at: sql`CURRENT_TIMESTAMP`
+        })
+        .where(
+          and(
+            eq(tickets.machine_id, id),
+            sql`tickets.status NOT IN ('resolved', 'closed', 'completed', 'cancelled', 'archived')`,
+            sql`tickets.deleted_at IS NULL`
+          )
+        );
+      
+      console.log(`[Machine Sync] Machine #${id} (${machineName}) status=${body.status} → Updated tickets is_machine_down=${isMachineDown}`);
+
+      // === AUTO TV BROADCAST ===
+      try {
+        if (isMachineDown) {
+          // Check if alert already exists for this machine
+          const existingAlert = await c.env.DB.prepare(`
+            SELECT id FROM broadcast_messages WHERE is_auto_generated = 1 AND source_machine_id = ?
+          `).bind(id).first();
+
+          if (!existingAlert) {
+            // Create urgent TV broadcast
+            await c.env.DB.prepare(`
+              INSERT INTO broadcast_messages (type, title, content, display_duration, priority, is_active, is_auto_generated, source_machine_id)
+              VALUES ('alert', ?, ?, 30, 100, 1, 1, ?)
+            `).bind(
+              `🚨 MACHINE À L'ARRÊT`,
+              `${machineName} - Mise hors service`,
+              id
+            ).run();
+            console.log(`[TV Broadcast] Auto-created alert for machine ${machineName} (from Machine Management)`);
+          }
+        } else {
+          // Remove auto-generated alert when machine is back operational
+          await c.env.DB.prepare(`
+            DELETE FROM broadcast_messages WHERE is_auto_generated = 1 AND source_machine_id = ?
+          `).bind(id).run();
+          console.log(`[TV Broadcast] Removed auto-alert for machine #${id}`);
+        }
+      } catch (broadcastError) {
+        console.error('[TV Broadcast] Error managing auto-alert:', broadcastError);
+      }
+    }
+
     return c.json({ machine: result[0] });
   } catch (error) {
     console.error('Update machine error:', error);

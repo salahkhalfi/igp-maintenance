@@ -384,6 +384,15 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
       // User explicitly signaled machine status via ticket
       const newStatus = body.is_machine_down ? 'out_of_service' : 'operational';
       
+      // Get machine info for broadcast
+      const machineInfo = await db.select()
+        .from(machines)
+        .where(eq(machines.id, currentTicket.machine_id))
+        .limit(1);
+      
+      const machine = machineInfo[0];
+      const machineName = machine ? `${machine.machine_type || 'Machine'} ${machine.model || ''}`.trim() : 'Machine';
+      
       // Update machine
       await db.update(machines)
         .set({ status: newStatus, updated_at: sql`CURRENT_TIMESTAMP` })
@@ -391,6 +400,35 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
         .run();
 
       console.log(`[Ticket Updated] Machine #${currentTicket.machine_id} status set to ${newStatus}.`);
+      
+      // ⚠️ AUTO TV BROADCAST: Critical machine status change bypasses admin
+      // When machine goes DOWN -> Create urgent broadcast alert
+      // When machine goes UP -> Remove the alert
+      try {
+        if (body.is_machine_down) {
+          // CREATE URGENT TV BROADCAST
+          await c.env.DB.prepare(`
+            INSERT INTO broadcast_messages (type, title, content, display_duration, priority, is_active, is_auto_generated, source_ticket_id, source_machine_id)
+            VALUES ('alert', ?, ?, 30, 100, 1, 1, ?, ?)
+          `).bind(
+            `🚨 MACHINE À L'ARRÊT`,
+            `${machineName} - ${currentTicket.title || 'Intervention requise'}`,
+            id,
+            currentTicket.machine_id
+          ).run();
+          console.log(`[TV Broadcast] Auto-created alert for machine ${machineName} (ticket #${id})`);
+        } else {
+          // REMOVE AUTO-GENERATED ALERT when machine is back up
+          await c.env.DB.prepare(`
+            DELETE FROM broadcast_messages 
+            WHERE is_auto_generated = 1 AND source_machine_id = ?
+          `).bind(currentTicket.machine_id).run();
+          console.log(`[TV Broadcast] Removed auto-alert for machine #${currentTicket.machine_id}`);
+        }
+      } catch (broadcastError) {
+        // Non-blocking: log error but don't fail the ticket update
+        console.error('[TV Broadcast] Error managing auto-alert:', broadcastError);
+      }
       
       // Add to timeline
       await db.insert(ticketTimeline).values({

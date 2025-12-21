@@ -308,7 +308,7 @@ app.get('/messenger', async (c) => {
   return newResponse;
 });
 
-// Servir la vue TV via Hono pour éviter les 404 statiques
+// Servir la vue TV via Hono (embedded in worker for reliability)
 app.get('/tv.html', (c) => c.html(tvHTML));
 app.get('/tv', (c) => c.html(tvHTML)); // Alias pour flexibilité
 

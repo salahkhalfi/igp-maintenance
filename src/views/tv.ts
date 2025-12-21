@@ -54,6 +54,15 @@ export const tvHTML = `
             100% { border-color: rgba(239, 68, 68, 0.4); }
         }
 
+        /* Machine Down Alert Animation */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2s ease-in-out infinite;
+        }
+
         .text-shadow {
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
@@ -560,7 +569,20 @@ export const tvHTML = `
                 const titleHtml = msg.title ? \`<h1 class="text-5xl lg:text-7xl font-bold text-white mb-8 font-display tracking-tight drop-shadow-lg">\${msg.title}</h1>\` : '';
                 const contentHtml = msg.content ? \`<p class="text-2xl lg:text-4xl text-slate-200 max-w-5xl leading-relaxed font-light drop-shadow-md whitespace-pre-line">\${msg.content}</p>\` : '';
                 
-                if (msg.type === 'image_text' || msg.type === 'text') { 
+                // ALERT TYPE: Critical machine down alerts (auto-generated)
+                if (msg.type === 'alert') {
+                    html = \`
+                        <div class="flex flex-col items-center animate-fade-in-up w-full">
+                            <div class="bg-red-600/90 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border-4 border-red-400 animate-pulse-slow max-w-4xl">
+                                <div class="flex items-center justify-center gap-6 mb-6">
+                                    <i class="fas fa-exclamation-triangle text-white text-6xl lg:text-8xl drop-shadow-lg"></i>
+                                </div>
+                                <h1 class="text-4xl lg:text-6xl font-black text-white text-center mb-4 tracking-tight drop-shadow-lg">\${msg.title || 'ALERTE'}</h1>
+                                <p class="text-2xl lg:text-3xl text-red-100 text-center font-medium drop-shadow-md">\${msg.content || ''}</p>
+                            </div>
+                        </div>
+                    \`;
+                } else if (msg.type === 'image_text' || msg.type === 'text') { 
                     const imgHtml = (msg.media_urls && msg.media_urls.length > 0) 
                         ? \`<img src="\${msg.media_urls[0]}" class="max-h-[60vh] w-auto rounded-3xl shadow-2xl border-4 border-white/10 mb-8 object-contain bg-black/20">\` 
                         : '';
