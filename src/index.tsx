@@ -56,7 +56,7 @@ import { homeHTML } from './views/home';
 import { historiqueHTML } from './views/historique';
 import { tvHTML } from './views/tv';
 import { tvAdminHTML } from './views/tv-admin';
-import { dashboardV2HTML } from './views/dashboard-v2';
+// Dashboard V2 removed - keeping legacy dashboard
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
@@ -331,9 +331,7 @@ app.get('/admin/ai-settings', async (c) => {
 
 // Dashboard V2 - Nouveau dashboard moderne (Phase 2A)
 // Fonctionne en parallèle du legacy, auth gérée par JS
-app.get('/dashboard-v2', (c) => {
-  return c.html(dashboardV2HTML);
-});
+// Dashboard V2 route removed - legacy dashboard is the main UI
 
 // Servir les fichiers statiques du dossier static/
 app.use('/static/*', serveStatic({ root: './' }));
