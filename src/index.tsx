@@ -56,6 +56,7 @@ import { homeHTML } from './views/home';
 import { historiqueHTML } from './views/historique';
 import { tvHTML } from './views/tv';
 import { tvAdminHTML } from './views/tv-admin';
+import { dashboardV2HTML } from './views/dashboard-v2';
 import auth from './routes/auth';
 import tickets from './routes/tickets';
 import machines from './routes/machines';
@@ -326,6 +327,12 @@ app.get('/admin/roles', async (c) => {
 // Page d'administration du Cerveau IA (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/ai-settings', async (c) => {
   return c.html(adminAiSettingsHTML);
+});
+
+// Dashboard V2 - Nouveau dashboard moderne (Phase 2A)
+// Fonctionne en parallèle du legacy, auth gérée par JS
+app.get('/dashboard-v2', (c) => {
+  return c.html(dashboardV2HTML);
 });
 
 // Servir les fichiers statiques du dossier static/
