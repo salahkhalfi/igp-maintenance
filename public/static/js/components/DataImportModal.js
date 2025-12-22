@@ -175,42 +175,24 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
         URL.revokeObjectURL(url);
     };
 
-    // Open template in Google Sheets (no API, just URL redirect)
-    const openInGoogleSheets = (type) => {
-        const template = TEMPLATES[type];
-        if (!template) return;
+    // Google Sheets PUBLIC templates (pre-configured, read-only, users make a copy)
+    const GOOGLE_SHEETS_TEMPLATES = {
+        users: 'https://docs.google.com/spreadsheets/d/1pUGa3Sgwc5Lfn0oTrnCELZZtSz5mQD3sq9epkQrSdlg/copy',
+        machines: 'https://docs.google.com/spreadsheets/d/1vIGxumPFa8fpIU9BU9U-cmDIohPBWa2lpObs215ytcc/copy'
+    };
 
-        // Encode CSV content for URL (without comments for cleaner Google Sheets)
-        const cleanContent = template.content
-            .split('\n')
-            .filter(line => !line.trim().startsWith('#'))
-            .join('\n');
+    // Open template in Google Sheets (direct link to public template)
+    const openInGoogleSheets = (type) => {
+        const templateUrl = GOOGLE_SHEETS_TEMPLATES[type];
+        if (!templateUrl) return;
+
+        // Show instruction toast
+        if (window.showToast) {
+            window.showToast('📋 Google Sheets va s\'ouvrir. Cliquez "Créer une copie" pour utiliser le modèle.', 'info', 5000);
+        }
         
-        // Create a Blob and upload to a temporary data URL approach won't work cross-origin
-        // Instead, we use Google Sheets' import from clipboard approach via a new tab
-        
-        // Method: Copy to clipboard + open Google Sheets with instructions
-        const csvForClipboard = cleanContent;
-        
-        navigator.clipboard.writeText(csvForClipboard).then(() => {
-            // Open Google Sheets new spreadsheet
-            const sheetName = type === 'users' ? 'Import_Utilisateurs' : 'Import_Machines';
-            const googleSheetsUrl = `https://docs.google.com/spreadsheets/create?title=${encodeURIComponent(sheetName)}`;
-            
-            // Show instruction toast
-            if (window.showToast) {
-                window.showToast('📋 Données copiées ! Dans Google Sheets: Ctrl+V pour coller', 'success', 5000);
-            } else {
-                alert('📋 Données copiées dans le presse-papier !\n\nDans Google Sheets qui va s\'ouvrir:\n1. Cliquez sur la cellule A1\n2. Appuyez sur Ctrl+V (ou Cmd+V sur Mac)\n3. Les données seront collées automatiquement');
-            }
-            
-            // Open Google Sheets in new tab
-            window.open(googleSheetsUrl, '_blank');
-        }).catch(err => {
-            console.error('Clipboard error:', err);
-            // Fallback: just open Google Sheets
-            alert('Impossible de copier automatiquement.\n\nVeuillez télécharger le fichier CSV puis l\'importer manuellement dans Google Sheets via Fichier > Importer.');
-        });
+        // Open Google Sheets template (forces copy dialog)
+        window.open(templateUrl, '_blank');
     };
 
     // Export current data to Google Sheets
