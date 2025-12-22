@@ -259,34 +259,42 @@ const AppHeader = ({
 
     return React.createElement('header', { className: 'sticky top-0 z-50 bg-transparent transition-all duration-300' },
         
-        // --- ROW 1: IDENTITY & NAVIGATION (White Background) ---
-        React.createElement('div', { className: 'bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100' },
-            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-2' },
-                React.createElement('div', { className: 'flex justify-between items-center h-12' },
+        // --- ROW 1: IDENTITY & NAVIGATION ---
+        React.createElement('div', { className: 'bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-100' },
+            React.createElement('div', { className: 'max-w-[1600px] mx-auto px-3 md:px-4 py-2' },
+                React.createElement('div', { className: 'flex justify-between items-center h-12 md:h-12' },
                     
                     // LEFT: LOGO & TITLE
                     React.createElement('div', { className: 'flex items-center group cursor-pointer flex-1 min-w-0', onClick: () => window.location.reload() },
                         React.createElement('img', {
                             src: logoUrl, alt: 'Logo',
-                            className: 'h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105 shrink-0',
+                            className: 'h-9 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105 shrink-0',
                             onError: (e) => { 
                                 if (e.target.src.includes('logo.png')) return;
                                 e.target.src = '/logo.png'; 
                             }
                         }),
-                        React.createElement('div', { className: 'flex flex-col justify-center ml-2 md:ml-3 pl-2 md:pl-3 border-l border-slate-200 flex-1 min-w-0' },
-                            React.createElement('h1', { className: 'text-xs md:text-sm font-bold leading-none text-slate-800 tracking-tight truncate', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'text-[9px] md:text-[10px] font-medium text-slate-500 mt-0.5 truncate' }, headerSubtitle)
+                        // Mobile: Compact title
+                        React.createElement('div', { className: 'md:hidden flex flex-col justify-center ml-2 pl-2 border-l border-slate-200 flex-1 min-w-0' },
+                            React.createElement('h1', { className: 'text-[11px] font-bold leading-tight text-slate-800 tracking-tight line-clamp-2', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[9px] font-medium text-slate-400 truncate hidden' }, headerSubtitle)
+                        ),
+                        // Desktop: Full title
+                        React.createElement('div', { className: 'hidden md:flex flex-col justify-center ml-3 pl-3 border-l border-slate-200 flex-1 min-w-0' },
+                            React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 tracking-tight truncate', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[10px] font-medium text-slate-500 mt-0.5 truncate' }, headerSubtitle)
                         )
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE
-                    React.createElement('div', { className: 'flex items-center gap-2 md:gap-3 shrink-0 ml-2' },
+                    React.createElement('div', { className: 'flex items-center gap-1.5 md:gap-3 shrink-0 ml-2' },
 
-                        // Mobile Greeting (Optimized for space)
-                        React.createElement('div', { className: 'md:hidden flex flex-col items-end mr-1' },
-                            React.createElement('span', { className: 'text-[10px] text-slate-400 font-medium leading-none' }, 'Bonjour,'),
-                            React.createElement('span', { className: 'text-xs font-bold text-slate-700 leading-none truncate max-w-[80px]' }, (currentUser?.first_name || 'Vous'))
+                        // Mobile: Compact user badge with initial
+                        React.createElement('div', { className: 'md:hidden flex items-center gap-2' },
+                            React.createElement('div', { className: 'flex flex-col items-end' },
+                                React.createElement('span', { className: 'text-[9px] text-slate-400 font-medium leading-none' }, 'Bonjour,'),
+                                React.createElement('span', { className: 'text-[11px] font-bold text-slate-700 leading-tight truncate max-w-[70px]' }, (currentUser?.first_name || 'Vous'))
+                            )
                         ),
                         
                         // User Badge (Desktop) - STATIC (No click)
@@ -364,13 +372,12 @@ const AppHeader = ({
                              onClick: onOpenTv, title: 'Passer en mode affichage TV'
                         }, React.createElement('i', { className: 'fas fa-tv' })),
 
-                        // MAIN MENU TOGGLE (Visible on ALL screens)
-                        // This button was missing on Desktop in v2, preventing access to Settings/Admin
+                        // MAIN MENU TOGGLE (Premium design)
                         React.createElement('button', {
-                            className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-sm ml-2',
+                            className: 'w-10 h-10 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 text-white hover:from-slate-600 hover:to-slate-700 shadow-lg shadow-slate-400/30 active:scale-95 transition-all ml-1 md:ml-2',
                             onClick: () => setShowMobileMenu(!showMobileMenu),
                             title: 'Ouvrir le menu complet'
-                        }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-lg' }))
+                        }, React.createElement('i', { className: 'fas ' + (showMobileMenu ? 'fa-times' : 'fa-bars') + ' text-base' }))
                     )
                 )
             )
