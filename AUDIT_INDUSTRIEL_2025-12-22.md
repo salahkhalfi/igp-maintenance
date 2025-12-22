@@ -14,13 +14,15 @@
 | 🔒 Sécurité | **9.8/10** | ✅ Excellent |
 | 🛡️ Fiabilité | **9.5/10** | ✅ Excellent |
 | ⚡ Performance | **8.5/10** | ✅ Très Bon |
-| 🌐 Disponibilité | **8.5/10** | ✅ Très Bon |
+| 🌐 Disponibilité | **6.5/10** | ⚠️ Acceptable (offline non implémenté) |
 | 📝 Traçabilité | **9.5/10** | ✅ Excellent |
 | 🏢 Conformité SaaS | **9.0/10** | ✅ Excellent |
 | 📱 UX Industriel | **9.0/10** | ✅ Excellent |
 | 🔌 Intégrations | **9.0/10** | ✅ Excellent |
 
-**Score Global: 9.2/10** 🌟🌟 - Application **PRODUCTION-READY** pour un contexte industriel exigeant.
+**Score Global: 8.9/10** 🌟 - Application **PRODUCTION-READY** pour un contexte industriel.
+
+> ⚠️ **CONNEXION INTERNET OBLIGATOIRE** - Le mode hors-ligne n'est pas implémenté.
 
 ---
 
@@ -131,15 +133,28 @@ CREATE INDEX idx_users_email ON users(email);
 
 ---
 
-## 4. 🌐 DISPONIBILITÉ (8.5/10)
+## 4. 🌐 DISPONIBILITÉ (6.5/10)
 
 ### ✅ Points Forts
 
 | Critère | Implémentation | Score |
 |---------|----------------|-------|
-| **Service Worker** | PWA avec stratégies cache (Stale-While-Revalidate) | 9/10 |
-| **Cache Utilisateur** | localStorage pour accès offline | 8/10 |
-| **Fallbacks** | Fallbacks Markdown, cache user, etc. | 8/10 |
+| **Service Worker** | PWA avec cache assets statiques uniquement | 6/10 |
+| **Cache Utilisateur** | localStorage pour session persistante | 7/10 |
+| **Fallbacks** | Fallbacks Markdown, cache user, etc. | 7/10 |
+
+### 🚨 **AVERTISSEMENT CRITIQUE : Mode Offline NON IMPLÉMENTÉ**
+
+> **🔴 L'application NÉCESSITE UNE CONNEXION INTERNET pour fonctionner.**
+> 
+> Le Service Worker cache UNIQUEMENT les assets statiques (JS, CSS, images).
+> Les données métier (tickets, machines, utilisateurs) proviennent de l'API D1 
+> et ne sont **JAMAIS disponibles hors-ligne**.
+>
+> **⚠️ Les tentatives passées d'implémenter le mode offline ont CASSÉ L'APPLICATION plusieurs fois.**
+> Cette fonctionnalité est VOLONTAIREMENT ABSENTE pour garantir la stabilité.
+>
+> **NE PAS TENTER D'IMPLÉMENTER LE MODE OFFLINE sans validation approfondie.**
 
 ### 📱 PWA Configuration
 ```json
@@ -233,7 +248,7 @@ CREATE INDEX idx_users_email ON users(email);
 - ✅ Photos intégrées aux tickets
 - ✅ Kanban drag-and-drop (touch support)
 - ✅ QR Code machines
-- ✅ Mode hors-ligne partiel
+- ⚠️ Mode hors-ligne **NON FONCTIONNEL** (cache assets uniquement)
 - ✅ Notifications push temps réel
 
 ### ⚠️ Points d'Attention
@@ -334,7 +349,7 @@ import { generatePushHTTPRequest } from '@block65/webcrypto-web-push';
 
 **Points différenciants :**
 - 🧠 IA intégrée (diagnostic, transcription vocale, contexte personnalisé)
-- 📱 PWA industrielle (offline, push, touch, QR codes)
+- 📱 PWA industrielle (push, touch, QR codes) - ❌ **Mode offline NON IMPLÉMENTÉ** (connexion internet requise)
 - 🔐 Sécurité enterprise (PBKDF2 100k iter, RBAC, HttpOnly, Rate Limiting)
 - ⚙️ Configuration 100% dynamique (logo, modules, IA, rôles)
 - 📝 Traçabilité complète (audit_logs, timestamps, timeline)
@@ -345,7 +360,7 @@ import { generatePushHTTPRequest } from '@block65/webcrypto-web-push';
 3. Monitoring erreurs externes (Sentry)
 
 **Verdict final : ✅✅ PRODUCTION-READY POUR INDUSTRIE**
-Score 9.2/10 - Excellente application
+Score 8.9/10 - Excellente application (connexion internet requise)
 
 ---
 

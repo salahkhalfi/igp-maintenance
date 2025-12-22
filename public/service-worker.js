@@ -1,10 +1,17 @@
 /**
  * Service Worker pour PWA MaintenanceOS
- * Gère le cache des assets statiques et les notifications push
- * Version: v1.1.3 (Online First - Performance Optimized)
+ * 
+ * ⚠️ AVERTISSEMENT IMPORTANT:
+ * Ce Service Worker NE FOURNIT PAS de fonctionnalité hors-ligne pour l'application.
+ * Il cache UNIQUEMENT les assets statiques (JS, CSS, images) pour la performance.
+ * Les données métier (tickets, machines, utilisateurs) NÉCESSITENT une connexion internet.
+ * 
+ * 🚫 NE PAS TENTER D'IMPLÉMENTER LE MODE OFFLINE - Les tentatives passées ont causé des instabilités.
+ * 
+ * Version: v3.1.6 (Online First - NO OFFLINE MODE)
  */
 
-const CACHE_VERSION = 'v3.1.5-fix-lag';
+const CACHE_VERSION = 'v3.1.6-no-offline';
 const CACHE_NAME = `maintenance-os-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)

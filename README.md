@@ -645,7 +645,7 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 - **🔔 PUSH NOTIFICATIONS** : Notifications push quand ticket assigné
 - **📱 Mode Standalone** : App s'ouvre en plein écran (sans barre navigateur)
 - **🏠 Icône écran d'accueil** : Installation "Ajouter à l'écran d'accueil"
-- **⚡ Offline-ready** : Service Worker avec cache pour mode hors ligne
+- **⚠️ CONNEXION INTERNET REQUISE** : Le mode hors-ligne n'est PAS implémenté (les tentatives passées ont causé des instabilités)
 - **🔐 VAPID Keys** : Authentification sécurisée Web Push Protocol
 - **💾 D1 Subscriptions** : Tokens push stockés dans base de données
 - **🎯 Auto-trigger** : Permission demandée automatiquement après login
