@@ -150,11 +150,16 @@ auth.get('/avatar/:userId', async (c) => {
     const userIdStr = c.req.param('userId');
     const userId = parseInt(userIdStr);
     
+    // Cache strategy: short cache + must-revalidate to prevent stale images
+    const CACHE_HEADERS_SVG = { 
+      'Content-Type': 'image/svg+xml', 
+      'Cache-Control': 'public, max-age=300, must-revalidate',  // 5 min cache, revalidate after
+      'Vary': 'Accept'
+    };
+    
     // If invalid ID, return generic SVG immediately (200 OK)
     if (isNaN(userId)) {
-        return new Response(generateAvatarSvg('?'), { 
-            headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=3600' } 
-        });
+        return new Response(generateAvatarSvg('?'), { headers: CACHE_HEADERS_SVG });
     }
 
     const db = getDb(c.env);
@@ -167,18 +172,22 @@ auth.get('/avatar/:userId', async (c) => {
         }).from(users).where(eq(users.id, userId)).get();
     } catch (dbError) {
         console.error('DB Error fetching user avatar:', dbError);
-        // Fallback to generic on DB error
         return new Response(generateAvatarSvg('?'), { 
-            headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-cache' } 
+            headers: { ...CACHE_HEADERS_SVG, 'Cache-Control': 'no-store' } 
         });
     }
 
     // Si utilisateur introuvable or no avatar key
     if (!user || !user.avatar_key) {
-        // Return generated avatar
         const name = user ? user.full_name : '?';
-        return new Response(generateAvatarSvg(name), {
-            headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=3600' }
+        const svg = generateAvatarSvg(name);
+        // Generate ETag from SVG content for proper caching
+        const etag = `"svg-${userId}-${name?.charAt(0) || 'x'}"`;
+        return new Response(svg, {
+            headers: { 
+              ...CACHE_HEADERS_SVG, 
+              'ETag': etag
+            }
         });
     }
 
@@ -189,26 +198,25 @@ auth.get('/avatar/:userId', async (c) => {
         if (object) {
             const headers = new Headers();
             object.writeHttpMetadata(headers);
-            headers.set('etag', object.httpEtag);
-            headers.set('Cache-Control', 'public, max-age=31536000'); // Cache 1 year
+            headers.set('ETag', object.httpEtag);
+            // Cache with avatar_key as version - if key changes, URL changes = cache bust
+            headers.set('Cache-Control', 'public, max-age=86400, must-revalidate'); // 1 day + revalidate
+            headers.set('Vary', 'Accept');
             
             return new Response(object.body, { headers });
         } else {
-            // 🛠️ LOG ONLY: Si le fichier R2 est manquant, on loggue mais on ne supprime PAS la clé en DB
-            // Cela évite de perdre l'avatar en cas de problème temporaire avec R2
-            console.warn(`Avatar file missing in R2 for user ${userId} (key: ${user.avatar_key}), serving fallback temporarily.`);
+            console.warn(`Avatar file missing in R2 for user ${userId} (key: ${user.avatar_key}), serving fallback.`);
         }
     } catch (r2Error) {
         console.error('R2 Fetch Error:', r2Error);
-        // Continue to fallback
     }
 
-    // Fallback final: Retourner un SVG généré (200 OK)
+    // Fallback final: Retourner un SVG généré (200 OK, no-store to prevent caching bad state)
     const svg = generateAvatarSvg(user.full_name);
     return new Response(svg, {
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'no-cache', 
+        'Cache-Control': 'no-store',  // Don't cache fallback - might be temporary R2 issue
       }
     });
 
