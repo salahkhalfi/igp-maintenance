@@ -34,8 +34,38 @@ const AppHeader = ({
         try { return JSON.parse(localStorage.getItem('user_cache') || '{}'); } catch(e) { return {}; }
     }, [propUser]);
     
-    // Session-based cache buster for avatars (changes on each page load, not each render)
-    const [avatarCacheBuster] = React.useState(() => Date.now());
+    // Avatar state: null = loading, true = loaded, false = error (show initials)
+    const [avatarLoaded, setAvatarLoaded] = React.useState(null);
+    const avatarUrl = '/api/auth/avatar/' + (currentUser?.id || 0);
+    
+    // Preload avatar image on mount
+    React.useEffect(() => {
+        if (!currentUser?.id) {
+            setAvatarLoaded(false);
+            return;
+        }
+        const img = new Image();
+        img.onload = () => setAvatarLoaded(true);
+        img.onerror = () => setAvatarLoaded(false);
+        img.src = avatarUrl;
+    }, [currentUser?.id, avatarUrl]);
+    
+    // Helper to render avatar or initials fallback
+    const renderAvatar = (size, className) => {
+        const initial = currentUser?.first_name?.[0] || 'U';
+        if (avatarLoaded === true) {
+            return React.createElement('img', {
+                src: avatarUrl,
+                alt: currentUser?.first_name || 'Avatar',
+                className: className + ' object-cover'
+            });
+        }
+        // Fallback: show initials in gradient circle
+        return React.createElement('div', {
+            className: className + ' bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold',
+            style: { fontSize: size === 'lg' ? '18px' : size === 'md' ? '14px' : '12px' }
+        }, initial);
+    };
 
     // Search state
     const [searchQuery, setSearchQuery] = React.useState('');
@@ -294,12 +324,8 @@ const AppHeader = ({
 
                         // Mobile: Premium User Badge with Real Avatar
                         React.createElement('div', { className: 'md:hidden flex items-center gap-1.5 px-1.5 py-1 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-200/80 shadow-sm' },
-                            // Avatar from API (always returns valid image/SVG, bg as loading state)
-                            React.createElement('img', { 
-                                src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default') + '&t=' + avatarCacheBuster,
-                                alt: currentUser?.first_name || 'User',
-                                className: 'w-7 h-7 rounded-lg object-cover shadow-sm bg-gradient-to-br from-blue-400 to-indigo-600'
-                            }),
+                            // Avatar with conditional rendering
+                            renderAvatar('sm', 'w-7 h-7 rounded-lg shadow-sm'),
                             // Name and role - compact
                             React.createElement('div', { className: 'flex flex-col items-start max-w-[70px]' },
                                 React.createElement('span', { className: 'text-[9px] font-bold text-slate-700 leading-tight truncate w-full' }, 
@@ -319,11 +345,7 @@ const AppHeader = ({
                         
                         // User Badge (Desktop) - with Real Avatar
                         React.createElement('div', { className: 'hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 cursor-default' },
-                            React.createElement('img', { 
-                                src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default') + '&t=' + avatarCacheBuster,
-                                alt: currentUser?.first_name || 'User',
-                                className: 'w-6 h-6 rounded-full object-cover mr-2 bg-gradient-to-br from-blue-400 to-indigo-600'
-                            }),
+                            renderAvatar('sm', 'w-6 h-6 rounded-full mr-2'),
                             React.createElement('span', { className: 'text-xs font-medium text-slate-700' }, 
                                 "Bonjour, " + (currentUser?.first_name || 'Utilisateur')
                             ),
@@ -648,13 +670,9 @@ const AppHeader = ({
                                 className: 'absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all'
                             }, React.createElement('i', { className: 'fas fa-times text-sm' })),
                             
-                            // User Profile Card with REAL AVATAR (API always returns valid image/SVG)
+                            // User Profile Card with REAL AVATAR (conditional rendering)
                             React.createElement('div', { className: 'flex items-center gap-3' },
-                                React.createElement('img', { 
-                                    src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default') + '&t=' + avatarCacheBuster,
-                                    alt: currentUser?.first_name || 'Avatar',
-                                    className: 'w-12 h-12 rounded-2xl object-cover shadow-lg shadow-blue-500/30 border-2 border-white/20 bg-gradient-to-br from-blue-400 to-indigo-600'
-                                }),
+                                renderAvatar('lg', 'w-12 h-12 rounded-2xl shadow-lg shadow-blue-500/30 border-2 border-white/20'),
                                 React.createElement('div', { className: 'flex-1 min-w-0' },
                                     React.createElement('h3', { className: 'text-white font-bold text-base truncate' }, 
                                         currentUser?.first_name || 'Utilisateur'
