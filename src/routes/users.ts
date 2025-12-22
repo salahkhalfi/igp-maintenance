@@ -206,9 +206,9 @@ usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json'
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
-    // PROTECTION: Bloquer toute modification du super admin
-    if (existingUser.is_super_admin === 1) {
-      return c.json({ error: 'Action non autorisée' }, 403);
+    // PROTECTION: Le superadmin ne peut être modifié QUE par lui-même
+    if (existingUser.is_super_admin === 1 && currentUser.userId !== id) {
+      return c.json({ error: 'Seul le support peut modifier son propre compte' }, 403);
     }
 
     // Vérifier si l'utilisateur actuel a la permission can_create_admins
@@ -391,7 +391,11 @@ usersRoute.post('/:id/reset-password', zValidator('param', userIdParamSchema), z
     const existingUser = await db.select().from(users).where(eq(users.id, id)).get();
 
     if (!existingUser) return c.json({ error: 'Utilisateur non trouvé' }, 404);
-    if (existingUser.is_super_admin === 1) return c.json({ error: 'Action non autorisée' }, 403);
+    
+    // Le superadmin ne peut changer son mot de passe que lui-même
+    if (existingUser.is_super_admin === 1 && currentUser.userId !== id) {
+      return c.json({ error: 'Seul le support peut modifier son propre mot de passe' }, 403);
+    }
 
     const password_hash = await hashPassword(new_password);
 
