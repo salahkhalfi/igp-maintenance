@@ -343,6 +343,15 @@ app.get('/admin/ai-settings', async (c) => {
 // Fonctionne en parallèle du legacy, auth gérée par JS
 // Dashboard V2 route removed - legacy dashboard is the main UI
 
+// Middleware pour forcer no-cache sur les fichiers JS (résout le problème de mise à jour)
+app.use('/static/js/*', async (c, next) => {
+  await next();
+  // Force no-cache pour tous les fichiers JS
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  c.header('Pragma', 'no-cache');
+  c.header('Expires', '0');
+});
+
 // Servir les fichiers statiques du dossier static/
 app.use('/static/*', serveStatic({ root: './' }));
 
@@ -350,6 +359,10 @@ app.use('/static/*', serveStatic({ root: './' }));
 app.use('/*.html', serveStatic({ root: './' }));
 
 app.get("/", (c) => {
+  // Force no-cache pour la page principale (assure que les mises à jour sont visibles)
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  c.header('Pragma', 'no-cache');
+  c.header('Expires', '0');
   return c.html(homeHTML);
 });
 
