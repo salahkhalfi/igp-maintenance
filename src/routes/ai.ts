@@ -348,15 +348,26 @@ app.post('/analyze-ticket', async (c) => {
         } catch (e) {}
 
         const machinesList = await db.select({
-            id: machines.id, type: machines.machine_type, model: machines.model, manufacturer: machines.manufacturer, location: machines.location, status: machines.status
-        }).from(machines).all();
+            id: machines.id, type: machines.machine_type, model: machines.model, manufacturer: machines.manufacturer, 
+            location: machines.location, status: machines.status, year: machines.year, serial_number: machines.serial_number,
+            technical_specs: machines.technical_specs
+        }).from(machines).where(sql`deleted_at IS NULL`).all();
         
         // Dynamic Tech List: Don't hardcode roles. Fetch all internal users.
         const techsList = await db.select({
             id: users.id, name: users.full_name, role: users.role
         }).from(users).where(and(ne(users.role, 'guest'), sql`deleted_at IS NULL`)).all();
 
-        const machinesContext = machinesList.map(m => `ID ${m.id}: ${m.type} ${m.manufacturer || ''} ${m.model || ''} [Loc: ${m.location || '?'}] [Status: ${m.status || 'unknown'}]`).join('\n');
+        const machinesContext = machinesList.map(m => {
+            const details = [
+                m.manufacturer,
+                m.model,
+                m.year ? `(${m.year})` : null,
+                m.serial_number ? `S/N:${m.serial_number}` : null
+            ].filter(Boolean).join(' ');
+            const specs = m.technical_specs ? ` - Specs: ${m.technical_specs.substring(0, 100)}` : '';
+            return `ID ${m.id}: ${m.type} ${details} [Loc: ${m.location || '?'}] [Status: ${m.status || 'unknown'}]${specs}`;
+        }).join('\n');
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
         const vocabularyContext = [...machinesList.map(m => `${m.type} ${m.manufacturer || ''} ${m.model || ''}`), ...techsList.map(t => t.name), "Maintenance", "Panne", "Urgent", "Réparation", aiConfig.custom].join(", ");
