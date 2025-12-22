@@ -28,43 +28,44 @@ const AppHeader = ({
     activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true }, // Default
     hasPermission = () => false // Safety fallback
 }) => {
-    // PARACHUTE FIX: Fallback to cache if currentUser is missing (Offline/Refresh fix)
-    const currentUser = React.useMemo(() => {
+    // Get user from props or cache - with STATE to force re-render when propUser arrives
+    const [currentUser, setCurrentUser] = React.useState(() => {
+        // First try propUser
         if (propUser && propUser.id) return propUser;
+        // Then try localStorage cache
         try { 
             const cached = JSON.parse(localStorage.getItem('user_cache') || '{}');
             if (cached && cached.id) return cached;
         } catch(e) {}
-        return propUser || {};
+        return {};
+    });
+    
+    // CRITICAL: Update state when propUser changes (triggers re-render with correct avatar)
+    React.useEffect(() => {
+        if (propUser && propUser.id && propUser.id !== currentUser?.id) {
+            console.log('[Avatar] User loaded, id:', propUser.id);
+            setCurrentUser(propUser);
+        }
     }, [propUser]);
     
-    // Get user ID with multiple fallbacks to ensure we always have a valid ID
-    const userId = React.useMemo(() => {
-        // 1. Try propUser
-        if (propUser?.id) return propUser.id;
-        // 2. Try currentUser (already includes cache)
-        if (currentUser?.id) return currentUser.id;
-        // 3. Direct localStorage check as last resort
-        try {
-            const cached = JSON.parse(localStorage.getItem('user_cache') || '{}');
-            if (cached?.id) return cached.id;
-        } catch(e) {}
-        return null;
-    }, [propUser, currentUser]);
-    
-    // SIMPLE: Render avatar - only show if we have a valid userId
+    // SIMPLE: Just render the image. API ALWAYS returns valid content.
+    // If no user ID yet, show nothing (will update when propUser arrives)
     const renderAvatar = (size, className) => {
+        const userId = currentUser?.id;
+        
         if (!userId) {
-            // No user ID yet - show loading placeholder
-            const initial = currentUser?.first_name?.[0] || '?';
+            // Still loading - show placeholder with initial
+            const initial = currentUser?.first_name?.[0] || propUser?.first_name?.[0] || '·';
             return React.createElement('div', {
-                className: className + ' bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold animate-pulse'
+                className: className + ' bg-slate-300 flex items-center justify-center text-slate-500 font-bold text-xs'
             }, initial);
         }
+        
+        // User ID available - render image (API always returns valid JPEG or SVG)
         return React.createElement('img', {
             src: '/api/auth/avatar/' + userId,
             alt: currentUser?.first_name || 'Avatar',
-            className: className + ' object-cover bg-slate-100'
+            className: className + ' object-cover'
         });
     };
     
