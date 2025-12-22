@@ -1251,7 +1251,8 @@ settings.get('/export/users', authMiddleware, adminOnly, async (c) => {
         EMAIL: users.email,
         PRENOM: users.first_name,
         NOM: users.last_name,
-        ROLE: users.role
+        ROLE: users.role,
+        CONTEXTE: users.ai_context
       })
       .from(users)
       .where(sql`${users.deleted_at} IS NULL AND ${users.id} != 0 AND (${users.is_super_admin} = 0 OR ${users.is_super_admin} IS NULL)`)
@@ -1348,6 +1349,7 @@ settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
         const firstName = sanitizeForDb(userData.first_name);
         const lastName = sanitizeForDb(userData.last_name);
         const role = userData.role?.trim().toLowerCase() || 'technician';
+        const aiContext = userData.ai_context?.trim().substring(0, 500) || null;
         
         // Validation
         if (!email || !email.includes('@')) {
@@ -1370,14 +1372,19 @@ settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
         if (existing) {
           if (updateExisting) {
             // Mise à jour
+            const updateData: any = {
+              first_name: firstName,
+              last_name: lastName,
+              full_name: lastName ? `${firstName} ${lastName}` : firstName,
+              role: role,
+              updated_at: sql`CURRENT_TIMESTAMP`
+            };
+            // Only update ai_context if provided in import
+            if (aiContext !== null) {
+              updateData.ai_context = aiContext;
+            }
             await db.update(users)
-              .set({
-                first_name: firstName,
-                last_name: lastName,
-                full_name: lastName ? `${firstName} ${lastName}` : firstName,
-                role: role,
-                updated_at: sql`CURRENT_TIMESTAMP`
-              })
+              .set(updateData)
               .where(sql`${users.id} = ${existing.id}`);
             stats.updated++;
           } else {
@@ -1391,7 +1398,8 @@ settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
             first_name: firstName,
             last_name: lastName,
             full_name: lastName ? `${firstName} ${lastName}` : firstName,
-            role: role
+            role: role,
+            ai_context: aiContext
           });
           stats.success++;
         }

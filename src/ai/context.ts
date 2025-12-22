@@ -358,13 +358,14 @@ export interface ContextOptions {
     userId?: number;
     userName?: string;
     userRole?: string;
+    userAiContext?: string; // Additional context for AI interactions
     baseUrl?: string;
     ticketContext?: any;
     message?: string; // For vision search relevance
 }
 
 export async function buildDynamicContext(db: any, env: Bindings, options: ContextOptions = {}) {
-    const { userId, userName = 'Utilisateur', userRole = 'unknown', baseUrl = '', ticketContext, message } = options;
+    const { userId, userName = 'Utilisateur', userRole = 'unknown', userAiContext = '', baseUrl = '', ticketContext, message } = options;
 
     const aiConfig = await getAiConfig(db);
     
@@ -400,7 +401,7 @@ export async function buildDynamicContext(db: any, env: Bindings, options: Conte
 
         // 1. SELECT DATA
         machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all() || [];
-        usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login }).from(users).where(sql`deleted_at IS NULL`).all() || [];
+        usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login, ai_context: users.ai_context }).from(users).where(sql`deleted_at IS NULL`).all() || [];
         activeTickets = await db.select({
             id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
         }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), sql`deleted_at IS NULL`)).all() || [];
@@ -474,7 +475,8 @@ export async function buildDynamicContext(db: any, env: Bindings, options: Conte
         usersSummary = usersList.map(u => {
              if (u.role === 'admin' && userRole !== 'admin') return `[ID:${u.id}] ${u.name} (ADMINISTRATEUR) - [INFO RESTREINTE]`;
              const count = workloadMap.get(u.id) || 0;
-             return `[ID:${u.id}] ${u.name} (${u.role}) - ${count === 0 ? "✅ LIBRE" : `❌ OCCUPÉ (${count} tickets)`} - Login: ${u.last_login || 'Jamais'}`;
+             const contextInfo = u.ai_context ? ` | Profil: ${u.ai_context}` : '';
+             return `[ID:${u.id}] ${u.name} (${u.role}) - ${count === 0 ? "✅ LIBRE" : `❌ OCCUPÉ (${count} tickets)`} - Login: ${u.last_login || 'Jamais'}${contextInfo}`;
         }).join('\n');
 
         const todayStr = new Date().toISOString().split('T')[0];
@@ -614,7 +616,7 @@ ${aiConfig.identity}
 ${ticketContextBlock}
 
 --- 1. CONTEXTE OPÉRATIONNEL ---
-- UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})
+- UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})${userAiContext ? `\n- PROFIL UTILISATEUR : ${userAiContext}` : ''}
 - SERVEUR (BASE URL) : ${baseUrl}
 - PLANNING AUJOURD'HUI : ${planningSummary}
 - HISTORIQUE RÉCENT :

@@ -136,13 +136,14 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
     const TEMPLATES = {
         users: {
             filename: 'modele_utilisateurs.csv',
-            content: `EMAIL,PRENOM,NOM,ROLE
+            content: `EMAIL,PRENOM,NOM,ROLE,CONTEXTE
 # AIDE: EMAIL obligatoire et unique | ROLE: admin/supervisor/technician/operator/team_leader/viewer | MDP par défaut: Changeme123!
+# CONTEXTE: Infos optionnelles pour personnaliser les interactions (compétences, préférences, certifications)
 # DOUBLONS: Si même EMAIL existe → mis à jour ou ignoré selon option choisie
-jean.dupont@exemple.com,Jean,Dupont,technician
-marie.martin@exemple.com,Marie,Martin,supervisor
-pierre.durand@exemple.com,Pierre,Durand,operator
-chef.equipe@exemple.com,Chef,Équipe,team_leader`
+jean.dupont@exemple.com,Jean,Dupont,technician,Expert hydraulique - Certification BR
+marie.martin@exemple.com,Marie,Martin,supervisor,Responsable zone A - Préfère réponses concises
+pierre.durand@exemple.com,Pierre,Durand,operator,Travaille de nuit
+chef.equipe@exemple.com,Chef,Équipe,team_leader,Coordination inter-équipes`
         },
         machines: {
             filename: 'modele_machines.csv',
@@ -355,7 +356,8 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
                     email: row.EMAIL,
                     first_name: row.PRENOM,
                     last_name: row.NOM,
-                    role: row.ROLE
+                    role: row.ROLE,
+                    ai_context: row.CONTEXTE || null
                 }));
             } else {
                 payload.machines = previewData.map(row => ({
@@ -392,7 +394,7 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
     // Colonnes à afficher dans la prévisualisation
     const getPreviewColumns = () => {
         if (activeTab === 'users') {
-            return ['EMAIL', 'PRENOM', 'NOM', 'ROLE'];
+            return ['EMAIL', 'PRENOM', 'NOM', 'ROLE', 'CONTEXTE'];
         } else {
             return ['TYPE', 'MODELE', 'MARQUE', 'SERIE', 'LIEU', 'ANNEE', 'STATUT', 'SPECS'];
         }

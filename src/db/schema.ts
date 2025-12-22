@@ -14,6 +14,7 @@ export const users = sqliteTable('users', {
   can_create_admins: integer('can_create_admins').default(0), // Permission granted by superadmin
   last_login: text('last_login'), // Added in migration 0009
   avatar_key: text('avatar_key'), // Added in migration 0007
+  ai_context: text('ai_context'), // Additional context for AI interactions (skills, preferences, certifications)
   deleted_at: text('deleted_at'), // Soft delete
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),

@@ -483,7 +483,7 @@ app.post('/chat', async (c) => {
             // 1. SELECT * : On récupère TOUTES les colonnes (serial, location, specs, etc.) sans filtrage manuel
             machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all() || [];
             
-            usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login }).from(users).where(sql`deleted_at IS NULL`).all() || [];
+            usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login, ai_context: users.ai_context }).from(users).where(sql`deleted_at IS NULL`).all() || [];
             activeTickets = await db.select({
                 id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
             }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), sql`deleted_at IS NULL`)).all() || [];
@@ -557,7 +557,8 @@ app.post('/chat', async (c) => {
             usersSummary = usersList.map(u => {
                  if (u.role === 'admin' && userRole !== 'admin') return `[ID:${u.id}] ${u.name} (ADMINISTRATEUR) - [INFO RESTREINTE]`;
                  const count = workloadMap.get(u.id) || 0;
-                 return `[ID:${u.id}] ${u.name} (${u.role}) - ${count === 0 ? "✅ LIBRE" : `❌ OCCUPÉ (${count} tickets)`} - Login: ${u.last_login || 'Jamais'}`;
+                 const contextInfo = u.ai_context ? ` | Profil: ${u.ai_context}` : '';
+                 return `[ID:${u.id}] ${u.name} (${u.role}) - ${count === 0 ? "✅ LIBRE" : `❌ OCCUPÉ (${count} tickets)`} - Login: ${u.last_login || 'Jamais'}${contextInfo}`;
             }).join('\n');
 
             const todayStr = new Date().toISOString().split('T')[0];
@@ -565,6 +566,22 @@ app.post('/chat', async (c) => {
             planningSummary = todaysEvents.length > 0 ? todaysEvents.map((e: any) => `[${e.time || 'Journée'}] ${e.title}`).join(', ') : "Aucun événement.";
         } catch (contextError) {
             console.error("⚠️ [AI] Context Load Failed:", contextError);
+        }
+
+        // 2.5. FETCH CURRENT USER AI CONTEXT (for personalized interactions)
+        let currentUserAiContext = '';
+        if (userId) {
+            try {
+                const currentUserData = await db.select({ ai_context: users.ai_context })
+                    .from(users)
+                    .where(eq(users.id, userId))
+                    .get();
+                if (currentUserData?.ai_context) {
+                    currentUserAiContext = currentUserData.ai_context;
+                }
+            } catch (e) {
+                console.warn("[AI] Failed to fetch user ai_context", e);
+            }
         }
 
         // 3. FETCH USER HISTORY
@@ -742,7 +759,7 @@ ${aiConfig.identity}
 ${ticketContextBlock}
 
 --- 1. CONTEXTE OPÉRATIONNEL ---
-- UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})
+- UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})${currentUserAiContext ? `\n- PROFIL UTILISATEUR : ${currentUserAiContext}` : ''}
 - SERVEUR (BASE URL) : ${baseUrl}
 - PLANNING AUJOURD'HUI : ${planningSummary}
 - HISTORIQUE RÉCENT :

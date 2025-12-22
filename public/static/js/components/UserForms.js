@@ -4,6 +4,7 @@ const CreateUserForm = ({ onCancel, onSuccess, currentUserRole }) => {
     const [firstName, setFirstName] = React.useState('');
     const [lastName, setLastName] = React.useState('');
     const [role, setRole] = React.useState('operator');
+    const [aiContext, setAiContext] = React.useState('');
     const [loading, setLoading] = React.useState(false);
 
     const handleSubmit = async (e) => {
@@ -15,7 +16,8 @@ const CreateUserForm = ({ onCancel, onSuccess, currentUserRole }) => {
                 password,
                 first_name: firstName,
                 last_name: lastName,
-                role
+                role,
+                ai_context: aiContext || null
             });
             // Reset form is not strictly needed as component will likely be unmounted
             onSuccess();
@@ -112,6 +114,24 @@ const CreateUserForm = ({ onCancel, onSuccess, currentUserRole }) => {
                     })
                 )
             ),
+            // Champ Informations complémentaires (pour IA)
+            React.createElement('div', { className: 'mb-4' },
+                React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'newAiContext' }, 
+                    React.createElement('span', {}, 'Informations complémentaires '),
+                    React.createElement('span', { className: 'text-gray-400 font-normal text-sm' }, '(optionnel)')
+                ),
+                React.createElement('textarea', {
+                    id: 'newAiContext',
+                    name: 'newAiContext',
+                    value: aiContext,
+                    onChange: (e) => setAiContext(e.target.value),
+                    className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all resize-none',
+                    placeholder: 'Ex: Expert hydraulique, Certification BR, Travaille de nuit...',
+                    rows: 2,
+                    maxLength: 500
+                }),
+                React.createElement('p', { className: 'text-xs text-gray-400 mt-1' }, `Ces informations permettent de personnaliser les interactions avec l'assistant.`)
+            ),
             React.createElement('div', { className: 'flex gap-4' },
                 React.createElement('button', {
                     type: 'button',
@@ -136,6 +156,7 @@ const EditUserForm = ({ user, onCancel, onSuccess, currentUserRole, currentUserI
     const [firstName, setFirstName] = React.useState(user.first_name || '');
     const [lastName, setLastName] = React.useState(user.last_name || '');
     const [role, setRole] = React.useState(user.role);
+    const [aiContext, setAiContext] = React.useState(user.ai_context || '');
     const [loading, setLoading] = React.useState(false);
 
     const handleSubmit = async (e) => {
@@ -146,7 +167,8 @@ const EditUserForm = ({ user, onCancel, onSuccess, currentUserRole, currentUserI
                 email,
                 first_name: firstName,
                 last_name: lastName,
-                role
+                role,
+                ai_context: aiContext || null
             });
             onSuccess();
         } catch (error) {
@@ -223,6 +245,24 @@ const EditUserForm = ({ user, onCancel, onSuccess, currentUserRole, currentUserI
                     currentUserRole: currentUserRole,
                     variant: 'green'
                 })
+            ),
+            // Champ Informations complémentaires (pour IA)
+            React.createElement('div', { className: 'mb-4' },
+                React.createElement('label', { className: 'block font-bold mb-2', htmlFor: 'editAiContext' }, 
+                    React.createElement('span', {}, 'Informations complémentaires '),
+                    React.createElement('span', { className: 'text-gray-400 font-normal text-sm' }, '(optionnel)')
+                ),
+                React.createElement('textarea', {
+                    id: 'editAiContext',
+                    name: 'editAiContext',
+                    value: aiContext,
+                    onChange: (e) => setAiContext(e.target.value),
+                    className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all resize-none',
+                    placeholder: 'Ex: Expert hydraulique, Certification BR, Travaille de nuit...',
+                    rows: 2,
+                    maxLength: 500
+                }),
+                React.createElement('p', { className: 'text-xs text-gray-400 mt-1' }, `Ces informations permettent de personnaliser les interactions avec l'assistant.`)
             ),
             React.createElement('div', { className: 'flex gap-4' },
                 React.createElement('button', {

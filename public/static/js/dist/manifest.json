@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-22T18:56:35.027Z",
+  "generated": "2025-12-22T19:16:51.115Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -39,7 +39,7 @@
     {
       "original": "DataImportModal.js",
       "minified": "DataImportModal.min.js",
-      "savings": "49.5%"
+      "savings": "49.2%"
     },
     {
       "original": "ErrorBoundary.js",
@@ -159,7 +159,7 @@
     {
       "original": "UserForms.js",
       "minified": "UserForms.min.js",
-      "savings": "44.1%"
+      "savings": "42.8%"
     },
     {
       "original": "UserGuideModal.js",
@@ -187,5 +187,5 @@
       "savings": "65.7%"
     }
   ],
-  "totalSavings": "51.1%"
+  "totalSavings": "51.0%"
 }

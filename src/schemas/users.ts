@@ -5,7 +5,8 @@ const LIMITS = {
   NAME_MAX: 50,
   EMAIL_MAX: 100,
   PASSWORD_MIN: 8,
-  PASSWORD_MAX: 100
+  PASSWORD_MAX: 100,
+  AI_CONTEXT_MAX: 500 // Max characters for AI context field
 };
 
 const validRoles = [
@@ -19,7 +20,8 @@ export const createUserSchema = z.object({
   password: z.string().min(LIMITS.PASSWORD_MIN, `Le mot de passe doit contenir au moins ${LIMITS.PASSWORD_MIN} caractères`).max(LIMITS.PASSWORD_MAX, "Mot de passe trop long"),
   first_name: z.string().min(LIMITS.NAME_MIN, "Prénom trop court").max(LIMITS.NAME_MAX, "Prénom trop long"),
   last_name: z.string().max(LIMITS.NAME_MAX, "Nom trop long").optional().or(z.literal('')),
-  role: z.enum(validRoles, { errorMap: () => ({ message: "Rôle invalide" }) })
+  role: z.enum(validRoles, { errorMap: () => ({ message: "Rôle invalide" }) }),
+  ai_context: z.string().max(LIMITS.AI_CONTEXT_MAX, "Informations trop longues").optional().or(z.literal(''))
 });
 
 export const updateUserSchema = z.object({
@@ -27,7 +29,8 @@ export const updateUserSchema = z.object({
   password: z.string().min(LIMITS.PASSWORD_MIN).max(LIMITS.PASSWORD_MAX).optional(),
   first_name: z.string().min(LIMITS.NAME_MIN).max(LIMITS.NAME_MAX).optional(),
   last_name: z.string().max(LIMITS.NAME_MAX).optional().or(z.literal('')),
-  role: z.enum(validRoles).optional()
+  role: z.enum(validRoles).optional(),
+  ai_context: z.string().max(LIMITS.AI_CONTEXT_MAX).optional().or(z.literal(''))
 });
 
 export const resetPasswordSchema = z.object({

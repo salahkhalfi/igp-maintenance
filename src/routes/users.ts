@@ -200,7 +200,7 @@ usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const body = c.req.valid('json');
-    const { email, password, first_name, last_name, role } = body;
+    const { email, password, first_name, last_name, role, ai_context } = body;
 
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedFirstName = first_name.trim();
@@ -244,7 +244,8 @@ usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
       full_name,
       first_name: trimmedFirstName,
       last_name: trimmedLastName,
-      role
+      role,
+      ai_context: ai_context?.trim() || null
     }).returning();
 
     const newUser = result[0];
@@ -271,7 +272,7 @@ usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json'
     // isNaN check removed
 
     const body = c.req.valid('json');
-    const { email, first_name, last_name, role, password } = body;
+    const { email, first_name, last_name, role, password, ai_context } = body;
 
     const db = getDb(c.env);
 
@@ -353,6 +354,9 @@ usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json'
     if (role) updates.role = role;
     if (password) {
       updates.password_hash = await hashPassword(password);
+    }
+    if (ai_context !== undefined) {
+      updates.ai_context = ai_context?.trim() || null;
     }
 
     const result = await db.update(users)
