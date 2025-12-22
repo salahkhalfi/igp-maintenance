@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-22T20:17:41.039Z",
+  "generated": "2025-12-22T20:37:01.794Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -29,12 +29,12 @@
     {
       "original": "ConfirmModal.js",
       "minified": "ConfirmModal.min.js",
-      "savings": "35.6%"
+      "savings": "37.2%"
     },
     {
       "original": "CreateTicketModal.js",
       "minified": "CreateTicketModal.min.js",
-      "savings": "49.5%"
+      "savings": "49.4%"
     },
     {
       "original": "DataImportModal.js",
@@ -49,12 +49,12 @@
     {
       "original": "KanbanBoard.js",
       "minified": "KanbanBoard.min.js",
-      "savings": "51.5%"
+      "savings": "51.4%"
     },
     {
       "original": "LoginForm.js",
       "minified": "LoginForm.min.js",
-      "savings": "49.5%"
+      "savings": "49.6%"
     },
     {
       "original": "MachineManagementModal.js",
@@ -79,12 +79,12 @@
     {
       "original": "NotificationModal.js",
       "minified": "NotificationModal.min.js",
-      "savings": "44.5%"
+      "savings": "44.3%"
     },
     {
       "original": "OfflineBanner.js",
       "minified": "OfflineBanner.min.js",
-      "savings": "43.7%"
+      "savings": "43.5%"
     },
     {
       "original": "OverdueTicketsModal.js",
@@ -159,7 +159,7 @@
     {
       "original": "Toast.js",
       "minified": "Toast.min.js",
-      "savings": "40.8%"
+      "savings": "39.4%"
     },
     {
       "original": "UserForms.js",

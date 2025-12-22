@@ -80,7 +80,9 @@ const LoginForm = ({ onLogin }) => {
         style: {
             // Background handled globally by #app-background in home.html
             // keeping transparent to show it
-        }
+        },
+        role: 'main',
+        'aria-label': 'Page de connexion'
     },
         // Overlay sombre pour améliorer le contraste et faire ressortir la carte
         React.createElement('div', {
@@ -158,19 +160,28 @@ const LoginForm = ({ onLogin }) => {
             ),
             React.createElement('form', {
                 onSubmit: handleSubmit,
-                autoComplete: 'off'
+                autoComplete: 'off',
+                role: 'form',
+                'aria-label': 'Formulaire de connexion'
             },
                 React.createElement('div', { className: 'mb-3 sm:mb-4' }, // Reduced margin
-                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-1 sm:mb-2 shadow-black/5 drop-shadow-sm' },
-                        React.createElement('i', { className: 'fas fa-envelope mr-2 text-blue-700' }),
+                    React.createElement('label', { 
+                        className: 'block text-gray-800 text-sm font-bold mb-1 sm:mb-2 shadow-black/5 drop-shadow-sm',
+                        htmlFor: 'login-email',
+                        id: 'email-label'
+                    },
+                        React.createElement('i', { className: 'fas fa-envelope mr-2 text-blue-700', 'aria-hidden': 'true' }),
                         'Email'
                     ),
                     React.createElement('input', {
                         type: 'email',
+                        id: 'login-email',
                         name: 'email',
                         autoComplete: 'off',
                         'data-lpignore': 'true',
                         'data-form-type': 'other',
+                        'aria-labelledby': 'email-label',
+                        'aria-required': 'true',
                         className: 'w-full px-3 py-2.5 border border-white/50 bg-white/70 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner',
                         value: email,
                         onChange: handleInputEmail,
@@ -180,17 +191,24 @@ const LoginForm = ({ onLogin }) => {
                     })
                 ),
                 React.createElement('div', { className: 'mb-4 sm:mb-6' }, // Reduced margin
-                    React.createElement('label', { className: 'block text-gray-800 text-sm font-bold mb-1 sm:mb-2 shadow-black/5 drop-shadow-sm' },
-                        React.createElement('i', { className: 'fas fa-lock mr-2 text-blue-700' }),
+                    React.createElement('label', { 
+                        className: 'block text-gray-800 text-sm font-bold mb-1 sm:mb-2 shadow-black/5 drop-shadow-sm',
+                        htmlFor: 'login-password',
+                        id: 'password-label'
+                    },
+                        React.createElement('i', { className: 'fas fa-lock mr-2 text-blue-700', 'aria-hidden': 'true' }),
                         'Mot de passe'
                     ),
                     React.createElement('div', { className: 'relative' },
                         React.createElement('input', {
                             type: showPassword ? 'text' : 'password',
+                            id: 'login-password',
                             name: 'password',
                             autoComplete: 'new-password',
                             'data-lpignore': 'true',
                             'data-form-type': 'other',
+                            'aria-labelledby': 'password-label',
+                            'aria-required': 'true',
                             className: 'w-full px-3 py-2.5 pr-10 border border-white/50 bg-white/70 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-inner',
                             value: password,
                             onChange: handleInputPassword,
@@ -226,9 +244,10 @@ const LoginForm = ({ onLogin }) => {
                 ),
                 React.createElement('button', {
                     type: 'submit',
-                    className: 'w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white font-bold py-3 px-4 rounded-xl hover:from-blue-800 hover:to-blue-950 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30'
+                    className: 'w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white font-bold py-3 px-4 rounded-xl hover:from-blue-800 hover:to-blue-950 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30',
+                    'aria-label': 'Se connecter au système'
                 },
-                    React.createElement('i', { className: 'fas fa-sign-in-alt mr-2' }),
+                    React.createElement('i', { className: 'fas fa-sign-in-alt mr-2', 'aria-hidden': 'true' }),
                     'Se connecter'
                 )
             ),

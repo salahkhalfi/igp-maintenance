@@ -296,7 +296,10 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
     return React.createElement('div', {
         className: 'fixed inset-0 bg-slate-900 bg-opacity-80 flex items-center justify-center z-[2010] p-2 sm:p-4 animate-fadeIn',
         style: { willChange: 'opacity' }, // GPU hint
-        onClick: onClose
+        onClick: onClose,
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-labelledby': 'create-ticket-title'
     },
         React.createElement('div', {
             className: 'bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col transform transition-transform',
@@ -306,22 +309,29 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
             // Header
             React.createElement('div', { className: 'sticky top-0 bg-blue-700 text-white p-3 sm:p-5 flex justify-between items-center shadow-md z-10' },
                 React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
-                    React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-blue-300 flex-shrink-0' }),
-                    React.createElement('h2', { className: 'text-lg sm:text-2xl font-bold truncate' },
+                    React.createElement('i', { className: 'fas fa-plus-circle text-xl sm:text-2xl text-blue-300 flex-shrink-0', 'aria-hidden': 'true' }),
+                    React.createElement('h2', { id: 'create-ticket-title', className: 'text-lg sm:text-2xl font-bold truncate' },
                         'Nouvelle Demande'
                     )
                 ),
                 React.createElement('button', {
                     onClick: onClose,
-                    className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all flex-shrink-0'
+                    className: 'text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all flex-shrink-0',
+                    'aria-label': 'Fermer le formulaire de création'
                 },
-                    React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl' })
+                    React.createElement('i', { className: 'fas fa-times text-lg sm:text-xl', 'aria-hidden': 'true' })
                 )
             ),
             // Content
             React.createElement('div', { className: 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 bg-blue-50' },
                 
-                React.createElement('form', { id: 'create-ticket-form', onSubmit: handleSubmit, className: 'space-y-4' },
+                React.createElement('form', { 
+                    id: 'create-ticket-form', 
+                    onSubmit: handleSubmit, 
+                    className: 'space-y-4',
+                    role: 'form',
+                    'aria-label': 'Formulaire de création de ticket'
+                },
                     
                     // Title
                     React.createElement('div', { className: 'mb-4' },
@@ -333,9 +343,11 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: () => startVoiceInput(setTitle, title, 'title'),
-                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'title' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200'}`
+                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'title' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200'}`,
+                                'aria-label': isListening && listeningField === 'title' ? 'Arrêter la dictée vocale' : 'Dicter le titre',
+                                'aria-pressed': isListening && listeningField === 'title'
                             },
-                                React.createElement('i', { className: `fas ${isListening && listeningField === 'title' ? 'fa-stop-circle' : 'fa-microphone'}` }),
+                                React.createElement('i', { className: `fas ${isListening && listeningField === 'title' ? 'fa-stop-circle' : 'fa-microphone'}`, 'aria-hidden': 'true' }),
                                 React.createElement('span', {}, isListening && listeningField === 'title' ? 'Écoute...' : 'Dicter')
                             )
                         ),
@@ -365,9 +377,11 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             React.createElement('button', {
                                 type: 'button',
                                 onClick: () => startVoiceInput(setDescription, description, 'desc'),
-                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'desc' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200'}`
+                                className: `text-xs px-3 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${isListening && listeningField === 'desc' ? 'bg-red-100 text-red-600 animate-pulse border border-red-200' : 'bg-blue-100 text-blue-600 hover:bg-blue-200 border border-blue-200'}`,
+                                'aria-label': isListening && listeningField === 'desc' ? 'Arrêter la dictée vocale' : 'Dicter la description',
+                                'aria-pressed': isListening && listeningField === 'desc'
                             },
-                                React.createElement('i', { className: `fas ${isListening && listeningField === 'desc' ? 'fa-stop-circle' : 'fa-microphone'}` }),
+                                React.createElement('i', { className: `fas ${isListening && listeningField === 'desc' ? 'fa-stop-circle' : 'fa-microphone'}`, 'aria-hidden': 'true' }),
                                 React.createElement('span', {}, isListening && listeningField === 'desc' ? 'Écoute...' : 'Dicter')
                             )
                         ),

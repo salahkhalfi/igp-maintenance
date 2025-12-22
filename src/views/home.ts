@@ -15,6 +15,34 @@ export const homeHTML = `
     <link rel="preload" href="/static/js/dist/KanbanBoard.min.js?v=c2a54a50" as="script">
     <link rel="preload" href="/static/js/dist/AppHeader.min.js?v=c2a54a50" as="script">
     <meta name="theme-color" content="#003B73">
+    
+    <!-- SEO & Social Meta Tags -->
+    <meta name="description" content="MaintenanceOS - Système de gestion de maintenance industrielle. Gérez vos tickets, machines et équipes de techniciens en temps réel.">
+    <meta name="keywords" content="maintenance, industriel, GMAO, tickets, machines, techniciens, PWA">
+    <meta name="author" content="MaintenanceOS">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://app.igpglass.ca/">
+    <meta property="og:title" content="MaintenanceOS - Gestion de Maintenance Industrielle">
+    <meta property="og:description" content="Système complet de gestion de maintenance pour l'industrie. Tickets, machines, planification et IA intégrée.">
+    <meta property="og:image" content="https://app.igpglass.ca/static/og-image.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://app.igpglass.ca/">
+    <meta property="twitter:title" content="MaintenanceOS - Gestion de Maintenance Industrielle">
+    <meta property="twitter:description" content="Système complet de gestion de maintenance pour l'industrie.">
+    <meta property="twitter:image" content="https://app.igpglass.ca/static/og-image.png">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://api.openai.com" crossorigin>
+    <link rel="preconnect" href="https://api.deepseek.com" crossorigin>
+    <link rel="preconnect" href="https://api.groq.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://api.openai.com">
+    <link rel="dns-prefetch" href="https://api.deepseek.com">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MaintenanceOS">

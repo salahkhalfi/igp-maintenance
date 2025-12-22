@@ -1,4 +1,4 @@
-// Composant de notification personnalisé
+// Composant de notification personnalisé - ARIA Enhanced
 const NotificationModal = ({ show, message, type, onClose }) => {
     if (!show) return null;
 
@@ -14,26 +14,38 @@ const NotificationModal = ({ show, message, type, onClose }) => {
         info: 'fa-info-circle text-blue-600'
     };
 
+    const ariaLive = type === 'error' ? 'assertive' : 'polite';
+
     return React.createElement('div', {
         className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[80]',
-        onClick: onClose
+        onClick: onClose,
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-labelledby': 'notification-modal-message'
     },
         React.createElement('div', {
             className: 'bg-white rounded-lg shadow-2xl p-6 max-w-md mx-4 transform transition-all',
-            onClick: (e) => e.stopPropagation()
+            onClick: (e) => e.stopPropagation(),
+            role: 'alert',
+            'aria-live': ariaLive
         },
             React.createElement('div', { className: 'flex items-start gap-4' },
                 React.createElement('i', {
-                    className: 'fas ' + icons[type] + ' text-3xl mt-1'
+                    className: 'fas ' + icons[type] + ' text-3xl mt-1',
+                    'aria-hidden': 'true'
                 }),
                 React.createElement('div', { className: 'flex-1' },
-                    React.createElement('p', { className: 'text-lg font-semibold mb-4' }, message)
+                    React.createElement('p', { 
+                        id: 'notification-modal-message',
+                        className: 'text-lg font-semibold mb-4' 
+                    }, message)
                 )
             ),
             React.createElement('div', { className: 'flex justify-end mt-4' },
                 React.createElement('button', {
                     onClick: onClose,
-                    className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-700 font-semibold'
+                    className: 'px-6 py-2 bg-igp-blue text-white rounded-md hover:bg-blue-700 font-semibold',
+                    'aria-label': 'Fermer la notification'
                 }, 'OK')
             )
         )

@@ -59,7 +59,11 @@ const OfflineBanner = () => {
                 ? '1px solid rgba(16, 185, 129, 0.3)'
                 : '1px solid rgba(148, 163, 184, 0.1)',
             boxShadow: '0 4px 30px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2)'
-        }
+        },
+        role: 'alert',
+        'aria-live': 'assertive',
+        'aria-atomic': 'true',
+        'aria-label': showReconnecting ? 'Reconnexion en cours' : 'Vous êtes hors ligne'
     },
         React.createElement('div', {
             className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
@@ -93,7 +97,8 @@ const OfflineBanner = () => {
                             fas ${showReconnecting ? 'fa-sync fa-spin' : 'fa-wifi-slash'}
                             text-lg sm:text-xl
                             ${showReconnecting ? 'text-white' : 'text-amber-400'}
-                        `.trim()
+                        `.trim(),
+                        'aria-hidden': 'true'
                     })
                 ),
 

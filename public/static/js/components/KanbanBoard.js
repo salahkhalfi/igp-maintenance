@@ -225,7 +225,10 @@ const KanbanBoard = ({
             onTouchMove: handleTouchMove,
             onTouchEnd: handleTouchEnd,
             onContextMenu: (e) => handleContextMenu(e, ticket),
-            title: currentUser && currentUser.role === 'operator' ? 'Détails' : 'Détails | Glisser | Clic droit'
+            title: currentUser && currentUser.role === 'operator' ? 'Détails' : 'Détails | Glisser | Clic droit',
+            role: 'article',
+            'aria-label': 'Ticket ' + ticket.ticket_id + ': ' + ticket.title + ', Priorité ' + ticket.priority,
+            tabIndex: 0
         },
             // BANNIÈRE ASSIGNATION/PLANIFICATION
             (hasAssigned && !isCompletedOrArchived) ? React.createElement('div', {
@@ -321,7 +324,10 @@ const KanbanBoard = ({
             'data-status': status.key,
             onDragOver: (e) => handleDragOver(e, status.key),
             onDragLeave: handleDragLeave,
-            onDrop: (e) => handleDrop(e, status.key)
+            onDrop: (e) => handleDrop(e, status.key),
+            role: 'region',
+            'aria-label': status.label + ' - ' + ticketList.length + ' tickets',
+            'aria-dropeffect': isDragOver ? 'move' : 'none'
         },
             React.createElement('div', { className: 'mb-3 flex items-center justify-between kanban-column-header' },
                 React.createElement('div', { className: 'flex items-center min-w-0 flex-1' },
