@@ -174,6 +174,96 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
         URL.revokeObjectURL(url);
     };
 
+    // Open template in Google Sheets (no API, just URL redirect)
+    const openInGoogleSheets = (type) => {
+        const template = TEMPLATES[type];
+        if (!template) return;
+
+        // Encode CSV content for URL (without comments for cleaner Google Sheets)
+        const cleanContent = template.content
+            .split('\n')
+            .filter(line => !line.trim().startsWith('#'))
+            .join('\n');
+        
+        // Create a Blob and upload to a temporary data URL approach won't work cross-origin
+        // Instead, we use Google Sheets' import from clipboard approach via a new tab
+        
+        // Method: Copy to clipboard + open Google Sheets with instructions
+        const csvForClipboard = cleanContent;
+        
+        navigator.clipboard.writeText(csvForClipboard).then(() => {
+            // Open Google Sheets new spreadsheet
+            const sheetName = type === 'users' ? 'Import_Utilisateurs' : 'Import_Machines';
+            const googleSheetsUrl = `https://docs.google.com/spreadsheets/create?title=${encodeURIComponent(sheetName)}`;
+            
+            // Show instruction toast
+            if (window.showToast) {
+                window.showToast('📋 Données copiées ! Dans Google Sheets: Ctrl+V pour coller', 'success', 5000);
+            } else {
+                alert('📋 Données copiées dans le presse-papier !\n\nDans Google Sheets qui va s\'ouvrir:\n1. Cliquez sur la cellule A1\n2. Appuyez sur Ctrl+V (ou Cmd+V sur Mac)\n3. Les données seront collées automatiquement');
+            }
+            
+            // Open Google Sheets in new tab
+            window.open(googleSheetsUrl, '_blank');
+        }).catch(err => {
+            console.error('Clipboard error:', err);
+            // Fallback: just open Google Sheets
+            alert('Impossible de copier automatiquement.\n\nVeuillez télécharger le fichier CSV puis l\'importer manuellement dans Google Sheets via Fichier > Importer.');
+        });
+    };
+
+    // Export current data to Google Sheets
+    const exportToGoogleSheets = async () => {
+        setIsExporting(true);
+        try {
+            const endpoint = activeTab === 'users' ? '/settings/export/users' : '/settings/export/machines';
+            const res = await axios.get(API_URL + endpoint);
+            const data = res.data;
+
+            let exportData = [];
+            if (activeTab === 'users' && data.users) {
+                exportData = data.users;
+            } else if (activeTab === 'machines' && data.machines) {
+                exportData = data.machines;
+            }
+
+            if (!exportData.length) {
+                alert('Aucune donnée à exporter');
+                setIsExporting(false);
+                return;
+            }
+
+            // Convert to CSV string
+            const headers = Object.keys(exportData[0]);
+            const csvContent = [
+                headers.join('\t'), // Tab-separated for better Google Sheets paste
+                ...exportData.map(row => headers.map(h => {
+                    const val = row[h] === null || row[h] === undefined ? '' : String(row[h]);
+                    return val;
+                }).join('\t'))
+            ].join('\n');
+
+            // Copy to clipboard
+            await navigator.clipboard.writeText(csvContent);
+            
+            const sheetName = activeTab === 'users' ? 'Export_Utilisateurs' : 'Export_Machines';
+            const googleSheetsUrl = `https://docs.google.com/spreadsheets/create?title=${encodeURIComponent(sheetName)}`;
+            
+            if (window.showToast) {
+                window.showToast('📋 Données copiées ! Dans Google Sheets: Ctrl+V pour coller', 'success', 5000);
+            } else {
+                alert('📋 Données copiées dans le presse-papier !\n\nDans Google Sheets:\n1. Cliquez sur la cellule A1\n2. Appuyez sur Ctrl+V');
+            }
+            
+            window.open(googleSheetsUrl, '_blank');
+        } catch (e) {
+            console.error('Export to Google Sheets error:', e);
+            alert('Erreur: ' + (e.message || 'Impossible d\'exporter vers Google Sheets'));
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     // Export current data
     const handleExport = async () => {
         setIsExporting(true);
@@ -371,28 +461,57 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
             React.createElement('div', { className: 'p-6 overflow-y-auto flex-1' },
                 // Step 1: Template & Export
                 React.createElement('div', { className: 'mb-6 bg-slate-50 border border-slate-200 rounded-lg p-4' },
-                    React.createElement('div', { className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4' },
-                        React.createElement('div', { className: 'text-sm text-slate-700' },
-                            React.createElement('p', { className: 'font-bold mb-1' }, '📥 Étape 1 : Obtenir un fichier'),
-                            React.createElement('p', { className: 'text-xs text-slate-500' }, 'Téléchargez un modèle vide ou exportez vos données actuelles.')
+                    React.createElement('div', { className: 'text-sm text-slate-700 mb-3' },
+                        React.createElement('p', { className: 'font-bold mb-1' }, '📥 Étape 1 : Obtenir un fichier'),
+                        React.createElement('p', { className: 'text-xs text-slate-500' }, 'Téléchargez un modèle ou exportez vos données (CSV ou Google Sheets)')
+                    ),
+                    // Row 1: CSV options
+                    React.createElement('div', { className: 'flex flex-wrap gap-2 mb-2' },
+                        React.createElement('button', {
+                            onClick: () => downloadTemplate(activeTab),
+                            className: 'px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 flex items-center gap-2 shadow-sm'
+                        },
+                            React.createElement('i', { className: 'fas fa-download' }),
+                            'Modèle CSV'
                         ),
-                        React.createElement('div', { className: 'flex gap-2' },
-                            React.createElement('button', {
-                                onClick: () => downloadTemplate(activeTab),
-                                className: 'px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 flex items-center gap-2 shadow-sm'
-                            },
-                                React.createElement('i', { className: 'fas fa-download' }),
-                                'Modèle Vide'
-                            ),
-                            React.createElement('button', {
-                                onClick: handleExport,
-                                disabled: isExporting,
-                                className: 'px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm disabled:opacity-50'
-                            },
-                                isExporting ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-file-export' }),
-                                'Exporter Actuel'
-                            )
+                        React.createElement('button', {
+                            onClick: handleExport,
+                            disabled: isExporting,
+                            className: 'px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm disabled:opacity-50'
+                        },
+                            isExporting ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-file-export' }),
+                            'Exporter CSV'
                         )
+                    ),
+                    // Row 2: Google Sheets options
+                    React.createElement('div', { className: 'flex flex-wrap gap-2 pt-2 border-t border-slate-200' },
+                        React.createElement('button', {
+                            onClick: () => openInGoogleSheets(activeTab),
+                            className: 'px-3 py-2 bg-green-50 border border-green-300 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex items-center gap-2 shadow-sm'
+                        },
+                            React.createElement('img', { 
+                                src: 'https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_16dp.png',
+                                alt: 'Google Sheets',
+                                className: 'w-4 h-4'
+                            }),
+                            'Modèle → Google Sheets'
+                        ),
+                        React.createElement('button', {
+                            onClick: exportToGoogleSheets,
+                            disabled: isExporting,
+                            className: 'px-3 py-2 bg-green-50 border border-green-300 text-green-700 rounded-lg text-xs font-bold hover:bg-green-100 flex items-center gap-2 shadow-sm disabled:opacity-50'
+                        },
+                            isExporting ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('img', { 
+                                src: 'https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_16dp.png',
+                                alt: 'Google Sheets',
+                                className: 'w-4 h-4'
+                            }),
+                            'Exporter → Google Sheets'
+                        )
+                    ),
+                    // Help text
+                    React.createElement('p', { className: 'text-xs text-slate-400 mt-2 italic' },
+                        '💡 Google Sheets : les données sont copiées, collez avec Ctrl+V dans le nouveau tableur'
                     )
                 ),
 
