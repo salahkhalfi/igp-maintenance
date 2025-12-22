@@ -132,12 +132,13 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         return result;
     };
 
-    // Templates CSV avec ligne d'aide - AMÉLIORÉ
+    // Templates CSV avec ligne d'aide - AMÉLIORÉ v2
     const TEMPLATES = {
         users: {
             filename: 'modele_utilisateurs.csv',
             content: `EMAIL,PRENOM,NOM,ROLE
-# AIDE: EMAIL obligatoire | ROLE: admin/supervisor/technician/operator/viewer | MDP par défaut: Changeme123!
+# AIDE: EMAIL obligatoire et unique | ROLE: admin/supervisor/technician/operator/viewer | MDP par défaut: Changeme123!
+# DOUBLONS: Si même EMAIL existe → mis à jour ou ignoré selon option choisie
 jean.dupont@exemple.com,Jean,Dupont,technician
 marie.martin@exemple.com,Marie,Martin,supervisor
 pierre.durand@exemple.com,Pierre,Durand,operator`
@@ -145,8 +146,11 @@ pierre.durand@exemple.com,Pierre,Durand,operator`
         machines: {
             filename: 'modele_machines.csv',
             content: `TYPE,MODELE,MARQUE,SERIE,LIEU
-# AIDE: TYPE obligatoire | SERIE = identifiant unique (pour mises à jour) | Laissez SERIE vide pour toujours créer
-Presse hydraulique,PH-500,Bosch,SN-2024-001,Atelier A
+# AIDE: TYPE obligatoire | SERIE = identifiant unique préféré
+# DOUBLONS: Si SERIE fourni → identifié par SERIE. Sinon → identifié par TYPE+MODELE+LIEU
+# CONSEIL: Pour 2 machines identiques au même endroit, ajoutez un SERIE unique (ex: POLI-001, POLI-002)
+Polisseuse,GX-500,Brand A,POLI-001,Atelier A
+Polisseuse,GX-500,Brand A,POLI-002,Atelier A
 Four industriel,FI-800,Siemens,SN-2024-002,Zone B
 Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
         }
@@ -458,6 +462,39 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
                     )
                 ),
 
+                // Détection des doublons potentiels dans le fichier importé (frontend)
+                activeTab === 'machines' && previewData.length > 0 && (() => {
+                    // Détecter les doublons potentiels dans les données à importer
+                    const seen = new Map();
+                    const duplicates = [];
+                    previewData.forEach((row, idx) => {
+                        const key = row.SERIE 
+                            ? `SERIE:${row.SERIE.toLowerCase().trim()}`
+                            : `COMPOSITE:${(row.TYPE || '').toLowerCase().trim()}|${(row.MODELE || '').toLowerCase().trim()}|${(row.LIEU || '').toLowerCase().trim()}`;
+                        
+                        if (seen.has(key)) {
+                            duplicates.push({ idx: idx + 1, key, firstIdx: seen.get(key) });
+                        } else {
+                            seen.set(key, idx + 1);
+                        }
+                    });
+                    
+                    return duplicates.length > 0 && React.createElement('div', { className: 'mb-4 p-3 bg-orange-50 border border-orange-300 rounded-lg' },
+                        React.createElement('div', { className: 'flex items-start gap-2' },
+                            React.createElement('i', { className: 'fas fa-exclamation-circle text-orange-600 mt-0.5' }),
+                            React.createElement('div', { className: 'text-xs text-orange-900' },
+                                React.createElement('span', { className: 'font-bold' }, `⚠️ ${duplicates.length} doublon(s) détecté(s) dans votre fichier`),
+                                React.createElement('ul', { className: 'mt-1 list-disc list-inside' },
+                                    duplicates.slice(0, 3).map((d, i) => 
+                                        React.createElement('li', { key: i }, `Ligne ${d.idx} identique à ligne ${d.firstIdx}`)
+                                    )
+                                ),
+                                duplicates.length > 3 && React.createElement('p', { className: 'mt-1 italic' }, `... et ${duplicates.length - 3} autre(s)`)
+                            )
+                        )
+                    );
+                })(),
+
                 // Options
                 previewData.length > 0 && React.createElement('div', { className: 'mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg' },
                     React.createElement('label', { className: 'flex items-start gap-3 cursor-pointer' },
@@ -472,7 +509,7 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
                             React.createElement('p', { className: 'text-xs text-amber-800 mt-1' },
                                 activeTab === 'users' 
                                     ? 'Si coché, les utilisateurs existants (même EMAIL) seront mis à jour. Sinon, ils seront ignorés.'
-                                    : 'Si coché, les machines existantes (même N° SERIE) seront mises à jour. Sinon, elles seront ignorées.'
+                                    : 'Si coché, les machines existantes (même N° SERIE ou même TYPE+MODÈLE+LIEU) seront mises à jour. Sinon, elles seront ignorées.'
                             )
                         )
                     )
@@ -500,6 +537,18 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
                         React.createElement('div', { className: 'bg-white p-3 rounded-lg border border-red-100' },
                             React.createElement('div', { className: 'text-2xl font-bold text-red-500' }, report.errors || 0),
                             React.createElement('div', { className: 'text-xs font-bold text-red-500 mt-1' }, '❌ Erreurs')
+                        )
+                    ),
+                    // Avertissement doublons potentiels (machines uniquement)
+                    activeTab === 'machines' && report.duplicateWarnings > 0 && React.createElement('div', { className: 'mt-3 p-3 bg-amber-100 border border-amber-300 rounded-lg text-xs text-amber-900' },
+                        React.createElement('div', { className: 'flex items-start gap-2' },
+                            React.createElement('i', { className: 'fas fa-exclamation-triangle text-amber-600 mt-0.5' }),
+                            React.createElement('div', null,
+                                React.createElement('span', { className: 'font-bold' }, `⚠️ ${report.duplicateWarnings} doublon(s) potentiel(s) détecté(s)`),
+                                React.createElement('p', { className: 'mt-1 text-amber-800' }, 
+                                    'Ces machines ont le même TYPE+MODÈLE+LIEU. Pour les différencier, ajoutez un N° SERIE unique à chacune.'
+                                )
+                            )
                         )
                     ),
                     activeTab === 'users' && report.success > 0 && React.createElement('div', { className: 'mt-3 p-2 bg-blue-50 rounded text-xs text-blue-800 text-center' },

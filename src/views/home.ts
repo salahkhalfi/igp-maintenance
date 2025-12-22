@@ -9,11 +9,11 @@ export const homeHTML = `
     <link rel="icon" type="image/png" href="/icon-192.png">
     <link rel="manifest" href="/manifest.json">
     <!-- Preload critical scripts -->
-    <link rel="preload" href="/static/js/dist/utils.min.js?v=46bca92e" as="script">
-    <link rel="preload" href="/static/js/dist/App.min.js?v=46bca92e" as="script">
-    <link rel="preload" href="/static/js/dist/LoginForm.min.js?v=46bca92e" as="script">
-    <link rel="preload" href="/static/js/dist/KanbanBoard.min.js?v=46bca92e" as="script">
-    <link rel="preload" href="/static/js/dist/AppHeader.min.js?v=46bca92e" as="script">
+    <link rel="preload" href="/static/js/dist/utils.min.js?v=ff33574d" as="script">
+    <link rel="preload" href="/static/js/dist/App.min.js?v=ff33574d" as="script">
+    <link rel="preload" href="/static/js/dist/LoginForm.min.js?v=ff33574d" as="script">
+    <link rel="preload" href="/static/js/dist/KanbanBoard.min.js?v=ff33574d" as="script">
+    <link rel="preload" href="/static/js/dist/AppHeader.min.js?v=ff33574d" as="script">
     <meta name="theme-color" content="#003B73">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,46 +27,46 @@ export const homeHTML = `
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="/static/js/dist/utils.min.js?v=46bca92e"></script>
+    <script src="/static/js/dist/utils.min.js?v=ff33574d"></script>
 
-    <script src="/static/js/dist/NotificationModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/ConfirmModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/Toast.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/TicketTimer.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/ScheduledCountdown.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/UserGuideModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/PromptModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/LoginForm.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/MoveTicketBottomSheet.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/CreateTicketModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/TicketDetailsModal_v3.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/ErrorBoundary.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/MachineManagementModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/RoleDropdown.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/SystemSettingsModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/PerformanceModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/AIChatModal_v4.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/OverdueTicketsModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/PushDevicesModal.min.js?v=46bca92e"></script>
+    <script src="/static/js/dist/NotificationModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/ConfirmModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/Toast.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/TicketTimer.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/ScheduledCountdown.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/UserGuideModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/PromptModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/LoginForm.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/MoveTicketBottomSheet.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/CreateTicketModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/TicketDetailsModal_v3.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/ErrorBoundary.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/MachineManagementModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/RoleDropdown.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/SystemSettingsModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/PerformanceModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/AIChatModal_v4.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/OverdueTicketsModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/PushDevicesModal.min.js?v=ff33574d"></script>
     <!-- MISSING SCRIPTS RESTORED -->
     <script src="/static/js/hooks/useTickets.js"></script>
     <script src="/static/js/hooks/useMachines.js"></script>
-    <script src="/static/js/dist/AppHeader.min.js?v=46bca92e"></script>
+    <script src="/static/js/dist/AppHeader.min.js?v=ff33574d"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=2.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=3.0.0"></script>
-    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/KanbanBoard.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/AdminRoles.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/ManageColumnsModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/TicketComments.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/TicketAttachments.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/UserForms.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/UserList.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/UserManagementModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/DataImportModal.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/VoiceTicketFab.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/MainApp.min.js?v=46bca92e"></script>
-    <script src="/static/js/dist/App.min.js?v=46bca92e"></script>
+    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/KanbanBoard.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/AdminRoles.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/ManageColumnsModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/TicketComments.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/TicketAttachments.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/UserForms.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/UserList.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/UserManagementModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/DataImportModal.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/VoiceTicketFab.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/MainApp.min.js?v=ff33574d"></script>
+    <script src="/static/js/dist/App.min.js?v=ff33574d"></script>
     <!-- DISABLED: main.js conflicts with CDN React - uses bundled React which breaks Legacy MainApp hooks -->
     <!-- <script type="module" src="/static/client/main.js"></script> -->
     <style>
@@ -574,54 +574,54 @@ export const homeHTML = `
             axios.defaults.headers.common['Authorization'] = 'Bearer ' + authToken;
         }
 
-        // getStatusLabel - DÉPLACÉ VERS /static/js/dist/utils.min.js?v=46bca92e
+        // getStatusLabel - DÉPLACÉ VERS /static/js/dist/utils.min.js?v=ff33574d
 
 
         // FONCTION UTILITAIRE CENTRALE: Obtenir l'heure EST/EDT configurée
-        // DÉPLACÉ VERS /static/js/dist/utils.min.js?v=46bca92e
+        // DÉPLACÉ VERS /static/js/dist/utils.min.js?v=ff33574d
 
 
         // ============================================================================
 
         // Fonction pour calculer le temps écoulé depuis la création
         // Retourne un objet {days, hours, minutes, seconds, color, bgColor}
-        // getElapsedTime - DÉPLACÉ VERS /static/js/dist/utils.min.js?v=46bca92e
+        // getElapsedTime - DÉPLACÉ VERS /static/js/dist/utils.min.js?v=ff33574d
 
         // Formater le texte du chronomètre avec secondes
-        // formatElapsedTime - DÉPLACÉ VERS /static/js/dist/utils.min.js?v=46bca92e
+        // formatElapsedTime - DÉPLACÉ VERS /static/js/dist/utils.min.js?v=ff33574d
 
 
         // Composant de notification personnalisé
-        // NotificationModal - DÉPLACÉ VERS /static/js/dist/NotificationModal.min.js?v=46bca92e
+        // NotificationModal - DÉPLACÉ VERS /static/js/dist/NotificationModal.min.js?v=ff33574d
 
         // Composant de confirmation personnalisé
-        // ConfirmModal - DÉPLACÉ VERS /static/js/dist/ConfirmModal.min.js?v=46bca92e
+        // ConfirmModal - DÉPLACÉ VERS /static/js/dist/ConfirmModal.min.js?v=ff33574d
 
         // Composant Toast pour notifications rapides
-        // Toast - DÉPLACÉ VERS /static/js/dist/Toast.min.js?v=46bca92e
+        // Toast - DÉPLACÉ VERS /static/js/dist/Toast.min.js?v=ff33574d
 
         // Composant Chronomètre dynamique (mise à jour chaque seconde)
-        // TicketTimer - DÉPLACÉ VERS /static/js/dist/TicketTimer.min.js?v=46bca92e
-        // ScheduledCountdown - DÉPLACÉ VERS /static/js/dist/ScheduledCountdown.min.js?v=46bca92e
+        // TicketTimer - DÉPLACÉ VERS /static/js/dist/TicketTimer.min.js?v=ff33574d
+        // ScheduledCountdown - DÉPLACÉ VERS /static/js/dist/ScheduledCountdown.min.js?v=ff33574d
 
         // Composant Guide Utilisateur
-        // UserGuideModal - DÉPLACÉ VERS /static/js/dist/UserGuideModal.min.js?v=46bca92e
-        // PromptModal - DÉPLACÉ VERS /static/js/dist/PromptModal.min.js?v=46bca92e
-        // LoginForm - DÉPLACÉ VERS /static/js/dist/LoginForm.min.js?v=46bca92e
-        // MoveTicketBottomSheet - DÉPLACÉ VERS /static/js/dist/MoveTicketBottomSheet.min.js?v=46bca92e
-        // CreateTicketModal - DÉPLACÉ VERS /static/js/dist/CreateTicketModal.min.js?v=46bca92e
+        // UserGuideModal - DÉPLACÉ VERS /static/js/dist/UserGuideModal.min.js?v=ff33574d
+        // PromptModal - DÉPLACÉ VERS /static/js/dist/PromptModal.min.js?v=ff33574d
+        // LoginForm - DÉPLACÉ VERS /static/js/dist/LoginForm.min.js?v=ff33574d
+        // MoveTicketBottomSheet - DÉPLACÉ VERS /static/js/dist/MoveTicketBottomSheet.min.js?v=ff33574d
+        // CreateTicketModal - DÉPLACÉ VERS /static/js/dist/CreateTicketModal.min.js?v=ff33574d
         // TicketDetailsModal - DÉPLACÉ VERS /static/js/components/TicketDetailsModal.js
         // Composant de gestion des machines (VERSION SIMPLIFIÉE ET ÉLÉGANTE)
-        // MachineManagementModal - DÉPLACÉ VERS /static/js/dist/MachineManagementModal.min.js?v=46bca92e
-        // RoleDropdown - DÉPLACÉ VERS /static/js/dist/RoleDropdown.min.js?v=46bca92e
-        // SystemSettingsModal - DÉPLACÉ VERS /static/js/dist/SystemSettingsModal.min.js?v=46bca92e
+        // MachineManagementModal - DÉPLACÉ VERS /static/js/dist/MachineManagementModal.min.js?v=ff33574d
+        // RoleDropdown - DÉPLACÉ VERS /static/js/dist/RoleDropdown.min.js?v=ff33574d
+        // SystemSettingsModal - DÉPLACÉ VERS /static/js/dist/SystemSettingsModal.min.js?v=ff33574d
         // Composant de performance des techniciens (ÉTAPE 2: VERSION BASIQUE)
-        // PerformanceModal - DÉPLACÉ VERS /static/js/dist/PerformanceModal.min.js?v=46bca92e
-        // OverdueTicketsModal - DÉPLACÉ VERS /static/js/dist/OverdueTicketsModal.min.js?v=46bca92e
-        // PushDevicesModal - DÉPLACÉ VERS /static/js/dist/PushDevicesModal.min.js?v=46bca92e
-        // UserManagementModal - DÉPLACÉ VERS /static/js/dist/UserManagementModal.min.js?v=46bca92e
-        // MainApp - DÉPLACÉ VERS /static/js/dist/MainApp.min.js?v=46bca92e
-        // App - DÉPLACÉ VERS /static/js/dist/App.min.js?v=46bca92e
+        // PerformanceModal - DÉPLACÉ VERS /static/js/dist/PerformanceModal.min.js?v=ff33574d
+        // OverdueTicketsModal - DÉPLACÉ VERS /static/js/dist/OverdueTicketsModal.min.js?v=ff33574d
+        // PushDevicesModal - DÉPLACÉ VERS /static/js/dist/PushDevicesModal.min.js?v=ff33574d
+        // UserManagementModal - DÉPLACÉ VERS /static/js/dist/UserManagementModal.min.js?v=ff33574d
+        // MainApp - DÉPLACÉ VERS /static/js/dist/MainApp.min.js?v=ff33574d
+        // App - DÉPLACÉ VERS /static/js/dist/App.min.js?v=ff33574d
 
         // --- TV DASHBOARD MODAL ---
         const TVDashboardModal = ({ isOpen, onClose }) => {

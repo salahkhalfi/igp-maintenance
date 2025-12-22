@@ -1446,6 +1446,12 @@ settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
  * POST /api/settings/import/machines - Importer des machines depuis CSV
  * Accès: Admin uniquement
  * Body: { machines: [{ type, model, manufacturer, serial, location }], updateExisting: boolean }
+ * 
+ * LOGIQUE DE DÉTECTION DES DOUBLONS :
+ * 1. Si SERIE (numéro de série) est fourni → utiliser SERIE comme clé unique
+ * 2. Si SERIE est vide → utiliser clé composite TYPE+MODELE+LIEU (lowercase, trimmed)
+ * 3. Si clé existe et updateExisting=true → mettre à jour
+ * 4. Si clé existe et updateExisting=false → ignorer
  */
 settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
   try {
@@ -1463,7 +1469,23 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
       return c.json({ error: 'Maximum 1000 machines par import' }, 400);
     }
     
-    const stats = { success: 0, updated: 0, ignored: 0, errors: 0 };
+    const stats = { 
+      success: 0, 
+      updated: 0, 
+      ignored: 0, 
+      errors: 0,
+      duplicateWarnings: 0  // Nouveaux: avertissements pour doublons potentiels
+    };
+    
+    // Fonction pour générer la clé composite
+    const generateCompositeKey = (type: string, model: string | null, location: string | null): string => {
+      const parts = [
+        type?.toLowerCase().trim() || '',
+        model?.toLowerCase().trim() || '',
+        location?.toLowerCase().trim() || ''
+      ];
+      return parts.join('|');
+    };
     
     for (const machineData of importMachines) {
       try {
@@ -1480,35 +1502,71 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
           continue;
         }
         
-        // Si numéro de série fourni, vérifier s'il existe
+        let existing = null;
+        let matchedBy = '';
+        
+        // STRATÉGIE 1 : Si numéro de série fourni → chercher par SERIE
         if (serialNumber) {
-          const existing = await db
+          existing = await db
             .select({ id: machines.id })
             .from(machines)
-            .where(sql`${machines.serial_number} = ${serialNumber}`)
+            .where(sql`${machines.serial_number} = ${serialNumber} AND ${machines.deleted_at} IS NULL`)
             .get();
           
-          if (existing) {
-            if (updateExisting) {
-              // Mise à jour
-              await db.update(machines)
-                .set({
-                  machine_type: machineType,
-                  model: model,
-                  manufacturer: manufacturer,
-                  location: location,
-                  updated_at: sql`CURRENT_TIMESTAMP`
-                })
-                .where(sql`${machines.id} = ${existing.id}`);
-              stats.updated++;
-            } else {
-              stats.ignored++;
-            }
-            continue;
-          }
+          if (existing) matchedBy = 'serial';
         }
         
-        // Création
+        // STRATÉGIE 2 : Si pas de SERIE → chercher par clé composite TYPE+MODELE+LIEU
+        if (!existing && !serialNumber) {
+          const compositeKey = generateCompositeKey(machineType, model, location);
+          
+          // Recherche par clé composite (case-insensitive)
+          existing = await db
+            .select({ id: machines.id })
+            .from(machines)
+            .where(sql`
+              LOWER(TRIM(${machines.machine_type})) = ${machineType.toLowerCase().trim()}
+              AND (
+                (${model} IS NULL AND (${machines.model} IS NULL OR ${machines.model} = ''))
+                OR LOWER(TRIM(${machines.model})) = ${(model || '').toLowerCase().trim()}
+              )
+              AND (
+                (${location} IS NULL AND (${machines.location} IS NULL OR ${machines.location} = ''))
+                OR LOWER(TRIM(${machines.location})) = ${(location || '').toLowerCase().trim()}
+              )
+              AND ${machines.deleted_at} IS NULL
+            `)
+            .get();
+          
+          if (existing) matchedBy = 'composite';
+        }
+        
+        // Gérer le cas existant
+        if (existing) {
+          if (updateExisting) {
+            // Mise à jour de la machine existante
+            await db.update(machines)
+              .set({
+                machine_type: machineType,
+                model: model,
+                manufacturer: manufacturer,
+                serial_number: serialNumber,
+                location: location,
+                updated_at: sql`CURRENT_TIMESTAMP`
+              })
+              .where(sql`${machines.id} = ${existing.id}`);
+            stats.updated++;
+          } else {
+            stats.ignored++;
+            // Si match par composite et pas de série → avertissement
+            if (matchedBy === 'composite') {
+              stats.duplicateWarnings++;
+            }
+          }
+          continue;
+        }
+        
+        // Création d'une nouvelle machine
         await db.insert(machines).values({
           machine_type: machineType,
           model: model,
@@ -1524,11 +1582,14 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
       }
     }
     
-    console.log(`✅ Import machines par ${currentUser.email}: ${stats.success} ajoutées, ${stats.updated} mises à jour, ${stats.ignored} ignorées, ${stats.errors} erreurs`);
+    console.log(`✅ Import machines par ${currentUser.email}: ${stats.success} ajoutées, ${stats.updated} mises à jour, ${stats.ignored} ignorées, ${stats.errors} erreurs, ${stats.duplicateWarnings} avertissements doublons`);
     
     return c.json({ 
       message: 'Import terminé',
-      stats
+      stats,
+      note: stats.duplicateWarnings > 0 
+        ? `${stats.duplicateWarnings} machine(s) détectée(s) comme doublon potentiel (même TYPE+MODÈLE+LIEU). Ajoutez un N° SERIE pour les différencier.`
+        : undefined
     });
   } catch (error) {
     console.error('Import machines error:', error);
