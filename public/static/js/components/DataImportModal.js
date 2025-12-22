@@ -21,7 +21,60 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         }
     }, [show, initialTab]);
 
-    // Parse CSV content - AMÉLIORÉ : ignore les lignes commençant par #
+    // Sanitize string - remove dangerous HTML/script tags
+    const sanitizeString = (str) => {
+        if (!str || typeof str !== 'string') return str;
+        return str
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    // Parse CSV line respecting quoted fields (RFC 4180 compliant)
+    const parseCSVLine = (line, delimiter) => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+            
+            if (inQuotes) {
+                if (char === '"') {
+                    if (nextChar === '"') {
+                        // Escaped quote
+                        current += '"';
+                        i++;
+                    } else {
+                        // End of quoted field
+                        inQuotes = false;
+                    }
+                } else {
+                    current += char;
+                }
+            } else {
+                if (char === '"') {
+                    // Start of quoted field
+                    inQuotes = true;
+                } else if (char === delimiter) {
+                    // End of field
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+        }
+        
+        // Don't forget the last field
+        result.push(current.trim());
+        
+        return result;
+    };
+
+    // Parse CSV content - RFC 4180 compliant, ignore lines starting with #
     const parseCSV = (content) => {
         if (!content) return [];
 
@@ -40,15 +93,20 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         
         if (headerIndex >= allLines.length) return [];
 
-        // Détecter le délimiteur sur la ligne d'en-tête
+        // Détecter le délimiteur sur la ligne d'en-tête (hors guillemets)
         const headerLine = allLines[headerIndex];
         let delimiter = ',';
-        if (headerLine.includes(';') && (headerLine.match(/;/g) || []).length > (headerLine.match(/,/g) || []).length) {
-            delimiter = ';';
+        // Count delimiters outside quotes
+        let commaCount = 0, semicolonCount = 0, inQ = false;
+        for (const char of headerLine) {
+            if (char === '"') inQ = !inQ;
+            else if (!inQ && char === ',') commaCount++;
+            else if (!inQ && char === ';') semicolonCount++;
         }
+        if (semicolonCount > commaCount) delimiter = ';';
 
         // Parser les en-têtes
-        const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^"|"$/g, '').toUpperCase());
+        const headers = parseCSVLine(headerLine, delimiter).map(h => h.toUpperCase());
 
         // Parser les données (ignorer les lignes commençant par #)
         const result = [];
@@ -58,7 +116,7 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
             // Ignorer les commentaires
             if (line.startsWith('#')) continue;
             
-            const values = line.split(delimiter).map(v => v.trim().replace(/^"|"$/g, ''));
+            const values = parseCSVLine(line, delimiter);
             const obj = {};
             let hasData = false;
 

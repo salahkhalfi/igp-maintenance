@@ -1322,6 +1322,26 @@ settings.get('/export/machines', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+// Sanitize string - remove/escape dangerous characters for XSS prevention
+const sanitizeForDb = (str: string | undefined | null): string => {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .trim()
+    // Remove null bytes
+    .replace(/\0/g, '')
+    // Limit length to prevent overflow
+    .substring(0, 500)
+    // Decode HTML entities that might be double-encoded
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    // Then escape HTML for storage (XSS prevention)
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+};
+
 /**
  * POST /api/settings/import/users - Importer des utilisateurs depuis CSV
  * Accès: Admin uniquement
@@ -1338,6 +1358,11 @@ settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
       return c.json({ error: 'Données invalides' }, 400);
     }
     
+    // Limite de sécurité : max 1000 lignes par import
+    if (importUsers.length > 1000) {
+      return c.json({ error: 'Maximum 1000 utilisateurs par import' }, 400);
+    }
+    
     const stats = { success: 0, updated: 0, ignored: 0, errors: 0 };
     const validRoles = ['admin', 'supervisor', 'technician', 'operator', 'team_leader', 'planner', 'coordinator', 'director', 'senior_technician', 'furnace_operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'];
     
@@ -1346,9 +1371,10 @@ settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
     
     for (const userData of importUsers) {
       try {
-        const email = userData.email?.trim().toLowerCase();
-        const firstName = userData.first_name?.trim() || '';
-        const lastName = userData.last_name?.trim() || '';
+        // Sanitize all inputs
+        const email = userData.email?.trim().toLowerCase().substring(0, 255);
+        const firstName = sanitizeForDb(userData.first_name);
+        const lastName = sanitizeForDb(userData.last_name);
         const role = userData.role?.trim().toLowerCase() || 'technician';
         
         // Validation
@@ -1432,15 +1458,21 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
       return c.json({ error: 'Données invalides' }, 400);
     }
     
+    // Limite de sécurité : max 1000 lignes par import
+    if (importMachines.length > 1000) {
+      return c.json({ error: 'Maximum 1000 machines par import' }, 400);
+    }
+    
     const stats = { success: 0, updated: 0, ignored: 0, errors: 0 };
     
     for (const machineData of importMachines) {
       try {
-        const machineType = machineData.type?.trim();
-        const model = machineData.model?.trim() || null;
-        const manufacturer = machineData.manufacturer?.trim() || null;
-        const serialNumber = machineData.serial?.trim() || null;
-        const location = machineData.location?.trim() || null;
+        // Sanitize all inputs
+        const machineType = sanitizeForDb(machineData.type);
+        const model = sanitizeForDb(machineData.model) || null;
+        const manufacturer = sanitizeForDb(machineData.manufacturer) || null;
+        const serialNumber = machineData.serial?.trim().substring(0, 100) || null;
+        const location = sanitizeForDb(machineData.location) || null;
         
         // Validation - Type obligatoire
         if (!machineType) {
