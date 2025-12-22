@@ -592,12 +592,22 @@ const AppHeader = ({
                 ), document.body
             ),
 
-            // MOBILE MENU PORTAL (Fixed Overlay behind header)
+            // MOBILE MENU PORTAL (Professional Drawer with Overlay)
             showMobileMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
                 React.createElement('div', { 
-                    className: 'fixed inset-0 md:left-auto md:right-0 md:w-80 md:shadow-2xl md:border-l md:border-gray-200 z-[49] flex flex-col bg-white overflow-y-auto pt-[60px] pb-32 px-4 transition-all duration-300 ease-in-out',
-                    style: { WebkitOverflowScrolling: 'touch' } // Native momentum scrolling
+                    className: 'fixed inset-0 z-[48]',
+                    onClick: () => setShowMobileMenu(false) // Close on overlay click
                 },
+                    // Dark Overlay
+                    React.createElement('div', { 
+                        className: 'absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300'
+                    }),
+                    // Drawer Panel (Right-aligned, professional width)
+                    React.createElement('div', { 
+                        className: 'absolute top-0 right-0 h-full w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col overflow-y-auto pt-[60px] pb-32 px-4 transition-transform duration-300 ease-out',
+                        style: { WebkitOverflowScrolling: 'touch' },
+                        onClick: (e) => e.stopPropagation() // Prevent close when clicking inside drawer
+                    },
                         React.createElement('button', { 
                             onClick: () => window.open('/messenger', '_blank'), 
                             className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-emerald-50 border-emerald-200' 
@@ -664,6 +674,7 @@ const AppHeader = ({
 
                     React.createElement('button', { onClick: onRefresh, className: 'px-3 py-3 bg-blue-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-blue-700 transition mt-4 font-bold' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser les données'),
                     React.createElement('button', { onClick: onLogout, className: 'px-3 py-3 bg-gray-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-gray-700 transition mt-2 font-bold' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Se déconnecter')
+                    )
                 ), document.body
             )
     );
