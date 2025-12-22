@@ -416,9 +416,9 @@ app.get('/conversations/:id/messages', async (c) => {
 });
 
 // 7. POST /api/v2/chat/conversations/:id/read - Mark conversation as read
-app.post('/conversations/:id/read', async (c) => {
+app.post('/conversations/:id/read', zValidator('param', conversationIdParamSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
+    const { id: conversationId } = c.req.valid('param');
     
     await c.env.DB.prepare(`
         UPDATE chat_participants
@@ -529,10 +529,10 @@ app.delete('/guests/:id', zValidator('param', guestIdParamSchema), async (c) => 
 });
 
 // 9. POST /api/v2/chat/conversations/:id/participants - Add participant to group
-app.post('/conversations/:id/participants', async (c) => {
+app.post('/conversations/:id/participants', zValidator('param', conversationIdParamSchema), zValidator('json', addParticipantSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
-    const { userId } = await c.req.json();
+    const { id: conversationId } = c.req.valid('param');
+    const { user_id: userId } = c.req.valid('json');
 
     // Vérifier si c'est un groupe
     const conv = await c.env.DB.prepare('SELECT type FROM chat_conversations WHERE id = ?').bind(conversationId).first();
@@ -578,9 +578,15 @@ app.post('/conversations/:id/participants', async (c) => {
 });
 
 // 3. POST /api/v2/chat/send - Send a message
-app.post('/send', async (c) => {
+app.post('/send', zValidator('json', sendMessageSchema), async (c) => {
     const user = c.get('user');
-    let { conversationId, content, type = 'text', mediaKey, mediaMeta, isCall, transcription } = await c.req.json();
+    const validated = c.req.valid('json');
+    let conversationId = validated.conversation_id;
+    let content = validated.content;
+    const type = validated.type || 'text';
+    // Additional fields from raw body (not in schema - optional media fields)
+    const rawBody = await c.req.json().catch(() => ({}));
+    const { mediaKey, mediaMeta, isCall, transcription } = rawBody;
     const messageId = crypto.randomUUID();
 
     try {
@@ -890,14 +896,14 @@ Input: "${originalText}"`;
 });
 
 // 4. POST /api/v2/chat/conversations - Create new conversation (Direct or Group)
-app.post('/conversations', async (c) => {
+app.post('/conversations', zValidator('json', createConversationSchema), async (c) => {
     try {
         const user = c.get('user');
-        const { type, participantIds, name } = await c.req.json();
+        const { type, participant_ids: participantIds, name } = c.req.valid('json');
         
-        // Basic Validation
-        if (!participantIds || !Array.isArray(participantIds)) {
-            return c.json({ error: 'Format des participants invalide' }, 400);
+        // Basic Validation (Zod ensures array format)
+        if (!participantIds || participantIds.length === 0) {
+            return c.json({ error: 'Au moins un participant requis' }, 400);
         }
 
         const conversationId = crypto.randomUUID();
@@ -962,10 +968,12 @@ app.post('/conversations', async (c) => {
 });
 
 // 10. PUT /api/v2/chat/conversations/:id - Update conversation (Name, Avatar) - Admin only
-app.put('/conversations/:id', async (c) => {
+app.put('/conversations/:id', zValidator('param', conversationIdParamSchema), zValidator('json', updateConversationSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
-    const { name, avatar_key } = await c.req.json();
+    const { id: conversationId } = c.req.valid('param');
+    const { name } = c.req.valid('json');
+    const rawBody = await c.req.json().catch(() => ({}));
+    const avatar_key = rawBody.avatar_key; // Optional, not in schema
 
     // Vérifier si l'utilisateur est admin du groupe ou Admin Global
     const participant = await c.env.DB.prepare(`
@@ -1045,10 +1053,9 @@ app.post('/conversations/:id/avatar', async (c) => {
 });
 
 // 11. DELETE /api/v2/chat/conversations/:id/participants/:userId - Remove participant (Kick)
-app.delete('/conversations/:id/participants/:userId', async (c) => {
+app.delete('/conversations/:id/participants/:userId', zValidator('param', userIdParamSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
-    const targetUserId = Number(c.req.param('userId'));
+    const { id: conversationId, userId: targetUserId } = c.req.valid('param');
 
     // Vérifier droits: Admin du groupe requis
     const participant = await c.env.DB.prepare(`
@@ -1158,9 +1165,9 @@ app.post('/upload', async (c) => {
 
 
 // 12. DELETE /api/v2/chat/conversations/:id - Delete entire conversation (Global Admin only)
-app.delete('/conversations/:id', async (c) => {
+app.delete('/conversations/:id', zValidator('param', conversationIdParamSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
+    const { id: conversationId } = c.req.valid('param');
 
     // Check if Global Admin
     if (user.role !== 'admin') {
@@ -1190,10 +1197,9 @@ app.delete('/conversations/:id', async (c) => {
 });
 
 // 13. DELETE /api/v2/chat/conversations/:id/messages/:messageId - Delete single message
-app.delete('/conversations/:id/messages/:messageId', async (c) => {
+app.delete('/conversations/:id/messages/:messageId', zValidator('param', messageIdParamSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
-    const messageId = c.req.param('messageId');
+    const { id: conversationId, messageId } = c.req.valid('param');
 
     // 1. Get message metadata to verify ownership
     // MODIFICATION: We search by ID only, ignoring conversation_id mismatch to fix "ghost" message deletions
@@ -1221,9 +1227,9 @@ app.delete('/conversations/:id/messages/:messageId', async (c) => {
 });
 
 // 14. DELETE /api/v2/chat/conversations/:id/messages - Clear all messages (Admin or Group Admin)
-app.delete('/conversations/:id/messages', async (c) => {
+app.delete('/conversations/:id/messages', zValidator('param', conversationIdParamSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
+    const { id: conversationId } = c.req.valid('param');
 
     // Check permissions (Global Admin or Group Admin)
     const participant = await c.env.DB.prepare(`
@@ -1350,11 +1356,10 @@ app.post('/stress-test', async (c) => {
 });
 
 // 16. PUT /api/v2/chat/conversations/:id/messages/:messageId/transcription - Update transcription
-app.put('/conversations/:id/messages/:messageId/transcription', async (c) => {
+app.put('/conversations/:id/messages/:messageId/transcription', zValidator('param', messageIdParamSchema), zValidator('json', updateTranscriptionSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
-    const messageId = c.req.param('messageId');
-    const { transcription } = await c.req.json();
+    const { id: conversationId, messageId } = c.req.valid('param');
+    const { transcription } = c.req.valid('json');
 
     // 1. Get message metadata to verify ownership
     const message = await c.env.DB.prepare(`
@@ -1384,10 +1389,9 @@ app.put('/conversations/:id/messages/:messageId/transcription', async (c) => {
 });
 
 // 17. POST /api/v2/chat/conversations/:id/messages/:messageId/card
-app.post('/conversations/:id/messages/:messageId/card', async (c) => {
+app.post('/conversations/:id/messages/:messageId/card', zValidator('param', messageIdParamSchema), async (c) => {
     const user = c.get('user');
-    const conversationId = c.req.param('id');
-    const messageId = c.req.param('messageId');
+    const { id: conversationId, messageId } = c.req.valid('param');
     const { assignee_id, priority = 'normal' } = await c.req.json();
 
     // Check participation

@@ -321,3 +321,25 @@ export const plannerNotes = sqliteTable('planner_notes', {
   is_dashboard: integer('is_dashboard', { mode: 'boolean' }).default(false),
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Audit Logs - Complete traceability for compliance
+export const auditLogs = sqliteTable('audit_logs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  user_id: integer('user_id'),
+  user_email: text('user_email'),
+  user_role: text('user_role'),
+  action: text('action').notNull(), // 'create', 'update', 'delete', 'login', 'logout', 'export', 'import'
+  resource: text('resource').notNull(), // 'ticket', 'user', 'machine', 'message', 'conversation', 'settings'
+  resource_id: text('resource_id'),
+  details: text('details'), // JSON
+  ip_address: text('ip_address'),
+  user_agent: text('user_agent'),
+  status: text('status').default('success'), // 'success', 'failed', 'error'
+  error_message: text('error_message'),
+  created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  userIdx: index('idx_audit_logs_user_id').on(table.user_id),
+  actionIdx: index('idx_audit_logs_action').on(table.action),
+  resourceIdx: index('idx_audit_logs_resource').on(table.resource),
+  createdIdx: index('idx_audit_logs_created_at').on(table.created_at),
+}));

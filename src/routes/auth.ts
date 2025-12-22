@@ -19,6 +19,8 @@ const auth = new Hono<{ Bindings: Bindings }>();
 // POST /api/auth/avatar - Upload user avatar (Protected)
 // Note: authMiddleware must be imported if not globally applied, checking imports...
 import { authMiddleware } from '../middlewares/auth';
+import { strictRateLimit } from '../middlewares/rateLimit';
+import { audit, getClientInfo } from '../utils/audit';
 
 auth.post('/avatar', authMiddleware, async (c) => {
   try {
@@ -219,8 +221,8 @@ auth.get('/avatar/:userId', async (c) => {
   }
 });
 
-// POST /api/auth/register - Inscription
-auth.post('/register', zValidator('json', registerSchema), async (c) => {
+// POST /api/auth/register - Inscription (Rate limited: 5 attempts/minute)
+auth.post('/register', strictRateLimit, zValidator('json', registerSchema), async (c) => {
   try {
     const { email, password, first_name, last_name, role } = c.req.valid('json');
     const db = getDb(c.env);
@@ -285,8 +287,8 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
   }
 });
 
-// POST /api/auth/login - Connexion
-auth.post('/login', zValidator('json', loginSchema), async (c) => {
+// POST /api/auth/login - Connexion (Rate limited: 5 attempts/minute)
+auth.post('/login', strictRateLimit, zValidator('json', loginSchema), async (c) => {
   try {
     const { email, password, rememberMe } = c.req.valid('json');
     const db = getDb(c.env);
@@ -371,6 +373,11 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
             })()
           );
         }
+
+        // Audit login success
+        c.executionCtx?.waitUntil?.(
+          audit.login(c.env.DB, { userId: user.id, email: user.email, role: user.role }, getClientInfo(c))
+        );
 
         return c.json({ token, user: userWithoutPassword });
     }
@@ -522,6 +529,8 @@ auth.post('/logout', async (c) => {
       path: '/'
     });
 
+    // Note: We don't have user context in logout (cookie cleared)
+    // But we can still log the action
     return c.json({ message: 'Déconnexion réussie' });
   } catch (error) {
     console.error('Logout error:', error);
