@@ -291,11 +291,11 @@ const AppHeader = ({
 
                         // Mobile: Premium User Badge with Real Avatar
                         React.createElement('div', { className: 'md:hidden flex items-center gap-1.5 px-1.5 py-1 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-200/80 shadow-sm' },
-                            // Avatar from API (falls back to SVG with initial)
+                            // Avatar from API (always returns valid image/SVG, bg as loading state)
                             React.createElement('img', { 
                                 src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default'),
                                 alt: currentUser?.first_name || 'User',
-                                className: 'w-7 h-7 rounded-lg object-cover shadow-sm'
+                                className: 'w-7 h-7 rounded-lg object-cover shadow-sm bg-gradient-to-br from-blue-400 to-indigo-600'
                             }),
                             // Name and role - compact
                             React.createElement('div', { className: 'flex flex-col items-start max-w-[70px]' },
@@ -319,7 +319,7 @@ const AppHeader = ({
                             React.createElement('img', { 
                                 src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default'),
                                 alt: currentUser?.first_name || 'User',
-                                className: 'w-6 h-6 rounded-full object-cover mr-2'
+                                className: 'w-6 h-6 rounded-full object-cover mr-2 bg-gradient-to-br from-blue-400 to-indigo-600'
                             }),
                             React.createElement('span', { className: 'text-xs font-medium text-slate-700' }, 
                                 "Bonjour, " + (currentUser?.first_name || 'Utilisateur')
@@ -645,23 +645,13 @@ const AppHeader = ({
                                 className: 'absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all'
                             }, React.createElement('i', { className: 'fas fa-times text-sm' })),
                             
-                            // User Profile Card with REAL AVATAR
+                            // User Profile Card with REAL AVATAR (API always returns valid image/SVG)
                             React.createElement('div', { className: 'flex items-center gap-3' },
                                 React.createElement('img', { 
-                                    src: '/api/auth/avatar/' + (currentUser?.id || 0),
+                                    src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default'),
                                     alt: currentUser?.first_name || 'Avatar',
-                                    className: 'w-12 h-12 rounded-2xl object-cover shadow-lg shadow-blue-500/30 border-2 border-white/20',
-                                    onError: (e) => { 
-                                        e.target.onerror = null; 
-                                        e.target.style.display = 'none';
-                                        e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
-                                    }
+                                    className: 'w-12 h-12 rounded-2xl object-cover shadow-lg shadow-blue-500/30 border-2 border-white/20 bg-gradient-to-br from-blue-400 to-indigo-600'
                                 }),
-                                // Fallback initial avatar (hidden by default)
-                                React.createElement('div', { 
-                                    className: 'w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-500/30',
-                                    style: { display: 'none' }
-                                }, (currentUser?.first_name?.[0] || 'U')),
                                 React.createElement('div', { className: 'flex-1 min-w-0' },
                                     React.createElement('h3', { className: 'text-white font-bold text-base truncate' }, 
                                         currentUser?.first_name || 'Utilisateur'
