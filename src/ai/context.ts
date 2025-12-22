@@ -169,6 +169,24 @@ export async function buildAutoContext(db: any): Promise<CompanyProfile> {
     };
 }
 
+// --- ROLE TRANSLATION MAP (English DB values -> French display) ---
+const ROLE_LABELS: Record<string, string> = {
+    'admin': 'Administrateur',
+    'supervisor': 'Superviseur',
+    'team_leader': 'Chef d\'équipe',
+    'technician': 'Technicien',
+    'operator': 'Opérateur',
+    'furnace_operator': 'Opérateur de four',
+    'maintenance': 'Maintenance',
+    'guest': 'Invité',
+    // Add more as needed
+};
+
+// Helper to translate role to French
+function translateRole(role: string): string {
+    return ROLE_LABELS[role] || role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, ' ');
+}
+
 // --- HELPER: GENERATE AI IDENTITY FROM COMPANY PROFILE ---
 function generateAutoIdentity(profile: CompanyProfile): AiConfig {
     const { name, subtitle, equipmentTypes, locations, roles, admins } = profile;
@@ -183,9 +201,21 @@ function generateAutoIdentity(profile: CompanyProfile): AiConfig {
         ? locations.slice(0, 5).join(", ")
         : "différentes zones";
     
-    // Build role context
-    const hasMultipleRoles = roles.length > 1;
-    const rolesStr = roles.filter(r => r !== 'admin' && r !== 'guest').join(", ") || "techniciens";
+    // Build role context - translate to French and filter out admin/guest
+    const teamRoles = roles
+        .filter(r => r !== 'admin' && r !== 'guest')
+        .map(r => translateRole(r));
+    
+    // Build a natural team description
+    let teamDescription = "l'équipe technique";
+    if (teamRoles.length === 1) {
+        teamDescription = `les ${teamRoles[0]}s`;
+    } else if (teamRoles.length === 2) {
+        teamDescription = `les ${teamRoles[0]}s et ${teamRoles[1]}s`;
+    } else if (teamRoles.length > 2) {
+        const lastRole = teamRoles.pop();
+        teamDescription = `les ${teamRoles.join('s, ')}s et ${lastRole}s`;
+    }
     
     // Build hierarchy (admin names)
     const hierarchyStr = admins.length > 0
@@ -217,7 +247,7 @@ Ta mission : assurer la fiabilité et la performance des équipements.`,
         
         hierarchy: `HIÉRARCHIE :
 Tu rapportes à ${hierarchyStr}.
-Tu collabores avec ${rolesStr} pour résoudre les problèmes rapidement.`,
+Tu travailles en collaboration avec ${teamDescription} pour résoudre les problèmes rapidement.`,
         
         character: `CARACTÈRE :
 1. **PROFESSIONNEL** : Tu communiques de façon claire et technique.
