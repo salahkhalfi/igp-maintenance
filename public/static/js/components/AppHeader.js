@@ -592,88 +592,236 @@ const AppHeader = ({
                 ), document.body
             ),
 
-            // MOBILE MENU PORTAL (Professional Drawer with Overlay)
+            // MOBILE MENU PORTAL (Premium Design)
             showMobileMenu && typeof ReactDOM !== 'undefined' && ReactDOM.createPortal(
                 React.createElement('div', { 
-                    className: 'fixed inset-0 z-[48]',
-                    onClick: () => setShowMobileMenu(false) // Close on overlay click
+                    className: 'fixed inset-0 z-[9999]',
+                    onClick: () => setShowMobileMenu(false)
                 },
-                    // Dark Overlay
+                    // Premium Overlay with gradient
                     React.createElement('div', { 
-                        className: 'absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300'
+                        className: 'absolute inset-0 bg-gradient-to-br from-slate-900/60 via-slate-800/50 to-slate-900/60 backdrop-blur-md'
                     }),
-                    // Drawer Panel (Right-aligned, professional width)
+                    
+                    // Premium Drawer Panel
                     React.createElement('div', { 
-                        className: 'absolute top-0 right-0 h-full w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col overflow-y-auto pt-[60px] pb-32 px-4 transition-transform duration-300 ease-out',
-                        style: { WebkitOverflowScrolling: 'touch' },
-                        onClick: (e) => e.stopPropagation() // Prevent close when clicking inside drawer
+                        className: 'absolute top-0 right-0 h-full w-[88%] max-w-[340px] bg-gradient-to-b from-slate-50 to-white flex flex-col overflow-hidden shadow-[-8px_0_30px_-5px_rgba(0,0,0,0.3)]',
+                        onClick: (e) => e.stopPropagation()
                     },
-                        React.createElement('button', { 
-                            onClick: () => window.open('/messenger', '_blank'), 
-                            className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm items-center flex justify-between mt-2 hover:bg-emerald-50 border-emerald-200' 
-                        }, 
-                            React.createElement('div', { className: 'flex items-center' }, 
-                                React.createElement('i', { className: 'fas fa-rocket mr-3 text-emerald-600 text-lg' }), 
-                                React.createElement('span', { className: 'font-bold text-emerald-700' }, messengerName)
+                        
+                        // === HEADER SECTION ===
+                        React.createElement('div', { 
+                            className: 'relative px-5 pt-5 pb-4 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800'
+                        },
+                            // Close button
+                            React.createElement('button', {
+                                onClick: () => setShowMobileMenu(false),
+                                className: 'absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all'
+                            }, React.createElement('i', { className: 'fas fa-times text-sm' })),
+                            
+                            // User Profile Card
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                React.createElement('div', { 
+                                    className: 'w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-500/30'
+                                }, (currentUser?.first_name?.[0] || 'U')),
+                                React.createElement('div', { className: 'flex-1 min-w-0' },
+                                    React.createElement('h3', { className: 'text-white font-bold text-base truncate' }, 
+                                        currentUser?.first_name || 'Utilisateur'
+                                    ),
+                                    React.createElement('p', { className: 'text-slate-400 text-xs truncate' }, 
+                                        currentUser?.email || ''
+                                    )
+                                )
                             ),
-                            React.createElement('span', { className: 'ml-2 px-2 py-0.5 text-[10px] font-bold text-white bg-emerald-600 rounded-full' }, 'NOUVEAU')
+                            // Role Badge
+                            (currentUser?.role) && React.createElement('div', { 
+                                className: 'mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ' +
+                                    (currentUser?.role === 'admin' ? 'bg-amber-500/20 text-amber-300' : 
+                                     currentUser?.role === 'supervisor' ? 'bg-blue-500/20 text-blue-300' : 
+                                     'bg-slate-500/20 text-slate-300')
+                            }, 
+                                React.createElement('i', { className: 'fas fa-shield-alt text-[8px]' }),
+                                currentUser?.role === 'admin' ? 'Administrateur' : 
+                                currentUser?.role === 'supervisor' ? 'Superviseur' : 
+                                currentUser?.role === 'technician' ? 'Technicien' : 'Opérateur'
+                            )
                         ),
 
-                    // --- ADDED MOBILE QUICK ACTIONS ---
-                    React.createElement('button', {
-                        onClick: onOpenOverdue,
-                        className: 'px-3 py-3 bg-orange-50 text-orange-800 text-sm rounded-lg border border-orange-200 shadow-sm flex items-center mt-2 hover:bg-orange-100'
-                    }, React.createElement('i', { className: 'fas fa-clock mr-3 text-orange-600 text-lg' }), 'Tickets en Retard'),
-                    
-                    (canViewStats) && React.createElement('button', {
-                        onClick: onOpenPerformance,
-                        className: 'px-3 py-3 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-200 shadow-sm flex items-center mt-2 hover:bg-blue-100'
-                    }, React.createElement('i', { className: 'fas fa-chart-line mr-3 text-blue-600 text-lg' }), 'Statistiques Performance'),
+                        // === SCROLLABLE CONTENT ===
+                        React.createElement('div', { 
+                            className: 'flex-1 overflow-y-auto px-4 py-4',
+                            style: { WebkitOverflowScrolling: 'touch' }
+                        },
+                            
+                            // --- QUICK ACTIONS SECTION ---
+                            React.createElement('div', { className: 'mb-5' },
+                                React.createElement('p', { className: 'text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1' }, 'Actions rapides'),
+                                React.createElement('div', { className: 'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden' },
+                                    // Tickets en Retard
+                                    React.createElement('button', {
+                                        onClick: () => { onOpenOverdue(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-orange-50/50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-md shadow-orange-500/20' },
+                                            React.createElement('i', { className: 'fas fa-clock text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Tickets en Retard')
+                                    ),
+                                    // Performance
+                                    (canViewStats) && React.createElement('button', {
+                                        onClick: () => { onOpenPerformance(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-blue-50/50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-md shadow-blue-500/20' },
+                                            React.createElement('i', { className: 'fas fa-chart-line text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Statistiques Performance')
+                                    ),
+                                    // Push Notifications
+                                    React.createElement('button', {
+                                        onClick: () => { handlePushClick(); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl flex items-center justify-center shadow-md ' + 
+                                            (pushState === 'granted' && isSubscribed ? 'bg-gradient-to-br from-teal-400 to-emerald-500 shadow-teal-500/20' : 'bg-gradient-to-br from-slate-300 to-slate-400 shadow-slate-400/20')
+                                        },
+                                            React.createElement('i', { className: 'fas fa-bell text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Notifications Push'),
+                                        React.createElement('span', { 
+                                            className: 'px-2 py-0.5 rounded-md text-[10px] font-bold ' + 
+                                            (pushState === 'granted' && isSubscribed ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-500')
+                                        }, pushState === 'granted' && isSubscribed ? 'ON' : 'OFF')
+                                    ),
+                                    // Manage devices (admin)
+                                    (isAdmin) && React.createElement('button', {
+                                        onClick: () => { onOpenPushDevices(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shadow-md shadow-violet-500/20' },
+                                            React.createElement('i', { className: 'fas fa-mobile-alt text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Gérer mes appareils')
+                                    ),
+                                    // AI Expert
+                                    React.createElement('button', {
+                                        onClick: () => { onOpenAIChat(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-purple-50/50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md shadow-purple-500/20' },
+                                            React.createElement('i', { className: 'fas fa-robot text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Expert Industriel (IA)')
+                                    ),
+                                    // Archive toggle
+                                    React.createElement('button', {
+                                        onClick: () => { setShowArchived(!showArchived); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-md shadow-slate-400/20' },
+                                            React.createElement('i', { className: 'fas fa-archive text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Voir les tickets archivés')
+                                    )
+                                )
+                            ),
 
-                    React.createElement('button', {
-                        onClick: handlePushClick,
-                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50 justify-between'
-                    }, 
-                        React.createElement('div', { className: 'flex items-center' },
-                            React.createElement('i', { className: 'fas ' + (pushState === 'granted' && isSubscribed ? 'fa-bell text-teal-500' : 'fa-bell-slash text-gray-400') + ' mr-3 text-lg' }), 
-                            'Notifications Push'
+                            // --- MANAGEMENT SECTION ---
+                            React.createElement('div', { className: 'mb-5' },
+                                React.createElement('p', { className: 'text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1' }, 'Gestion'),
+                                React.createElement('div', { className: 'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden' },
+                                    // Users
+                                    (safeHasPermission('users.read') || currentUser?.role === 'technician') && React.createElement('button', {
+                                        onClick: () => { onOpenUserManagement(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center shadow-md shadow-indigo-500/20' },
+                                            React.createElement('i', { className: 'fas fa-users text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Gestion Utilisateurs')
+                                    ),
+                                    // Machines
+                                    safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', {
+                                        onClick: () => { onOpenMachineManagement(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-md shadow-teal-500/20' },
+                                            React.createElement('i', { className: 'fas fa-cogs text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Gestion Machines')
+                                    ),
+                                    // Kanban columns
+                                    (isAdmin) && safeHasPermission('settings.manage') && React.createElement('button', {
+                                        onClick: () => { onOpenManageColumns(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center shadow-md shadow-slate-500/20' },
+                                            React.createElement('i', { className: 'fas fa-columns text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Colonnes Kanban')
+                                    ),
+                                    // Planning
+                                    safeHasPermission('planning.read') && activeModules.planning && React.createElement('button', {
+                                        onClick: () => { onOpenPlanning(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20' },
+                                            React.createElement('i', { className: 'fas fa-calendar-alt text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Planning Production')
+                                    ),
+                                    // System Settings
+                                    (isAdmin) && safeHasPermission('settings.manage') && React.createElement('button', {
+                                        onClick: () => { onOpenSystemSettings(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-slate-500 to-slate-700 flex items-center justify-center shadow-md shadow-slate-600/20' },
+                                            React.createElement('i', { className: 'fas fa-cog text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Paramètres Système')
+                                    )
+                                )
+                            ),
+
+                            // --- CONNECT SECTION (Prominent) ---
+                            React.createElement('div', { className: 'mb-5' },
+                                React.createElement('button', {
+                                    onClick: () => { window.open('/messenger', '_blank'); setShowMobileMenu(false); },
+                                    className: 'w-full flex items-center gap-3 px-4 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all'
+                                },
+                                    React.createElement('div', { className: 'w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center' },
+                                        React.createElement('i', { className: 'fas fa-rocket text-white text-lg' })
+                                    ),
+                                    React.createElement('div', { className: 'flex-1 text-left' },
+                                        React.createElement('span', { className: 'text-white font-bold text-sm block' }, messengerName),
+                                        React.createElement('span', { className: 'text-emerald-100 text-[10px]' }, 'Messagerie instantanée')
+                                    ),
+                                    React.createElement('span', { className: 'px-2 py-1 bg-white/20 rounded-lg text-[9px] font-bold text-white uppercase' }, 'New')
+                                )
+                            )
                         ),
-                        React.createElement('span', { className: 'text-xs font-bold ' + (pushState === 'granted' && isSubscribed ? 'text-teal-600' : 'text-gray-400') }, 
-                            pushState === 'granted' && isSubscribed ? 'ON' : 'OFF'
+
+                        // === FOOTER ACTIONS ===
+                        React.createElement('div', { 
+                            className: 'px-4 py-4 bg-slate-50 border-t border-slate-200'
+                        },
+                            React.createElement('div', { className: 'flex gap-2' },
+                                React.createElement('button', {
+                                    onClick: () => { onRefresh(); setShowMobileMenu(false); },
+                                    className: 'flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-50 active:scale-95 transition-all shadow-sm'
+                                }, 
+                                    React.createElement('i', { className: 'fas fa-sync-alt' }),
+                                    'Actualiser'
+                                ),
+                                React.createElement('button', {
+                                    onClick: () => { onLogout(); setShowMobileMenu(false); },
+                                    className: 'flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 rounded-xl text-white font-semibold text-sm hover:bg-slate-700 active:scale-95 transition-all shadow-sm'
+                                }, 
+                                    React.createElement('i', { className: 'fas fa-sign-out-alt' }),
+                                    'Déconnexion'
+                                )
+                            )
                         )
-                    ),
-
-                    (isAdmin) && React.createElement('button', {
-                        onClick: onOpenPushDevices,
-                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50'
-                    }, React.createElement('i', { className: 'fas fa-mobile-alt mr-3 text-purple-500 text-lg' }), 'Gérer mes appareils'),
-                    
-                    React.createElement('button', {
-                        onClick: onOpenAIChat,
-                        className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center mt-2 hover:bg-gray-50'
-                    }, React.createElement('i', { className: 'fas fa-robot mr-3 text-purple-600 text-lg' }), 'Expert Industriel (IA)'),
-
-                    // ----------------------------------
-
-                    React.createElement('button', {
-                        onClick: () => { setShowArchived(!showArchived); if(!showArchived) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100); },
-                        className: 'px-3 py-3 text-sm rounded-lg shadow-sm flex items-center gap-2 border mt-2 ' + (showArchived ? 'bg-gray-100 text-gray-800' : 'bg-white text-gray-700 hover:bg-gray-50')
-                    }, React.createElement('i', { className: 'fas fa--' + (showArchived ? 'eye-slash' : 'archive') + ' mr-1 text-lg' }), showArchived ? 'Masquer les tickets archivés' : 'Voir les tickets archivés'),
-                    
-                    React.createElement('div', { className: 'h-px bg-gray-200 my-4' }), // Separator
-                    
-                    (safeHasPermission('users.read') || currentUser?.role === 'technician') && React.createElement('button', { onClick: onOpenUserManagement, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-users mr-3 text-indigo-600 text-lg' }), currentUser?.role === 'technician' ? 'Mon Équipe' : 'Gestion Utilisateurs'),
-                    safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', { onClick: onOpenMachineManagement, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-cogs mr-3 text-teal-500 text-lg' }), 'Gestion Machines'),
-                    (isAdmin) && safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenManageColumns, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-columns mr-3 text-gray-500 text-lg' }), 'Colonnes Kanban'),
-                    safeHasPermission('planning.read') && activeModules.planning && React.createElement('button', { onClick: onOpenPlanning, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-calendar-alt mr-3 text-blue-500 text-lg' }), 'Planning Production'),
-                    (isAdmin) && safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenSystemSettings, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-cog mr-3 text-gray-600 text-lg' }), 'Paramètres Système'),
-                    (isAdmin) && safeHasPermission('roles.read') && React.createElement('button', { onClick: onOpenAdminRoles, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-shield-alt mr-3 text-blue-600 text-lg' }), 'Gestion Rôles'),
-                    (isAdmin) && safeHasPermission('settings.manage') && React.createElement('button', { onClick: onOpenTv, className: 'px-3 py-3 bg-white text-gray-700 text-sm rounded-lg border shadow-sm flex items-center hover:bg-gray-50 mb-2' }, React.createElement('i', { className: 'fas fa-tv mr-3 text-purple-600 text-lg' }), 'Mode Écran TV'),
-
-                    React.createElement('div', { className: 'flex-1' }), // Spacer
-
-                    React.createElement('button', { onClick: onRefresh, className: 'px-3 py-3 bg-blue-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-blue-700 transition mt-4 font-bold' }, React.createElement('i', { className: 'fas fa-sync-alt mr-2' }), 'Actualiser les données'),
-                    React.createElement('button', { onClick: onLogout, className: 'px-3 py-3 bg-gray-600 text-white text-sm rounded-lg shadow-md flex items-center justify-center hover:bg-gray-700 transition mt-2 font-bold' }, React.createElement('i', { className: 'fas fa-sign-out-alt mr-2' }), 'Se déconnecter')
                     )
                 ), document.body
             )
