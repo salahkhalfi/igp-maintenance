@@ -135,4 +135,32 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 
 ---
 
-## 🏁 END OF KERNEL (v6.0 - 148 lines)
+## ⚠️ MODULE 8: DEAD CODE DELETION PROTOCOL
+
+### [THE HONO TRAP - 2025-12-22]
+```
+⚠️ CRITICAL: In Hono, the FIRST declared route wins (unlike Express where LAST wins).
+   Duplicate routes: The FIRST one is ACTIVE, the second is DEAD CODE.
+   ALWAYS verify which route is actually being called before deleting!
+```
+
+### [MANDATORY CHECKLIST BEFORE DELETING "DEAD CODE"]
+1. **GREP GLOBALLY**: Search entire project (`src/`, `public/`, `dist/`)
+2. **CHECK FRAMEWORK BEHAVIOR**: Hono = first wins, Express = last wins
+3. **VERIFY RUNTIME**: Test the actual endpoint in browser/curl
+4. **DOCUMENT BEFORE DELETE**: Write what you're deleting and why
+5. **PROPOSE, DON'T ACT**: Present findings to user, wait for approval
+6. **KEEP GIT CLEAN**: Small commits, easy to revert
+
+### [LESSON LEARNED]
+```
+2025-12-22: Deleted "duplicate" routes in settings.ts (lines 925-1076).
+ASSUMPTION: Second route was active (like Express).
+REALITY: First route was active (Hono behavior).
+OUTCOME: Fortunately, second route was BETTER (fixed password bug).
+LESSON: Always test actual behavior, don't assume based on other frameworks.
+```
+
+---
+
+## 🏁 END OF KERNEL (v6.1 - 170 lines)
