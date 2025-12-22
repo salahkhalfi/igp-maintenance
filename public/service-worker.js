@@ -11,10 +11,11 @@
  * Version: v3.1.6 (Online First - NO OFFLINE MODE)
  */
 
-const CACHE_VERSION = 'v3.1.6-no-offline';
+const CACHE_VERSION = 'v3.1.7-clean-assets';
 const CACHE_NAME = `maintenance-os-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)
+// NOTE: Ne lister QUE les fichiers qui existent réellement
 const STATIC_ASSETS = [
     '/',
     '/static/styles.css',
@@ -24,18 +25,19 @@ const STATIC_ASSETS = [
     '/icon-512.png',
     '/manifest.json',
     '/static/logo.png',
-    '/static/js/utils.js',
     '/push-notifications.js',
+    // Core App Components (verified to exist)
     '/static/js/components/App.js',
     '/static/js/components/MainApp.js',
     '/static/js/components/AppHeader.js',
     '/static/js/components/LoginForm.js',
-    '/static/js/components/TicketDetailsModal.js',
+    '/static/js/components/KanbanBoard.js',
     '/static/js/components/CreateTicketModal.js',
-    '/static/js/components/MessagingSidebar.js',
-    '/static/js/components/MessagingChatWindow.js',
+    '/static/js/components/TicketDetailsModal.js',
     '/static/js/components/MachineManagementModal.js',
-    '/static/js/components/AIChatModal_v4.js'
+    '/static/js/components/AIChatModal_v4.js',
+    '/static/js/components/OfflineBanner.js'
+    // NOTE: MessagingSidebar & MessagingChatWindow are bundled in /messenger/
 ];
 
 // Installation du Service Worker
