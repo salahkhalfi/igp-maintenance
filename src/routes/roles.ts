@@ -2,6 +2,7 @@
 
 import { Hono } from 'hono';
 import { clearPermissionsCache } from '../utils/permissions';
+import { clearRoleCache, loadRoles } from '../services/RoleService';
 import type { Bindings } from '../types';
 import { LIMITS } from '../utils/validation';
 
@@ -9,9 +10,13 @@ const roles = new Hono<{ Bindings: Bindings }>();
 
 /**
  * GET /api/roles - Liste tous les rôles
+ * Also initializes RoleService cache for formatRole() function
  */
 roles.get('/', async (c) => {
   try {
+    // Initialize RoleService cache (used by formatRole across the app)
+    await loadRoles(c.env.DB);
+    
     const { results } = await c.env.DB.prepare(`
       SELECT
         r.id,
@@ -260,6 +265,7 @@ roles.post('/', async (c) => {
 
     // Vider le cache des permissions
     clearPermissionsCache();
+    clearRoleCache();
 
     // Récupérer le rôle créé avec ses permissions
     const newRole = await c.env.DB.prepare(`
@@ -351,6 +357,7 @@ roles.put('/:id', async (c) => {
 
     // Vider le cache des permissions
     clearPermissionsCache();
+    clearRoleCache();
 
     // Récupérer le rôle mis à jour
     const updatedRole = await c.env.DB.prepare(`
@@ -409,6 +416,7 @@ roles.delete('/:id', async (c) => {
 
     // Vider le cache des permissions
     clearPermissionsCache();
+    clearRoleCache();
 
     return c.json({
       message: 'Rôle supprimé avec succès',

@@ -241,54 +241,26 @@ export function formatMachineInfo(ticket: any): string {
 
 /**
  * Traduit un rôle technique en français
+ * 
+ * 🔗 Uses RoleService - reads from database `roles` table with fallback to defaults.
+ * This allows custom roles to be created via Admin UI (/admin/roles) without code changes.
  *
  * @example
- * formatRole('admin') => "Administrateur"
- * formatRole('team_leader') => "Chef d'Équipe de Production"
+ * formatRole('admin') => "Administrateur" (without emoji)
+ * formatRole('team_leader') => "Chef Équipe Production"
+ * formatRole('chef_boulanger') => "Chef Boulanger" (custom role from DB)
  */
-export function formatRole(role: string): string {
-  const roles: Record<string, string> = {
-    admin: 'Administrateur',
-    director: 'Directeur',
-    supervisor: 'Superviseur',
-    coordinator: 'Coordinateur',
-    planner: 'Planificateur',
-    senior_technician: 'Technicien Senior',
-    technician: 'Technicien',
-    team_leader: 'Chef d\'Équipe de Production',
-    furnace_operator: 'Opérateur de Four',
-    operator: 'Opérateur',
-    safety_officer: 'Agent de Sécurité',
-    quality_inspector: 'Inspecteur Qualité',
-    storekeeper: 'Magasinier',
-    viewer: 'Observateur'
-  };
+import { getRoleDisplayNameClean, getRoleDisplayNameShort } from '../services/RoleService';
 
-  return roles[role] || role;
+export function formatRole(role: string): string {
+  return getRoleDisplayNameClean(role);
 }
 
 /**
  * Version courte du rôle (pour badges)
  */
 export function formatRoleShort(role: string): string {
-  const roles: Record<string, string> = {
-    admin: 'Admin',
-    director: 'Directeur',
-    supervisor: 'Super.',
-    coordinator: 'Coord.',
-    planner: 'Plan.',
-    senior_technician: 'Tech. Sr',
-    technician: 'Tech.',
-    team_leader: 'Chef Éq.',
-    furnace_operator: 'Op. Four',
-    operator: 'Opér.',
-    safety_officer: 'Sécurité',
-    quality_inspector: 'Qualité',
-    storekeeper: 'Magasin',
-    viewer: 'Observ.'
-  };
-
-  return roles[role] || role;
+  return getRoleDisplayNameShort(role);
 }
 
 // ============================================================================
