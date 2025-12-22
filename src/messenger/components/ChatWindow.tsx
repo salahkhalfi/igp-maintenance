@@ -86,9 +86,12 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         if (conversationId === 'expert_ai') {
             const rawHistory = JSON.parse(localStorage.getItem(`ai_chat_history_${currentUserId}`) || '[]');
             
-            // 🛡️ SANITIZE HISTORY ON LOAD (Fix old bad links locally)
+            // 🛡️ SANITIZE HISTORY ON LOAD (Fix old bad links + ensure AI avatar key for proper formatting)
             const history = rawHistory.map((msg: Message) => ({
                 ...msg,
+                // 🔧 FIX: Ensure AI messages have sender_avatar_key for proper Markdown rendering
+                // Old localStorage entries may lack this field, causing formatting loss
+                sender_avatar_key: msg.sender_id === 0 ? 'ai_avatar' : msg.sender_avatar_key,
                 content: msg.content
                     .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, 'https://app.igpglass.ca')
                     .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1')
