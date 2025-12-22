@@ -909,41 +909,10 @@ settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
 });
 
 // ============================================================================
-// ROUTES D'EXPORTATION DE DONNÉES (JSON -> CSV Client)
+// NOTE: Les routes /export/users et /export/machines sont définies plus bas
+// dans la section "IMPORT / EXPORT CSV - Configuration rapide"
+// avec les 8 colonnes complètes (TYPE, MODELE, MARQUE, SERIE, LIEU, ANNEE, STATUT, SPECS)
 // ============================================================================
-
-settings.get('/export/users', authMiddleware, adminOnly, async (c) => {
-  try {
-    const db = getDb(c.env);
-    const allUsers = await db.select({
-      EMAIL: users.email,
-      PRENOM: users.first_name,
-      NOM: users.last_name,
-      ROLE: users.role
-    }).from(users).where(sql`deleted_at IS NULL`).all();
-    
-    return c.json({ users: allUsers });
-  } catch (error: any) {
-    return c.json({ error: 'Erreur export users: ' + error.message }, 500);
-  }
-});
-
-settings.get('/export/machines', authMiddleware, adminOnly, async (c) => {
-  try {
-    const db = getDb(c.env);
-    const allMachines = await db.select({
-      TYPE: machines.machine_type,
-      MODELE: machines.model,
-      MARQUE: machines.manufacturer,
-      SERIE: machines.serial_number,
-      LIEU: machines.location
-    }).from(machines).where(sql`deleted_at IS NULL`).all();
-    
-    return c.json({ machines: allMachines });
-  } catch (error: any) {
-    return c.json({ error: 'Erreur export machines: ' + error.message }, 500);
-  }
-});
 
 // ============================================================================
 // ROUTES D'IMPORTATION DE DONNÉES (CSV)
