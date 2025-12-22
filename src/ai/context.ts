@@ -475,7 +475,7 @@ export async function buildDynamicContext(db: any, env: Bindings, options: Conte
         usersSummary = usersList.map(u => {
              if (u.role === 'admin' && userRole !== 'admin') return `[ID:${u.id}] ${u.name} (ADMINISTRATEUR) - [INFO RESTREINTE]`;
              const count = workloadMap.get(u.id) || 0;
-             const contextInfo = u.ai_context ? ` | Profil: ${u.ai_context}` : '';
+             const contextInfo = u.ai_context ? ` | Info: ${u.ai_context}` : '';
              return `[ID:${u.id}] ${u.name} (${u.role}) - ${count === 0 ? "✅ LIBRE" : `❌ OCCUPÉ (${count} tickets)`} - Login: ${u.last_login || 'Jamais'}${contextInfo}`;
         }).join('\n');
 
