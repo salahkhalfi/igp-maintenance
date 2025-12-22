@@ -10,7 +10,10 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [uploadingLogo, setUploadingLogo] = React.useState(false);
     const [currentLogoUrl, setCurrentLogoUrl] = React.useState('/api/settings/logo');
     const [logoRefreshKey, setLogoRefreshKey] = React.useState(Date.now());
+    // isSuperAdmin = vendeur SaaS (salah@khalfi.com) - accès TOTAL
     const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
+    // isClientAdmin = admin entreprise cliente - accès aux paramètres de son entreprise (logo, titre, etc.)
+    const [isClientAdmin, setIsClientAdmin] = React.useState(false);
 
     // États pour titre/sous-titre (admin uniquement)
     const [companyTitle, setCompanyTitle] = React.useState('Gestion de la maintenance et des réparations');
@@ -78,16 +81,32 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
     React.useEffect(() => {
         if (show) {
-            // Vérifier d'abord si admin, puis charger les settings
+            // Vérifier d'abord les niveaux d'accès, puis charger les settings
             const init = async () => {
-                // Check admin status first
-                let isAdmin = false;
-                if (currentUser && currentUser.role === 'admin') {
-                    isAdmin = true;
-                    setIsSuperAdmin(true);
+                // ARCHITECTURE DES PERMISSIONS:
+                // - isSuperAdmin (vendeur SaaS): accès TOTAL (Anti-Abus, URLs, Maintenance DB, Webhooks)
+                // - isClientAdmin (admin entreprise): accès aux paramètres de SON entreprise (Logo, Titre, Contexte IA)
+                
+                let isSuperAdminUser = false;
+                let isClientAdminUser = false;
+                
+                if (currentUser) {
+                    // SuperAdmin = is_super_admin flag TRUE en base de données
+                    if (currentUser.isSuperAdmin === true) {
+                        isSuperAdminUser = true;
+                        isClientAdminUser = true; // SuperAdmin a AUSSI accès aux fonctions client admin
+                    }
+                    // Client Admin = role === 'admin' mais PAS superadmin
+                    else if (currentUser.role === 'admin') {
+                        isClientAdminUser = true;
+                    }
                 }
-                // Then load settings with correct admin status
-                await loadSettingsWithAdmin(isAdmin);
+                
+                setIsSuperAdmin(isSuperAdminUser);
+                setIsClientAdmin(isClientAdminUser);
+                
+                // Load settings - superadmin voit tout, client admin voit les sections entreprise
+                await loadSettingsWithAdmin(isClientAdminUser);
                 loadModules();
             };
             init();
@@ -142,10 +161,11 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
     const checkSuperAdmin = async () => {
         try {
-            // Vérifier si l'utilisateur actuel est admin
-            // Tous les admins (role='admin') peuvent modifier le logo, titre et sous-titre
-            // Le backend vérifie avec adminOnly middleware
-            if (currentUser && currentUser.role === 'admin') {
+            // Vérifier si l'utilisateur actuel est SUPERADMIN (vendeur SaaS)
+            // IMPORTANT: isSuperAdmin vient de la DB (is_super_admin = 1)
+            // Seul le vendeur (salah@khalfi.com) a accès aux paramètres système critiques
+            // Les admins client (admin@igpglass.ca) n'ont PAS accès à ces sections
+            if (currentUser && currentUser.isSuperAdmin === true) {
                 setIsSuperAdmin(true);
             } else {
                 setIsSuperAdmin(false);
@@ -771,7 +791,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     // Section Gestion des Modules (Licensing) - REMOVED BY ROLLBACK
                     // (isSuperAdmin || currentUser?.role === 'admin') && null,
 
-                    // Section Protection Anti-Abus (Rate Limiting)
+                    // Section Protection Anti-Abus (SUPERADMIN ONLY - vendeur SaaS uniquement)
                     isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-red-50 border border-red-200 rounded-lg p-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
@@ -781,6 +801,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         React.createElement('div', {},
                                             React.createElement('h3', { className: 'font-bold text-red-900 mb-1 flex items-center gap-2' },
                                                 "Protection Anti-Abus",
+                                                React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-0.5 rounded' }, 'VENDEUR'),
                                                 React.createElement('span', { className: 'text-xs px-2 py-0.5 rounded ' + (rateLimitEnabled ? 'bg-green-600 text-white' : 'bg-gray-400 text-white') }, 
                                                     rateLimitEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ'
                                                 )
@@ -808,15 +829,15 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Personnalisation des Exemples (ADMIN UNIQUEMENT)
-                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                    // Section Personnalisation des Exemples (CLIENT ADMIN - accessible aux admins clients)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-industry text-teal-600 text-xl mt-1' }),
                                 React.createElement('div', { className: 'flex-1' },
                                     React.createElement('h3', { className: 'font-bold text-teal-900 mb-2 flex items-center gap-2' },
                                         "Personnalisation Industrie",
-                                        React.createElement('span', { className: 'text-xs bg-teal-600 text-white px-2 py-1 rounded' }, 'SaaS')
+                                        React.createElement('span', { className: 'text-xs bg-teal-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-teal-800 mb-3' },
                                         "Personnalisez les exemples affichés dans les formulaires selon votre secteur d'activité (boulangerie, garage, hôtel...)."
@@ -902,12 +923,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                    // Section Maintenance Base de Données (SUPERADMIN ONLY - vendeur SaaS uniquement)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-broom text-orange-600 text-xl mt-1' }),
                                 React.createElement('div', {},
-                                    React.createElement('h3', { className: 'font-bold text-orange-900 mb-2' }, "Maintenance Base de Données"),
+                                    React.createElement('h3', { className: 'font-bold text-orange-900 mb-2 flex items-center gap-2' }, 
+                                        "Maintenance Base de Données",
+                                        React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-1 rounded' }, 'VENDEUR')
+                                    ),
                                     React.createElement('p', { className: 'text-sm text-orange-800 mb-2' },
                                         "Nettoyage manuel des données obsolètes (Le Concierge)."
                                     ),
@@ -924,7 +949,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Configuration du Domaine (ADMIN UNIQUEMENT)
+                    // Section Configuration du Domaine (SUPERADMIN ONLY - vendeur SaaS uniquement)
                     isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
@@ -932,7 +957,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                 React.createElement('div', {},
                                     React.createElement('h3', { className: 'font-bold text-indigo-900 mb-2 flex items-center gap-2' },
                                         "Domaine & URL Système",
-                                        React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-1 rounded' }, 'CRITIQUE')
+                                        React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-1 rounded' }, 'VENDEUR')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-indigo-800 mb-2' },
                                         "Définit l'URL de base utilisée par l'IA et les notifications pour générer des liens."
@@ -999,7 +1024,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Webhook / Intégrations (ADMIN UNIQUEMENT)
+                    // Section Webhook / Intégrations (SUPERADMIN ONLY - vendeur SaaS uniquement)
                     isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
@@ -1007,7 +1032,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                 React.createElement('div', {},
                                     React.createElement('h3', { className: 'font-bold text-teal-900 mb-2 flex items-center gap-2' },
                                         "Intégrations & Webhooks",
-                                        React.createElement('span', { className: 'text-xs bg-teal-600 text-white px-2 py-1 rounded' }, 'OPTIONNEL')
+                                        React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-1 rounded' }, 'VENDEUR')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-teal-800 mb-2' },
                                         "Connectez votre application à des services externes (Pabbly, Make, Zapier, n8n...)."
@@ -1066,8 +1091,8 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Logo de l'entreprise (ADMIN UNIQUEMENT)
-                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                    // Section Logo de l'entreprise (CLIENT ADMIN - accessible aux admins clients)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-image text-purple-600 text-xl mt-1' }),
@@ -1169,8 +1194,8 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Titre et Sous-titre (ADMIN UNIQUEMENT)
-                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                    // Section Titre et Sous-titre (CLIENT ADMIN - accessible aux admins clients)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-heading text-blue-600 text-xl mt-1' }),
@@ -1346,8 +1371,8 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Contexte AI Personnalisé (ADMIN UNIQUEMENT)
-                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                    // Section Contexte AI Personnalisé (CLIENT ADMIN - accessible aux admins clients)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
                                 React.createElement('i', { className: 'fas fa-brain text-green-600 text-xl mt-1' }),

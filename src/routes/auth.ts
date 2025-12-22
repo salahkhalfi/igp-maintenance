@@ -483,7 +483,8 @@ auth.get('/me', async (c) => {
         avatar_key: users.avatar_key,
         created_at: users.created_at,
         updated_at: users.updated_at,
-        last_login: users.last_login
+        last_login: users.last_login,
+        is_super_admin: users.is_super_admin
       })
       .from(users)
       .where(eq(users.id, userPayload.userId))
@@ -493,8 +494,14 @@ auth.get('/me', async (c) => {
       return c.json({ error: 'Utilisateur non trouvé' }, 404);
     }
 
+    // Ajouter isSuperAdmin pour le frontend
+    const userWithSuperAdmin = {
+      ...user,
+      isSuperAdmin: user.is_super_admin === 1
+    };
+
     c.header('Cache-Control', 'no-store, no-cache, must-revalidate');
-    return c.json({ user });
+    return c.json({ user: userWithSuperAdmin });
   } catch (error) {
     console.error('Me error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);

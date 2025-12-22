@@ -172,6 +172,7 @@ export async function buildAutoContext(db: any): Promise<CompanyProfile> {
 
 // --- ROLE TRANSLATION MAP (English DB values -> French display) ---
 const ROLE_LABELS: Record<string, string> = {
+    'superadmin': 'Super Administrateur', // SaaS vendor (is_super_admin flag)
     'admin': 'Administrateur',
     'supervisor': 'Superviseur',
     'team_leader': 'Chef d\'équipe',
