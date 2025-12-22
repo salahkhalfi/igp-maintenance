@@ -34,39 +34,17 @@ const AppHeader = ({
         try { return JSON.parse(localStorage.getItem('user_cache') || '{}'); } catch(e) { return {}; }
     }, [propUser]);
     
-    // Avatar state: null = loading, true = loaded, false = error (show initials)
-    const [avatarLoaded, setAvatarLoaded] = React.useState(null);
-    const avatarUrl = '/api/auth/avatar/' + (currentUser?.id || 0);
-    
-    // Preload avatar image on mount
-    React.useEffect(() => {
-        if (!currentUser?.id) {
-            setAvatarLoaded(false);
-            return;
-        }
-        const img = new Image();
-        img.onload = () => setAvatarLoaded(true);
-        img.onerror = () => setAvatarLoaded(false);
-        img.src = avatarUrl;
-    }, [currentUser?.id, avatarUrl]);
-    
-    // Helper to render avatar or initials fallback
+    // SIMPLE: L'API /api/auth/avatar/{id} retourne TOUJOURS une image valide
+    // Soit la photo uploadée, soit un SVG généré avec les initiales
+    // Donc on affiche simplement <img> sans condition
     const renderAvatar = (size, className) => {
-        const initial = currentUser?.first_name?.[0] || 'U';
-        if (avatarLoaded === true) {
-            return React.createElement('img', {
-                src: avatarUrl,
-                alt: currentUser?.first_name || 'Avatar',
-                className: className + ' object-cover'
-            });
-        }
-        // Fallback: show initials in gradient circle
-        return React.createElement('div', {
-            className: className + ' bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold',
-            style: { fontSize: size === 'lg' ? '18px' : size === 'md' ? '14px' : '12px' }
-        }, initial);
+        return React.createElement('img', {
+            src: '/api/auth/avatar/' + (currentUser?.id || 0),
+            alt: currentUser?.first_name || 'Avatar',
+            className: className + ' object-cover bg-slate-200'
+        });
     };
-
+    
     // Search state
     const [searchQuery, setSearchQuery] = React.useState('');
     const [searchResults, setSearchResults] = React.useState([]);
