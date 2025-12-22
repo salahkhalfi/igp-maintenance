@@ -645,10 +645,22 @@ const AppHeader = ({
                                 className: 'absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all'
                             }, React.createElement('i', { className: 'fas fa-times text-sm' })),
                             
-                            // User Profile Card
+                            // User Profile Card with REAL AVATAR
                             React.createElement('div', { className: 'flex items-center gap-3' },
+                                React.createElement('img', { 
+                                    src: '/api/auth/avatar/' + (currentUser?.id || 0),
+                                    alt: currentUser?.first_name || 'Avatar',
+                                    className: 'w-12 h-12 rounded-2xl object-cover shadow-lg shadow-blue-500/30 border-2 border-white/20',
+                                    onError: (e) => { 
+                                        e.target.onerror = null; 
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                                    }
+                                }),
+                                // Fallback initial avatar (hidden by default)
                                 React.createElement('div', { 
-                                    className: 'w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-500/30'
+                                    className: 'w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 items-center justify-center text-white text-lg font-bold shadow-lg shadow-blue-500/30',
+                                    style: { display: 'none' }
                                 }, (currentUser?.first_name?.[0] || 'U')),
                                 React.createElement('div', { className: 'flex-1 min-w-0' },
                                     React.createElement('h3', { className: 'text-white font-bold text-base truncate' }, 
