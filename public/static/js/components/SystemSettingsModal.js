@@ -68,11 +68,21 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
     React.useEffect(() => {
         if (show) {
-            loadSettings();
-            checkSuperAdmin();
-            loadModules();
+            // Vérifier d'abord si admin, puis charger les settings
+            const init = async () => {
+                // Check admin status first
+                let isAdmin = false;
+                if (currentUser && currentUser.role === 'admin') {
+                    isAdmin = true;
+                    setIsSuperAdmin(true);
+                }
+                // Then load settings with correct admin status
+                await loadSettingsWithAdmin(isAdmin);
+                loadModules();
+            };
+            init();
         }
-    }, [show]);
+    }, [show, currentUser]);
 
     const loadModules = async () => {
         try {
@@ -135,14 +145,14 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
-    const loadSettings = async () => {
+    const loadSettingsWithAdmin = async (isAdmin) => {
         setLoading(true);
         try {
             const response = await axios.get(API_URL + '/settings/timezone_offset_hours');
             setTimezoneOffset(response.data.setting_value);
 
-            // Charger titre et sous-titre (super admin uniquement)
-            if (isSuperAdmin) {
+            // Charger titre et sous-titre (admin uniquement)
+            if (isAdmin) {
                 try {
                     const titleResponse = await axios.get(API_URL + '/settings/company_title');
                     if (titleResponse.data.setting_value) {
