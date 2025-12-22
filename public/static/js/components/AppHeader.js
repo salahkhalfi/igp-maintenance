@@ -274,10 +274,10 @@ const AppHeader = ({
                                 e.target.src = '/logo.png'; 
                             }
                         }),
-                        // Mobile: Compact title
+                        // Mobile: Compact title with subtitle
                         React.createElement('div', { className: 'md:hidden flex flex-col justify-center ml-2 pl-2 border-l border-slate-200 flex-1 min-w-0' },
-                            React.createElement('h1', { className: 'text-[11px] font-bold leading-tight text-slate-800 tracking-tight line-clamp-2', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'text-[9px] font-medium text-slate-400 truncate hidden' }, headerSubtitle)
+                            React.createElement('h1', { className: 'text-[11px] font-bold leading-tight text-slate-800 tracking-tight line-clamp-1', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[8px] font-medium text-slate-400 truncate mt-0.5' }, headerSubtitle)
                         ),
                         // Desktop: Full title
                         React.createElement('div', { className: 'hidden md:flex flex-col justify-center ml-3 pl-3 border-l border-slate-200 flex-1 min-w-0' },
@@ -289,11 +289,11 @@ const AppHeader = ({
                     // RIGHT: USER & MOBILE TOGGLE
                     React.createElement('div', { className: 'flex items-center gap-1.5 md:gap-3 shrink-0 ml-2' },
 
-                        // Mobile: Compact user badge with initial
-                        React.createElement('div', { className: 'md:hidden flex items-center gap-2' },
-                            React.createElement('div', { className: 'flex flex-col items-end' },
+                        // Mobile: Compact user badge - responsive width
+                        React.createElement('div', { className: 'md:hidden flex items-center' },
+                            React.createElement('div', { className: 'flex flex-col items-end mr-1' },
                                 React.createElement('span', { className: 'text-[9px] text-slate-400 font-medium leading-none' }, 'Bonjour,'),
-                                React.createElement('span', { className: 'text-[11px] font-bold text-slate-700 leading-tight truncate max-w-[70px]' }, (currentUser?.first_name || 'Vous'))
+                                React.createElement('span', { className: 'text-[11px] font-bold text-slate-700 leading-tight truncate max-w-[90px]' }, (currentUser?.first_name || 'Vous'))
                             )
                         ),
                         
