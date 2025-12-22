@@ -63,6 +63,16 @@ class MockD1PreparedStatement {
       } as any;
     }
 
+    // Simuler requête COUNT tickets (pour generateTicketId)
+    if (this.query.includes('COUNT(*)') && this.query.includes('tickets')) {
+      const countData = this.data.get('ticket_count') || [{ count: 0 }];
+      return {
+        results: countData,
+        success: true,
+        meta: { duration: 0, rows_read: 1, rows_written: 0 },
+      } as any;
+    }
+
     // Simuler requête users
     if (this.query.includes('FROM users')) {
       const users = this.data.get('users') || [];
@@ -107,33 +117,36 @@ class MockD1PreparedStatement {
 
 /**
  * Créer mock DB avec permissions RBAC pour tests
+ * 
+ * Le code de production (permissions.ts) attend des objets avec { slug }
+ * où slug = "resource.action.scope" (ex: "tickets.create.all")
  */
 export function createMockDBWithPermissions(): MockD1Database {
   const db = new MockD1Database();
 
   // Permissions admin (toutes permissions)
   db.addTestData('permissions_admin', [
-    { resource: 'tickets', action: 'create', scope: 'all' },
-    { resource: 'tickets', action: 'read', scope: 'all' },
-    { resource: 'tickets', action: 'update', scope: 'all' },
-    { resource: 'tickets', action: 'delete', scope: 'all' },
-    { resource: 'users', action: 'create', scope: 'all' },
-    { resource: 'users', action: 'read', scope: 'all' },
-    { resource: 'users', action: 'update', scope: 'all' },
-    { resource: 'users', action: 'delete', scope: 'all' },
+    { slug: 'tickets.create.all' },
+    { slug: 'tickets.read.all' },
+    { slug: 'tickets.update.all' },
+    { slug: 'tickets.delete.all' },
+    { slug: 'users.create.all' },
+    { slug: 'users.read.all' },
+    { slug: 'users.update.all' },
+    { slug: 'users.delete.all' },
   ]);
 
   // Permissions technician (limitées)
   db.addTestData('permissions_technician', [
-    { resource: 'tickets', action: 'read', scope: 'all' },
-    { resource: 'tickets', action: 'update', scope: 'own' },
-    { resource: 'users', action: 'read', scope: 'all' },
+    { slug: 'tickets.read.all' },
+    { slug: 'tickets.update.own' },
+    { slug: 'users.read.all' },
   ]);
 
-  // Permissions operator (lecture seule)
+  // Permissions operator (création/lecture tickets)
   db.addTestData('permissions_operator', [
-    { resource: 'tickets', action: 'create', scope: 'all' },
-    { resource: 'tickets', action: 'read', scope: 'all' },
+    { slug: 'tickets.create.all' },
+    { slug: 'tickets.read.all' },
   ]);
 
   return db;
