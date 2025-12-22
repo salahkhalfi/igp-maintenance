@@ -16,11 +16,43 @@ const usersRoute = new Hono<{ Bindings: Bindings }>();
 /**
  * GET /api/users/team - Liste toute l'équipe (pour tous les rôles)
  * Accès: Technicien, Superviseur, Admin
- * NOTE: Exclut les superadmins (vendeur SaaS) - ils sont invisibles aux clients
+ * 
+ * VISIBILITÉ SUPERADMIN:
+ * - Si l'utilisateur actuel EST superadmin → il voit TOUS les utilisateurs (y compris lui-même)
+ * - Si l'utilisateur actuel N'EST PAS superadmin → il ne voit PAS les superadmins
  */
 usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
   try {
+    const currentUser = c.get('user') as any;
     const db = getDb(c.env);
+    
+    // Vérifier le statut superadmin directement en base de données
+    const currentUserFromDb = await db
+      .select({ is_super_admin: users.is_super_admin })
+      .from(users)
+      .where(eq(users.id, currentUser.userId))
+      .get();
+    
+    const isSuperAdmin = currentUserFromDb?.is_super_admin === 1;
+    
+    // Construire la condition de filtrage
+    let whereCondition;
+    
+    if (isSuperAdmin) {
+      // SuperAdmin voit TOUS les utilisateurs (y compris lui-même)
+      whereCondition = and(
+        ne(users.id, 0),
+        sql`${users.deleted_at} IS NULL`
+      );
+    } else {
+      // Les autres ne voient PAS les superadmins
+      whereCondition = and(
+        ne(users.id, 0),
+        sql`${users.deleted_at} IS NULL`,
+        or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`)
+      );
+    }
+    
     const results = await db
       .select({
         id: users.id,
@@ -29,17 +61,13 @@ usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
         first_name: users.first_name,
         last_name: users.last_name,
         role: users.role,
+        is_super_admin: users.is_super_admin,
         created_at: users.created_at,
         updated_at: users.updated_at,
         last_login: users.last_login
       })
       .from(users)
-      .where(and(
-        ne(users.id, 0),
-        sql`${users.deleted_at} IS NULL`,
-        // Exclure les superadmins (vendeur SaaS) - invisibles aux clients
-        or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`)
-      ))
+      .where(whereCondition)
       .orderBy(desc(users.role), users.full_name);
 
     return c.json({ users: results });
@@ -65,6 +93,14 @@ usersRoute.get('/', async (c) => {
     const currentUser = c.get('user') as any;
     const db = getDb(c.env);
     
+    // DEBUG: Log pour identifier le problème
+    console.log('[GET /api/users] currentUser from JWT:', JSON.stringify({
+      userId: currentUser.userId,
+      email: currentUser.email,
+      role: currentUser.role,
+      isSuperAdmin: currentUser.isSuperAdmin
+    }));
+    
     // IMPORTANT: Vérifier le statut superadmin DIRECTEMENT en base de données
     // (au cas où le JWT n'est pas à jour après une modification)
     const currentUserFromDb = await db
@@ -73,18 +109,24 @@ usersRoute.get('/', async (c) => {
       .where(eq(users.id, currentUser.userId))
       .get();
     
+    console.log('[GET /api/users] currentUserFromDb:', JSON.stringify(currentUserFromDb));
+    
     const isSuperAdmin = currentUserFromDb?.is_super_admin === 1;
+    
+    console.log('[GET /api/users] isSuperAdmin determined:', isSuperAdmin);
     
     // Construire la condition de filtrage selon le rôle de l'utilisateur actuel
     let whereCondition;
     
     if (isSuperAdmin) {
+      console.log('[GET /api/users] Using SuperAdmin query (showing ALL users)');
       // SuperAdmin voit TOUS les utilisateurs (sauf id=0 et soft-deleted)
       whereCondition = and(
         ne(users.id, 0),
         sql`${users.deleted_at} IS NULL`
       );
     } else {
+      console.log('[GET /api/users] Using Client Admin query (hiding superadmins)');
       // Admin client ne voit PAS les superadmins
       whereCondition = and(
         or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`),
@@ -102,7 +144,18 @@ usersRoute.get('/', async (c) => {
       .where(whereCondition)
       .orderBy(users.full_name);
 
-    return c.json({ users: results });
+    console.log('[GET /api/users] Found', results.length, 'users');
+    
+    // DEBUG: Return extra info in response
+    return c.json({ 
+      users: results,
+      _debug: {
+        currentUserId: currentUser.userId,
+        currentUserEmail: currentUser.email,
+        isSuperAdminFromDb: isSuperAdmin,
+        totalUsersReturned: results.length
+      }
+    });
   } catch (error) {
     console.error('Get users error:', error);
     return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
