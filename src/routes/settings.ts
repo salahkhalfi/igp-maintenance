@@ -1309,7 +1309,9 @@ settings.get('/export/machines', authMiddleware, adminOnly, async (c) => {
         MODELE: machines.model,
         MARQUE: machines.manufacturer,
         SERIE: machines.serial_number,
-        LIEU: machines.location
+        LIEU: machines.location,
+        ANNEE: machines.year,
+        SPECS: machines.technical_specs
       })
       .from(machines)
       .where(sql`${machines.deleted_at} IS NULL`)
@@ -1495,6 +1497,8 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
         const manufacturer = sanitizeForDb(machineData.manufacturer) || null;
         const serialNumber = machineData.serial?.trim().substring(0, 100) || null;
         const location = sanitizeForDb(machineData.location) || null;
+        const year = machineData.year ? parseInt(machineData.year, 10) || null : null;
+        const technicalSpecs = sanitizeForDb(machineData.specs) || null;
         
         // Validation - Type obligatoire
         if (!machineType) {
@@ -1552,6 +1556,8 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
                 manufacturer: manufacturer,
                 serial_number: serialNumber,
                 location: location,
+                year: year,
+                technical_specs: technicalSpecs,
                 updated_at: sql`CURRENT_TIMESTAMP`
               })
               .where(sql`${machines.id} = ${existing.id}`);
@@ -1573,6 +1579,8 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
           manufacturer: manufacturer,
           serial_number: serialNumber,
           location: location,
+          year: year,
+          technical_specs: technicalSpecs,
           status: 'operational'
         });
         stats.success++;

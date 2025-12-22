@@ -132,27 +132,28 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         return result;
     };
 
-    // Templates CSV avec ligne d'aide - AMÉLIORÉ v2
+    // Templates CSV avec toutes les colonnes disponibles
     const TEMPLATES = {
         users: {
             filename: 'modele_utilisateurs.csv',
             content: `EMAIL,PRENOM,NOM,ROLE
-# AIDE: EMAIL obligatoire et unique | ROLE: admin/supervisor/technician/operator/viewer | MDP par défaut: Changeme123!
+# AIDE: EMAIL obligatoire et unique | ROLE: admin/supervisor/technician/operator/team_leader/viewer | MDP par défaut: Changeme123!
 # DOUBLONS: Si même EMAIL existe → mis à jour ou ignoré selon option choisie
 jean.dupont@exemple.com,Jean,Dupont,technician
 marie.martin@exemple.com,Marie,Martin,supervisor
-pierre.durand@exemple.com,Pierre,Durand,operator`
+pierre.durand@exemple.com,Pierre,Durand,operator
+chef.equipe@exemple.com,Chef,Équipe,team_leader`
         },
         machines: {
             filename: 'modele_machines.csv',
-            content: `TYPE,MODELE,MARQUE,SERIE,LIEU
-# AIDE: TYPE obligatoire | SERIE = identifiant unique préféré
+            content: `TYPE,MODELE,MARQUE,SERIE,LIEU,ANNEE,SPECS
+# AIDE: TYPE obligatoire | SERIE = identifiant unique préféré | ANNEE = année de fabrication | SPECS = spécifications techniques
 # DOUBLONS: Si SERIE fourni → identifié par SERIE. Sinon → identifié par TYPE+MODELE+LIEU
 # CONSEIL: Pour 2 machines identiques au même endroit, ajoutez un SERIE unique (ex: POLI-001, POLI-002)
-Polisseuse,GX-500,Brand A,POLI-001,Atelier A
-Polisseuse,GX-500,Brand A,POLI-002,Atelier A
-Four industriel,FI-800,Siemens,SN-2024-002,Zone B
-Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
+Polisseuse,GX-500,Brand A,POLI-001,Atelier A,2022,Vitesse: 3000 RPM
+Polisseuse,GX-500,Brand A,POLI-002,Atelier A,2023,Vitesse: 3500 RPM
+Four industriel,FI-800,Siemens,SN-2024-002,Zone B,2024,Temp max: 1200°C
+Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,Capacité: 2.5T`
         }
     };
 
@@ -380,7 +381,9 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
                     model: row.MODELE,
                     manufacturer: row.MARQUE,
                     serial: row.SERIE,
-                    location: row.LIEU
+                    location: row.LIEU,
+                    year: row.ANNEE,
+                    specs: row.SPECS
                 }));
             }
 
@@ -408,7 +411,7 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
         if (activeTab === 'users') {
             return ['EMAIL', 'PRENOM', 'NOM', 'ROLE'];
         } else {
-            return ['TYPE', 'MODELE', 'MARQUE', 'SERIE', 'LIEU'];
+            return ['TYPE', 'MODELE', 'MARQUE', 'SERIE', 'LIEU', 'ANNEE', 'SPECS'];
         }
     };
 
