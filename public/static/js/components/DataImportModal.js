@@ -137,7 +137,8 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         users: {
             filename: 'modele_utilisateurs.csv',
             content: `EMAIL,PRENOM,NOM,ROLE,CONTEXTE
-# AIDE: EMAIL obligatoire et unique | ROLE: admin/supervisor/technician/operator/team_leader/viewer | MDP par défaut: Changeme123!
+# AIDE: EMAIL obligatoire et unique | MDP par défaut: Changeme123!
+# ROLES DISPONIBLES: admin, supervisor, technician, operator, team_leader, planner, coordinator, director, senior_technician, furnace_operator, safety_officer, quality_inspector, storekeeper, viewer
 # CONTEXTE: Infos optionnelles pour personnaliser les interactions (compétences, préférences, certifications)
 # DOUBLONS: Si même EMAIL existe → mis à jour ou ignoré selon option choisie
 jean.dupont@exemple.com,Jean,Dupont,technician,Expert hydraulique - Certification BR

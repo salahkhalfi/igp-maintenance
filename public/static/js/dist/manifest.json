@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-22T21:22:32.912Z",
+  "generated": "2025-12-22T21:28:59.154Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -39,7 +39,7 @@
     {
       "original": "DataImportModal.js",
       "minified": "DataImportModal.min.js",
-      "savings": "49.2%"
+      "savings": "49.0%"
     },
     {
       "original": "ErrorBoundary.js",
