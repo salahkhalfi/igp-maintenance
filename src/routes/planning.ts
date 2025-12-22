@@ -80,9 +80,9 @@ app.get('/', requirePermission('planning', 'read'), async (c) => {
       'SELECT * FROM planning_categories ORDER BY label ASC'
     ).all();
 
-    // 2. Récupérer les événements (optionnel: filtrer par date si nécessaire, ici on prend tout pour simplifier)
+    // 2. Récupérer les événements (excluant les supprimés)
     const events = await c.env.DB.prepare(
-      'SELECT * FROM planning_events ORDER BY date ASC'
+      'SELECT * FROM planning_events WHERE deleted_at IS NULL ORDER BY date ASC'
     ).all();
 
     // 3. Récupérer les notes
@@ -186,7 +186,8 @@ app.put('/events/:id', requirePermission('planning', 'manage'), async (c) => {
 app.delete('/events/:id', requirePermission('planning', 'manage'), async (c) => {
   try {
     const id = c.req.param('id');
-    await c.env.DB.prepare('DELETE FROM planning_events WHERE id = ?').bind(id).run();
+    // Soft delete - preserve event history
+    await c.env.DB.prepare('UPDATE planning_events SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?').bind(id).run();
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: 'Erreur suppression événement' }, 500);
