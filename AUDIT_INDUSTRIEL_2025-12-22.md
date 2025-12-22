@@ -17,7 +17,7 @@
 | 🌐 Disponibilité | **6.5/10** | ⚠️ Acceptable (offline non implémenté) |
 | 📝 Traçabilité | **9.5/10** | ✅ Excellent |
 | 🏢 Conformité SaaS | **9.0/10** | ✅ Excellent |
-| 📱 UX Industriel | **9.0/10** | ✅ Excellent |
+| 📱 UX Industriel | **9.1/10** | ✅ Excellent |
 | 🔌 Intégrations | **9.0/10** | ✅ Excellent |
 
 **Score Global: 8.9/10** 🌟 - Application **PRODUCTION-READY** pour un contexte industriel.
@@ -232,7 +232,7 @@ CREATE INDEX idx_users_email ON users(email);
 
 ---
 
-## 7. 📱 UX INDUSTRIEL (8.5/10)
+## 7. 📱 UX INDUSTRIEL (8.6/10)
 
 ### ✅ Points Forts
 
@@ -242,13 +242,14 @@ CREATE INDEX idx_users_email ON users(email);
 | **PWA** | Installable, mode standalone | 9/10 |
 | **Touch Targets** | Boutons adaptés au mobile | 8/10 |
 | **Notifications Push** | WebPush avec vibration | 9/10 |
+| **Feedback Offline** | Bannière premium glassmorphism | 8/10 |
 
 ### 📱 Fonctionnalités Terrain
 - ✅ Création ticket vocale (IA transcription)
 - ✅ Photos intégrées aux tickets
 - ✅ Kanban drag-and-drop (touch support)
 - ✅ QR Code machines
-- ⚠️ Mode hors-ligne **NON FONCTIONNEL** (cache assets uniquement)
+- ⚠️ Mode hors-ligne **NON IMPLÉMENTÉ** - Bannière d'avertissement premium
 - ✅ Notifications push temps réel
 
 ### ⚠️ Points d'Attention
@@ -389,6 +390,21 @@ Score 8.9/10 - Excellente application (connexion internet requise)
 | ✅ **Schéma Drizzle** pour audit_logs avec indexes | Performance +0.2 |
 
 **Score amélioré: 8.8 → 9.1/10** (+0.3)
+
+## 🛠️ AMÉLIORATIONS v3.0.6 (22 Déc 2025)
+
+| Correction | Impact |
+|------------|--------|
+| ✅ **Bannière Offline Premium** - Design glassmorphism avec animations | UX +0.1 |
+| ✅ **Détection auto online/offline** via `navigator.onLine` | UX +0.0 |
+| ✅ **Message "Reconnexion en cours..."** avec feedback visuel | UX +0.0 |
+| ✅ **Service Worker nettoyé** - Liste assets corrigée (v3.1.7) | Fiabilité +0.0 |
+| ✅ **Documentation offline clarifiée** - Avertissements explicites | Docs +0.0 |
+
+**Score UX Industriel: 9.0 → 9.1/10** (+0.1)
+
+> ⚠️ **Note importante**: La bannière offline est un feedback UX, PAS une fonctionnalité offline.
+> L'application nécessite toujours une connexion internet pour fonctionner.
 
 ---
 
