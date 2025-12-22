@@ -52,9 +52,9 @@ export const homeHTML = `
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" async></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript" async></script>
     <script src="/static/js/dist/utils.min.js?v=c2a54a50"></script>
 
     <script src="/static/js/dist/NotificationModal.min.js?v=c2a54a50"></script>
