@@ -65,10 +65,20 @@ usersRoute.get('/', async (c) => {
     const currentUser = c.get('user') as any;
     const db = getDb(c.env);
     
+    // IMPORTANT: Vérifier le statut superadmin DIRECTEMENT en base de données
+    // (au cas où le JWT n'est pas à jour après une modification)
+    const currentUserFromDb = await db
+      .select({ is_super_admin: users.is_super_admin })
+      .from(users)
+      .where(eq(users.id, currentUser.userId))
+      .get();
+    
+    const isSuperAdmin = currentUserFromDb?.is_super_admin === 1;
+    
     // Construire la condition de filtrage selon le rôle de l'utilisateur actuel
     let whereCondition;
     
-    if (currentUser.isSuperAdmin) {
+    if (isSuperAdmin) {
       // SuperAdmin voit TOUS les utilisateurs (sauf id=0 et soft-deleted)
       whereCondition = and(
         ne(users.id, 0),
