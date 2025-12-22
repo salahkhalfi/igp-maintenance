@@ -25,16 +25,25 @@ export const getAvatarGradient = (name: string) => {
 
 export const getRoleDisplayName = (role: string) => {
     if (!role) return '';
-    switch(role.toLowerCase()) {
-        case 'admin': return 'Administrateur';
-        case 'supervisor': return 'Superviseur';
-        case 'technician': return 'Technicien';
-        case 'operator': return 'Opérateur';
-        case 'coordinator': return 'Coordinateur';
-        case 'planner': return 'Planificateur';
-        case 'guest': return 'Invité';
-        default: return role;
-    }
+    const roleMap: Record<string, string> = {
+        // Management
+        'admin': 'Administrateur',
+        'director': 'Directeur',
+        'supervisor': 'Superviseur',
+        'coordinator': 'Coordinateur',
+        'planner': 'Planificateur',
+        // Technical
+        'senior_technician': 'Technicien Senior',
+        'technician': 'Technicien',
+        // Production
+        'team_leader': 'Chef d\'Équipe',
+        'furnace_operator': 'Opérateur Four',
+        'operator': 'Opérateur',
+        // External
+        'guest': 'Invité',
+        'external': 'Externe',
+    };
+    return roleMap[role.toLowerCase()] || role;
 };
 
 export const formatTime = (dateStr: string | null) => {
