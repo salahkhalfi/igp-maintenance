@@ -164,20 +164,23 @@ export function userKeyGenerator(c: Context): string {
 
 /**
  * Presets de configuration courants
+ * 
+ * NOTE: Ces limites sont par IP+UserAgent, pas globales.
+ * Chaque instance Worker a son propre cache (distribué).
  */
 export const RateLimitPresets = {
-  /** API standard: 100 req/min */
-  standard: { limit: 100, windowSeconds: 60 },
+  /** API standard: 200 req/min (augmenté pour usage normal) */
+  standard: { limit: 200, windowSeconds: 60 },
   
-  /** API stricte: 30 req/min */
-  strict: { limit: 30, windowSeconds: 60 },
+  /** API stricte: 50 req/min */
+  strict: { limit: 50, windowSeconds: 60 },
   
-  /** API IA: 10 req/min (coûteux) */
-  ai: { limit: 10, windowSeconds: 60 },
+  /** API IA: 20 req/min (coûteux mais utilisable) */
+  ai: { limit: 20, windowSeconds: 60 },
   
-  /** Auth: 5 tentatives/min (anti-bruteforce) */
-  auth: { limit: 5, windowSeconds: 60 },
+  /** Auth login/register: 10 tentatives/min (anti-bruteforce mais pas trop strict) */
+  auth: { limit: 10, windowSeconds: 60 },
   
-  /** Upload: 20 req/min */
-  upload: { limit: 20, windowSeconds: 60 },
+  /** Upload: 30 req/min */
+  upload: { limit: 30, windowSeconds: 60 },
 } as const;
