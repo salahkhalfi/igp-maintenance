@@ -89,10 +89,22 @@ export const getRetentionInfo = (createdAt: string) => {
     }
 };
 
+// 🔧 FIX: Proper UTF-8 decoding for JWT payload
+// atob() decodes to Latin-1, not UTF-8, causing "É" → "Ã©" issues
+export const decodeJwtPayload = (token: string) => {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const binaryStr = atob(base64);
+    // Convert Latin-1 binary string to UTF-8
+    const bytes = Uint8Array.from(binaryStr, char => char.charCodeAt(0));
+    const jsonStr = new TextDecoder('utf-8').decode(bytes);
+    return JSON.parse(jsonStr);
+};
+
 export const getUserIdFromToken = (token: string | null) => {
     if (!token) return null;
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = decodeJwtPayload(token);
         return payload.userId;
     } catch (e) {
         return null;
@@ -102,7 +114,7 @@ export const getUserIdFromToken = (token: string | null) => {
 export const getUserRoleFromToken = (token: string | null) => {
     if (!token) return '';
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = decodeJwtPayload(token);
         return payload.role || '';
     } catch (e) {
         return '';
@@ -112,7 +124,7 @@ export const getUserRoleFromToken = (token: string | null) => {
 export const getNameFromToken = (token: string | null) => {
     if (!token) return '';
     try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = decodeJwtPayload(token);
         return payload.full_name || payload.name || 'Utilisateur';
     } catch (e) {
         return 'Utilisateur';

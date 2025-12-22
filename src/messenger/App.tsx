@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { getUserIdFromToken, getUserRoleFromToken, getNameFromToken } from './utils';
+import { getUserIdFromToken, getUserRoleFromToken, getNameFromToken, decodeJwtPayload } from './utils';
 import { SoundManager } from './sound';
 import GlobalStyles from './components/GlobalStyles';
 import OfflineBanner from './components/OfflineBanner';
@@ -97,7 +97,7 @@ const App = () => {
             
             // Update state immediately
             try {
-                const payload = JSON.parse(atob(tokenParam.split('.')[1]));
+                const payload = decodeJwtPayload(tokenParam);
                 setCurrentUserId(payload.userId);
                 setCurrentUserRole(payload.role || '');
                 setCurrentUserName(payload.full_name || payload.name || 'Utilisateur');

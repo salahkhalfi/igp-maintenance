@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Conversation, User } from '../types';
-import { getInitials, getRoleDisplayName } from '../utils';
+import { getInitials, getRoleDisplayName, decodeJwtPayload } from '../utils';
 import { SoundManager } from '../sound';
 import UserSelect from './UserSelect';
 import CreateGroupModal from './CreateGroupModal';
@@ -175,7 +175,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
         const token = localStorage.getItem('auth_token');
         if (token) {
             try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
+                const payload = decodeJwtPayload(token);
                 if (payload.role) setCurrentUserRole(payload.role);
             } catch (e) { console.error(e); }
         }
