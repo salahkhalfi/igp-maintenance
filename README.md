@@ -57,6 +57,17 @@ Le système intègre désormais 5 modules distincts activables à la carte :
 
 ## 🆕 Dernières mises à jour
 
+### Version 3.0.3 (22 Décembre 2025) - CONTEXTE IA PERSONNALISÉ 🤖👤
+- **🧠 PROFIL IA PAR UTILISATEUR**: Nouveau champ `ai_context` permettant de personnaliser les interactions de l'IA avec chaque utilisateur.
+  - Compétences techniques (ex: "Expert en hydraulique, certifié soudure TIG")
+  - Préférences de communication (ex: "Préfère les explications détaillées")
+  - Contexte métier (ex: "Responsable ligne A, connaît bien les équipements anciens")
+- **📝 LIMITE**: 500 caractères max pour éviter la surcharge de tokens.
+- **📊 EXPORT/IMPORT**: Nouvelle colonne `CONTEXTE` dans les fichiers CSV et Google Sheets.
+- **🔧 FIX EXPORT MACHINES**: Correction de la route dupliquée qui n'exportait que 5 colonnes au lieu de 8 (ANNEE, STATUT, SPECS maintenant inclus).
+- **🎯 INJECTION IA**: Le profil utilisateur est automatiquement injecté dans le contexte IA si défini.
+- **✅ IMPACT**: L'IA s'adapte au profil de chaque utilisateur pour des réponses plus pertinentes et personnalisées.
+
 ### Version 3.0.2 (15 Décembre 2025) - FIX MACHINE HORS SERVICE ⚠️✅
 - **🚨 ALERTE VISIBLE**: Si la machine est hors service, une grande bannière rouge animée s'affiche désormais en haut des détails du ticket.
 - **⚡ ACTION RAPIDE**: Bouton "Remettre en service" directement accessible dans la bannière.
