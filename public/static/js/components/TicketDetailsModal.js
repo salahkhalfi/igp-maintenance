@@ -1,3 +1,16 @@
+/**
+ * ⚠️ LEGACY FILE - DO NOT USE
+ * 
+ * SUPERSEDED BY: TicketDetailsModal_v3.js (loaded in home.ts line 70)
+ * VERSION: v3.1 (this) vs v3.2 (active)
+ * 
+ * DIFFERENCES:
+ * - v3.1: Machine status block at BOTTOM, neutral gray styling
+ * - v3.2: Machine status block at TOP, green/red visual feedback
+ * 
+ * WHY KEPT: Rollback reference, Chesterton's Fence principle
+ * AUDIT DATE: 2025-12-22
+ */
 const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDeleted }) => {
     const [ticket, setTicket] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
