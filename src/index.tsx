@@ -46,6 +46,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/cloudflare-workers';
 import { authMiddleware, adminOnly, internalUserOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
+import { rateLimit, RateLimitPresets } from './middlewares/rate-limit';
 import { hasPermission, getRolePermissions } from './utils/permissions';
 import { adminRolesHTML } from './views/admin-roles';
 import { adminAiSettingsHTML } from './views/admin-ai-settings';
@@ -159,6 +160,20 @@ app.use('*', async (c, next) => {
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
 });
 
+// ========================================
+// RATE LIMITING
+// ========================================
+// Protection contre les abus et attaques DDoS
+
+// Auth: 5 tentatives/min (anti-bruteforce)
+app.use('/api/auth/login', rateLimit(RateLimitPresets.auth));
+app.use('/api/auth/register', rateLimit(RateLimitPresets.auth));
+
+// IA: 10 req/min (coûteux - Groq/OpenAI)
+app.use('/api/ai/*', rateLimit(RateLimitPresets.ai));
+
+// API globale: 100 req/min (standard)
+app.use('/api/*', rateLimit(RateLimitPresets.standard));
 
 app.use('/api/auth/me', authMiddleware);
 
@@ -415,12 +430,33 @@ app.get('/test', (c) => {
 // REPLACED BY src/routes/stats.ts
 // Logic moved to src/routes/stats.ts
 
-app.get('/api/health', (c) => {
+app.get('/api/health', async (c) => {
+  const startTime = Date.now();
+  let dbStatus = 'ok';
+  let dbLatency = 0;
+  
+  // Test DB connection
+  try {
+    const dbStart = Date.now();
+    await c.env.DB.prepare('SELECT 1').first();
+    dbLatency = Date.now() - dbStart;
+  } catch (e) {
+    dbStatus = 'error';
+    console.error('[Health] DB check failed:', e);
+  }
+  
+  const totalLatency = Date.now() - startTime;
+  const overallStatus = dbStatus === 'ok' ? 'healthy' : 'degraded';
+  
   return c.json({
-    status: 'ok',
+    status: overallStatus,
     timestamp: new Date().toISOString(),
-    version: '3.0.0-beta.4'
-  });
+    version: '3.0.0-beta.4',
+    checks: {
+      database: { status: dbStatus, latency_ms: dbLatency },
+    },
+    latency_ms: totalLatency
+  }, overallStatus === 'healthy' ? 200 : 503);
 });
 
 // ========================================
