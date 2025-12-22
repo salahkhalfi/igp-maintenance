@@ -7,6 +7,20 @@ import { sendPushNotification } from './push';
 import { hashPassword } from '../utils/password';
 import { chatGuests, systemSettings } from '../db/schema'; // Assuming schema export
 import { eq } from 'drizzle-orm';
+import { zValidator } from '@hono/zod-validator';
+import { 
+  conversationIdParamSchema, 
+  messageIdParamSchema, 
+  userIdParamSchema,
+  guestIdParamSchema,
+  createConversationSchema,
+  updateConversationSchema,
+  sendMessageSchema,
+  addParticipantSchema,
+  createGuestSchema,
+  updateTranscriptionSchema,
+  createActionCardSchema
+} from '../schemas/chat';
 
 // Helper for Vision Analysis
 async function analyzeImageWithOpenAI(arrayBuffer: ArrayBuffer, contentType: string, apiKey: string): Promise<string | null> {
@@ -465,11 +479,12 @@ app.get('/guests', async (c) => {
 });
 
 // POST /api/v2/chat/guests - Create guest
-app.post('/guests', async (c) => {
+app.post('/guests', zValidator('json', createGuestSchema), async (c) => {
     const user = c.get('user');
     if (user.role !== 'admin') return c.json({ error: 'Admin only' }, 403);
 
-    const { email, password, full_name, company } = await c.req.json();
+    const { email, password, name: full_name } = c.req.valid('json');
+    const company = (await c.req.json()).company; // Optional field
 
     // Check duplicate email in both tables
     const existingUser = await c.env.DB.prepare(`SELECT 1 FROM users WHERE email = ?`).bind(email).first();
@@ -490,11 +505,11 @@ app.post('/guests', async (c) => {
 });
 
 // DELETE /api/v2/chat/guests/:id - Delete guest
-app.delete('/guests/:id', async (c) => {
+app.delete('/guests/:id', zValidator('param', guestIdParamSchema), async (c) => {
     const user = c.get('user');
     if (user.role !== 'admin') return c.json({ error: 'Admin only' }, 403);
 
-    const guestId = c.req.param('id');
+    const { id: guestId } = c.req.valid('param');
     
     // 1. Remove from all conversations (Cascade handled by DB ideally, but we use negative IDs so we must be careful)
     // Actually, in chat_participants, the user_id is the negative ID.

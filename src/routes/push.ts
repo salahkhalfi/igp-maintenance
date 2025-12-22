@@ -731,65 +731,6 @@ push.post('/test', async (c) => {
 });
 
 /**
- * GET /api/push/send-test-to-salah
- * Route de débogage temporaire pour envoyer une notification à Salah (user_id 11)
- * À SUPPRIMER après le diagnostic
- */
-push.get('/send-test-to-salah', async (c) => {
-  try {
-    console.log(`[PUSH-DEBUG] Sending test notification to Salah (user_id 11)`);
-
-    const result = await sendPushNotification(c.env, 11, {
-      title: '🧪 Test de Diagnostic',
-      body: `Push envoyé depuis l'assistant à ${new Date().toLocaleTimeString('fr-FR')}`,
-      icon: '/icon-192.png',
-      badge: '/badge-72.png',
-      data: {
-        url: '/',
-        action: 'debug_test',
-        timestamp: Date.now()
-      }
-    });
-
-    // Logger le résultat
-    await c.env.DB.prepare(`
-      INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-      VALUES (?, ?, ?, ?)
-    `).bind(
-      11,
-      null,
-      result.success ? 'success' : 'failed',
-      result.success ? null : JSON.stringify(result)
-    ).run();
-
-    // Récupérer les subscriptions actuelles de Salah pour diagnostic
-    const subscriptions = await c.env.DB.prepare(`
-      SELECT id, endpoint, datetime(created_at, 'localtime') as created_at
-      FROM push_subscriptions
-      WHERE user_id = 11
-    `).all();
-
-    return c.json({ 
-      success: result.success,
-      message: result.success ? 'Push envoyé avec succès ✅' : 'Push échoué ❌',
-      timestamp: new Date().toISOString(),
-      userId: 11,
-      subscriptionsCount: subscriptions.results?.length || 0,
-      subscriptions: subscriptions.results,
-      pushResult: result
-    });
-
-  } catch (error) {
-    console.error('[PUSH-DEBUG] Error:', error);
-    return c.json({ 
-      success: false,
-      error: 'Erreur lors de l\'envoi',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
-  }
-});
-
-/**
  * GET /api/push/diagnose/:query
  * Outil de diagnostic complet pour un utilisateur (ID, email ou nom)
  * Permet de vérifier les abonnements, logs et tester l'envoi

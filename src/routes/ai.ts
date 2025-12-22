@@ -345,7 +345,7 @@ app.post('/analyze-ticket', async (c) => {
         try {
             const tzSetting = await db.select().from(systemSettings).where(eq(systemSettings.setting_key, 'timezone_offset_hours')).get();
             if (tzSetting && tzSetting.setting_value) offset = parseInt(tzSetting.setting_value);
-        } catch (e) {}
+        } catch (e) { /* Timezone setting optional, use default */ }
 
         const machinesList = await db.select({
             id: machines.id, type: machines.machine_type, model: machines.model, manufacturer: machines.manufacturer, 
@@ -466,7 +466,7 @@ app.post('/chat', async (c) => {
                         if (Array.isArray(parsed)) {
                             kanbanColumns = parsed;
                         }
-                    } catch (e) {}
+                    } catch (e) { /* User preferences parse error, use defaults */ }
                 }
             }
 
@@ -597,7 +597,7 @@ app.post('/chat', async (c) => {
                         return `- [${h.date}] [TICKET #${h.id}] (${statusMap[h.status] || h.status}): ${h.title} sur ${m ? m.type : '?'}`;
                     }).join('\n');
                 }
-            } catch (e) {}
+            } catch (e) { console.warn('[AI] Failed to load user history:', e); }
         }
 
         // 4. VISION CONTEXT
@@ -626,14 +626,14 @@ app.post('/chat', async (c) => {
                                         c.executionCtx.waitUntil(c.env.DB.prepare(`UPDATE chat_messages SET transcription = ? WHERE id = ?`).bind(finalTranscript, img.id).run());
                                     }
                                 }
-                            } catch (err) {}
+                            } catch (err) { /* Vision analysis optional */ }
                         }
                         const publicUrl = `/api/media/public?key=${encodeURIComponent(img.media_key)}`;
                         const imageMd = `![Image ${idx + 1}](${publicUrl})`;
                         recentImageContext += `--- IMAGE #${idx + 1} ---\nFICHIER: ${imageMd}\nCONTENU: ${finalTranscript || "Analyse en cours..."}\n`;
                     }
                 }
-            } catch (e) {}
+            } catch (e) { console.warn('[AI] Failed to load image context:', e); }
         }
 
         // --- CONSTRUCT CLEAN SYSTEM PROMPT ---
