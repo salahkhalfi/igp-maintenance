@@ -42,7 +42,7 @@
  *   - ticket-id.ts: Génération des IDs de tickets
  */
 
-import { Hono } from 'hono';
+import { Hono, Context, Next } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/cloudflare-workers';
 import { authMiddleware, adminOnly, internalUserOnly, technicianOrAdmin, technicianSupervisorOrAdmin, requirePermission, requireAnyPermission } from './middlewares/auth';
@@ -159,20 +159,39 @@ app.use('*', async (c, next) => {
 });
 
 // ========================================
-// RATE LIMITING
+// RATE LIMITING (Configurable via Admin UI)
 // ========================================
-// Protection contre les abus et attaques DDoS
-// NOTE: Désactivé sur auth pendant développement, réactiver en production
+// Protection contre les abus - Contrôlé par system_settings.rate_limit_enabled
+// Par défaut: DÉSACTIVÉ (pour ne pas bloquer pendant le développement)
 
-// Auth: DÉSACTIVÉ en dev (réactiver avec la ligne ci-dessous pour production)
-// app.use('/api/auth/login', rateLimit(RateLimitPresets.auth));
-// app.use('/api/auth/register', rateLimit(RateLimitPresets.auth));
+// Middleware conditionnel - vérifie si rate limiting est activé dans la DB
+const conditionalRateLimit = (preset: { limit: number; windowSeconds: number }) => {
+  return async (c: Context<{ Bindings: Bindings }>, next: Next) => {
+    try {
+      const result = await c.env.DB.prepare(
+        'SELECT setting_value FROM system_settings WHERE setting_key = ?'
+      ).bind('rate_limit_enabled').first<{ setting_value: string }>();
+      
+      // Si rate_limit_enabled = 'true', appliquer le rate limit
+      if (result?.setting_value === 'true') {
+        return rateLimit(preset)(c, next);
+      }
+    } catch (e) {
+      // En cas d'erreur DB, ne pas bloquer
+    }
+    return next();
+  };
+};
 
-// IA: 20 req/min (coûteux - Groq/OpenAI/DeepSeek)
-app.use('/api/ai/*', rateLimit(RateLimitPresets.ai));
+// Auth: Anti-bruteforce (si activé)
+app.use('/api/auth/login', conditionalRateLimit(RateLimitPresets.auth));
+app.use('/api/auth/register', conditionalRateLimit(RateLimitPresets.auth));
 
-// API globale: 200 req/min (standard)
-app.use('/api/*', rateLimit(RateLimitPresets.standard));
+// IA: Protection coûts API (si activé)
+app.use('/api/ai/*', conditionalRateLimit(RateLimitPresets.ai));
+
+// API globale (si activé)
+app.use('/api/*', conditionalRateLimit(RateLimitPresets.standard));
 
 app.use('/api/auth/me', authMiddleware);
 

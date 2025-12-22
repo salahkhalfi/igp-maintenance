@@ -46,6 +46,10 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [tempWebhookUrl, setTempWebhookUrl] = React.useState('');
     const [savingWebhookUrl, setSavingWebhookUrl] = React.useState(false);
 
+    // État pour le Rate Limiting (protection anti-abus)
+    const [rateLimitEnabled, setRateLimitEnabled] = React.useState(false);
+    const [savingRateLimit, setSavingRateLimit] = React.useState(false);
+
     // États Modules
     const [licenses, setLicenses] = React.useState({
         planning: true,
@@ -194,6 +198,15 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     }
                 } catch (error) {
                     // Webhook non configuré (normal pour nouvelle installation)
+                }
+
+                // Charger l'état du Rate Limiting
+                try {
+                    const rateLimitResponse = await axios.get(API_URL + '/settings/rate_limit_enabled');
+                    setRateLimitEnabled(rateLimitResponse.data.setting_value === 'true');
+                } catch (error) {
+                    // Rate limit désactivé par défaut
+                    setRateLimitEnabled(false);
                 }
             }
         } catch (error) {
@@ -546,6 +559,21 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
+    // Fonction pour toggle le Rate Limiting
+    const handleToggleRateLimit = async () => {
+        const newValue = !rateLimitEnabled;
+        setSavingRateLimit(true);
+        try {
+            await axios.put(API_URL + '/settings/rate_limit_enabled', { value: newValue ? 'true' : 'false' });
+            setRateLimitEnabled(newValue);
+            alert(newValue ? 'Protection anti-abus ACTIVÉE' : 'Protection anti-abus DÉSACTIVÉE');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingRateLimit(false);
+        }
+    };
+
     // Fonction pour lancer le nettoyage (Janitor) manuel
     const [cleaning, setCleaning] = React.useState(false);
     const handleManualCleanup = async () => {
@@ -685,6 +713,43 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
                     // Section Gestion des Modules (Licensing) - REMOVED BY ROLLBACK
                     // (isSuperAdmin || currentUser?.role === 'admin') && null,
+
+                    // Section Protection Anti-Abus (Rate Limiting)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-red-50 border border-red-200 rounded-lg p-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-shield-alt text-red-600 text-xl mt-1' }),
+                                React.createElement('div', { className: 'flex-1' },
+                                    React.createElement('div', { className: 'flex items-center justify-between' },
+                                        React.createElement('div', {},
+                                            React.createElement('h3', { className: 'font-bold text-red-900 mb-1 flex items-center gap-2' },
+                                                "Protection Anti-Abus",
+                                                React.createElement('span', { className: 'text-xs px-2 py-0.5 rounded ' + (rateLimitEnabled ? 'bg-green-600 text-white' : 'bg-gray-400 text-white') }, 
+                                                    rateLimitEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ'
+                                                )
+                                            ),
+                                            React.createElement('p', { className: 'text-sm text-red-800' },
+                                                rateLimitEnabled 
+                                                    ? "Limite les tentatives de connexion et les appels API pour protéger contre les attaques."
+                                                    : "Désactivé pour le développement. Activer pour la production."
+                                            )
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: handleToggleRateLimit,
+                                            disabled: savingRateLimit,
+                                            className: 'ml-4 px-4 py-2 rounded-lg font-bold text-sm transition shadow-sm flex items-center gap-2 ' + 
+                                                (rateLimitEnabled 
+                                                    ? 'bg-gray-500 hover:bg-gray-600 text-white' 
+                                                    : 'bg-green-600 hover:bg-green-700 text-white')
+                                        },
+                                            savingRateLimit && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            rateLimitEnabled ? 'Désactiver' : 'Activer'
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
 
                     React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4' },
