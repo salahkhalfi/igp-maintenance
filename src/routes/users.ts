@@ -127,9 +127,10 @@ usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
     const trimmedLastName = last_name ? last_name.trim() : '';
     const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
 
-    // RESTRICTION: Superviseur ne peut pas créer d'admin
-    if (currentUser.role === 'supervisor' && role === 'admin') {
-      return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
+    // RESTRICTION: Seul le SuperAdmin peut créer des admins
+    // Les admins clients et superviseurs ne peuvent PAS créer d'autres admins
+    if (role === 'admin' && !currentUser.isSuperAdmin) {
+      return c.json({ error: 'Seul le support peut créer des administrateurs' }, 403);
     }
 
     const db = getDb(c.env);
@@ -202,14 +203,14 @@ usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json'
       return c.json({ error: 'Action non autorisée' }, 403);
     }
 
-    // RESTRICTION: Superviseur ne peut pas modifier un admin
-    if (currentUser.role === 'supervisor' && existingUser.role === 'admin') {
-      return c.json({ error: 'Les superviseurs ne peuvent pas modifier les administrateurs' }, 403);
+    // RESTRICTION: Seul le SuperAdmin peut modifier un admin
+    if (existingUser.role === 'admin' && !currentUser.isSuperAdmin) {
+      return c.json({ error: 'Seul le support peut modifier les administrateurs' }, 403);
     }
 
-    // RESTRICTION: Superviseur ne peut pas promouvoir quelqu'un en admin
-    if (currentUser.role === 'supervisor' && role === 'admin') {
-      return c.json({ error: 'Les superviseurs ne peuvent pas créer d\'administrateurs' }, 403);
+    // RESTRICTION: Seul le SuperAdmin peut promouvoir quelqu'un en admin
+    if (role === 'admin' && !currentUser.isSuperAdmin) {
+      return c.json({ error: 'Seul le support peut promouvoir en administrateur' }, 403);
     }
 
     // Empêcher un admin de se retirer ses propres droits admin
@@ -298,7 +299,8 @@ usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
     }
 
     if (existingUser.is_super_admin === 1) return c.json({ error: 'Action non autorisée' }, 403);
-    if (currentUser.role === 'supervisor' && existingUser.role === 'admin') return c.json({ error: 'Non autorisé' }, 403);
+    // RESTRICTION: Seul le SuperAdmin peut supprimer un admin
+    if (existingUser.role === 'admin' && !currentUser.isSuperAdmin) return c.json({ error: 'Seul le support peut supprimer un administrateur' }, 403);
     if (currentUser.userId === id) return c.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, 403);
 
     // Vérifier si dernier admin
