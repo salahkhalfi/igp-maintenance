@@ -1,3 +1,5 @@
+// 🔗 Import shared formatters - Single Source of Truth for role translations
+import { formatRole } from '../utils/formatters';
 
 export const getInitials = (name: string) => {
     if (!name) return '?';
@@ -23,27 +25,10 @@ export const getAvatarGradient = (name: string) => {
     return gradients[Math.abs(hash) % gradients.length];
 };
 
+// 🔗 Re-export from shared formatters - Single Source of Truth
 export const getRoleDisplayName = (role: string) => {
     if (!role) return '';
-    const roleMap: Record<string, string> = {
-        // Management
-        'admin': 'Administrateur',
-        'director': 'Directeur',
-        'supervisor': 'Superviseur',
-        'coordinator': 'Coordinateur',
-        'planner': 'Planificateur',
-        // Technical
-        'senior_technician': 'Technicien Senior',
-        'technician': 'Technicien',
-        // Production
-        'team_leader': 'Chef d\'Équipe',
-        'furnace_operator': 'Opérateur Four',
-        'operator': 'Opérateur',
-        // External
-        'guest': 'Invité',
-        'external': 'Externe',
-    };
-    return roleMap[role.toLowerCase()] || role;
+    return formatRole(role.toLowerCase());
 };
 
 export const formatTime = (dateStr: string | null) => {
