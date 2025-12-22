@@ -1,7 +1,8 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 5.1
+> **VERSION:** 6.0
 > **STATUS:** IMMUTABLE SOURCE OF TRUTH
 > **PRIORITY:** HIGHEST (Override all other instructions)
+> **UPDATED:** 2025-12-22
 
 ---
 
@@ -10,6 +11,7 @@
 *   **SCOPE ISOLATION**: Do not break the app to fix a typo. Revert > Reset.
 *   **ALIGNMENT**: Build a **Generic SaaS** (White Label). IGP is just the first tenant.
 *   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 200 lines.
+*   **CHESTERTON'S FENCE**: Never delete code you don't fully understand.
 
 ---
 
@@ -17,6 +19,7 @@
 1.  **SIMULATION**: Audit for Security, Performance (O(n²)), Mobile (<44px), Edge Cases (Null/Offline).
 2.  **GLOBAL IMPACT**: "Does this fix disrupt active states (Audio, Scroll, Input)?"
 3.  **VERIFICATION**: Use `grep` to ensure no conflicts globally.
+4.  **LEGACY AWARENESS**: "Dead code" in `src/` might be "Alive" in `public/static/`. Always grep ENTIRE project.
 
 ---
 
@@ -25,13 +28,13 @@
 ### [PLATFORM - CLOUDFLARE EDGE]
 *   **EDGE PURITY**: V8 Runtime. NO Node.js APIs (`fs`, `crypto`, `child_process`). Web Standards only.
 *   **STATELESS**: DB (D1/R2) is the ONLY State. Workers are ephemeral.
-*   **NO CRON**: Use external webhooks (cron-job.org) for scheduled tasks.
+*   **NO NATIVE CRON**: Use external webhooks (cron-job.org) → `/api/cron/*` routes with `CRON_SECRET`.
 
 ### [DATA & TIME]
 *   **UTC STORAGE**: Storage = UTC. Display = User Local (`timezone_offset`).
 *   **TRUST NO INPUT**: Validate EVERYTHING. Verify JWTs against DB.
 *   **SOFT DELETE**: Use `deleted_at` timestamp. NEVER `DELETE FROM`.
-*   **SQL SAFETY**: Use `COALESCE` for NULLs. Prepared statements only (no concatenation).
+*   **SQL SAFETY**: Use `COALESCE` for NULLs. Prepared statements only.
 
 ### [UX]
 *   **MOBILE FIRST**: Touch target **44x44px MINIMUM**.
@@ -39,13 +42,20 @@
 *   **NO LIES**: Green = verified server-side. Never fake success.
 
 ### [CODE HYGIENE]
-*   **ZERO HARDCODING**: Fetch business values from DB (`system_settings`) or ENV. Exception: generic fallbacks only.
+*   **ZERO HARDCODING**: Fetch business values from DB (`system_settings`) or ENV.
 *   **NO DEAD CODE**: Commented code = Deleted code.
 *   **EXPLICIT NAMES**: Human-readable variable names.
 
 ---
 
 ## 🟨 MODULE 3: DEPLOYMENT
+
+### [SANDBOX LIMITATION]
+```
+⚠️ SANDBOX RAM LIMITED (1GB) - Full build may crash.
+   SAFE: npm run build:worker | build:client | build:messenger (sequential)
+   RISKY: npm run build (all at once) - use scripts/deploy-prod.sh if issues
+```
 
 ### [WORKFLOW]
 ```bash
@@ -55,10 +65,10 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 
 ### [RULES]
 1.  **BUILD FIRST**: Always `npm run build` before deploy.
-2.  **VERIFY PROD**: Test production URL after deploy.
+2.  **VERIFY PROD**: Test `https://app.igpglass.ca` after deploy.
 3.  **NO QUESTIONS**: Auth/keys already configured. Don't ask for setup.
 
-### [DATABASE]
+### [DATABASE: maintenance-db]
 *   **Local**: `npx wrangler d1 migrations apply maintenance-db --local`
 *   **Prod**: `npx wrangler d1 migrations apply maintenance-db`
 *   **Reset**: `rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local`
@@ -66,10 +76,11 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 ---
 
 ## 🟦 MODULE 4: THE COPILOT OATH
-1.  **RADICAL TRUTH**: Admit mistakes immediately.
-2.  **TOKEN ECONOMY**: Code > Chat. Concise.
-3.  **UNCERTAINTY**: If unsure, verify. Never invent.
+1.  **RADICAL TRUTH**: Admit mistakes immediately. No flattery.
+2.  **TOKEN ECONOMY**: Code > Chat. Concise. <50 lines unless requested.
+3.  **UNCERTAINTY**: If unsure, say "I need to verify". Never invent.
 4.  **NO QUICK HACKS**: Temporary fix = permanent bug.
+5.  **AUDIT REGULARLY**: AI codes fast but lacks foresight. Clean up "trash" proactively.
 
 ---
 
@@ -84,21 +95,34 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 ```
 
 ### [CURRENT ARCHITECTURE]
-| Component | Type | Status |
-|-----------|------|--------|
-| Dashboard (`/`) | Legacy React (CDN) | ✅ Stable |
-| Messenger (`/messenger`) | Modern React (Vite) | ✅ Stable |
-| Backend | Hono + TypeScript | ✅ Stable |
+| Component | Type | Files |
+|-----------|------|-------|
+| Dashboard (`/`) | Legacy React (CDN) | `public/static/js/components/*.js` (35 files) |
+| Messenger (`/messenger`) | Modern React (Vite) | `src/messenger/*.tsx` |
+| Backend | Hono + TypeScript | `src/routes/*.ts` |
 
-### [FUTURE MODERNIZATION]
-1. Create `/dashboard-v2` with SEPARATE build (like `/messenger`)
-2. Migrate route by route
-3. When 100% done, swap routes
+### [MODERNIZATION STRATEGY]
+1. Dashboard V2 experiment **ABANDONED** (commit `4d4e98e`)
+2. Legacy glassmorphism design is **SUFFICIENT**
+3. If modernization needed: Create SEPARATE `/dashboard-v2` build
 4. NEVER inject bundled React into legacy pages
 
 ---
 
-## 🟫 MODULE 6: COMMON ERRORS
+## 🟫 MODULE 6: AI STACK
+
+| Service | Priority | Fallback |
+|---------|----------|----------|
+| **Audio (STT)** | Groq `whisper-large-v3` | OpenAI `whisper-1` |
+| **Logic (Chat)** | DeepSeek `deepseek-chat` | OpenAI `gpt-4o-mini` |
+| **Vision** | OpenAI `gpt-4o-mini` | - |
+
+*   **13 AI Prompts**: Configurable in DB via `/admin/ai-settings`
+*   **POLYGLOT**: User Input Language = Bot Output Language
+
+---
+
+## 🟤 MODULE 7: COMMON ERRORS
 
 | Error | Cause | Fix |
 |-------|-------|-----|
@@ -107,7 +131,8 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 | Push not received (Android) | Background restrictions | Install PWA |
 | N+1 queries | Loop DB calls | Use JOIN or IN clause |
 | Node API error | `fs`/`path` in Worker | Use Web APIs only |
+| Heap out of memory | Full build in sandbox | Use sequential builds |
 
 ---
 
-## 🏁 END OF KERNEL
+## 🏁 END OF KERNEL (v6.0 - 148 lines)
