@@ -162,15 +162,16 @@ app.use('*', async (c, next) => {
 // RATE LIMITING
 // ========================================
 // Protection contre les abus et attaques DDoS
+// NOTE: Désactivé sur auth pendant développement, réactiver en production
 
-// Auth: 5 tentatives/min (anti-bruteforce)
-app.use('/api/auth/login', rateLimit(RateLimitPresets.auth));
-app.use('/api/auth/register', rateLimit(RateLimitPresets.auth));
+// Auth: DÉSACTIVÉ en dev (réactiver avec la ligne ci-dessous pour production)
+// app.use('/api/auth/login', rateLimit(RateLimitPresets.auth));
+// app.use('/api/auth/register', rateLimit(RateLimitPresets.auth));
 
-// IA: 10 req/min (coûteux - Groq/OpenAI)
+// IA: 20 req/min (coûteux - Groq/OpenAI/DeepSeek)
 app.use('/api/ai/*', rateLimit(RateLimitPresets.ai));
 
-// API globale: 100 req/min (standard)
+// API globale: 200 req/min (standard)
 app.use('/api/*', rateLimit(RateLimitPresets.standard));
 
 app.use('/api/auth/me', authMiddleware);
