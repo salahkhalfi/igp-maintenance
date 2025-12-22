@@ -1311,6 +1311,7 @@ settings.get('/export/machines', authMiddleware, adminOnly, async (c) => {
         SERIE: machines.serial_number,
         LIEU: machines.location,
         ANNEE: machines.year,
+        STATUT: machines.status,
         SPECS: machines.technical_specs
       })
       .from(machines)
@@ -1500,6 +1501,11 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
         const year = machineData.year ? parseInt(machineData.year, 10) || null : null;
         const technicalSpecs = sanitizeForDb(machineData.specs) || null;
         
+        // Valider le statut
+        const validStatuses = ['operational', 'maintenance', 'broken', 'retired'];
+        const status = machineData.status?.toLowerCase().trim();
+        const machineStatus = validStatuses.includes(status) ? status : 'operational';
+        
         // Validation - Type obligatoire
         if (!machineType) {
           stats.errors++;
@@ -1557,6 +1563,7 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
                 serial_number: serialNumber,
                 location: location,
                 year: year,
+                status: machineStatus,
                 technical_specs: technicalSpecs,
                 updated_at: sql`CURRENT_TIMESTAMP`
               })
@@ -1580,8 +1587,8 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
           serial_number: serialNumber,
           location: location,
           year: year,
-          technical_specs: technicalSpecs,
-          status: 'operational'
+          status: machineStatus,
+          technical_specs: technicalSpecs
         });
         stats.success++;
       } catch (err) {

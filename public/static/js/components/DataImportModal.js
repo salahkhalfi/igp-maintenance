@@ -146,14 +146,14 @@ chef.equipe@exemple.com,Chef,Équipe,team_leader`
         },
         machines: {
             filename: 'modele_machines.csv',
-            content: `TYPE,MODELE,MARQUE,SERIE,LIEU,ANNEE,SPECS
-# AIDE: TYPE obligatoire | SERIE = identifiant unique préféré | ANNEE = année de fabrication | SPECS = spécifications techniques
+            content: `TYPE,MODELE,MARQUE,SERIE,LIEU,ANNEE,STATUT,SPECS
+# AIDE: TYPE obligatoire | SERIE = identifiant unique | STATUT: operational/maintenance/broken/retired
 # DOUBLONS: Si SERIE fourni → identifié par SERIE. Sinon → identifié par TYPE+MODELE+LIEU
 # CONSEIL: Pour 2 machines identiques au même endroit, ajoutez un SERIE unique (ex: POLI-001, POLI-002)
-Polisseuse,GX-500,Brand A,POLI-001,Atelier A,2022,Vitesse: 3000 RPM
-Polisseuse,GX-500,Brand A,POLI-002,Atelier A,2023,Vitesse: 3500 RPM
-Four industriel,FI-800,Siemens,SN-2024-002,Zone B,2024,Temp max: 1200°C
-Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,Capacité: 2.5T`
+Polisseuse,GX-500,Brand A,POLI-001,Atelier A,2022,operational,Vitesse: 3000 RPM
+Polisseuse,GX-500,Brand A,POLI-002,Atelier A,2023,maintenance,Vitesse: 3500 RPM - En révision
+Four industriel,FI-800,Siemens,SN-2024-002,Zone B,2024,operational,Temp max: 1200°C
+Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5T`
         }
     };
 
@@ -383,6 +383,7 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,Capacité: 2.5T`
                     serial: row.SERIE,
                     location: row.LIEU,
                     year: row.ANNEE,
+                    status: row.STATUT,
                     specs: row.SPECS
                 }));
             }
@@ -411,7 +412,7 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,Capacité: 2.5T`
         if (activeTab === 'users') {
             return ['EMAIL', 'PRENOM', 'NOM', 'ROLE'];
         } else {
-            return ['TYPE', 'MODELE', 'MARQUE', 'SERIE', 'LIEU', 'ANNEE', 'SPECS'];
+            return ['TYPE', 'MODELE', 'MARQUE', 'SERIE', 'LIEU', 'ANNEE', 'STATUT', 'SPECS'];
         }
     };
 
