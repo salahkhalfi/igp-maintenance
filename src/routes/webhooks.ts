@@ -28,7 +28,21 @@ import { getTimezoneOffset, convertToLocalTime } from '../utils/timezone';
 
 const webhooks = new Hono<{ Bindings: Bindings }>();
 
-const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY0MDYzMDA0M2Q1MjY5NTUzYzUxM2Ei_pc';
+/**
+ * Get webhook URL from database (SaaS-ready, zero hardcoding)
+ * Returns null if not configured (webhooks disabled)
+ */
+async function getWebhookUrl(db: D1Database): Promise<string | null> {
+  try {
+    const result = await db.prepare(
+      'SELECT setting_value FROM system_settings WHERE setting_key = ?'
+    ).bind('webhook_url').first<{ setting_value: string }>();
+    return result?.setting_value || null;
+  } catch (e) {
+    console.error('[Webhook] Failed to get URL from DB:', e);
+    return null;
+  }
+}
 
 /**
  * POST /api/webhooks/check-overdue-tickets - Vérifier et notifier les tickets planifiés expirés
@@ -152,7 +166,16 @@ webhooks.post('/check-overdue-tickets', async (c) => {
           notification_sent_at: convertToLocalTime(now, timezoneOffset)
         };
 
-        // Envoyer le webhook à Pabbly Connect
+        // Get webhook URL from DB (SaaS-ready)
+        const WEBHOOK_URL = await getWebhookUrl(c.env.DB);
+        
+        // Skip if no webhook configured
+        if (!WEBHOOK_URL) {
+          console.log(`[Webhook] No webhook_url configured, skipping notification for ticket ${ticket.ticket_id}`);
+          continue;
+        }
+
+        // Envoyer le webhook
         const webhookResponse = await fetch(WEBHOOK_URL, {
           method: 'POST',
           headers: {

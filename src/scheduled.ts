@@ -6,6 +6,22 @@ import type { Bindings } from './types';
 import { sendPushNotification } from './routes/push';
 
 /**
+ * Get webhook URL from database (SaaS-ready, zero hardcoding)
+ * Returns null if not configured (webhooks disabled)
+ */
+async function getWebhookUrl(db: D1Database): Promise<string | null> {
+  try {
+    const result = await db.prepare(
+      'SELECT setting_value FROM system_settings WHERE setting_key = ?'
+    ).bind('webhook_url').first<{ setting_value: string }>();
+    return result?.setting_value || null;
+  } catch (e) {
+    console.error('[Scheduled] Failed to get webhook URL from DB:', e);
+    return null;
+  }
+}
+
+/**
  * Scheduled event handler (Cloudflare Workers CRON)
  * Exécuté automatiquement selon le schedule dans wrangler.jsonc
  */
@@ -204,7 +220,11 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
 
     console.log(`⚠️ CRON: ${overdueTickets.results.length} ticket(s) expiré(s) trouvé(s)`);
 
-    const WEBHOOK_URL = 'https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTY0MDYzMDA0M2Q1MjY5NTUzYzUxM2Ei_pc';
+    // Get webhook URL from DB (SaaS-ready, zero hardcoding)
+    const WEBHOOK_URL = await getWebhookUrl(env.DB);
+    if (!WEBHOOK_URL) {
+      console.log('ℹ️ CRON: No webhook_url configured, webhook notifications disabled');
+    }
     let notificationsSent = 0;
 
     // Envoyer webhook pour chaque ticket expiré
@@ -247,15 +267,19 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
             notification_time: now.toISOString()
           };
 
-          // Envoyer webhook
-          const response = await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(webhookData)
-          });
-
-          const responseStatus = response.status;
-          const responseBody = await response.text();
+          // Envoyer webhook (only if configured)
+          let responseStatus = 0;
+          let responseBody = 'Webhook not configured';
+          
+          if (WEBHOOK_URL) {
+            const response = await fetch(WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(webhookData)
+            });
+            responseStatus = response.status;
+            responseBody = await response.text();
+          }
 
           // Enregistrer notification dans DB
           const sentAt = now.toISOString();
@@ -266,7 +290,7 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
           `).bind(
             ticket.id,
             'overdue_scheduled',
-            WEBHOOK_URL,
+            WEBHOOK_URL || 'NOT_CONFIGURED',
             sentAt,
             responseStatus,
             responseBody.substring(0, 1000),

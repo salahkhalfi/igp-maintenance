@@ -40,6 +40,12 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [tempBaseUrl, setTempBaseUrl] = React.useState('');
     const [savingBaseUrl, setSavingBaseUrl] = React.useState(false);
 
+    // États pour le Webhook URL (Intégrations: Pabbly, Make, Zapier, etc.)
+    const [webhookUrl, setWebhookUrl] = React.useState('');
+    const [editingWebhookUrl, setEditingWebhookUrl] = React.useState(false);
+    const [tempWebhookUrl, setTempWebhookUrl] = React.useState('');
+    const [savingWebhookUrl, setSavingWebhookUrl] = React.useState(false);
+
     // États Modules
     const [licenses, setLicenses] = React.useState({
         planning: true,
@@ -178,6 +184,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     }
                 } catch (error) {
                     setBaseUrl(window.location.origin);
+                }
+
+                // Charger le Webhook URL
+                try {
+                    const webhookUrlResponse = await axios.get(API_URL + '/settings/webhook_url');
+                    if (webhookUrlResponse.data.setting_value) {
+                        setWebhookUrl(webhookUrlResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Webhook non configuré (normal pour nouvelle installation)
                 }
             }
         } catch (error) {
@@ -498,6 +514,38 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
+    // Fonctions pour gérer le Webhook URL (Intégrations)
+    const handleStartEditWebhookUrl = () => {
+        setTempWebhookUrl(webhookUrl);
+        setEditingWebhookUrl(true);
+    };
+
+    const handleCancelEditWebhookUrl = () => {
+        setTempWebhookUrl('');
+        setEditingWebhookUrl(false);
+    };
+
+    const handleSaveWebhookUrl = async () => {
+        let cleanUrl = tempWebhookUrl.trim();
+        // Allow empty URL to disable webhooks
+        if (cleanUrl && !cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+            cleanUrl = 'https://' + cleanUrl;
+        }
+
+        setSavingWebhookUrl(true);
+        try {
+            await axios.put(API_URL + '/settings/webhook_url', { value: cleanUrl });
+            setWebhookUrl(cleanUrl);
+            setEditingWebhookUrl(false);
+            setTempWebhookUrl('');
+            alert(cleanUrl ? 'Webhook configuré avec succès !' : 'Webhook désactivé.');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingWebhookUrl(false);
+        }
+    };
+
     // Fonction pour lancer le nettoyage (Janitor) manuel
     const [cleaning, setCleaning] = React.useState(false);
     const handleManualCleanup = async () => {
@@ -729,6 +777,73 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     },
                                         savingBaseUrl && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                         savingBaseUrl ? 'Enregistrement...' : 'Enregistrer'
+                                    )
+                                )
+                            )
+                        )
+                    ),
+
+                    // Section Webhook / Intégrations (ADMIN UNIQUEMENT)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-plug text-teal-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-teal-900 mb-2 flex items-center gap-2' },
+                                        "Intégrations & Webhooks",
+                                        React.createElement('span', { className: 'text-xs bg-teal-600 text-white px-2 py-1 rounded' }, 'OPTIONNEL')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-teal-800 mb-2' },
+                                        "Connectez votre application à des services externes (Pabbly, Make, Zapier, n8n...)."
+                                    ),
+                                    React.createElement('p', { className: 'text-xs text-teal-700' },
+                                        "Les événements (ticket créé, en retard, etc.) seront envoyés à cette URL."
+                                    )
+                                )
+                            )
+                        ),
+
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-link mr-2' }),
+                                'URL du Webhook (laisser vide pour désactiver)'
+                            ),
+                            !editingWebhookUrl ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800 font-mono text-sm truncate' },
+                                    webhookUrl || React.createElement('span', { className: 'text-gray-500 italic' }, 'Non configuré (notifications désactivées)')
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleStartEditWebhookUrl,
+                                    className: 'px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                    type: 'button'
+                                },
+                                    React.createElement('i', { className: 'fas fa-edit' }),
+                                    'Configurer'
+                                )
+                            ) : React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: tempWebhookUrl,
+                                    onChange: (e) => setTempWebhookUrl(e.target.value),
+                                    placeholder: 'https://connect.pabbly.com/workflow/... ou https://hook.make.com/...',
+                                    className: 'w-full px-4 py-2.5 border-2 border-teal-300 rounded-lg focus:outline-none focus:border-teal-500 font-mono text-sm',
+                                    disabled: savingWebhookUrl
+                                }),
+                                React.createElement('div', { className: 'flex items-center justify-end gap-2' },
+                                    React.createElement('button', {
+                                        onClick: handleCancelEditWebhookUrl,
+                                        disabled: savingWebhookUrl,
+                                        className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                        type: 'button'
+                                    }, 'Annuler'),
+                                    React.createElement('button', {
+                                        onClick: handleSaveWebhookUrl,
+                                        disabled: savingWebhookUrl,
+                                        className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50',
+                                        type: 'button'
+                                    },
+                                        savingWebhookUrl && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                        savingWebhookUrl ? 'Enregistrement...' : 'Enregistrer'
                                     )
                                 )
                             )

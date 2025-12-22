@@ -8,7 +8,7 @@ import { getDb } from '../db';
 import { tickets, machines, users, media, ticketTimeline, pushLogs } from '../db/schema';
 import { generateTicketId } from '../utils/ticket-id';
 import { formatUserName } from '../utils/userFormatter';
-import { sendToPabbly } from '../utils/pabbly';
+import { sendWebhook } from '../utils/webhook';
 import { createTicketSchema, updateTicketSchema, ticketIdParamSchema, getTicketsQuerySchema } from '../schemas/tickets';
 import type { Bindings } from '../types';
 
@@ -307,8 +307,8 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
 
     const newTicket = await createTicketWithRetry();
 
-    // WEBHOOK: Send to Pabbly (Shadow Logging)
-    c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_created', {
+    // WEBHOOK: Send to configured webhook (Shadow Logging)
+    c.executionCtx.waitUntil(sendWebhook(db, c.env, 'ticket_created', {
       ...newTicket,
       machine_info: machine,
       creator_info: user
@@ -441,8 +441,8 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
     
     const updatedTicket = result[0];
 
-    // WEBHOOK: Send to Pabbly (Shadow Logging)
-    c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_updated', {
+    // WEBHOOK: Send to configured webhook (Shadow Logging)
+    c.executionCtx.waitUntil(sendWebhook(db, c.env, 'ticket_updated', {
       ticket_id: updatedTicket.ticket_id,
       id: updatedTicket.id,
       changes: body,
@@ -585,8 +585,8 @@ ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) 
       .set({ deleted_at: sql`CURRENT_TIMESTAMP`, updated_at: sql`CURRENT_TIMESTAMP` })
       .where(eq(tickets.id, id));
 
-    // WEBHOOK: Send to Pabbly (Shadow Logging)
-    c.executionCtx.waitUntil(sendToPabbly(c.env, 'ticket_deleted', {
+    // WEBHOOK: Send to configured webhook (Shadow Logging)
+    c.executionCtx.waitUntil(sendWebhook(db, c.env, 'ticket_deleted', {
       ticket_id: ticket.ticket_id,
       id: ticket.id,
       deleted_title: ticket.title,
