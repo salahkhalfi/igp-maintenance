@@ -55,24 +55,41 @@ usersRoute.use('/*', supervisorOrAdmin);
 /**
  * GET /api/users - Liste tous les utilisateurs
  * Accès: Admin uniquement
+ * 
+ * VISIBILITÉ SUPERADMIN:
+ * - Si l'utilisateur actuel EST superadmin → il voit TOUS les utilisateurs (y compris lui-même)
+ * - Si l'utilisateur actuel N'EST PAS superadmin → il ne voit PAS les superadmins
  */
 usersRoute.get('/', async (c) => {
   try {
+    const currentUser = c.get('user') as any;
     const db = getDb(c.env);
-    // Filtrer le super admin ET l'utilisateur système team (id=0)
+    
+    // Construire la condition de filtrage selon le rôle de l'utilisateur actuel
+    let whereCondition;
+    
+    if (currentUser.isSuperAdmin) {
+      // SuperAdmin voit TOUS les utilisateurs (sauf id=0 et soft-deleted)
+      whereCondition = and(
+        ne(users.id, 0),
+        sql`${users.deleted_at} IS NULL`
+      );
+    } else {
+      // Admin client ne voit PAS les superadmins
+      whereCondition = and(
+        or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`),
+        ne(users.id, 0),
+        sql`${users.deleted_at} IS NULL`
+      );
+    }
+    
     const results = await db
       .select({
         ...getTableColumns(users),
         hash_type: sql<string>`CASE WHEN ${users.password_hash} LIKE 'v2:%' THEN 'PBKDF2' ELSE 'SHA-256 (Legacy)' END`
       })
       .from(users)
-      .where(
-        and(
-          or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`),
-          ne(users.id, 0),
-          sql`${users.deleted_at} IS NULL` // Exclude soft-deleted
-        )
-      )
+      .where(whereCondition)
       .orderBy(users.full_name);
 
     return c.json({ users: results });
