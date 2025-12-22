@@ -127,13 +127,21 @@ usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
     const trimmedLastName = last_name ? last_name.trim() : '';
     const full_name = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
 
-    // RESTRICTION: Seul le SuperAdmin peut créer des admins
-    // Les admins clients et superviseurs ne peuvent PAS créer d'autres admins
-    if (role === 'admin' && !currentUser.isSuperAdmin) {
-      return c.json({ error: 'Seul le support peut créer des administrateurs' }, 403);
-    }
-
     const db = getDb(c.env);
+
+    // RESTRICTION: Création d'admin nécessite SuperAdmin OU permission can_create_admins
+    if (role === 'admin' && !currentUser.isSuperAdmin) {
+      // Vérifier si l'utilisateur a la permission can_create_admins
+      const currentUserData = await db
+        .select({ can_create_admins: users.can_create_admins })
+        .from(users)
+        .where(eq(users.id, currentUser.userId))
+        .get();
+      
+      if (!currentUserData?.can_create_admins) {
+        return c.json({ error: 'Vous n\'avez pas la permission de créer des administrateurs' }, 403);
+      }
+    }
 
     // Vérifier si l'email existe déjà
     const existing = await db
@@ -203,14 +211,22 @@ usersRoute.put('/:id', zValidator('param', userIdParamSchema), zValidator('json'
       return c.json({ error: 'Action non autorisée' }, 403);
     }
 
-    // RESTRICTION: Seul le SuperAdmin peut modifier un admin
-    if (existingUser.role === 'admin' && !currentUser.isSuperAdmin) {
-      return c.json({ error: 'Seul le support peut modifier les administrateurs' }, 403);
+    // Vérifier si l'utilisateur actuel a la permission can_create_admins
+    const currentUserData = await db
+      .select({ can_create_admins: users.can_create_admins })
+      .from(users)
+      .where(eq(users.id, currentUser.userId))
+      .get();
+    const canManageAdmins = currentUser.isSuperAdmin || currentUserData?.can_create_admins === 1;
+
+    // RESTRICTION: Modifier un admin nécessite SuperAdmin OU permission can_create_admins
+    if (existingUser.role === 'admin' && !canManageAdmins) {
+      return c.json({ error: 'Vous n\'avez pas la permission de modifier les administrateurs' }, 403);
     }
 
-    // RESTRICTION: Seul le SuperAdmin peut promouvoir quelqu'un en admin
-    if (role === 'admin' && !currentUser.isSuperAdmin) {
-      return c.json({ error: 'Seul le support peut promouvoir en administrateur' }, 403);
+    // RESTRICTION: Promouvoir en admin nécessite SuperAdmin OU permission can_create_admins
+    if (role === 'admin' && !canManageAdmins) {
+      return c.json({ error: 'Vous n\'avez pas la permission de promouvoir en administrateur' }, 403);
     }
 
     // Empêcher un admin de se retirer ses propres droits admin
@@ -299,8 +315,17 @@ usersRoute.delete('/:id', zValidator('param', userIdParamSchema), async (c) => {
     }
 
     if (existingUser.is_super_admin === 1) return c.json({ error: 'Action non autorisée' }, 403);
-    // RESTRICTION: Seul le SuperAdmin peut supprimer un admin
-    if (existingUser.role === 'admin' && !currentUser.isSuperAdmin) return c.json({ error: 'Seul le support peut supprimer un administrateur' }, 403);
+    
+    // Vérifier si l'utilisateur actuel a la permission can_create_admins
+    const currentUserData = await db
+      .select({ can_create_admins: users.can_create_admins })
+      .from(users)
+      .where(eq(users.id, currentUser.userId))
+      .get();
+    const canManageAdmins = currentUser.isSuperAdmin || currentUserData?.can_create_admins === 1;
+    
+    // RESTRICTION: Supprimer un admin nécessite SuperAdmin OU permission can_create_admins
+    if (existingUser.role === 'admin' && !canManageAdmins) return c.json({ error: 'Vous n\'avez pas la permission de supprimer un administrateur' }, 403);
     if (currentUser.userId === id) return c.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, 403);
 
     // Vérifier si dernier admin
@@ -379,6 +404,50 @@ usersRoute.post('/:id/reset-password', zValidator('param', userIdParamSchema), z
   } catch (error) {
     console.error('Reset password error:', error);
     return c.json({ error: 'Erreur lors de la réinitialisation du mot de passe' }, 500);
+  }
+});
+
+/**
+ * PUT /api/users/:id/permissions - Gérer les permissions spéciales d'un admin
+ * Accès: SuperAdmin uniquement
+ */
+usersRoute.put('/:id/permissions', zValidator('param', userIdParamSchema), async (c) => {
+  try {
+    const currentUser = c.get('user') as any;
+    const { id } = c.req.valid('param');
+    
+    // RESTRICTION: SuperAdmin uniquement
+    if (!currentUser.isSuperAdmin) {
+      return c.json({ error: 'Action réservée au support' }, 403);
+    }
+
+    const body = await c.req.json();
+    const { can_create_admins } = body;
+
+    const db = getDb(c.env);
+    const existingUser = await db.select().from(users).where(eq(users.id, id)).get();
+
+    if (!existingUser) return c.json({ error: 'Utilisateur non trouvé' }, 404);
+    if (existingUser.is_super_admin === 1) return c.json({ error: 'Impossible de modifier les permissions du super admin' }, 403);
+    if (existingUser.role !== 'admin') return c.json({ error: 'Cette permission ne s\'applique qu\'aux administrateurs' }, 400);
+
+    await db.update(users)
+      .set({ 
+        can_create_admins: can_create_admins ? 1 : 0,
+        updated_at: sql`CURRENT_TIMESTAMP` 
+      })
+      .where(eq(users.id, id));
+
+    console.log(`SuperAdmin ${currentUser.email} ${can_create_admins ? 'granted' : 'revoked'} can_create_admins for ${existingUser.email}`);
+    return c.json({ 
+      message: can_create_admins 
+        ? `${existingUser.full_name} peut maintenant créer des administrateurs` 
+        : `${existingUser.full_name} ne peut plus créer des administrateurs`,
+      can_create_admins: can_create_admins ? 1 : 0
+    });
+  } catch (error) {
+    console.error('Update permissions error:', error);
+    return c.json({ error: 'Erreur lors de la modification des permissions' }, 500);
   }
 });
 
