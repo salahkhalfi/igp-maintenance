@@ -372,12 +372,12 @@ app.get('/conversations/:id/messages', async (c) => {
     });
 
     // Récupérer le statut de lecture ET les infos des participants
-    // Updated Query: Support Guests
+    // Updated Query: Support Guests + SuperAdmin displayed as "SUPPORT"
     const participants = await c.env.DB.prepare(`
         SELECT 
             cp.user_id, 
             cp.last_read_at, 
-            cp.role, 
+            CASE WHEN u.is_super_admin = 1 THEN 'support' ELSE cp.role END as role, 
             COALESCE(u.full_name, g.full_name) as full_name, 
             COALESCE(u.last_seen, g.last_seen) as last_seen, 
             u.avatar_key
@@ -416,12 +416,15 @@ app.post('/conversations/:id/read', async (c) => {
 });
 
 // 8. GET /api/v2/chat/users - List all available users for chat (Employees + Guests)
+// NOTE: SuperAdmins are visible in chat but with role displayed as "SUPPORT"
 app.get('/users', async (c) => {
     const user = c.get('user');
     
-    // 1. Employees
+    // 1. Employees (SuperAdmins appear as "SUPPORT" role)
     const employees = await c.env.DB.prepare(`
-        SELECT id, full_name, role, email, avatar_key
+        SELECT id, full_name, 
+               CASE WHEN is_super_admin = 1 THEN 'support' ELSE role END as role, 
+               email, avatar_key
         FROM users 
         WHERE id != ? AND id != 0 AND deleted_at IS NULL
         ORDER BY first_name ASC

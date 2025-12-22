@@ -25,12 +25,15 @@ technicians.get('/', authMiddleware, internalUserOnly, async (c) => {
 
 // GET /api/users/team - Liste de tous les utilisateurs pour les techniciens/superviseurs/admins
 // IMPORTANT: Cette route doit être montée AVANT /api/users/* pour ne pas être bloquée
+// NOTE: Exclut les superadmins (vendeur SaaS) - ils sont invisibles aux clients
 technicians.get('/team', authMiddleware, technicianSupervisorOrAdmin, async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
       SELECT id, email, first_name, last_name, full_name, role, created_at, updated_at, last_login
       FROM users
-      WHERE id != 0
+      WHERE id != 0 
+        AND deleted_at IS NULL
+        AND (is_super_admin = 0 OR is_super_admin IS NULL)
       ORDER BY role DESC, first_name ASC
     `).all();
 

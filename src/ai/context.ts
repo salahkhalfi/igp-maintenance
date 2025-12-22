@@ -149,10 +149,14 @@ export async function buildAutoContext(db: any): Promise<CompanyProfile> {
             .all();
         roles = roleList.map((r: any) => r.role).filter(Boolean);
 
-        // 5. Fetch admin names (for hierarchy)
+        // 5. Fetch admin names (for hierarchy) - EXCLUDE superadmins (SaaS vendor)
         const adminList = await db.select({ name: users.full_name })
             .from(users)
-            .where(and(eq(users.role, 'admin'), sql`deleted_at IS NULL`))
+            .where(and(
+                eq(users.role, 'admin'), 
+                sql`deleted_at IS NULL`,
+                sql`(is_super_admin = 0 OR is_super_admin IS NULL)` // Exclude SaaS vendor
+            ))
             .all();
         admins = adminList.map((a: any) => a.name).filter(Boolean);
 
@@ -172,7 +176,8 @@ export async function buildAutoContext(db: any): Promise<CompanyProfile> {
 
 // --- ROLE TRANSLATION MAP (English DB values -> French display) ---
 const ROLE_LABELS: Record<string, string> = {
-    'superadmin': 'Super Administrateur', // SaaS vendor (is_super_admin flag)
+    'superadmin': 'Super Administrateur', // SaaS vendor (is_super_admin flag) - internal only
+    'support': 'Support', // Public display name for superadmin in chat/messenger
     'admin': 'Administrateur',
     'supervisor': 'Superviseur',
     'team_leader': 'Chef d\'équipe',

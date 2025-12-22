@@ -16,6 +16,7 @@ const usersRoute = new Hono<{ Bindings: Bindings }>();
 /**
  * GET /api/users/team - Liste toute l'équipe (pour tous les rôles)
  * Accès: Technicien, Superviseur, Admin
+ * NOTE: Exclut les superadmins (vendeur SaaS) - ils sont invisibles aux clients
  */
 usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
   try {
@@ -33,7 +34,12 @@ usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
         last_login: users.last_login
       })
       .from(users)
-      .where(and(ne(users.id, 0), sql`${users.deleted_at} IS NULL`))
+      .where(and(
+        ne(users.id, 0),
+        sql`${users.deleted_at} IS NULL`,
+        // Exclure les superadmins (vendeur SaaS) - invisibles aux clients
+        or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`)
+      ))
       .orderBy(desc(users.role), users.full_name);
 
     return c.json({ users: results });
