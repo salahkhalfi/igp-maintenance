@@ -48,7 +48,8 @@ describe('formatters.ts - Roles', () => {
   });
 
   it('formate rôle team_leader', () => {
-    expect(formatRole('team_leader')).toBe("Chef d'Équipe de Production");
+    // RoleService default: "Chef d'Équipe" (without "de Production")
+    expect(formatRole('team_leader')).toBe("Chef d'Équipe");
   });
 
   it('fallback pour rôle inconnu', () => {
@@ -56,11 +57,14 @@ describe('formatters.ts - Roles', () => {
   });
 
   it('version courte admin', () => {
-    expect(formatRoleShort('admin')).toBe('Admin');
+    // RoleService returns clean name for single-word roles
+    // "Administrateur" is the clean version of "👑 Administrateur"
+    expect(formatRoleShort('admin')).toBe('Administrateur');
   });
 
   it('version courte supervisor', () => {
-    expect(formatRoleShort('supervisor')).toBe('Super.');
+    // RoleService returns "Superviseur" (first word after emoji removal)
+    expect(formatRoleShort('supervisor')).toBe('Superviseur');
   });
 });
 
