@@ -6,7 +6,7 @@ const EmptyState = () => (
         <div className="absolute top-[20%] right-[30%] w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none animate-pulse"></div>
         
         <div className="relative z-10 text-center p-12 backdrop-blur-xl bg-white/5 rounded-[3rem] border border-white/5 shadow-2xl max-w-lg transform hover:scale-105 transition-transform duration-700">
-            <img src="/logo-igp.png" alt="Logo" className="h-40 mx-auto mb-10 object-contain drop-shadow-2xl" />
+            <img src="/static/logo.png" alt="Logo" className="h-40 mx-auto mb-10 object-contain drop-shadow-2xl" />
             <h1 className="text-white text-4xl font-bold mb-6 tracking-tight font-display">Messenger</h1>
             <p className="text-gray-400 text-xl leading-relaxed mb-10 font-light">
                 L'expérience de communication ultime pour les professionnels.

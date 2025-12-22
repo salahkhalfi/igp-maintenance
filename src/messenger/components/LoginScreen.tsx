@@ -47,7 +47,7 @@ const LoginScreen = ({ onLogin }: { onLogin: () => void }) => {
             <div className="w-full max-w-md z-10 animate-slide-up px-4">
                 <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl">
                     <div className="flex flex-col items-center mb-10">
-                        <img src="/static/logo.png" onError={(e) => { e.currentTarget.src = '/logo-igp.png'; }} alt="Logo" className="h-20 object-contain mb-4 drop-shadow-2xl" />
+                        <img src="/static/logo.png" onError={(e) => { e.currentTarget.src = '/static/logo-igp.png'; }} alt="Logo" className="h-20 object-contain mb-4 drop-shadow-2xl" />
                         <p className="text-emerald-500/90 text-[10px] font-bold tracking-widest uppercase text-center mb-6 leading-relaxed max-w-[280px] mx-auto">
                             Système de<br/>Maintenance Universel
                         </p>
