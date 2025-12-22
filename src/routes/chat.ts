@@ -197,9 +197,9 @@ app.get('/conversations', async (c) => {
                 c.name, 
                 c.avatar_key, 
                 c.updated_at,
-                (SELECT content FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
-                (SELECT type FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_type,
-                (SELECT created_at FROM chat_messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_time
+                (SELECT content FROM chat_messages WHERE conversation_id = c.id AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY created_at DESC LIMIT 1) as last_message,
+                (SELECT type FROM chat_messages WHERE conversation_id = c.id AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY created_at DESC LIMIT 1) as last_message_type,
+                (SELECT created_at FROM chat_messages WHERE conversation_id = c.id AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY created_at DESC LIMIT 1) as last_message_time
             FROM chat_conversations c
             JOIN chat_participants cp ON c.id = cp.conversation_id
             WHERE cp.user_id = ?
@@ -224,10 +224,11 @@ app.get('/conversations', async (c) => {
                     AND (u.last_seen > datetime('now', '-5 minutes') OR g.last_seen > datetime('now', '-5 minutes'))
                 `).bind(conv.id).first(),
                 
-                // Unread Count
+                // Unread Count (excluding deleted messages)
                 c.env.DB.prepare(`
                     SELECT COUNT(*) as c FROM chat_messages cm
                     WHERE cm.conversation_id = ? 
+                    AND (cm.is_deleted = 0 OR cm.is_deleted IS NULL)
                     AND cm.created_at > (
                         SELECT COALESCE(last_read_at, '1970-01-01') 
                         FROM chat_participants 
@@ -338,7 +339,7 @@ app.get('/conversations/:id/messages', async (c) => {
         LEFT JOIN users u ON m.sender_id = u.id AND m.sender_id > 0
         LEFT JOIN chat_guests g ON ABS(m.sender_id) = g.id AND m.sender_id < 0
         LEFT JOIN chat_action_cards ac ON m.id = ac.message_id
-        WHERE m.conversation_id = ?
+        WHERE m.conversation_id = ? AND (m.is_deleted = 0 OR m.is_deleted IS NULL)
         ORDER BY m.created_at DESC
         LIMIT ? OFFSET ?
     `).bind(conversationId, limit, offset).all();
@@ -1194,13 +1195,9 @@ app.delete('/conversations/:id/messages/:messageId', async (c) => {
         return c.json({ error: 'Action non autorisée' }, 403);
     }
 
-    // 3. Delete media from R2 if exists
-    if (message.media_key) {
-        await c.env.MEDIA_BUCKET.delete(message.media_key as string);
-    }
-
-    // 4. Delete message from DB
-    await c.env.DB.prepare(`DELETE FROM chat_messages WHERE id = ?`).bind(messageId).run();
+    // 3. Soft delete message (keep media for potential recovery)
+    // Note: Media is NOT deleted to allow recovery. Use scheduled cleanup for old deleted messages.
+    await c.env.DB.prepare(`UPDATE chat_messages SET is_deleted = 1 WHERE id = ?`).bind(messageId).run();
 
     return c.json({ success: true });
 });
