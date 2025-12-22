@@ -1,31 +1,28 @@
 # Cloudflare Pages Headers Configuration
-# Forces browsers to always check for updates on static files
+# Smart caching strategy for SaaS
 
-# All static JS files - NO CACHE (critical for updates)
-/static/js/*
+# HTML pages - NEVER cache (ensures users get latest version with updated ?v= hashes)
+/
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
-  Expires: 0
 
-/static/js/dist/*
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-  Expires: 0
-
-# CSS files - short cache
-/static/*.css
-  Cache-Control: no-cache, no-store, must-revalidate
-
-# HTML pages - never cache
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
 
-/
-  Cache-Control: no-cache, no-store, must-revalidate
+# JS/CSS files with version hash (?v=xxx) - LONG CACHE
+# The ?v= hash changes on each deployment, forcing browser to fetch new version
+/static/js/*
+  Cache-Control: public, max-age=31536000, immutable
 
-# Images and fonts - can be cached longer (they rarely change)
+/static/js/dist/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/static/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# Images and fonts - Long cache (rarely change)
 /static/images/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=31536000
 
 /*.png
   Cache-Control: public, max-age=86400
@@ -33,6 +30,13 @@
 /*.ico
   Cache-Control: public, max-age=86400
 
+/*.woff2
+  Cache-Control: public, max-age=31536000
+
 # API responses - never cache
 /api/*
   Cache-Control: no-store
+
+# Service worker - short cache (needs to update)
+/service-worker.js
+  Cache-Control: no-cache, must-revalidate

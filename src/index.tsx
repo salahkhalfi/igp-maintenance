@@ -343,13 +343,13 @@ app.get('/admin/ai-settings', async (c) => {
 // Fonctionne en parallèle du legacy, auth gérée par JS
 // Dashboard V2 route removed - legacy dashboard is the main UI
 
-// Middleware pour forcer no-cache sur les fichiers JS (résout le problème de mise à jour)
+// Middleware pour cache intelligent sur les fichiers JS
+// Les fichiers ont un hash ?v=xxx qui change à chaque déploiement
+// Donc on peut les cacher longtemps - le hash force le refresh
 app.use('/static/js/*', async (c, next) => {
   await next();
-  // Force no-cache pour tous les fichiers JS
-  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  c.header('Pragma', 'no-cache');
-  c.header('Expires', '0');
+  // Cache long car le hash ?v= change à chaque build
+  c.header('Cache-Control', 'public, max-age=31536000, immutable');
 });
 
 // Servir les fichiers statiques du dossier static/
