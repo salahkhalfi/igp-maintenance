@@ -21,6 +21,8 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
     const [showProductionPlanning, setShowProductionPlanning] = React.useState(false);
     const [showTvModal, setShowTvModal] = React.useState(false);
     const [showAIChat, setShowAIChat] = React.useState(false);
+    const [showDataImport, setShowDataImport] = React.useState(false);
+    const [dataImportTab, setDataImportTab] = React.useState('users');
 
     // Gestion des modules (Feature Flipping)
     const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
@@ -182,6 +184,15 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
         window.addEventListener('open-planning', handleOpenPlanning);
         return () => window.removeEventListener('open-planning', handleOpenPlanning);
     }, [activeModules]);
+
+    // Expose openDataImport globally
+    React.useEffect(() => {
+        window.openDataImport = (tab = 'users') => {
+            setDataImportTab(tab);
+            setShowDataImport(true);
+        };
+        return () => { delete window.openDataImport; };
+    }, []);
 
     // Service Worker Messages
     React.useEffect(() => {
@@ -422,6 +433,13 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
 
         // --- AI CHAT MODAL ---
         window.AIChatModal && React.createElement(window.AIChatModal, { isOpen: showAIChat, onClose: () => setShowAIChat(false), ticket: null }),
+
+        // --- DATA IMPORT/EXPORT MODAL ---
+        window.DataImportModal && React.createElement(window.DataImportModal, { 
+            show: showDataImport, 
+            onClose: () => setShowDataImport(false), 
+            initialTab: dataImportTab 
+        }),
 
         // --- FOOTER ---
         window.VoiceTicketFab ? React.createElement(window.VoiceTicketFab, { onTicketDetected: handleTicketDetected }) : null,

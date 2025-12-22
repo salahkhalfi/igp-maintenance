@@ -1265,4 +1265,243 @@ settings.put('/config/bulk', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+// ============================================================================
+// IMPORT / EXPORT CSV - Configuration rapide (Utilisateurs & Machines)
+// ============================================================================
+
+/**
+ * GET /api/settings/export/users - Exporter la liste des utilisateurs en CSV
+ * Accès: Admin uniquement
+ */
+settings.get('/export/users', authMiddleware, adminOnly, async (c) => {
+  try {
+    const db = getDb(c.env);
+    
+    const results = await db
+      .select({
+        EMAIL: users.email,
+        PRENOM: users.first_name,
+        NOM: users.last_name,
+        ROLE: users.role
+      })
+      .from(users)
+      .where(sql`${users.deleted_at} IS NULL AND ${users.id} != 0 AND (${users.is_super_admin} = 0 OR ${users.is_super_admin} IS NULL)`)
+      .all();
+    
+    return c.json({ users: results });
+  } catch (error) {
+    console.error('Export users error:', error);
+    return c.json({ error: 'Erreur lors de l\'export des utilisateurs' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/export/machines - Exporter la liste des machines en CSV
+ * Accès: Admin uniquement
+ */
+settings.get('/export/machines', authMiddleware, adminOnly, async (c) => {
+  try {
+    const db = getDb(c.env);
+    
+    const results = await db
+      .select({
+        TYPE: machines.machine_type,
+        MODELE: machines.model,
+        MARQUE: machines.manufacturer,
+        SERIE: machines.serial_number,
+        LIEU: machines.location
+      })
+      .from(machines)
+      .where(sql`${machines.deleted_at} IS NULL`)
+      .all();
+    
+    return c.json({ machines: results });
+  } catch (error) {
+    console.error('Export machines error:', error);
+    return c.json({ error: 'Erreur lors de l\'export des machines' }, 500);
+  }
+});
+
+/**
+ * POST /api/settings/import/users - Importer des utilisateurs depuis CSV
+ * Accès: Admin uniquement
+ * Body: { users: [{ email, first_name, last_name, role }], updateExisting: boolean }
+ */
+settings.post('/import/users', authMiddleware, adminOnly, async (c) => {
+  try {
+    const currentUser = c.get('user') as any;
+    const db = getDb(c.env);
+    const body = await c.req.json();
+    const { users: importUsers, updateExisting } = body;
+    
+    if (!importUsers || !Array.isArray(importUsers)) {
+      return c.json({ error: 'Données invalides' }, 400);
+    }
+    
+    const stats = { success: 0, updated: 0, ignored: 0, errors: 0 };
+    const validRoles = ['admin', 'supervisor', 'technician', 'operator', 'team_leader', 'planner', 'coordinator', 'director', 'senior_technician', 'furnace_operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'];
+    
+    // Mot de passe par défaut pour les nouveaux utilisateurs
+    const defaultPassword = await hashPassword('Changeme123!');
+    
+    for (const userData of importUsers) {
+      try {
+        const email = userData.email?.trim().toLowerCase();
+        const firstName = userData.first_name?.trim() || '';
+        const lastName = userData.last_name?.trim() || '';
+        const role = userData.role?.trim().toLowerCase() || 'technician';
+        
+        // Validation
+        if (!email || !email.includes('@')) {
+          stats.errors++;
+          continue;
+        }
+        
+        if (!validRoles.includes(role)) {
+          stats.errors++;
+          continue;
+        }
+        
+        // Vérifier si l'email existe déjà
+        const existing = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(sql`${users.email} = ${email}`)
+          .get();
+        
+        if (existing) {
+          if (updateExisting) {
+            // Mise à jour
+            await db.update(users)
+              .set({
+                first_name: firstName,
+                last_name: lastName,
+                full_name: lastName ? `${firstName} ${lastName}` : firstName,
+                role: role,
+                updated_at: sql`CURRENT_TIMESTAMP`
+              })
+              .where(sql`${users.id} = ${existing.id}`);
+            stats.updated++;
+          } else {
+            stats.ignored++;
+          }
+        } else {
+          // Création
+          await db.insert(users).values({
+            email: email,
+            password_hash: defaultPassword,
+            first_name: firstName,
+            last_name: lastName,
+            full_name: lastName ? `${firstName} ${lastName}` : firstName,
+            role: role
+          });
+          stats.success++;
+        }
+      } catch (err) {
+        console.error('Import user row error:', err);
+        stats.errors++;
+      }
+    }
+    
+    console.log(`✅ Import utilisateurs par ${currentUser.email}: ${stats.success} ajoutés, ${stats.updated} mis à jour, ${stats.ignored} ignorés, ${stats.errors} erreurs`);
+    
+    return c.json({ 
+      message: 'Import terminé',
+      stats,
+      note: stats.success > 0 ? 'Les nouveaux utilisateurs ont le mot de passe par défaut: Changeme123!' : undefined
+    });
+  } catch (error) {
+    console.error('Import users error:', error);
+    return c.json({ error: 'Erreur lors de l\'import des utilisateurs' }, 500);
+  }
+});
+
+/**
+ * POST /api/settings/import/machines - Importer des machines depuis CSV
+ * Accès: Admin uniquement
+ * Body: { machines: [{ type, model, manufacturer, serial, location }], updateExisting: boolean }
+ */
+settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
+  try {
+    const currentUser = c.get('user') as any;
+    const db = getDb(c.env);
+    const body = await c.req.json();
+    const { machines: importMachines, updateExisting } = body;
+    
+    if (!importMachines || !Array.isArray(importMachines)) {
+      return c.json({ error: 'Données invalides' }, 400);
+    }
+    
+    const stats = { success: 0, updated: 0, ignored: 0, errors: 0 };
+    
+    for (const machineData of importMachines) {
+      try {
+        const machineType = machineData.type?.trim();
+        const model = machineData.model?.trim() || null;
+        const manufacturer = machineData.manufacturer?.trim() || null;
+        const serialNumber = machineData.serial?.trim() || null;
+        const location = machineData.location?.trim() || null;
+        
+        // Validation - Type obligatoire
+        if (!machineType) {
+          stats.errors++;
+          continue;
+        }
+        
+        // Si numéro de série fourni, vérifier s'il existe
+        if (serialNumber) {
+          const existing = await db
+            .select({ id: machines.id })
+            .from(machines)
+            .where(sql`${machines.serial_number} = ${serialNumber}`)
+            .get();
+          
+          if (existing) {
+            if (updateExisting) {
+              // Mise à jour
+              await db.update(machines)
+                .set({
+                  machine_type: machineType,
+                  model: model,
+                  manufacturer: manufacturer,
+                  location: location,
+                  updated_at: sql`CURRENT_TIMESTAMP`
+                })
+                .where(sql`${machines.id} = ${existing.id}`);
+              stats.updated++;
+            } else {
+              stats.ignored++;
+            }
+            continue;
+          }
+        }
+        
+        // Création
+        await db.insert(machines).values({
+          machine_type: machineType,
+          model: model,
+          manufacturer: manufacturer,
+          serial_number: serialNumber,
+          location: location,
+          status: 'operational'
+        });
+        stats.success++;
+      } catch (err) {
+        console.error('Import machine row error:', err);
+        stats.errors++;
+      }
+    }
+    
+    console.log(`✅ Import machines par ${currentUser.email}: ${stats.success} ajoutées, ${stats.updated} mises à jour, ${stats.ignored} ignorées, ${stats.errors} erreurs`);
+    
+    return c.json({ 
+      message: 'Import terminé',
+      stats
+    });
+  } catch (error) {
+    console.error('Import machines error:', error);
+    return c.json({ error: 'Erreur lors de l\'import des machines' }, 500);
+  }
+});
+
 export default settings;
