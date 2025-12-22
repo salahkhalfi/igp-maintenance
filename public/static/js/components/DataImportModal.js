@@ -1,4 +1,5 @@
 // ===== MODAL D'IMPORT/EXPORT CSV (Utilisateurs & Machines) =====
+// Version 2.0 - Avec templates améliorés et prévisualisation
 
 const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
     const [activeTab, setActiveTab] = React.useState(initialTab);
@@ -16,35 +17,55 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
             setFile(null);
             setPreviewData([]);
             setReport(null);
+            setUpdateExisting(false);
         }
     }, [show, initialTab]);
 
-    // Parse CSV content
+    // Parse CSV content - AMÉLIORÉ : ignore les lignes commençant par #
     const parseCSV = (content) => {
         if (!content) return [];
 
-        const firstLine = content.split('\n')[0];
+        // Normaliser les sauts de ligne
+        const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        
+        // Séparer les lignes et filtrer les vides
+        const allLines = normalizedContent.split('\n').filter(l => l.trim().length > 0);
+        if (allLines.length < 1) return [];
+
+        // Trouver la première ligne non-commentaire (en-têtes)
+        let headerIndex = 0;
+        while (headerIndex < allLines.length && allLines[headerIndex].trim().startsWith('#')) {
+            headerIndex++;
+        }
+        
+        if (headerIndex >= allLines.length) return [];
+
+        // Détecter le délimiteur sur la ligne d'en-tête
+        const headerLine = allLines[headerIndex];
         let delimiter = ',';
-        if (firstLine.includes(';') && (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length) {
+        if (headerLine.includes(';') && (headerLine.match(/;/g) || []).length > (headerLine.match(/,/g) || []).length) {
             delimiter = ';';
         }
 
-        const lines = content.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim().length > 0);
-        if (lines.length < 2) return [];
+        // Parser les en-têtes
+        const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^"|"$/g, '').toUpperCase());
 
-        const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, '').toUpperCase());
-
+        // Parser les données (ignorer les lignes commençant par #)
         const result = [];
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(delimiter).map(v => v.trim().replace(/^"|"$/g, ''));
+        for (let i = headerIndex + 1; i < allLines.length; i++) {
+            const line = allLines[i].trim();
+            
+            // Ignorer les commentaires
+            if (line.startsWith('#')) continue;
+            
+            const values = line.split(delimiter).map(v => v.trim().replace(/^"|"$/g, ''));
             const obj = {};
             let hasData = false;
 
             headers.forEach((header, index) => {
-                if (values[index]) {
-                    obj[header] = values[index];
-                    hasData = true;
-                }
+                const value = values[index] || '';
+                obj[header] = value;
+                if (value) hasData = true;
             });
 
             if (hasData) result.push(obj);
@@ -53,37 +74,50 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         return result;
     };
 
+    // Templates CSV avec ligne d'aide - AMÉLIORÉ
+    const TEMPLATES = {
+        users: {
+            filename: 'modele_utilisateurs.csv',
+            content: `EMAIL,PRENOM,NOM,ROLE
+# AIDE: EMAIL obligatoire | ROLE: admin/supervisor/technician/operator/viewer | MDP par défaut: Changeme123!
+jean.dupont@exemple.com,Jean,Dupont,technician
+marie.martin@exemple.com,Marie,Martin,supervisor
+pierre.durand@exemple.com,Pierre,Durand,operator`
+        },
+        machines: {
+            filename: 'modele_machines.csv',
+            content: `TYPE,MODELE,MARQUE,SERIE,LIEU
+# AIDE: TYPE obligatoire | SERIE = identifiant unique (pour mises à jour) | Laissez SERIE vide pour toujours créer
+Presse hydraulique,PH-500,Bosch,SN-2024-001,Atelier A
+Four industriel,FI-800,Siemens,SN-2024-002,Zone B
+Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt`
+        }
+    };
+
     // Download template
     const downloadTemplate = (type) => {
-        let content = '';
-        let filename = '';
+        const template = TEMPLATES[type];
+        if (!template) return;
 
-        if (type === 'users') {
-            content = 'EMAIL,PRENOM,NOM,ROLE\nuser1@exemple.com,Jean,Dupont,technician\nuser2@exemple.com,Marie,Curie,operator';
-            filename = 'modele_utilisateurs.csv';
-        } else {
-            content = 'TYPE,MODELE,MARQUE,SERIE,LIEU\nÉquipement,Modèle A,Fabricant,SN123456,Zone A\nMachine,Standard,Marque X,,Secteur B';
-            filename = 'modele_machines.csv';
-        }
-
-        const bom = '\uFEFF';
-        const blob = new Blob([bom + content], { type: 'text/csv;charset=utf-8;' });
+        const bom = '\uFEFF'; // UTF-8 BOM pour Excel
+        const blob = new Blob([bom + template.content], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', filename);
+        link.setAttribute('download', template.filename);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
     // Export current data
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            const endpoint = activeTab === 'users' ? '/api/settings/export/users' : '/api/settings/export/machines';
-            const res = await axios.get(API_URL + endpoint.replace('/api', ''));
+            const endpoint = activeTab === 'users' ? '/settings/export/users' : '/settings/export/machines';
+            const res = await axios.get(API_URL + endpoint);
             const data = res.data;
 
             if (activeTab === 'users' && data.users) {
@@ -91,7 +125,7 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
             } else if (activeTab === 'machines' && data.machines) {
                 exportToCSV(data.machines, 'export_machines.csv');
             } else {
-                alert('Erreur: Pas de données à exporter');
+                alert('Aucune donnée à exporter');
             }
         } catch (e) {
             console.error('Export error:', e);
@@ -130,6 +164,7 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
     // Handle file selection
@@ -140,22 +175,36 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         setFile(selectedFile);
         setReport(null);
 
-        const text = await selectedFile.text();
-        const data = parseCSV(text);
+        try {
+            const text = await selectedFile.text();
+            const data = parseCSV(text);
 
-        // Validate Headers
-        const required = activeTab === 'users' ? ['EMAIL'] : ['TYPE'];
-        const headers = Object.keys(data[0] || {});
-        const missing = required.filter(r => !headers.includes(r));
+            if (data.length === 0) {
+                alert('Erreur : Le fichier est vide ou ne contient que des commentaires.');
+                setFile(null);
+                setPreviewData([]);
+                return;
+            }
 
-        if (missing.length > 0) {
-            alert(`Erreur : Colonnes manquantes dans le fichier CSV : ${missing.join(', ')}`);
+            // Validate Headers
+            const required = activeTab === 'users' ? ['EMAIL'] : ['TYPE'];
+            const headers = Object.keys(data[0] || {});
+            const missing = required.filter(r => !headers.includes(r));
+
+            if (missing.length > 0) {
+                alert(`Erreur : Colonnes obligatoires manquantes : ${missing.join(', ')}`);
+                setFile(null);
+                setPreviewData([]);
+                return;
+            }
+
+            setPreviewData(data);
+        } catch (err) {
+            console.error('File read error:', err);
+            alert('Erreur lors de la lecture du fichier.');
             setFile(null);
             setPreviewData([]);
-            return;
         }
-
-        setPreviewData(data);
     };
 
     // Handle import
@@ -190,8 +239,9 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
             setFile(null);
             setPreviewData([]);
 
+            // Notification du mot de passe par défaut
             if (res.data.note) {
-                alert(res.data.note);
+                setTimeout(() => alert(res.data.note), 100);
             }
         } catch (error) {
             console.error('Import error', error);
@@ -201,14 +251,25 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
         }
     };
 
+    // Colonnes à afficher dans la prévisualisation
+    const getPreviewColumns = () => {
+        if (activeTab === 'users') {
+            return ['EMAIL', 'PRENOM', 'NOM', 'ROLE'];
+        } else {
+            return ['TYPE', 'MODELE', 'MARQUE', 'SERIE', 'LIEU'];
+        }
+    };
+
     if (!show) return null;
+
+    const previewColumns = getPreviewColumns();
 
     return React.createElement('div', {
         className: 'fixed inset-0 z-[10005] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4',
         onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]',
+            className: 'bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-200 flex flex-col max-h-[90vh]',
             onClick: (e) => e.stopPropagation()
         },
             // Header
@@ -219,7 +280,7 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
                     ),
                     React.createElement('div', null,
                         React.createElement('h3', { className: 'font-bold text-lg' }, 'Import / Export de Données'),
-                        React.createElement('p', { className: 'text-xs text-slate-400' }, 'Configuration rapide (Utilisateurs & Machines)')
+                        React.createElement('p', { className: 'text-xs text-slate-400' }, 'Onboarding rapide - Utilisateurs & Machines')
                     )
                 ),
                 React.createElement('button', {
@@ -250,7 +311,7 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
                 React.createElement('div', { className: 'mb-6 bg-slate-50 border border-slate-200 rounded-lg p-4' },
                     React.createElement('div', { className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4' },
                         React.createElement('div', { className: 'text-sm text-slate-700' },
-                            React.createElement('p', { className: 'font-bold mb-1' }, 'Étape 1 : Obtenir un fichier'),
+                            React.createElement('p', { className: 'font-bold mb-1' }, '📥 Étape 1 : Obtenir un fichier'),
                             React.createElement('p', { className: 'text-xs text-slate-500' }, 'Téléchargez un modèle vide ou exportez vos données actuelles.')
                         ),
                         React.createElement('div', { className: 'flex gap-2' },
@@ -275,17 +336,18 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
 
                 // Step 2: Upload
                 React.createElement('div', { className: 'mb-6' },
-                    React.createElement('p', { className: 'font-bold text-sm text-slate-700 mb-2' }, 'Étape 2 : Sélectionner le fichier rempli'),
+                    React.createElement('p', { className: 'font-bold text-sm text-slate-700 mb-2' }, '📤 Étape 2 : Sélectionner le fichier rempli'),
                     !file ? React.createElement('label', {
                         className: 'flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-blue-50 hover:border-blue-400 transition-colors group'
                     },
                         React.createElement('div', { className: 'flex flex-col items-center justify-center pt-5 pb-6' },
                             React.createElement('i', { className: 'fas fa-cloud-upload-alt text-3xl text-slate-400 group-hover:text-blue-500 mb-2' }),
-                            React.createElement('p', { className: 'text-sm text-slate-500 group-hover:text-blue-600 font-medium' }, 'Cliquez pour choisir un fichier CSV')
+                            React.createElement('p', { className: 'text-sm text-slate-500 group-hover:text-blue-600 font-medium' }, 'Cliquez pour choisir un fichier CSV'),
+                            React.createElement('p', { className: 'text-xs text-slate-400 mt-1' }, 'Les lignes commençant par # sont ignorées')
                         ),
                         React.createElement('input', {
                             type: 'file',
-                            accept: '.csv',
+                            accept: '.csv,.txt',
                             className: 'hidden',
                             onChange: handleFileChange
                         })
@@ -294,7 +356,7 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
                             React.createElement('i', { className: 'fas fa-file-csv text-3xl text-blue-500' }),
                             React.createElement('div', null,
                                 React.createElement('p', { className: 'text-sm font-bold text-blue-900' }, file.name),
-                                React.createElement('p', { className: 'text-xs text-blue-700' }, previewData.length + ' lignes détectées')
+                                React.createElement('p', { className: 'text-xs text-blue-700' }, previewData.length + ' lignes de données détectées')
                             )
                         ),
                         React.createElement('button', {
@@ -306,8 +368,40 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
                     )
                 ),
 
+                // Step 3: Preview - NOUVEAU
+                previewData.length > 0 && React.createElement('div', { className: 'mb-6' },
+                    React.createElement('p', { className: 'font-bold text-sm text-slate-700 mb-2' }, '👁️ Étape 3 : Vérifier les données'),
+                    React.createElement('div', { className: 'border border-slate-200 rounded-lg overflow-hidden' },
+                        React.createElement('div', { className: 'overflow-x-auto' },
+                            React.createElement('table', { className: 'w-full text-xs' },
+                                React.createElement('thead', { className: 'bg-slate-100' },
+                                    React.createElement('tr', null,
+                                        previewColumns.map(col => 
+                                            React.createElement('th', { key: col, className: 'px-3 py-2 text-left font-bold text-slate-700 border-b' }, col)
+                                        )
+                                    )
+                                ),
+                                React.createElement('tbody', null,
+                                    previewData.slice(0, 5).map((row, idx) => 
+                                        React.createElement('tr', { key: idx, className: idx % 2 === 0 ? 'bg-white' : 'bg-slate-50' },
+                                            previewColumns.map(col => 
+                                                React.createElement('td', { key: col, className: 'px-3 py-2 border-b border-slate-100 truncate max-w-[150px]' }, 
+                                                    row[col] || React.createElement('span', { className: 'text-slate-300' }, '—')
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+                        previewData.length > 5 && React.createElement('div', { className: 'px-3 py-2 bg-slate-50 text-xs text-slate-500 text-center border-t' },
+                            '... et ' + (previewData.length - 5) + ' autres lignes'
+                        )
+                    )
+                ),
+
                 // Options
-                file && React.createElement('div', { className: 'mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg' },
+                previewData.length > 0 && React.createElement('div', { className: 'mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg' },
                     React.createElement('label', { className: 'flex items-start gap-3 cursor-pointer' },
                         React.createElement('input', {
                             type: 'checkbox',
@@ -318,7 +412,9 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
                         React.createElement('div', null,
                             React.createElement('span', { className: 'font-bold text-sm text-amber-900' }, 'Mettre à jour les données existantes ?'),
                             React.createElement('p', { className: 'text-xs text-amber-800 mt-1' },
-                                'Si coché, les éléments existants (basés sur Email ou Numéro de Série) seront écrasés par les valeurs du CSV. Sinon, les doublons seront ignorés (plus sûr).'
+                                activeTab === 'users' 
+                                    ? 'Si coché, les utilisateurs existants (même EMAIL) seront mis à jour. Sinon, ils seront ignorés.'
+                                    : 'Si coché, les machines existantes (même N° SERIE) seront mises à jour. Sinon, elles seront ignorées.'
                             )
                         )
                     )
@@ -326,45 +422,53 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
 
                 // Report
                 report && React.createElement('div', { className: 'mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200' },
-                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                    React.createElement('div', { className: 'flex items-center gap-2 mb-3' },
                         React.createElement('i', { className: 'fas fa-check-circle text-emerald-600 text-xl' }),
                         React.createElement('h4', { className: 'font-bold text-emerald-900' }, 'Import terminé !')
                     ),
-                    React.createElement('div', { className: 'grid grid-cols-3 gap-4 text-center' },
-                        React.createElement('div', { className: 'bg-white p-2 rounded border border-emerald-100' },
-                            React.createElement('div', { className: 'text-lg font-bold text-emerald-600' }, report.success),
-                            React.createElement('div', { className: 'text-xs uppercase font-bold text-emerald-400' }, 'Ajoutés')
+                    React.createElement('div', { className: 'grid grid-cols-4 gap-3 text-center' },
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg border border-emerald-100' },
+                            React.createElement('div', { className: 'text-2xl font-bold text-emerald-600' }, report.success || 0),
+                            React.createElement('div', { className: 'text-xs font-bold text-emerald-500 mt-1' }, '✅ Créés')
                         ),
-                        report.updated > 0 && React.createElement('div', { className: 'bg-white p-2 rounded border border-blue-100' },
-                            React.createElement('div', { className: 'text-lg font-bold text-blue-600' }, report.updated),
-                            React.createElement('div', { className: 'text-xs uppercase font-bold text-blue-400' }, 'Mis à jour')
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg border border-blue-100' },
+                            React.createElement('div', { className: 'text-2xl font-bold text-blue-600' }, report.updated || 0),
+                            React.createElement('div', { className: 'text-xs font-bold text-blue-500 mt-1' }, '🔄 Mis à jour')
                         ),
-                        React.createElement('div', { className: 'bg-white p-2 rounded border border-amber-100' },
-                            React.createElement('div', { className: 'text-lg font-bold text-amber-500' }, report.ignored),
-                            React.createElement('div', { className: 'text-xs uppercase font-bold text-amber-400' }, 'Ignorés')
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg border border-amber-100' },
+                            React.createElement('div', { className: 'text-2xl font-bold text-amber-500' }, report.ignored || 0),
+                            React.createElement('div', { className: 'text-xs font-bold text-amber-500 mt-1' }, '⏭️ Ignorés')
                         ),
-                        React.createElement('div', { className: 'bg-white p-2 rounded border border-red-100' },
-                            React.createElement('div', { className: 'text-lg font-bold text-red-500' }, report.errors),
-                            React.createElement('div', { className: 'text-xs uppercase font-bold text-red-400' }, 'Erreurs')
+                        React.createElement('div', { className: 'bg-white p-3 rounded-lg border border-red-100' },
+                            React.createElement('div', { className: 'text-2xl font-bold text-red-500' }, report.errors || 0),
+                            React.createElement('div', { className: 'text-xs font-bold text-red-500 mt-1' }, '❌ Erreurs')
                         )
+                    ),
+                    activeTab === 'users' && report.success > 0 && React.createElement('div', { className: 'mt-3 p-2 bg-blue-50 rounded text-xs text-blue-800 text-center' },
+                        '🔑 Mot de passe par défaut : Changeme123!'
                     )
                 )
             ),
 
             // Footer
-            React.createElement('div', { className: 'p-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3' },
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'px-5 py-2 text-gray-600 font-semibold hover:bg-gray-200 rounded-lg transition-colors',
-                    disabled: isUploading
-                }, 'Fermer'),
-                React.createElement('button', {
-                    onClick: handleImport,
-                    disabled: isUploading || !file || previewData.length === 0,
-                    className: 'px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none'
-                },
-                    isUploading ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-upload' }),
-                    isUploading ? 'Import en cours...' : 'Lancer l\'Import'
+            React.createElement('div', { className: 'p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center' },
+                React.createElement('div', { className: 'text-xs text-slate-500' },
+                    previewData.length > 0 ? `${previewData.length} ligne(s) prête(s) à importer` : ''
+                ),
+                React.createElement('div', { className: 'flex gap-3' },
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'px-5 py-2 text-gray-600 font-semibold hover:bg-gray-200 rounded-lg transition-colors',
+                        disabled: isUploading
+                    }, 'Fermer'),
+                    React.createElement('button', {
+                        onClick: handleImport,
+                        disabled: isUploading || !file || previewData.length === 0,
+                        className: 'px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none'
+                    },
+                        isUploading ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-upload' }),
+                        isUploading ? 'Import en cours...' : 'Lancer l\'Import'
+                    )
                 )
             )
         )
