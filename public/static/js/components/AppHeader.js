@@ -287,13 +287,28 @@ const AppHeader = ({
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE
-                    React.createElement('div', { className: 'flex items-center gap-1.5 md:gap-3 shrink-0 ml-2' },
+                    React.createElement('div', { className: 'flex items-center gap-1.5 md:gap-3 shrink-0 ml-1' },
 
-                        // Mobile: Compact user badge - responsive width
-                        React.createElement('div', { className: 'md:hidden flex items-center' },
-                            React.createElement('div', { className: 'flex flex-col items-end mr-1' },
-                                React.createElement('span', { className: 'text-[9px] text-slate-400 font-medium leading-none' }, 'Bonjour,'),
-                                React.createElement('span', { className: 'text-[11px] font-bold text-slate-700 leading-tight truncate max-w-[90px]' }, (currentUser?.first_name || 'Vous'))
+                        // Mobile: Premium User Badge with Avatar
+                        React.createElement('div', { className: 'md:hidden flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200/80 shadow-sm' },
+                            // Avatar with initial
+                            React.createElement('div', { 
+                                className: 'w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-blue-500/30'
+                            }, (currentUser?.first_name?.[0] || 'U')),
+                            // Name and role
+                            React.createElement('div', { className: 'flex flex-col items-start' },
+                                React.createElement('span', { className: 'text-[10px] font-bold text-slate-700 leading-tight' }, 
+                                    (currentUser?.first_name || 'Utilisateur')
+                                ),
+                                React.createElement('span', { 
+                                    className: 'text-[8px] font-semibold leading-none mt-0.5 ' + 
+                                    (currentUser?.role === 'admin' ? 'text-amber-600' : 
+                                     currentUser?.role === 'supervisor' ? 'text-blue-600' : 'text-slate-400')
+                                }, 
+                                    currentUser?.role === 'admin' ? 'Admin' : 
+                                    currentUser?.role === 'supervisor' ? 'Superviseur' : 
+                                    currentUser?.role === 'technician' ? 'Technicien' : 'Opérateur'
+                                )
                             )
                         ),
                         

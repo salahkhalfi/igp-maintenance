@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-22T22:31:12.796Z",
+  "generated": "2025-12-22T22:36:26.947Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -19,7 +19,7 @@
     {
       "original": "AppHeader.js",
       "minified": "AppHeader.min.js",
-      "savings": "48.1%"
+      "savings": "48.2%"
     },
     {
       "original": "BarcodeScanner.js",
