@@ -43,30 +43,30 @@ const AppHeader = ({
     // CRITICAL: Update state when propUser changes (triggers re-render with correct avatar)
     React.useEffect(() => {
         if (propUser && propUser.id && propUser.id !== currentUser?.id) {
-            console.log('[Avatar] User loaded, id:', propUser.id);
             setCurrentUser(propUser);
         }
     }, [propUser]);
     
-    // SIMPLE: Just render the image. API ALWAYS returns valid content.
-    // If no user ID yet, show nothing (will update when propUser arrives)
+    // SAME LOGIC AS MESSENGER: Only show <img> if avatar_key exists
+    // This is how Messenger does it (ChatHeader.tsx line 91)
     const renderAvatar = (size, className) => {
         const userId = currentUser?.id;
+        const avatarKey = currentUser?.avatar_key;
+        const initial = currentUser?.first_name?.[0] || '?';
         
-        if (!userId) {
-            // Still loading - show placeholder with initial
-            const initial = currentUser?.first_name?.[0] || propUser?.first_name?.[0] || '·';
-            return React.createElement('div', {
-                className: className + ' bg-slate-300 flex items-center justify-center text-slate-500 font-bold text-xs'
-            }, initial);
+        // MESSENGER PATTERN: Only render img if avatar_key exists
+        if (userId && avatarKey) {
+            return React.createElement('img', {
+                src: '/api/auth/avatar/' + userId + '?v=' + avatarKey,
+                alt: currentUser?.first_name || 'Avatar',
+                className: className + ' object-cover'
+            });
         }
         
-        // User ID available - render image (API always returns valid JPEG or SVG)
-        return React.createElement('img', {
-            src: '/api/auth/avatar/' + userId,
-            alt: currentUser?.first_name || 'Avatar',
-            className: className + ' object-cover'
-        });
+        // No avatar_key - show initials (same as Messenger fallback)
+        return React.createElement('div', {
+            className: className + ' bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold'
+        }, initial);
     };
     
     // Search state
