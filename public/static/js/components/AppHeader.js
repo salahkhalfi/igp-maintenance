@@ -265,19 +265,19 @@ const AppHeader = ({
                 React.createElement('div', { className: 'flex justify-between items-center h-12 md:h-12' },
                     
                     // LEFT: LOGO & TITLE
-                    React.createElement('div', { className: 'flex items-center group cursor-pointer flex-1 min-w-0', onClick: () => window.location.reload() },
+                    React.createElement('div', { className: 'flex items-center group cursor-pointer flex-1 min-w-0 mr-2', onClick: () => window.location.reload() },
                         React.createElement('img', {
                             src: logoUrl, alt: 'Logo',
-                            className: 'h-9 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105 shrink-0',
+                            className: 'h-8 md:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105 shrink-0',
                             onError: (e) => { 
                                 if (e.target.src.includes('logo.png')) return;
                                 e.target.src = '/logo.png'; 
                             }
                         }),
-                        // Mobile: Compact title with subtitle
-                        React.createElement('div', { className: 'md:hidden flex flex-col justify-center ml-2 pl-2 border-l border-slate-200 flex-1 min-w-0' },
-                            React.createElement('h1', { className: 'text-[11px] font-bold leading-tight text-slate-800 tracking-tight line-clamp-1', title: headerTitle }, headerTitle),
-                            React.createElement('p', { className: 'text-[8px] font-medium text-slate-400 truncate mt-0.5' }, headerSubtitle)
+                        // Mobile: Compact title with subtitle - RESPONSIVE
+                        React.createElement('div', { className: 'md:hidden flex flex-col justify-center ml-1.5 pl-1.5 border-l border-slate-200 flex-1 min-w-0 overflow-hidden' },
+                            React.createElement('h1', { className: 'text-[10px] font-bold leading-tight text-slate-800 tracking-tight truncate', title: headerTitle }, headerTitle),
+                            React.createElement('p', { className: 'text-[8px] font-medium text-slate-400 truncate' }, headerSubtitle)
                         ),
                         // Desktop: Full title
                         React.createElement('div', { className: 'hidden md:flex flex-col justify-center ml-3 pl-3 border-l border-slate-200 flex-1 min-w-0' },
@@ -287,36 +287,40 @@ const AppHeader = ({
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE
-                    React.createElement('div', { className: 'flex items-center gap-1.5 md:gap-3 shrink-0 ml-1' },
+                    React.createElement('div', { className: 'flex items-center gap-1.5 md:gap-3 shrink-0' },
 
-                        // Mobile: Premium User Badge with Avatar
-                        React.createElement('div', { className: 'md:hidden flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200/80 shadow-sm' },
-                            // Avatar with initial
-                            React.createElement('div', { 
-                                className: 'w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-blue-500/30'
-                            }, (currentUser?.first_name?.[0] || 'U')),
-                            // Name and role
-                            React.createElement('div', { className: 'flex flex-col items-start' },
-                                React.createElement('span', { className: 'text-[10px] font-bold text-slate-700 leading-tight' }, 
-                                    (currentUser?.first_name || 'Utilisateur')
+                        // Mobile: Premium User Badge with Real Avatar
+                        React.createElement('div', { className: 'md:hidden flex items-center gap-1.5 px-1.5 py-1 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-200/80 shadow-sm' },
+                            // Avatar from API (falls back to SVG with initial)
+                            React.createElement('img', { 
+                                src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default'),
+                                alt: currentUser?.first_name || 'User',
+                                className: 'w-7 h-7 rounded-lg object-cover shadow-sm'
+                            }),
+                            // Name and role - compact
+                            React.createElement('div', { className: 'flex flex-col items-start max-w-[70px]' },
+                                React.createElement('span', { className: 'text-[9px] font-bold text-slate-700 leading-tight truncate w-full' }, 
+                                    (currentUser?.first_name || 'User')
                                 ),
                                 React.createElement('span', { 
-                                    className: 'text-[8px] font-semibold leading-none mt-0.5 ' + 
+                                    className: 'text-[7px] font-semibold leading-none mt-0.5 ' + 
                                     (currentUser?.role === 'admin' ? 'text-amber-600' : 
                                      currentUser?.role === 'supervisor' ? 'text-blue-600' : 'text-slate-400')
                                 }, 
                                     currentUser?.role === 'admin' ? 'Admin' : 
                                     currentUser?.role === 'supervisor' ? 'Superviseur' : 
-                                    currentUser?.role === 'technician' ? 'Technicien' : 'Opérateur'
+                                    currentUser?.role === 'technician' ? 'Tech' : 'Opérateur'
                                 )
                             )
                         ),
                         
-                        // User Badge (Desktop) - STATIC (No click)
+                        // User Badge (Desktop) - with Real Avatar
                         React.createElement('div', { className: 'hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 cursor-default' },
-                            React.createElement('div', { className: 'w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2' },
-                                (currentUser?.first_name?.[0] || 'U')
-                            ),
+                            React.createElement('img', { 
+                                src: '/api/auth/avatar/' + (currentUser?.id || 0) + '?v=' + (currentUser?.avatar_key || 'default'),
+                                alt: currentUser?.first_name || 'User',
+                                className: 'w-6 h-6 rounded-full object-cover mr-2'
+                            }),
                             React.createElement('span', { className: 'text-xs font-medium text-slate-700' }, 
                                 "Bonjour, " + (currentUser?.first_name || 'Utilisateur')
                             ),
