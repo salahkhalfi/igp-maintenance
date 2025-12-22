@@ -159,39 +159,16 @@ app.use('*', async (c, next) => {
 });
 
 // ========================================
-// RATE LIMITING (Configurable via Admin UI)
+// RATE LIMITING - DÉSACTIVÉ
 // ========================================
-// Protection contre les abus - Contrôlé par system_settings.rate_limit_enabled
-// Par défaut: DÉSACTIVÉ (pour ne pas bloquer pendant le développement)
-
-// Middleware conditionnel - vérifie si rate limiting est activé dans la DB
-const conditionalRateLimit = (preset: { limit: number; windowSeconds: number }) => {
-  return async (c: Context<{ Bindings: Bindings }>, next: Next) => {
-    try {
-      const result = await c.env.DB.prepare(
-        'SELECT setting_value FROM system_settings WHERE setting_key = ?'
-      ).bind('rate_limit_enabled').first<{ setting_value: string }>();
-      
-      // Si rate_limit_enabled = 'true', appliquer le rate limit
-      if (result?.setting_value === 'true') {
-        return rateLimit(preset)(c, next);
-      }
-    } catch (e) {
-      // En cas d'erreur DB, ne pas bloquer
-    }
-    return next();
-  };
-};
-
-// Auth: Anti-bruteforce (si activé)
-app.use('/api/auth/login', conditionalRateLimit(RateLimitPresets.auth));
-app.use('/api/auth/register', conditionalRateLimit(RateLimitPresets.auth));
-
-// IA: Protection coûts API (si activé)
-app.use('/api/ai/*', conditionalRateLimit(RateLimitPresets.ai));
-
-// API globale (si activé)
-app.use('/api/*', conditionalRateLimit(RateLimitPresets.standard));
+// TODO: Réactiver pour la production via Admin UI
+// Pour l'instant, désactivé pour le développement
+//
+// Quand prêt pour production, décommenter:
+// app.use('/api/auth/login', rateLimit(RateLimitPresets.auth));
+// app.use('/api/auth/register', rateLimit(RateLimitPresets.auth));
+// app.use('/api/ai/*', rateLimit(RateLimitPresets.ai));
+// app.use('/api/*', rateLimit(RateLimitPresets.standard));
 
 app.use('/api/auth/me', authMiddleware);
 
