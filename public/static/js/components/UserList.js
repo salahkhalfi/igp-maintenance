@@ -118,10 +118,10 @@ const UserList = ({
                 }, "Créer un utilisateur"),
                 currentUser.role === 'admin' ? React.createElement('button', {
                     onClick: () => window.openDataImport ? window.openDataImport('users') : alert("Fonction non disponible"),
-                    className: 'px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2'
+                    className: 'px-4 py-3 bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2'
                 }, 
-                    React.createElement("i", { className: "fas fa-file-import" }),
-                    "Import CSV"
+                    React.createElement("i", { className: "fas fa-exchange-alt" }),
+                    "Import / Export"
                 ) : null
             ) : null,
             React.createElement('div', { className: 'flex-1 relative' },

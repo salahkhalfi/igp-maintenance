@@ -297,10 +297,10 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                         ),
                         React.createElement("button", {
                             onClick: () => window.openDataImport ? window.openDataImport('machines') : alert("Fonction non disponible"),
-                            className: `px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2`
+                            className: `px-4 py-2.5 bg-slate-700 hover:bg-slate-800 text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2`
                         }, 
-                            React.createElement("i", { className: "fas fa-file-import" }),
-                            "Import CSV"
+                            React.createElement("i", { className: "fas fa-exchange-alt" }),
+                            "Import / Export"
                         )
                     ) : null,
                     React.createElement("div", { className: "relative flex-1" },
