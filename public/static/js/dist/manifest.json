@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-22T19:52:40.577Z",
+  "generated": "2025-12-22T20:14:01.408Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -80,6 +80,11 @@
       "original": "NotificationModal.js",
       "minified": "NotificationModal.min.js",
       "savings": "44.5%"
+    },
+    {
+      "original": "OfflineBanner.js",
+      "minified": "OfflineBanner.min.js",
+      "savings": "43.7%"
     },
     {
       "original": "OverdueTicketsModal.js",
@@ -187,5 +192,5 @@
       "savings": "65.7%"
     }
   ],
-  "totalSavings": "51.0%"
+  "totalSavings": "50.9%"
 }

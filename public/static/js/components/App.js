@@ -293,6 +293,8 @@ const App = () => {
 
     return React.createElement(ErrorBoundary, null,
         React.createElement(React.Fragment, null,
+            // Offline Banner - Premium notification when connection is lost
+            React.createElement(OfflineBanner),
             // Main Application
             React.createElement(MainApp, {
                 tickets,

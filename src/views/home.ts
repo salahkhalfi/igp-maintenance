@@ -41,6 +41,7 @@ export const homeHTML = `
     <script src="/static/js/dist/CreateTicketModal.min.js?v=c2a54a50"></script>
     <script src="/static/js/dist/TicketDetailsModal_v3.min.js?v=c2a54a50"></script>
     <script src="/static/js/dist/ErrorBoundary.min.js?v=c2a54a50"></script>
+    <script src="/static/js/components/OfflineBanner.js?v=3.0.6"></script>
     <script src="/static/js/dist/MachineManagementModal.min.js?v=c2a54a50"></script>
     <script src="/static/js/dist/RoleDropdown.min.js?v=c2a54a50"></script>
     <script src="/static/js/dist/SystemSettingsModal.min.js?v=c2a54a50"></script>
