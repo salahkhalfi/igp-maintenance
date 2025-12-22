@@ -31,21 +31,25 @@ export interface Role {
 // ============================================================================
 
 const DEFAULT_ROLES: Role[] = [
+  // Management
   { id: 1, slug: 'admin', name: '👑 Administrateur', description: 'Accès complet au système', is_system: true },
   { id: 2, slug: 'director', name: '📊 Directeur Général', description: 'Vision globale', is_system: true },
-  { id: 3, slug: 'supervisor', name: '⭐ Superviseur', description: 'Gestion des équipes', is_system: true },
-  { id: 4, slug: 'coordinator', name: '🎯 Coordonnateur Maintenance', description: 'Planification', is_system: true },
-  { id: 5, slug: 'planner', name: '📅 Planificateur Maintenance', description: 'Calendrier préventif', is_system: true },
-  { id: 6, slug: 'senior_technician', name: '🔧 Électromécanicien Senior', description: null, is_system: true },
-  { id: 7, slug: 'technician', name: '🔧 Électromécanicien', description: null, is_system: true },
-  { id: 8, slug: 'team_leader', name: '👔 Chef Équipe Production', description: null, is_system: true },
-  { id: 9, slug: 'furnace_operator', name: '🔥 Opérateur Four', description: null, is_system: true },
-  { id: 10, slug: 'operator', name: '👷 Opérateur Production', description: null, is_system: true },
-  { id: 11, slug: 'safety_officer', name: '🛡️ Préventionniste SST', description: null, is_system: true },
-  { id: 12, slug: 'quality_inspector', name: '✓ Inspecteur Qualité', description: null, is_system: true },
-  { id: 13, slug: 'storekeeper', name: '📦 Magasinier Technique', description: null, is_system: true },
-  { id: 14, slug: 'viewer', name: '👁️ Lecture Seule', description: null, is_system: true },
-  { id: 15, slug: 'guest', name: '🔗 Invité', description: 'Accès externe limité', is_system: true },
+  { id: 3, slug: 'supervisor', name: '⭐ Superviseur', description: 'Gestion des équipes et tickets', is_system: true },
+  { id: 4, slug: 'coordinator', name: '🎯 Coordonnateur', description: 'Planification et coordination des tâches', is_system: true },
+  { id: 5, slug: 'planner', name: '📅 Planificateur', description: 'Gestion du calendrier et planification', is_system: true },
+  // Technical
+  { id: 6, slug: 'senior_technician', name: '🔧 Technicien Senior', description: 'Technicien expérimenté', is_system: true },
+  { id: 7, slug: 'technician', name: '🔧 Technicien', description: 'Technicien de maintenance', is_system: true },
+  // Production
+  { id: 8, slug: 'team_leader', name: '👔 Chef d\'Équipe', description: 'Responsable d\'équipe', is_system: true },
+  { id: 10, slug: 'operator', name: '👷 Opérateur', description: 'Opérateur de production', is_system: true },
+  // Quality & Safety
+  { id: 11, slug: 'safety_officer', name: '🛡️ Responsable Sécurité', description: 'Santé et Sécurité au Travail', is_system: true },
+  { id: 12, slug: 'quality_inspector', name: '✓ Contrôle Qualité', description: 'Inspection et contrôle qualité', is_system: true },
+  { id: 13, slug: 'storekeeper', name: '📦 Magasinier', description: 'Gestion des stocks et inventaire', is_system: true },
+  // External
+  { id: 14, slug: 'viewer', name: '👁️ Lecture Seule', description: 'Accès en lecture uniquement', is_system: true },
+  { id: 15, slug: 'guest', name: '🔗 Invité Externe', description: 'Accès limité pour clients et partenaires', is_system: true },
 ];
 
 // ============================================================================
@@ -164,15 +168,15 @@ export function getRoleDisplayNameShort(roleSlug: string): string {
   // Special cases for better abbreviations
   const shortMap: Record<string, string> = {
     'admin': 'Admin',
+    'director': 'Directeur',
     'supervisor': 'Super.',
     'coordinator': 'Coord.',
     'planner': 'Plan.',
     'senior_technician': 'Tech. Sr',
     'technician': 'Tech.',
     'team_leader': 'Chef Éq.',
-    'furnace_operator': 'Op. Four',
     'operator': 'Opér.',
-    'safety_officer': 'SST',
+    'safety_officer': 'Sécurité',
     'quality_inspector': 'Qualité',
     'storekeeper': 'Magasin',
     'viewer': 'Lecture',
