@@ -44,7 +44,7 @@ export const parseCSV = (content: string): any[] => {
     return result;
 };
 
-export const downloadTemplate = (type: 'users' | 'machines') => {
+export const downloadTemplate = async (type: 'users' | 'machines') => {
     let content = '';
     let filename = '';
 
@@ -52,7 +52,21 @@ export const downloadTemplate = (type: 'users' | 'machines') => {
         content = 'EMAIL,PRENOM,NOM,ROLE\nuser1@exemple.com,Jean,Dupont,technician\nuser2@exemple.com,Marie,Curie,operator';
         filename = 'modele_utilisateurs.csv';
     } else {
-        content = 'TYPE,MODELE,MARQUE,SERIE,LIEU\nFour,Trempe,Glaston,SN123456,Zone A\nPont Roulant,5 Tonnes,Kone,,Quai 1';
+        // Fetch customizable CSV example from settings (SaaS-ready)
+        try {
+            const res = await fetch('/api/settings/placeholders');
+            if (res.ok) {
+                const placeholders = await res.json();
+                if (placeholders.csv_example_machines) {
+                    content = placeholders.csv_example_machines;
+                }
+            }
+        } catch { /* Use default */ }
+        
+        // Default if not customized
+        if (!content) {
+            content = 'TYPE,MODELE,MARQUE,SERIE,LIEU\nÉquipement,Modèle A,Fabricant,SN123456,Zone A\nMachine,Standard,Marque X,,Secteur B';
+        }
         filename = 'modele_machines.csv';
     }
 

@@ -3,6 +3,25 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
     const [searchQuery, setSearchQuery] = React.useState("");
     const [showCreateForm, setShowCreateForm] = React.useState(false);
     const [editingMachine, setEditingMachine] = React.useState(null);
+    
+    // Placeholders personnalisables (SaaS-ready)
+    const [placeholders, setPlaceholders] = React.useState({
+        placeholder_machine_type: 'Ex: Équipement, Machine...',
+        placeholder_location: 'Ex: Zone A, Atelier...',
+        placeholder_manufacturer: 'Ex: Marque, Fabricant...',
+        placeholder_model: 'Ex: Modèle, Version...',
+        placeholder_serial_number: 'Ex: SN-001, ABC123...'
+    });
+    
+    // Charger les placeholders au montage
+    React.useEffect(() => {
+        if (show) {
+            fetch('/api/settings/placeholders')
+                .then(res => res.ok ? res.json() : {})
+                .then(data => setPlaceholders(prev => ({ ...prev, ...data })))
+                .catch(() => {}); // Silently fail, defaults already set
+        }
+    }, [show]);
 
     // Formulaire création
     const [newType, setNewType] = React.useState("");
@@ -309,7 +328,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 value: newType,
                                 onChange: (e) => setNewType(e.target.value),
                                 className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
-                                placeholder: "Ex: Polisseuse, CNC, Four..."
+                                placeholder: placeholders.placeholder_machine_type
                             })
                         ),
                         React.createElement("div", {},
@@ -319,7 +338,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 value: newModel,
                                 onChange: (e) => setNewModel(e.target.value),
                                 className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
-                                placeholder: "Ex: Bavelloni, Double Edger..."
+                                placeholder: placeholders.placeholder_model
                             })
                         ),
                         React.createElement("div", {},
@@ -329,7 +348,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 value: newSerial,
                                 onChange: (e) => setNewSerial(e.target.value),
                                 className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
-                                placeholder: "Ex: PDE-001"
+                                placeholder: placeholders.placeholder_serial_number
                             })
                         ),
                         React.createElement("div", {},
@@ -339,7 +358,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 value: newLocation,
                                 onChange: (e) => setNewLocation(e.target.value),
                                 className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
-                                placeholder: "Ex: Atelier Polissage"
+                                placeholder: placeholders.placeholder_location
                             })
                         ),
                         React.createElement("div", {},
@@ -349,7 +368,7 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 value: newManufacturer,
                                 onChange: (e) => setNewManufacturer(e.target.value),
                                 className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none",
-                                placeholder: "Ex: Intermac"
+                                placeholder: placeholders.placeholder_manufacturer
                             })
                         ),
                         React.createElement("div", {},

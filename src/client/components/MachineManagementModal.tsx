@@ -43,6 +43,18 @@ const MachineManagementModal: React.FC<MachineManagementModalProps> = ({ isOpen,
         status: 'operational'
     });
 
+    // Fetch Placeholders (SaaS-ready customizable)
+    const { data: placeholders = {} } = useQuery({
+        queryKey: ['placeholders'],
+        queryFn: async () => {
+            const res = await fetch('/api/settings/placeholders');
+            if (!res.ok) return {};
+            return res.json();
+        },
+        enabled: isOpen,
+        staleTime: 5 * 60 * 1000 // Cache 5 minutes
+    });
+
     // Fetch Machines
     const { data: machines = [], isLoading } = useQuery({
         queryKey: ['machines'],
@@ -230,7 +242,7 @@ const MachineManagementModal: React.FC<MachineManagementModalProps> = ({ isOpen,
                                     <input required type="text" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" 
                                         value={isCreateMode ? formData.machine_type : editingMachine?.machine_type} 
                                         onChange={e => isCreateMode ? setFormData({...formData, machine_type: e.target.value}) : setEditingMachine({...editingMachine!, machine_type: e.target.value})} 
-                                        placeholder="Ex: Four de Trempe"
+                                        placeholder={placeholders.placeholder_machine_type || 'Ex: Équipement, Machine...'}
                                     />
                                 </div>
                                 <div>

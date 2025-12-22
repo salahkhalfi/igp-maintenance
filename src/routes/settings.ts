@@ -627,6 +627,87 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * GET /api/settings/placeholders - Obtenir les placeholders personnalisables (SaaS)
+ * Accès: Public (pour affichage dans les formulaires)
+ * Utilisé pour les formulaires de création (machines, tickets, etc.)
+ */
+settings.get('/placeholders', async (c) => {
+  try {
+    // Récupérer tous les placeholders de la DB
+    const results = await c.env.DB.prepare(`
+      SELECT setting_key, setting_value FROM system_settings 
+      WHERE setting_key LIKE 'placeholder_%' OR setting_key LIKE 'csv_example_%'
+    `).all();
+
+    // Valeurs par défaut universelles (SaaS-ready)
+    const defaults: Record<string, string> = {
+      placeholder_machine_type: 'Ex: Équipement, Machine, Véhicule...',
+      placeholder_location: 'Ex: Zone A, Atelier, Entrepôt...',
+      placeholder_manufacturer: 'Ex: Marque, Fabricant...',
+      placeholder_model: 'Ex: Modèle, Version...',
+      placeholder_serial_number: 'Ex: SN-001, ABC123...',
+      csv_example_machines: 'TYPE,MODELE,MARQUE,SERIE,LIEU\nÉquipement,Modèle A,Fabricant,SN123456,Zone A\nMachine,Standard,Marque X,,Secteur B'
+    };
+
+    // Fusionner DB avec defaults
+    const placeholders = { ...defaults };
+    if (results.results) {
+      for (const row of results.results as any[]) {
+        placeholders[row.setting_key] = row.setting_value;
+      }
+    }
+
+    return c.json(placeholders);
+  } catch (error) {
+    console.error('Get placeholders error:', error);
+    // Fallback safe avec valeurs universelles
+    return c.json({
+      placeholder_machine_type: 'Ex: Équipement, Machine, Véhicule...',
+      placeholder_location: 'Ex: Zone A, Atelier, Entrepôt...',
+      placeholder_manufacturer: 'Ex: Marque, Fabricant...',
+      placeholder_model: 'Ex: Modèle, Version...',
+      placeholder_serial_number: 'Ex: SN-001, ABC123...',
+      csv_example_machines: 'TYPE,MODELE,MARQUE,SERIE,LIEU\nÉquipement,Modèle A,Fabricant,SN123456,Zone A'
+    });
+  }
+});
+
+/**
+ * PUT /api/settings/placeholders - Mettre à jour les placeholders
+ * Accès: Admin uniquement
+ * Body: { placeholder_machine_type: "Ex: Four, Pétrin...", ... }
+ */
+settings.put('/placeholders', authMiddleware, adminOnly, async (c) => {
+  try {
+    const updates = await c.req.json<Record<string, string>>();
+    const validKeys = [
+      'placeholder_machine_type', 'placeholder_location', 'placeholder_manufacturer',
+      'placeholder_model', 'placeholder_serial_number', 'csv_example_machines'
+    ];
+
+    let updated = 0;
+    for (const [key, value] of Object.entries(updates)) {
+      if (!validKeys.includes(key)) continue;
+      if (typeof value !== 'string' || value.length > 500) continue;
+
+      const existing = await c.env.DB.prepare(`SELECT id FROM system_settings WHERE setting_key = ?`).bind(key).first();
+      
+      if (existing) {
+        await c.env.DB.prepare(`UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?`).bind(value, key).run();
+      } else {
+        await c.env.DB.prepare(`INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)`).bind(key, value).run();
+      }
+      updated++;
+    }
+
+    return c.json({ success: true, updated });
+  } catch (error) {
+    console.error('Update placeholders error:', error);
+    return c.json({ error: 'Erreur mise à jour placeholders' }, 500);
+  }
+});
+
+/**
  * GET /api/settings/modules - Obtenir la configuration des modules (Legacy/Fallback)
  * Accès: Tous les utilisateurs authentifiés
  */
