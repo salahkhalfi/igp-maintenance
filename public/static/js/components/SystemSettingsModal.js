@@ -50,6 +50,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [rateLimitEnabled, setRateLimitEnabled] = React.useState(false);
     const [savingRateLimit, setSavingRateLimit] = React.useState(false);
 
+    // États pour les Placeholders personnalisables (SaaS)
+    const [placeholders, setPlaceholders] = React.useState({
+        placeholder_machine_type: 'Ex: Équipement, Machine...',
+        placeholder_location: 'Ex: Zone A, Atelier...',
+        placeholder_manufacturer: 'Ex: Marque, Fabricant...'
+    });
+    const [editingPlaceholders, setEditingPlaceholders] = React.useState(false);
+    const [tempPlaceholders, setTempPlaceholders] = React.useState({});
+    const [savingPlaceholders, setSavingPlaceholders] = React.useState(false);
+
     // États Modules
     const [licenses, setLicenses] = React.useState({
         planning: true,
@@ -218,11 +228,48 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     // Rate limit désactivé par défaut
                     setRateLimitEnabled(false);
                 }
+
+                // Charger les Placeholders personnalisables
+                try {
+                    const placeholdersResponse = await axios.get(API_URL + '/settings/placeholders');
+                    if (placeholdersResponse.data) {
+                        setPlaceholders(placeholdersResponse.data);
+                    }
+                } catch (error) {
+                    // Placeholders par défaut
+                }
             }
         } catch (error) {
             // Erreur silencieuse
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Handlers pour les Placeholders
+    const handleEditPlaceholders = () => {
+        setTempPlaceholders({ ...placeholders });
+        setEditingPlaceholders(true);
+    };
+
+    const handleCancelEditPlaceholders = () => {
+        setEditingPlaceholders(false);
+        setTempPlaceholders({});
+    };
+
+    const handleSavePlaceholders = async () => {
+        setSavingPlaceholders(true);
+        try {
+            await axios.put(API_URL + '/settings/placeholders', tempPlaceholders, {
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+            });
+            setPlaceholders(tempPlaceholders);
+            setEditingPlaceholders(false);
+            alert('Exemples mis à jour avec succès !');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingPlaceholders(false);
         }
     };
 
@@ -754,6 +801,100 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         },
                                             savingRateLimit && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                             rateLimitEnabled ? 'Désactiver' : 'Activer'
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+
+                    // Section Personnalisation des Exemples (ADMIN UNIQUEMENT)
+                    isSuperAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-industry text-teal-600 text-xl mt-1' }),
+                                React.createElement('div', { className: 'flex-1' },
+                                    React.createElement('h3', { className: 'font-bold text-teal-900 mb-2 flex items-center gap-2' },
+                                        "Personnalisation Industrie",
+                                        React.createElement('span', { className: 'text-xs bg-teal-600 text-white px-2 py-1 rounded' }, 'SaaS')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-teal-800 mb-3' },
+                                        "Personnalisez les exemples affichés dans les formulaires selon votre secteur d'activité (boulangerie, garage, hôtel...)."
+                                    ),
+                                    
+                                    !editingPlaceholders ? React.createElement('div', { className: 'space-y-2' },
+                                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-2 text-sm' },
+                                            React.createElement('div', { className: 'bg-white rounded p-2 border border-teal-100' },
+                                                React.createElement('span', { className: 'text-gray-500' }, 'Type: '),
+                                                React.createElement('span', { className: 'font-medium' }, placeholders.placeholder_machine_type || 'Non défini')
+                                            ),
+                                            React.createElement('div', { className: 'bg-white rounded p-2 border border-teal-100' },
+                                                React.createElement('span', { className: 'text-gray-500' }, 'Lieu: '),
+                                                React.createElement('span', { className: 'font-medium' }, placeholders.placeholder_location || 'Non défini')
+                                            ),
+                                            React.createElement('div', { className: 'bg-white rounded p-2 border border-teal-100' },
+                                                React.createElement('span', { className: 'text-gray-500' }, 'Fabricant: '),
+                                                React.createElement('span', { className: 'font-medium' }, placeholders.placeholder_manufacturer || 'Non défini')
+                                            )
+                                        ),
+                                        React.createElement('button', {
+                                            onClick: handleEditPlaceholders,
+                                            className: 'mt-3 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                            type: 'button'
+                                        },
+                                            React.createElement('i', { className: 'fas fa-edit' }),
+                                            'Personnaliser les exemples'
+                                        )
+                                    ) : React.createElement('div', { className: 'space-y-3 bg-white rounded-lg p-4 border border-teal-200' },
+                                        React.createElement('div', {},
+                                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Type d\'équipement'),
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: tempPlaceholders.placeholder_machine_type || '',
+                                                onChange: (e) => setTempPlaceholders({...tempPlaceholders, placeholder_machine_type: e.target.value}),
+                                                placeholder: 'Ex: Four, Pétrin, Véhicule...',
+                                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm',
+                                                disabled: savingPlaceholders
+                                            })
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Emplacement'),
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: tempPlaceholders.placeholder_location || '',
+                                                onChange: (e) => setTempPlaceholders({...tempPlaceholders, placeholder_location: e.target.value}),
+                                                placeholder: 'Ex: Cuisine, Garage, Chambre 101...',
+                                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm',
+                                                disabled: savingPlaceholders
+                                            })
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('label', { className: 'block text-xs font-semibold text-gray-600 mb-1' }, 'Fabricant / Marque'),
+                                            React.createElement('input', {
+                                                type: 'text',
+                                                value: tempPlaceholders.placeholder_manufacturer || '',
+                                                onChange: (e) => setTempPlaceholders({...tempPlaceholders, placeholder_manufacturer: e.target.value}),
+                                                placeholder: 'Ex: Bosch, Caterpillar, Samsung...',
+                                                className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm',
+                                                disabled: savingPlaceholders
+                                            })
+                                        ),
+                                        React.createElement('div', { className: 'flex justify-end gap-2 pt-2' },
+                                            React.createElement('button', {
+                                                onClick: handleCancelEditPlaceholders,
+                                                disabled: savingPlaceholders,
+                                                className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                                type: 'button'
+                                            }, 'Annuler'),
+                                            React.createElement('button', {
+                                                onClick: handleSavePlaceholders,
+                                                disabled: savingPlaceholders,
+                                                className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50',
+                                                type: 'button'
+                                            },
+                                                savingPlaceholders && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                                savingPlaceholders ? 'Enregistrement...' : 'Enregistrer'
+                                            )
                                         )
                                     )
                                 )
