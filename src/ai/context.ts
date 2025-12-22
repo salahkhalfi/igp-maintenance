@@ -2,6 +2,7 @@
 import { systemSettings, machines, users, tickets, media, ticketComments, planningEvents, userPreferences } from '../db/schema';
 import { inArray, eq, and, ne, lt, desc, or, sql, not, like } from 'drizzle-orm';
 import type { Bindings } from '../types';
+import { detectIndustry, formatVocabulary, type IndustryTemplate } from './industry-templates';
 
 // --- TYPE DEFINITIONS ---
 export interface AiConfig {
@@ -187,26 +188,33 @@ function translateRole(role: string): string {
     return ROLE_LABELS[role] || role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, ' ');
 }
 
-// --- HELPER: GENERATE AI IDENTITY FROM COMPANY PROFILE ---
+// --- HELPER: GENERATE AI IDENTITY FROM COMPANY PROFILE + INDUSTRY TEMPLATE ---
 function generateAutoIdentity(profile: CompanyProfile): AiConfig {
     const { name, subtitle, equipmentTypes, locations, roles, admins } = profile;
     
-    // Build equipment list (max 10 for readability)
-    const equipmentStr = equipmentTypes.length > 0 
-        ? equipmentTypes.slice(0, 10).join(", ")
-        : "équipements industriels";
+    // 1. DETECT INDUSTRY from subtitle and equipment types
+    const industry: IndustryTemplate = detectIndustry(subtitle, equipmentTypes);
     
-    // Build zones list (max 5)
+    // 2. Build equipment list - prioritize actual equipment, supplement with industry typical
+    let equipmentStr: string;
+    if (equipmentTypes.length > 0) {
+        equipmentStr = equipmentTypes.slice(0, 8).join(", ");
+    } else if (industry.typicalEquipment.length > 0) {
+        equipmentStr = industry.typicalEquipment.slice(0, 6).join(", ");
+    } else {
+        equipmentStr = "équipements industriels";
+    }
+    
+    // 3. Build zones list
     const zonesStr = locations.length > 0
         ? locations.slice(0, 5).join(", ")
         : "différentes zones";
     
-    // Build role context - translate to French and filter out admin/guest
+    // 4. Build role context - translate to French and filter out admin/guest
     const teamRoles = roles
         .filter(r => r !== 'admin' && r !== 'guest')
         .map(r => translateRole(r));
     
-    // Build a natural team description
     let teamDescription = "l'équipe technique";
     if (teamRoles.length === 1) {
         teamDescription = `les ${teamRoles[0]}s`;
@@ -217,32 +225,19 @@ function generateAutoIdentity(profile: CompanyProfile): AiConfig {
         teamDescription = `les ${teamRoles.join('s, ')}s et ${lastRole}s`;
     }
     
-    // Build hierarchy (admin names)
+    // 5. Build hierarchy (admin names)
     const hierarchyStr = admins.length > 0
         ? admins.slice(0, 2).join(" et ")
         : "la direction";
     
-    // Infer industry from subtitle or equipment
-    let industryHint = "maintenance industrielle";
-    if (subtitle) {
-        industryHint = subtitle.toLowerCase();
-    } else if (equipmentTypes.length > 0) {
-        // Try to infer from equipment types
-        const equipStr = equipmentTypes.join(' ').toLowerCase();
-        if (equipStr.includes('four') || equipStr.includes('verre') || equipStr.includes('tempering')) {
-            industryHint = "industrie du verre";
-        } else if (equipStr.includes('cnc') || equipStr.includes('tour') || equipStr.includes('fraiseuse')) {
-            industryHint = "usinage et fabrication";
-        } else if (equipStr.includes('pompe') || equipStr.includes('compresseur')) {
-            industryHint = "systèmes industriels";
-        } else if (equipStr.includes('chariot') || equipStr.includes('véhicule')) {
-            industryHint = "logistique et transport";
-        }
-    }
+    // 6. Get vocabulary if available
+    const vocabularySection = formatVocabulary(industry.vocabulary);
 
+    // 7. BUILD THE ENRICHED PROMPT
     return {
-        identity: `RÔLE : Expert Maintenance Senior de ${name}.
+        identity: `RÔLE : Expert Maintenance Senior - ${industry.name}
 Tu es l'Intelligence Artificielle dédiée à ${name}${subtitle ? ` (${subtitle})` : ''}.
+Secteur d'activité détecté : **${industry.name}**
 Ta mission : assurer la fiabilité et la performance des équipements.`,
         
         hierarchy: `HIÉRARCHIE :
@@ -255,26 +250,26 @@ Tu travailles en collaboration avec ${teamDescription} pour résoudre les probl�
 3. **SÉCURITÉ D'ABORD** : Le cadenassage et la sécurité sont prioritaires.
 4. **EFFICACE** : Tu vas droit au but, pas de bavardage inutile.`,
         
-        knowledge: `EXPERTISE (${industryHint.toUpperCase()}) :
+        knowledge: `${industry.expertise}
 
-1. ÉQUIPEMENTS COUVERTS :
-   ${equipmentStr}
+--- ÉQUIPEMENTS DE CETTE ENTREPRISE ---
+${equipmentStr}
 
-2. ZONES D'INTERVENTION :
-   ${zonesStr}
+--- ZONES D'INTERVENTION ---
+${zonesStr}
 
-3. COMPÉTENCES :
-   - Diagnostic de pannes et dépannage
-   - Maintenance préventive et corrective
-   - Analyse des causes racines
-   - Gestion des priorités d'intervention
-   - Documentation technique`,
+${industry.commonIssues}
+
+${industry.seasonality || ''}
+${vocabularySection}`,
         
-        rules: `RÈGLES STRICTES :
-1. **SÉCURITÉ ABSOLUE** : Toujours rappeler le cadenassage avant intervention sur une machine.
-2. **DONNÉES RÉELLES** : N'invente jamais de données. Si tu ne sais pas, dis-le.
-3. **SUJET AUTORISÉ** : Tu ne réponds qu'aux questions liées à la maintenance et aux équipements.
-4. **LIENS OBLIGATOIRES** : Toujours fournir des liens vers les tickets mentionnés.`,
+        rules: `${industry.safetyRules}
+
+RÈGLES COMPORTEMENTALES :
+1. **DONNÉES RÉELLES** : N'invente jamais de données. Si tu ne sais pas, dis-le.
+2. **SUJET AUTORISÉ** : Tu ne réponds qu'aux questions liées à la maintenance et aux équipements.
+3. **LIENS OBLIGATOIRES** : Toujours fournir des liens vers les tickets mentionnés.
+4. **DIAGNOSTIC STRUCTURÉ** : Utilise les pannes fréquentes ci-dessus pour guider ton diagnostic.`,
         
         custom: "", // No custom context in auto mode
         
