@@ -16,6 +16,7 @@ const UserList = ({
 
     // Fonctions utilitaires mémorisées
     const ROLE_LABELS = React.useMemo(() => ({
+        'superadmin': '🛡️ SUPPORT',
         'admin': '👑 Administrateur',
         'director': '📊 Directeur Général',
         'supervisor': '⭐ Superviseur',
@@ -33,6 +34,7 @@ const UserList = ({
     }), []);
 
     const ROLE_BADGE_COLORS = React.useMemo(() => ({
+        'superadmin': 'bg-purple-600 text-white',
         'admin': 'bg-red-100 text-red-800',
         'director': 'bg-red-50 text-red-700',
         'supervisor': 'bg-yellow-100 text-yellow-800',
@@ -49,8 +51,21 @@ const UserList = ({
         'viewer': 'bg-gray-100 text-gray-800'
     }), []);
 
-    const getRoleLabel = React.useCallback((role) => ROLE_LABELS[role] || '👤 ' + role, [ROLE_LABELS]);
-    const getRoleBadgeClass = React.useCallback((role) => ROLE_BADGE_COLORS[role] || 'bg-gray-100 text-gray-800', [ROLE_BADGE_COLORS]);
+    // Fonction pour déterminer le rôle effectif (superadmin si is_super_admin === 1)
+    const getEffectiveRole = React.useCallback((user) => {
+        if (user.is_super_admin === 1) return 'superadmin';
+        return user.role;
+    }, []);
+
+    const getRoleLabel = React.useCallback((user) => {
+        const effectiveRole = typeof user === 'object' ? getEffectiveRole(user) : user;
+        return ROLE_LABELS[effectiveRole] || '👤 ' + effectiveRole;
+    }, [ROLE_LABELS, getEffectiveRole]);
+    
+    const getRoleBadgeClass = React.useCallback((user) => {
+        const effectiveRole = typeof user === 'object' ? getEffectiveRole(user) : user;
+        return ROLE_BADGE_COLORS[effectiveRole] || 'bg-gray-100 text-gray-800';
+    }, [ROLE_BADGE_COLORS, getEffectiveRole]);
 
     const getLastLoginStatus = React.useCallback((lastLogin) => {
         if (!lastLogin) return { color: "text-gray-500", status: "Jamais connecté", time: "", dot: "bg-gray-400" };
@@ -149,8 +164,8 @@ const UserList = ({
                             React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
                                 React.createElement('h4', { className: 'font-bold text-lg' }, user.full_name),
                                 React.createElement('span', {
-                                    className: 'px-3 py-1 rounded-full text-xs font-semibold ' + getRoleBadgeClass(user.role)
-                                }, getRoleLabel(user.role))
+                                    className: 'px-3 py-1 rounded-full text-xs font-semibold ' + getRoleBadgeClass(user)
+                                }, getRoleLabel(user))
                             ),
                             React.createElement('p', { className: 'text-sm text-gray-600' },
                                 React.createElement('i', { className: 'fas fa-envelope mr-2' }),
