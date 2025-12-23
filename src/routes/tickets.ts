@@ -341,7 +341,7 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
       })
       .from(tickets)
       .leftJoin(machines, eq(tickets.machine_id, machines.id))
-      .where(eq(tickets.id, id))
+      .where(and(eq(tickets.id, id), sql`${tickets.deleted_at} IS NULL`))
       .get();
 
     if (!currentTicket) {
@@ -567,7 +567,7 @@ ticketsRoute.delete('/:id', zValidator('param', ticketIdParamSchema), async (c) 
     const ticket = await db
       .select()
       .from(tickets)
-      .where(eq(tickets.id, id))
+      .where(and(eq(tickets.id, id), sql`${tickets.deleted_at} IS NULL`))
       .get();
 
     if (!ticket) {
