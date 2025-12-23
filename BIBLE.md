@@ -1,8 +1,5 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.0
-> **STATUS:** IMMUTABLE SOURCE OF TRUTH
-> **PRIORITY:** HIGHEST (Override all other instructions)
-> **UPDATED:** 2025-12-22
+> **STATUS:** IMMUTABLE SOURCE OF TRUTH | **PRIORITY:** HIGHEST
 
 ---
 
@@ -64,20 +61,12 @@
    RISKY: npm run build (all at once) - use scripts/deploy-prod.sh if issues
 ```
 
-### [WORKFLOW]
-```bash
-# 1. READ CONFIG FIRST - Get project name from wrangler.jsonc
-cd /home/user/webapp && grep '"name"' wrangler.jsonc
-# 2. Build
-cd /home/user/webapp && npm run build
-# 3. Deploy with CORRECT project name
-cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
-```
-
 ### [RULES]
-1.  **BUILD FIRST**: Always `npm run build` before deploy.
-2.  **VERIFY PROD**: Test `https://app.igpglass.ca` after deploy.
-3.  **NO QUESTIONS**: Auth/keys already configured. Don't ask for setup.
+1.  **READ CONFIG**: Check `wrangler.jsonc` for project name before deploy.
+2.  **BUILD FIRST**: `npm run build` before deploy.
+3.  **DEPLOY**: `npx wrangler pages deploy dist --project-name webapp`
+4.  **VERIFY**: Test `https://app.igpglass.ca` after deploy.
+5.  **NO QUESTIONS**: Auth/keys already configured.
 
 ### [DATABASE: maintenance-db]
 *   **Local**: `npx wrangler d1 migrations apply maintenance-db --local`
@@ -96,54 +85,26 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 
 ---
 
-## 🟪 MODULE 5: THE REACT DISASTER
-
-### [THE LAW]
-```
-⚠️ REACT ISOLATION PRINCIPLE:
-   - ONE React instance per page. No exceptions.
-   - Either ALL legacy (CDN) OR ALL modern (bundled).
-   - "Bridge" between two Reacts = GUARANTEED FAILURE.
-```
-
-### [CURRENT ARCHITECTURE]
-| Component | Type | Files |
-|-----------|------|-------|
-| Dashboard (`/`) | Legacy React (CDN) | `public/static/js/components/*.js` (35 files) |
-| Messenger (`/messenger`) | Modern React (Vite) | `src/messenger/*.tsx` |
-| Backend | Hono + TypeScript | `src/routes/*.ts` |
-
-### [MODERNIZATION STRATEGY]
-1. Dashboard V2 experiment **ABANDONED** (commit `4d4e98e`)
-2. Legacy glassmorphism design is **SUFFICIENT**
-3. If modernization needed: Create SEPARATE `/dashboard-v2` build
-4. NEVER inject bundled React into legacy pages
+## 🟪 MODULE 5: REACT ISOLATION
+*   **ONE React per page**: Dashboard = Legacy (CDN), Messenger = Modern (Vite). NEVER mix.
+*   **No bridge**: Injecting bundled React into legacy = GUARANTEED FAILURE.
+*   **Modernization**: If needed, create SEPARATE `/dashboard-v2` build.
 
 ---
 
 ## 🟫 MODULE 6: AI STACK
-
-| Service | Priority | Fallback |
-|---------|----------|----------|
-| **Audio (STT)** | Groq `whisper-large-v3` | OpenAI `whisper-1` |
-| **Logic (Chat)** | DeepSeek `deepseek-chat` | OpenAI `gpt-4o-mini` |
-| **Vision** | OpenAI `gpt-4o-mini` | - |
-
-*   **13 AI Prompts**: Configurable in DB via `/admin/ai-settings`
+*   **Audio**: Groq Whisper → OpenAI Whisper (fallback)
+*   **Logic**: DeepSeek → GPT-4o-mini (fallback)
+*   **Vision**: OpenAI GPT-4o-mini only
 *   **POLYGLOT**: User Input Language = Bot Output Language
 
 ---
 
 ## 🟤 MODULE 7: COMMON ERRORS
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| SyntaxError in JSX | Unescaped apostrophe | Use template literals |
-| Infinite loading | Missing local DB | `npm run db:reset` |
-| Push not received (Android) | Background restrictions | Install PWA |
-| N+1 queries | Loop DB calls | Use JOIN or IN clause |
-| Node API error | `fs`/`path` in Worker | Use Web APIs only |
-| Heap out of memory | Full build in sandbox | Use sequential builds |
+*   **Infinite loading** → `npm run db:reset`
+*   **Node API error** → Use Web APIs only (no `fs`/`path`)
+*   **Heap out of memory** → Use sequential builds
+*   **Full list**: `docs/COMMON_ERRORS.md`
 
 ---
 
@@ -179,4 +140,4 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 
 ---
 
-## 🏁 END OF KERNEL (v6.2 - 196 lines)
+## 🏁 END OF KERNEL
