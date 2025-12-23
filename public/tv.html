@@ -828,50 +828,46 @@
 
         // --- SCROLL & REMOTE ---
         function setupAutoScroll(container) {
-            // Cancel any existing animation
-            if (container.dataset.scrollAnimationId) {
-                cancelAnimationFrame(parseInt(container.dataset.scrollAnimationId));
+            // Cancel any existing interval
+            if (container.dataset.scrollIntervalId) {
+                clearInterval(parseInt(container.dataset.scrollIntervalId));
             }
             if (container.scrollHeight <= container.clientHeight) return;
 
             let direction = 1;
-            let pauseFrames = 100; // Pause in frames (~1.6s at 60fps)
-            let lastTime = 0;
-            const SCROLL_SPEED = 0.5; // pixels per frame (slower = smoother)
+            let pauseCount = 0;
+            const PAUSE_DURATION = 30; // ~3 seconds at 100ms interval
             container.dataset.isPaused = "false";
 
-            function scrollStep(timestamp) {
-                if (!document.body.contains(container)) return; // Stop if removed
+            // Use setInterval at 100ms (10fps) - much lighter than requestAnimationFrame
+            const intervalId = setInterval(() => {
+                if (!document.body.contains(container)) {
+                    clearInterval(intervalId);
+                    return;
+                }
                 
-                // Throttle to ~30fps for performance
-                if (timestamp - lastTime < 33) {
-                    container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
-                    return;
-                }
-                lastTime = timestamp;
+                if (container.dataset.isPaused === "true") return;
 
-                if (container.dataset.isPaused === "true") {
-                    container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
-                    return;
-                }
-
-                if (pauseFrames > 0) {
-                    pauseFrames--;
-                    container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
+                if (pauseCount > 0) {
+                    pauseCount--;
                     return;
                 }
 
                 const current = container.scrollTop;
                 const max = container.scrollHeight - container.clientHeight;
 
-                if (direction === 1 && current >= max) { pauseFrames = 90; direction = -1; }
-                else if (direction === -1 && current <= 0) { pauseFrames = 90; direction = 1; }
+                if (direction === 1 && current >= max) { 
+                    pauseCount = PAUSE_DURATION; 
+                    direction = -1; 
+                } else if (direction === -1 && current <= 0) { 
+                    pauseCount = PAUSE_DURATION; 
+                    direction = 1; 
+                }
 
-                container.scrollTop += direction * SCROLL_SPEED;
-                container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
-            }
+                container.scrollTop += direction * 2; // 2px per step
+            }, 100); // 10fps is enough for smooth scroll
 
-            container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
+            container.dataset.scrollIntervalId = intervalId;
         }
 
         class RemoteController {
