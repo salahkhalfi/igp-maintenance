@@ -4,37 +4,10 @@ import { Message, Participant, Conversation, User } from '../types';
 import { SoundManager } from '../sound';
 import ImageViewer from './ImageViewer';
 import GroupInfo from './GroupInfo';
+import { getErrorMessage } from '../utils/errors';
 
 // Lazy load Native Annotation Editor (zero dependencies, replaces Konva)
 const AnnotationEditor = React.lazy(() => import('../NativeAnnotationEditor'));
-
-import ChatHeader from './ChatHeader';
-import MessageList from './MessageList';
-import MessageInput from './MessageInput';
-
-// Helper to extract error message from various error formats
-const getErrorMessage = (err: any, fallback: string = 'Une erreur est survenue'): string => {
-    // Handle axios errors
-    if (err?.response?.data?.error) {
-        return typeof err.response.data.error === 'string' 
-            ? err.response.data.error 
-            : JSON.stringify(err.response.data.error);
-    }
-    // Handle fetch response errors
-    if (err?.error) {
-        return typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
-    }
-    // Handle standard Error objects
-    if (err?.message && typeof err.message === 'string') {
-        return err.message;
-    }
-    // Handle string errors
-    if (typeof err === 'string') {
-        return err;
-    }
-    // Fallback
-    return fallback;
-};
 
 const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo, initialMessage, onMessageConsumed }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void, initialMessage?: string, onMessageConsumed?: () => void }) => {
     // --- STATE ---

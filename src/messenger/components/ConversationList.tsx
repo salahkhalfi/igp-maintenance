@@ -8,25 +8,7 @@ import CreateGroupModal from './CreateGroupModal';
 import GuestManagementModal from './GuestManagementModal';
 import MessengerSettingsModal from './MessengerSettingsModal';
 import ConversationItem from './ConversationItem';
-
-// Helper to extract error message from various error formats
-const getErrorMessage = (err: any, fallback: string = 'Une erreur est survenue'): string => {
-    if (err?.response?.data?.error) {
-        return typeof err.response.data.error === 'string' 
-            ? err.response.data.error 
-            : JSON.stringify(err.response.data.error);
-    }
-    if (err?.error) {
-        return typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
-    }
-    if (err?.message && typeof err.message === 'string') {
-        return err.message;
-    }
-    if (typeof err === 'string') {
-        return err;
-    }
-    return fallback;
-};
+import { getErrorMessage } from '../utils/errors';
 
 const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName, currentUserAvatarKey, onOpenInfo, onAvatarUpdate, initialRecipientId, onRecipientProcessed }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, currentUserName: string, currentUserAvatarKey: string | null, onOpenInfo: () => void, onAvatarUpdate: () => void, initialRecipientId?: number | null, onRecipientProcessed?: () => void }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
