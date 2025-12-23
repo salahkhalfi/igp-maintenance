@@ -35,3 +35,4 @@ lerna-debug.log*
 # VAPID Keys (NEVER COMMIT)
 VAPID-KEYS-PRIVATE.md
 .dev.vars
+core

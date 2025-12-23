@@ -71,6 +71,12 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
     const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
     const [imageDisplaySize, setImageDisplaySize] = useState({ width: 0, height: 0 });
     const [scale, setScale] = useState(1);
+    
+    // Text input modal state
+    const [textModalOpen, setTextModalOpen] = useState(false);
+    const [textModalValue, setTextModalValue] = useState('');
+    const [textModalPosition, setTextModalPosition] = useState<Point>({ x: 0, y: 0 });
+    const textInputRef = useRef<HTMLInputElement>(null);
 
     // Refs
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -205,6 +211,11 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
             case 'text': {
                 const s = shape as TextShape;
                 ctx.font = `bold ${FONT_SIZE}px Arial`;
+                // Draw text with outline for visibility on any background
+                ctx.strokeStyle = shape.color === '#FFFFFF' ? '#000000' : '#FFFFFF';
+                ctx.lineWidth = 3;
+                ctx.strokeText(s.text, s.position.x, s.position.y);
+                ctx.fillStyle = shape.color;
                 ctx.fillText(s.text, s.position.x, s.position.y);
                 break;
             }
@@ -271,17 +282,12 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
         const point = getCanvasPoint(e);
 
         if (tool === 'text') {
-            const text = prompt('Texte à ajouter:');
-            if (text && text.trim()) {
-                const newShape: TextShape = {
-                    id: Date.now().toString(),
-                    type: 'text',
-                    color,
-                    position: point,
-                    text: text.trim()
-                };
-                setShapes(prev => [...prev, newShape]);
-            }
+            // Open text input modal instead of browser prompt
+            setTextModalPosition(point);
+            setTextModalValue('');
+            setTextModalOpen(true);
+            // Focus input after modal opens
+            setTimeout(() => textInputRef.current?.focus(), 100);
             return;
         }
 
@@ -373,6 +379,28 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
         if (confirm('Effacer toutes les annotations?')) {
             setShapes([]);
         }
+    };
+
+    // Confirm text from modal
+    const handleTextConfirm = () => {
+        if (textModalValue.trim()) {
+            const newShape: TextShape = {
+                id: Date.now().toString(),
+                type: 'text',
+                color,
+                position: textModalPosition,
+                text: textModalValue.trim()
+            };
+            setShapes(prev => [...prev, newShape]);
+        }
+        setTextModalOpen(false);
+        setTextModalValue('');
+    };
+
+    // Cancel text modal
+    const handleTextCancel = () => {
+        setTextModalOpen(false);
+        setTextModalValue('');
     };
 
     // Export and send
@@ -560,6 +588,43 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
                     />
                 ))}
             </div>
+
+            {/* Text Input Modal */}
+            {textModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-gray-900 rounded-2xl p-4 mx-4 w-full max-w-sm shadow-2xl border border-white/20">
+                        <h3 className="text-white font-bold mb-3 text-center">Ajouter du texte</h3>
+                        <input
+                            ref={textInputRef}
+                            type="text"
+                            value={textModalValue}
+                            onChange={(e) => setTextModalValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleTextConfirm();
+                                if (e.key === 'Escape') handleTextCancel();
+                            }}
+                            placeholder="Tapez votre texte ici..."
+                            className="w-full bg-white/10 text-white placeholder-gray-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 text-lg mb-4"
+                            autoFocus
+                        />
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleTextCancel}
+                                className="flex-1 py-2 px-4 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={handleTextConfirm}
+                                disabled={!textModalValue.trim()}
+                                className="flex-1 py-2 px-4 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
