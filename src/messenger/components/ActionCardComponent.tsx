@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActionCard } from '../types';
 
-const ActionCardComponent = ({ card, isSender, onUpdateStatus, content, imageUrl }: { card: ActionCard, isSender: boolean, onUpdateStatus: (status: 'open' | 'in_progress' | 'resolved') => void, content?: string, imageUrl?: string }) => {
+const ActionCardComponent = ({ card, isSender, onUpdateStatus, content, imageUrl, canEscalate = true }: { card: ActionCard, isSender: boolean, onUpdateStatus: (status: 'open' | 'in_progress' | 'resolved') => void, content?: string, imageUrl?: string, canEscalate?: boolean }) => {
     const statusConfig: Record<string, { color: string, icon: string, label: string, bg: string }> = {
         'open': { color: 'text-red-600', icon: 'fa-exclamation-circle', label: 'À faire', bg: 'bg-red-50 border-l-4 border-red-500' },
         'in_progress': { color: 'text-amber-600', icon: 'fa-spinner fa-spin', label: 'En cours', bg: 'bg-amber-50 border-l-4 border-amber-500' },
@@ -58,8 +58,8 @@ const ActionCardComponent = ({ card, isSender, onUpdateStatus, content, imageUrl
                 })}
             </div>
 
-            {/* Escalade vers Ticket (Seulement si non résolu) */}
-            {card.status !== 'resolved' && (
+            {/* Escalade vers Ticket (Seulement si non résolu ET permission accordée) */}
+            {card.status !== 'resolved' && canEscalate && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); handleEscalate(); }}
                     className="w-full py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors shadow-sm"

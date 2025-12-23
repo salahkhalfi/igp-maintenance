@@ -117,6 +117,7 @@ interface MessageListProps {
     onPrivateChat: (userId: number) => void;
     onUpdateCardStatus: (msgId: string, status: 'open' | 'in_progress' | 'resolved') => void;
     onCreateActionCard: (msgId: string) => void;
+    canCreateTickets?: boolean; // RBAC permission check
     onDeleteMessage: (msgId: string) => void;
     onSaveTranscription: (msgId: string, text: string) => void;
     onDownload: (key: string, type: 'image' | 'audio') => void;
@@ -144,6 +145,7 @@ const MessageList: React.FC<MessageListProps> = ({
     onUpdateCardStatus,
     onCreateActionCard,
     onDeleteMessage,
+    canCreateTickets = false,
     onSaveTranscription,
     onDownload,
     setViewImage,
@@ -327,7 +329,8 @@ const MessageList: React.FC<MessageListProps> = ({
                         <div className={`p-4 rounded-2xl shadow-lg backdrop-blur-md relative transition-all ${bubbleClass}`}>
                             {(isGlobalAdmin || isMe) && (
                                 <>
-                                    {!msg.action_card && (
+                                    {/* Only show "Transform to ticket" button if user has permission */}
+                                    {!msg.action_card && canCreateTickets && (
                                         <div className="absolute -top-3 -right-2 z-20 transition-all">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onCreateActionCard(msg.id); }}
@@ -448,6 +451,7 @@ const MessageList: React.FC<MessageListProps> = ({
                                     onUpdateStatus={(status) => onUpdateCardStatus(msg.id, status)} 
                                     content={msg.content}
                                     imageUrl={msg.type === 'image' && msg.media_key ? `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}` : undefined}
+                                    canEscalate={canCreateTickets}
                                 />
                             )}
                             

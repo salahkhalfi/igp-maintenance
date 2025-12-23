@@ -11,6 +11,7 @@ interface MessageInputProps {
     isSending: boolean;
     onTicketDetected: (data: any) => void;
     textareaRef: React.RefObject<HTMLTextAreaElement>;
+    canCreateTickets?: boolean; // RBAC permission check
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -21,7 +22,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
     onFileSelect,
     isSending,
     onTicketDetected,
-    textareaRef
+    textareaRef,
+    canCreateTickets = false
 }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
@@ -305,12 +307,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
                                 </button>
                             </div>
 
-                            <div className="flex-shrink-0 relative z-50">
-                                <VoiceTicketFab 
-                                    onTicketDetected={onTicketDetected} 
-                                    className="relative" 
-                                />
-                            </div>
+                            {/* Voice Ticket FAB - only show if user has permission */}
+                            {canCreateTickets && (
+                                <div className="flex-shrink-0 relative z-50">
+                                    <VoiceTicketFab 
+                                        onTicketDetected={onTicketDetected} 
+                                        className="relative" 
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex-1 flex gap-2 w-full md:w-auto items-end">

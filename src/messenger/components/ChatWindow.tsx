@@ -42,6 +42,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [allUsers, setAllUsers] = useState<User[]>([]);
 
     const [isSending, setIsSending] = useState(false);
+    const [canCreateTickets, setCanCreateTickets] = useState(false); // RBAC permission check
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,11 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
         axios.get('/api/settings/ai_expert_avatar_key').then(res => {
             if(res.data?.setting_value) setAiAvatarKey(res.data.setting_value);
         }).catch(() => {});
+        
+        // RBAC: Check ticket creation permission
+        axios.get('/api/rbac/check?resource=tickets&action=create').then(res => {
+            setCanCreateTickets(res.data?.allowed === true);
+        }).catch(() => setCanCreateTickets(false));
     }, []);
 
     useEffect(() => {
@@ -657,39 +663,41 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                 Annoter l'image
                             </button>
                             
-                            {/* Create ticket */}
-                            <button
-                                onClick={async () => {
-                                    const file = pendingFile;
-                                    setPendingFile(null);
-                                    // Upload image first to get URL
-                                    const token = localStorage.getItem('auth_token');
-                                    if (!token) return;
-                                    try {
-                                        const formData = new FormData();
-                                        formData.append('file', file);
-                                        const uploadRes = await fetch('/api/v2/chat/upload', {
-                                            method: 'POST',
-                                            headers: { 'Authorization': `Bearer ${token}` },
-                                            body: formData
-                                        });
-                                        const uploadData = await uploadRes.json();
-                                        if (!uploadRes.ok) throw new Error(uploadData.error);
-                                        // Redirect to ticket creation with image
-                                        // Use the correct asset URL format for chat uploads
-                                        const params = new URLSearchParams();
-                                        params.set('createTicket', 'true');
-                                        params.set('imageUrl', `/api/v2/chat/asset?key=${encodeURIComponent(uploadData.key)}`);
-                                        window.open('/?' + params.toString(), '_blank');
-                                    } catch (err: any) {
-                                        alert(`Erreur upload: ${err.message}`);
-                                    }
-                                }}
-                                className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-colors"
-                            >
-                                <i className="fas fa-ticket-alt"></i>
-                                Créer un ticket
-                            </button>
+                            {/* Create ticket - only show if user has permission */}
+                            {canCreateTickets && (
+                                <button
+                                    onClick={async () => {
+                                        const file = pendingFile;
+                                        setPendingFile(null);
+                                        // Upload image first to get URL
+                                        const token = localStorage.getItem('auth_token');
+                                        if (!token) return;
+                                        try {
+                                            const formData = new FormData();
+                                            formData.append('file', file);
+                                            const uploadRes = await fetch('/api/v2/chat/upload', {
+                                                method: 'POST',
+                                                headers: { 'Authorization': `Bearer ${token}` },
+                                                body: formData
+                                            });
+                                            const uploadData = await uploadRes.json();
+                                            if (!uploadRes.ok) throw new Error(uploadData.error);
+                                            // Redirect to ticket creation with image
+                                            // Use the correct asset URL format for chat uploads
+                                            const params = new URLSearchParams();
+                                            params.set('createTicket', 'true');
+                                            params.set('imageUrl', `/api/v2/chat/asset?key=${encodeURIComponent(uploadData.key)}`);
+                                            window.open('/?' + params.toString(), '_blank');
+                                        } catch (err: any) {
+                                            alert(`Erreur upload: ${err.message}`);
+                                        }
+                                    }}
+                                    className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-colors"
+                                >
+                                    <i className="fas fa-ticket-alt"></i>
+                                    Créer un ticket
+                                </button>
+                            )}
                             
                             {/* Cancel */}
                             <button
@@ -767,6 +775,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 setEditingTranscriptionText={setEditingTranscriptionText}
                 messagesContainerRef={messagesContainerRef}
                 messagesEndRef={messagesEndRef}
+                canCreateTickets={canCreateTickets}
             />
 
             <MessageInput 
@@ -778,6 +787,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 isSending={isSending}
                 onTicketDetected={handleTicketDetected}
                 textareaRef={textareaRef}
+                canCreateTickets={canCreateTickets}
             />
         </div>
     );
