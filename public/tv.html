@@ -822,28 +822,50 @@
 
         // --- SCROLL & REMOTE ---
         function setupAutoScroll(container) {
-            if (container.dataset.scrollInterval) clearInterval(parseInt(container.dataset.scrollInterval));
+            // Cancel any existing animation
+            if (container.dataset.scrollAnimationId) {
+                cancelAnimationFrame(parseInt(container.dataset.scrollAnimationId));
+            }
             if (container.scrollHeight <= container.clientHeight) return;
 
             let direction = 1;
-            let pause = 100; // Start delay
+            let pauseFrames = 100; // Pause in frames (~1.6s at 60fps)
+            let lastTime = 0;
+            const SCROLL_SPEED = 0.5; // pixels per frame (slower = smoother)
             container.dataset.isPaused = "false";
 
-            const interval = setInterval(() => {
-                if (!document.body.contains(container)) { clearInterval(interval); return; }
-                if (container.dataset.isPaused === "true") return;
-                if (pause > 0) { pause--; return; }
+            function scrollStep(timestamp) {
+                if (!document.body.contains(container)) return; // Stop if removed
+                
+                // Throttle to ~30fps for performance
+                if (timestamp - lastTime < 33) {
+                    container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
+                    return;
+                }
+                lastTime = timestamp;
+
+                if (container.dataset.isPaused === "true") {
+                    container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
+                    return;
+                }
+
+                if (pauseFrames > 0) {
+                    pauseFrames--;
+                    container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
+                    return;
+                }
 
                 const current = container.scrollTop;
                 const max = container.scrollHeight - container.clientHeight;
 
-                if (direction === 1 && current >= max) { pause = 150; direction = -1; }
-                else if (direction === -1 && current <= 0) { pause = 150; direction = 1; }
+                if (direction === 1 && current >= max) { pauseFrames = 90; direction = -1; }
+                else if (direction === -1 && current <= 0) { pauseFrames = 90; direction = 1; }
 
-                container.scrollTop += direction;
-            }, 50); // Smooth slow scroll
+                container.scrollTop += direction * SCROLL_SPEED;
+                container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
+            }
 
-            container.dataset.scrollInterval = interval;
+            container.dataset.scrollAnimationId = requestAnimationFrame(scrollStep);
         }
 
         class RemoteController {
