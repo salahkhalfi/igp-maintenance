@@ -28,6 +28,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
     const [editingTranscriptionText, setEditingTranscriptionText] = useState('');
 
     const [previewFile, setPreviewFile] = useState<File | null>(null);
+    const [pendingFile, setPendingFile] = useState<File | null>(null); // File awaiting user choice
     const [uploading, setUploading] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
     const [triggerAddMember, setTriggerAddMember] = useState(false);
@@ -614,6 +615,94 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             
             {showInfo && <GroupInfo participants={participants} conversationId={conversationId} conversationName={conversation?.name || null} conversationAvatarKey={conversation?.avatar_key || null} conversationType={conversation?.type || 'group'} currentUserId={currentUserId} currentUserRole={currentUserRole} onClose={() => { setShowInfo(false); setTriggerAddMember(false); }} onPrivateChat={handlePrivateChat} autoOpenAddMember={triggerAddMember} />}
             
+            {/* Image Choice Modal */}
+            {pendingFile && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-[#1a1a1a] rounded-2xl p-5 mx-4 w-full max-w-sm shadow-2xl border border-white/10">
+                        {/* Preview thumbnail */}
+                        <div className="mb-4 rounded-xl overflow-hidden bg-black/50 flex items-center justify-center h-32">
+                            <img 
+                                src={URL.createObjectURL(pendingFile)} 
+                                alt="Preview" 
+                                className="max-h-full max-w-full object-contain"
+                            />
+                        </div>
+                        
+                        <h3 className="text-white font-bold text-center mb-4">Que voulez-vous faire ?</h3>
+                        
+                        <div className="flex flex-col gap-2">
+                            {/* Send directly */}
+                            <button
+                                onClick={() => {
+                                    const file = pendingFile;
+                                    setPendingFile(null);
+                                    handleNewEditorSend(file, '');
+                                }}
+                                className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-colors"
+                            >
+                                <i className="fas fa-paper-plane"></i>
+                                Envoyer directement
+                            </button>
+                            
+                            {/* Annotate */}
+                            <button
+                                onClick={() => {
+                                    const file = pendingFile;
+                                    setPendingFile(null);
+                                    setPreviewFile(file);
+                                }}
+                                className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-colors"
+                            >
+                                <i className="fas fa-pencil-alt"></i>
+                                Annoter l'image
+                            </button>
+                            
+                            {/* Create ticket */}
+                            <button
+                                onClick={async () => {
+                                    const file = pendingFile;
+                                    setPendingFile(null);
+                                    // Upload image first to get URL
+                                    const token = localStorage.getItem('auth_token');
+                                    if (!token) return;
+                                    try {
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        const uploadRes = await fetch('/api/v2/chat/upload', {
+                                            method: 'POST',
+                                            headers: { 'Authorization': `Bearer ${token}` },
+                                            body: formData
+                                        });
+                                        const uploadData = await uploadRes.json();
+                                        if (!uploadRes.ok) throw new Error(uploadData.error);
+                                        // Redirect to ticket creation with image
+                                        const params = new URLSearchParams();
+                                        params.set('createTicket', 'true');
+                                        params.set('imageUrl', `/api/media/${uploadData.key}`);
+                                        window.open('/?' + params.toString(), '_blank');
+                                    } catch (err: any) {
+                                        alert(`Erreur upload: ${err.message}`);
+                                    }
+                                }}
+                                className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-colors"
+                            >
+                                <i className="fas fa-ticket-alt"></i>
+                                Créer un ticket
+                            </button>
+                            
+                            {/* Cancel */}
+                            <button
+                                onClick={() => setPendingFile(null)}
+                                className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-gray-300 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors mt-1"
+                            >
+                                <i className="fas fa-times"></i>
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {previewFile && (
                 <React.Suspense fallback={
                     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -684,7 +773,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 setInput={setInput}
                 onSendText={sendMessage}
                 onSendAudio={sendAudio}
-                onFileSelect={(file) => setPreviewFile(file)}
+                onFileSelect={(file) => setPendingFile(file)}
                 isSending={isSending}
                 onTicketDetected={handleTicketDetected}
                 textareaRef={textareaRef}
