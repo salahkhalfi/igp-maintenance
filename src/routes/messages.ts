@@ -38,6 +38,22 @@ messagesRoute.post('/', zValidator('json', sendMessageSchema), async (c) => {
     // 🔔 Envoyer push notification si message privé
     if (message_type === 'private' && recipient_id) {
       try {
+        // 🛡️ ANTI-SPAM: Throttle 30s par sender→recipient pour éviter spam sonore
+        const recentPush = await c.env.DB.prepare(`
+          SELECT id FROM push_logs 
+          WHERE user_id = ? 
+            AND status IN ('success', 'private_msg_sent')
+            AND error_message LIKE ?
+            AND datetime(created_at) >= datetime('now', '-30 seconds')
+          LIMIT 1
+        `).bind(recipient_id, `%"senderId":${user.userId}%`).first();
+        
+        if (recentPush) {
+          console.log(`⏭️ Push throttled: sender ${user.userId} → recipient ${recipient_id} (30s cooldown)`);
+          // Message saved, just skip notification
+          return c.json(newMessage, 201);
+        }
+        
         const { sendPushNotification } = await import('./push');
         
         // Obtenir le nom de l'expéditeur
@@ -62,12 +78,14 @@ messagesRoute.post('/', zValidator('json', sendMessageSchema), async (c) => {
           }
         });
         
-        // Logger le résultat
+        // Logger le résultat (avec senderId pour throttle)
         await db.insert(pushLogs).values({
           user_id: recipient_id,
           ticket_id: null,
-          status: pushResult.success ? 'success' : 'failed',
-          error_message: pushResult.success ? null : JSON.stringify(pushResult)
+          status: pushResult.success ? 'private_msg_sent' : 'failed',
+          error_message: pushResult.success 
+            ? JSON.stringify({ senderId: user.userId, type: 'private_message' })
+            : JSON.stringify(pushResult)
         });
         
         console.log(`✅ Push notification sent to user ${recipient_id} for message from ${user.userId}`);
@@ -179,8 +197,24 @@ messagesRoute.post('/audio', async (c) => {
     // 🔔 Envoyer push notification si message privé
     if (messageType === 'private' && recipientId) {
       try {
-        const { sendPushNotification } = await import('./push');
         const recipientIdNum = parseInt(recipientId);
+        
+        // 🛡️ ANTI-SPAM: Throttle 30s par sender→recipient
+        const recentPush = await c.env.DB.prepare(`
+          SELECT id FROM push_logs 
+          WHERE user_id = ? 
+            AND status IN ('success', 'private_msg_sent', 'audio_msg_sent')
+            AND error_message LIKE ?
+            AND datetime(created_at) >= datetime('now', '-30 seconds')
+          LIMIT 1
+        `).bind(recipientIdNum, `%"senderId":${user.userId}%`).first();
+        
+        if (recentPush) {
+          console.log(`⏭️ Audio push throttled: sender ${user.userId} → recipient ${recipientIdNum} (30s cooldown)`);
+          return c.json(newMessage, 201);
+        }
+        
+        const { sendPushNotification } = await import('./push');
         
         const senderName = formatUserName(user, 'Un utilisateur');
         
@@ -209,8 +243,10 @@ messagesRoute.post('/audio', async (c) => {
         await db.insert(pushLogs).values({
           user_id: recipientIdNum,
           ticket_id: null,
-          status: pushResult.success ? 'success' : 'failed',
-          error_message: pushResult.success ? null : JSON.stringify(pushResult)
+          status: pushResult.success ? 'audio_msg_sent' : 'failed',
+          error_message: pushResult.success 
+            ? JSON.stringify({ senderId: user.userId, type: 'audio_message' })
+            : JSON.stringify(pushResult)
         });
         
         console.log(`✅ Push notification sent to user ${recipientId} for audio message from ${user.userId}`);
