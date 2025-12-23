@@ -540,7 +540,8 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
                     placeholder="Ajouter une légende..."
-                    className="w-full bg-white/10 text-white placeholder-gray-400 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                    className="w-full bg-gray-800 text-white placeholder-gray-400 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500 text-sm border border-gray-600"
+                    style={{ WebkitTextFillColor: 'white', opacity: 1 }}
                 />
             </div>
 
@@ -604,7 +605,8 @@ const NativeAnnotationEditor: React.FC<NativeAnnotationEditorProps> = ({ file, o
                                 if (e.key === 'Escape') handleTextCancel();
                             }}
                             placeholder="Tapez votre texte ici..."
-                            className="w-full bg-white/10 text-white placeholder-gray-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 text-lg mb-4"
+                            className="w-full bg-gray-800 text-white placeholder-gray-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-emerald-500 text-lg mb-4 border border-gray-600"
+                            style={{ WebkitTextFillColor: 'white', opacity: 1 }}
                             autoFocus
                         />
                         <div className="flex gap-2">

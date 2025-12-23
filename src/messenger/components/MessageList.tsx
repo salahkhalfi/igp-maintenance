@@ -353,27 +353,35 @@ const MessageList: React.FC<MessageListProps> = ({
                                 </>
                             )}
                             {msg.type === 'image' && msg.media_key ? (
-                                <div className="overflow-hidden rounded-xl border border-white/10 relative group/image">
-                                    <img 
-                                        src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} 
-                                        alt="Photo" 
-                                        className="max-h-96 object-cover w-full cursor-pointer hover:scale-105 transition-transform duration-700"
-                                        onClick={() => setViewImage({
-                                            src: `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key!)}`,
-                                            msgId: msg.id,
-                                            canDelete: isMe || isGlobalAdmin,
-                                            mediaKey: msg.media_key!,
-                                            createdAt: msg.created_at
-                                        })}
-                                    />
-                                    {/* Download Button Overlay */}
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onDownload(msg.media_key!, 'image'); }}
-                                        className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white/80 hover:text-white rounded-full backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover/image:opacity-100 shadow-lg border border-white/10 md:hidden"
-                                        title="Télécharger l'image"
-                                    >
-                                        <i className="fas fa-download text-xs"></i>
-                                    </button>
+                                <div className="flex flex-col gap-2">
+                                    <div className="overflow-hidden rounded-xl border border-white/10 relative group/image">
+                                        <img 
+                                            src={`/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key)}`} 
+                                            alt="Photo" 
+                                            className="max-h-96 object-cover w-full cursor-pointer hover:scale-105 transition-transform duration-700"
+                                            onClick={() => setViewImage({
+                                                src: `/api/v2/chat/asset?key=${encodeURIComponent(msg.media_key!)}`,
+                                                msgId: msg.id,
+                                                canDelete: isMe || isGlobalAdmin,
+                                                mediaKey: msg.media_key!,
+                                                createdAt: msg.created_at
+                                            })}
+                                        />
+                                        {/* Download Button Overlay */}
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onDownload(msg.media_key!, 'image'); }}
+                                            className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 hover:bg-black/80 text-white/80 hover:text-white rounded-full backdrop-blur-md flex items-center justify-center transition-all opacity-0 group-hover/image:opacity-100 shadow-lg border border-white/10 md:hidden"
+                                            title="Télécharger l'image"
+                                        >
+                                            <i className="fas fa-download text-xs"></i>
+                                        </button>
+                                    </div>
+                                    {/* Caption below image (if not default placeholder) */}
+                                    {msg.content && msg.content !== '📷 Photo annotée' && msg.content !== '📷 Photo' && (
+                                        <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
+                                            {msg.content}
+                                        </div>
+                                    )}
                                 </div>
                             ) : msg.type === 'audio' && msg.media_key ? (
                                 <div className="flex flex-col gap-2">
