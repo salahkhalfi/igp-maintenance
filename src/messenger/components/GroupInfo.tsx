@@ -98,8 +98,18 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
         }
     };
 
+    // Permission check for adding members
+    const isSupervisor = currentUserRole === 'supervisor';
+    const canAddMembers = isGroupAdmin || isGlobalAdmin || isSupervisor;
+
     const handleAddMember = async (ids: number[]) => {
         if (ids.length === 0) return;
+
+        // Permission check
+        if (!canAddMembers) {
+            alert("Vous n'avez pas la permission d'ajouter des membres à ce groupe.\nSeuls les administrateurs du groupe peuvent ajouter des participants.");
+            return;
+        }
 
         // Blocage pour les non-admins sur les discussions privées
         if (conversationType === 'direct' && currentUserRole !== 'admin') {
@@ -109,7 +119,7 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
 
         try {
             for (const id of ids) {
-                await axios.post(`/api/v2/chat/conversations/${conversationId}/participants`, { userId: id });
+                await axios.post(`/api/v2/chat/conversations/${conversationId}/participants`, { user_id: id });
             }
             alert(conversationType === 'direct' && currentUserRole === 'admin' ? 'Conversation convertie en groupe !' : 'Membres ajoutés avec succès !');
             setShowAddMember(false);
@@ -241,15 +251,18 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
 
                     {/* Actions Principales */}
                     <div className="grid grid-cols-2 gap-4 mb-10">
-                        <button 
-                            onClick={() => setShowAddMember(true)}
-                            className="flex flex-col items-center justify-center p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
-                        >
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-emerald-500 group-hover:text-white transition-colors text-emerald-500">
-                                <i className="fas fa-user-plus"></i>
-                            </div>
-                            <span className="text-xs font-bold text-gray-300 group-hover:text-white uppercase tracking-wide">Ajouter</span>
-                        </button>
+                        {/* Only show Add Member button if user has permission */}
+                        {canAddMembers && (
+                            <button 
+                                onClick={() => setShowAddMember(true)}
+                                className="flex flex-col items-center justify-center p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover:bg-emerald-500 group-hover:text-white transition-colors text-emerald-500">
+                                    <i className="fas fa-user-plus"></i>
+                                </div>
+                                <span className="text-xs font-bold text-gray-300 group-hover:text-white uppercase tracking-wide">Ajouter</span>
+                            </button>
+                        )}
                         
                         {isGroupAdmin && conversationType === 'group' && (
                             <button 

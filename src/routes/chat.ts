@@ -529,14 +529,40 @@ app.delete('/guests/:id', zValidator('param', guestIdParamSchema), async (c) => 
 });
 
 // 9. POST /api/v2/chat/conversations/:id/participants - Add participant to group
-app.post('/conversations/:id/participants', zValidator('param', conversationIdParamSchema), zValidator('json', addParticipantSchema), async (c) => {
+app.post('/conversations/:id/participants', async (c) => {
     const user = c.get('user');
-    const { id: conversationId } = c.req.valid('param');
-    const { user_id: userId } = c.req.valid('json');
+    const conversationId = c.req.param('id');
+    
+    // Parse body manually to accept both userId (frontend) and user_id (schema)
+    const body = await c.req.json().catch(() => ({}));
+    const userId = body.userId || body.user_id;
+    
+    // Validate userId
+    if (!userId || typeof userId !== 'number' || userId <= 0) {
+        // Try parsing if it's a string number
+        const parsedId = parseInt(userId, 10);
+        if (isNaN(parsedId) || parsedId <= 0) {
+            return c.json({ error: 'ID utilisateur invalide' }, 400);
+        }
+    }
+    const targetUserId = typeof userId === 'number' ? userId : parseInt(userId, 10);
 
     // Vérifier si c'est un groupe
     const conv = await c.env.DB.prepare('SELECT type FROM chat_conversations WHERE id = ?').bind(conversationId).first();
     if (!conv) return c.json({ error: 'Conversation introuvable' }, 404);
+
+    // Vérifier les permissions : seuls admin du groupe ou admin global peuvent ajouter
+    const participant = await c.env.DB.prepare(
+        'SELECT role FROM chat_participants WHERE conversation_id = ? AND user_id = ?'
+    ).bind(conversationId, user.userId).first() as { role: string } | null;
+    
+    const isGroupAdmin = participant?.role === 'admin';
+    const isGlobalAdmin = user.role === 'admin';
+    const isSupervisor = user.role === 'supervisor';
+    
+    if (!isGroupAdmin && !isGlobalAdmin && !isSupervisor) {
+        return c.json({ error: 'Vous n\'avez pas la permission d\'ajouter des membres à ce groupe' }, 403);
+    }
 
     if (conv.type !== 'group') {
         // GOD MODE: Admin can convert direct to group
@@ -557,15 +583,15 @@ app.post('/conversations/:id/participants', zValidator('param', conversationIdPa
 
     // Vérifier si déjà dedans
     const existing = await c.env.DB.prepare('SELECT 1 FROM chat_participants WHERE conversation_id = ? AND user_id = ?')
-        .bind(conversationId, userId).first();
+        .bind(conversationId, targetUserId).first();
     
-    if (existing) return c.json({ error: 'Déjà membre' }, 400);
+    if (existing) return c.json({ error: 'Cet utilisateur est déjà membre du groupe' }, 400);
 
     // Ajouter
     await c.env.DB.prepare(`
         INSERT INTO chat_participants (conversation_id, user_id, role) 
         VALUES (?, ?, 'member')
-    `).bind(conversationId, userId).run();
+    `).bind(conversationId, targetUserId).run();
 
     // Message système (facultatif, pour dire "X a ajouté Y")
     const messageId = crypto.randomUUID();
