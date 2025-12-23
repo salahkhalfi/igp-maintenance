@@ -139,32 +139,36 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 
 ---
 
-## ⚠️ MODULE 8: DEAD CODE DELETION PROTOCOL
+## 🔴 MODULE 8: SANCTUARIZED CODE (DO NOT TOUCH)
 
-### [THE HONO TRAP - 2025-12-22]
-```
-⚠️ CRITICAL: In Hono, the FIRST declared route wins (unlike Express where LAST wins).
-   Duplicate routes: The FIRST one is ACTIVE, the second is DEAD CODE.
-   ALWAYS verify which route is actually being called before deleting!
-```
+### [VITAL FUNCTIONS - FORBIDDEN WITHOUT VALIDATION]
+| Function | File | Critical Lines |
+|----------|------|----------------|
+| Voice Ticket | `ai.ts` | L135-400 (transcribe, analyze, route) |
+| Push Notifications | `push.ts` | L197-450 (sendPush, queue) |
+| Expert IA | `ai.ts` | L88-130 (vision), L148-184 (config), L480-700 (context) |
+| Service Worker | `service-worker.js` | ALL |
+| Voice UI | `VoiceTicketFab.js` | ALL |
 
-### [MANDATORY CHECKLIST BEFORE DELETING "DEAD CODE"]
-1. **GREP GLOBALLY**: Search entire project (`src/`, `public/`, `dist/`)
-2. **CHECK FRAMEWORK BEHAVIOR**: Hono = first wins, Express = last wins
-3. **VERIFY RUNTIME**: Test the actual endpoint in browser/curl
-4. **DOCUMENT BEFORE DELETE**: Write what you're deleting and why
-5. **PROPOSE, DON'T ACT**: Present findings to user, wait for approval
-6. **KEEP GIT CLEAN**: Small commits, easy to revert
+### [DANGEROUS ACTIONS - HIGH RISK]
+| Action | Risk | Reason |
+|--------|------|--------|
+| Rate limit `/api/ai/*` | 🔴 CRITICAL | Breaks Voice Ticket |
+| Rate limit `/api/v2/chat` | 🔴 CRITICAL | Breaks Messenger polling |
+| Modify R2 paths | 🔴 CRITICAL | Breaks all images |
+| Pagination in `ai.ts` | 🟠 HIGH | Expert IA loses context |
 
-### [LESSON LEARNED]
+### [MANDATORY TESTS AFTER ANY CHANGE]
+1. **Voice**: Record → Analyze → Pre-fill modal
+2. **Push**: Create ticket → Receive notification with sound
+3. **Expert IA**: Send message → Get contextual response
+
+### [HONO TRAP]
 ```
-2025-12-22: Deleted "duplicate" routes in settings.ts (lines 925-1076).
-ASSUMPTION: Second route was active (like Express).
-REALITY: First route was active (Hono behavior).
-OUTCOME: Fortunately, second route was BETTER (fixed password bug).
-LESSON: Always test actual behavior, don't assume based on other frameworks.
+⚠️ In Hono, FIRST declared route wins (unlike Express where LAST wins).
+   Duplicate routes: First = ACTIVE, Second = DEAD CODE.
 ```
 
 ---
 
-## 🏁 END OF KERNEL (v6.1 - 170 lines)
+## 🏁 END OF KERNEL (v6.2 - 196 lines)
