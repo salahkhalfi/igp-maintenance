@@ -5,8 +5,8 @@ import { SoundManager } from '../sound';
 import ImageViewer from './ImageViewer';
 import GroupInfo from './GroupInfo';
 
-// Lazy load heavy AnnotationEditor (Konva) to optimize initial bundle size
-const AnnotationEditor = React.lazy(() => import('../AnnotationEditor'));
+// Lazy load Native Annotation Editor (zero dependencies, replaces Konva)
+const AnnotationEditor = React.lazy(() => import('../NativeAnnotationEditor'));
 
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
@@ -684,7 +684,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 setInput={setInput}
                 onSendText={sendMessage}
                 onSendAudio={sendAudio}
-                onFileSelect={(file) => handleNewEditorSend(file, '')}
+                onFileSelect={(file) => setPreviewFile(file)}
                 isSending={isSending}
                 onTicketDetected={handleTicketDetected}
                 textareaRef={textareaRef}
