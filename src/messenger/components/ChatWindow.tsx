@@ -676,9 +676,10 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                         const uploadData = await uploadRes.json();
                                         if (!uploadRes.ok) throw new Error(uploadData.error);
                                         // Redirect to ticket creation with image
+                                        // Use the correct asset URL format for chat uploads
                                         const params = new URLSearchParams();
                                         params.set('createTicket', 'true');
-                                        params.set('imageUrl', `/api/media/${uploadData.key}`);
+                                        params.set('imageUrl', `/api/v2/chat/asset?key=${encodeURIComponent(uploadData.key)}`);
                                         window.open('/?' + params.toString(), '_blank');
                                     } catch (err: any) {
                                         alert(`Erreur upload: ${err.message}`);
