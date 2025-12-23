@@ -24,7 +24,7 @@ export const guestIdParamSchema = z.object({
 // Création de conversation
 export const createConversationSchema = z.object({
   name: z.string().max(100, "Nom trop long").optional(),
-  type: z.enum(['private', 'group']).default('private'),
+  type: z.enum(['direct', 'private', 'group']).default('direct'),
   participant_ids: z.array(z.number().int().positive()).optional()
 });
 
