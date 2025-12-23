@@ -670,65 +670,7 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
   }
 }
 
-/**
- * POST /api/push/test
- * Route de test pour envoyer une notification push manuelle à l'utilisateur connecté
- * Utile pour diagnostiquer les problèmes de notifications
- */
-push.post('/test', async (c) => {
-  try {
-    const user = c.get('user') as any;
-    if (!user || !user.userId) {
-      return c.json({ error: 'Non authentifié' }, 401);
-    }
-
-    console.log(`[PUSH-TEST] Testing push notification for user ${user.userId} (${user.email})`);
-
-    const result = await sendPushNotification(c.env, user.userId, {
-      title: '🧪 Test de notification',
-      body: `Test envoyé à ${new Date().toLocaleTimeString('fr-FR')}`,
-      icon: '/icon-192.png',
-      badge: '/badge-72.png',
-      data: {
-        url: '/',
-        action: 'test',
-        timestamp: Date.now()
-      }
-    });
-
-    // Logger le résultat
-    await c.env.DB.prepare(`
-      INSERT INTO push_logs (user_id, ticket_id, status, error_message)
-      VALUES (?, ?, ?, ?)
-    `).bind(
-      user.userId,
-      null,
-      result.success ? 'success' : 'failed',
-      result.success ? null : JSON.stringify(result)
-    ).run();
-
-    if (result.success) {
-      return c.json({ 
-        success: true, 
-        message: 'Notification de test envoyée avec succès',
-        details: result
-      });
-    } else {
-      return c.json({ 
-        success: false, 
-        message: 'Échec de l\'envoi de la notification de test',
-        details: result
-      }, 500);
-    }
-
-  } catch (error) {
-    console.error('[PUSH-TEST] Error:', error);
-    return c.json({ 
-      error: 'Erreur lors de l\'envoi de la notification de test',
-      details: error instanceof Error ? error.message : String(error)
-    }, 500);
-  }
-});
+// NOTE: Route /test déjà déclarée L484-518 - cette version dupliquée supprimée le 2025-12-23
 
 /**
  * GET /api/push/diagnose/:query
