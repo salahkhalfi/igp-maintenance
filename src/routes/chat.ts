@@ -578,15 +578,20 @@ app.post('/conversations/:id/participants', zValidator('param', conversationIdPa
 });
 
 // 3. POST /api/v2/chat/send - Send a message
-app.post('/send', zValidator('json', sendMessageSchema), async (c) => {
+app.post('/send', async (c) => {
     const user = c.get('user');
-    const validated = c.req.valid('json');
-    let conversationId = validated.conversation_id;
-    let content = validated.content;
-    const type = validated.type || 'text';
-    // Additional fields from raw body (not in schema - optional media fields)
+    // Parse body once (zValidator consumes stream, so we parse manually)
     const rawBody = await c.req.json().catch(() => ({}));
-    const { mediaKey, mediaMeta, isCall, transcription } = rawBody;
+    
+    // Manual validation of required fields
+    let conversationId = rawBody.conversation_id;
+    if (!conversationId || typeof conversationId !== 'string') {
+        return c.json({ error: 'ID conversation requis' }, 400);
+    }
+    
+    let content = rawBody.content;
+    const type = rawBody.type || 'text';
+    const { mediaKey, mediaMeta, isCall, transcription, reply_to } = rawBody;
     const messageId = crypto.randomUUID();
 
     try {
