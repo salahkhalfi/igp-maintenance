@@ -10,7 +10,7 @@
 *   **READ BEFORE WRITE**: Always `READ` -> `GREP` before any `EDIT`. No blind coding.
 *   **SCOPE ISOLATION**: Do not break the app to fix a typo. Revert > Reset.
 *   **ALIGNMENT**: Build a **Generic SaaS** (White Label). IGP is just the first tenant.
-*   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 200 lines.
+*   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 300 lines (compress if exceeded).
 *   **CHESTERTON'S FENCE**: Never delete code you don't fully understand.
 
 ---
