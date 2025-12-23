@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerte - MaintenanceOS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 20px;
+        }
+        .alert-container {
+            text-align: center;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        .alert-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .alert-icon.critical { color: #ef4444; }
+        .alert-icon.normal { color: #f59e0b; }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        .btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .btn:hover {
+            background: #059669;
+            transform: scale(1.05);
+        }
+        .auto-close {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-container">
+        <div class="alert-icon" id="icon">🔔</div>
+        <h1 id="title">Nouvelle notification</h1>
+        <p id="message">Cliquez pour ouvrir l'application</p>
+        <button class="btn" onclick="openApp()">Ouvrir l'application</button>
+        <div class="auto-close" id="countdown"></div>
+    </div>
+
+    <!-- Audio elements preloaded -->
+    <audio id="sound-normal" preload="auto">
+        <source src="/static/notification.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="sound-critical" preload="auto" loop>
+        <source src="/static/notification.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const priority = params.get('priority') || 'normal';
+        const autoclose = params.get('autoclose') === 'true';
+        
+        const icon = document.getElementById('icon');
+        const title = document.getElementById('title');
+        const countdown = document.getElementById('countdown');
+        
+        // Set UI based on priority
+        if (priority === 'critical') {
+            icon.textContent = '🚨';
+            icon.className = 'alert-icon critical';
+            title.textContent = 'ALERTE CRITIQUE';
+            document.body.style.background = 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%)';
+        } else {
+            icon.textContent = '🔔';
+            icon.className = 'alert-icon normal';
+            title.textContent = 'Nouvelle notification';
+        }
+        
+        // Play sound immediately
+        function playSound() {
+            const audio = priority === 'critical' 
+                ? document.getElementById('sound-critical')
+                : document.getElementById('sound-normal');
+            
+            audio.volume = 1.0;
+            audio.play().then(() => {
+                console.log('Sound played successfully');
+            }).catch(e => {
+                console.warn('Sound play failed:', e);
+                // On some browsers, we need user interaction first
+                document.body.addEventListener('click', () => {
+                    audio.play();
+                }, { once: true });
+            });
+            
+            // For critical: repeat sound 3 times
+            if (priority === 'critical') {
+                let playCount = 0;
+                audio.addEventListener('ended', function repeat() {
+                    playCount++;
+                    if (playCount < 3) {
+                        audio.play();
+                    } else {
+                        audio.removeEventListener('ended', repeat);
+                    }
+                });
+            }
+        }
+        
+        // Also vibrate if supported
+        function vibrate() {
+            if ('vibrate' in navigator) {
+                if (priority === 'critical') {
+                    navigator.vibrate([800, 200, 800, 200, 800, 400, 300, 100, 300]);
+                } else {
+                    navigator.vibrate([400, 150, 400]);
+                }
+            }
+        }
+        
+        // Open main app
+        function openApp() {
+            // Stop any playing audio
+            document.getElementById('sound-critical').pause();
+            document.getElementById('sound-normal').pause();
+            
+            // Go to main app
+            window.location.href = '/';
+        }
+        
+        // Auto-close countdown
+        let secondsLeft = priority === 'critical' ? 15 : 8;
+        
+        function updateCountdown() {
+            if (autoclose && secondsLeft > 0) {
+                countdown.textContent = `Fermeture automatique dans ${secondsLeft}s`;
+                secondsLeft--;
+                setTimeout(updateCountdown, 1000);
+            } else if (autoclose && secondsLeft <= 0) {
+                window.close();
+                // Fallback if window.close() doesn't work
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 500);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            playSound();
+            vibrate();
+            if (autoclose) {
+                updateCountdown();
+            }
+        });
+        
+        // Also try to play on any user interaction (for browsers that block autoplay)
+        document.body.addEventListener('touchstart', playSound, { once: true });
+        document.body.addEventListener('click', playSound, { once: true });
+    </script>
+</body>
+</html>

@@ -277,7 +277,8 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
                   ticketId: newTicket.id,
                   ticket_id: ticket_id,
                   action: 'view_ticket',
-                  url: `/?ticket=${newTicket.id}` 
+                  url: `/?ticket=${newTicket.id}`,
+                  priority: priority // INDUSTRIAL: Pass priority for enhanced sound/vibration
                 }
               });
 
@@ -487,7 +488,8 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
               ticketId: id,
               ticket_id: currentTicket.ticket_id,
               action: 'view_ticket',
-              url: `/?ticket=${id}` 
+              url: `/?ticket=${id}`,
+              priority: currentTicket.priority // INDUSTRIAL: Pass priority
             }
           });
         } catch (e) { console.error(e); }
@@ -508,7 +510,8 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
             ticketId: id,
             ticket_id: currentTicket.ticket_id,
             action: 'view_ticket',
-            url: `/?ticket=${id}` 
+            url: `/?ticket=${id}`,
+            priority: currentTicket.priority // INDUSTRIAL: Pass priority
           }
         });
 
@@ -550,7 +553,8 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
             ticketId: id,
             ticket_id: currentTicket.ticket_id,
             action: 'view_ticket',
-            url: `/?ticket=${id}` 
+            url: `/?ticket=${id}`,
+            priority: currentTicket.priority // INDUSTRIAL: Pass priority 
           }
         });
       } catch (e) { console.error(e); }

@@ -305,33 +305,58 @@ if ('serviceWorker' in navigator) {
         if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
             console.log('🔊 [SW-MSG] Demande de son reçue du Service Worker');
             
-            // Tenter de jouer le son via un Audio global
-            try {
-                const audio = new Audio('/static/notification.mp3');
-                audio.volume = 1.0;
-                audio.play().catch(e => {
-                    if (e.name === 'NotAllowedError') {
-                        console.warn('🔇 [SW-MSG] Son bloqué par le navigateur (Autoplay policy). Attente d\'interaction utilisateur.');
-                    } else {
-                        console.warn('⚠️ [SW-MSG] Erreur lecture audio:', e);
-                    }
-                });
-                
-                // Si c'est un appel, vibrer aussi via JS
-                if ('vibrate' in navigator) {
-                    try {
-                        if (event.data.isCall) {
-                            navigator.vibrate([500, 200, 500, 200, 500]);
+            const isCall = event.data.isCall;
+            const isCritical = event.data.isCritical;
+            
+            // INDUSTRIAL MODE: Play sound multiple times for critical alerts
+            const playCount = isCall ? 5 : (isCritical ? 3 : 1);
+            let currentPlay = 0;
+            
+            function playNotificationSound() {
+                try {
+                    const audio = new Audio('/static/notification.mp3');
+                    audio.volume = 1.0;
+                    
+                    audio.play().then(() => {
+                        console.log(`🔊 Son joué (${currentPlay + 1}/${playCount})`);
+                    }).catch(e => {
+                        if (e.name === 'NotAllowedError') {
+                            console.warn('🔇 [SW-MSG] Son bloqué par le navigateur (Autoplay policy). Attente d\'interaction utilisateur.');
                         } else {
-                            // Notification standard : Vibrer aussi (Demande utilisateur)
-                            navigator.vibrate([200, 100, 200]);
+                            console.warn('⚠️ [SW-MSG] Erreur lecture audio:', e);
                         }
-                    } catch (vibrateErr) {
-                         // Ignorer silencieusement les erreurs de vibration (souvent bloquées aussi)
-                    }
+                    });
+                    
+                    // Repeat sound for critical alerts
+                    audio.addEventListener('ended', () => {
+                        currentPlay++;
+                        if (currentPlay < playCount) {
+                            setTimeout(playNotificationSound, 300); // 300ms pause between sounds
+                        }
+                    });
+                } catch (e) {
+                    console.error(e);
                 }
-            } catch (e) {
-                console.error(e);
+            }
+            
+            playNotificationSound();
+            
+            // INDUSTRIAL VIBRATION: Stronger patterns for noisy environments
+            if ('vibrate' in navigator) {
+                try {
+                    if (isCall) {
+                        // Appel: vibration très forte et répétée
+                        navigator.vibrate([500, 200, 500, 200, 500, 200, 500, 200, 500]);
+                    } else if (isCritical) {
+                        // Critique: vibration insistante
+                        navigator.vibrate([800, 200, 800, 200, 800, 400, 300, 100, 300]);
+                    } else {
+                        // Standard: vibration modérée
+                        navigator.vibrate([400, 150, 400, 150, 400]);
+                    }
+                } catch (vibrateErr) {
+                    // Ignorer silencieusement les erreurs de vibration
+                }
             }
         }
     });

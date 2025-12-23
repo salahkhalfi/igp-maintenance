@@ -11,7 +11,7 @@
  * Version: v3.1.6 (Online First - NO OFFLINE MODE)
  */
 
-const CACHE_VERSION = 'v3.1.7-clean-assets';
+const CACHE_VERSION = 'v3.1.8-industrial-sound';
 const CACHE_NAME = `maintenance-os-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)
@@ -214,13 +214,32 @@ self.addEventListener('push', (event) => {
   }
   
   const isCall = data.data?.isCall === true;
+  const isCritical = data.data?.priority === 'critical' || data.data?.priority === 'high';
+  const isTicket = data.data?.ticketId || data.data?.ticket_id;
+
+  // INDUSTRIAL MODE: Stronger vibration patterns for noisy environments
+  // Format: [vibrate, pause, vibrate, pause, ...] in milliseconds
+  let vibratePattern;
+  if (isCall) {
+    // Appel: vibration longue et répétée (5 cycles)
+    vibratePattern = [500, 200, 500, 200, 500, 200, 500, 200, 500];
+  } else if (isCritical && isTicket) {
+    // Ticket CRITIQUE: vibration très forte et insistante (attention urgente)
+    vibratePattern = [800, 200, 800, 200, 800, 400, 300, 100, 300, 100, 300];
+  } else if (isTicket) {
+    // Ticket normal: vibration modérée mais notable
+    vibratePattern = [400, 150, 400, 150, 400];
+  } else {
+    // Message standard: vibration légère
+    vibratePattern = [200, 100, 200];
+  }
 
   const options = {
     body: data.body,
     icon: data.icon || '/icon-192.png',
     badge: data.badge || '/icon-192.png',
     data: data.data || {},
-    vibrate: isCall ? [500, 200, 500, 200, 500] : [200, 100, 200],
+    vibrate: vibratePattern,
     tag: isCall 
       ? `call-${Date.now()}`
       : data.data?.conversationId // Use conversation ID to group messages correctly (prevent stacking issues)
@@ -231,22 +250,43 @@ self.addEventListener('push', (event) => {
     sound: '/static/notification.mp3', // Note: Only works on some browsers/Android versions
     timestamp: Date.now(), 
     priority: 2, 
-    requireInteraction: isCall, 
+    requireInteraction: isCall || isCritical, // Keep critical notifications visible until acknowledged
     actions: data.actions || []
   };
   
   event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(data.title, options),
-      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-          clients.forEach(client => {
-              client.postMessage({
-                  type: 'PLAY_NOTIFICATION_SOUND',
-                  isCall: isCall
-              });
+    (async () => {
+      // 1. Show the notification
+      await self.registration.showNotification(data.title, options);
+      
+      // 2. Try to play sound via existing clients
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      
+      if (clients.length > 0) {
+        // App is open - send message to play sound
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'PLAY_NOTIFICATION_SOUND',
+            isCall: isCall,
+            isCritical: isCritical
           });
-      })
-    ])
+        });
+      } else {
+        // APP IS CLOSED - Try to open a minimal window to play sound (experimental)
+        // This works on some browsers when the PWA is installed
+        console.log('[SW] No clients found, attempting sound wake-up...');
+        try {
+          // Open a minimal sound player page that auto-closes
+          // Only for critical/high priority to avoid spam
+          if (isCritical || isCall) {
+            const soundUrl = `/sound-player.html?priority=${isCritical ? 'critical' : 'normal'}&autoclose=true`;
+            await self.clients.openWindow(soundUrl);
+          }
+        } catch (e) {
+          console.log('[SW] Could not open sound window:', e.message);
+        }
+      }
+    })()
   );
 });
 
