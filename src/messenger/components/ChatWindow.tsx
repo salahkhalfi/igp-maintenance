@@ -9,6 +9,10 @@ import { getErrorMessage } from '../utils/errors';
 // Lazy load Native Annotation Editor (zero dependencies, replaces Konva)
 const AnnotationEditor = React.lazy(() => import('../NativeAnnotationEditor'));
 
+import ChatHeader from './ChatHeader';
+import MessageList from './MessageList';
+import MessageInput from './MessageInput';
+
 const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo, initialMessage, onMessageConsumed }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void, initialMessage?: string, onMessageConsumed?: () => void }) => {
     // --- STATE ---
     const [messages, setMessages] = useState<Message[]>([]);
