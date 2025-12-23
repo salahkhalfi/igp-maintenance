@@ -33,7 +33,7 @@
 ### [DATA & TIME]
 *   **UTC STORAGE**: Storage = UTC. Display = User Local (`timezone_offset`).
 *   **TRUST NO INPUT**: Validate EVERYTHING. Verify JWTs against DB.
-*   **SOFT DELETE**: Use `deleted_at` timestamp. NEVER `DELETE FROM`.
+*   **SOFT DELETE**: Use `deleted_at` timestamp. NEVER `DELETE FROM`. Every SELECT MUST filter `deleted_at IS NULL`.
 *   **SQL SAFETY**: Use `COALESCE` for NULLs. Prepared statements only.
 
 ### [UX]
@@ -59,7 +59,11 @@
 
 ### [WORKFLOW]
 ```bash
+# 1. READ CONFIG FIRST - Get project name from wrangler.jsonc
+cd /home/user/webapp && grep '"name"' wrangler.jsonc
+# 2. Build
 cd /home/user/webapp && npm run build
+# 3. Deploy with CORRECT project name
 cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 ```
 
