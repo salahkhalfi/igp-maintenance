@@ -836,6 +836,22 @@ Input: "${originalText}"`;
                 // On évite de spammer l'utilisateur quand l'IA "répond" ou qu'un audio est traité
                 if (conversationId === 'expert_ai') return;
 
+                // 🛡️ ANTI-SPAM: Throttle appels (isCall) - max 1 appel / 2 min par conversation
+                if (isCall) {
+                    const recentCall = await c.env.DB.prepare(`
+                        SELECT id FROM push_logs 
+                        WHERE status = 'call_sent'
+                          AND error_message LIKE ?
+                          AND datetime(created_at) >= datetime('now', '-2 minutes')
+                        LIMIT 1
+                    `).bind(`%"conversationId":"${conversationId}"%`).first();
+                    
+                    if (recentCall) {
+                        console.log(`⏭️ Call throttled: conversation ${conversationId} (2 min cooldown)`);
+                        return; // Skip all call notifications
+                    }
+                }
+
                 // Fetch Base URL (using ConfigService pattern - no hardcoded fallback)
                 const baseSetting = await c.env.DB.prepare('SELECT setting_value FROM system_settings WHERE setting_key = ?').bind('app_base_url').first<{setting_value: string}>();
                 const baseUrl = baseSetting?.setting_value || 'https://example.com';
@@ -883,6 +899,19 @@ Input: "${originalText}"`;
                     }
 
                     await sendPushNotification(c.env, (p as any).user_id as number, payload);
+                }
+                
+                // 🛡️ Log call for throttle (only once per call, not per participant)
+                if (isCall) {
+                    await c.env.DB.prepare(`
+                        INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+                        VALUES (?, NULL, 'call_sent', ?)
+                    `).bind(user.userId, JSON.stringify({ 
+                        conversationId: conversationId, 
+                        type: 'group_call',
+                        participantCount: participants.length 
+                    })).run();
+                    console.log(`📞 Call sent to ${participants.length} participants in ${conversationId}`);
                 }
             } catch (err) {
                 console.error("Push chat error", err);
