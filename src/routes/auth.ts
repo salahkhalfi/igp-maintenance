@@ -301,11 +301,11 @@ auth.post('/login', strictRateLimit, zValidator('json', loginSchema), async (c) 
     const { email, password, rememberMe } = c.req.valid('json');
     const db = getDb(c.env);
 
-    // Récupérer l'utilisateur (Standard User)
+    // Récupérer l'utilisateur (Standard User) - exclure les soft-deleted
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.email, email))
+      .where(sql`${users.email} = ${email} AND ${users.deleted_at} IS NULL`)
       .get();
 
     // 1. Try Standard User
@@ -503,7 +503,7 @@ auth.get('/me', async (c) => {
         can_create_admins: users.can_create_admins
       })
       .from(users)
-      .where(eq(users.id, userPayload.userId))
+      .where(sql`${users.id} = ${userPayload.userId} AND ${users.deleted_at} IS NULL`)
       .get();
 
     if (!user) {
