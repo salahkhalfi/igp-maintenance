@@ -36,8 +36,8 @@ const processMarkdown = (content: string) => {
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
                             let validUrl = url.trim();
-                            validUrl = validUrl.replace(/igpglass\.com/g, 'igpglass.ca');
-                            const isInternal = validUrl.includes('app.igpglass.ca') || validUrl.startsWith('/');
+                            // Check if URL is internal (same origin or relative path)
+                            const isInternal = validUrl.startsWith('/') || validUrl.includes(window.location.hostname);
                             const target = isInternal ? '_self' : '_blank';
                             return `<a href="${validUrl}" target="${target}" class="text-blue-600 underline">${text}</a>`;
                         });
@@ -77,10 +77,9 @@ const processMarkdown = (content: string) => {
             let validUrl = url.trim();
             // Fix AI hallucination of absolute 'api' domain (handles any domain prefix for internal api routes)
             validUrl = validUrl.replace(/^https?:\/\/(?:www\.)?[\w.-]+\/api\//, '/api/');
-            // Fix .com hallucination
-            validUrl = validUrl.replace(/igpglass\.com/g, 'igpglass.ca');
             
-            const isInternal = validUrl.includes('app.igpglass.ca') || validUrl.startsWith('/');
+            // Check if URL is internal (same origin or relative path)
+            const isInternal = validUrl.startsWith('/') || validUrl.includes(window.location.hostname);
             const target = isInternal ? '_self' : '_blank';
             
             return `<a href="${validUrl}" target="${target}" class="text-blue-600 hover:underline font-medium">${text}</a>`;

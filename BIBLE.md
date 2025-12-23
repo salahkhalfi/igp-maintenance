@@ -43,6 +43,24 @@
 *   **NO DEAD CODE**: Commented code = Deleted code.
 *   **EXPLICIT NAMES**: Human-readable variable names.
 
+### [🚨 HARDCODING FORBIDDEN - AUTO-BLOCKED BY PRE-COMMIT]
+```
+FORBIDDEN PATTERNS (pre-commit hook blocks these):
+❌ app.igpglass.ca    → Use window.location.hostname or getDomainFromRequest()
+❌ igpglass.com       → Use window.location.origin
+❌ IGP Glass          → Use window.APP_COMPANY_NAME or system_settings
+❌ admin@igpglass.*   → Use system_settings support_email
+❌ sk-*, AKIA*        → NEVER commit API keys
+
+✅ CORRECT APPROACH:
+- Backend: import { getDomainFromRequest, getBrandingFromDB } from 'src/config/branding'
+- Frontend: window.location.hostname, window.APP_COMPANY_NAME
+- Both: system_settings table for tenant-specific values
+
+🔧 Script: ./scripts/check-hardcoding.sh
+🔧 Config: src/config/branding.ts
+```
+
 ### [TOKEN OPTIMIZATION]
 *   **NO RE-READ**: Never re-read a file already read in same session.
 *   **NO UNSOLICITED EXPLANATIONS**: Don't explain unless asked "pourquoi?" or "explique".

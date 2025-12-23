@@ -1,4 +1,9 @@
-export const homeHTML = `
+/**
+ * Generate home HTML with dynamic baseUrl for SEO meta tags
+ * @param baseUrl - The base URL of the app (e.g., https://app.example.com)
+ */
+export function generateHomeHTML(baseUrl: string = ''): string {
+  return `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -23,17 +28,17 @@ export const homeHTML = `
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://app.igpglass.ca/">
+    <meta property="og:url" content="${baseUrl}/">
     <meta property="og:title" content="MaintenanceOS - Gestion de Maintenance Industrielle">
     <meta property="og:description" content="Système complet de gestion de maintenance pour l'industrie. Tickets, machines, planification et IA intégrée.">
-    <meta property="og:image" content="https://app.igpglass.ca/static/og-image.png">
+    <meta property="og:image" content="${baseUrl}/static/og-image.png">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://app.igpglass.ca/">
+    <meta property="twitter:url" content="${baseUrl}/">
     <meta property="twitter:title" content="MaintenanceOS - Gestion de Maintenance Industrielle">
     <meta property="twitter:description" content="Système complet de gestion de maintenance pour l'industrie.">
-    <meta property="twitter:image" content="https://app.igpglass.ca/static/og-image.png">
+    <meta property="twitter:image" content="${baseUrl}/static/og-image.png">
     
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://api.openai.com" crossorigin>
@@ -869,3 +874,7 @@ export const homeHTML = `
 </body>
 </html>
 `;
+}
+
+// Legacy export for backward compatibility (uses empty baseUrl)
+export const homeHTML = generateHomeHTML('');

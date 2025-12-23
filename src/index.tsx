@@ -53,7 +53,7 @@ import { adminAiSettingsHTML } from './views/admin-ai-settings';
 import { generateGuideHTML } from './views/guide';
 import { createConfigService } from './services/config';
 import { changelogHTML } from './views/changelog';
-import { homeHTML } from './views/home';
+import { generateHomeHTML } from './views/home';
 import { historiqueHTML } from './views/historique';
 import { tvHTML } from './views/tv';
 import { tvAdminHTML } from './views/tv-admin';
@@ -358,12 +358,16 @@ app.use('/static/*', serveStatic({ root: './' }));
 // Servir les fichiers HTML statiques à la racine (guide.html, etc.)
 app.use('/*.html', serveStatic({ root: './' }));
 
-app.get("/", (c) => {
+app.get("/", async (c) => {
   // Force no-cache pour la page principale (assure que les mises à jour sont visibles)
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   c.header('Pragma', 'no-cache');
   c.header('Expires', '0');
-  return c.html(homeHTML);
+  
+  // Dynamic baseUrl for SEO meta tags (multi-tenant ready)
+  const config = createConfigService(c.env.DB);
+  const baseUrl = await config.getBaseUrl();
+  return c.html(generateHomeHTML(baseUrl));
 });
 
 

@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run hardcoding check on staged files
+./scripts/check-hardcoding.sh --staged

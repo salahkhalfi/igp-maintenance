@@ -433,7 +433,7 @@ const ProductionPlanning = ({ onClose }) => {
                     React.createElement('span', { className: 'truncate' }, 'Planning & Production')
                 ),
                 React.createElement('div', { className: 'flex items-center gap-2 text-xs text-slate-500 mt-1' },
-                    React.createElement('span', null, 'IGP Glass'),
+                    React.createElement('span', null, window.APP_COMPANY_NAME || 'Entreprise'),
                     React.createElement('i', { className: 'fas fa-circle text-[4px] text-slate-300' }),
                     React.createElement('span', null, 'Vue Directeur')
                 )

@@ -93,7 +93,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 // Old localStorage entries may lack this field, causing formatting loss
                 sender_avatar_key: msg.sender_id === 0 ? 'ai_avatar' : msg.sender_avatar_key,
                 content: msg.content
-                    .replace(/https?:\/\/(?:www\.)?(?:igpglass\.com|example\.com)/gi, 'https://app.igpglass.ca')
+                    // Fix AI hallucinated domains - redirect to current origin
+                    .replace(/https?:\/\/(?:www\.)?(?:example\.com)/gi, window.location.origin)
                     .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1')
             }));
 

@@ -164,7 +164,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
             // Vérifier si l'utilisateur actuel est SUPERADMIN (vendeur SaaS)
             // IMPORTANT: isSuperAdmin vient de la DB (is_super_admin = 1)
             // Seul le vendeur (salah@khalfi.com) a accès aux paramètres système critiques
-            // Les admins client (admin@igpglass.ca) n'ont PAS accès à ces sections
+            // Les admins client (support@maintenance-app.com) n'ont PAS accès à ces sections
             if (currentUser && currentUser.isSuperAdmin === true) {
                 setIsSuperAdmin(true);
             } else {
