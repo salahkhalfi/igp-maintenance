@@ -24,27 +24,33 @@ stats.get('/active-tickets', async (c) => {
     }
 
     // Count active tickets (not completed, not cancelled, not archived)
+    // AUDIT FIX: Exclure les tickets soft-deleted
     const activeResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM tickets
       WHERE status NOT IN ('completed', 'cancelled', 'archived')
+        AND deleted_at IS NULL
     `).first();
 
     // Count overdue tickets (scheduled_date in the past)
+    // AUDIT FIX: Exclure les tickets soft-deleted
     const overdueResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM tickets
       WHERE status NOT IN ('completed', 'cancelled', 'archived')
+        AND deleted_at IS NULL
         AND scheduled_date IS NOT NULL
         AND datetime(scheduled_date) < datetime('now')
     `).first();
 
     // Count active technicians (only real technicians, exclude system team account)
+    // AUDIT FIX: Exclure les utilisateurs soft-deleted
     const techniciansResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM users
       WHERE role = 'technician'
         AND id != 0
+        AND deleted_at IS NULL
     `).first();
 
     // Count registered push notification devices
@@ -91,6 +97,7 @@ stats.get('/technicians-performance', async (c) => {
         AND t.completed_at >= datetime('now', '-30 days')
       WHERE u.role = 'technician' 
         AND u.id != 0
+        AND u.deleted_at IS NULL
       GROUP BY u.id
       ORDER BY completed_count DESC
       LIMIT 3

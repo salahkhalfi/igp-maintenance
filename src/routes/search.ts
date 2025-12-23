@@ -85,6 +85,7 @@ search.get('/', authMiddleware, async (c) => {
         LEFT JOIN users u2 ON t.assigned_to = u2.id
         WHERE 
           t.status != 'archived' AND
+          t.deleted_at IS NULL AND
           EXISTS (SELECT 1 FROM ticket_comments tc WHERE tc.ticket_id = t.id)
         ORDER BY t.created_at DESC
         LIMIT 50
@@ -105,6 +106,7 @@ search.get('/', authMiddleware, async (c) => {
         LEFT JOIN users u2 ON t.assigned_to = u2.id
         WHERE 
           t.status NOT IN ('completed', 'cancelled', 'archived') AND
+          t.deleted_at IS NULL AND
           t.scheduled_date IS NOT NULL AND
           t.scheduled_date != 'null' AND
           t.scheduled_date < datetime('now')
@@ -125,7 +127,7 @@ search.get('/', authMiddleware, async (c) => {
         LEFT JOIN machines m ON t.machine_id = m.id
         LEFT JOIN users u1 ON t.reported_by = u1.id
         LEFT JOIN users u2 ON t.assigned_to = u2.id
-        WHERE t.status != 'archived'
+        WHERE t.status != 'archived' AND t.deleted_at IS NULL
       `;
       
       params = [];
@@ -156,7 +158,8 @@ search.get('/', authMiddleware, async (c) => {
         LEFT JOIN users u2 ON t.assigned_to = u2.id
         LEFT JOIN ticket_comments c ON t.id = c.ticket_id
         WHERE 
-          t.status != 'archived' AND (
+          t.status != 'archived' AND
+          t.deleted_at IS NULL AND (
             t.ticket_id LIKE ? OR
             t.title LIKE ? OR
             t.description LIKE ? OR
@@ -203,7 +206,8 @@ search.get('/', authMiddleware, async (c) => {
         LEFT JOIN users u2 ON t.assigned_to = u2.id
         LEFT JOIN ticket_comments c ON t.id = c.ticket_id
         WHERE 
-          t.status != 'archived' AND (
+          t.status != 'archived' AND
+          t.deleted_at IS NULL AND (
             t.ticket_id LIKE ? OR
             t.title LIKE ? OR
             t.description LIKE ? OR
