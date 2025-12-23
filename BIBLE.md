@@ -74,8 +74,11 @@ FORBIDDEN PATTERNS (pre-commit hook blocks these):
 
 ### [⚠️ SANDBOX PROTECTION - CRITICAL]
 ```
-🚨 NEVER deploy from sandbox - CPU/RAM spike (80%) risks session freeze.
-   USE GITHUB ACTIONS ONLY for production deployments.
+🚨 SANDBOX RAM LIMITED - NO FULL BUILDS ALLOWED
+   ❌ npm run build (crashes sandbox)
+   ❌ npm run build:worker/client/messenger (crashes sandbox)
+   ✅ npx tsc --noEmit (lightweight type check only)
+   ✅ git push origin main (GitHub Actions builds for us)
 ```
 
 ### [GITHUB ACTIONS - MANDATORY]
