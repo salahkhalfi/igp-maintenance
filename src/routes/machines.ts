@@ -23,10 +23,11 @@ machinesRoute.get('/', zValidator('query', getMachinesQuerySchema), async (c) =>
       conditions.push(eq(machines.status, status));
     }
 
+    // AUDIT FIX: Exclure les machines soft-deleted
     const results = await db
       .select()
       .from(machines)
-      .where(and(...conditions))
+      .where(and(...conditions, sql`${machines.deleted_at} IS NULL`))
       .orderBy(machines.location, machines.machine_type);
 
     return c.json({ machines: results });
@@ -43,10 +44,11 @@ machinesRoute.get('/:id', zValidator('param', machineIdParamSchema), async (c) =
     
     const db = getDb(c.env);
 
+    // AUDIT FIX: Exclure les machines soft-deleted
     const machine = await db
       .select()
       .from(machines)
-      .where(eq(machines.id, id))
+      .where(and(eq(machines.id, id), sql`${machines.deleted_at} IS NULL`))
       .get();
 
     if (!machine) {
