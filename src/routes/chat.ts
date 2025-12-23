@@ -583,8 +583,8 @@ app.post('/send', async (c) => {
     // Parse body once (zValidator consumes stream, so we parse manually)
     const rawBody = await c.req.json().catch(() => ({}));
     
-    // Manual validation of required fields
-    let conversationId = rawBody.conversation_id;
+    // Manual validation - accept both camelCase (frontend) and snake_case
+    let conversationId = rawBody.conversationId || rawBody.conversation_id;
     if (!conversationId || typeof conversationId !== 'string') {
         return c.json({ error: 'ID conversation requis' }, 400);
     }
