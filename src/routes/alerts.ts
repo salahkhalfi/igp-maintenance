@@ -55,6 +55,7 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
       WHERE t.scheduled_date IS NOT NULL
         AND t.scheduled_date < ?
         AND (t.status = 'received' OR t.status = 'diagnostic')
+        AND t.deleted_at IS NULL
       ORDER BY t.scheduled_date ASC
     `).bind(now).all();
 
@@ -143,6 +144,63 @@ ${ticket.description ? `Description: ${ticket.description.substring(0, 100)}${ti
 
 Action requise immédiatement !
       `.trim();
+
+      // 🔔 NOUVEAU: Envoyer push notification au technicien assigné (si existe)
+      if (ticket.assigned_to && ticket.assigned_to !== 0) {
+        try {
+          // Vérifier si push déjà envoyé récemment au technicien (fenêtre 5 min anti-spam)
+          const existingTechPush = await c.env.DB.prepare(`
+            SELECT id FROM push_logs
+            WHERE user_id = ? AND ticket_id = ?
+              AND datetime(created_at) >= datetime('now', '-5 minutes')
+            LIMIT 1
+          `).bind(ticket.assigned_to, ticket.id).first();
+
+          if (!existingTechPush) {
+            const { sendPushNotification } = await import('./push');
+            const delayText = delayHours > 0 
+              ? `${delayHours}h ${delayMinutes}min` 
+              : `${delayMinutes}min`;
+
+            const techName = assignedName || 'Technicien';
+            
+            const techPushResult = await sendPushNotification(c.env, ticket.assigned_to as number, {
+              title: `🔴 ${techName}, ticket expiré`,
+              body: `${ticket.ticket_id}: ${ticket.title} - Retard ${delayText}`,
+              icon: '/icon-192.png',
+              badge: '/icon-192.png',
+              actions: [
+                { action: 'view', title: 'Voir' },
+                { action: 'acknowledge', title: "J'y vais !" }
+              ],
+              data: {
+                ticketId: ticket.id,
+                ticket_id: ticket.ticket_id,
+                type: 'overdue',
+                action: 'view_ticket',
+                url: `/?ticket=${ticket.id}`
+              }
+            });
+
+            // Logger le résultat
+            await c.env.DB.prepare(`
+              INSERT INTO push_logs (user_id, ticket_id, status, error_message)
+              VALUES (?, ?, ?, ?)
+            `).bind(
+              ticket.assigned_to,
+              ticket.id,
+              techPushResult.success ? 'success' : 'failed',
+              techPushResult.success ? null : JSON.stringify(techPushResult)
+            ).run();
+
+            if (techPushResult.success) {
+              console.log(`✅ Push notification envoyée au technicien ${ticket.assigned_to} pour ${ticket.ticket_id}`);
+            }
+          }
+        } catch (techPushError) {
+          console.error(`⚠️ Push technicien échouée pour ${ticket.ticket_id}:`, techPushError);
+        }
+      }
 
       // Envoyer à tous les administrateurs
       for (const admin of admins) {

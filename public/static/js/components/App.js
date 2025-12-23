@@ -81,14 +81,23 @@ const App = () => {
 
             loadData();
             loadUnreadMessagesCount();
+            checkOverdueTickets(); // Vérification initiale des tickets expirés
 
             // Rafraichir le compteur de messages non lus toutes les 60 secondes (optimisé pour performance Chrome)
             const messagesInterval = setInterval(() => {
                 loadUnreadMessagesCount();
             }, 60000);
 
+            // RESTAURÉ: Vérifier les tickets planifiés expirés toutes les 5 minutes
+            // Cette fonctionnalité a été supprimée par erreur le 12 Nov 2025 (commit cf2dee2)
+            // Elle est essentielle pour les notifications push instantanées de retard
+            const overdueInterval = setInterval(() => {
+                checkOverdueTickets();
+            }, 5 * 60 * 1000); // 5 minutes
+
             return () => {
                 clearInterval(messagesInterval);
+                clearInterval(overdueInterval);
             };
         } else {
             // CRITICAL FIX: If not logged in, stop loading immediately to show login form
@@ -191,6 +200,30 @@ const App = () => {
         } catch (error) {
             // Erreur silencieuse mais loguée pour debug
             console.warn("Erreur chargement messages:", error);
+        }
+    };
+
+    // RESTAURÉ: Fonction pour vérifier les tickets en retard et déclencher les notifications push
+    // Supprimée par erreur le 12 Nov 2025 (commit cf2dee2) lors de la migration vers CRON serveur
+    // Cloudflare Pages ne supporte pas les CRON triggers, donc cette vérification côté client
+    // est essentielle pour les notifications push instantanées de retard
+    const checkOverdueTickets = async () => {
+        try {
+            // Seuls les admins et supervisors peuvent déclencher cette vérification
+            // Le backend vérifiera aussi les permissions (double sécurité)
+            if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'supervisor')) {
+                return; // Silently skip for non-admin/supervisor users
+            }
+
+            const response = await axios.post(API_URL + '/alerts/check-overdue');
+            if (response.data.alertsSent > 0) {
+                console.log('🔔 Notifications retard envoyées:', response.data.alertsSent, 'pour', response.data.overdueCount, 'ticket(s)');
+            }
+        } catch (error) {
+            // Erreur silencieuse - le système ne doit pas bloquer si la vérification échoue
+            if (error.response?.status !== 403) {
+                console.warn('Erreur vérification tickets expirés:', error.message || error);
+            }
         }
     };
 
