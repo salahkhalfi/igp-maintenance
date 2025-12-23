@@ -255,9 +255,19 @@ ticketsRoute.post('/', zValidator('json', createTicketSchema), async (c) => {
                 console.error('CRITICAL: New ticket created but ID is undefined/null', newTicket);
               }
 
+              // Traduction des priorités
+              const priorityLabels: Record<string, string> = {
+                'critical': 'CRITIQUE',
+                'high': 'HAUTE', 
+                'medium': 'MOYENNE',
+                'low': 'BASSE'
+              };
+              const priorityLabel = priorityLabels[priority] || priority.toUpperCase();
+              const machineLabel = [machine.machine_type, machine.model].filter(Boolean).join(' ') || 'Machine';
+              
               const pushResult = await sendPushNotification(c.env, assigned_to, {
-                title: `🔴 Nouveau : ${machine.machine_type} ${machine.model}`,
-                body: `[${priority.toUpperCase()}] ${safeTitle}`,
+                title: `🔴 Nouveau : ${machineLabel}`,
+                body: `[${priorityLabel}] ${safeTitle}`,
                 icon: '/icon-192.png',
                 actions: [
                   { action: 'view', title: 'Voir' },
@@ -485,8 +495,9 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
 
       // Notify new assignee
       try {
+        const assignMachineLabel = [currentTicket.machine_type, currentTicket.model].filter(Boolean).join(' ') || 'Machine';
         const pushResult = await sendPushNotification(c.env, body.assigned_to, {
-          title: `🔄 Affectation : ${currentTicket.machine_type} ${currentTicket.model || ''}`,
+          title: `🔄 Affectation : ${assignMachineLabel}`,
           body: `Ticket #${currentTicket.ticket_id} vous a été transféré`,
           icon: '/icon-192.png',
           actions: [
