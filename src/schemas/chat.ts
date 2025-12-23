@@ -25,7 +25,9 @@ export const guestIdParamSchema = z.object({
 export const createConversationSchema = z.object({
   name: z.string().max(100, "Nom trop long").optional(),
   type: z.enum(['direct', 'private', 'group']).default('direct'),
-  participant_ids: z.array(z.number().int().positive()).optional()
+  // Accept both camelCase (frontend) and snake_case
+  participant_ids: z.array(z.number().int().positive()).optional(),
+  participantIds: z.array(z.number().int().positive()).optional()
 });
 
 // Mise à jour de conversation

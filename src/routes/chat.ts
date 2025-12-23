@@ -933,7 +933,10 @@ Input: "${originalText}"`;
 app.post('/conversations', zValidator('json', createConversationSchema), async (c) => {
     try {
         const user = c.get('user');
-        const { type, participant_ids: participantIds, name } = c.req.valid('json');
+        const validated = c.req.valid('json');
+        const { type, name } = validated;
+        // Accept both camelCase (frontend) and snake_case
+        const participantIds = validated.participantIds || validated.participant_ids;
         
         // Basic Validation (Zod ensures array format)
         if (!participantIds || participantIds.length === 0) {
