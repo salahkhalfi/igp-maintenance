@@ -87,6 +87,7 @@ webhooks.post('/check-overdue-tickets', async (c) => {
         AND t.scheduled_date != 'null'
         AND t.scheduled_date != ''
         AND t.status IN ('received', 'diagnostic')
+        AND t.deleted_at IS NULL
         AND datetime(t.scheduled_date) < datetime('now')
       ORDER BY t.scheduled_date ASC
     `).all();
