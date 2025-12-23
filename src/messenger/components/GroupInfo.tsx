@@ -4,6 +4,25 @@ import { Participant } from '../types';
 import { getAvatarGradient, getInitials, getRoleDisplayName } from '../utils';
 import UserSelect from './UserSelect';
 
+// Helper to extract error message from various error formats
+const getErrorMessage = (err: any, fallback: string = 'Une erreur est survenue'): string => {
+    if (err?.response?.data?.error) {
+        return typeof err.response.data.error === 'string' 
+            ? err.response.data.error 
+            : JSON.stringify(err.response.data.error);
+    }
+    if (err?.error) {
+        return typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+    }
+    if (err?.message && typeof err.message === 'string') {
+        return err.message;
+    }
+    if (typeof err === 'string') {
+        return err;
+    }
+    return fallback;
+};
+
 const GroupInfo = ({ participants, conversationId, conversationName, conversationAvatarKey, conversationType, currentUserId, currentUserRole, onClose, onPrivateChat, autoOpenAddMember = false }: { participants: Participant[], conversationId: string, conversationName: string | null, conversationAvatarKey: string | null, conversationType: 'direct' | 'group', currentUserId: number | null, currentUserRole: string, onClose: () => void, onPrivateChat: (userId: number) => void, autoOpenAddMember?: boolean }) => {
     const [showAddMember, setShowAddMember] = useState(false);
     const [isManageMode, setIsManageMode] = useState(false);
@@ -99,8 +118,7 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
             if (conversationType === 'direct') window.location.reload(); 
         } catch (err: any) {
             console.error("Add member error:", err);
-            const errorMsg = err.response?.data?.error || 'Erreur lors de l\'ajout';
-            alert(`Erreur: ${errorMsg}`);
+            alert(`Erreur: ${getErrorMessage(err, "Erreur lors de l'ajout")}`);
         }
     };
 
@@ -110,7 +128,7 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
             await axios.delete(`/api/v2/chat/conversations/${conversationId}/participants/${userId}`);
             onClose(); 
         } catch (err: any) {
-            alert(err.response?.data?.error || "Erreur");
+            alert(`Erreur: ${getErrorMessage(err, "Erreur lors du retrait")}`);
         }
     };
 

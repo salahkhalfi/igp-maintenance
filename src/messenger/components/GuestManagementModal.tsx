@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getInitials } from '../utils';
 
+// Helper to extract error message from various error formats
+const getErrorMessage = (err: any, fallback: string = 'Une erreur est survenue'): string => {
+    if (err?.response?.data?.error) {
+        return typeof err.response.data.error === 'string' 
+            ? err.response.data.error 
+            : JSON.stringify(err.response.data.error);
+    }
+    if (err?.error) {
+        return typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+    }
+    if (err?.message && typeof err.message === 'string') {
+        return err.message;
+    }
+    if (typeof err === 'string') {
+        return err;
+    }
+    return fallback;
+};
+
 const GuestManagementModal = ({ onClose }: { onClose: () => void }) => {
     const [guests, setGuests] = useState<any[]>([]);
     const [showForm, setShowForm] = useState(false);
@@ -28,7 +47,7 @@ const GuestManagementModal = ({ onClose }: { onClose: () => void }) => {
             setFormData({ email: '', password: '', full_name: '', company: '' });
             fetchGuests();
         } catch (err: any) {
-            alert(err.response?.data?.error || 'Erreur création');
+            alert(`Erreur: ${getErrorMessage(err, "Erreur lors de la création")}`);
         } finally {
             setLoading(false);
         }
@@ -39,8 +58,8 @@ const GuestManagementModal = ({ onClose }: { onClose: () => void }) => {
         try {
             await axios.delete(`/api/v2/chat/guests/${id}`);
             fetchGuests();
-        } catch (e) {
-            alert('Erreur suppression');
+        } catch (err: any) {
+            alert(`Erreur: ${getErrorMessage(err, "Erreur lors de la suppression")}`);
         }
     };
 

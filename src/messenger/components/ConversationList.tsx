@@ -9,6 +9,25 @@ import GuestManagementModal from './GuestManagementModal';
 import MessengerSettingsModal from './MessengerSettingsModal';
 import ConversationItem from './ConversationItem';
 
+// Helper to extract error message from various error formats
+const getErrorMessage = (err: any, fallback: string = 'Une erreur est survenue'): string => {
+    if (err?.response?.data?.error) {
+        return typeof err.response.data.error === 'string' 
+            ? err.response.data.error 
+            : JSON.stringify(err.response.data.error);
+    }
+    if (err?.error) {
+        return typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+    }
+    if (err?.message && typeof err.message === 'string') {
+        return err.message;
+    }
+    if (typeof err === 'string') {
+        return err;
+    }
+    return fallback;
+};
+
 const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName, currentUserAvatarKey, onOpenInfo, onAvatarUpdate, initialRecipientId, onRecipientProcessed }: { onSelect: (id: string) => void, selectedId: string | null, currentUserId: number | null, currentUserName: string, currentUserAvatarKey: string | null, onOpenInfo: () => void, onAvatarUpdate: () => void, initialRecipientId?: number | null, onRecipientProcessed?: () => void }) => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -280,8 +299,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 alert("⛔ Vous n'avez pas la permission de créer un groupe.");
             } else {
                 console.error("Group creation error:", err);
-                const detail = err.response?.data?.error || err.message || "Inconnue";
-                alert(`Erreur création groupe: ${detail}`);
+                alert(`Erreur création groupe: ${getErrorMessage(err, "Erreur inconnue")}`);
             }
         }
     };
@@ -328,7 +346,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                 setPushEnabled(true);
                 alert("✅ Notifications activées avec succès !");
             } else {
-                alert("❌ Erreur d'activation: " + (res?.error || "Inconnue"));
+                alert(`❌ Erreur d'activation: ${getErrorMessage(res, "Erreur inconnue")}`);
             }
         } else {
             alert("⚠️ Erreur système: Le script de notification n'est pas chargé. Rafraîchissez la page.");

@@ -12,6 +12,30 @@ import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 
+// Helper to extract error message from various error formats
+const getErrorMessage = (err: any, fallback: string = 'Une erreur est survenue'): string => {
+    // Handle axios errors
+    if (err?.response?.data?.error) {
+        return typeof err.response.data.error === 'string' 
+            ? err.response.data.error 
+            : JSON.stringify(err.response.data.error);
+    }
+    // Handle fetch response errors
+    if (err?.error) {
+        return typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+    }
+    // Handle standard Error objects
+    if (err?.message && typeof err.message === 'string') {
+        return err.message;
+    }
+    // Handle string errors
+    if (typeof err === 'string') {
+        return err;
+    }
+    // Fallback
+    return fallback;
+};
+
 const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, onNavigate, initialShowInfo, onConsumeInfo, initialMessage, onMessageConsumed }: { conversationId: string, currentUserId: number | null, currentUserRole: string, onBack: () => void, onNavigate: (id: string) => void, initialShowInfo: boolean, onConsumeInfo: () => void, initialMessage?: string, onMessageConsumed?: () => void }) => {
     // --- STATE ---
     const [messages, setMessages] = useState<Message[]>([]);
@@ -209,8 +233,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             }
         } catch (err: any) {
             console.error(err);
-            const errorMsg = err.response?.data?.error || "Impossible d'ouvrir la discussion privée";
-            alert(`Erreur: ${errorMsg}`);
+            alert(`Erreur: ${getErrorMessage(err, "Impossible d'ouvrir la discussion privée")}`);
         }
     };
 
@@ -557,7 +580,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 })
             });
             fetchMessages();
-        } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
+        } catch (err: any) { alert(`Erreur: ${getErrorMessage(err, "Erreur d'envoi")}`); } finally { setUploading(false); }
     };
 
     const handleNewEditorSend = async (file: File, caption: string) => {
@@ -584,7 +607,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
             });
             setPreviewFile(null);
             fetchMessages();
-        } catch (err: any) { alert(`Erreur: ${err.message}`); } finally { setUploading(false); }
+        } catch (err: any) { alert(`Erreur: ${getErrorMessage(err, "Erreur d'envoi")}`); } finally { setUploading(false); }
     };
 
     return (
@@ -689,7 +712,7 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                                             params.set('imageUrl', `/api/v2/chat/asset?key=${encodeURIComponent(uploadData.key)}`);
                                             window.open('/?' + params.toString(), '_blank');
                                         } catch (err: any) {
-                                            alert(`Erreur upload: ${err.message}`);
+                                            alert(`Erreur: ${getErrorMessage(err, "Erreur lors de l'upload")}`);
                                         }
                                     }}
                                     className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 transition-colors"
