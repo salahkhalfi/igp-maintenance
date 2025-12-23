@@ -54,24 +54,58 @@
 
 ## 🟨 MODULE 3: DEPLOYMENT
 
-### [SANDBOX LIMITATION]
+### [⚠️ SANDBOX PROTECTION - CRITICAL]
 ```
-⚠️ SANDBOX RAM LIMITED (1GB) - Full build may crash.
-   SAFE: npm run build:worker | build:client | build:messenger (sequential)
-   RISKY: npm run build (all at once) - use scripts/deploy-prod.sh if issues
+🚨 NEVER deploy from sandbox - CPU/RAM spike (80%) risks session freeze.
+   USE GITHUB ACTIONS ONLY for production deployments.
 ```
 
-### [RULES]
-1.  **READ CONFIG**: Check `wrangler.jsonc` for project name before deploy.
-2.  **BUILD FIRST**: `npm run build` before deploy.
-3.  **DEPLOY**: `npx wrangler pages deploy dist --project-name webapp`
+### [GITHUB ACTIONS - MANDATORY]
+1.  **TO DEPLOY**: `git push origin main` → auto build & deploy (~2 min)
+2.  **WORKFLOW**: `.github/workflows/deploy.yml`
+3.  **MONITOR**: https://github.com/salahkhalfi/igp-maintenance/actions
 4.  **VERIFY**: Test `https://app.igpglass.ca` after deploy.
-5.  **NO QUESTIONS**: Auth/keys already configured.
 
 ### [DATABASE: maintenance-db]
 *   **Local**: `npx wrangler d1 migrations apply maintenance-db --local`
 *   **Prod**: `npx wrangler d1 migrations apply maintenance-db`
 *   **Reset**: `rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local`
+
+---
+
+## 🟩 MODULE 9: SAAS SCALING PLAN
+
+### [CLOUDFLARE LIMITS - PAID $5/mois]
+| Ressource | Limite | Goulot |
+|-----------|--------|--------|
+| Requests | 10M/mois | Non |
+| D1 Storage | 5 GB inclus + $0.75/GB | ⚠️ OUI |
+| R2 Storage | 10 GB inclus + $0.015/GB | ⚠️ OUI |
+| D1 writes | 50M/mois | Non |
+
+### [CAPACITÉ PAR PALIER]
+| Clients | D1 | R2 | Coût/mois |
+|---------|----|----|-----------|
+| 5 | 2 GB | 10 GB | $5 |
+| 25 | 10 GB | 50 GB | ~$10 |
+| 50 | 20 GB | 100 GB | ~$25 |
+| 100 | 40 GB | 200 GB | ~$50 |
+
+### [TRIGGERS DE MIGRATION]
+| Seuil | Action |
+|-------|--------|
+| 50+ clients | Migrer D1 → **Turso** ($30/mois illimité) |
+| 500 GB+ R2 | Rester R2 ou migrer → **S3** |
+| 100+ clients | Évaluer **multi-region** |
+
+### [MULTI-TENANT CHECKLIST]
+```
+⏳ À FAIRE quand app stable (2+ semaines prod sans bug critique):
+   1. Ajouter tenant_id à toutes les tables (migration)
+   2. Middleware tenant isolation (extract from domain)
+   3. Panel admin tenants
+   4. Tests non-fuite données inter-tenants
+```
 
 ---
 
