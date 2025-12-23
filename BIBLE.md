@@ -46,6 +46,13 @@
 *   **NO DEAD CODE**: Commented code = Deleted code.
 *   **EXPLICIT NAMES**: Human-readable variable names.
 
+### [TOKEN OPTIMIZATION]
+*   **NO RE-READ**: Never re-read a file already read in same session.
+*   **NO UNSOLICITED EXPLANATIONS**: Don't explain unless asked "pourquoi?" or "explique".
+*   **NO RECAP**: After action, just "Fait." or show error. No summary.
+*   **MINIMAL READS**: Use `head -20` or `grep` instead of full `Read` when possible.
+*   **ONE COMMAND**: One bash command at a time when debugging.
+
 ---
 
 ## 🟨 MODULE 3: DEPLOYMENT
