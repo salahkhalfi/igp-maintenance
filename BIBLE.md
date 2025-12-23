@@ -94,57 +94,121 @@ FORBIDDEN PATTERNS (pre-commit hook blocks these):
 
 ---
 
-## 🟩 MODULE 9: SAAS SCALING PLAN
+## 🟩 MODULE 9: BUSINESS MODEL & SCALING
 
-### [CLOUDFLARE LIMITS - PAID $5/mois]
-| Ressource | Limite | Goulot |
-|-----------|--------|--------|
-| Requests | 10M/mois | Non |
-| D1 Storage | 5 GB inclus + $0.75/GB | ⚠️ OUI |
-| R2 Storage | 10 GB inclus + $0.015/GB | ⚠️ OUI |
-| D1 writes | 50M/mois | Non |
-
-### [CAPACITÉ PAR PALIER]
-| Clients | D1 | R2 | Coût/mois |
-|---------|----|----|-----------|
-| 5 | 2 GB | 10 GB | $5 |
-| 25 | 10 GB | 50 GB | ~$10 |
-| 50 | 20 GB | 100 GB | ~$25 |
-| 100 | 40 GB | 200 GB | ~$50 |
-
-### [TRIGGERS DE MIGRATION]
-| Seuil | Action |
-|-------|--------|
-| 50+ clients | Migrer D1 → **Turso** ($30/mois illimité) |
-| 50+ clients isolation stricte | **Workers for Platforms** ($25/mois) - 1 Worker/client |
-| 500 GB+ R2 | Rester R2 ou migrer → **S3** |
-| 100+ clients | Évaluer **multi-region** |
-
-### [CLOUDFLARE SERVICES - AIDE MÉMOIRE]
-| Service | Usage | Notre status |
-|---------|-------|--------------|
-| **D1** | Base SQL relationnelle | ✅ Utilisé |
-| **R2** | Stockage fichiers/médias | ✅ Utilisé |
-| **KV** | Cache key-value rapide | ❌ Pas besoin (<1000 users) |
-| **Workers for Platforms** | 1 Worker isolé/client | ❌ Pas besoin (<50 clients) |
-| **Durable Objects** | État persistant temps réel | ❌ Pas besoin (pas de WebSocket) |
-| **Queues** | Files d'attente async | ❌ Pas besoin |
-
-### [CAPACITÉ PLAN GRATUIT]
-| Ressource | Limite/jour | Max users |
-|-----------|-------------|-----------|
-| Requests | 100K | ~100-200 |
-| D1 reads | 5M | ~1000 |
-| D1 writes | 100K | ~500 |
-| **Goulot** | Requests | **~50-100 users actifs/jour** |
-
-### [MULTI-TENANT CHECKLIST]
+### [📦 MODÈLE CHOISI: INSTALLATION DÉDIÉE]
 ```
-⏳ À FAIRE quand app stable (2+ semaines prod sans bug critique):
-   1. Ajouter tenant_id à toutes les tables (migration)
-   2. Middleware tenant isolation (extract from domain)
-   3. Panel admin tenants
-   4. Tests non-fuite données inter-tenants
+✅ DÉCISION: 1 Client = 1 Instance Isolée (PAS de multi-tenant DB)
+
+POURQUOI:
+├── App DÉJÀ prête (0 travail supplémentaire)
+├── Isolation totale (0 risque fuite données)
+├── Personnalisation illimitée par client
+├── Pas de dette technique tenant_id
+└── Marge maximale (95%+)
+
+PRICING SUGGÉRÉ:
+├── Setup: $1,500 (one-time)
+├── Mensuel: $99/mois
+└── Coût réel: ~$5/mois Cloudflare
+```
+
+### [🔧 ARCHITECTURE MULTI-CLIENT]
+```
+CHAQUE CLIENT A:
+├── 1 Fork GitHub (github.com/salahkhalfi/[client]-maintenance)
+├── 1 Projet Cloudflare Pages ([client]-app)
+├── 1 Base D1 dédiée ([client]-db)
+├── 1 Bucket R2 dédié ([client]-media)
+├── 1 Hub Genspark dédié pour support
+└── 1 BIBLE.md personnalisée
+
+GESTION AGENT:
+├── 1 Session = 1 Client (via Hubs séparés)
+├── Jamais 2 clients dans même session
+└── Switch client = Switch Hub/Onglet
+```
+
+### [🚀 ONBOARDING NOUVEAU CLIENT]
+```bash
+# 1. Créer nouveau Hub Genspark "[Client] Maintenance"
+# 2. Dans ce Hub:
+git clone https://github.com/salahkhalfi/igp-maintenance [client]-maintenance
+cd [client]-maintenance
+git remote set-url origin https://github.com/salahkhalfi/[client]-maintenance
+git push -u origin main
+
+# 3. Cloudflare Dashboard:
+#    - Créer projet Pages: [client]-app
+#    - Créer D1: [client]-db
+#    - Créer R2: [client]-media
+#    - Configurer secrets (CRON_SECRET, API keys)
+
+# 4. Configurer system_settings (branding, IA, modules)
+# 5. Configurer cron-job.org pour ce client
+# 6. Déployer & tester
+```
+
+### [⚙️ SYSTEM_SETTINGS - WHITE LABEL READY]
+```
+BRANDING (39 paramètres configurables):
+├── company_title, company_subtitle, company_logo_url
+├── primary_color, secondary_color
+├── app_name, app_base_url, app_tagline
+└── support_email, documentation_url
+
+IA PERSONNALISÉE:
+├── ai_expert_name, ai_expert_avatar_key
+├── ai_identity_block (qui est l'IA)
+├── ai_knowledge_block (expertise métier)
+├── ai_character_block (personnalité)
+├── ai_hierarchy_block (noms des managers)
+├── ai_rules_block (règles comportement)
+└── ai_custom_context (contexte additionnel)
+
+MODULES ACTIVABLES:
+├── planning, analytics, notifications
+├── statistics, messaging, machines
+└── [futurs modules]: inventory, quality, etc.
+```
+
+### [📊 MODULES CUSTOM PAR CLIENT]
+```
+SCÉNARIO: Client A veut "Gestion Stock", Client B non
+
+SOLUTION:
+├── Créer src/routes/inventory.ts (code commun)
+├── Créer migration inventory.sql
+├── Client A: modules_config.inventory = true (visible)
+├── Client B: modules_config.inventory = false (caché)
+└── Tables existent mais UI cachée = 0 confusion
+
+IA AWARENESS:
+├── L'IA charge modules_config au démarrage
+├── Elle sait quels modules sont actifs
+└── Ne suggère PAS de fonctionnalités désactivées
+```
+
+### [💰 ÉCONOMIE CLOUDFLARE]
+| Clients | D1 | R2 | Coût Total |
+|---------|----|----|------------|
+| 1 | 713 KB | ~0 | $5/mois |
+| 5 | ~5×$5 | ~5×$5 | ~$25/mois |
+| 10 | ~10×$5 | ~10×$5 | ~$50/mois |
+
+*Chaque client paie son propre Cloudflare OU tu factures +$10/mois*
+
+### [⏳ MIGRATION MULTI-TENANT: PLUS TARD]
+```
+TRIGGER: 10+ clients ET gestion devient lourde
+EFFORT: ~5-6 jours
+CHANGEMENTS:
+├── Ajouter tenant_id à toutes tables
+├── Middleware extraction tenant (domain → tenant)
+├── Super-admin panel
+└── 1 seule instance pour tous
+
+POUR L'INSTANT: NE PAS IMPLÉMENTER (dette technique inutile)
 ```
 
 ---
