@@ -48,13 +48,12 @@ const AppHeader = ({
     }, [propUser]);
     
     // SAME LOGIC AS MESSENGER: Only show <img> if avatar_key exists
-    // This is how Messenger does it (ChatHeader.tsx line 91)
     const renderAvatar = (size, className) => {
         const userId = currentUser?.id;
         const avatarKey = currentUser?.avatar_key;
         const initial = currentUser?.first_name?.[0] || '?';
         
-        // MESSENGER PATTERN: Only render img if avatar_key exists
+// MESSENGER PATTERN: Only render img if avatar_key exists
         if (userId && avatarKey) {
             return React.createElement('img', {
                 src: '/api/auth/avatar/' + userId + '?v=' + avatarKey,
@@ -63,7 +62,7 @@ const AppHeader = ({
             });
         }
         
-        // No avatar_key - show initials (same as Messenger fallback)
+        // No avatar_key - show initials
         return React.createElement('div', {
             className: className + ' bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold'
         }, initial);
