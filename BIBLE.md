@@ -7,7 +7,7 @@
 *   **READ BEFORE WRITE**: Always `READ` -> `GREP` before any `EDIT`. No blind coding.
 *   **SCOPE ISOLATION**: Do not break the app to fix a typo. Revert > Reset.
 *   **ALIGNMENT**: Build a **Generic SaaS** (White Label). IGP is just the first tenant.
-*   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 300 lines (compress if exceeded).
+*   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 400 lines (compress if exceeded).
 *   **CHESTERTON'S FENCE**: Never delete code you don't fully understand.
 
 ---
@@ -116,8 +116,27 @@ FORBIDDEN PATTERNS (pre-commit hook blocks these):
 | Seuil | Action |
 |-------|--------|
 | 50+ clients | Migrer D1 → **Turso** ($30/mois illimité) |
+| 50+ clients isolation stricte | **Workers for Platforms** ($25/mois) - 1 Worker/client |
 | 500 GB+ R2 | Rester R2 ou migrer → **S3** |
 | 100+ clients | Évaluer **multi-region** |
+
+### [CLOUDFLARE SERVICES - AIDE MÉMOIRE]
+| Service | Usage | Notre status |
+|---------|-------|--------------|
+| **D1** | Base SQL relationnelle | ✅ Utilisé |
+| **R2** | Stockage fichiers/médias | ✅ Utilisé |
+| **KV** | Cache key-value rapide | ❌ Pas besoin (<1000 users) |
+| **Workers for Platforms** | 1 Worker isolé/client | ❌ Pas besoin (<50 clients) |
+| **Durable Objects** | État persistant temps réel | ❌ Pas besoin (pas de WebSocket) |
+| **Queues** | Files d'attente async | ❌ Pas besoin |
+
+### [CAPACITÉ PLAN GRATUIT]
+| Ressource | Limite/jour | Max users |
+|-----------|-------------|-----------|
+| Requests | 100K | ~100-200 |
+| D1 reads | 5M | ~1000 |
+| D1 writes | 100K | ~500 |
+| **Goulot** | Requests | **~50-100 users actifs/jour** |
 
 ### [MULTI-TENANT CHECKLIST]
 ```
