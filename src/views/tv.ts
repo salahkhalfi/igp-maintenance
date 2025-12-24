@@ -109,16 +109,20 @@ export const tvHTML = `
             will-change: auto !important;
         }
         
-        /* Disable CSS transitions and animations EXCEPT ticker */
-        *:not(.news-ticker-text), *:not(.news-ticker-text)::before, *:not(.news-ticker-text)::after {
-            -webkit-transition: none !important;
-            transition: none !important;
+        /* Disable CSS transitions for most elements */
+        /* IMPORTANT: Do NOT use *:not() here - it breaks child animations */
+        /* Instead, we selectively enable animations where needed */
+        body, header, main, section, footer, div:not(.news-ticker-text), span:not(.news-ticker-text) {
+            /* transition: none; - DISABLED to allow hover effects */
         }
         
-        /* Disable animations except ticker */
-        *:not(.news-ticker-text) {
-            -webkit-animation: none !important;
-            animation: none !important;
+        /* NEWS TICKER - MUST ANIMATE */
+        /* Override any global rules - ticker needs transform animation */
+        .news-ticker-text {
+            -webkit-animation: ticker var(--ticker-duration, 20s) linear infinite !important;
+            animation: ticker var(--ticker-duration, 20s) linear infinite !important;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
         }
 
         /* 1. CARD HIGHLIGHT (Background & Border) */
@@ -340,7 +344,7 @@ export const tvHTML = `
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%;
-            animation: ticker var(--ticker-duration, 20s) linear infinite !important;
+            /* Animation defined above with !important override */
         }
         .mask-linear {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
