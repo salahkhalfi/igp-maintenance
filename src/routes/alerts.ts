@@ -283,7 +283,8 @@ Action requise immédiatement !
 
   } catch (error) {
     console.error('Check overdue error:', error);
-    return c.json({ error: 'Erreur lors de la vérification des retards' }, 500);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return c.json({ error: 'Erreur lors de la vérification des retards', details: errorMessage }, 500);
   }
 });
 
