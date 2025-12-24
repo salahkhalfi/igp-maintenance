@@ -682,7 +682,7 @@ export const tvHTML = `
                 // Fluidity: Reset timeline scroll when cycle restarts
                 if (this.currentIndex === 0) {
                     const timelineContainer = document.getElementById('timeline-content');
-                    if (timelineContainer) timelineContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (timelineContainer) timelineContainer.scrollTo({ top: 0, behavior: 'auto' });
                 }
 
                 this.showCurrent();
@@ -714,7 +714,7 @@ export const tvHTML = `
                     item.focus({ preventScroll: true });
                     
                     // Smooth scroll to center (KEY: prevents hiding behind popup)
-                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    item.scrollIntoView({ behavior: 'auto', block: 'center' });
                 }
             }
         };
@@ -788,7 +788,7 @@ export const tvHTML = `
                         const target = getItems(todayList)[0] || getItems(timelineList)[0];
                         if (target) {
                             target.focus();
-                            target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                            target.scrollIntoView({ block: 'center', behavior: 'auto' });
                         }
                     }
                     return;
@@ -804,7 +804,7 @@ export const tvHTML = `
                     const first = getItems(todayList)[0] || getItems(timelineList)[0];
                     if (first) {
                         first.focus();
-                        first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        first.scrollIntoView({ block: 'center', behavior: 'auto' });
                     }
                     return;
                 }
@@ -816,7 +816,7 @@ export const tvHTML = `
                     if (currentIndex > 0) {
                         const target = items[currentIndex - 1];
                         target.focus();
-                        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        target.scrollIntoView({ block: 'center', behavior: 'auto' });
                     } else {
                         // TOP OF LIST -> Go to Header (Fullscreen Button)
                         if (btnFullscreen) btnFullscreen.focus();
@@ -825,7 +825,7 @@ export const tvHTML = `
                     if (currentIndex < items.length - 1) {
                         const target = items[currentIndex + 1];
                         target.focus();
-                        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        target.scrollIntoView({ block: 'center', behavior: 'auto' });
                     }
                 } else if (key === 'ArrowRight') {
                     if (currentContainer === todayList) {
@@ -834,7 +834,7 @@ export const tvHTML = `
                             // Find closest item by vertical position approximation or just first
                             // For TV stability, first visible is often safest, but let's try top
                             targetItems[0].focus();
-                            targetItems[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+                            targetItems[0].scrollIntoView({ block: 'center', behavior: 'auto' });
                         }
                     }
                 } else if (key === 'ArrowLeft') {
@@ -842,7 +842,7 @@ export const tvHTML = `
                         const targetItems = getItems(todayList);
                         if (targetItems.length > 0) {
                             targetItems[0].focus();
-                            targetItems[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+                            targetItems[0].scrollIntoView({ block: 'center', behavior: 'auto' });
                         }
                     }
                 }
