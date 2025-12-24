@@ -1427,11 +1427,12 @@ export const tvHTML = `
                 else if (isInProgress) statusClasses = 'glass-panel-active';
 
                 // Helper: Generate avatar HTML (photo or initials)
-                function getAvatarHtml(avatarKey, initial, name, colorClass, size) {
+                // URL pattern: /api/auth/avatar/{userId}?v={avatarKey}
+                function getAvatarHtml(userId, avatarKey, initial, name, colorClass, size) {
                     size = size || 'w-10 h-10 xl:w-14 xl:h-14';
                     const bgClass = colorClass.replace('border-', 'bg-').replace('/50', '');
-                    if (avatarKey) {
-                        return '<img src="/api/media/' + avatarKey + '" alt="' + name + '" class="' + size + ' rounded-full object-cover border-2 ' + colorClass + '" onerror="this.style.display=\\'none\\';this.nextElementSibling.style.display=\\'flex\\';"><div class="' + size + ' rounded-full ' + bgClass + ' hidden items-center justify-center text-white font-bold text-base xl:text-xl">' + initial + '</div>';
+                    if (userId && avatarKey) {
+                        return '<img src="/api/auth/avatar/' + userId + '?v=' + avatarKey + '" alt="' + name + '" class="' + size + ' rounded-full object-cover border-2 ' + colorClass + '" onerror="this.style.display=\\'none\\';this.nextElementSibling.style.display=\\'flex\\';"><div class="' + size + ' rounded-full ' + bgClass + ' hidden items-center justify-center text-white font-bold text-base xl:text-xl">' + initial + '</div>';
                     }
                     return '<div class="' + size + ' rounded-full ' + bgClass + ' flex items-center justify-center text-white font-bold text-base xl:text-xl">' + initial + '</div>';
                 }
@@ -1466,7 +1467,7 @@ export const tvHTML = `
                                     Signalé par
                                 </div>
                                 <div class="flex items-center gap-2 xl:gap-3">
-                                    \${getAvatarHtml(t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || 'Inconnu', 'border-blue-500/50')}
+                                    \${getAvatarHtml(t.reporter_id, t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || 'Inconnu', 'border-blue-500/50')}
                                     <div class="text-white text-sm xl:text-xl font-bold truncate person-name">\${t.reporter_name || 'Inconnu'}</div>
                                 </div>
                             </div>
@@ -1478,7 +1479,7 @@ export const tvHTML = `
                                 </div>
                                 <div class="flex items-center gap-2 xl:gap-3">
                                     \${t.assignee_name 
-                                        ? getAvatarHtml(t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')
+                                        ? getAvatarHtml(t.assignee_id, t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')
                                         : '<div class="w-10 h-10 xl:w-14 xl:h-14 rounded-full bg-slate-700 flex items-center justify-center text-slate-500"><i class="fas fa-user-clock text-lg xl:text-2xl"></i></div>'
                                     }
                                     <div class="\${t.assignee_name ? 'text-green-400' : 'text-slate-500 italic'} text-sm xl:text-xl font-bold truncate person-name">
@@ -1490,9 +1491,9 @@ export const tvHTML = `
                     \`;
                 } else {
                     // TIMELINE: Compact with mini avatars
-                    function getMiniAvatar(avatarKey, initial, name, borderColor) {
-                        if (avatarKey) {
-                            return '<img src="/api/media/' + avatarKey + '" alt="' + name + '" class="w-6 h-6 rounded-full object-cover border ' + borderColor + '" onerror="this.outerHTML=\\'<div class=\\\\\\\'w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold\\\\\\\'>' + initial + '</div>\\'">';
+                    function getMiniAvatar(userId, avatarKey, initial, name, borderColor) {
+                        if (userId && avatarKey) {
+                            return '<img src="/api/auth/avatar/' + userId + '?v=' + avatarKey + '" alt="' + name + '" class="w-6 h-6 rounded-full object-cover border ' + borderColor + '" onerror="this.outerHTML=\\'<div class=\\\\\\\'w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold\\\\\\\'>' + initial + '</div>\\'">';
                         }
                         return '<div class="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold">' + initial + '</div>';
                     }
@@ -1511,14 +1512,14 @@ export const tvHTML = `
                             <div class="flex items-center gap-2">
                                 <!-- Reporter mini avatar -->
                                 <div class="flex items-center gap-1" title="Signalé par \${t.reporter_name || '?'}">
-                                    \${getMiniAvatar(t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || '?', 'border-blue-500/50')}
+                                    \${getMiniAvatar(t.reporter_id, t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || '?', 'border-blue-500/50')}
                                     <span class="text-slate-400 person-name">\${t.reporter_name || '?'}</span>
                                 </div>
                                 <!-- Assignee mini avatar -->
                                 \${t.assignee_name 
                                     ? \`<div class="flex items-center gap-1" title="Intervenant: \${t.assignee_name}">
                                         <span class="text-slate-600">→</span>
-                                        \${getMiniAvatar(t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')}
+                                        \${getMiniAvatar(t.assignee_id, t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')}
                                         <span class="text-green-400 person-name">\${t.assignee_name}</span>
                                       </div>\`
                                     : '<span class="text-slate-600 italic text-xs">Non assigné</span>'
