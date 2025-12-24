@@ -125,19 +125,13 @@
             50% { opacity: 1; }
         }
 
-        /* Status Indicators */
+        /* Status Indicators - Simple dots, no glow effect */
         .status-indicator {
             width: 12px; height: 12px; border-radius: 50%;
-            display: inline-block; position: relative;
+            display: inline-block;
         }
-        .status-indicator::after {
-            content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
-            border-radius: 50%; opacity: 0.6; /* Static glow - no animation */
-        }
-        .status-green { background-color: #10b981; }
-        .status-green::after { background-color: #10b981; }
-        .status-red { background-color: #ef4444; }
-        .status-red::after { background-color: #ef4444; opacity: 0.8; /* Static - no animation */ }
+        .status-green { background-color: #10b981; box-shadow: 0 0 6px #10b981; }
+        .status-red { background-color: #ef4444; box-shadow: 0 0 6px #ef4444; }
 
         /* Header Gradient Line */
         .header-line {
