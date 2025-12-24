@@ -190,6 +190,54 @@ export const tvHTML = `
             color: #dc2626 !important; /* Red-600 */
         }
 
+        /* 4. PERSON CARDS (Signalé par / Intervenant) */
+        .interactive-card:focus .person-card,
+        .interactive-card:focus-visible .person-card,
+        .interactive-card:hover .person-card {
+            background: rgba(30, 41, 59, 0.9) !important; /* Dark slate for contrast */
+            border: 1px solid #475569 !important;
+        }
+
+        .interactive-card:focus .person-label,
+        .interactive-card:focus-visible .person-label,
+        .interactive-card:hover .person-label {
+            color: #94a3b8 !important; /* Lighter for dark bg */
+        }
+
+        .interactive-card:focus .person-name,
+        .interactive-card:focus-visible .person-name,
+        .interactive-card:hover .person-name {
+            color: #f8fafc !important; /* White for max contrast */
+        }
+
+        /* Keep green for assignee name on hover */
+        .interactive-card:focus .text-green-400.person-name,
+        .interactive-card:focus-visible .text-green-400.person-name,
+        .interactive-card:hover .text-green-400.person-name {
+            color: #4ade80 !important; /* Brighter green */
+        }
+
+        /* 5. TITLES & MACHINE TEXT - better contrast on white bg */
+        .interactive-card:focus .ticket-title,
+        .interactive-card:focus-visible .ticket-title,
+        .interactive-card:hover .ticket-title {
+            color: #0f172a !important; /* Near black */
+        }
+
+        .interactive-card:focus .ticket-machine,
+        .interactive-card:focus-visible .ticket-machine,
+        .interactive-card:hover .ticket-machine {
+            color: #1e40af !important; /* Dark blue */
+        }
+
+        /* 6. AVATAR BORDERS on hover */
+        .interactive-card:focus img[class*="rounded-full"],
+        .interactive-card:focus-visible img[class*="rounded-full"],
+        .interactive-card:hover img[class*="rounded-full"] {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        }
+
         /* Remove default outline */
         :focus-visible {
             outline: none !important;
@@ -1378,9 +1426,18 @@ export const tvHTML = `
                 if (isCritical) statusClasses = 'glass-panel-urgent';
                 else if (isInProgress) statusClasses = 'glass-panel-active';
 
+                // Helper: Generate avatar HTML (photo or initials)
+                const getAvatarHtml = (avatarKey: string | null, initial: string, name: string, colorClass: string, size: string = 'w-10 h-10 xl:w-14 xl:h-14') => {
+                    if (avatarKey) {
+                        return \`<img src="/api/media/\${avatarKey}" alt="\${name}" class="\${size} rounded-full object-cover border-2 \${colorClass}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                <div class="\${size} rounded-full \${colorClass.replace('border-', 'bg-').replace('/50', '')} hidden items-center justify-center text-white font-bold text-base xl:text-xl">\${initial}</div>\`;
+                    }
+                    return \`<div class="\${size} rounded-full \${colorClass.replace('border-', 'bg-').replace('/50', '')} flex items-center justify-center text-white font-bold text-base xl:text-xl">\${initial}</div>\`;
+                };
+
                 // Different styling for Today vs Timeline
                 if (isToday) {
-                    // TODAY: Professional card layout with better space usage
+                    // TODAY: Professional card layout with avatars
                     el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-4 xl:p-6 mb-3 xl:mb-4 interactive-card\`;
                     el.innerHTML = \`
                         <!-- Header: ID + Status badges -->
@@ -1392,51 +1449,79 @@ export const tvHTML = `
                         </div>
                         
                         <!-- Title -->
-                        <h3 class="text-xl xl:text-3xl font-bold text-white mb-3 leading-tight line-clamp-2">\${t.title}</h3>
+                        <h3 class="text-xl xl:text-3xl font-bold text-white mb-3 leading-tight line-clamp-2 ticket-title">\${t.title}</h3>
                         
                         <!-- Machine -->
-                        <div class="flex items-center gap-2 text-blue-300 text-sm xl:text-lg font-mono mb-4">
+                        <div class="flex items-center gap-2 text-blue-300 text-sm xl:text-lg font-mono mb-4 ticket-machine">
                             <i class="fas fa-industry"></i>
                             \${t.machine_name}
                         </div>
                         
-                        <!-- People: Two columns layout -->
-                        <div class="flex gap-4 xl:gap-6 mt-auto pt-3 border-t border-slate-700/50">
-                            <!-- Signalé par (Creator) - Always shown -->
-                            <div class="flex-1 bg-slate-800/50 rounded-lg p-2 xl:p-3">
-                                <div class="text-slate-400 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-1">
-                                    <i class="fas fa-user text-slate-500 mr-1"></i>Signalé par
+                        <!-- People: Two columns with avatars -->
+                        <div class="flex gap-3 xl:gap-4 mt-auto pt-3 border-t border-slate-700/50">
+                            <!-- Signalé par (Creator) -->
+                            <div class="flex-1 bg-slate-800/80 rounded-lg p-2 xl:p-3 person-card">
+                                <div class="text-slate-300 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-2 person-label">
+                                    Signalé par
                                 </div>
-                                <div class="text-white text-base xl:text-xl font-bold truncate">\${t.reporter_name || 'Inconnu'}</div>
+                                <div class="flex items-center gap-2 xl:gap-3">
+                                    \${getAvatarHtml(t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || 'Inconnu', 'border-blue-500/50')}
+                                    <div class="text-white text-sm xl:text-xl font-bold truncate person-name">\${t.reporter_name || 'Inconnu'}</div>
+                                </div>
                             </div>
                             
-                            <!-- Intervenant (Assignee) - Shows placeholder if none -->
-                            <div class="flex-1 bg-slate-800/50 rounded-lg p-2 xl:p-3 \${t.assignee_name ? 'border border-green-500/30' : ''}">
-                                <div class="text-slate-400 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-1">
-                                    <i class="fas fa-wrench \${t.assignee_name ? 'text-green-500' : 'text-slate-500'} mr-1"></i>Intervenant
+                            <!-- Intervenant (Assignee) -->
+                            <div class="flex-1 bg-slate-800/80 rounded-lg p-2 xl:p-3 \${t.assignee_name ? 'border border-green-500/40' : 'border border-slate-700/50'} person-card">
+                                <div class="text-slate-300 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-2 person-label">
+                                    Intervenant
                                 </div>
-                                <div class="\${t.assignee_name ? 'text-green-400' : 'text-slate-500 italic'} text-base xl:text-xl font-bold truncate">
-                                    \${t.assignee_name || 'Non assigné'}
+                                <div class="flex items-center gap-2 xl:gap-3">
+                                    \${t.assignee_name 
+                                        ? getAvatarHtml(t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')
+                                        : '<div class="w-10 h-10 xl:w-14 xl:h-14 rounded-full bg-slate-700 flex items-center justify-center text-slate-500"><i class="fas fa-user-clock text-lg xl:text-2xl"></i></div>'
+                                    }
+                                    <div class="\${t.assignee_name ? 'text-green-400' : 'text-slate-500 italic'} text-sm xl:text-xl font-bold truncate person-name">
+                                        \${t.assignee_name || 'Non assigné'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     \`;
                 } else {
-                    // TIMELINE: Compact but informative
+                    // TIMELINE: Compact with mini avatars
+                    const getMiniAvatar = (avatarKey: string | null, initial: string, name: string, borderColor: string) => {
+                        if (avatarKey) {
+                            return \`<img src="/api/media/\${avatarKey}" alt="\${name}" class="w-6 h-6 rounded-full object-cover border \${borderColor}" onerror="this.outerHTML='<div class=\\'w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold\\'>\${initial}</div>'">\`;
+                        }
+                        return \`<div class="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold">\${initial}</div>\`;
+                    };
+                    
                     el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
                         <div class="flex flex-wrap justify-between items-start gap-y-1 mb-1">
-                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-1">\${t.title}</div>
+                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-1 ticket-title">\${t.title}</div>
                             \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-sm lg:text-base"></i>' : ''}
                         </div>
                         <div class="flex flex-wrap items-center justify-between gap-2 text-xs lg:text-sm">
-                            <div class="flex items-center gap-2 text-slate-400">
+                            <div class="flex items-center gap-2 text-slate-400 ticket-machine">
                                 <i class="fas fa-industry text-blue-400"></i>
                                 <span class="truncate max-w-[120px] lg:max-w-[200px]">\${t.machine_name}</span>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-slate-500"><i class="fas fa-user mr-1"></i>\${t.reporter_name || '?'}</span>
-                                \${t.assignee_name ? \`<span class="text-green-400"><i class="fas fa-wrench mr-1"></i>\${t.assignee_name}</span>\` : '<span class="text-slate-600 italic text-xs">Non assigné</span>'}
+                            <div class="flex items-center gap-2">
+                                <!-- Reporter mini avatar -->
+                                <div class="flex items-center gap-1" title="Signalé par \${t.reporter_name || '?'}">
+                                    \${getMiniAvatar(t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || '?', 'border-blue-500/50')}
+                                    <span class="text-slate-400 person-name">\${t.reporter_name || '?'}</span>
+                                </div>
+                                <!-- Assignee mini avatar -->
+                                \${t.assignee_name 
+                                    ? \`<div class="flex items-center gap-1" title="Intervenant: \${t.assignee_name}">
+                                        <span class="text-slate-600">→</span>
+                                        \${getMiniAvatar(t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')}
+                                        <span class="text-green-400 person-name">\${t.assignee_name}</span>
+                                      </div>\`
+                                    : '<span class="text-slate-600 italic text-xs">Non assigné</span>'
+                                }
                             </div>
                         </div>
                     \`;

@@ -115,7 +115,11 @@ app.get('/data', checkTvKey, async (c) => {
           t.created_at,
           COALESCE(m.machine_type, 'Machine') || ' ' || COALESCE(m.model, '') as machine_name,
           assignee.first_name as assignee_name,
-          reporter.first_name as reporter_name
+          assignee.avatar_key as assignee_avatar,
+          UPPER(SUBSTR(COALESCE(assignee.first_name, '?'), 1, 1)) as assignee_initial,
+          reporter.first_name as reporter_name,
+          reporter.avatar_key as reporter_avatar,
+          UPPER(SUBSTR(COALESCE(reporter.first_name, '?'), 1, 1)) as reporter_initial
         FROM tickets t
         LEFT JOIN machines m ON t.machine_id = m.id
         LEFT JOIN users assignee ON t.assigned_to = assignee.id
