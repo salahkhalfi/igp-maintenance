@@ -5,6 +5,9 @@ export const tvHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Force software rendering to prevent Chrome GPU crashes on TV displays -->
+    <meta name="renderer" content="software">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>Vision - Planning Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -38,9 +41,9 @@ export const tvHTML = `
 
         .glass-panel-urgent {
             background: rgba(127, 29, 29, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.4);
+            border: 2px solid rgba(239, 68, 68, 0.6);
             box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);
-            animation: pulse-border 4s infinite;
+            /* DISABLED: animation: pulse-border - causes Chrome crash */
         }
 
         .glass-panel-active {
@@ -48,19 +51,10 @@ export const tvHTML = `
             border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
-        @keyframes pulse-border {
-            0% { border-color: rgba(239, 68, 68, 0.4); }
-            50% { border-color: rgba(239, 68, 68, 0.8); }
-            100% { border-color: rgba(239, 68, 68, 0.4); }
-        }
-
-        /* Machine Down Alert Animation */
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.02); }
-        }
+        /* ALL KEYFRAME ANIMATIONS DISABLED - Causes Chrome GPU crashes on TV displays */
         .animate-pulse-slow {
-            animation: pulse-slow 2s ease-in-out infinite;
+            /* DISABLED for TV stability */
+            opacity: 1;
         }
 
         .text-shadow {
@@ -100,9 +94,31 @@ export const tvHTML = `
            "Projector Effect" with Premium Colors (Blue/Gold/Slate)
            ========================================================================== */
         
-        /* Common Transition */
+        /* DISABLED: transitions cause Chrome GPU issues on TV displays */
         [tabindex="0"] {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* transition disabled for TV stability */
+        }
+
+        /* FORCE CPU RENDERING - Prevent Chrome GPU crashes on TV displays */
+        * {
+            -webkit-transform: none !important;
+            transform: none !important;
+            -webkit-backface-visibility: visible !important;
+            backface-visibility: visible !important;
+            -webkit-perspective: none !important;
+            perspective: none !important;
+            will-change: auto !important;
+        }
+        
+        /* Disable ALL transitions and animations globally */
+        *, *::before, *::after {
+            -webkit-transition: none !important;
+            -moz-transition: none !important;
+            transition: none !important;
+            -webkit-animation: none !important;
+            -moz-animation: none !important;
+            animation: none !important;
+            animation-duration: 0s !important;
         }
 
         /* 1. CARD HIGHLIGHT (Background & Border) */
@@ -179,18 +195,18 @@ export const tvHTML = `
             outline: none !important;
         }
 
-        /* Smooth scrolling for D-pad */
+        /* DISABLED: scroll-behavior smooth causes GPU issues on TV */
         html {
-            scroll-behavior: smooth;
+            scroll-behavior: auto;
         }
         /* IMAGE POPUP PANEL (Above Details) */
         #image-popup-panel {
             position: fixed;
             bottom: 35vh; /* Positioned above the max-height of details panel */
             left: 50%;
-            transform: translateX(-50%) translateY(20px);
+            transform: translateX(-50%);
             opacity: 0;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            /* DISABLED: transition for TV stability */
             z-index: 140; /* Above details panel (100) */
             pointer-events: none;
             display: flex;
@@ -217,7 +233,7 @@ export const tvHTML = `
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
-            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            /* DISABLED: transition for TV stability */
             z-index: 100;
             /* padding handled by classes */
             display: flex;
@@ -250,16 +266,14 @@ export const tvHTML = `
             justify-content: center;
         }
 
-        /* News Ticker Animation */
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
+        /* News Ticker - STATIC VERSION (animation disabled for TV stability) */
         .news-ticker-text {
             display: inline-block;
             white-space: nowrap;
-            padding-left: 100%; /* Start from right */
-            animation: ticker 20s linear infinite; /* Continuous flow */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            /* DISABLED: animation ticker - causes Chrome crash */
         }
         .mask-linear {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
@@ -272,7 +286,7 @@ export const tvHTML = `
         #broadcast-overlay {
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.5s ease-in-out;
+            /* DISABLED: transition for TV stability */
         }
         #broadcast-overlay.visible {
             opacity: 1;
@@ -284,12 +298,9 @@ export const tvHTML = `
             gap: 1rem;
         }
         
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* DISABLED: fadeInUp animation causes GPU issues on TV */
         .animate-fade-in-up {
-            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 1;
         }
     </style>
 </head>
@@ -325,7 +336,7 @@ export const tvHTML = `
     <!-- LOADING SCREEN -->
     <div id="loading" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center">
         <div class="text-center">
-            <div class="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-blue-500 mx-auto mb-8"></div>
+            <div class="rounded-full h-32 w-32 border-4 border-blue-500 mx-auto mb-8"></div>
             <h2 class="text-4xl font-bold text-blue-400 tracking-wider">VISION</h2>
             <p class="text-slate-500 mt-4 text-xl">Chargement du planning...</p>
         </div>
@@ -366,7 +377,7 @@ export const tvHTML = `
                 
                 <!-- Icon Bubble -->
                 <div class="relative h-10 w-10 rounded-full bg-gradient-to-br from-emerald-600 to-green-500 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.6)] flex-shrink-0 border border-white/20 z-10">
-                    <i class="fas fa-bullhorn text-white text-sm animate-pulse drop-shadow-md"></i>
+                    <i class="fas fa-bullhorn text-white text-sm drop-shadow-md"></i>
                 </div>
                 
                 <!-- Text (Ticker) -->
@@ -573,7 +584,7 @@ export const tvHTML = `
                 if (msg.type === 'alert') {
                     html = \`
                         <div class="flex flex-col items-center animate-fade-in-up w-full">
-                            <div class="bg-red-600/90 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border-4 border-red-400 animate-pulse-slow max-w-4xl">
+                            <div class="bg-red-600/90 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border-4 border-red-400 max-w-4xl">
                                 <div class="flex items-center justify-center gap-6 mb-6">
                                     <i class="fas fa-exclamation-triangle text-white text-6xl lg:text-8xl drop-shadow-lg"></i>
                                 </div>
@@ -1175,7 +1186,7 @@ export const tvHTML = `
             
             // Only change icon class if needed to prevent flicker
             if (!icon.classList.contains(theme.iconClass)) {
-                icon.className = \`fas \${theme.iconClass} text-white text-sm animate-pulse drop-shadow-md\`;
+                icon.className = \`fas \${theme.iconClass} text-white text-sm drop-shadow-md\`;
             }
         }
 
@@ -1329,7 +1340,7 @@ export const tvHTML = `
                 broadcastEl.innerHTML = \`
                     <div id="broadcast-glow" class="absolute inset-0 bg-gradient-to-r \${theme.glow} to-transparent opacity-100 transition-all duration-500"></div>
                     <div id="broadcast-icon-container" class="relative h-10 w-10 rounded-full bg-gradient-to-br \${theme.iconBg} flex items-center justify-center \${theme.iconShadow} flex-shrink-0 border border-white/20 z-10 transition-all duration-500">
-                        <i id="broadcast-icon" class="fas \${theme.iconClass} text-white text-sm animate-pulse drop-shadow-md"></i>
+                        <i id="broadcast-icon" class="fas \${theme.iconClass} text-white text-sm drop-shadow-md"></i>
                     </div>
                     <div class="flex-1 overflow-hidden relative h-8 flex items-center mask-linear z-10 w-full">
                         <div class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5 flex items-center" style="animation-duration: \${duration}s;">
@@ -1374,8 +1385,8 @@ export const tvHTML = `
                             <div class="flex items-center gap-2 xl:gap-3">
                                 <span class="text-lg xl:text-3xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
                                 <span class="font-mono text-slate-400 text-xs xl:text-xl">#\${t.ticket_id}</span>
-                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 animate-pulse">EN COURS</span>' : ''}
-                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 animate-pulse">CRITIQUE</span>' : ''}
+                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1">EN COURS</span>' : ''}
+                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1">CRITIQUE</span>' : ''}
                             </div>
                             
                                 <div class="text-base xl:text-2xl font-bold text-white leading-none">\${t.assignee_name || 'Non assigné'}</div>
