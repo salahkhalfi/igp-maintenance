@@ -1380,44 +1380,64 @@ export const tvHTML = `
 
                 // Different styling for Today vs Timeline
                 if (isToday) {
-                    // TODAY: Reduced padding (p-4), smaller fonts
-                    el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-3 xl:p-6 mb-3 xl:mb-4 interactive-card\`;
+                    // TODAY: Professional card layout with better space usage
+                    el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-4 xl:p-6 mb-3 xl:mb-4 interactive-card\`;
                     el.innerHTML = \`
-                        <div class="flex flex-wrap justify-between items-start mb-2 gap-y-1">
-                            <div class="flex items-center gap-2 xl:gap-3">
-                                <span class="text-lg xl:text-3xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
-                                <span class="font-mono text-slate-400 text-xs xl:text-xl">#\${t.ticket_id}</span>
-                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1">EN COURS</span>' : ''}
-                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1">CRITIQUE</span>' : ''}
-                            </div>
-                            
-                                <div class="text-right">
-                                \${t.assignee_name ? \`
-                                    <div class="text-base xl:text-2xl font-bold text-green-400 leading-none">\${t.assignee_name}</div>
-                                    <div class="text-slate-500 text-[9px] xl:text-xs uppercase tracking-wider">Intervenant</div>
-                                \` : ''}
-                                <div class="text-sm xl:text-lg \${t.assignee_name ? 'text-slate-400 mt-1' : 'text-white font-bold'}">\${t.reporter_name || '?'}</div>
-                                <div class="text-slate-500 text-[9px] xl:text-xs uppercase tracking-wider">Signalé par</div>
-                            </div>
+                        <!-- Header: ID + Status badges -->
+                        <div class="flex items-center gap-2 xl:gap-3 mb-3">
+                            <span class="text-lg xl:text-2xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
+                            <span class="font-mono text-slate-400 text-sm xl:text-xl font-semibold">#\${t.ticket_id}</span>
+                            \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">EN COURS</span>' : ''}
+                            \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">CRITIQUE</span>' : ''}
                         </div>
-                        <h3 class="text-lg xl:text-3xl font-bold text-white mb-2 leading-tight line-clamp-2 whitespace-normal">\${t.title}</h3>
-                        <div class="flex items-center gap-2 text-blue-300 text-xs xl:text-xl font-mono mt-2">
+                        
+                        <!-- Title -->
+                        <h3 class="text-xl xl:text-3xl font-bold text-white mb-3 leading-tight line-clamp-2">\${t.title}</h3>
+                        
+                        <!-- Machine -->
+                        <div class="flex items-center gap-2 text-blue-300 text-sm xl:text-lg font-mono mb-4">
                             <i class="fas fa-industry"></i>
                             \${t.machine_name}
                         </div>
+                        
+                        <!-- People: Two columns layout -->
+                        <div class="flex gap-4 xl:gap-6 mt-auto pt-3 border-t border-slate-700/50">
+                            <!-- Signalé par (Creator) - Always shown -->
+                            <div class="flex-1 bg-slate-800/50 rounded-lg p-2 xl:p-3">
+                                <div class="text-slate-400 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-1">
+                                    <i class="fas fa-user text-slate-500 mr-1"></i>Signalé par
+                                </div>
+                                <div class="text-white text-base xl:text-xl font-bold truncate">\${t.reporter_name || 'Inconnu'}</div>
+                            </div>
+                            
+                            <!-- Intervenant (Assignee) - Shows placeholder if none -->
+                            <div class="flex-1 bg-slate-800/50 rounded-lg p-2 xl:p-3 \${t.assignee_name ? 'border border-green-500/30' : ''}">
+                                <div class="text-slate-400 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-1">
+                                    <i class="fas fa-wrench \${t.assignee_name ? 'text-green-500' : 'text-slate-500'} mr-1"></i>Intervenant
+                                </div>
+                                <div class="\${t.assignee_name ? 'text-green-400' : 'text-slate-500 italic'} text-base xl:text-xl font-bold truncate">
+                                    \${t.assignee_name || 'Non assigné'}
+                                </div>
+                            </div>
+                        </div>
                     \`;
                 } else {
-                    // TIMELINE: Compact
-                    el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative transition-all duration-300 outline-none cursor-pointer interactive-card';
+                    // TIMELINE: Compact but informative
+                    el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
-                        <div class="flex flex-wrap justify-between items-start gap-y-1">
-                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-2 whitespace-normal">\${t.title}</div>
+                        <div class="flex flex-wrap justify-between items-start gap-y-1 mb-1">
+                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-1">\${t.title}</div>
                             \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-sm lg:text-base"></i>' : ''}
                         </div>
-                        <div class="text-slate-400 text-sm lg:text-sm lg:text-base mt-0.5 lg:mt-1 lg:mt-2 flex flex-wrap items-center gap-2">
-                            <i class="fas fa-wrench text-xs lg:text-sm"></i>
-                            \${t.machine_name}
-                            \${t.assignee_name ? \`<span class="font-mono text-green-400">\${t.assignee_name}</span> · \` : ''}<span class="font-mono text-slate-400">\${t.reporter_name || '?'}</span>
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-xs lg:text-sm">
+                            <div class="flex items-center gap-2 text-slate-400">
+                                <i class="fas fa-industry text-blue-400"></i>
+                                <span class="truncate max-w-[120px] lg:max-w-[200px]">\${t.machine_name}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-slate-500"><i class="fas fa-user mr-1"></i>\${t.reporter_name || '?'}</span>
+                                \${t.assignee_name ? \`<span class="text-green-400"><i class="fas fa-wrench mr-1"></i>\${t.assignee_name}</span>\` : '<span class="text-slate-600 italic text-xs">Non assigné</span>'}
+                            </div>
                         </div>
                     \`;
                 }
