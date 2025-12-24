@@ -11,7 +11,7 @@
  * Version: v3.1.6 (Online First - NO OFFLINE MODE)
  */
 
-const CACHE_VERSION = 'v3.1.8-industrial-sound';
+const CACHE_VERSION = 'v3.1.9-tv-button';
 const CACHE_NAME = `maintenance-os-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)
