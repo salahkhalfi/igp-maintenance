@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-24T10:27:34.744Z",
+  "generated": "2025-12-24T11:02:45.515Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -189,7 +189,7 @@
     {
       "original": "utils.js",
       "minified": "utils.min.js",
-      "savings": "65.7%"
+      "savings": "67.2%"
     }
   ],
   "totalSavings": "51.2%"

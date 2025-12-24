@@ -217,3 +217,105 @@ const formatElapsedTime = (elapsed) => {
 const API_URL = '/api';
 const DEFAULT_COMPANY_TITLE = 'Gestion de la maintenance et des réparations';
 const DEFAULT_COMPANY_SUBTITLE = 'Les Produits Verriers International (IGP) Inc.';
+
+/**
+ * ============================================
+ * SYSTÈME DE NIVEAUX D'ACCÈS (RBAC Simplifié)
+ * ============================================
+ * 
+ * Niveau 4 - SUPER : Accès multi-tenant, gestion modules (support SaaS)
+ * Niveau 3 - ADMIN : Configuration complète de son installation
+ * Niveau 2 - MANAGER : Gestion équipe, tickets, planning
+ * Niveau 1 - WORKER : Ses tickets, consultation
+ * Niveau 0 - VIEWER : Lecture seule
+ * 
+ * IMPORTANT: Ce mapping peut être ajusté sans migration de données.
+ * Les rôles existants dans la DB restent inchangés.
+ */
+const ROLE_LEVELS = {
+    // Niveau 4 - Super (SaaS/Support)
+    'super_admin': 4,
+    'support': 4,
+    
+    // Niveau 3 - Admin (Client)
+    'admin': 3,
+    'owner': 3,
+    'director': 3,
+    
+    // Niveau 2 - Manager
+    'supervisor': 2,
+    'coordinator': 2,
+    'planner': 2,
+    'foreman': 2,
+    'team_leader': 2,
+    
+    // Niveau 1 - Worker
+    'technician': 1,
+    'senior_technician': 1,
+    'operator': 1,
+    'furnace_operator': 1,
+    'inspector': 1,
+    'quality_inspector': 1,
+    'storekeeper': 1,
+    'safety_officer': 1,
+    
+    // Niveau 0 - Viewer
+    'viewer': 0,
+    'guest': 0,
+    'auditor': 0,
+    'client': 0
+};
+
+/**
+ * Obtenir le niveau d'accès d'un rôle
+ * @param {string} role - Le slug du rôle (ex: 'admin', 'technician')
+ * @returns {number} Niveau 0-4
+ */
+const getUserLevel = (role) => {
+    if (!role) return 0;
+    return ROLE_LEVELS[role.toLowerCase()] ?? 0;
+};
+
+/**
+ * Vérifier si un rôle a le niveau minimum requis
+ * @param {string} role - Le slug du rôle
+ * @param {number} minLevel - Niveau minimum requis (0-4)
+ * @returns {boolean}
+ */
+const canAccess = (role, minLevel) => {
+    return getUserLevel(role) >= minLevel;
+};
+
+/**
+ * Vérifier si un rôle est admin ou plus
+ * Remplace: role === 'admin'
+ */
+const isAdminOrAbove = (role) => canAccess(role, 3);
+
+/**
+ * Vérifier si un rôle est manager ou plus
+ * Remplace: role === 'admin' || role === 'supervisor'
+ */
+const isManagerOrAbove = (role) => canAccess(role, 2);
+
+/**
+ * Vérifier si un rôle est worker ou plus (pas viewer/guest)
+ */
+const isWorkerOrAbove = (role) => canAccess(role, 1);
+
+/**
+ * Obtenir le libellé français du niveau
+ */
+const getLevelLabel = (level) => {
+    const labels = {
+        4: 'Super Admin',
+        3: 'Administrateur',
+        2: 'Gestionnaire',
+        1: 'Employé',
+        0: 'Consultation'
+    };
+    return labels[level] ?? 'Inconnu';
+};
+
+// Debug: Log pour vérification (à retirer en production)
+console.log('[RBAC] Système de niveaux chargé. Fonctions disponibles: getUserLevel(), canAccess(), isAdminOrAbove(), isManagerOrAbove()');
