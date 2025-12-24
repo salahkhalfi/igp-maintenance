@@ -132,18 +132,16 @@ export const tvHTML = `
             /* Vibrant Border */
             border: 2px solid #3b82f6 !important; /* Blue-500 */
             
-            /* Luxurious Glow/Shadow */
+            /* Subtle glow - no overflow */
             box-shadow: 
-                0 0 0 4px rgba(59, 130, 246, 0.3), /* Blue Ring */
-                0 20px 50px -12px rgba(37, 99, 235, 0.5) !important; /* Blue Ambient Glow */
+                0 0 0 3px rgba(59, 130, 246, 0.4), /* Blue Ring */
+                0 8px 20px -8px rgba(37, 99, 235, 0.4) !important; /* Subtle shadow */
             
-            transform: scale(1.03) translateX(10px);
-            z-index: 50;
+            /* FIXED: Removed scale/translateX to prevent overflow into adjacent column */
+            transform: none;
+            z-index: 10; /* Lower z-index, stay within container */
+            position: relative;
         }
-        
-        /* Reset transform for Today items (they don't need translateX as much, or maybe they do?) 
-           Today items are in a col. Let's keep the pop effect but maybe less X shift? 
-           Let's keep it consistent for now. */
 
         /* 2. TYPOGRAPHY (High Contrast & Color) */
         .interactive-card:focus h3,
@@ -542,7 +540,7 @@ export const tvHTML = `
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
         <!-- LEFT COLUMN: TODAY (responsive width) -->
-        <section class="w-full lg:w-[55%] xl:w-[60%] 2xl:w-[65%] flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/50 relative p-3 lg:p-4 xl:p-6 min-h-[50vh] lg:min-h-0">
+        <section class="w-full lg:w-[55%] xl:w-[60%] 2xl:w-[65%] flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/50 relative p-3 lg:p-4 xl:p-6 min-h-[50vh] lg:min-h-0 overflow-hidden">
             
             <!-- Header Today -->
             <div class="flex items-center justify-between gap-3 mb-4 border-b border-slate-800/50 pb-3">
@@ -575,7 +573,7 @@ export const tvHTML = `
         </section>
 
         <!-- RIGHT COLUMN: TIMELINE (responsive width) -->
-        <section class="w-full lg:w-[45%] xl:w-[40%] 2xl:w-[35%] bg-slate-950 relative flex flex-col min-h-[40vh] lg:min-h-0">
+        <section class="w-full lg:w-[45%] xl:w-[40%] 2xl:w-[35%] bg-slate-950 relative flex flex-col min-h-[40vh] lg:min-h-0 overflow-hidden">
             <div class="p-3 lg:p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
                 <h2 class="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-blue-100 flex items-center gap-2 lg:gap-3 whitespace-nowrap">
                     <i class="fas fa-history text-blue-500"></i>
