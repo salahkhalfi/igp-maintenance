@@ -370,6 +370,7 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
     const updates: any = {
       updated_at: sql`CURRENT_TIMESTAMP`
     };
+    let wasAutoAssigned = false; // Track for timeline entry
 
     if (body.title) updates.title = body.title;
     if (body.description) updates.description = body.description;
@@ -377,6 +378,17 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
       updates.status = body.status;
       if (body.status === 'completed') {
         updates.completed_at = sql`CURRENT_TIMESTAMP`;
+      }
+      // AUTO-ASSIGN: When moving to "in_progress" and no one is assigned yet
+      // The person who takes the ticket becomes responsible
+      if (body.status === 'in_progress' && !currentTicket.assigned_to && !body.assigned_to) {
+        // Only auto-assign if user is a worker (not guest/viewer)
+        const workerRoles = ['admin', 'owner', 'director', 'supervisor', 'coordinator', 'planner', 'foreman', 'team_leader', 'technician', 'senior_technician', 'operator', 'furnace_operator', 'inspector', 'quality_inspector', 'storekeeper', 'safety_officer'];
+        if (workerRoles.includes(user.role)) {
+          updates.assigned_to = user.userId;
+          wasAutoAssigned = true;
+          console.log(`[Auto-Assign] Ticket #${id} auto-assigned to user #${user.userId} (${user.role}) on status change to in_progress`);
+        }
       }
     }
     if (body.priority) updates.priority = body.priority;
@@ -465,10 +477,10 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
     await db.insert(ticketTimeline).values({
       ticket_id: id,
       user_id: user.userId,
-      action: body.status ? 'Changement de statut' : 'Mise à jour',
+      action: wasAutoAssigned ? 'Prise en charge' : (body.status ? 'Changement de statut' : 'Mise à jour'),
       old_status: body.status ? currentTicket.status : null,
       new_status: body.status || null,
-      comment: body.comment || null
+      comment: wasAutoAssigned ? 'Auto-assigné en prenant le ticket' : (body.comment || null)
     });
 
     // Push notifications logic
