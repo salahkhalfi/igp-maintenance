@@ -371,6 +371,71 @@ export const tvHTML = `
         .animate-fade-in-up {
             opacity: 1;
         }
+
+        /* ============================================
+           TV ASPECT RATIO & RESPONSIVE FIXES
+           ============================================ */
+        
+        /* Prevent image/avatar distortion */
+        img, [class*="rounded-full"] {
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+        }
+        img:not([class*="rounded-full"]) {
+            aspect-ratio: auto;
+        }
+
+        /* Ultra-wide TV (21:9) - More horizontal space */
+        @media (min-aspect-ratio: 21/9) {
+            main > section:first-child { flex: 0 0 70%; }
+            main > section:last-child { flex: 0 0 30%; }
+        }
+
+        /* Standard TV (16:9) - Default layout */
+        @media (min-aspect-ratio: 16/9) and (max-aspect-ratio: 21/9) {
+            main > section:first-child { flex: 0 0 60%; }
+            main > section:last-child { flex: 0 0 40%; }
+        }
+
+        /* Older TV / Monitor (4:3) - More vertical space needed */
+        @media (max-aspect-ratio: 4/3) {
+            main { flex-direction: column !important; }
+            main > section:first-child { 
+                flex: 0 0 55%; 
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid rgb(30, 41, 59) !important;
+            }
+            main > section:last-child { 
+                flex: 0 0 45%; 
+                width: 100% !important;
+            }
+        }
+
+        /* Small screens / Vertical TV setup */
+        @media (max-width: 1024px) {
+            main { flex-direction: column !important; }
+            main > section { 
+                width: 100% !important; 
+                min-height: 45vh;
+            }
+        }
+
+        /* Prevent text overflow */
+        .line-clamp-1, .line-clamp-2, .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Ensure cards don't stretch weirdly */
+        .interactive-card {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Fix flex item shrinking issues */
+        .flex-shrink-0 { flex-shrink: 0 !important; }
+        .min-w-0 { min-width: 0 !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col p-1 lg:p-4 bg-slate-950 overflow-hidden">
@@ -473,11 +538,11 @@ export const tvHTML = `
         </div>
     </header>
 
-    <!-- MAIN CONTENT GRID -->
-    <main class="flex-1 flex overflow-hidden relative">
+    <!-- MAIN CONTENT GRID - Responsive for different TV aspect ratios -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
-        <!-- LEFT COLUMN: TODAY (60%) -->
-        <section class="w-[60%] flex flex-col border-r border-slate-800 bg-slate-900/50 relative p-6">
+        <!-- LEFT COLUMN: TODAY (responsive width) -->
+        <section class="w-full lg:w-[55%] xl:w-[60%] 2xl:w-[65%] flex flex-col border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/50 relative p-3 lg:p-4 xl:p-6 min-h-[50vh] lg:min-h-0">
             
             <!-- Header Today -->
             <div class="flex items-center justify-between gap-3 mb-4 border-b border-slate-800/50 pb-3">
@@ -509,8 +574,8 @@ export const tvHTML = `
 
         </section>
 
-        <!-- RIGHT COLUMN: TIMELINE (40%) -->
-        <section class="w-[40%] bg-slate-950 relative flex flex-col">
+        <!-- RIGHT COLUMN: TIMELINE (responsive width) -->
+        <section class="w-full lg:w-[45%] xl:w-[40%] 2xl:w-[35%] bg-slate-950 relative flex flex-col min-h-[40vh] lg:min-h-0">
             <div class="p-3 lg:p-4 border-b border-slate-800 bg-slate-900 z-20 shadow-xl flex justify-between items-center">
                 <h2 class="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-blue-100 flex items-center gap-2 lg:gap-3 whitespace-nowrap">
                     <i class="fas fa-history text-blue-500"></i>
@@ -1504,30 +1569,30 @@ export const tvHTML = `
                             \${t.machine_name}
                         </div>
                         
-                        <!-- People: Two columns with avatars -->
-                        <div class="flex gap-3 xl:gap-4 mt-auto pt-3 border-t border-slate-700/50">
+                        <!-- People: Two columns with avatars (responsive wrap) -->
+                        <div class="flex flex-wrap gap-2 xl:gap-4 mt-auto pt-3 border-t border-slate-700/50">
                             <!-- Signalé par (Creator) -->
-                            <div class="flex-1 bg-slate-800/80 rounded-lg p-2 xl:p-3 person-card">
+                            <div class="flex-1 min-w-[140px] bg-slate-800/80 rounded-lg p-2 xl:p-3 person-card">
                                 <div class="text-slate-300 text-xs xl:text-sm uppercase tracking-wider font-semibold mb-2 person-label">
                                     Signalé par
                                 </div>
-                                <div class="flex items-center gap-2 xl:gap-3">
+                                <div class="flex items-center gap-2 xl:gap-3 min-w-0">
                                     \${getAvatarHtml(t.reporter_id, t.reporter_avatar, t.reporter_initial || '?', t.reporter_name || 'Inconnu', 'border-blue-500/50')}
-                                    <div class="text-white text-sm xl:text-xl font-bold truncate person-name">\${t.reporter_name || 'Inconnu'}</div>
+                                    <div class="text-white text-sm xl:text-xl font-bold truncate person-name min-w-0 flex-1">\${t.reporter_name || 'Inconnu'}</div>
                                 </div>
                             </div>
                             
                             <!-- Intervenant (Assignee) -->
-                            <div class="flex-1 bg-slate-800/80 rounded-lg p-2 xl:p-3 \${t.assignee_name ? 'border border-green-500/40' : 'border border-slate-700/50'} person-card">
+                            <div class="flex-1 min-w-[140px] bg-slate-800/80 rounded-lg p-2 xl:p-3 \${t.assignee_name ? 'border border-green-500/40' : 'border border-slate-700/50'} person-card">
                                 <div class="text-slate-300 text-xs xl:text-sm uppercase tracking-wider font-semibold mb-2 person-label">
                                     Intervenant
                                 </div>
-                                <div class="flex items-center gap-2 xl:gap-3">
+                                <div class="flex items-center gap-2 xl:gap-3 min-w-0">
                                     \${t.assignee_name 
                                         ? getAvatarHtml(t.assignee_id, t.assignee_avatar, t.assignee_initial || '?', t.assignee_name, 'border-green-500/50')
-                                        : '<div class="w-10 h-10 xl:w-14 xl:h-14 rounded-full bg-slate-700 flex items-center justify-center text-slate-500"><i class="fas fa-user-clock text-lg xl:text-2xl"></i></div>'
+                                        : '<div class="w-10 h-10 xl:w-14 xl:h-14 rounded-full bg-slate-700 flex items-center justify-center text-slate-500 flex-shrink-0"><i class="fas fa-user-clock text-lg xl:text-2xl"></i></div>'
                                     }
-                                    <div class="\${t.assignee_name ? 'text-green-400' : 'text-slate-500 italic'} text-sm xl:text-xl font-bold truncate person-name">
+                                    <div class="\${t.assignee_name ? 'text-green-400' : 'text-slate-500 italic'} text-sm xl:text-xl font-bold truncate person-name min-w-0 flex-1">
                                         \${t.assignee_name || 'Non assigné'}
                                     </div>
                                 </div>
