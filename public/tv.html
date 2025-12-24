@@ -112,18 +112,7 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* Keyframes for animations */
-        /* DISABLED - GPU heavy animation causing Chrome crashes
-        @keyframes pulse {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-        }
-        */
-        
-        /* Lightweight alternative - opacity only, no transform */
-        @keyframes pulse-light {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
+        /* ALL ANIMATIONS DISABLED - Causing Chrome crashes on TV displays */
 
         /* Status Indicators - Simple dots, no glow effect */
         .status-indicator {
@@ -704,7 +693,7 @@
 
         function renderNote(n) {
             return `
-            <div class="dashboard-card p-4 border-l-4 border-l-yellow-400 mb-2 bg-yellow-900/20 animate-enter">
+            <div class="dashboard-card p-4 border-l-4 border-l-yellow-400 mb-2 bg-yellow-900/20">
                 <div class="flex items-start gap-3">
                     <div class="text-center bg-yellow-500/20 rounded p-2 min-w-[3rem]">
                         <i class="fas fa-sticky-note text-yellow-400 text-2xl"></i>
@@ -723,7 +712,7 @@
             const map = {
                 'received': { c: 'slate', t: 'À Traiter', i: 'fa-inbox' },
                 'diagnostic': { c: 'amber', t: 'En Étude', i: 'fa-search' },
-                'in_progress': { c: 'blue', t: 'En Cours', i: 'fa-spinner fa-spin' },
+                'in_progress': { c: 'blue', t: 'En Cours', i: 'fa-cog' },
                 'waiting_parts': { c: 'purple', t: 'En Attente', i: 'fa-hourglass-half' },
                 'completed': { c: 'emerald', t: 'Terminé', i: 'fa-check' }
             };
