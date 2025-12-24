@@ -441,10 +441,11 @@ export const tvHTML = `
         .min-w-0 { min-width: 0 !important; }
     </style>
 </head>
-<body class="h-screen flex flex-col p-1 lg:p-4 bg-slate-950 overflow-hidden">
+<!-- TV Safe Zone: 3% padding on all sides to prevent overscan cutoff -->
+<body class="h-screen flex flex-col bg-slate-950 overflow-hidden" style="padding: 2vh 3vw;">
 
-    <!-- BROADCAST OVERLAY (Full Screen) -->
-    <div id="broadcast-overlay" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center p-8 lg:p-16 text-center">
+    <!-- BROADCAST OVERLAY (Full Screen with TV Safe Zone) -->
+    <div id="broadcast-overlay" class="fixed z-[200] bg-slate-950 flex flex-col items-center justify-center p-8 lg:p-16 text-center" style="top: 2vh; right: 3vw; bottom: 2vh; left: 3vw;">
         <div id="broadcast-content-container" class="max-w-7xl w-full h-full flex flex-col items-center justify-center relative">
             <!-- Injected via JS -->
         </div>
