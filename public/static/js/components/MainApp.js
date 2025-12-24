@@ -185,6 +185,27 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
         return () => window.removeEventListener('open-planning', handleOpenPlanning);
     }, [activeModules]);
 
+    // URL-based view persistence (e.g., ?view=planning)
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view');
+        if (view === 'planning' && activeModules.planning) {
+            setShowProductionPlanning(true);
+        }
+    }, [activeModules]);
+
+    // Update URL when planning opens/closes
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (showProductionPlanning) {
+            params.set('view', 'planning');
+        } else {
+            params.delete('view');
+        }
+        const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+    }, [showProductionPlanning]);
+
     // Expose openDataImport globally
     React.useEffect(() => {
         window.openDataImport = (tab = 'users') => {
