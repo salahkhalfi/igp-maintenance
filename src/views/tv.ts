@@ -1391,8 +1391,9 @@ export const tvHTML = `
                                 \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1">CRITIQUE</span>' : ''}
                             </div>
                             
-                                <div class="text-base xl:text-2xl font-bold text-white leading-none">\${t.assignee_name || 'Non assigné'}</div>
-                                <div class="text-slate-400 text-[10px] xl:text-sm uppercase tracking-wider">Intervenant</div>
+                                <div class="text-right">
+                                <div class="text-base xl:text-2xl font-bold text-white leading-none">\${t.assignee_name || t.reporter_name || '?'}</div>
+                                <div class="text-slate-400 text-[10px] xl:text-sm uppercase tracking-wider">\${t.assignee_name ? 'Intervenant' : 'Signalé par'}</div>
                             </div>
                         </div>
                         <h3 class="text-lg xl:text-3xl font-bold text-white mb-2 leading-tight line-clamp-2 whitespace-normal">\${t.title}</h3>
@@ -1412,7 +1413,7 @@ export const tvHTML = `
                         <div class="text-slate-400 text-sm lg:text-sm lg:text-base mt-0.5 lg:mt-1 lg:mt-2 flex flex-wrap items-center gap-2">
                             <i class="fas fa-wrench text-xs lg:text-sm"></i>
                             \${t.machine_name}
-                            <span class="ml-auto font-mono text-blue-300">\${t.assignee_name || '?'}</span>
+                            <span class="ml-auto font-mono text-blue-300">\${t.assignee_name || t.reporter_name || '?'}</span>
                         </div>
                     \`;
                 }

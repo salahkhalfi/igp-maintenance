@@ -102,41 +102,47 @@ app.get('/data', checkTvKey, async (c) => {
     // 2. Récupérer les Tickets
     let activeTickets = [];
     try {
+      // Use raw SQL for multiple joins to same table (assignee + reporter)
+      const ticketsQuery = await c.env.DB.prepare(`
+        SELECT 
+          t.id,
+          t.ticket_id,
+          t.title,
+          t.description,
+          t.status,
+          t.priority,
+          t.scheduled_date,
+          t.created_at,
+          COALESCE(m.machine_type, 'Machine') || ' ' || COALESCE(m.model, '') as machine_name,
+          assignee.first_name as assignee_name,
+          reporter.first_name as reporter_name
+        FROM tickets t
+        LEFT JOIN machines m ON t.machine_id = m.id
+        LEFT JOIN users assignee ON t.assigned_to = assignee.id
+        LEFT JOIN users reporter ON t.reported_by = reporter.id
+        WHERE t.deleted_at IS NULL
+          AND t.status NOT IN ('resolved', 'closed', 'completed', 'cancelled', 'archived')
+          AND (
+            t.status = 'in_progress'
+            OR (t.scheduled_date >= ? AND t.scheduled_date <= ?)
+            OR (t.priority = 'critical' AND t.status IN ('received', 'diagnostic'))
+          )
+        ORDER BY 
+          CASE WHEN t.priority = 'critical' THEN 0 ELSE 1 END,
+          CASE WHEN t.status = 'in_progress' THEN 0 ELSE 1 END,
+          t.scheduled_date ASC
+      `).bind(startOfPast, endOfFuture).all();
+      
+      activeTickets = ticketsQuery.results || [];
+      
+      /* Original Drizzle query (replaced for double join):
       activeTickets = await db
         .select({
           id: tickets.id,
           ticket_id: tickets.ticket_id,
           title: tickets.title,
           description: tickets.description,
-          status: tickets.status,
-          priority: tickets.priority,
-          scheduled_date: tickets.scheduled_date,
-          created_at: tickets.created_at,
-          machine_name: sql`COALESCE(${machines.machine_type}, 'Machine') || ' ' || COALESCE(${machines.model}, '')`,
-          assignee_name: users.first_name
-        })
-        .from(tickets)
-        .leftJoin(machines, eq(tickets.machine_id, machines.id))
-        .leftJoin(users, eq(tickets.assigned_to, users.id))
-        .where(
-          and(
-            // 1. Exclure les tickets supprimés (Soft Delete)
-            sql`tickets.deleted_at IS NULL`,
-            // 2. Exclure les tickets terminés/archivés (Pour ne garder que l'actif)
-            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])),
-            // 3. Critères d'affichage TV habituels
-            or(
-              eq(tickets.status, 'in_progress'),
-              and(gte(tickets.scheduled_date, startOfPast), lte(tickets.scheduled_date, endOfFuture)),
-              and(eq(tickets.priority, 'critical'), or(eq(tickets.status, 'received'), eq(tickets.status, 'diagnostic')))
-            )
-          )
-        )
-        .orderBy(
-          sql`CASE WHEN ${tickets.priority} = 'critical' THEN 0 ELSE 1 END`,
-          sql`CASE WHEN ${tickets.status} = 'in_progress' THEN 0 ELSE 1 END`,
-          asc(tickets.scheduled_date)
-        );
+      */
     } catch (e) {
       console.error('TV: Error fetching tickets:', e);
       throw e; // Critical error
