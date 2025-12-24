@@ -380,11 +380,12 @@ export const tvHTML = `
             aspect-ratio: 1 / 1;
         }
         
-        /* Avatar circles - MUST have explicit max size to prevent explosion */
-        div[class*="rounded-full"][class*="bg-"] {
-            max-width: 56px !important;  /* xl:w-14 = 56px */
-            max-height: 56px !important;
-            flex-shrink: 0 !important;
+        /* Avatar initial circles - limit size to prevent explosion */
+        /* Target: divs with rounded-full AND a background color (bg-*) */
+        .person-card div.rounded-full {
+            max-width: 56px;
+            max-height: 56px;
+            flex-shrink: 0;
         }
 
         /* Ultra-wide TV (21:9) - More horizontal space */
