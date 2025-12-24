@@ -109,17 +109,16 @@ export const tvHTML = `
             will-change: auto !important;
         }
         
-        /* Disable CSS transitions and animations (JS handles ticker) */
-        *, *::before, *::after {
+        /* Disable CSS transitions and animations EXCEPT ticker */
+        *:not(.news-ticker-text), *:not(.news-ticker-text)::before, *:not(.news-ticker-text)::after {
             -webkit-transition: none !important;
             transition: none !important;
-            -webkit-animation: none !important;
-            animation: none !important;
         }
         
-        /* Allow ticker to use transform */
-        .news-ticker-text {
-            will-change: transform;
+        /* Disable animations except ticker */
+        *:not(.news-ticker-text) {
+            -webkit-animation: none !important;
+            animation: none !important;
         }
 
         /* 1. CARD HIGHLIGHT (Background & Border) */
@@ -267,17 +266,16 @@ export const tvHTML = `
             justify-content: center;
         }
 
-        /* News Ticker - JavaScript version (CSS animation disabled for stability) */
-        .news-ticker-wrapper {
-            overflow: hidden;
-            position: relative;
-            flex: 1;
+        /* News Ticker - CSS animation restored (isolated, won't crash) */
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
         }
         .news-ticker-text {
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%;
-            /* Animation driven by JavaScript, not CSS */
+            animation: ticker var(--ticker-duration, 20s) linear infinite !important;
         }
         .mask-linear {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
@@ -500,48 +498,8 @@ export const tvHTML = `
                 data: null,
                 broadcast: null // Timer for message rotation
             },
-            tickerObserver: null,
-            tickerAnimationId: null,
-            tickerPosition: 0
+            tickerObserver: null
         };
-
-        // ==========================================
-        // TICKER ANIMATION (JavaScript-based, no CSS)
-        // ==========================================
-        function startTickerAnimation() {
-            const ticker = document.querySelector('.news-ticker-text');
-            if (!ticker) return;
-            
-            // Stop any existing animation
-            if (State.tickerAnimationId) {
-                cancelAnimationFrame(State.tickerAnimationId);
-            }
-            
-            const container = ticker.parentElement;
-            if (!container) return;
-            
-            const tickerWidth = ticker.scrollWidth;
-            const containerWidth = container.offsetWidth;
-            
-            // Start from right edge
-            State.tickerPosition = containerWidth;
-            
-            const speed = 1; // pixels per frame (~60px/sec at 60fps)
-            
-            function animate() {
-                State.tickerPosition -= speed;
-                
-                // Reset when fully scrolled off left
-                if (State.tickerPosition < -tickerWidth) {
-                    State.tickerPosition = containerWidth;
-                }
-                
-                ticker.style.transform = 'translateX(' + State.tickerPosition + 'px)';
-                State.tickerAnimationId = requestAnimationFrame(animate);
-            }
-            
-            animate();
-        }
 
         // ==========================================
         // BROADCAST OVERLAY MANAGER (RICH MEDIA)
@@ -1387,7 +1345,7 @@ export const tvHTML = `
                         <i id="broadcast-icon" class="fas \${theme.iconClass} text-white text-sm drop-shadow-md"></i>
                     </div>
                     <div class="flex-1 overflow-hidden relative h-8 flex items-center mask-linear z-10 w-full">
-                        <div class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5 flex items-center" style="animation-duration: \${duration}s;">
+                        <div class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5 flex items-center" style="--ticker-duration: \${duration}s;">
                            \${combinedHTML}
                         </div>
                     </div>
@@ -1397,8 +1355,6 @@ export const tvHTML = `
                 
                 // Init Observer
                 setTimeout(setupTickerObserver, 100);
-                // Start JavaScript-based ticker animation
-                setTimeout(startTickerAnimation, 200);
             } else {
                 broadcastEl.classList.add('hidden');
                 broadcastEl.dataset.signature = '';
