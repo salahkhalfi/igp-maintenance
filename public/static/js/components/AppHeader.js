@@ -249,8 +249,9 @@ const AppHeader = ({
     const safeHasPermission = (perm) => {
         try {
             if (typeof hasPermission !== 'function') return false;
-            // Bypass for technician on critical buttons
-            if (perm === 'tickets.create' && currentUser?.role === 'technician') return true;
+            // Bypass: All workers (level 1+) can create tickets
+            // Uses new RBAC level system from utils.js
+            if (perm === 'tickets.create' && isWorkerOrAbove(currentUser?.role)) return true;
             return hasPermission(perm);
         } catch (e) {
             console.warn('Permission check failed:', e);
