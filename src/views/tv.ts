@@ -434,7 +434,7 @@ export const tvHTML = `
             <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
             <div class="hidden sm:block">
                 <h1 class="text-base lg:text-lg font-bold text-white tracking-tight leading-none">PLANNING</h1>
-                <p class="text-blue-400 text-[10px] font-mono font-bold tracking-widest uppercase leading-none mt-0.5">Dashboard</p>
+                <p class="text-blue-400 text-xs lg:text-sm font-mono font-bold tracking-widest uppercase leading-none mt-0.5">Dashboard</p>
             </div>
         </div>
 
@@ -468,7 +468,7 @@ export const tvHTML = `
             <!-- CLOCK (Compact) -->
             <div class="text-right font-mono leading-none">
                 <div id="clock-time" class="text-4xl font-bold text-white tracking-tighter">--:--</div>
-                <div id="clock-date" class="text-xs text-blue-300 font-semibold uppercase mt-0.5">---</div>
+                <div id="clock-date" class="text-xs lg:text-sm text-blue-300 font-semibold uppercase mt-0.5">---</div>
             </div>
         </div>
     </header>
@@ -1487,8 +1487,8 @@ export const tvHTML = `
                             <div class="flex items-center gap-2 xl:gap-3">
                                 <span class="text-lg xl:text-2xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
                                 <span class="font-mono text-slate-400 text-sm xl:text-xl font-semibold">#\${t.ticket_id}</span>
-                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">EN COURS</span>' : ''}
-                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">CRITIQUE</span>' : ''}
+                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-xs xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">EN COURS</span>' : ''}
+                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-xs xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">CRITIQUE</span>' : ''}
                             </div>
                             <div class="text-slate-500 hover:text-blue-400 transition-colors ticket-link-icon" title="Cliquer pour ouvrir le ticket">
                                 <i class="fas fa-external-link-alt text-sm xl:text-lg"></i>
@@ -1508,7 +1508,7 @@ export const tvHTML = `
                         <div class="flex gap-3 xl:gap-4 mt-auto pt-3 border-t border-slate-700/50">
                             <!-- Signalé par (Creator) -->
                             <div class="flex-1 bg-slate-800/80 rounded-lg p-2 xl:p-3 person-card">
-                                <div class="text-slate-300 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-2 person-label">
+                                <div class="text-slate-300 text-xs xl:text-sm uppercase tracking-wider font-semibold mb-2 person-label">
                                     Signalé par
                                 </div>
                                 <div class="flex items-center gap-2 xl:gap-3">
@@ -1519,7 +1519,7 @@ export const tvHTML = `
                             
                             <!-- Intervenant (Assignee) -->
                             <div class="flex-1 bg-slate-800/80 rounded-lg p-2 xl:p-3 \${t.assignee_name ? 'border border-green-500/40' : 'border border-slate-700/50'} person-card">
-                                <div class="text-slate-300 text-[10px] xl:text-xs uppercase tracking-wider font-semibold mb-2 person-label">
+                                <div class="text-slate-300 text-xs xl:text-sm uppercase tracking-wider font-semibold mb-2 person-label">
                                     Intervenant
                                 </div>
                                 <div class="flex items-center gap-2 xl:gap-3">
