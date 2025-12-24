@@ -331,16 +331,20 @@ export const tvHTML = `
             justify-content: center;
         }
 
-        /* News Ticker - CSS animation restored (isolated, won't crash) */
+        /* News Ticker - CSS animation with GPU acceleration */
         @keyframes ticker {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
         }
         .news-ticker-text {
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%;
             animation: ticker var(--ticker-duration, 20s) linear infinite !important;
+            /* GPU acceleration for smooth animation */
+            will-change: transform;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
         }
         .mask-linear {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);

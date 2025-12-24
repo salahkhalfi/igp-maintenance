@@ -1,22 +1,22 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **STATUS:** IMMUTABLE SOURCE OF TRUTH | **PRIORITY:** HIGHEST
+> **VERSION:** 6.0 (Unified) | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
 
 ---
 
 ## 🟢 MODULE 0: META-PROTOCOL
-*   **READ BEFORE WRITE**: Always `READ` -> `GREP` before any `EDIT`. No blind coding.
-*   **SCOPE ISOLATION**: Do not break the app to fix a typo. Revert > Reset.
-*   **ALIGNMENT**: Build a **Generic SaaS** (White Label). IGP is just the first tenant.
-*   **ONE FILE**: Update THIS file, never create `bible_v2.md`. Keep < 400 lines (compress if exceeded).
+*   **READ BEFORE WRITE**: `READ` → `GREP` → `PLAN` → `EDIT`. No blind coding.
+*   **SCOPE ISOLATION**: Don't burn the house to kill a spider. Revert > Reset.
+*   **ALIGNMENT**: Generic SaaS (White Label). IGP = first tenant, NOT the product.
+*   **ONE FILE**: Update THIS file only. Never create `bible_v2.md`. Keep < 500 lines.
 *   **CHESTERTON'S FENCE**: Never delete code you don't fully understand.
 
 ---
 
 ## 🟥 MODULE 1: THE CORE LOOP
-1.  **SIMULATION**: Audit for Security, Performance (O(n²)), Mobile (<44px), Edge Cases (Null/Offline).
+1.  **SIMULATION**: Audit for Security, Performance (O(n²)), Mobile (<44px), Edge Cases.
 2.  **GLOBAL IMPACT**: "Does this fix disrupt active states (Audio, Scroll, Input)?"
 3.  **VERIFICATION**: Use `grep` to ensure no conflicts globally.
-4.  **LEGACY AWARENESS**: "Dead code" in `src/` might be "Alive" in `public/static/`. Always grep ENTIRE project.
+4.  **LEGACY AWARENESS**: "Dead code" in `src/` might be "Alive" in `public/static/`.
 
 ---
 
@@ -25,12 +25,13 @@
 ### [PLATFORM - CLOUDFLARE EDGE]
 *   **EDGE PURITY**: V8 Runtime. NO Node.js APIs (`fs`, `crypto`, `child_process`). Web Standards only.
 *   **STATELESS**: DB (D1/R2) is the ONLY State. Workers are ephemeral.
-*   **NO NATIVE CRON**: Use external webhooks (cron-job.org) → `/api/cron/*` routes with `CRON_SECRET`.
+*   **NO NATIVE CRON**: Use external webhooks (cron-job.org) → `/api/cron/*` with `CRON_SECRET`.
+*   **NO WEBSOCKETS**: Use polling or Server-Sent Events instead.
 
 ### [DATA & TIME]
 *   **UTC STORAGE**: Storage = UTC. Display = User Local (`timezone_offset`).
 *   **TRUST NO INPUT**: Validate EVERYTHING. Verify JWTs against DB.
-*   **SOFT DELETE**: Use `deleted_at` timestamp. NEVER `DELETE FROM`. Every SELECT MUST filter `deleted_at IS NULL`.
+*   **SOFT DELETE**: Use `deleted_at` timestamp. NEVER `DELETE FROM`. Every SELECT filters `deleted_at IS NULL`.
 *   **SQL SAFETY**: Use `COALESCE` for NULLs. Prepared statements only.
 
 ### [UX]
@@ -39,34 +40,22 @@
 *   **NO LIES**: Green = verified server-side. Never fake success.
 
 ### [CODE HYGIENE]
-*   **ZERO HARDCODING**: Fetch business values from DB (`system_settings`) or ENV.
+*   **ZERO HARDCODING**: Fetch values from DB (`system_settings`) or ENV.
 *   **NO DEAD CODE**: Commented code = Deleted code.
 *   **EXPLICIT NAMES**: Human-readable variable names.
 
-### [🚨 HARDCODING FORBIDDEN - AUTO-BLOCKED BY PRE-COMMIT]
+### [🚨 HARDCODING FORBIDDEN]
 ```
-FORBIDDEN PATTERNS (pre-commit hook blocks these):
 ❌ app.igpglass.ca    → Use window.location.hostname or getDomainFromRequest()
 ❌ igpglass.com       → Use window.location.origin
 ❌ IGP Glass          → Use window.APP_COMPANY_NAME or system_settings
 ❌ admin@igpglass.*   → Use system_settings support_email
 ❌ sk-*, AKIA*        → NEVER commit API keys
 
-✅ CORRECT APPROACH:
-- Backend: import { getDomainFromRequest, getBrandingFromDB } from 'src/config/branding'
-- Frontend: window.location.hostname, window.APP_COMPANY_NAME
-- Both: system_settings table for tenant-specific values
-
-🔧 Script: ./scripts/check-hardcoding.sh
-🔧 Config: src/config/branding.ts
+✅ Backend: import { getDomainFromRequest, getBrandingFromDB } from 'src/config/branding'
+✅ Frontend: window.location.hostname, window.APP_COMPANY_NAME
+✅ Both: system_settings table for tenant-specific values
 ```
-
-### [TOKEN OPTIMIZATION]
-*   **NO RE-READ**: Never re-read a file already read in same session.
-*   **NO UNSOLICITED EXPLANATIONS**: Don't explain unless asked "pourquoi?" or "explique".
-*   **NO RECAP**: After action, just "Fait." or show error. No summary.
-*   **MINIMAL READS**: Use `head -20` or `grep` instead of full `Read` when possible.
-*   **ONE COMMAND**: One bash command at a time when debugging.
 
 ---
 
@@ -74,15 +63,14 @@ FORBIDDEN PATTERNS (pre-commit hook blocks these):
 
 ### [⚠️ SANDBOX PROTECTION - CRITICAL]
 ```
-🚨 SANDBOX RAM LIMITED - NO FULL BUILDS ALLOWED
-   ❌ npm run build (crashes sandbox)
-   ❌ npm run build:worker/client/messenger (crashes sandbox)
-   ✅ npx tsc --noEmit (lightweight type check only)
-   ✅ git push origin main (GitHub Actions builds for us)
+🚨 SANDBOX RAM LIMITED - NO FULL BUILDS
+❌ npm run build (crashes sandbox)
+✅ npx tsc --noEmit (type check only)
+✅ git push origin main (GitHub Actions builds)
 ```
 
 ### [GITHUB ACTIONS - MANDATORY]
-1.  **TO DEPLOY**: `git push origin main` → auto build & deploy (~2 min)
+1.  **DEPLOY**: `git push origin main` → auto build & deploy (~2 min)
 2.  **WORKFLOW**: `.github/workflows/deploy.yml`
 3.  **MONITOR**: https://github.com/salahkhalfi/igp-maintenance/actions
 4.  **VERIFY**: Test `https://app.igpglass.ca` after deploy.
@@ -94,144 +82,179 @@ FORBIDDEN PATTERNS (pre-commit hook blocks these):
 
 ---
 
-## 🟩 MODULE 9: BUSINESS MODEL & SCALING
+## 🟩 MODULE 4: ARCHITECTURE TECHNIQUE
 
-### [📦 MODÈLE CHOISI: INSTALLATION DÉDIÉE]
+### [STACK]
+*   **Framework**: Hono (lightweight, edge-optimized)
+*   **Database**: Cloudflare D1 (`maintenance-db`) - SQLite distributed
+*   **Storage**: Cloudflare R2 (`maintenance-media`) - Files/Images
+*   **Frontend**: React 18 (via CDN) - Legacy dashboard
+*   **Push**: `@block65/webcrypto-web-push` (NOT web-push npm)
+
+### [CRON EXTERNE (cron-job.org)]
 ```
-✅ DÉCISION: 1 Client = 1 Instance Isolée (PAS de multi-tenant DB)
+URL: mecanique.igpglass.ca (NEVER preview URLs)
+Auth: Authorization: cron_secret_igp_2025_webhook_notifications (NO "Bearer" prefix)
+Frequency: Every 5 min
+Endpoints: /api/cron/*
+```
 
-POURQUOI:
-├── App DÉJÀ prête (0 travail supplémentaire)
-├── Isolation totale (0 risque fuite données)
-├── Personnalisation illimitée par client
-├── Pas de dette technique tenant_id
-└── Marge maximale (95%+)
+### [TIMEZONE HANDLING]
+```
+Storage: UTC (via localDateTimeToUTC() frontend)
+Display: Local (via parseUTCDate() adds 'Z' suffix)
+Webhooks: Convert to local (via convertToLocalTime())
+Helper: getTimezoneOffset() (used in cron.ts, webhooks.ts)
+```
 
-PRICING SUGGÉRÉ:
+### [PUSH NOTIFICATIONS]
+```
+Queue: table pending_notifications (users offline)
+Cleanup: CRON externe requis
+Admin push: code in cron.ts L188-296 (NOT scheduled.ts)
+```
+
+---
+
+## 🟦 MODULE 5: BUSINESS MODEL
+
+### [📦 MODÈLE: INSTALLATION DÉDIÉE]
+```
+✅ 1 Client = 1 Instance Isolée (NO multi-tenant DB for now)
+
+WHY:
+├── App ALREADY ready (0 extra work)
+├── Total isolation (0 data leak risk)
+├── Unlimited customization per client
+├── No tenant_id technical debt
+└── Maximum margin (95%+)
+
+PRICING:
 ├── Setup: $1,500 (one-time)
-├── Mensuel: $99/mois
-└── Coût réel: ~$5/mois Cloudflare
+├── Monthly: $99/month
+└── Real cost: ~$5/month Cloudflare
 ```
 
-### [🔧 ARCHITECTURE MULTI-CLIENT]
+### [🔧 MULTI-CLIENT ARCHITECTURE]
 ```
-CHAQUE CLIENT A:
-├── 1 Fork GitHub (github.com/salahkhalfi/[client]-maintenance)
-├── 1 Projet Cloudflare Pages ([client]-app)
-├── 1 Base D1 dédiée ([client]-db)
-├── 1 Bucket R2 dédié ([client]-media)
-├── 1 Hub Genspark dédié pour support
-└── 1 BIBLE.md personnalisée
+EACH CLIENT HAS:
+├── 1 GitHub Fork (github.com/salahkhalfi/[client]-maintenance)
+├── 1 Cloudflare Pages project ([client]-app)
+├── 1 D1 Database ([client]-db)
+├── 1 R2 Bucket ([client]-media)
+├── 1 Genspark Hub for support
+└── 1 Custom BIBLE.md
 
-GESTION AGENT:
-├── 1 Session = 1 Client (via Hubs séparés)
-├── Jamais 2 clients dans même session
-└── Switch client = Switch Hub/Onglet
+AGENT MANAGEMENT:
+├── 1 Session = 1 Client (via separate Hubs)
+├── Never 2 clients in same session
+└── Switch client = Switch Hub/Tab
 ```
 
-### [🚀 ONBOARDING NOUVEAU CLIENT]
+### [🚀 NEW CLIENT ONBOARDING]
 ```bash
-# 1. Créer nouveau Hub Genspark "[Client] Maintenance"
-# 2. Dans ce Hub:
+# 1. Create Genspark Hub "[Client] Maintenance"
+# 2. In that Hub:
 git clone https://github.com/salahkhalfi/igp-maintenance [client]-maintenance
 cd [client]-maintenance
 git remote set-url origin https://github.com/salahkhalfi/[client]-maintenance
 git push -u origin main
 
-# 3. Cloudflare Dashboard:
-#    - Créer projet Pages: [client]-app
-#    - Créer D1: [client]-db
-#    - Créer R2: [client]-media
-#    - Configurer secrets (CRON_SECRET, API keys)
-
-# 4. Configurer system_settings (branding, IA, modules)
-# 5. Configurer cron-job.org pour ce client
-# 6. Déployer & tester
+# 3. Cloudflare Dashboard: Create Pages, D1, R2, configure secrets
+# 4. Configure system_settings (branding, AI, modules)
+# 5. Configure cron-job.org for this client
+# 6. Deploy & test
 ```
 
-### [⚙️ SYSTEM_SETTINGS - WHITE LABEL READY]
+### [⚙️ SYSTEM_SETTINGS - WHITE LABEL]
 ```
-BRANDING (39 paramètres configurables):
-├── company_title, company_subtitle, company_logo_url
-├── primary_color, secondary_color
-├── app_name, app_base_url, app_tagline
-└── support_email, documentation_url
-
-IA PERSONNALISÉE:
-├── ai_expert_name, ai_expert_avatar_key
-├── ai_identity_block (qui est l'IA)
-├── ai_knowledge_block (expertise métier)
-├── ai_character_block (personnalité)
-├── ai_hierarchy_block (noms des managers)
-├── ai_rules_block (règles comportement)
-└── ai_custom_context (contexte additionnel)
-
-MODULES ACTIVABLES:
-├── planning, analytics, notifications
-├── statistics, messaging, machines
-└── [futurs modules]: inventory, quality, etc.
+BRANDING (39 params): company_title, logo_url, primary_color, app_name, support_email
+AI CUSTOM: ai_expert_name, ai_identity_block, ai_knowledge_block, ai_character_block
+MODULES: planning, analytics, notifications, statistics, messaging, machines
 ```
 
-### [📊 MODULES CUSTOM PAR CLIENT]
+### [💰 CLOUDFLARE ECONOMICS]
+| Clients | Cost/month |
+|---------|------------|
+| 1 | ~$5 |
+| 5 | ~$25 |
+| 10 | ~$50 |
+
+### [⏳ MULTI-TENANT: LATER]
 ```
-SCÉNARIO: Client A veut "Gestion Stock", Client B non
-
-SOLUTION:
-├── Créer src/routes/inventory.ts (code commun)
-├── Créer migration inventory.sql
-├── Client A: modules_config.inventory = true (visible)
-├── Client B: modules_config.inventory = false (caché)
-└── Tables existent mais UI cachée = 0 confusion
-
-IA AWARENESS:
-├── L'IA charge modules_config au démarrage
-├── Elle sait quels modules sont actifs
-└── Ne suggère PAS de fonctionnalités désactivées
-```
-
-### [💰 ÉCONOMIE CLOUDFLARE]
-| Clients | D1 | R2 | Coût Total |
-|---------|----|----|------------|
-| 1 | 713 KB | ~0 | $5/mois |
-| 5 | ~5×$5 | ~5×$5 | ~$25/mois |
-| 10 | ~10×$5 | ~10×$5 | ~$50/mois |
-
-*Chaque client paie son propre Cloudflare OU tu factures +$10/mois*
-
-### [⏳ MIGRATION MULTI-TENANT: PLUS TARD]
-```
-TRIGGER: 10+ clients ET gestion devient lourde
-EFFORT: ~5-6 jours
-CHANGEMENTS:
-├── Ajouter tenant_id à toutes tables
-├── Middleware extraction tenant (domain → tenant)
-├── Super-admin panel
-└── 1 seule instance pour tous
-
-POUR L'INSTANT: NE PAS IMPLÉMENTER (dette technique inutile)
+TRIGGER: 10+ clients AND management becomes heavy
+EFFORT: ~5-6 days
+FOR NOW: DO NOT IMPLEMENT (unnecessary technical debt)
 ```
 
 ---
 
-## 🟦 MODULE 4: THE COPILOT OATH
-0.  **TOKEN PRIORITY**: Ne JAMAIS gaspiller les tokens Genspark. Chaque action doit être justifiée. Réfléchir AVANT d'agir.
-1.  **RADICAL TRUTH**: Admit mistakes immediately. No flattery. No ass-kissing.
-2.  **CALL BULLSHIT**: If user is wrong, say it directly. No automatic "you're right". C'EST UN ORDRE: contredire le user quand il a tort.
-3.  **TOKEN ECONOMY**: Code > Chat. Concise. <50 lines unless requested.
-4.  **UNCERTAINTY**: If unsure, say "I need to verify". Never invent.
-5.  **NO QUICK HACKS**: Temporary fix = permanent bug.
-6.  **AUDIT REGULARLY**: AI codes fast but lacks foresight. Clean up "trash" proactively.
+## 🟪 MODULE 6: COPILOT OATH
+
+### [TOKEN PRIORITY]
+0.  **NEVER WASTE TOKENS**: Every action must be justified. Think BEFORE acting.
+
+### [COMMUNICATION]
+1.  **RADICAL TRUTH**: Admit mistakes immediately. No flattery.
+2.  **CALL BULLSHIT**: If user is wrong, say it directly. C'EST UN ORDRE.
+3.  **UNCERTAINTY**: If unsure, say "I need to verify". Never invent.
+
+### [TOKEN ECONOMY - DEFAULT MODE]
+```
+FORMAT:
+Action: [1 line]
+[Code/Command]
+Result: [1 line]
+
+RULES:
+- <100 words unless complex task
+- Act first, summarize after
+- No decoration (skip tables/emojis unless clarity)
+- Batch tool calls
+- No re-read files already read in session
+- No repeating user's question
+- No "Great question!" filler
+- No explaining what you're ABOUT to do (just do it)
+
+TRIGGERS:
+- "mode efficace" / "sois bref" → Strict mode
+- "explique" / "détails" → Verbose allowed
+```
 
 ---
 
-## 🟪 MODULE 5: REACT ISOLATION
-*   **ONE React per page**: Dashboard = Legacy (CDN), Messenger = Modern (Vite). NEVER mix.
-*   **No bridge**: Injecting bundled React into legacy = GUARANTEED FAILURE.
-*   **Modernization**: If needed, create SEPARATE `/dashboard-v2` build.
+## 🟫 MODULE 7: SANCTUARIZED CODE (DO NOT TOUCH)
+
+### [VITAL FUNCTIONS]
+| Function | File | Lines |
+|----------|------|-------|
+| Voice Ticket | `ai.ts` | L135-400 |
+| Push Notifications | `push.ts` | L197-450 |
+| Expert IA | `ai.ts` | L88-130, L148-184, L480-700 |
+| Service Worker | `service-worker.js` | ALL |
+| Voice UI | `VoiceTicketFab.js` | ALL |
+
+### [DANGEROUS ACTIONS]
+| Action | Risk |
+|--------|------|
+| Rate limit `/api/ai/*` | 🔴 Breaks Voice Ticket |
+| Rate limit `/api/v2/chat` | 🔴 Breaks Messenger polling |
+| Modify R2 paths | 🔴 Breaks all images |
+
+### [MANDATORY TESTS]
+1. **Voice**: Record → Analyze → Pre-fill modal
+2. **Push**: Create ticket → Receive notification
+3. **Expert IA**: Send message → Get contextual response
+
+### [HONO TRAP]
+```
+⚠️ FIRST declared route wins (unlike Express LAST wins)
+Duplicate routes: First = ACTIVE, Second = DEAD CODE
+```
 
 ---
 
-## 🟫 MODULE 6: AI STACK
+## 🔵 MODULE 8: AI STACK
 *   **Audio**: Groq Whisper → OpenAI Whisper (fallback)
 *   **Logic**: DeepSeek → GPT-4o-mini (fallback)
 *   **Vision**: OpenAI GPT-4o-mini only
@@ -239,44 +262,24 @@ POUR L'INSTANT: NE PAS IMPLÉMENTER (dette technique inutile)
 
 ---
 
-## 🟤 MODULE 7: COMMON ERRORS
+## 🟤 MODULE 9: REACT ISOLATION
+*   **ONE React per page**: Dashboard = Legacy (CDN), Messenger = Modern (Vite). NEVER mix.
+*   **No bridge**: Injecting bundled React into legacy = GUARANTEED FAILURE.
+*   **Modernization**: Create SEPARATE `/dashboard-v2` build if needed.
+
+---
+
+## ⚫ MODULE 10: COMMON ERRORS
 *   **Infinite loading** → `npm run db:reset`
 *   **Node API error** → Use Web APIs only (no `fs`/`path`)
-*   **Heap out of memory** → Use sequential builds
+*   **Heap out of memory** → Use sequential builds / GitHub Actions
 *   **Full list**: `docs/COMMON_ERRORS.md`
 
 ---
 
-## 🔴 MODULE 8: SANCTUARIZED CODE (DO NOT TOUCH)
-
-### [VITAL FUNCTIONS - FORBIDDEN WITHOUT VALIDATION]
-| Function | File | Critical Lines |
-|----------|------|----------------|
-| Voice Ticket | `ai.ts` | L135-400 (transcribe, analyze, route) |
-| Push Notifications | `push.ts` | L197-450 (sendPush, queue) |
-| Expert IA | `ai.ts` | L88-130 (vision), L148-184 (config), L480-700 (context) |
-| Service Worker | `service-worker.js` | ALL |
-| Voice UI | `VoiceTicketFab.js` | ALL |
-
-### [DANGEROUS ACTIONS - HIGH RISK]
-| Action | Risk | Reason |
-|--------|------|--------|
-| Rate limit `/api/ai/*` | 🔴 CRITICAL | Breaks Voice Ticket |
-| Rate limit `/api/v2/chat` | 🔴 CRITICAL | Breaks Messenger polling |
-| Modify R2 paths | 🔴 CRITICAL | Breaks all images |
-| Pagination in `ai.ts` | 🟠 HIGH | Expert IA loses context |
-
-### [MANDATORY TESTS AFTER ANY CHANGE]
-1. **Voice**: Record → Analyze → Pre-fill modal
-2. **Push**: Create ticket → Receive notification with sound
-3. **Expert IA**: Send message → Get contextual response
-
-### [HONO TRAP]
-```
-⚠️ In Hono, FIRST declared route wins (unlike Express where LAST wins).
-   Duplicate routes: First = ACTIVE, Second = DEAD CODE.
-```
+## ⏳ MODULE 11: TEMPORARY MEASURES
+*   **CACHE KILLER** in `home.ts`: Remove after 2025-12-25 to restore PWA caching.
 
 ---
 
-## 🏁 END OF KERNEL
+## 🏁 END OF KERNEL (v6.0 - ~280 lines)
