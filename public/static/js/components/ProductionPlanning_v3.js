@@ -470,6 +470,13 @@ const ProductionPlanning = ({ onClose }) => {
                         className: `w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm ${viewMode === 'list' ? 'bg-slate-800 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`
                     }, React.createElement('i', { className: viewMode === 'calendar' ? 'fas fa-tv' : 'fas fa-calendar-alt' })),
 
+                    // Bouton Admin TV
+                    React.createElement('button', { 
+                        onClick: () => window.open('/admin/tv', '_blank'),
+                        title: 'Configuration écran TV',
+                        className: 'w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm bg-white border-slate-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300'
+                    }, React.createElement('i', { className: 'fas fa-desktop' })),
+
                     React.createElement('button', { 
                         onClick: () => { 
                             const today = new Date();
