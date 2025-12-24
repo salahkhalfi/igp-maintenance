@@ -1427,13 +1427,14 @@ export const tvHTML = `
                 else if (isInProgress) statusClasses = 'glass-panel-active';
 
                 // Helper: Generate avatar HTML (photo or initials)
-                const getAvatarHtml = (avatarKey: string | null, initial: string, name: string, colorClass: string, size: string = 'w-10 h-10 xl:w-14 xl:h-14') => {
+                function getAvatarHtml(avatarKey, initial, name, colorClass, size) {
+                    size = size || 'w-10 h-10 xl:w-14 xl:h-14';
+                    const bgClass = colorClass.replace('border-', 'bg-').replace('/50', '');
                     if (avatarKey) {
-                        return \`<img src="/api/media/\${avatarKey}" alt="\${name}" class="\${size} rounded-full object-cover border-2 \${colorClass}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                <div class="\${size} rounded-full \${colorClass.replace('border-', 'bg-').replace('/50', '')} hidden items-center justify-center text-white font-bold text-base xl:text-xl">\${initial}</div>\`;
+                        return '<img src="/api/media/' + avatarKey + '" alt="' + name + '" class="' + size + ' rounded-full object-cover border-2 ' + colorClass + '" onerror="this.style.display=\\'none\\';this.nextElementSibling.style.display=\\'flex\\';"><div class="' + size + ' rounded-full ' + bgClass + ' hidden items-center justify-center text-white font-bold text-base xl:text-xl">' + initial + '</div>';
                     }
-                    return \`<div class="\${size} rounded-full \${colorClass.replace('border-', 'bg-').replace('/50', '')} flex items-center justify-center text-white font-bold text-base xl:text-xl">\${initial}</div>\`;
-                };
+                    return '<div class="' + size + ' rounded-full ' + bgClass + ' flex items-center justify-center text-white font-bold text-base xl:text-xl">' + initial + '</div>';
+                }
 
                 // Different styling for Today vs Timeline
                 if (isToday) {
@@ -1489,12 +1490,12 @@ export const tvHTML = `
                     \`;
                 } else {
                     // TIMELINE: Compact with mini avatars
-                    const getMiniAvatar = (avatarKey: string | null, initial: string, name: string, borderColor: string) => {
+                    function getMiniAvatar(avatarKey, initial, name, borderColor) {
                         if (avatarKey) {
-                            return \`<img src="/api/media/\${avatarKey}" alt="\${name}" class="w-6 h-6 rounded-full object-cover border \${borderColor}" onerror="this.outerHTML='<div class=\\'w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold\\'>\${initial}</div>'">\`;
+                            return '<img src="/api/media/' + avatarKey + '" alt="' + name + '" class="w-6 h-6 rounded-full object-cover border ' + borderColor + '" onerror="this.outerHTML=\\'<div class=\\\\\\\'w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold\\\\\\\'>' + initial + '</div>\\'">';
                         }
-                        return \`<div class="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold">\${initial}</div>\`;
-                    };
+                        return '<div class="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold">' + initial + '</div>';
+                    }
                     
                     el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
