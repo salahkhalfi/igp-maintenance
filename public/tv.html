@@ -75,7 +75,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
-            transition: background-color 0.3s, color 0.3s;
+            /* NO TRANSITIONS - disabled for TV stability */
         }
 
         /* Header uses dark theme always for contrast with logo */
@@ -99,7 +99,7 @@
             border: 1px solid var(--card-border);
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s, border-color 0.2s;
+            /* NO TRANSITIONS - disabled for TV stability */
         }
         .dashboard-card:hover {
             border-color: var(--text-muted);
@@ -128,12 +128,18 @@
             will-change: auto !important;
         }
         
-        /* Disable all transitions on TV */
+        /* Disable ALL transitions and animations on TV - prevent Chrome GPU crash */
         *, *::before, *::after {
             -webkit-transition: none !important;
+            -moz-transition: none !important;
+            -o-transition: none !important;
             transition: none !important;
             -webkit-animation: none !important;
+            -moz-animation: none !important;
+            -o-animation: none !important;
             animation: none !important;
+            -webkit-animation-duration: 0s !important;
+            animation-duration: 0s !important;
         }
 
         /* Status Indicators - Simple dots, no glow effect */
@@ -307,9 +313,9 @@
             </div>
         </div>
 
-        <!-- Bottom Progress -->
+        <!-- Bottom Progress - NO TRANSITION to prevent Chrome GPU crash -->
         <div class="h-1 bg-slate-800 shrink-0 w-full relative">
-             <div id="refresh-bar" class="absolute top-0 left-0 h-full bg-corp-primary transition-all duration-1000 ease-linear" style="width: 0%"></div>
+             <div id="refresh-bar" class="absolute top-0 left-0 h-full bg-corp-primary" style="width: 0%"></div>
         </div>
     </div>
 
