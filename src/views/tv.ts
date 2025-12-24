@@ -119,6 +119,9 @@ export const tvHTML = `
         /* NEWS TICKER - MUST ANIMATE */
         /* Override any global rules - ticker needs transform animation */
         .news-ticker-text {
+            display: inline-block !important;
+            white-space: nowrap !important;
+            padding-left: 100%;
             -webkit-animation: ticker var(--ticker-duration, 20s) linear infinite !important;
             animation: ticker var(--ticker-duration, 20s) linear infinite !important;
             -webkit-transform: translateZ(0);
@@ -340,12 +343,7 @@ export const tvHTML = `
             0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
         }
-        .news-ticker-text {
-            display: inline-block;
-            white-space: nowrap;
-            padding-left: 100%;
-            /* Animation defined above with !important override */
-        }
+        /* .news-ticker-text styles defined above with !important */
         .mask-linear {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
             -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
@@ -1380,8 +1378,10 @@ export const tvHTML = `
 
         function renderBroadcast() {
             const broadcastEl = document.getElementById('tv-broadcast');
+            console.log('[TICKER DEBUG] renderBroadcast called, broadcastEl:', !!broadcastEl);
             
             const notes = State.appData.broadcast_notes || [];
+            console.log('[TICKER DEBUG] broadcast_notes:', notes.length, notes);
             let combinedHTML = '';
             let isContainerScheduled = false; // Initial state
             let plainText = '';
@@ -1389,6 +1389,7 @@ export const tvHTML = `
             if (notes.length > 0) {
                 const now = dayjs();
                 const todayStr = now.format('YYYY-MM-DD');
+                console.log('[TICKER DEBUG] todayStr:', todayStr);
 
                 const activeNotes = notes.filter(n => {
                     if (!n.time) {
@@ -1402,6 +1403,7 @@ export const tvHTML = `
                     else endTime = startTime.add(1, 'hour');
                     return now.isAfter(startTime) && now.isBefore(endTime);
                 });
+                console.log('[TICKER DEBUG] activeNotes after filter:', activeNotes.length, activeNotes);
 
                 if (activeNotes.length > 0) {
                     // Determine initial theme based on first item
@@ -1483,19 +1485,21 @@ export const tvHTML = `
                         <i id="broadcast-icon" class="fas \${theme.iconClass} text-white text-sm drop-shadow-md"></i>
                     </div>
                     <div class="flex-1 overflow-hidden relative h-8 flex items-center mask-linear z-10 w-full">
-                        <div class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5 flex items-center" style="--ticker-duration: \${duration}s;">
+                        <span class="news-ticker-text text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold tracking-wide leading-tight font-sans drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pb-0.5" style="--ticker-duration: \${duration}s;">
                            \${combinedHTML}
-                        </div>
+                        </span>
                     </div>
                 \`;
 
                 broadcastEl.classList.remove('hidden');
+                console.log('[TICKER DEBUG] Ticker shown! combinedHTML length:', combinedHTML.length);
                 
                 // Init Observer
                 setTimeout(setupTickerObserver, 100);
             } else {
                 broadcastEl.classList.add('hidden');
                 broadcastEl.dataset.signature = '';
+                console.log('[TICKER DEBUG] Ticker hidden - no combinedHTML');
             }
         }
 
