@@ -829,47 +829,59 @@
         }
 
         // --- SCROLL & REMOTE ---
+        // Global scroll state - single instance, never recreated
+        const autoScroll = {
+            intervalId: null,
+            direction: 1,
+            pauseCount: 0,
+            isPaused: false,
+            PAUSE_DURATION: 30, // ~3 seconds at 100ms
+            STEP: 2 // pixels per tick
+        };
+
         function setupAutoScroll(container) {
-            // Cancel any existing interval
-            if (container.dataset.scrollIntervalId) {
-                clearInterval(parseInt(container.dataset.scrollIntervalId));
+            // Always clear previous interval first
+            if (autoScroll.intervalId) {
+                clearInterval(autoScroll.intervalId);
+                autoScroll.intervalId = null;
             }
+
+            // Reset state
+            autoScroll.direction = 1;
+            autoScroll.pauseCount = 0;
+            autoScroll.isPaused = false;
+            container.scrollTop = 0;
+
+            // Don't scroll if content fits
             if (container.scrollHeight <= container.clientHeight) return;
 
-            let direction = 1;
-            let pauseCount = 0;
-            const PAUSE_DURATION = 30; // ~3 seconds at 100ms interval
-            container.dataset.isPaused = "false";
+            // Single global interval
+            autoScroll.intervalId = setInterval(() => {
+                // Get fresh reference to container each tick
+                const el = document.getElementById('today-list');
+                if (!el) return;
 
-            // Use setInterval at 100ms (10fps) - much lighter than requestAnimationFrame
-            const intervalId = setInterval(() => {
-                if (!document.body.contains(container)) {
-                    clearInterval(intervalId);
-                    return;
-                }
-                
-                if (container.dataset.isPaused === "true") return;
+                if (autoScroll.isPaused) return;
 
-                if (pauseCount > 0) {
-                    pauseCount--;
+                if (autoScroll.pauseCount > 0) {
+                    autoScroll.pauseCount--;
                     return;
                 }
 
-                const current = container.scrollTop;
-                const max = container.scrollHeight - container.clientHeight;
+                const current = el.scrollTop;
+                const max = el.scrollHeight - el.clientHeight;
 
-                if (direction === 1 && current >= max) { 
-                    pauseCount = PAUSE_DURATION; 
-                    direction = -1; 
-                } else if (direction === -1 && current <= 0) { 
-                    pauseCount = PAUSE_DURATION; 
-                    direction = 1; 
+                // Change direction at bounds
+                if (autoScroll.direction === 1 && current >= max - 1) {
+                    autoScroll.pauseCount = autoScroll.PAUSE_DURATION;
+                    autoScroll.direction = -1;
+                } else if (autoScroll.direction === -1 && current <= 1) {
+                    autoScroll.pauseCount = autoScroll.PAUSE_DURATION;
+                    autoScroll.direction = 1;
                 }
 
-                container.scrollTop += direction * 2; // 2px per step
-            }, 100); // 10fps is enough for smooth scroll
-
-            container.dataset.scrollIntervalId = intervalId;
+                el.scrollTop += autoScroll.direction * autoScroll.STEP;
+            }, 100);
         }
 
         class RemoteController {
@@ -895,19 +907,18 @@
                         this.toast("Avance " + (currentView === 'day' ? 'Jour' : currentView === 'week' ? 'Semaine' : 'Mois'));
                         break;
                     case 38: // UP
-                        this.container.dataset.isPaused = "true";
+                        autoScroll.isPaused = true;
                         this.container.scrollTop -= STEP;
                         break;
                     case 40: // DOWN
-                        this.container.dataset.isPaused = "true";
+                        autoScroll.isPaused = true;
                         this.container.scrollTop += STEP;
                         break;
                     case 13: // ENTER/OK
                     case 32: // SPACE
-                        const isP = this.container.dataset.isPaused === "true";
-                        this.container.dataset.isPaused = (!isP).toString();
-                        this.toast(isP ? "▶️ Reprise Auto" : "⏸️ Pause Manuelle");
-                        document.getElementById('scroll-status').style.display = isP ? 'none' : 'block';
+                        autoScroll.isPaused = !autoScroll.isPaused;
+                        this.toast(autoScroll.isPaused ? "⏸️ Pause Manuelle" : "▶️ Reprise Auto");
+                        document.getElementById('scroll-status').style.display = autoScroll.isPaused ? 'block' : 'none';
                         break;
                     case 82: // R (Reload)
                     case 406: // Blue
@@ -930,7 +941,7 @@
                 // Auto-resume after 10s of inactivity
                 clearTimeout(this.resumeTimer);
                 this.resumeTimer = setTimeout(() => {
-                    this.container.dataset.isPaused = "false";
+                    autoScroll.isPaused = false;
                     document.getElementById('scroll-status').style.display = 'none';
                 }, 10000);
             }
