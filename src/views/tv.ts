@@ -374,13 +374,17 @@ export const tvHTML = `
            TV ASPECT RATIO & RESPONSIVE FIXES
            ============================================ */
         
-        /* Prevent image/avatar distortion */
-        img, [class*="rounded-full"] {
+        /* Prevent image distortion - ONLY for img tags */
+        img.rounded-full {
             object-fit: cover;
             aspect-ratio: 1 / 1;
         }
-        img:not([class*="rounded-full"]) {
-            aspect-ratio: auto;
+        
+        /* Avatar circles - MUST have explicit max size to prevent explosion */
+        div[class*="rounded-full"][class*="bg-"] {
+            max-width: 56px !important;  /* xl:w-14 = 56px */
+            max-height: 56px !important;
+            flex-shrink: 0 !important;
         }
 
         /* Ultra-wide TV (21:9) - More horizontal space */
