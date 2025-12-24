@@ -190,34 +190,38 @@ export const tvHTML = `
             color: #dc2626 !important; /* Red-600 */
         }
 
-        /* 4. PERSON CARDS (Signalé par / Intervenant) */
+        /* 4. PERSON CARDS - Keep dark background for contrast on white card */
         .interactive-card:focus .person-card,
         .interactive-card:focus-visible .person-card,
         .interactive-card:hover .person-card {
-            background: rgba(30, 41, 59, 0.9) !important; /* Dark slate for contrast */
-            border: 1px solid #475569 !important;
+            background: #1e293b !important; /* Slate-800 solid */
+            border: 2px solid #3b82f6 !important; /* Blue border for pop */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
         }
 
         .interactive-card:focus .person-label,
         .interactive-card:focus-visible .person-label,
         .interactive-card:hover .person-label {
-            color: #94a3b8 !important; /* Lighter for dark bg */
+            color: #cbd5e1 !important; /* Slate-300 - visible on dark */
         }
 
-        .interactive-card:focus .person-name,
-        .interactive-card:focus-visible .person-name,
-        .interactive-card:hover .person-name {
-            color: #f8fafc !important; /* White for max contrast */
+        /* CRITICAL: Person names must stay WHITE on dark person-card */
+        .interactive-card:focus .person-card .person-name,
+        .interactive-card:focus-visible .person-card .person-name,
+        .interactive-card:hover .person-card .person-name {
+            color: #ffffff !important; /* Pure white */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
         }
 
-        /* Keep green for assignee name on hover */
-        .interactive-card:focus .text-green-400.person-name,
-        .interactive-card:focus-visible .text-green-400.person-name,
-        .interactive-card:hover .text-green-400.person-name {
-            color: #4ade80 !important; /* Brighter green */
+        /* Green assignee name stays green but brighter */
+        .interactive-card:focus .person-card .text-green-400,
+        .interactive-card:focus-visible .person-card .text-green-400,
+        .interactive-card:hover .person-card .text-green-400 {
+            color: #4ade80 !important; /* Bright green-400 */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
         }
 
-        /* 5. TITLES & MACHINE TEXT - better contrast on white bg */
+        /* 5. TITLES & MACHINE TEXT - black on white card background */
         .interactive-card:focus .ticket-title,
         .interactive-card:focus-visible .ticket-title,
         .interactive-card:hover .ticket-title {
@@ -230,12 +234,19 @@ export const tvHTML = `
             color: #1e40af !important; /* Dark blue */
         }
 
-        /* 6. AVATAR BORDERS on hover */
-        .interactive-card:focus img[class*="rounded-full"],
-        .interactive-card:focus-visible img[class*="rounded-full"],
-        .interactive-card:hover img[class*="rounded-full"] {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+        /* 6. AVATARS - Enhanced visibility on hover */
+        .interactive-card:focus .person-card img[class*="rounded-full"],
+        .interactive-card:focus-visible .person-card img[class*="rounded-full"],
+        .interactive-card:hover .person-card img[class*="rounded-full"] {
+            border-color: #60a5fa !important; /* Blue-400 */
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.4), 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+
+        /* Initial circles - ensure visible on dark bg */
+        .interactive-card:focus .person-card div[class*="rounded-full"][class*="bg-"],
+        .interactive-card:focus-visible .person-card div[class*="rounded-full"][class*="bg-"],
+        .interactive-card:hover .person-card div[class*="rounded-full"][class*="bg-"] {
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.3) !important;
         }
 
         /* Remove default outline */
