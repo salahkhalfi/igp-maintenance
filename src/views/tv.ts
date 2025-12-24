@@ -100,9 +100,8 @@ export const tvHTML = `
         }
 
         /* FORCE CPU RENDERING - Prevent Chrome GPU crashes on TV displays */
-        * {
-            -webkit-transform: none !important;
-            transform: none !important;
+        /* Exception: .news-ticker-text needs transform for JS animation */
+        *:not(.news-ticker-text) {
             -webkit-backface-visibility: visible !important;
             backface-visibility: visible !important;
             -webkit-perspective: none !important;
@@ -110,15 +109,17 @@ export const tvHTML = `
             will-change: auto !important;
         }
         
-        /* Disable ALL transitions and animations globally */
+        /* Disable CSS transitions and animations (JS handles ticker) */
         *, *::before, *::after {
             -webkit-transition: none !important;
-            -moz-transition: none !important;
             transition: none !important;
             -webkit-animation: none !important;
-            -moz-animation: none !important;
             animation: none !important;
-            animation-duration: 0s !important;
+        }
+        
+        /* Allow ticker to use transform */
+        .news-ticker-text {
+            will-change: transform;
         }
 
         /* 1. CARD HIGHLIGHT (Background & Border) */
@@ -266,14 +267,17 @@ export const tvHTML = `
             justify-content: center;
         }
 
-        /* News Ticker - STATIC VERSION (animation disabled for TV stability) */
+        /* News Ticker - JavaScript version (CSS animation disabled for stability) */
+        .news-ticker-wrapper {
+            overflow: hidden;
+            position: relative;
+            flex: 1;
+        }
         .news-ticker-text {
             display: inline-block;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-            /* DISABLED: animation ticker - causes Chrome crash */
+            padding-left: 100%;
+            /* Animation driven by JavaScript, not CSS */
         }
         .mask-linear {
             mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
@@ -496,8 +500,48 @@ export const tvHTML = `
                 data: null,
                 broadcast: null // Timer for message rotation
             },
-            tickerObserver: null
+            tickerObserver: null,
+            tickerAnimationId: null,
+            tickerPosition: 0
         };
+
+        // ==========================================
+        // TICKER ANIMATION (JavaScript-based, no CSS)
+        // ==========================================
+        function startTickerAnimation() {
+            const ticker = document.querySelector('.news-ticker-text');
+            if (!ticker) return;
+            
+            // Stop any existing animation
+            if (State.tickerAnimationId) {
+                cancelAnimationFrame(State.tickerAnimationId);
+            }
+            
+            const container = ticker.parentElement;
+            if (!container) return;
+            
+            const tickerWidth = ticker.scrollWidth;
+            const containerWidth = container.offsetWidth;
+            
+            // Start from right edge
+            State.tickerPosition = containerWidth;
+            
+            const speed = 1; // pixels per frame (~60px/sec at 60fps)
+            
+            function animate() {
+                State.tickerPosition -= speed;
+                
+                // Reset when fully scrolled off left
+                if (State.tickerPosition < -tickerWidth) {
+                    State.tickerPosition = containerWidth;
+                }
+                
+                ticker.style.transform = 'translateX(' + State.tickerPosition + 'px)';
+                State.tickerAnimationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
 
         // ==========================================
         // BROADCAST OVERLAY MANAGER (RICH MEDIA)
@@ -1353,6 +1397,8 @@ export const tvHTML = `
                 
                 // Init Observer
                 setTimeout(setupTickerObserver, 100);
+                // Start JavaScript-based ticker animation
+                setTimeout(startTickerAnimation, 200);
             } else {
                 broadcastEl.classList.add('hidden');
                 broadcastEl.dataset.signature = '';
