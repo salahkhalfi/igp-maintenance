@@ -234,6 +234,14 @@ export const tvHTML = `
             color: #1e40af !important; /* Dark blue */
         }
 
+        /* 5b. LINK ICON - becomes prominent on hover */
+        .interactive-card:focus .ticket-link-icon,
+        .interactive-card:focus-visible .ticket-link-icon,
+        .interactive-card:hover .ticket-link-icon {
+            color: #2563eb !important; /* Blue-600 */
+            transform: scale(1.2);
+        }
+
         /* 6. AVATARS - Enhanced visibility on hover */
         .interactive-card:focus .person-card img[class*="rounded-full"],
         .interactive-card:focus-visible .person-card img[class*="rounded-full"],
@@ -1433,6 +1441,27 @@ export const tvHTML = `
                 const isCritical = t.priority === 'critical';
                 const isInProgress = t.status === 'in_progress';
                 
+                // Make ticket card clickable - opens ticket in main app
+                const ticketUrl = '/?ticket=' + t.id;
+                el.setAttribute('data-ticket-url', ticketUrl);
+                el.setAttribute('data-ticket-id', t.ticket_id);
+                el.setAttribute('role', 'link');
+                el.setAttribute('aria-label', 'Ouvrir le ticket ' + t.ticket_id);
+                el.onclick = function(e) {
+                    // Open in new tab (Ctrl/Cmd+Click) or same tab
+                    if (e.ctrlKey || e.metaKey) {
+                        window.open(ticketUrl, '_blank');
+                    } else {
+                        window.location.href = ticketUrl;
+                    }
+                };
+                el.onkeydown = function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        window.location.href = ticketUrl;
+                    }
+                };
+                
                 let statusClasses = '';
                 if (isCritical) statusClasses = 'glass-panel-urgent';
                 else if (isInProgress) statusClasses = 'glass-panel-active';
@@ -1453,12 +1482,17 @@ export const tvHTML = `
                     // TODAY: Professional card layout with avatars
                     el.className = \`\${baseClasses} glass-panel \${statusClasses} rounded-xl p-4 xl:p-6 mb-3 xl:mb-4 interactive-card\`;
                     el.innerHTML = \`
-                        <!-- Header: ID + Status badges -->
-                        <div class="flex items-center gap-2 xl:gap-3 mb-3">
-                            <span class="text-lg xl:text-2xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
-                            <span class="font-mono text-slate-400 text-sm xl:text-xl font-semibold">#\${t.ticket_id}</span>
-                            \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">EN COURS</span>' : ''}
-                            \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">CRITIQUE</span>' : ''}
+                        <!-- Header: ID + Status badges + Link icon -->
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2 xl:gap-3">
+                                <span class="text-lg xl:text-2xl">\${isCritical ? '🔴' : (isInProgress ? '⚡' : '🎫')}</span>
+                                <span class="font-mono text-slate-400 text-sm xl:text-xl font-semibold">#\${t.ticket_id}</span>
+                                \${isInProgress ? '<span class="status-pill bg-green-500 text-black text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">EN COURS</span>' : ''}
+                                \${isCritical ? '<span class="status-pill bg-red-600 text-white text-[10px] xl:text-sm px-2 xl:px-3 py-0.5 xl:py-1 font-bold">CRITIQUE</span>' : ''}
+                            </div>
+                            <div class="text-slate-500 hover:text-blue-400 transition-colors ticket-link-icon" title="Cliquer pour ouvrir le ticket">
+                                <i class="fas fa-external-link-alt text-sm xl:text-lg"></i>
+                            </div>
                         </div>
                         
                         <!-- Title -->
@@ -1512,8 +1546,11 @@ export const tvHTML = `
                     el.className = 'ml-4 lg:ml-8 mb-2 lg:mb-4 bg-slate-800/50 rounded-lg p-2 lg:p-4 border border-slate-700 relative outline-none cursor-pointer interactive-card';
                     el.innerHTML = \`
                         <div class="flex flex-wrap justify-between items-start gap-y-1 mb-1">
-                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-1 ticket-title">\${t.title}</div>
-                            \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-sm lg:text-base"></i>' : ''}
+                            <div class="font-bold text-white text-base lg:text-xl leading-snug line-clamp-1 ticket-title flex-1">\${t.title}</div>
+                            <div class="flex items-center gap-2">
+                                \${isCritical ? '<i class="fas fa-exclamation-triangle text-red-500 text-sm lg:text-base"></i>' : ''}
+                                <i class="fas fa-external-link-alt text-slate-600 text-xs ticket-link-icon" title="Ouvrir le ticket"></i>
+                            </div>
                         </div>
                         <div class="flex flex-wrap items-center justify-between gap-2 text-xs lg:text-sm">
                             <div class="flex items-center gap-2 text-slate-400 ticket-machine">
