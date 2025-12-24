@@ -1,6 +1,5 @@
 // Guide HTML generator - accepts baseUrl to avoid hardcoding
 export const generateGuideHTML = (baseUrl: string = 'https://example.com'): string => {
-  // Extract domain from baseUrl for display
   const domain = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
   
   return `<!DOCTYPE html>
@@ -12,1759 +11,715 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'igp-blue': '#1e40af',
-                        'igp-orange': '#ea580c',
-                        'igp-red': '#dc2626',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        /* Background avec photo d'atelier */
+        * { scroll-behavior: smooth; }
         body {
-            background-image: url(/static/login-background.jpg);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
             min-height: 100vh;
         }
-        
-        /* Effet glassmorphism (vitreux) comme les colonnes Kanban */
-        .guide-container {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .step-card {
+            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
             border-radius: 12px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            transition: all 0.3s ease;
-        }
-        
-        .section-card {
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
-        }
-        
-        .section-card:hover {
-            background: rgba(255, 255, 255, 0.65);
-            box-shadow: 0 8px 28px 0 rgba(0, 0, 0, 0.20);
-            transform: translateY(-2px);
-        }
-        
-        .feature-box {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.4);
             border-left: 4px solid #3b82f6;
+            transition: all 0.2s ease;
         }
-        
-        .icon-badge {
+        .step-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .icon-box {
             width: 48px;
             height: 48px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            background: rgba(255, 255, 255, 0.50);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            font-size: 20px;
         }
-        
-        .back-button {
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 10px;
-            box-shadow: 
-                6px 6px 12px rgba(37, 99, 235, 0.3),
-                -3px -3px 8px rgba(147, 197, 253, 0.3);
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            font-size: 14px;
         }
-        
-        .back-button:hover {
-            box-shadow: 
-                8px 8px 16px rgba(37, 99, 235, 0.4),
-                -4px -4px 10px rgba(147, 197, 253, 0.4);
-            transform: translateY(-2px);
-        }
-        
-        .back-button:active {
-            box-shadow: 
-                4px 4px 8px rgba(37, 99, 235, 0.3),
-                -2px -2px 6px rgba(147, 197, 253, 0.3);
-            transform: translateY(0);
-        }
-        
         .toc-link {
-            color: #1e293b;
-            text-decoration: none;
-            padding: 16px 20px;
             display: flex;
             align-items: center;
-            gap: 14px;
-            border-radius: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255, 255, 255, 0.50);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-            font-weight: 500;
-            font-size: 0.9375rem;
-            letter-spacing: -0.01em;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #334155;
         }
-        
         .toc-link:hover {
-            background: rgba(255, 255, 255, 0.80);
-            border-color: #3b82f6;
-            box-shadow: 
-                0 4px 12px rgba(59, 130, 246, 0.15),
-                0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: #3b82f6;
+            color: white;
             transform: translateX(4px);
         }
-        
-        .toc-link:active {
-            transform: translateX(2px) scale(0.98);
-        }
-        
-        .toc-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
-            box-shadow: 
-                inset 2px 2px 5px rgba(148, 163, 184, 0.2),
-                inset -2px -2px 5px rgba(255, 255, 255, 0.9);
-            flex-shrink: 0;
-        }
-        
-        .toc-link:hover .toc-icon {
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            box-shadow: 
-                0 4px 12px rgba(59, 130, 246, 0.4),
-                inset 0 2px 4px rgba(255, 255, 255, 0.2);
-        }
-        
-        .toc-icon i {
-            font-size: 1.125rem;
-            color: #64748b;
-            transition: all 0.3s ease;
-        }
-        
-        .toc-link:hover .toc-icon i {
-            color: #ffffff;
-            transform: scale(1.1);
-        }
-        
-        .toc-number {
-            font-weight: 700;
-            color: #64748b;
-            font-size: 0.875rem;
-            min-width: 20px;
-            transition: color 0.3s ease;
-        }
-        
-        .toc-link:hover .toc-number {
-            color: #3b82f6;
-        }
-        
-        .toc-text {
-            flex: 1;
-            line-height: 1.4;
-            color: #334155;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-        
-        .toc-link:hover .toc-text {
-            color: #1e293b;
-        }
-        
-        .step-number {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #3b82f6, #2563eb);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 
-                3px 3px 6px rgba(37, 99, 235, 0.3),
-                -2px -2px 4px rgba(147, 197, 253, 0.3);
-        }
-        
-        kbd {
-            background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-family: monospace;
-            font-size: 0.9em;
-            box-shadow: 
-                2px 2px 4px rgba(71, 85, 105, 0.1),
-                -1px -1px 2px rgba(255, 255, 255, 0.8);
-        }
-        
-        .priority-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 600;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .priority-critical {
-            background: rgba(254, 226, 226, 0.70);
-            color: #dc2626;
-            border-left: 3px solid #dc2626;
-        }
-        
-        .priority-high {
-            background: rgba(254, 243, 199, 0.70);
-            color: #d97706;
-            border-left: 3px solid #f59e0b;
-        }
-        
-        .priority-medium {
-            background: rgba(219, 234, 254, 0.70);
-            color: #1d4ed8;
-            border-left: 3px solid #3b82f6;
-        }
-        
-        .priority-low {
-            background: rgba(209, 250, 229, 0.70);
-            color: #059669;
-            border-left: 3px solid #10b981;
-        }
-        
-        .status-badge {
+        .toc-link:hover i { color: white; }
+        .kanban-col {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 4px 12px;
+        }
+        .priority-badge {
+            padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.85em;
+            font-size: 12px;
             font-weight: 600;
-            background: rgba(241, 245, 249, 0.60);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 2px 8px rgba(71, 85, 105, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.4);
         }
-        
-        /* ============================================
-           📱 RESPONSIVE DESIGN PROFESSIONNEL
-           ============================================ */
-        
-        /* Tablet (768px - 1024px) */
-        @media (max-width: 1024px) {
-            body {
-                padding: 2rem 1rem;
-            }
-            
-            .guide-container {
-                padding: 1.5rem;
-                margin: 0 auto 1.5rem;
-            }
-            
-            .section-card {
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-            
-            .feature-box {
-                padding: 1rem;
-                margin-bottom: 0.75rem;
-            }
-        }
-        
-        /* Mobile Large (480px - 768px) */
         @media (max-width: 768px) {
-            body {
-                padding: 1rem 0.5rem;
-            }
-            
-            .guide-container {
-                margin: 0 0 1rem;
-                padding: 1rem;
-                border-radius: 10px;
-            }
-            
-            .section-card {
-                padding: 0.875rem;
-                margin-bottom: 0.875rem;
-                border-radius: 10px;
-            }
-            
-            .feature-box {
-                padding: 0.875rem;
-                margin-bottom: 0.75rem;
-                border-radius: 8px;
-            }
-            
-            .icon-badge {
-                width: 40px;
-                height: 40px;
-                font-size: 20px;
-            }
-            
-            .step-number {
-                width: 28px;
-                height: 28px;
-                font-size: 13px;
-            }
-            
-            .back-button {
-                padding: 0.625rem 1rem;
-                font-size: 14px;
-                width: auto;
-            }
-            
-            /* Header responsive */
-            h1 {
-                font-size: 1.75rem !important;
-                line-height: 1.2;
-            }
-            
-            h2 {
-                font-size: 1.5rem !important;
-            }
-            
-            h3 {
-                font-size: 1.25rem !important;
-            }
-            
-            /* Badges responsive */
-            .priority-badge,
-            .status-badge {
-                font-size: 0.75rem;
-                padding: 0.25rem 0.625rem;
-            }
-            
-            /* TOC responsive */
-            .toc-link {
-                padding: 12px 16px;
-                font-size: 0.875rem;
-                gap: 10px;
-            }
-            
-            .toc-icon {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .toc-icon i {
-                font-size: 1rem;
-            }
-            
-            .toc-number {
-                font-size: 0.8125rem;
-                min-width: 18px;
-            }
-            
-            /* Liste items plus compacts */
-            ul, ol {
-                padding-left: 1.5rem;
-            }
-            
-            li {
-                margin-bottom: 0.5rem;
-            }
-        }
-        
-        /* Mobile Small (320px - 480px) */
-        @media (max-width: 480px) {
-            body {
-                padding: 0.5rem 0.25rem;
-            }
-            
-            .guide-container {
-                margin: 0 0 0.75rem;
-                padding: 0.75rem;
-                border-radius: 8px;
-            }
-            
-            .section-card {
-                padding: 0.75rem;
-                border-radius: 8px;
-                margin-bottom: 0.75rem;
-            }
-            
-            .feature-box {
-                padding: 0.75rem;
-                margin-bottom: 0.625rem;
-            }
-            
-            /* Typographie très petite */
-            h1 {
-                font-size: 1.5rem !important;
-            }
-            
-            h2 {
-                font-size: 1.25rem !important;
-            }
-            
-            h3 {
-                font-size: 1.125rem !important;
-            }
-            
-            p, li, span {
-                font-size: 0.875rem;
-            }
-            
-            /* Badges très compacts */
-            .priority-badge,
-            .status-badge {
-                font-size: 0.6875rem;
-                padding: 0.1875rem 0.5rem;
-            }
-            
-            .icon-badge {
-                width: 36px;
-                height: 36px;
-                font-size: 18px;
-            }
-            
-            .step-number {
-                width: 24px;
-                height: 24px;
-                font-size: 12px;
-            }
-            
-            /* TOC très compact */
-            .toc-link {
-                padding: 10px 12px;
-                font-size: 0.8125rem;
-                gap: 8px;
-            }
-            
-            .toc-icon {
-                width: 32px;
-                height: 32px;
-            }
-            
-            .toc-icon i {
-                font-size: 0.875rem;
-            }
-            
-            .toc-number {
-                font-size: 0.75rem;
-                min-width: 16px;
-            }
-            
-            .toc-text {
-                font-size: 0.8125rem;
-            }
-            
-            /* Bouton retour compact */
-            .back-button {
-                padding: 0.5rem 0.75rem;
-                font-size: 13px;
-                width: 100%;
-                justify-content: center;
-            }
-            
-            /* Listes ultra-compactes */
-            ul, ol {
-                padding-left: 1.25rem;
-            }
-            
-            li {
-                margin-bottom: 0.375rem;
-            }
-            
-            /* Code blocks */
-            kbd {
-                font-size: 0.75rem;
-                padding: 0.125rem 0.5rem;
-            }
-            
-            /* Scroll navigation button (up/down) */
-            #scroll-nav-btn {
-                width: 48px !important;
-                height: 48px !important;
-                bottom: 1rem !important;
-                right: 1rem !important;
-                font-size: 1rem;
-            }
-            
-            /* Table responsive */
-            table {
-                font-size: 0.75rem;
-            }
-            
-            /* Badges info header */
-            .flex.items-center.gap-3 {
-                flex-wrap: wrap;
-                gap: 0.5rem !important;
-            }
-            
-            .flex.items-center.gap-3 > span {
-                font-size: 0.6875rem !important;
-                padding: 0.25rem 0.5rem !important;
-            }
-        }
-        
-        /* Mobile Extra Small (< 360px) */
-        @media (max-width: 360px) {
-            body {
-                padding: 0.375rem 0.125rem;
-            }
-            
-            .guide-container {
-                padding: 0.625rem;
-            }
-            
-            .section-card {
-                padding: 0.625rem;
-            }
-            
-            .feature-box {
-                padding: 0.625rem;
-            }
-            
-            h1 {
-                font-size: 1.375rem !important;
-            }
-            
-            h2 {
-                font-size: 1.125rem !important;
-            }
-            
-            h3 {
-                font-size: 1rem !important;
-            }
-            
-            p, li, span {
-                font-size: 0.8125rem;
-            }
-            
-            .back-button {
-                padding: 0.5rem;
-                font-size: 12px;
-            }
-        }
-        
-        /* Landscape mobile */
-        @media (max-height: 600px) and (orientation: landscape) {
-            html {
-                scroll-padding-top: 60px;
-            }
-            
-            .guide-container {
-                padding: 1rem;
-            }
-            
-            .section-card {
-                padding: 0.75rem;
-                margin-bottom: 0.75rem;
-            }
-            
-            #scroll-nav-btn {
-                bottom: 0.75rem !important;
-                right: 0.75rem !important;
-            }
-        }
-        
-        /* Touch targets - Accessibilité mobile */
-        @media (pointer: coarse) {
-            .toc-link,
-            .back-button,
-            button,
-            a {
-                min-height: 44px;
-                min-width: 44px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .toc-link {
-                padding: 0.75rem 1rem;
-            }
-        }
-        
-        /* Print media query */
-        @media print {
-            body {
-                background: white !important;
-            }
-            
-            .guide-container,
-            .section-card,
-            .feature-box {
-                background: white !important;
-                box-shadow: none !important;
-                border: 1px solid #ddd !important;
-            }
-            
-            .back-button,
-            #scroll-nav-btn,
-            .reading-progress {
-                display: none !important;
-            }
-            
-            .section-card {
-                page-break-inside: avoid;
-            }
-        }
-        
-        /* ============================================
-           🌟 AMÉLIORATIONS PROFESSIONNELLES PREMIUM
-           ============================================ */
-        
-        /* Smooth scroll premium avec décélération */
-        html {
-            scroll-behavior: smooth;
-            scroll-padding-top: 80px; /* Espace pour header fixe */
-        }
-        
-        /* Animation d'entrée des sections au scroll */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .section-card {
-            animation: fadeInUp 0.6s ease-out;
-            animation-fill-mode: both;
-        }
-        
-        /* Délai progressif pour effet cascade */
-        .section-card:nth-child(1) { animation-delay: 0.1s; }
-        .section-card:nth-child(2) { animation-delay: 0.2s; }
-        .section-card:nth-child(3) { animation-delay: 0.3s; }
-        .section-card:nth-child(4) { animation-delay: 0.4s; }
-        .section-card:nth-child(5) { animation-delay: 0.5s; }
-        .section-card:nth-child(6) { animation-delay: 0.6s; }
-        .section-card:nth-child(7) { animation-delay: 0.7s; }
-        .section-card:nth-child(8) { animation-delay: 0.8s; }
-        .section-card:nth-child(9) { animation-delay: 0.9s; }
-        
-        /* Highlight target section avec effet premium */
-        :target {
-            animation: highlightPremium 1.5s ease;
-        }
-        
-        @keyframes highlightPremium {
-            0% {
-                background: rgba(59, 130, 246, 0.25);
-                transform: scale(1.02);
-            }
-            50% {
-                background: rgba(59, 130, 246, 0.15);
-            }
-            100% {
-                background: transparent;
-                transform: scale(1);
-            }
-        }
-        
-        /* Barre de progression de lecture */
-        .reading-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 0%;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-            z-index: 9999;
-            transition: width 0.1s ease-out;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
-        }
-        
-        /* Effet de brillance sur les cartes au hover */
-        .section-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            transition: left 0.5s ease;
-            pointer-events: none;
-        }
-        
-        .section-card:hover::before {
-            left: 100%;
-        }
-        
-        /* Amélioration du bouton de navigation (up/down) */
-        #scroll-nav-btn {
-            position: fixed !important;
-            bottom: 2rem !important;
-            right: 2rem !important;
-            width: 3.5rem !important;
-            height: 3.5rem !important;
-            border-radius: 50% !important;
-            z-index: 9999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            color: white !important;
-            cursor: pointer !important;
-            border: none !important;
-            animation: bounceIn 0.5s ease;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 
-                0 4px 15px rgba(102, 126, 234, 0.4),
-                0 0 20px rgba(118, 75, 162, 0.3);
-            transition: all 0.3s ease !important;
-        }
-        
-        #scroll-nav-btn:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 
-                0 6px 20px rgba(102, 126, 234, 0.5),
-                0 0 30px rgba(118, 75, 162, 0.4);
-        }
-        
-        @keyframes bounceIn {
-            0% {
-                opacity: 0;
-                transform: scale(0.3) translateY(20px);
-            }
-            50% {
-                transform: scale(1.05) translateY(-5px);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-        
-        /* Curseur custom pour liens interactifs */
-        .toc-link, .back-button, a {
-            cursor: pointer;
-        }
-        
-        .toc-link:hover, .back-button:hover {
-            cursor: pointer;
-        }
-        
-        /* Effet de focus accessible premium */
-        *:focus-visible {
-            outline: 3px solid rgba(59, 130, 246, 0.5);
-            outline-offset: 3px;
-            border-radius: 6px;
-        }
-        
-        /* Table des matières sticky avec glassmorphism */
-        @media (min-width: 1280px) {
-            .sticky-toc {
-                position: sticky;
-                top: 20px;
-                max-height: calc(100vh - 40px);
-                overflow-y: auto;
-            }
-        }
-        
-        /* Scrollbar personnalisée premium */
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
-        }
-        
-        /* Animation d'icônes au hover */
-        .icon-badge {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        
-        .icon-badge:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.15);
-        }
-        
-        /* Effet de typing pour le titre */
-        @keyframes typing {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-        
-        @keyframes blink {
-            50% { border-color: transparent; }
+            .glass { border-radius: 0; }
         }
     </style>
 </head>
-<body class="p-3 sm:p-4 md:p-6 lg:p-8">
-    <div class="max-w-5xl mx-auto">
-        <!-- Header avec temps de lecture - 100% responsive -->
-        <div class="guide-container p-3 sm:p-4 md:p-6 lg:p-8 mb-4 md:mb-6 lg:mb-8">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-                <div class="flex items-start gap-3 sm:gap-4 flex-1 w-full">
-                    <div class="icon-badge text-blue-600 flex-shrink-0">
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Header -->
+        <div class="glass p-6 mb-6">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="icon-box bg-blue-600 text-white">
                         <i class="fas fa-book"></i>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 leading-tight">
-                            Guide Utilisateur
-                        </h1>
-                        <p class="text-xs sm:text-sm md:text-base text-gray-600 mt-1 leading-snug">
-                            Système de Gestion de Maintenance Universel
-                        </p>
-                        <div class="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-500">
-                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-md whitespace-nowrap">
-                                <i class="fas fa-clock text-xs"></i>
-                                <span id="reading-time" class="text-xs">~8 min</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded-md whitespace-nowrap">
-                                <i class="fas fa-check-circle text-xs"></i>
-                                <span class="text-xs">8 sections</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-600 rounded-md whitespace-nowrap">
-                                <i class="fas fa-bookmark text-xs"></i>
-                                <span class="text-xs">v2.8.1</span>
-                            </span>
-                        </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">Guide Utilisateur</h1>
+                        <p class="text-gray-500 text-sm">MaintenanceOS - Version Janvier 2025</p>
                     </div>
                 </div>
-                <button onclick="window.location.href='/'" class="back-button flex items-center justify-center gap-2 w-full sm:w-auto flex-shrink-0">
+                <a href="/" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                     <i class="fas fa-arrow-left"></i>
                     <span>Retour</span>
-                </button>
+                </a>
             </div>
         </div>
 
-        <!-- Table des matières - 100% responsive -->
-        <div class="section-card" id="table-of-contents">
-            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-3">
-                <div class="icon-badge text-blue-600">
-                    <i class="fas fa-th-list"></i>
-                </div>
-                <span class="leading-tight">Table des matières</span>
+        <!-- Table des matières -->
+        <div class="glass p-6 mb-6" id="top">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-list text-blue-600"></i>
+                Table des matières
             </h2>
-            <p class="text-sm text-gray-600 mb-4 ml-1">Sélectionnez une section pour y accéder directement</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <a href="#connexion" class="toc-link">
+                    <i class="fas fa-sign-in-alt text-blue-600"></i>
+                    <span>1. Se connecter</span>
+                </a>
+                <a href="#dashboard" class="toc-link">
+                    <i class="fas fa-th-large text-purple-600"></i>
+                    <span>2. Tableau de bord</span>
+                </a>
                 <a href="#tickets" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-ticket-alt"></i>
-                    </div>
-                    <span class="toc-number">01</span>
-                    <span class="toc-text">Gestion des Tickets</span>
+                    <i class="fas fa-ticket-alt text-orange-600"></i>
+                    <span>3. Gérer les tickets</span>
                 </a>
-                <a href="#kanban" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-columns"></i>
-                    </div>
-                    <span class="toc-number">02</span>
-                    <span class="toc-text">Tableau Kanban</span>
+                <a href="#vocal" class="toc-link">
+                    <i class="fas fa-microphone text-red-600"></i>
+                    <span>4. Créer un ticket vocal</span>
                 </a>
-                <a href="#messages" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-comments"></i>
-                    </div>
-                    <span class="toc-number">03</span>
-                    <span class="toc-text">Messagerie Interne</span>
+                <a href="#messenger" class="toc-link">
+                    <i class="fas fa-comments text-green-600"></i>
+                    <span>5. Messagerie (IGP Connect)</span>
                 </a>
                 <a href="#notifications" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <span class="toc-number">04</span>
-                    <span class="toc-text">Notifications Push</span>
+                    <i class="fas fa-bell text-yellow-600"></i>
+                    <span>6. Notifications</span>
                 </a>
-                <a href="#machines" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-cogs"></i>
-                    </div>
-                    <span class="toc-number">05</span>
-                    <span class="toc-text">Gestion des Machines</span>
+                <a href="#planning" class="toc-link">
+                    <i class="fas fa-calendar-alt text-indigo-600"></i>
+                    <span>7. Planning</span>
                 </a>
-                <a href="#profile" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-user-cog"></i>
-                    </div>
-                    <span class="toc-number">06</span>
-                    <span class="toc-text">Profil & Paramètres</span>
-                </a>
-                <a href="#mobile" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <span class="toc-number">07</span>
-                    <span class="toc-text">Utilisation Mobile</span>
-                </a>
-                <a href="#tips" class="toc-link">
-                    <div class="toc-icon">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <span class="toc-number">08</span>
-                    <span class="toc-text">Trucs & Astuces</span>
+                <a href="#admin" class="toc-link">
+                    <i class="fas fa-cog text-gray-600"></i>
+                    <span>8. Administration</span>
                 </a>
             </div>
         </div>
 
-        <!-- Section 1: Gestion des Tickets -->
-        <div class="section-card" id="tickets">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-ticket-alt text-blue-600"></i>
-                1. Gestion des Tickets
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Créer un nouveau ticket
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur le bouton <strong>"+ Demande"</strong> (bouton bleu avec icône <i class="fas fa-plus"></i>) en haut à gauche</li>
-                    <li>• Remplissez les champs obligatoires :
-                        <ul class="ml-6 mt-2 space-y-1">
-                            <li>- <strong>Titre</strong> : Description courte du problème</li>
-                            <li>- <strong>Machine</strong> : Sélectionnez l'équipement concerné</li>
-                            <li>- <strong>Priorité</strong> : Choisissez selon l'urgence</li>
-                            <li>- <strong>Technicien</strong> : Assignez à un membre de l'équipe</li>
-                        </ul>
-                    </li>
-                    <li>• Ajoutez des détails dans la <strong>Description</strong></li>
-                    <li>• Optionnel : Joignez des <strong>photos</strong> ou <strong>documents</strong></li>
-                    <li>• Cliquez sur <strong>"Créer"</strong> pour soumettre le ticket</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Comprendre les priorités
-                </h3>
-                <div class="space-y-3 ml-12">
-                    <div class="flex items-center gap-3">
-                        <span class="priority-badge priority-critical">
-                            <i class="fas fa-exclamation-triangle"></i> CRITIQUE
-                        </span>
-                        <span class="text-gray-700">Arrêt de production imminent - Intervention immédiate requise</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="priority-badge priority-high">
-                            <i class="fas fa-arrow-up"></i> HAUTE
-                        </span>
-                        <span class="text-gray-700">Impact majeur - Planifier intervention aujourd'hui</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="priority-badge priority-medium">
-                            <i class="fas fa-minus"></i> MOYENNE
-                        </span>
-                        <span class="text-gray-700">Impact modéré - Planifier dans les 2-3 jours</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="priority-badge priority-low">
-                            <i class="fas fa-arrow-down"></i> BASSE
-                        </span>
-                        <span class="text-gray-700">Impact mineur - Planifier quand disponible</span>
-                    </div>
+        <!-- Section 1: Connexion -->
+        <div class="glass p-6 mb-6" id="connexion">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-blue-100 text-blue-600">
+                    <i class="fas fa-sign-in-alt"></i>
                 </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Modifier un ticket existant
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur le ticket dans le tableau Kanban</li>
-                    <li>• Modifiez les informations nécessaires</li>
-                    <li>• Ajoutez des <strong>commentaires</strong> pour documenter l'évolution</li>
-                    <li>• Changez le <strong>statut</strong> en déplaçant le ticket (voir section Kanban)</li>
-                    <li>• Cliquez sur <strong>"Enregistrer"</strong> pour sauvegarder</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">4</div>
-                    Joindre des fichiers
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Photos</strong> : Prenez une photo directement ou choisissez depuis la galerie</li>
-                    <li>• <strong>Documents</strong> : PDF, fichiers Word, Excel acceptés</li>
-                    <li>• <strong>Taille max</strong> : 10 MB par fichier</li>
-                    <li>• <strong>Formats acceptés</strong> : JPG, PNG, PDF, DOC, DOCX, XLS, XLSX</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 2: Tableau Kanban -->
-        <div class="section-card" id="kanban">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-columns text-purple-600"></i>
-                2. Tableau Kanban
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Comprendre les colonnes
-                </h3>
-                <div class="space-y-3 ml-12">
-                    <div class="flex items-start gap-3">
-                        <span class="status-badge">
-                            🟦 Requete Recue
-                        </span>
-                        <span class="text-gray-700">Nouvelle demande reçue, en attente d'analyse</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="status-badge">
-                            🟨 Diagnostic
-                        </span>
-                        <span class="text-gray-700">Analyse du problème en cours par le technicien</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="status-badge">
-                            🟧 En Cours
-                        </span>
-                        <span class="text-gray-700">Intervention active par le technicien assigné</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="status-badge">
-                            🟪 En Attente Pieces
-                        </span>
-                        <span class="text-gray-700">En attente de pièces de rechange ou matériel</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="status-badge">
-                            🟩 Termine
-                        </span>
-                        <span class="text-gray-700">Intervention complétée et validée</span>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <span class="status-badge">
-                            ⬜ Archive
-                        </span>
-                        <span class="text-gray-700">Ticket archivé pour historique et consultation</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Déplacer un ticket (Drag & Drop)
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Sur ordinateur</strong> : Cliquez et maintenez sur un ticket, puis glissez vers la colonne souhaitée</li>
-                    <li>• <strong>Sur mobile/tablette</strong> : Appuyez longuement (1 seconde) puis glissez le ticket</li>
-                    <li>• Le ticket change automatiquement de statut</li>
-                    <li>• <strong>Restrictions</strong> : Seuls les techniciens assignés ou superviseurs peuvent déplacer certains tickets</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Trier les tickets
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Utilisez le menu déroulant <strong>"Trier:"</strong> en haut du tableau</li>
-                    <li>• <strong>Par défaut</strong> : Ordre original (création)</li>
-                    <li>• <strong>🔥 Urgence</strong> : Calcul automatique (priorité + temps écoulé) - Les plus urgents en premier</li>
-                    <li>• <strong>⏰ Plus ancien</strong> : Tickets les plus anciens en premier</li>
-                    <li>• <strong>📅 Planifié</strong> : Tickets avec date de planification, triés par date la plus proche</li>
-                    <li>• Le tri est visible uniquement s'il y a <strong>3 tickets ou plus</strong> dans le tableau</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 3: Messagerie -->
-        <div class="section-card" id="messages">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-comments text-green-600"></i>
-                3. Messagerie Interne
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Envoyer un message texte
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur le bouton <strong>"Messagerie"</strong> (icône <i class="fas fa-comments"></i>) dans la barre de navigation</li>
-                    <li>• Sélectionnez un collègue dans la liste des conversations</li>
-                    <li>• Tapez votre message dans la zone de texte en bas</li>
-                    <li>• Appuyez sur <kbd>Entrée</kbd> ou cliquez sur <i class="fas fa-paper-plane"></i> pour envoyer</li>
-                    <li>• Les messages sont instantanés et le destinataire reçoit une notification</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Envoyer un message vocal
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Dans une conversation, cliquez sur l'icône <i class="fas fa-microphone text-red-600"></i> <strong>microphone</strong></li>
-                    <li>• <strong>Maintenez appuyé</strong> pour enregistrer (jusqu'à 2 minutes)</li>
-                    <li>• Relâchez pour envoyer automatiquement</li>
-                    <li>• <strong>Avantages</strong> : Parfait pour les mains occupées ou messages complexes</li>
-                    <li>• Le destinataire peut écouter directement dans l'application</li>
-                </ul>
-                <div class="mt-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-sm text-gray-700">
-                    <p class="font-semibold text-blue-800 mb-1">
-                        <i class="fas fa-info-circle"></i> Compatibilité des messages audio
-                    </p>
-                    <p>✅ <strong>Détection automatique du format</strong> : L'application choisit le meilleur format audio supporté par votre appareil</p>
-                    <ul class="mt-2 space-y-1 ml-4">
-                        <li>• <strong>iPhone/iPad (Safari)</strong> : MP4/AAC ou MP3</li>
-                        <li>• <strong>Android (Chrome)</strong> : MP3, MP4 ou WebM</li>
-                        <li>• <strong>Lecture universelle</strong> : Tous les appareils peuvent lire les messages audio reçus</li>
-                    </ul>
-                    <p class="mt-2 text-xs text-gray-600">Note: Les formats MP3 et MP4 sont universellement compatibles sur iOS et Android</p>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Indicateurs de conversation
-                </h3>
-                <div class="space-y-2 ml-12 text-gray-700">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">3</span>
-                        <span>Badge rouge : Nombre de messages non lus</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-circle text-green-500 text-xs"></i>
-                        <span>Point vert : L'utilisateur est en ligne</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-check text-gray-400"></i>
-                        <span>Simple coche : Message envoyé</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-check-double text-blue-500"></i>
-                        <span>Double coche bleue : Message lu</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Section 4: Notifications Push -->
-        <div class="section-card" id="notifications">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-bell text-yellow-600"></i>
-                4. Notifications Push
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Activer les notifications
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Lors de votre première connexion, autorisez les notifications quand votre navigateur le demande</li>
-                    <li>• Si vous avez refusé, allez dans les <strong>paramètres de votre navigateur</strong> :</li>
-                    <ul class="ml-6 mt-2 space-y-1">
-                        <li>- Chrome : ⋮ → Paramètres → Confidentialité → Paramètres des sites → Notifications</li>
-                        <li>- Safari : Préférences → Sites web → Notifications</li>
-                        <li>- Firefox : ☰ → Paramètres → Vie privée → Permissions → Notifications</li>
-                    </ul>
-                    <li>• Trouvez <strong>\${domain}</strong> et activez les notifications</li>
-                </ul>
-                <div class="mt-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-sm text-gray-700">
-                    <p class="font-semibold text-amber-800 mb-1">
-                        <i class="fas fa-exclamation-triangle"></i> Important pour iPhone/iPad
-                    </p>
-                    <p class="mb-2">Les notifications push sur iOS <strong>nécessitent l'installation de l'application sur l'écran d'accueil</strong> (voir section 7 - Utilisation Mobile).</p>
-                    <p class="text-xs text-gray-600"><strong>Pourquoi ?</strong> Apple requiert que les PWA soient installées pour recevoir des notifications push. Sans installation, les notifications ne fonctionneront pas sur iPhone/iPad.</p>
-                    <p class="mt-2 font-medium text-amber-700">
-                        ✅ <strong>Android</strong> : Notifications fonctionnent dans le navigateur Chrome<br>
-                        ⚠️ <strong>iOS</strong> : Installation requise (Safari → Partager → "Sur l'écran d'accueil")
-                    </p>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Types de notifications reçues
-                </h3>
-                <div class="space-y-3 ml-12">
-                    <div class="flex items-start gap-3">
-                        <i class="fas fa-wrench text-blue-600 text-xl"></i>
-                        <div>
-                            <strong>Nouveau ticket assigné</strong>
-                            <p class="text-sm text-gray-600">Notification : "🔧 [Titre du ticket]" → Cliquez pour ouvrir l'application</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <i class="fas fa-comment text-green-600 text-xl"></i>
-                        <div>
-                            <strong>Nouveau message texte</strong>
-                            <p class="text-sm text-gray-600">Notification : "💬 [Nom de l'expéditeur]" → Cliquez pour lire le message</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <i class="fas fa-microphone text-red-600 text-xl"></i>
-                        <div>
-                            <strong>Nouveau message vocal</strong>
-                            <p class="text-sm text-gray-600">Notification : "🎤 [Nom de l'expéditeur] - Message vocal ([durée])" → Cliquez pour écouter</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Fonctionnement des notifications
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Les notifications apparaissent même si l'application est <strong>fermée</strong></li>
-                    <li>• Elles fonctionnent sur <strong>ordinateur, mobile et tablette</strong></li>
-                    <li>• Cliquer sur une notification ouvre directement l'application</li>
-                    <li>• Les notifications restent visibles jusqu'à ce que vous les consultiez</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 5: Gestion des Machines -->
-        <div class="section-card" id="machines">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-cogs text-gray-600"></i>
-                5. Gestion des Machines
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Consulter les machines
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur l'icône <i class="fas fa-cogs"></i> <strong>"Machines"</strong> dans la navigation</li>
-                    <li>• Visualisez toutes les machines et leur statut actuel</li>
-                    <li>• <strong>Filtre rapide</strong> : Recherchez par nom, numéro de série, ou département</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Historique des interventions
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur une machine pour voir son détail</li>
-                    <li>• Consultez l'<strong>historique complet</strong> des tickets associés</li>
-                    <li>• Visualisez les <strong>pièces remplacées</strong> et interventions passées</li>
-                    <li>• Utile pour identifier les problèmes récurrents</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Ajouter une nouvelle machine (Admin)
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Fonction réservée aux <strong>administrateurs</strong></li>
-                    <li>• Cliquez sur <strong>"Nouvelle Machine"</strong></li>
-                    <li>• Remplissez les informations : nom, numéro de série, département, etc.</li>
-                    <li>• La machine devient immédiatement disponible pour les tickets</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 6: Profil & Paramètres -->
-        <div class="section-card" id="profile">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-user-cog text-indigo-600"></i>
-                6. Profil & Paramètres
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Modifier votre profil
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur votre <strong>nom</strong> en haut à droite</li>
-                    <li>• Sélectionnez <strong>"Profil"</strong></li>
-                    <li>• Modifiez vos informations : nom, email, téléphone</li>
-                    <li>• Changez votre <strong>mot de passe</strong> si nécessaire</li>
-                    <li>• Cliquez sur <strong>"Enregistrer"</strong></li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Préférences de notifications
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Dans <strong>Paramètres → Notifications</strong></li>
-                    <li>• Activez/désactivez les notifications selon vos préférences</li>
-                    <li>• Choisissez les types d'événements qui vous intéressent</li>
-                    <li>• Les changements prennent effet immédiatement</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Se déconnecter
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Cliquez sur votre nom en haut à droite</li>
-                    <li>• Sélectionnez <strong>"Déconnexion"</strong></li>
-                    <li>• <strong>Important</strong> : Sur les appareils partagés, déconnectez-vous toujours après utilisation</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 7: Utilisation Mobile -->
-        <div class="section-card" id="mobile">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-mobile-alt text-pink-600"></i>
-                7. Utilisation Mobile (PWA)
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">1</div>
-                    Installer l'application (recommandé)
-                </h3>
-                <div class="ml-12 space-y-4">
-                    <div>
-                        <strong class="text-gray-800">Sur iPhone/iPad (Safari) :</strong>
-                        <ol class="mt-2 space-y-1 text-gray-700">
-                            <li>1. Ouvrez \${domain} dans Safari</li>
-                            <li>2. Appuyez sur l'icône <i class="fas fa-share"></i> <strong>Partager</strong> (en bas)</li>
-                            <li>3. Sélectionnez <strong>"Sur l'écran d'accueil"</strong></li>
-                            <li>4. Appuyez sur <strong>"Ajouter"</strong></li>
-                        </ol>
-                    </div>
-                    <div>
-                        <strong class="text-gray-800">Sur Android (Chrome) :</strong>
-                        <ol class="mt-2 space-y-1 text-gray-700">
-                            <li>1. Ouvrez \${domain} dans Chrome</li>
-                            <li>2. Appuyez sur les <strong>trois points</strong> ⋮ en haut à droite</li>
-                            <li>3. Sélectionnez <strong>"Ajouter à l'écran d'accueil"</strong></li>
-                            <li>4. Appuyez sur <strong>"Installer"</strong></li>
-                        </ol>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">2</div>
-                    Avantages de l'installation
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Accès rapide</strong> : Lancez l'app comme une application native depuis votre écran d'accueil</li>
-                    <li>• <strong>Mode plein écran</strong> : Plus d'espace pour travailler sans barre d'adresse</li>
-                    <li>• <strong>Notifications push</strong> : Recevez des alertes même si l'app est fermée</li>
-                    <li>• <strong>Fonctionne hors ligne</strong> : Consultez les données récentes sans connexion</li>
-                    <li>• <strong>Plus rapide</strong> : Chargement instantané après installation</li>
-                    <li>• <strong>Icône sur l'écran d'accueil</strong> : Logo Application visible avec vos autres applications</li>
-                </ul>
-                <div class="mt-3 p-3 bg-purple-50 border-l-4 border-purple-500 rounded text-sm text-gray-700">
-                    <p class="font-semibold text-purple-800 mb-2">
-                        <i class="fas fa-star"></i> Recommandation forte pour iPhone/iPad
-                    </p>
-                    <p class="mb-2">L'installation est <strong>fortement recommandée</strong> et même <strong>obligatoire pour les notifications push</strong> sur iOS.</p>
-                    <p class="text-xs text-gray-600">
-                        <strong>Différence Android vs iOS :</strong><br>
-                        • <strong>Android</strong> : Installation optionnelle (améliore l'expérience)<br>
-                        • <strong>iOS</strong> : Installation obligatoire pour les notifications push
-                    </p>
-                    <p class="mt-2 font-medium text-purple-700">
-                        💡 L'installation prend 10 secondes et transforme le site web en application native complète!
-                    </p>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2">
-                    <div class="step-number">3</div>
-                    Gestes tactiles
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Glisser</strong> : Faites défiler les listes et le tableau Kanban</li>
-                    <li>• <strong>Appui long</strong> : Maintenez 1 seconde sur un ticket pour le déplacer</li>
-                    <li>• <strong>Pincer</strong> : Zoomez sur les photos de tickets</li>
-                    <li>• <strong>Balayer</strong> : Naviguez entre les conversations de messagerie</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section 8: Trucs & Astuces -->
-        <div class="section-card" id="tips">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-lightbulb text-yellow-500"></i>
-                8. Trucs & Astuces
-            </h2>
-
-            <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                    <i class="fas fa-keyboard text-blue-500 mr-2"></i>
-                    Raccourcis clavier
-                </h3>
-                <div class="ml-12 space-y-2 text-gray-700">
-                    <div class="flex items-center gap-3">
-                        <kbd>Esc</kbd>
-                        <span>Fermer les fenêtres modales (popups, formulaires)</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <kbd>Enter</kbd>
-                        <span>Soumettre le formulaire actif (création ticket, commentaire, etc.)</span>
-                    </div>
-                    <p class="text-sm text-gray-600 italic mt-3">Note: L'application privilégie les clics pour éviter les conflits de raccourcis.</p>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                    <i class="fas fa-tachometer-alt text-blue-500 mr-2"></i>
-                    Optimisations pour efficacité
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• <strong>Triez par Urgence</strong> : Utilisez le tri "🔥 Urgence" pour voir les tickets les plus pressants en premier</li>
-                    <li>• <strong>Planifiez votre journée</strong> : Le tri "📅 Planifié" affiche vos interventions à venir par ordre chronologique</li>
-                    <li>• <strong>Commentez régulièrement</strong> : Documentez vos actions pour les collègues</li>
-                    <li>• <strong>Photos systématiques</strong> : Prenez des photos avant/après intervention</li>
-                    <li>• <strong>Messages vocaux</strong> : Plus rapide qu'écrire quand vous êtes sur le terrain</li>
-                    <li>• <strong>Priorités réalistes</strong> : N'abusez pas du "Critique" - gardez-le pour les vraies urgences</li>
-                </ul>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                    <i class="fas fa-question-circle text-purple-500 mr-2"></i>
-                    Résolution de problèmes
-                </h3>
-                <div class="ml-12 space-y-3 text-gray-700">
-                    <div>
-                        <strong>❓ Les notifications ne fonctionnent pas</strong>
-                        <p class="text-sm mt-1">→ Vérifiez les autorisations dans les paramètres de votre navigateur/appareil</p>
-                    </div>
-                    <div>
-                        <strong>❓ L'application est lente</strong>
-                        <p class="text-sm mt-1">→ Rafraîchissez la page (<kbd>Ctrl</kbd>+<kbd>F5</kbd>) ou videz le cache</p>
-                    </div>
-                    <div>
-                        <strong>❓ Je ne peux pas déplacer un ticket</strong>
-                        <p class="text-sm mt-1">→ Vérifiez que vous êtes le technicien assigné ou un superviseur</p>
-                    </div>
-                    <div>
-                        <strong>❓ Une photo ne s'affiche pas</strong>
-                        <p class="text-sm mt-1">→ Vérifiez votre connexion internet, puis rechargez la page</p>
-                    </div>
-                    <div>
-                        <strong>❓ Je ne reçois pas les messages</strong>
-                        <p class="text-sm mt-1">→ Déconnectez-vous et reconnectez-vous, puis réactivez les notifications</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">
-                    <i class="fas fa-shield-alt text-green-600 mr-2"></i>
-                    Bonnes pratiques de sécurité
-                </h3>
-                <ul class="space-y-2 ml-12 text-gray-700">
-                    <li>• Ne partagez <strong>jamais votre mot de passe</strong></li>
-                    <li>• Déconnectez-vous sur les <strong>appareils partagés</strong></li>
-                    <li>• Utilisez un <strong>mot de passe fort</strong> (minimum 8 caractères, mélange de lettres et chiffres)</li>
-                    <li>• Ne laissez pas votre session ouverte sans surveillance</li>
-                    <li>• Signalez immédiatement toute activité suspecte à votre superviseur</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Section Aide -->
-        <div class="section-card">
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
-                <i class="fas fa-life-ring text-red-600"></i>
-                Besoin d'aide ?
-            </h2>
-            <div class="ml-12 space-y-3 text-gray-700">
-                <p>
-                    <i class="fas fa-phone text-green-600 mr-2"></i>
-                    <strong>Admin Système</strong> : 
-                    <a href="tel:+15144622889" class="text-green-600 hover:underline font-mono">514-462-2889</a>
-                </p>
-                <p>
-                    <i class="fas fa-envelope text-blue-600 mr-2"></i>
-                    <strong>Support technique</strong> : 
-                    <a href="mailto:support@maintenance-app.com" class="text-blue-600 hover:underline">support@maintenance-app.com</a>
-                </p>
-                <p>
-                    <i class="fas fa-user-tie text-purple-600 mr-2"></i>
-                    <strong>Superviseur</strong> : 
-                    Contactez votre superviseur d'équipe via la messagerie interne
-                </p>
+                <h2 class="text-xl font-bold text-gray-800">1. Se connecter</h2>
             </div>
             
-            <!-- Formulaire de contact Formcan -->
-            <div class="mt-6 pt-6 border-t border-gray-300">
-                <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2 px-3 sm:px-0">
-                    <i class="fas fa-paper-plane text-blue-600"></i>
-                    Formulaire de Contact
-                </h3>
-                <div class="px-3 sm:px-0">
-                    <p class="text-sm text-gray-600 mb-4">
-                        Vous pouvez également nous envoyer un message détaillé via ce formulaire.
-                        Nous vous répondrons dans les plus brefs délais.
-                    </p>
-                    <div class="plato-form-widget" data-pf-id="fr9ercvp1ay" data-pf-host="form.formcan.com/"></div>
-                    <script src="//static.formcan.com/assets/dist/formbuilder.js?v=20"></script>
+            <div class="step-card p-4 mb-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Ouvrir l'application</p>
+                        <p class="text-gray-600 text-sm mt-1">Allez à <strong>${domain}</strong> dans votre navigateur (Chrome recommandé)</p>
+                    </div>
                 </div>
             </div>
+            
+            <div class="step-card p-4 mb-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Entrer vos identifiants</p>
+                        <p class="text-gray-600 text-sm mt-1">Saisissez votre <strong>email</strong> et <strong>mot de passe</strong> fournis par l'administrateur</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step-card p-4 mb-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Cliquer sur "Connexion"</p>
+                        <p class="text-gray-600 text-sm mt-1">Vous arrivez sur le tableau de bord principal</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-lightbulb text-amber-600 mt-1"></i>
+                    <div>
+                        <p class="font-medium text-amber-800">Astuce</p>
+                        <p class="text-amber-700 text-sm">Sur mobile, ajoutez l'app à votre écran d'accueil pour un accès rapide (icône "Partager" puis "Sur l'écran d'accueil")</p>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 2: Dashboard -->
+        <div class="glass p-6 mb-6" id="dashboard">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-purple-100 text-purple-600">
+                    <i class="fas fa-th-large"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">2. Tableau de bord (Kanban)</h2>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Le tableau de bord affiche tous les tickets organisés en colonnes selon leur statut.</p>
+            
+            <h3 class="font-semibold text-gray-800 mb-3">Les colonnes</h3>
+            <div class="flex flex-wrap gap-2 mb-6">
+                <span class="kanban-col bg-blue-100 text-blue-800"><i class="fas fa-inbox"></i> Requête Reçue</span>
+                <span class="kanban-col bg-yellow-100 text-yellow-800"><i class="fas fa-search"></i> Diagnostic</span>
+                <span class="kanban-col bg-orange-100 text-orange-800"><i class="fas fa-wrench"></i> En Cours</span>
+                <span class="kanban-col bg-purple-100 text-purple-800"><i class="fas fa-clock"></i> Attente Pièces</span>
+                <span class="kanban-col bg-green-100 text-green-800"><i class="fas fa-check-circle"></i> Terminé</span>
+                <span class="kanban-col bg-gray-100 text-gray-800"><i class="fas fa-archive"></i> Archivé</span>
+            </div>
+            
+            <h3 class="font-semibold text-gray-800 mb-3">Barre de navigation</h3>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="btn-icon bg-blue-100 text-blue-600"><i class="fas fa-bell"></i></span>
+                        <span class="text-sm text-gray-600">Notifications</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="btn-icon bg-purple-100 text-purple-600"><i class="fas fa-robot"></i></span>
+                        <span class="text-sm text-gray-600">Expert IA</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="btn-icon bg-green-100 text-green-600"><i class="fas fa-comments"></i></span>
+                        <span class="text-sm text-gray-600">Messagerie</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="btn-icon bg-orange-100 text-orange-600"><i class="fas fa-users"></i></span>
+                        <span class="text-sm text-gray-600">Utilisateurs</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="btn-icon bg-gray-100 text-gray-600"><i class="fas fa-cog"></i></span>
+                        <span class="text-sm text-gray-600">Paramètres</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Actions rapides</h3>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-center gap-3">
+                    <span class="btn-icon bg-blue-600 text-white"><i class="fas fa-plus"></i></span>
+                    <div>
+                        <p class="font-medium text-gray-800">Bouton "+" (coin supérieur)</p>
+                        <p class="text-gray-600 text-sm">Créer un nouveau ticket</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-center gap-3">
+                    <span class="btn-icon bg-red-600 text-white"><i class="fas fa-microphone"></i></span>
+                    <div>
+                        <p class="font-medium text-gray-800">Bouton microphone (coin inférieur droit)</p>
+                        <p class="text-gray-600 text-sm">Créer un ticket par la voix</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4">
+                <div class="flex items-center gap-3">
+                    <span class="btn-icon bg-gray-200 text-gray-600"><i class="fas fa-search"></i></span>
+                    <div>
+                        <p class="font-medium text-gray-800">Barre de recherche</p>
+                        <p class="text-gray-600 text-sm">Trouver un ticket par titre, machine ou numéro</p>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 3: Tickets -->
+        <div class="glass p-6 mb-6" id="tickets">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-orange-100 text-orange-600">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">3. Gérer les tickets</h2>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Créer un ticket</h3>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Cliquer sur le bouton <span class="btn-icon bg-blue-600 text-white inline-flex mx-1"><i class="fas fa-plus"></i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Remplir les champs</p>
+                        <ul class="text-gray-600 text-sm mt-2 space-y-1">
+                            <li>• <strong>Titre</strong> : Description courte du problème</li>
+                            <li>• <strong>Description</strong> : Détails (optionnel)</li>
+                            <li>• <strong>Machine</strong> : Équipement concerné</li>
+                            <li>• <strong>Priorité</strong> : Urgence du ticket</li>
+                            <li>• <strong>Assigné à</strong> : Technicien responsable</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Cliquer sur "Créer le ticket"</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Niveaux de priorité</h3>
+            <div class="flex flex-wrap gap-2 mb-6">
+                <span class="priority-badge bg-gray-100 text-gray-700"><i class="fas fa-minus mr-1"></i> Basse</span>
+                <span class="priority-badge bg-blue-100 text-blue-700"><i class="fas fa-equals mr-1"></i> Normale</span>
+                <span class="priority-badge bg-yellow-100 text-yellow-700"><i class="fas fa-arrow-up mr-1"></i> Moyenne</span>
+                <span class="priority-badge bg-orange-100 text-orange-700"><i class="fas fa-exclamation mr-1"></i> Haute</span>
+                <span class="priority-badge bg-red-100 text-red-700"><i class="fas fa-fire mr-1"></i> Urgente</span>
+                <span class="priority-badge bg-red-200 text-red-800"><i class="fas fa-bomb mr-1"></i> Critique</span>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Modifier un ticket</h3>
+            <div class="step-card p-4 mb-3">
+                <p class="text-gray-600"><strong>Cliquer sur un ticket</strong> pour ouvrir sa fiche détaillée</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="font-medium text-gray-800 mb-2">Dans la fiche, vous pouvez :</p>
+                <ul class="text-gray-600 text-sm space-y-2">
+                    <li class="flex items-center gap-2"><i class="fas fa-exchange-alt text-blue-600"></i> Changer le statut (glisser vers une colonne)</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-comment text-green-600"></i> Ajouter un commentaire</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-camera text-purple-600"></i> Ajouter une photo</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-user-edit text-orange-600"></i> Modifier l'assignation</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-calendar text-indigo-600"></i> Planifier une date</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-history text-gray-600"></i> Voir l'historique</li>
+                </ul>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3 mt-6">Déplacer un ticket</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <p class="font-medium text-blue-800 mb-2"><i class="fas fa-desktop mr-2"></i>Sur ordinateur</p>
+                    <p class="text-blue-700 text-sm">Glisser-déposer le ticket vers la colonne souhaitée</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                    <p class="font-medium text-green-800 mb-2"><i class="fas fa-mobile-alt mr-2"></i>Sur mobile</p>
+                    <p class="text-green-700 text-sm">Ouvrir le ticket → Bouton "Déplacer" en bas</p>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 4: Vocal -->
+        <div class="glass p-6 mb-6" id="vocal">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-red-100 text-red-600">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">4. Créer un ticket vocal</h2>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Créez un ticket rapidement en parlant. L'IA transcrit et remplit automatiquement les champs.</p>
+            
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Appuyer sur le bouton microphone <span class="btn-icon bg-red-600 text-white inline-flex mx-1"><i class="fas fa-microphone"></i></span></p>
+                        <p class="text-gray-600 text-sm mt-1">En bas à droite de l'écran</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Décrire le problème clairement</p>
+                        <p class="text-gray-600 text-sm mt-1">Exemple : "La presse hydraulique numéro 3 fait un bruit anormal, priorité haute"</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Appuyer sur Stop <span class="btn-icon bg-gray-600 text-white inline-flex mx-1"><i class="fas fa-stop"></i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">4</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Vérifier et confirmer</p>
+                        <p class="text-gray-600 text-sm mt-1">L'IA remplit les champs. Vérifiez et cliquez sur "Créer"</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-check-circle text-green-600 mt-1"></i>
+                    <div>
+                        <p class="font-medium text-green-800">Conseils pour une bonne reconnaissance</p>
+                        <ul class="text-green-700 text-sm mt-1 space-y-1">
+                            <li>• Parlez clairement et pas trop vite</li>
+                            <li>• Mentionnez la machine par son nom</li>
+                            <li>• Indiquez la priorité si urgente</li>
+                            <li>• Évitez les bruits de fond</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 5: Messenger -->
+        <div class="glass p-6 mb-6" id="messenger">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-green-100 text-green-600">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">5. Messagerie (IGP Connect)</h2>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Communiquez avec votre équipe en temps réel.</p>
+            
+            <h3 class="font-semibold text-gray-800 mb-3">Accéder à la messagerie</h3>
+            <div class="step-card p-4 mb-4">
+                <p class="text-gray-600">Cliquer sur <span class="btn-icon bg-green-100 text-green-600 inline-flex mx-1"><i class="fas fa-comments"></i></span> dans la barre de navigation, ou aller à <strong>${domain}/messenger</strong></p>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Fonctionnalités</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fas fa-user text-blue-600"></i>
+                        <span class="font-medium text-gray-800">Messages directs</span>
+                    </div>
+                    <p class="text-gray-600 text-sm">Conversation privée avec un collègue</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fas fa-users text-purple-600"></i>
+                        <span class="font-medium text-gray-800">Groupes</span>
+                    </div>
+                    <p class="text-gray-600 text-sm">Discussion d'équipe</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fas fa-microphone text-red-600"></i>
+                        <span class="font-medium text-gray-800">Messages vocaux</span>
+                    </div>
+                    <p class="text-gray-600 text-sm">Enregistrer et envoyer un audio</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fas fa-image text-green-600"></i>
+                        <span class="font-medium text-gray-800">Photos & fichiers</span>
+                    </div>
+                    <p class="text-gray-600 text-sm">Partager des images et documents</p>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3 mt-6">Envoyer un message vocal</h3>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <p class="text-gray-600">Maintenir le bouton <span class="btn-icon bg-red-100 text-red-600 inline-flex mx-1"><i class="fas fa-microphone"></i></span> enfoncé</p>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <p class="text-gray-600">Parler pendant l'enregistrement</p>
+                </div>
+            </div>
+            <div class="step-card p-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <p class="text-gray-600">Relâcher pour envoyer automatiquement</p>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 6: Notifications -->
+        <div class="glass p-6 mb-6" id="notifications">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">6. Notifications</h2>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Recevez des alertes en temps réel sur votre téléphone ou ordinateur.</p>
+            
+            <h3 class="font-semibold text-gray-800 mb-3">Activer les notifications</h3>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-yellow-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Cliquer sur <span class="btn-icon bg-blue-100 text-blue-600 inline-flex mx-1"><i class="fas fa-bell"></i></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-yellow-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <div>
+                        <p class="font-medium text-gray-800">Autoriser les notifications dans votre navigateur</p>
+                        <p class="text-gray-600 text-sm mt-1">Une popup apparaîtra, cliquez sur "Autoriser"</p>
+                    </div>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-yellow-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <div>
+                        <p class="font-medium text-gray-800">C'est prêt!</p>
+                        <p class="text-gray-600 text-sm mt-1">Vous recevrez les alertes même si l'app est fermée</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Types de notifications</h3>
+            <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-plus-circle text-blue-600"></i>
+                    <span class="text-gray-700">Nouveau ticket créé</span>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-user-check text-green-600"></i>
+                    <span class="text-gray-700">Ticket assigné à vous</span>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-exchange-alt text-orange-600"></i>
+                    <span class="text-gray-700">Changement de statut</span>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <i class="fas fa-comment text-purple-600"></i>
+                    <span class="text-gray-700">Nouveau message</span>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 7: Planning -->
+        <div class="glass p-6 mb-6" id="planning">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-indigo-100 text-indigo-600">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">7. Planning</h2>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Visualisez et planifiez les interventions de maintenance.</p>
+            
+            <h3 class="font-semibold text-gray-800 mb-3">Accéder au planning</h3>
+            <div class="step-card p-4 mb-4">
+                <p class="text-gray-600">Cliquer sur <span class="btn-icon bg-indigo-100 text-indigo-600 inline-flex mx-1"><i class="fas fa-calendar-alt"></i></span> dans la barre de navigation</p>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Vues disponibles</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                    <i class="fas fa-calendar-day text-2xl text-indigo-600 mb-2"></i>
+                    <p class="font-medium text-gray-800">Jour</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                    <i class="fas fa-calendar-week text-2xl text-indigo-600 mb-2"></i>
+                    <p class="font-medium text-gray-800">Semaine</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                    <i class="fas fa-calendar text-2xl text-indigo-600 mb-2"></i>
+                    <p class="font-medium text-gray-800">Mois</p>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Planifier un ticket</h3>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                    <p class="text-gray-600">Ouvrir un ticket existant</p>
+                </div>
+            </div>
+            <div class="step-card p-4 mb-3">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                    <p class="text-gray-600">Cliquer sur "Planifier" <span class="btn-icon bg-indigo-100 text-indigo-600 inline-flex mx-1"><i class="fas fa-calendar-check"></i></span></p>
+                </div>
+            </div>
+            <div class="step-card p-4">
+                <div class="flex items-start gap-4">
+                    <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                    <p class="text-gray-600">Sélectionner la date et l'heure</p>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
+        </div>
+
+        <!-- Section 8: Admin -->
+        <div class="glass p-6 mb-6" id="admin">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="icon-box bg-gray-200 text-gray-600">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">8. Administration</h2>
+                <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">Admin seulement</span>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Fonctions réservées aux administrateurs.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="btn-icon bg-orange-100 text-orange-600"><i class="fas fa-users"></i></span>
+                        <span class="font-medium text-gray-800">Utilisateurs</span>
+                    </div>
+                    <ul class="text-gray-600 text-sm space-y-1">
+                        <li>• Créer/modifier des comptes</li>
+                        <li>• Assigner des rôles</li>
+                        <li>• Réinitialiser mots de passe</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="btn-icon bg-blue-100 text-blue-600"><i class="fas fa-cogs"></i></span>
+                        <span class="font-medium text-gray-800">Machines</span>
+                    </div>
+                    <ul class="text-gray-600 text-sm space-y-1">
+                        <li>• Ajouter des équipements</li>
+                        <li>• Modifier les informations</li>
+                        <li>• Désactiver une machine</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="btn-icon bg-purple-100 text-purple-600"><i class="fas fa-shield-alt"></i></span>
+                        <span class="font-medium text-gray-800">Rôles & Permissions</span>
+                    </div>
+                    <ul class="text-gray-600 text-sm space-y-1">
+                        <li>• Créer des rôles personnalisés</li>
+                        <li>• Définir les accès</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="btn-icon bg-green-100 text-green-600"><i class="fas fa-sliders-h"></i></span>
+                        <span class="font-medium text-gray-800">Paramètres</span>
+                    </div>
+                    <ul class="text-gray-600 text-sm space-y-1">
+                        <li>• Configuration système</li>
+                        <li>• Personnalisation</li>
+                        <li>• Colonnes Kanban</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-amber-600 mt-1"></i>
+                    <div>
+                        <p class="font-medium text-amber-800">Attention</p>
+                        <p class="text-amber-700 text-sm">Les modifications dans les paramètres affectent tous les utilisateurs. Faites attention avant de sauvegarder.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="#top" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 mt-4 text-sm">
+                <i class="fas fa-arrow-up"></i> Retour en haut
+            </a>
         </div>
 
         <!-- Footer -->
-        <div class="text-center mt-8 mb-4">
-            <button onclick="window.location.href='/'" class="back-button">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Retour à l'application
-            </button>
-            <p class="text-white text-sm mt-4">
-                © 2025 MaintenanceOS - Système de Gestion de Maintenance v2.8.1
-            </p>
+        <div class="glass p-6 text-center">
+            <p class="text-gray-600 mb-2">Besoin d'aide supplémentaire?</p>
+            <p class="text-gray-500 text-sm">Contactez votre administrateur ou utilisez l'Expert IA <span class="btn-icon bg-purple-100 text-purple-600 inline-flex mx-1"><i class="fas fa-robot"></i></span></p>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <p class="text-gray-400 text-xs">MaintenanceOS © 2025 - Guide v2.0</p>
+            </div>
         </div>
+
     </div>
-
-    <script>
-        // ============================================
-        // 🌟 JAVASCRIPT PREMIUM POUR EXPÉRIENCE UX
-        // ============================================
-        
-        // 1. Barre de progression de lecture
-        const progressBar = document.createElement('div');
-        progressBar.className = 'reading-progress';
-        document.body.appendChild(progressBar);
-        
-        window.addEventListener('scroll', function() {
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight - windowHeight;
-            const scrolled = window.pageYOffset;
-            const progress = (scrolled / documentHeight) * 100;
-            progressBar.style.width = progress + '%';
-        });
-        
-        // 2. Smooth scroll premium avec offset
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                    
-                    // Animation pulse sur la cible
-                    target.style.transition = 'all 0.3s ease';
-                    target.style.transform = 'scale(1.02)';
-                    setTimeout(() => {
-                        target.style.transform = 'scale(1)';
-                    }, 300);
-                }
-            });
-        });
-
-        // 3. Bouton de navigation bidirectionnel (Haut/Bas) avec animation premium
-        window.addEventListener('scroll', function() {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-            const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100;
-            
-            let btn = document.getElementById('scroll-nav-btn');
-            
-            // Afficher le bouton si on a scrollé plus de 300px
-            if (scrollTop > 300) {
-                if (!btn) {
-                    // Créer le bouton
-                    btn = document.createElement('button');
-                    btn.id = 'scroll-nav-btn';
-                    btn.className = 'fixed bottom-8 right-8 w-14 h-14 rounded-full shadow-lg z-50 flex items-center justify-center text-white transition-all duration-300';
-                    btn.style.animation = 'bounceIn 0.5s ease';
-                    document.body.appendChild(btn);
-                }
-                
-                // Déterminer la direction: Haut (≥50% de scroll) ou Bas (<50% de scroll)
-                if (scrollPercentage >= 50) {
-                    // On est en bas → Flèche vers le HAUT pour remonter
-                    btn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-                    btn.title = 'Retour en haut';
-                    btn.onclick = () => {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    };
-                } else {
-                    // On est en haut → Flèche vers le BAS pour descendre
-                    btn.innerHTML = '<i class="fas fa-arrow-down"></i>';
-                    btn.title = 'Aller en bas';
-                    btn.onclick = () => {
-                        window.scrollTo({ top: documentHeight, behavior: 'smooth' });
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    };
-                }
-            } else {
-                // Masquer le bouton quand on est tout en haut
-                if (btn) {
-                    btn.style.animation = 'bounceOut 0.5s ease';
-                    setTimeout(() => btn.remove(), 500);
-                }
-            }
-        });
-
-        // 4. Intersection Observer pour highlight de section active
-        const sections = document.querySelectorAll('.section-card[id]');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const id = entry.target.getAttribute('id');
-                    document.querySelectorAll('.toc-link').forEach(link => {
-                        const isActive = link.getAttribute('href') === '#' + id;
-                        link.style.background = isActive 
-                            ? 'linear-gradient(145deg, #dbeafe, #bfdbfe)' 
-                            : 'transparent';
-                        link.style.paddingLeft = isActive ? '24px' : '16px';
-                        link.style.fontWeight = isActive ? '600' : '400';
-                        link.style.borderLeft = isActive ? '3px solid #3b82f6' : 'none';
-                    });
-                }
-            });
-        }, { threshold: 0.2, rootMargin: '-100px' });
-
-        sections.forEach(section => observer.observe(section));
-        
-        // 5. Lazy loading des images (si présentes)
-        if ('loading' in HTMLImageElement.prototype) {
-            const images = document.querySelectorAll('img[loading="lazy"]');
-            images.forEach(img => {
-                img.src = img.dataset.src || img.src;
-            });
-        }
-        
-        // 6. Temps de lecture estimé et affichage dynamique
-        const wordCount = document.body.innerText.split(/\s+/).length;
-        const readingTime = Math.ceil(wordCount / 200); // 200 mots/minute
-        const readingTimeEl = document.getElementById('reading-time');
-        if (readingTimeEl) {
-            readingTimeEl.textContent = \`~\${readingTime} min de lecture\`;
-        }
-        
-        // 7. Animation des feature-box au scroll
-        const featureBoxes = document.querySelectorAll('.feature-box');
-        const featureObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.5s ease-out';
-                    featureObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-        
-        featureBoxes.forEach(box => featureObserver.observe(box));
-        
-        // 8. Raccourci clavier: Échap pour retour en haut
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-            // Ctrl/Cmd + K pour focus sur table des matières
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                const firstTocLink = document.querySelector('.toc-link');
-                if (firstTocLink) firstTocLink.focus();
-            }
-        });
-        
-        // 9. Tooltip pour les badges
-        document.querySelectorAll('[title]').forEach(el => {
-            el.style.cursor = 'help';
-        });
-        
-        // 10. Performance: Preload des images critiques
-        const criticalImages = ['/static/login-background.jpg', '/static/logo-igp.png'];
-        criticalImages.forEach(src => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.as = 'image';
-            link.href = src;
-            document.head.appendChild(link);
-        });
-        
-        // 11. Print styling: Préparer pour impression
-        window.addEventListener('beforeprint', function() {
-            document.querySelectorAll('.back-button, #scroll-nav-btn').forEach(el => {
-                el.style.display = 'none';
-            });
-        });
-        
-        window.addEventListener('afterprint', function() {
-            document.querySelectorAll('.back-button, #scroll-nav-btn').forEach(el => {
-                el.style.display = '';
-            });
-        });
-        
-        console.log('📖 Guide Utilisateur MaintenanceOS - v2.8.1 Premium');
-        console.log('⏱️ Temps de lecture estimé:', readingTime, 'minutes');
-        console.log('✨ Améliorations premium actives');
-    </script>
 </body>
 </html>`;
 };
-
-// Legacy export for backward compatibility (uses generic placeholder)
-export const guideHTML = generateGuideHTML('https://example.com');
