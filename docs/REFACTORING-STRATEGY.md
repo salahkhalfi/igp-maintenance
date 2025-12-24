@@ -1,13 +1,31 @@
 # 🏗️ Stratégie de Refactoring - PME App
 
-> **Version:** 1.0
+> **Version:** 1.1
 > **Date:** 2025-12-24
 > **Auteur:** AI Assistant + Salah
-> **Status:** PLANIFIÉ
+> **Status:** ⚠️ REPORTÉ - Prochaine étape = Guide Utilisateur
 
 ---
 
-## 📊 État actuel du code
+## 🚨 DÉCISION NO BULLSHIT (2025-12-24)
+
+**Ce plan est REPORTÉ indéfiniment.**
+
+**Pourquoi :**
+- L'app FONCTIONNE en production (IGP l'utilise)
+- 160-330h de refactoring = ROI négatif sans 2e client
+- Refactorer avant de vendre = procrastination déguisée
+
+**Prochaine vraie priorité :**
+1. ✅ Guide utilisateur débutant (mode d'emploi)
+2. 🎯 Trouver 1 client payant
+3. ⏳ Refactorer SEULEMENT si ça bloque une vente
+
+**Règle :** Ne pas toucher ce document tant qu'un 2e client n'est pas signé.
+
+---
+
+## 📊 État actuel du code (pour référence)
 
 ### Backend (src/)
 | Fichier | Lignes | Priorité refactoring |
