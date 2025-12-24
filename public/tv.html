@@ -112,9 +112,17 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* Keyframes for animations */
+        /* DISABLED - GPU heavy animation causing Chrome crashes
         @keyframes pulse {
             0%, 100% { opacity: 0.4; transform: scale(1); }
             50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        */
+        
+        /* Lightweight alternative - opacity only, no transform */
+        @keyframes pulse-light {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
         }
 
         /* Status Indicators */
@@ -124,12 +132,12 @@
         }
         .status-indicator::after {
             content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
-            border-radius: 50%; opacity: 0.4; animation: pulse 2s infinite;
+            border-radius: 50%; opacity: 0.6; /* Static glow - no animation */
         }
         .status-green { background-color: #10b981; }
         .status-green::after { background-color: #10b981; }
         .status-red { background-color: #ef4444; }
-        .status-red::after { background-color: #ef4444; animation: pulse 1s infinite; }
+        .status-red::after { background-color: #ef4444; opacity: 0.8; /* Static - no animation */ }
 
         /* Header Gradient Line */
         .header-line {
@@ -226,7 +234,7 @@
                     <!-- In Progress -->
                     <div class="dashboard-card flex items-center px-6 gap-4 border-l-4 border-l-blue-500">
                         <div class="p-3 bg-blue-500/10 rounded-lg">
-                            <i class="fas fa-wrench text-blue-500 text-xl animate-pulse"></i>
+                            <i class="fas fa-wrench text-blue-500 text-xl"></i>
                         </div>
                         <div>
                             <div class="text-3xl font-bold" style="color: var(--text-main);" id="stat-progress">0</div>
@@ -444,9 +452,9 @@
                 // Urgent styling
                 const urgCard = document.getElementById('stat-urgent-card');
                 if(stats.urgent > 0) {
-                    urgCard.classList.add('bg-red-900/20', 'animate-pulse');
+                    urgCard.classList.add('bg-red-900/20'); // Removed animate-pulse - causes Chrome crash
                 } else {
-                    urgCard.classList.remove('bg-red-900/20', 'animate-pulse');
+                    urgCard.classList.remove('bg-red-900/20');
                 }
 
                 // Status
@@ -757,7 +765,7 @@
 
         function renderCritical(t) {
             return `
-            <div class="bg-red-500 text-white p-4 rounded shadow-lg animate-pulse flex items-center gap-4">
+            <div class="bg-red-500 text-white p-4 rounded shadow-lg flex items-center gap-4">
                 <i class="fas fa-radiation text-2xl shrink-0"></i>
                 <div class="min-w-0">
                     <div class="font-black uppercase tracking-wider text-xs text-red-100">Urgence Critique</div>
@@ -955,7 +963,7 @@
 
             toast(msg) {
                 const el = document.createElement('div');
-                el.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-sky-600 text-white px-4 py-2 rounded font-bold shadow-xl z-50 uppercase tracking-wide animate-bounce';
+                el.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-sky-600 text-white px-4 py-2 rounded font-bold shadow-xl z-50 uppercase tracking-wide';
                 el.innerText = msg;
                 document.body.appendChild(el);
                 setTimeout(() => el.remove(), 2000);
