@@ -81,7 +81,7 @@ const App = () => {
 
             loadData();
             loadUnreadMessagesCount();
-            checkOverdueTickets(); // Vérification initiale des tickets expirés
+            // checkOverdueTickets exécuté APRÈS loadData (pas avant car besoin token)
 
             // Rafraichir le compteur de messages non lus toutes les 60 secondes (optimisé pour performance Chrome)
             const messagesInterval = setInterval(() => {
@@ -181,6 +181,9 @@ const App = () => {
                     window.loadSimpleStats();
                 }
             }, 600);
+
+            // Vérifier tickets expirés APRÈS que currentUser soit chargé
+            checkOverdueTickets();
         } catch (error) {
             console.error("Error in loadData:", error);
             if (error.response?.status === 401) {
