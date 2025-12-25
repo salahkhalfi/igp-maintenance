@@ -223,62 +223,80 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
                 <span class="kanban-col bg-blue-100 text-blue-800"><i class="fas fa-inbox"></i> Requête Reçue</span>
                 <span class="kanban-col bg-yellow-100 text-yellow-800"><i class="fas fa-search"></i> Diagnostic</span>
                 <span class="kanban-col bg-orange-100 text-orange-800"><i class="fas fa-wrench"></i> En Cours</span>
-                <span class="kanban-col bg-purple-100 text-purple-800"><i class="fas fa-clock"></i> Attente Pièces</span>
+                <span class="kanban-col bg-purple-100 text-purple-800"><i class="fas fa-clock"></i> En Attente Pièces</span>
                 <span class="kanban-col bg-green-100 text-green-800"><i class="fas fa-check-circle"></i> Terminé</span>
-                <span class="kanban-col bg-gray-100 text-gray-800"><i class="fas fa-archive"></i> Archivé</span>
             </div>
             
-            <h3 class="font-semibold text-gray-800 mb-3">Barre de navigation</h3>
+            <h3 class="font-semibold text-gray-800 mb-3">Barre de navigation (en haut)</h3>
             <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-600 mb-3">De gauche à droite :</p>
                 <div class="flex flex-wrap gap-3">
                     <div class="flex items-center gap-2">
-                        <span class="btn-icon bg-blue-100 text-blue-600"><i class="fas fa-bell"></i></span>
-                        <span class="text-sm text-gray-600">Notifications</span>
+                        <span class="btn-icon bg-gray-100 text-gray-600"><i class="fas fa-search"></i></span>
+                        <span class="text-sm text-gray-600">Recherche</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="btn-icon bg-purple-100 text-purple-600"><i class="fas fa-robot"></i></span>
-                        <span class="text-sm text-gray-600">Expert IA</span>
+                        <span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-medium">Retard</span>
+                        <span class="text-sm text-gray-600">Tickets en retard</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="btn-icon bg-green-100 text-green-600"><i class="fas fa-comments"></i></span>
-                        <span class="text-sm text-gray-600">Messagerie</span>
+                        <span class="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs font-medium">Performance</span>
+                        <span class="text-sm text-gray-600">Statistiques</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="btn-icon bg-orange-100 text-orange-600"><i class="fas fa-users"></i></span>
-                        <span class="text-sm text-gray-600">Utilisateurs</span>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs font-medium">Planning</span>
+                        <span class="text-sm text-gray-600">Calendrier</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="btn-icon bg-gray-100 text-gray-600"><i class="fas fa-cog"></i></span>
-                        <span class="text-sm text-gray-600">Paramètres</span>
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium"><i class="fas fa-plus mr-1"></i>Nouveau Ticket</span>
                     </div>
                 </div>
             </div>
 
-            <h3 class="font-semibold text-gray-800 mb-3">Actions rapides</h3>
-            <div class="step-card p-4 mb-3">
-                <div class="flex items-center gap-3">
-                    <span class="btn-icon bg-blue-600 text-white"><i class="fas fa-plus"></i></span>
-                    <div>
-                        <p class="font-medium text-gray-800">Bouton "+" (coin supérieur)</p>
-                        <p class="text-gray-600 text-sm">Créer un nouveau ticket</p>
+            <h3 class="font-semibold text-gray-800 mb-3">Menu utilisateur (cliquer sur votre nom)</h3>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-500 mb-3">ACTIONS RAPIDES</p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-3">
+                        <span class="btn-icon bg-red-100 text-red-600"><i class="fas fa-exclamation-circle"></i></span>
+                        <span class="text-sm text-gray-700">Tickets en Retard</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="btn-icon bg-purple-100 text-purple-600"><i class="fas fa-chart-line"></i></span>
+                        <span class="text-sm text-gray-700">Statistiques Performance</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="btn-icon bg-green-100 text-green-600"><i class="fas fa-bell"></i></span>
+                        <span class="text-sm text-gray-700">Notifications Push</span>
+                        <span class="px-2 py-0.5 bg-green-500 text-white text-xs rounded">ON</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="btn-icon bg-blue-100 text-blue-600"><i class="fas fa-mobile-alt"></i></span>
+                        <span class="text-sm text-gray-700">Gérer mes appareils</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="btn-icon bg-pink-100 text-pink-600"><i class="fas fa-robot"></i></span>
+                        <span class="text-sm text-gray-700">Expert Industriel (IA)</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="btn-icon bg-gray-100 text-gray-600"><i class="fas fa-archive"></i></span>
+                        <span class="text-sm text-gray-700">Voir les tickets archivés</span>
                     </div>
                 </div>
-            </div>
-            <div class="step-card p-4 mb-3">
+                <p class="text-sm text-gray-500 mt-4 mb-2">GESTION</p>
                 <div class="flex items-center gap-3">
-                    <span class="btn-icon bg-red-600 text-white"><i class="fas fa-microphone"></i></span>
-                    <div>
-                        <p class="font-medium text-gray-800">Bouton microphone (coin inférieur droit)</p>
-                        <p class="text-gray-600 text-sm">Créer un ticket par la voix</p>
-                    </div>
+                    <span class="btn-icon bg-blue-100 text-blue-600"><i class="fas fa-users"></i></span>
+                    <span class="text-sm text-gray-700">Gestion Utilisateurs</span>
                 </div>
             </div>
+
+            <h3 class="font-semibold text-gray-800 mb-3">Bouton vocal</h3>
             <div class="step-card p-4">
                 <div class="flex items-center gap-3">
-                    <span class="btn-icon bg-gray-200 text-gray-600"><i class="fas fa-search"></i></span>
+                    <span class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl"><i class="fas fa-microphone"></i></span>
                     <div>
-                        <p class="font-medium text-gray-800">Barre de recherche</p>
-                        <p class="text-gray-600 text-sm">Trouver un ticket par titre, machine ou numéro</p>
+                        <p class="font-medium text-gray-800">Bouton microphone (coin inférieur droit)</p>
+                        <p class="text-gray-600 text-sm">Créer un ticket par la voix - toujours visible</p>
                     </div>
                 </div>
             </div>
@@ -302,7 +320,7 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
                 <div class="flex items-start gap-4">
                     <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
                     <div>
-                        <p class="font-medium text-gray-800">Cliquer sur le bouton <span class="btn-icon bg-blue-600 text-white inline-flex mx-1"><i class="fas fa-plus"></i></span></p>
+                        <p class="font-medium text-gray-800">Cliquer sur <span class="px-3 py-1 bg-blue-600 text-white rounded text-sm inline-flex items-center mx-1"><i class="fas fa-plus mr-1"></i>Nouveau Ticket</span></p>
                     </div>
                 </div>
             </div>
@@ -340,6 +358,20 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
                 <span class="priority-badge bg-red-200 text-red-800"><i class="fas fa-bomb mr-1"></i> Critique</span>
             </div>
 
+            <h3 class="font-semibold text-gray-800 mb-3">Comprendre une carte ticket</h3>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <p class="font-medium text-gray-800 mb-3">Chaque ticket affiche :</p>
+                <ul class="text-gray-600 text-sm space-y-2">
+                    <li class="flex items-center gap-2"><span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-mono">MAC-1225-0004</span> Numéro unique</li>
+                    <li class="flex items-center gap-2"><span class="px-2 py-0.5 bg-green-500 text-white text-xs rounded">PLANIFIÉ</span> Badge si planifié (avec date)</li>
+                    <li class="flex items-center gap-2"><span class="px-2 py-0.5 bg-red-500 text-white text-xs rounded">HAUT</span><span class="px-2 py-0.5 bg-red-700 text-white text-xs rounded">CRIT</span><span class="px-2 py-0.5 bg-yellow-500 text-white text-xs rounded">MOY</span> Priorité</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-cog text-gray-500"></i> Machine concernée</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-user text-gray-500"></i> Rapporté par (créateur)</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-clock text-red-500"></i> Retard (si applicable)</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-hourglass-half text-orange-500"></i> Requête reçue depuis</li>
+                </ul>
+            </div>
+
             <h3 class="font-semibold text-gray-800 mb-3">Modifier un ticket</h3>
             <div class="step-card p-4 mb-3">
                 <p class="text-gray-600"><strong>Cliquer sur un ticket</strong> pour ouvrir sa fiche détaillée</p>
@@ -347,7 +379,7 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
             <div class="bg-gray-50 rounded-lg p-4">
                 <p class="font-medium text-gray-800 mb-2">Dans la fiche, vous pouvez :</p>
                 <ul class="text-gray-600 text-sm space-y-2">
-                    <li class="flex items-center gap-2"><i class="fas fa-exchange-alt text-blue-600"></i> Changer le statut (glisser vers une colonne)</li>
+                    <li class="flex items-center gap-2"><i class="fas fa-exchange-alt text-blue-600"></i> Changer le statut</li>
                     <li class="flex items-center gap-2"><i class="fas fa-comment text-green-600"></i> Ajouter un commentaire</li>
                     <li class="flex items-center gap-2"><i class="fas fa-camera text-purple-600"></i> Ajouter une photo</li>
                     <li class="flex items-center gap-2"><i class="fas fa-user-edit text-orange-600"></i> Modifier l'assignation</li>
