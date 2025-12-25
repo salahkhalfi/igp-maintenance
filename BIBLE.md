@@ -58,10 +58,15 @@
 
 ### [LEGACY JS COMPONENTS]
 ```
-APRÈS modification de public/static/js/components/*.js :
-1. npm run build:minify
-2. Bumper ?v=xxx dans home.ts (hash différent)
+⚠️ CRITIQUE : Modifier public/static/js/components/*.js NE SUFFIT PAS
+Le navigateur charge dist/*.min.js (pas components/*.js)
+
+PROCÉDURE OBLIGATOIRE :
+1. npm run build:minify (rebuild dist/*.min.js)
+2. Bumper ?v=xxx dans home.ts (nouveau hash)
 3. git push origin main
+
+OUBLI = Modification invisible en production (cache)
 ```
 
 ### [DATABASE: maintenance-db]
