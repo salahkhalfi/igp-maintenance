@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PWA Messenger</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        .status { padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .info { background: #d1ecf1; border-color: #0c5460; color: #0c5460; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Séparation PWA Messenger</h1>
+    
+    <div id="results"></div>
+
+    <div class="card">
+        <h2>📱 Test Installation Mobile</h2>
+        <p><strong>Étapes:</strong></p>
+        <ol>
+            <li>Ouvrir <a href="/" target="_blank">l'App Principale</a> → Menu → "Ajouter à l'écran d'accueil"</li>
+            <li>Ouvrir <a href="/messenger/" target="_blank">le Messenger</a> → Menu → "Ajouter à l'écran d'accueil"</li>
+            <li>Vérifier que vous avez <strong>2 icônes séparées</strong> sur votre écran d'accueil</li>
+        </ol>
+    </div>
+
+    <div class="card">
+        <h2>🔍 Vérification Automatique</h2>
+        <button class="btn-primary" onclick="runTests()">Lancer les Tests</button>
+    </div>
+
+    <script>
+        async function runTests() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="status info">⏳ Tests en cours...</div>';
+            
+            const checks = [];
+            
+            try {
+                // Test 1: Main manifest
+                const mainManifest = await fetch('/manifest.json').then(r => r.json());
+                checks.push({
+                    name: 'Manifest App Principale',
+                    pass: mainManifest.id === '/?source=pwa',
+                    details: `ID: ${mainManifest.id}, Scope: ${mainManifest.scope}, Name: ${mainManifest.name}`
+                });
+
+                // Test 2: Messenger manifest
+                const msgManifest = await fetch('/messenger/manifest.messenger.json').then(r => r.json());
+                checks.push({
+                    name: 'Manifest Messenger',
+                    pass: msgManifest.id === '/messenger/',
+                    details: `ID: ${msgManifest.id}, Scope: ${msgManifest.scope}, Name: ${msgManifest.name}`
+                });
+
+                // Test 3: IDs différents
+                checks.push({
+                    name: 'IDs Uniques',
+                    pass: mainManifest.id !== msgManifest.id,
+                    details: `App: "${mainManifest.id}" ≠ Messenger: "${msgManifest.id}"`
+                });
+
+                // Test 4: Scopes différents
+                checks.push({
+                    name: 'Scopes Différents',
+                    pass: mainManifest.scope !== msgManifest.scope,
+                    details: `App: "${mainManifest.scope}" ≠ Messenger: "${msgManifest.scope}"`
+                });
+
+                // Test 5: Service Workers
+                const mainSW = await fetch('/service-worker.js').then(r => r.ok);
+                const msgSW = await fetch('/messenger/service-worker-messenger.js').then(r => r.ok);
+                checks.push({
+                    name: 'Service Workers Accessibles',
+                    pass: mainSW && msgSW,
+                    details: `App SW: ${mainSW ? 'OK' : 'ERREUR'}, Messenger SW: ${msgSW ? 'OK' : 'ERREUR'}`
+                });
+
+                // Afficher résultats
+                const allPassed = checks.every(c => c.pass);
+                let html = '';
+
+                if (allPassed) {
+                    html += '<div class="status success"><strong>✅ TOUS LES TESTS RÉUSSIS!</strong><br>Les PWA sont correctement séparées.</div>';
+                } else {
+                    html += '<div class="status error"><strong>❌ CERTAINS TESTS ONT ÉCHOUÉ</strong></div>';
+                }
+
+                checks.forEach(check => {
+                    const icon = check.pass ? '✅' : '❌';
+                    const className = check.pass ? 'success' : 'error';
+                    html += `
+                        <div class="status ${className}">
+                            ${icon} <strong>${check.name}</strong><br>
+                            <small>${check.details}</small>
+                        </div>
+                    `;
+                });
+
+                results.innerHTML = html;
+
+            } catch (error) {
+                results.innerHTML = `<div class="status error"><strong>❌ ERREUR:</strong> ${error.message}</div>`;
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>
