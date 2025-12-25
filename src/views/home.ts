@@ -99,7 +99,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <script src="/static/js/dist/UserManagementModal.min.js?v=c2a54a50"></script>
     <script src="/static/js/dist/DataImportModal.min.js?v=c2a54a50"></script>
     <script src="/static/js/dist/VoiceTicketFab.min.js?v=c2a54a50"></script>
-    <script src="/static/js/dist/MainApp.min.js?v=c2a54a50"></script>
+    <script src="/static/js/dist/MainApp.min.js?v=66661313"></script>
     <script src="/static/js/dist/App.min.js?v=c2a54a50"></script>
     <!-- DISABLED: main.js conflicts with CDN React - uses bundled React which breaks Legacy MainApp hooks -->
     <!-- <script type="module" src="/static/client/main.js"></script> -->
@@ -654,7 +654,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
         // OverdueTicketsModal - DÉPLACÉ VERS /static/js/dist/OverdueTicketsModal.min.js?v=c2a54a50
         // PushDevicesModal - DÉPLACÉ VERS /static/js/dist/PushDevicesModal.min.js?v=c2a54a50
         // UserManagementModal - DÉPLACÉ VERS /static/js/dist/UserManagementModal.min.js?v=c2a54a50
-        // MainApp - DÉPLACÉ VERS /static/js/dist/MainApp.min.js?v=c2a54a50
+        // MainApp - DÉPLACÉ VERS /static/js/dist/MainApp.min.js?v=66661313
         // App - DÉPLACÉ VERS /static/js/dist/App.min.js?v=c2a54a50
 
         // --- TV DASHBOARD MODAL ---

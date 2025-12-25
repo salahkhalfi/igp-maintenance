@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-24T13:46:01.635Z",
+  "generated": "2025-12-25T11:14:36.822Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -64,7 +64,7 @@
     {
       "original": "MainApp.js",
       "minified": "MainApp.min.js",
-      "savings": "57.1%"
+      "savings": "57.3%"
     },
     {
       "original": "ManageColumnsModal.js",
@@ -192,5 +192,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "51.2%"
+  "totalSavings": "51.3%"
 }
