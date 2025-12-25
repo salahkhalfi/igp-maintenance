@@ -127,7 +127,7 @@ app.get('/data', checkTvKey, async (c) => {
         LEFT JOIN users assignee ON t.assigned_to = assignee.id
         LEFT JOIN users reporter ON t.reported_by = reporter.id
         WHERE t.deleted_at IS NULL
-          AND t.status NOT IN ('resolved', 'closed', 'completed', 'cancelled', 'archived')
+          AND t.status NOT IN ('resolved', 'closed', 'completed', 'cancelled', 'archived', 'private')
           AND (
             t.status = 'in_progress'
             OR (t.scheduled_date >= ? AND t.scheduled_date <= ?)
