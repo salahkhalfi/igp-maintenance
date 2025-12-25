@@ -13,7 +13,7 @@
     "prebuild": "npm run build:css && npm run build:minify",
     "build:worker": "vite build",
     "build:client": "vite build -c vite.client.config.ts",
-    "build:messenger": "vite build -c vite.messenger.config.ts && mv dist/messenger/src/messenger/index.html dist/messenger/index.html && rm -rf dist/messenger/src && cp public/messenger/messenger-icon*.png dist/messenger/",
+    "build:messenger": "vite build -c vite.messenger.config.ts && mv dist/messenger/src/messenger/index.html dist/messenger/index.html && rm -rf dist/messenger/src && cp public/messenger/messenger-icon*.png dist/messenger/ && cp public/messenger/service-worker-messenger.js dist/messenger/",
     "build": "npm run build:worker && npm run build:client && npm run build:messenger",
     "preview": "wrangler pages dev dist",
     "deploy:safe": "npm run build && wrangler d1 migrations apply maintenance-db --remote && wrangler pages deploy dist --project-name webapp --branch main",
