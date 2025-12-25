@@ -47,6 +47,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:search": "node scripts/test-search.js",
     "hub:check": "bash check-hub-sync.sh",
     "hub:version": "grep -m1 'Version:' LESSONS-LEARNED-MEMOIRE.md",
     "hub:changelog": "grep -A 20 'HISTORIQUE DES MODIFICATIONS' LESSONS-LEARNED-MEMOIRE.md"
