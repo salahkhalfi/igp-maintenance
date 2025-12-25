@@ -134,9 +134,39 @@ app.get('/data', checkTvKey, async (c) => {
             OR (t.priority = 'critical' AND t.status IN ('received', 'diagnostic'))
           )
         ORDER BY 
-          CASE WHEN t.priority = 'critical' THEN 0 ELSE 1 END,
+          -- 1. ALERTES CRITIQUES NON GÉRÉES (Non assignées = blocage décisionnel)
+          CASE 
+            WHEN t.priority = 'critical' 
+            AND t.status IN ('received', 'diagnostic') 
+            AND t.assigned_to IS NULL 
+            THEN 0 
+            ELSE 1 
+          END,
+          
+          -- 2. ALERTES CRITIQUES ASSIGNÉES MAIS BLOQUÉES (Escalade possible)
+          CASE 
+            WHEN t.priority = 'critical' 
+            AND t.status IN ('received', 'diagnostic') 
+            AND t.assigned_to IS NOT NULL 
+            THEN 0 
+            ELSE 1 
+          END,
+          
+          -- 3. INTERVENTIONS EN COURS (Ressources mobilisées maintenant)
           CASE WHEN t.status = 'in_progress' THEN 0 ELSE 1 END,
-          t.scheduled_date ASC
+          
+          -- 4. Dans les tickets en cours, les plus anciens d'abord (risque de dérive)
+          CASE 
+            WHEN t.status = 'in_progress' 
+            THEN julianday('now') - julianday(t.created_at)
+            ELSE -999 
+          END DESC,
+          
+          -- 5. Planification chronologique pour le reste
+          t.scheduled_date ASC,
+          
+          -- 6. Fallback: Critical même si planifié tard
+          CASE WHEN t.priority = 'critical' THEN 0 ELSE 1 END
       `).bind(startOfPast, endOfFuture).all();
       
       activeTickets = ticketsQuery.results || [];
