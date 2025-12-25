@@ -37,8 +37,8 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
         t.ticket_id,
         t.title,
         t.description,
-        t.machine_type,
-        t.model,
+        m.machine_type,
+        m.model,
         t.priority,
         t.status,
         t.scheduled_date,
@@ -50,6 +50,7 @@ alerts.post('/check-overdue', authMiddleware, async (c) => {
         r.last_name as reporter_last_name,
         r.full_name as reporter_full_name
       FROM tickets t
+      LEFT JOIN machines m ON t.machine_id = m.id
       LEFT JOIN users u ON t.assigned_to = u.id
       LEFT JOIN users r ON t.reported_by = r.id
       WHERE t.scheduled_date IS NOT NULL
