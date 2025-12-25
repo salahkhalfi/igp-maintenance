@@ -463,7 +463,8 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
         }),
 
         // --- FOOTER ---
-        window.VoiceTicketFab ? React.createElement(window.VoiceTicketFab, { onTicketDetected: handleTicketDetected }) : null,
+        // Hide VoiceTicketFab when Planning is open (avoid z-index conflict with Notes panel)
+        (window.VoiceTicketFab && !showProductionPlanning) ? React.createElement(window.VoiceTicketFab, { onTicketDetected: handleTicketDetected }) : null,
         React.createElement('footer', { className: 'mt-12 py-6 text-center border-t-4 border-igp-blue', style: footerStyle },
             React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4' },
             React.createElement('p', { className: 'text-sm mb-2', style: { color: '#1a1a1a', fontWeight: '700' } },
