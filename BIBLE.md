@@ -146,6 +146,12 @@ TRIGGER: User dit "bullshit" = reset comportement
 2. Push: Create ticket → Receive notification
 3. Expert IA: Send message → Get response
 
+### [HONO TRAP]
+```
+⚠️ FIRST declared route wins (unlike Express LAST wins)
+Duplicate routes: First = ACTIVE, Second = DEAD CODE
+```
+
 ---
 
 ## 🔵 MODULE 8: AI STACK
