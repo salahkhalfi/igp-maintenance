@@ -371,6 +371,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                 React.createElement('option', { value: 'diagnostic' }, 'DIAGNOSTIC'),
                                 React.createElement('option', { value: 'in_progress' }, 'EN COURS'),
                                 React.createElement('option', { value: 'waiting_parts' }, 'EN ATTENTE'),
+                                React.createElement('option', { value: 'private' }, '🔒 PRIVÉ'),
                                 React.createElement('option', { value: 'completed' }, 'TERMINÉ')
                             )
                             : React.createElement('span', { className: 'text-gray-800 font-semibold text-xs sm:text-sm block pl-6' }, getStatusLabel(ticket.status))

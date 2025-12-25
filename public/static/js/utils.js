@@ -138,6 +138,7 @@ const getStatusLabel = (status) => {
         'diagnostic': 'Diagnostic',
         'in_progress': 'En Cours',
         'waiting_parts': 'En Attente Pièces',
+        'private': '🔒 Privé',
         'completed': 'Terminé',
         'archived': 'Archivé'
     };
