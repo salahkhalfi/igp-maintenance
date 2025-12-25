@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PWA Messenger - Vérification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            <i class="fas fa-check-circle text-green-600 mr-2"></i>
+            Test PWA Messenger - Vérification
+        </h1>
+        <p class="text-gray-600 mb-8">Vérification automatique de la séparation des PWA</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- App Principale -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-600">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-tools text-blue-600 mr-2"></i>
+                    App Principale
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Manifest:</span>
+                        <span id="main-manifest" class="font-mono text-sm">Chargement...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">ID:</span>
+                        <span id="main-id" class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Scope:</span>
+                        <span id="main-scope" class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Service Worker:</span>
+                        <span id="main-sw" class="font-mono text-sm">...</span>
+                    </div>
+                    <a href="/" target="_blank" class="block w-full bg-blue-600 text-white text-center py-2 rounded-lg hover:bg-blue-700 mt-4">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Ouvrir l'App
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messenger -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-600">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-comments text-green-600 mr-2"></i>
+                    Messenger
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Manifest:</span>
+                        <span id="msg-manifest" class="font-mono text-sm">Chargement...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">ID:</span>
+                        <span id="msg-id" class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Scope:</span>
+                        <span id="msg-scope" class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">...</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Service Worker:</span>
+                        <span id="msg-sw" class="font-mono text-sm">...</span>
+                    </div>
+                    <a href="/messenger/" target="_blank" class="block w-full bg-green-600 text-white text-center py-2 rounded-lg hover:bg-green-700 mt-4">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Ouvrir Messenger
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultat -->
+        <div id="result" class="bg-white rounded-lg shadow-lg p-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">
+                <i id="result-icon" class="mr-2"></i>
+                <span id="result-title"></span>
+            </h2>
+            <p id="result-message" class="text-gray-700 mb-4"></p>
+            <ul id="result-details" class="space-y-2 text-sm"></ul>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg mt-8">
+            <h3 class="text-lg font-bold text-blue-900 mb-3">
+                <i class="fas fa-info-circle mr-2"></i>
+                Comment installer les PWA sur mobile
+            </h3>
+            <ol class="space-y-2 text-gray-700">
+                <li><strong>1.</strong> Ouvrir cette page sur votre téléphone</li>
+                <li><strong>2.</strong> Cliquer sur "Ouvrir l'App" pour l'app principale</li>
+                <li><strong>3.</strong> Menu navigateur → "Ajouter à l'écran d'accueil"</li>
+                <li><strong>4.</strong> Revenir ici et cliquer sur "Ouvrir Messenger"</li>
+                <li><strong>5.</strong> Menu navigateur → "Ajouter à l'écran d'accueil"</li>
+                <li><strong>6.</strong> Vérifier que vous avez <strong>deux icônes séparées</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        async function checkPWA() {
+            try {
+                // Fetch main manifest
+                const mainManifest = await fetch('/manifest.json').then(r => r.json());
+                document.getElementById('main-id').textContent = mainManifest.id || 'N/A';
+                document.getElementById('main-scope').textContent = mainManifest.scope || '/';
+                document.getElementById('main-manifest').innerHTML = '<i class="fas fa-check-circle text-green-600"></i>';
+                
+                // Fetch messenger manifest
+                const msgManifest = await fetch('/messenger/manifest.messenger.json').then(r => r.json());
+                document.getElementById('msg-id').textContent = msgManifest.id || 'N/A';
+                document.getElementById('msg-scope').textContent = msgManifest.scope || '/';
+                document.getElementById('msg-manifest').innerHTML = '<i class="fas fa-check-circle text-green-600"></i>';
+
+                // Check service workers
+                const mainSW = await fetch('/service-worker.js').then(r => r.ok ? '✅ OK' : '❌ Error');
+                const msgSW = await fetch('/messenger/service-worker-messenger.js').then(r => r.ok ? '✅ OK' : '❌ Error');
+                
+                document.getElementById('main-sw').textContent = mainSW;
+                document.getElementById('msg-sw').textContent = msgSW;
+
+                // Validation
+                const result = document.getElementById('result');
+                const resultIcon = document.getElementById('result-icon');
+                const resultTitle = document.getElementById('result-title');
+                const resultMessage = document.getElementById('result-message');
+                const resultDetails = document.getElementById('result-details');
+
+                result.classList.remove('hidden');
+
+                const checks = [
+                    { 
+                        name: 'IDs uniques', 
+                        pass: mainManifest.id !== msgManifest.id,
+                        details: `App: "${mainManifest.id}" vs Messenger: "${msgManifest.id}"`
+                    },
+                    { 
+                        name: 'Scopes différents', 
+                        pass: mainManifest.scope !== msgManifest.scope,
+                        details: `App: "${mainManifest.scope}" vs Messenger: "${msgManifest.scope}"`
+                    },
+                    { 
+                        name: 'Service Workers séparés', 
+                        pass: mainSW.includes('✅') && msgSW.includes('✅'),
+                        details: `App SW: /service-worker.js, Messenger SW: /messenger/service-worker-messenger.js`
+                    },
+                    {
+                        name: 'Noms différents',
+                        pass: mainManifest.name !== msgManifest.name,
+                        details: `App: "${mainManifest.name}" vs Messenger: "${msgManifest.name}"`
+                    }
+                ];
+
+                const allPassed = checks.every(c => c.pass);
+
+                if (allPassed) {
+                    result.classList.add('border-l-4', 'border-green-600');
+                    resultIcon.className = 'fas fa-check-circle text-green-600 mr-2';
+                    resultTitle.textContent = '✅ Séparation PWA RÉUSSIE !';
+                    resultTitle.className = 'text-green-900';
+                    resultMessage.textContent = 'Les deux PWA sont correctement séparées. Vous pouvez les installer indépendamment sur votre téléphone.';
+                } else {
+                    result.classList.add('border-l-4', 'border-red-600');
+                    resultIcon.className = 'fas fa-times-circle text-red-600 mr-2';
+                    resultTitle.textContent = '❌ Problème détecté';
+                    resultTitle.className = 'text-red-900';
+                    resultMessage.textContent = 'Certains tests ont échoué. Vérifiez les détails ci-dessous.';
+                }
+
+                resultDetails.innerHTML = checks.map(check => `
+                    <li class="flex items-start">
+                        <span class="mr-2">${check.pass ? '✅' : '❌'}</span>
+                        <div>
+                            <strong>${check.name}</strong>
+                            <div class="text-gray-600 text-xs mt-1">${check.details}</div>
+                        </div>
+                    </li>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error checking PWA:', error);
+                document.getElementById('result').innerHTML = `
+                    <div class="text-red-600">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Erreur lors de la vérification: ${error.message}
+                    </div>
+                `;
+                document.getElementById('result').classList.remove('hidden');
+            }
+        }
+
+        // Run check on page load
+        checkPWA();
+    </script>
+</body>
+</html>
