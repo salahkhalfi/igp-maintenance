@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Connect">
-    <link rel="manifest" href="/manifest.messenger.json?v=5">
+    <link rel="manifest" href="/messenger/manifest.messenger.json?v=6">
     <link rel="icon" type="image/png" href="/messenger/messenger-icon-192.png">
     <link rel="apple-touch-icon" href="/messenger/messenger-icon-192.png">
     <link rel="stylesheet" href="/static/styles.css">
@@ -60,12 +60,15 @@
         }
     </style>
     <script>
-        // Register Service Worker immediately
+        // Register Service Worker immediately (MESSENGER SPECIFIC)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('SW registered!', reg))
-                    .catch(err => console.error('SW registration failed:', err));
+                // Use dedicated messenger service worker with /messenger/ scope
+                navigator.serviceWorker.register('/messenger/service-worker-messenger.js', {
+                    scope: '/messenger/'
+                })
+                    .then(reg => console.log('[Messenger] SW registered!', reg))
+                    .catch(err => console.error('[Messenger] SW registration failed:', err));
             });
         }
     </script>
