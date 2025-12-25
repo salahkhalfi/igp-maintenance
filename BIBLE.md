@@ -56,6 +56,14 @@
 ✅ git push origin main (GitHub Actions builds ~2 min)
 ```
 
+### [LEGACY JS COMPONENTS]
+```
+APRÈS modification de public/static/js/components/*.js :
+1. npm run build:minify
+2. Bumper ?v=xxx dans home.ts (hash différent)
+3. git push origin main
+```
+
 ### [DATABASE: maintenance-db]
 *   **Prod**: `npx wrangler d1 migrations apply maintenance-db`
 *   **Reset**: `rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local`
@@ -111,11 +119,13 @@ INTERDICTIONS:
 ❌ "You're right" si faux → "Non, parce que..."
 ❌ Tourner en rond → "On tourne en rond, STOP"
 ❌ 3+ tentatives échouées → "Je n'y arrive pas"
+❌ Proposer une solution SANS révéler les risques d'abord
 
 OBLIGATIONS:
 ✅ Dire "Non" avec la raison
 ✅ Dire "Je sais pas" si incertain
 ✅ Admettre ses erreurs immédiatement
+✅ AVANT toute solution: lister les répercussions négatives possibles
 
 TRIGGER: User dit "bullshit" = reset comportement
 ```
