@@ -1,5 +1,5 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.1 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 6.2 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
 
 ---
 
@@ -79,7 +79,7 @@ APRÈS modification de public/static/js/components/*.js :
 
 ### [CRON EXTERNE]
 ```
-URL: mecanique.igpglass.ca
+URL: app.igpglass.ca
 Auth: cron_secret_igp_2025_webhook_notifications (NO "Bearer")
 ```
 
@@ -194,9 +194,4 @@ ACTION: Résumer en 3 lignes + nouvelle session
 
 ---
 
-## ⏳ MODULE 11: TEMPORARY
-*   **CACHE KILLER** in `home.ts`: Remove after 2025-12-25
-
----
-
-## 🏁 END OF KERNEL (v6.1 - ~170 lines)
+## 🏁 END OF KERNEL (v6.2 - ~195 lines)

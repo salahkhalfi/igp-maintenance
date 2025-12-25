@@ -575,22 +575,6 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     </div>
 
     <script>
-        // SAFE CACHE RESET v3.0.3 - DISABLED (Fixed Push Notification Stability)
-        /*
-        window.addEventListener('load', function() {
-            if ('serviceWorker' in navigator) {
-                // 1. Unregister all existing workers to clear "Zombie" cache
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    for(let registration of registrations) {
-                        console.log('🧹 Cleaning up old Service Worker:', registration);
-                        registration.unregister();
-                    }
-                }).catch(function(err) {
-                    console.warn('SW Cleanup warning (non-critical):', err);
-                });
-            }
-        });
-        */
 
         // API_URL est défini dans utils.js
         console.log('HOME HTML LOADED v3.0.7 (Push Fixed)');
