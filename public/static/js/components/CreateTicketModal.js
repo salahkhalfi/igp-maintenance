@@ -555,6 +555,8 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                             ),
                             React.createElement('input', {
                                 type: 'datetime-local',
+                                id: 'scheduledDate',
+                                name: 'scheduledDate',
                                 className: 'w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 transition-all font-semibold',
                                 value: scheduledDate,
                                 onChange: (e) => setScheduledDate(e.target.value)

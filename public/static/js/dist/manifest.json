@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-26T11:58:36.730Z",
+  "generated": "2025-12-26T12:07:49.997Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -34,7 +34,7 @@
     {
       "original": "CreateTicketModal.js",
       "minified": "CreateTicketModal.min.js",
-      "savings": "49.4%"
+      "savings": "49.5%"
     },
     {
       "original": "DataImportModal.js",
@@ -192,5 +192,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "51.2%"
+  "totalSavings": "51.3%"
 }

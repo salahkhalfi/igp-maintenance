@@ -440,7 +440,9 @@ const AppHeader = ({
                         React.createElement('div', { className: 'relative group' },
                             React.createElement('i', { className: 'fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors' }),
                             React.createElement('input', {
-                                ref: searchInputRef, 
+                                ref: searchInputRef,
+                                id: 'search-desktop',
+                                name: 'search',
                                 type: 'text', 
                                 placeholder: searchPlaceholders[placeholderIndex],
                                 className: 'w-full h-11 pl-11 pr-12 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none',
@@ -543,6 +545,8 @@ const AppHeader = ({
                 React.createElement('i', { className: 'fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' }),
                 React.createElement('input', {
                     ref: isMobile ? searchInputRef : null,
+                    id: 'search-mobile',
+                    name: 'search',
                     type: 'text',
                     placeholder: 'Rechercher...',
                     className: 'w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500',
