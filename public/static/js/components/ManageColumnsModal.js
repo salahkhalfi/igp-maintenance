@@ -1,4 +1,4 @@
-const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
+const ManageColumnsModal = ({ show, onClose, columns, onSave, tickets = [] }) => {
     const [localColumns, setLocalColumns] = React.useState([]);
     const [newColumnName, setNewColumnName] = React.useState('');
 
@@ -50,20 +50,24 @@ const ManageColumnsModal = ({ show, onClose, columns, onSave }) => {
     };
 
     const handleDelete = (key) => {
+        // Bloquer statuts système
         if (['received', 'completed', 'archived'].includes(key)) {
-            alert("Ce statut système ne peut pas être supprimé.");
+            alert('❌ Ce statut système ne peut pas être supprimé.');
             return;
         }
 
-        // --- SAFETY CHECK: PREVENT ORPHANED TICKETS ---
-        // Check if there are tickets in this column currently
-        // We use window.MainApp.tickets if available (global state hack for modal)
-        // Or simply warn the user strongly. Ideally we check the prop passed down but we don't have tickets prop here.
-        // Let's assume the user knows, but we enforce a stronger warning.
+        // NOUVEAU: Compter tickets dans cette colonne
+        const ticketsInColumn = tickets.filter(t => t.status === key && !t.deleted_at).length;
         
-        // BETTER: Ask the user to confirm there are NO tickets.
-        if (confirm("ATTENTION : Avez-vous vérifié que cette colonne est VIDE ?\n\nSi vous supprimez une colonne contenant des tickets, ils deviendront INVISIBLES (fantômes) mais resteront dans la base de données.\n\nÊtes-vous sûr de vouloir continuer ?")) {
-             setLocalColumns(localColumns.filter(c => c.key !== key));
+        if (ticketsInColumn > 0) {
+            alert(`⚠️ SUPPRESSION IMPOSSIBLE\n\n${ticketsInColumn} ticket(s) utilisent cette colonne.\n\nDéplacez d'abord ces tickets vers une autre colonne.`);
+            return;
+        }
+
+        // Si colonne vide: demander confirmation
+        const columnLabel = columns.find(c => c.key === key)?.label || key;
+        if (confirm(`🗑️ Supprimer la colonne "${columnLabel}" ?\n\nCette action est irréversible.`)) {
+            setLocalColumns(localColumns.filter(c => c.key !== key));
         }
     };
 

@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-25T20:33:27.181Z",
+  "generated": "2025-12-26T11:58:36.730Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -64,12 +64,12 @@
     {
       "original": "MainApp.js",
       "minified": "MainApp.min.js",
-      "savings": "57.3%"
+      "savings": "57.4%"
     },
     {
       "original": "ManageColumnsModal.js",
       "minified": "ManageColumnsModal.min.js",
-      "savings": "52.9%"
+      "savings": "51.7%"
     },
     {
       "original": "MoveTicketBottomSheet.js",
@@ -192,5 +192,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "51.3%"
+  "totalSavings": "51.2%"
 }

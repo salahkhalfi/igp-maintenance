@@ -354,6 +354,7 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
             onClose: () => setShowManageColumns(false),
             columns: columns,
             onSave: handleSaveColumns,
+            tickets: tickets,  // ← NOUVEAU: Passage de tickets pour validation
             currentUser: currentUser
         }),
         React.createElement(SystemSettingsModal, { show: showSystemSettings, onClose: () => setShowSystemSettings(false), currentUser: currentUser }),
