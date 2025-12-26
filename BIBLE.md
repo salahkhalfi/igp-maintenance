@@ -199,4 +199,57 @@ ACTION: Résumer en 3 lignes + nouvelle session
 
 ---
 
-## 🏁 END OF KERNEL (v6.2 - ~195 lines)
+## ⬛ MODULE 11: IMPACT ANALYSIS PROTOCOL
+
+```
+⚠️ MANDATORY AVANT TOUTE MODIFICATION ⚠️
+
+1. GREP GLOBAL (OBLIGATOIRE)
+   grep -rn "fonction\|variable\|endpoint" src/ public/
+   → Identifier TOUTES les dépendances
+   → Chercher hardcoding caché
+
+2. CARTOGRAPHIER IMPACTS
+   Lister TOUS les fichiers affectés:
+   - Fichier X lit cette valeur
+   - Fichier Y appelle cette fonction
+   - Fichier Z dépend de ce comportement
+   - AI/Voice/Push utilisent cette logique
+
+3. DÉTECTER HARDCODING
+   - Valeurs en dur qui cassent si config change
+   - Constantes dupliquées dans plusieurs fichiers
+   - Defaults assumés dans logique métier
+
+4. SIMULATION MENTALE
+   "Si je change X → est-ce que Y continue?"
+   - Création ticket fonctionne?
+   - AI propose statuses valides?
+   - Push notifications marchent?
+   - Cache localStorage sync?
+
+5. ÉVALUER RISQUES (%)
+   Probabilité × Impact:
+   - Critique (app cassée): 30%+ = STOP
+   - Majeur (feature cassée): 50%+ = STOP
+   - Mineur (UX dégradé): 70%+ = WARNING
+
+6. SEUIL DE SÉCURITÉ
+   SI risque total > 30% → ARRÊTER
+   - Présenter analyse complète
+   - Lister TOUS les risques
+   - Attendre validation explicite
+
+7. VALIDATION UTILISATEUR
+   AVANT de coder:
+   - Lister fichiers modifiés
+   - Expliquer chaque risque
+   - Proposer alternatives
+   - Demander: "OK pour procéder?"
+
+TRIGGER: Si modification touche >3 fichiers OU fonction sanctuarisée
+```
+
+---
+
+## 🏁 END OF KERNEL (v6.3 - ~250 lines)
