@@ -111,6 +111,9 @@ const AppHeader = ({
     // IMPORTANT: Defaults to 'Connect' for generic use, but user can set to 'IGP Connect' via settings
     const [messengerName, setMessengerName] = React.useState('Connect');
 
+    // Refresh state for visual feedback (UX improvement)
+    const [refreshing, setRefreshing] = React.useState(false);
+
     React.useEffect(() => {
         try {
             fetch('/api/settings/messenger_app_name')
@@ -291,6 +294,19 @@ const AppHeader = ({
     const isSupervisor = (currentUser && currentUser.role === 'supervisor');
     const isAdmin = (currentUser && currentUser.role === 'admin');
     const canViewStats = isAdmin || isSupervisor;
+
+    // Wrapper onRefresh with visual feedback
+    const handleRefresh = async () => {
+        if (refreshing) return; // Prevent double-click
+        setRefreshing(true);
+        try {
+            await onRefresh();
+        } catch (error) {
+            console.error('Refresh error:', error);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     return React.createElement('header', { className: 'sticky top-0 z-50 bg-transparent transition-all duration-300' },
         
@@ -527,12 +543,14 @@ const AppHeader = ({
                             activeTicketsCount + " actifs"
                         ),
 
-                        // Refresh
+                        // Refresh - WITH VISUAL FEEDBACK
                         React.createElement('button', {
-                            onClick: onRefresh,
-                            className: 'w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-md hover:-translate-y-0.5 transition-all',
-                            title: 'Actualiser les données maintenant'
-                        }, React.createElement('i', { className: 'fas fa-sync-alt' })),
+                            onClick: handleRefresh,
+                            disabled: refreshing,
+                            className: 'w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-md hover:-translate-y-0.5 transition-all ' + 
+                                (refreshing ? 'opacity-60 cursor-wait' : ''),
+                            title: refreshing ? 'Actualisation en cours...' : 'Actualiser les données maintenant'
+                        }, React.createElement('i', { className: 'fas fa-sync-alt' + (refreshing ? ' fa-spin' : '') })),
 
                         // NEW TICKET (The Big Button)
                         safeHasPermission('tickets.create') && React.createElement('button', {
@@ -908,11 +926,16 @@ const AppHeader = ({
                         },
                             React.createElement('div', { className: 'flex gap-2' },
                                 React.createElement('button', {
-                                    onClick: () => { onRefresh(); setShowMobileMenu(false); },
-                                    className: 'flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-50 active:scale-95 transition-all shadow-sm'
+                                    onClick: async () => { 
+                                        await handleRefresh(); 
+                                        setShowMobileMenu(false); 
+                                    },
+                                    disabled: refreshing,
+                                    className: 'flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-50 active:scale-95 transition-all shadow-sm ' +
+                                        (refreshing ? 'opacity-60 cursor-wait' : '')
                                 }, 
-                                    React.createElement('i', { className: 'fas fa-sync-alt' }),
-                                    'Actualiser'
+                                    React.createElement('i', { className: 'fas fa-sync-alt' + (refreshing ? ' fa-spin' : '') }),
+                                    refreshing ? 'Actualisation...' : 'Actualiser'
                                 ),
                                 React.createElement('button', {
                                     onClick: () => { onLogout(); setShowMobileMenu(false); },
