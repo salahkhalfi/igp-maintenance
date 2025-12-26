@@ -788,7 +788,7 @@ const AppHeader = ({
                                             React.createElement('span', { className: 'text-sm font-semibold text-slate-700 block' }, messengerName),
                                             React.createElement('span', { className: 'text-[10px] text-slate-500' }, 'Messagerie')
                                         ),
-                                        React.createElement('span', { className: 'px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-[9px] font-bold uppercase' }, 'New')
+                                        React.createElement('span', { className: 'px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-[9px] font-bold uppercase' }, 'Nouveau')
                                     ),
                                     // Push Notifications
                                     React.createElement('button', {
@@ -804,7 +804,7 @@ const AppHeader = ({
                                         React.createElement('span', { 
                                             className: 'px-2 py-0.5 rounded-md text-[10px] font-bold ' + 
                                             (pushState === 'granted' && isSubscribed ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-500')
-                                        }, pushState === 'granted' && isSubscribed ? 'ON' : 'OFF')
+                                        }, pushState === 'granted' && isSubscribed ? 'Activé' : 'Inactif')
                                     )
                                 )
                             ),
