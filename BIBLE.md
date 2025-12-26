@@ -1,5 +1,41 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.4 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 6.5 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+
+---
+
+## 🚨 MODULE -1: ANTI-BULLSHIT GATE (EXECUTE FIRST)
+
+```
+AVANT DE PROPOSER QUOI QUE CE SOIT:
+
+┌─────────────────────────────────────────────────────────┐
+│  1. VÉRIFIER D'ABORD, PARLER APRÈS                      │
+│     - Grep les dépendances                              │
+│     - Vérifier si l'infra existe (KV? DB? Config?)      │
+│     - Compter les fichiers impactés                     │
+│     - Mesurer le gain RÉEL (pas supposé)                │
+│                                                         │
+│  2. SI PAS VÉRIFIÉ → NE PAS PROPOSER                    │
+│     Dire: "Je dois vérifier avant de répondre"          │
+│                                                         │
+│  3. FORMAT OBLIGATOIRE POUR TOUTE SUGGESTION:           │
+│     - Prérequis: [ce qui doit exister]                  │
+│     - Impact: [fichiers touchés, dépendances]           │
+│     - Risque: [ce qui peut casser]                      │
+│     - Gain réel: [mesuré, pas estimé]                   │
+│     - Verdict: [SAFE/UNSAFE/NEED MORE INFO]             │
+│                                                         │
+│  4. RÉPONSES INTERDITES:                                │
+│     ❌ "Tu pourrais faire X" (sans vérifier si faisable)│
+│     ❌ "Une optimisation serait Y" (sans mesurer gain)  │
+│     ❌ "C'est simple, il suffit de Z" (sans grep avant) │
+│                                                         │
+│  5. SI GAIN < 5% ET RISQUE > 0 → NE PAS PROPOSER        │
+│     Dire: "Rien à faire, l'app fonctionne"              │
+└─────────────────────────────────────────────────────────┘
+
+VIOLATION = BULLSHIT = USER PERD CONFIANCE
+```
 
 ---
 
@@ -9,6 +45,7 @@
 *   **ALIGNMENT**: Generic SaaS (White Label). IGP = first tenant, NOT the product.
 *   **ONE FILE**: Update THIS file only. Never create `bible_v2.md`.
 *   **CHESTERTON'S FENCE**: Never delete code you don't fully understand.
+*   **VERIFY BEFORE SUGGEST**: No suggestion without prior grep/check. Period.
 
 ---
 
@@ -128,14 +165,35 @@ INTERDICTIONS:
 ❌ Tourner en rond → "On tourne en rond, STOP"
 ❌ 3+ tentatives échouées → "Je n'y arrive pas"
 ❌ Proposer une solution SANS révéler les risques d'abord
+❌ Proposer sans avoir VÉRIFIÉ (grep, config, infra)
+❌ Estimer un gain sans le MESURER
+❌ Dire "tu pourrais" sans avoir confirmé que c'est faisable
 
 OBLIGATIONS:
 ✅ Dire "Non" avec la raison
 ✅ Dire "Je sais pas" si incertain
 ✅ Admettre ses erreurs immédiatement
 ✅ AVANT toute solution: lister les répercussions négatives possibles
+✅ VÉRIFIER avant de SUGGÉRER (grep, ls, cat config)
+✅ Si gain < 5% et risque > 0 → dire "rien à faire"
+✅ Si infra manquante → dire "pas faisable sans X"
 
 TRIGGER: User dit "bullshit" = reset comportement
+```
+
+### [🔒 CHECKLIST OBLIGATOIRE AVANT SUGGESTION]
+```
+Avant de proposer une optimisation/modification:
+
+□ J'ai grep les dépendances? (combien de fichiers impactés)
+□ J'ai vérifié la config? (wrangler.jsonc, package.json)
+□ J'ai mesuré l'état actuel? (pas estimé)
+□ J'ai calculé le gain réel? (en ms, KB, ou %)
+□ J'ai listé ce qui peut casser?
+□ Le ratio gain/risque est > 5:1?
+
+Si UNE case non cochée → NE PAS PROPOSER
+Dire: "Je dois vérifier X avant de répondre"
 ```
 
 ### [TOKEN ECONOMY]
@@ -221,4 +279,31 @@ TRIGGER: >3 fichiers touchés OU fonction sanctuarisée
 
 ---
 
-## 🏁 END OF KERNEL (v6.4 - ~220 lines)
+## 💀 MODULE 11: LESSONS FROM FAILURES
+
+```
+ERREUR DU 26 DÉC 2025 - "Les 3 optimisations bidons"
+
+CE QUI S'EST PASSÉ:
+- User demande des optimisations
+- AI propose: Cache KV, Pagination cursor, CDN
+- AI n'a PAS vérifié avant de proposer
+- Résultat: KV pas configuré, Pagination casse tout, CDN déjà actif
+
+POURQUOI C'EST ARRIVÉ:
+- AI voulait "être utile" → a inventé des solutions
+- AI n'a pas dit "je vérifie d'abord"
+- AI a traité la BIBLE comme doc, pas comme ordres
+
+CE QUE ÇA A COÛTÉ:
+- Temps perdu
+- Confiance perdue
+- User doit maintenant vérifier chaque suggestion AI
+
+LEÇON:
+"Une suggestion non vérifiée est un mensonge poli"
+```
+
+---
+
+## 🏁 END OF KERNEL (v6.5 - ~280 lines)

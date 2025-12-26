@@ -18,6 +18,257 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
     // État pour le chat AI
     const [isAIChatOpen, setIsAIChatOpen] = React.useState(false);
 
+    // Fonction d'impression du ticket
+    const handlePrint = async () => {
+        if (!ticket) return;
+        
+        // Mappings français
+        const statusLabels = {
+            'received': 'Requête Reçue',
+            'diagnostic': 'Diagnostic',
+            'in_progress': 'En Cours',
+            'waiting_parts': 'En Attente Pièces',
+            'private': 'Privé',
+            'completed': 'Terminé',
+            'archived': 'Archivé'
+        };
+        const priorityLabels = {
+            'critical': 'CRITIQUE',
+            'high': 'HAUTE',
+            'medium': 'MOYENNE',
+            'low': 'BASSE'
+        };
+        const statusColors = {
+            'received': '#fef3c7',
+            'diagnostic': '#e0e7ff',
+            'in_progress': '#dbeafe',
+            'waiting_parts': '#fef3c7',
+            'completed': '#d1fae5',
+            'archived': '#f3f4f6'
+        };
+        const priorityColors = {
+            'critical': '#dc2626',
+            'high': '#ea580c',
+            'medium': '#ca8a04',
+            'low': '#16a34a'
+        };
+        
+        // Charger les infos compagnie
+        let companyTitle = 'Système de Maintenance';
+        let companySubtitle = '';
+        let logoUrl = '';
+        try {
+            const [titleRes, subtitleRes] = await Promise.all([
+                axios.get(API_URL + '/settings/company_title').catch(() => null),
+                axios.get(API_URL + '/settings/company_subtitle').catch(() => null)
+            ]);
+            if (titleRes?.data?.value) companyTitle = titleRes.data.value;
+            if (subtitleRes?.data?.value) companySubtitle = subtitleRes.data.value;
+            logoUrl = API_URL + '/settings/logo?t=' + Date.now();
+        } catch (e) { /* Utiliser valeurs par défaut */ }
+        
+        // Charger les commentaires
+        let comments = [];
+        try {
+            const response = await axios.get(API_URL + '/comments/ticket/' + ticket.id);
+            comments = response.data.comments || [];
+        } catch (e) { /* Ignorer si pas de commentaires */ }
+        
+        // Générer HTML des commentaires
+        const commentsHtml = comments.length > 0 
+            ? comments.map(c => `
+                <div class="comment">
+                    <div class="comment-header">
+                        <strong>${c.user_name || 'Utilisateur'}</strong>
+                        <span class="comment-date">${new Date(c.created_at).toLocaleString('fr-CA')}</span>
+                    </div>
+                    <div class="comment-content">${c.comment}</div>
+                </div>
+            `).join('')
+            : '<p class="no-data">Aucun commentaire</p>';
+        
+        // Générer HTML de la timeline avec statuts traduits
+        const timelineHtml = ticket.timeline && ticket.timeline.length > 0
+            ? ticket.timeline.map(t => {
+                let actionText = t.action;
+                // Si changement de statut, afficher ancien → nouveau
+                if (t.new_status || t.old_status) {
+                    const oldLabel = t.old_status ? (statusLabels[t.old_status] || t.old_status) : '';
+                    const newLabel = t.new_status ? (statusLabels[t.new_status] || t.new_status) : '';
+                    if (oldLabel && newLabel) {
+                        actionText = `${t.action}: ${oldLabel} → ${newLabel}`;
+                    } else if (newLabel) {
+                        actionText = `${t.action}: → ${newLabel}`;
+                    }
+                }
+                return `
+                <div class="timeline-item">
+                    <span class="timeline-date">${new Date(t.created_at).toLocaleString('fr-CA')}</span>
+                    <span class="timeline-action">${actionText}</span>
+                    ${t.user_name ? `<span class="timeline-user">par ${t.user_name}</span>` : ''}
+                    ${t.comment ? `<div class="timeline-comment">${t.comment}</div>` : ''}
+                </div>
+            `}).join('')
+            : '<p class="no-data">Aucun historique</p>';
+        
+        const printContent = `
+            <html>
+            <head>
+                <title>Ticket #${ticket.ticket_id} - ${ticket.title}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; font-size: 12px; }
+                    h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; font-size: 18px; margin-bottom: 5px; }
+                    .company-header { display: flex; align-items: center; gap: 15px; padding-bottom: 15px; border-bottom: 2px solid #3b82f6; margin-bottom: 15px; }
+                    .company-logo { max-height: 50px; max-width: 120px; object-fit: contain; }
+                    .company-info { flex: 1; }
+                    .company-title { font-size: 16px; font-weight: bold; color: #1f2937; margin: 0; }
+                    .company-subtitle { font-size: 11px; color: #6b7280; margin: 2px 0 0 0; }
+                    .header { margin-bottom: 15px; }
+                    .ticket-id { font-size: 14px; color: #6b7280; font-weight: bold; }
+                    .section { margin-bottom: 15px; page-break-inside: avoid; }
+                    .section-title { font-weight: bold; color: #1f2937; font-size: 13px; margin-bottom: 8px; border-bottom: 2px solid #3b82f6; padding-bottom: 4px; }
+                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+                    .info-row { display: flex; margin-bottom: 4px; }
+                    .info-label { font-weight: 600; width: 140px; color: #6b7280; }
+                    .info-value { flex: 1; color: #1f2937; }
+                    .status { padding: 3px 10px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 11px; }
+                    .priority { font-weight: bold; }
+                    .description { background: #f9fafb; padding: 10px; border-radius: 6px; white-space: pre-wrap; border: 1px solid #e5e7eb; }
+                    .machine-alert { background: #fef2f2; border: 2px solid #dc2626; padding: 8px; border-radius: 6px; color: #991b1b; margin-bottom: 12px; font-weight: bold; text-align: center; }
+                    .comment { background: #f9fafb; padding: 8px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #3b82f6; }
+                    .comment-header { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; }
+                    .comment-date { color: #6b7280; }
+                    .comment-content { color: #374151; }
+                    .timeline-item { padding: 6px 0; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
+                    .timeline-date { color: #6b7280; margin-right: 10px; font-weight: 500; }
+                    .timeline-action { color: #1f2937; font-weight: 500; }
+                    .timeline-user { color: #6b7280; font-style: italic; margin-left: 5px; }
+                    .timeline-comment { color: #6b7280; font-size: 10px; margin-top: 2px; padding-left: 10px; border-left: 2px solid #e5e7eb; }
+                    .no-data { color: #9ca3af; font-style: italic; }
+                    .footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; text-align: center; }
+                    .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+                    @media print { 
+                        body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } 
+                        .section { page-break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="company-header">
+                    <img src="${logoUrl}" class="company-logo" onerror="this.style.display='none'" />
+                    <div class="company-info">
+                        <p class="company-title">${companyTitle}</p>
+                        ${companySubtitle ? `<p class="company-subtitle">${companySubtitle}</p>` : ''}
+                    </div>
+                </div>
+                
+                <div class="header">
+                    <h1>${ticket.title}</h1>
+                    <span class="ticket-id">Ticket #${ticket.ticket_id}</span>
+                </div>
+                
+                ${ticket.is_machine_down ? '<div class="machine-alert">⚠️ MACHINE HORS SERVICE</div>' : ''}
+                
+                <div class="two-columns">
+                    <div class="section">
+                        <div class="section-title">📋 Informations générales</div>
+                        <div class="info-row">
+                            <span class="info-label">Statut:</span>
+                            <span class="info-value">
+                                <span class="status" style="background: ${statusColors[ticket.status] || '#f3f4f6'}">
+                                    ${statusLabels[ticket.status] || ticket.status}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Priorité:</span>
+                            <span class="info-value priority" style="color: ${priorityColors[ticket.priority] || '#374151'}">
+                                ${priorityLabels[ticket.priority] || ticket.priority}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Créé le:</span>
+                            <span class="info-value">${new Date(ticket.created_at).toLocaleString('fr-CA')}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Signalé par:</span>
+                            <span class="info-value">${ticket.reporter_name || ticket.created_by_name || 'N/A'}</span>
+                        </div>
+                        ${ticket.assignee_name ? `
+                        <div class="info-row">
+                            <span class="info-label">Assigné à:</span>
+                            <span class="info-value">${ticket.assignee_name}</span>
+                        </div>` : ''}
+                        ${ticket.scheduled_date ? `
+                        <div class="info-row">
+                            <span class="info-label">Planifié pour:</span>
+                            <span class="info-value"><strong>${new Date(ticket.scheduled_date).toLocaleString('fr-CA')}</strong></span>
+                        </div>` : ''}
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">🔧 Machine</div>
+                        <div class="info-row">
+                            <span class="info-label">Équipement:</span>
+                            <span class="info-value">${ticket.machine_name || ticket.machine_type || 'N/A'}</span>
+                        </div>
+                        ${ticket.manufacturer ? `
+                        <div class="info-row">
+                            <span class="info-label">Fabricant:</span>
+                            <span class="info-value">${ticket.manufacturer}</span>
+                        </div>` : ''}
+                        ${ticket.model ? `
+                        <div class="info-row">
+                            <span class="info-label">Modèle:</span>
+                            <span class="info-value">${ticket.model}</span>
+                        </div>` : ''}
+                        ${ticket.serial_number ? `
+                        <div class="info-row">
+                            <span class="info-label">N° série:</span>
+                            <span class="info-value">${ticket.serial_number}</span>
+                        </div>` : ''}
+                        ${ticket.location ? `
+                        <div class="info-row">
+                            <span class="info-label">Emplacement:</span>
+                            <span class="info-value">${ticket.location}</span>
+                        </div>` : ''}
+                        ${ticket.year ? `
+                        <div class="info-row">
+                            <span class="info-label">Année:</span>
+                            <span class="info-value">${ticket.year}</span>
+                        </div>` : ''}
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">📝 Description</div>
+                    <div class="description">${ticket.description || 'Aucune description'}</div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">💬 Commentaires (${comments.length})</div>
+                    ${commentsHtml}
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">📜 Historique</div>
+                    ${timelineHtml}
+                </div>
+                
+                <div class="footer">
+                    Imprimé le ${new Date().toLocaleString('fr-CA')} | Système de maintenance
+                </div>
+            </body>
+            </html>
+        `;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => { printWindow.print(); }, 250);
+    };
+
     React.useEffect(() => {
         if (show && ticketId) {
             loadTicketDetails();
@@ -603,7 +854,14 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     onRefresh: loadTicketDetails
                 }),
 
-                React.createElement('div', { className: 'flex justify-end mt-6 pt-4 border-t-2 border-gray-200' },
+                React.createElement('div', { className: 'flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-6 pt-4 border-t-2 border-gray-200' },
+                    React.createElement('button', {
+                        onClick: handlePrint,
+                        className: 'w-full sm:w-auto px-6 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-lg transition-all flex items-center justify-center gap-2'
+                    },
+                        React.createElement('i', { className: 'fas fa-print' }),
+                        'Imprimer'
+                    ),
                     React.createElement('button', {
                         onClick: onClose,
                         className: 'w-full sm:w-auto px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-lg transition-all flex items-center justify-center gap-2'
