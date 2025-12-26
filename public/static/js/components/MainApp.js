@@ -379,7 +379,7 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
                 setShowArchived(val); 
                 if(!val) setTimeout(() => document.getElementById('archived-section')?.scrollIntoView({behavior:'smooth'}), 100);
             },
-            onRefresh: () => { onRefresh(); setShowMobileMenu(false); },
+            onRefresh: async () => { await onRefresh(); setShowMobileMenu(false); },
             onLogout: () => { onLogout(); setShowMobileMenu(false); },
             onSearch: () => {}, // Search géré en interne dans AppHeader
             onOpenCreateModal: () => { setShowCreateModal(true); setShowMobileMenu(false); },
