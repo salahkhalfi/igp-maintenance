@@ -72,7 +72,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <script src="/static/js/dist/LoginForm.min.js?v=d352264"></script>
     <script src="/static/js/dist/MoveTicketBottomSheet.min.js?v=d352264"></script>
     <script src="/static/js/dist/CreateTicketModal.min.js?v=d352264"></script>
-    <script src="/static/js/dist/TicketDetailsModal_v3.min.js?v=4d074cb"></script>
+    <script src="/static/js/dist/TicketDetailsModal_v3.min.js?v=280f8a8"></script>
     <script src="/static/js/dist/ErrorBoundary.min.js?v=d352264"></script>
     <script src="/static/js/components/OfflineBanner.js?v=d352264.0.6"></script>
     <script src="/static/js/dist/MachineManagementModal.min.js?v=d352264"></script>

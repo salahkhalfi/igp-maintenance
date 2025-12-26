@@ -53,6 +53,29 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             'low': '#16a34a'
         };
         
+        // Calculer le temps écoulé (retard)
+        const calcElapsed = () => {
+            const now = new Date();
+            const created = new Date(ticket.created_at);
+            if (isNaN(created.getTime())) return null;
+            const diffMs = now - created;
+            if (diffMs < 0) return null;
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            let text = '';
+            let color = '#16a34a'; // vert
+            let label = '🟢 Dans les temps';
+            if (days > 0) text = days + 'j ' + hours + 'h ' + minutes + 'min';
+            else if (hours > 0) text = hours + 'h ' + minutes + 'min';
+            else text = minutes + 'min';
+            if (days >= 7) { color = '#dc2626'; label = '🔴 Retard critique'; }
+            else if (days >= 3) { color = '#ea580c'; label = '🟠 Retard important'; }
+            else if (days >= 1) { color = '#ca8a04'; label = '🟡 En attente'; }
+            return { text, color, label };
+        };
+        const elapsed = calcElapsed();
+        
         // Charger les infos compagnie
         let companyTitle = 'Système de Maintenance';
         let companySubtitle = '';
@@ -133,6 +156,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     .info-value { flex: 1; color: #1f2937; }
                     .status { padding: 3px 10px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 11px; }
                     .priority { font-weight: bold; }
+                    .elapsed-badge { padding: 3px 10px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 11px; }
                     .description { background: #f9fafb; padding: 10px; border-radius: 6px; white-space: pre-wrap; border: 1px solid #e5e7eb; }
                     .machine-alert { background: #fef2f2; border: 2px solid #dc2626; padding: 8px; border-radius: 6px; color: #991b1b; margin-bottom: 12px; font-weight: bold; text-align: center; }
                     .comment { background: #f9fafb; padding: 8px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #3b82f6; }
@@ -190,6 +214,15 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                             <span class="info-label">Créé le:</span>
                             <span class="info-value">${new Date(ticket.created_at).toLocaleString('fr-CA')}</span>
                         </div>
+                        ${elapsed ? `
+                        <div class="info-row">
+                            <span class="info-label">⏱️ Temps écoulé:</span>
+                            <span class="info-value">
+                                <span class="elapsed-badge" style="background: ${elapsed.color}20; color: ${elapsed.color}; border: 1px solid ${elapsed.color};">
+                                    ${elapsed.label} (${elapsed.text})
+                                </span>
+                            </span>
+                        </div>` : ''}
                         <div class="info-row">
                             <span class="info-label">Signalé par:</span>
                             <span class="info-value">${ticket.reporter_name || ticket.created_by_name || 'N/A'}</span>
