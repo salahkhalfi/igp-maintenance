@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-26T14:02:07.082Z",
+  "generated": "2025-12-26T14:16:19.006Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -20,11 +20,6 @@
       "original": "AppHeader.js",
       "minified": "AppHeader.min.js",
       "savings": "53.0%"
-    },
-    {
-      "original": "BarcodeScanner.js",
-      "minified": "BarcodeScanner.min.js",
-      "savings": "51.2%"
     },
     {
       "original": "ConfirmModal.js",
@@ -137,19 +132,9 @@
       "savings": "48.4%"
     },
     {
-      "original": "TicketDetailsModal.js",
-      "minified": "TicketDetailsModal.min.js",
-      "savings": "52.5%"
-    },
-    {
       "original": "TicketDetailsModal_v3.js",
       "minified": "TicketDetailsModal_v3.min.js",
       "savings": "52.0%"
-    },
-    {
-      "original": "TicketHistory.js",
-      "minified": "TicketHistory.min.js",
-      "savings": "36.3%"
     },
     {
       "original": "TicketTimer.js",

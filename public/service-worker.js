@@ -11,7 +11,7 @@
  * Version: v3.1.6 (Online First - NO OFFLINE MODE)
  */
 
-const CACHE_VERSION = 'v3.1.9-tv-button';
+const CACHE_VERSION = 'v3.2.0-cleanup';
 const CACHE_NAME = `maintenance-os-${CACHE_VERSION}`;
 
 // Fichiers critiques à mettre en cache pour la performance (App Shell)
@@ -33,7 +33,7 @@ const STATIC_ASSETS = [
     '/static/js/components/LoginForm.js',
     '/static/js/components/KanbanBoard.js',
     '/static/js/components/CreateTicketModal.js',
-    '/static/js/components/TicketDetailsModal.js',
+    '/static/js/components/TicketDetailsModal_v3.js',
     '/static/js/components/MachineManagementModal.js',
     '/static/js/components/AIChatModal_v4.js',
     '/static/js/components/OfflineBanner.js'
