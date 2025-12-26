@@ -374,9 +374,20 @@ const AppHeader = ({
                             onClick: onOpenAIChat, title: 'Expert Industriel (IA)'
                         }, React.createElement('i', { className: 'fas fa-robot' })),
 
+                        // IGP Connect / Messenger (Desktop) - RESTORED: High-frequency critical function
+                        React.createElement('button', {
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all relative',
+                            onClick: () => window.open('/messenger', '_blank'), 
+                            title: (messengerName || 'Connect') + ' - Messagerie instantanée'
+                        }, 
+                            React.createElement('i', { className: 'fas fa-rocket' }),
+                            React.createElement('span', { className: 'absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white' })
+                        ),
+
                         // === MOVED TO HAMBURGER (UX REFACTO) ===
                         // Following buttons removed from desktop to reduce cognitive load
                         // All functions accessible via hamburger menu (≡)
+                        // NOTE: Connect was restored to desktop due to high-frequency usage
                         
                         /* COMMENTED OUT - Available in hamburger menu:
                         
@@ -385,16 +396,6 @@ const AppHeader = ({
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
                             onClick: onOpenPushDevices, title: 'Gérer les appareils connectés'
                         }, React.createElement('i', { className: 'fas fa-mobile-alt' })),
-
-                        // IGP Connect / Messenger (Desktop - Top Row)
-                        React.createElement('button', {
-                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all relative',
-                            onClick: () => window.open('/messenger', '_blank'), 
-                            title: (messengerName || 'Connect') + ' (Nouvelle Messagerie)'
-                        }, 
-                            React.createElement('i', { className: 'fas fa-rocket' }),
-                            React.createElement('span', { className: 'absolute top-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white' })
-                        ),
                         
                         // User Management (Desktop)
                         (safeHasPermission('users.read') || currentUser?.role === 'technician') && React.createElement('button', {
