@@ -124,7 +124,7 @@ npx wrangler pages secret put CORS_STRICT_MODE --project-name webapp-7t8
 
 **Effet** :
 Seules ces origines seront autorisées :
-- `https://mecanique.igpglass.ca` (production)
+- `https://app.igpglass.ca` (production)
 - `https://webapp-7t8.pages.dev` (Cloudflare Pages)
 - `http://localhost:3000` (développement local)
 
@@ -155,7 +155,7 @@ CORS_STRICT_MODE    (configured)
 Après déploiement :
 ```bash
 # Login doit fonctionner
-curl -X POST https://mecanique.igpglass.ca/api/auth/login \
+curl -X POST https://app.igpglass.ca/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@igpglass.ca","password":"[ADMIN_PASSWORD]"}'
 
@@ -168,11 +168,11 @@ curl -X POST https://mecanique.igpglass.ca/api/auth/login \
 
 ```bash
 # Test avec bon token (doit fonctionner)
-curl -X POST https://mecanique.igpglass.ca/api/cron/check-overdue \
+curl -X POST https://app.igpglass.ca/api/cron/check-overdue \
   -H "Authorization: [VOTRE_CRON_SECRET]"
 
 # Test sans token (doit échouer 401)
-curl -X POST https://mecanique.igpglass.ca/api/cron/check-overdue
+curl -X POST https://app.igpglass.ca/api/cron/check-overdue
 ```
 
 ---
@@ -181,7 +181,7 @@ curl -X POST https://mecanique.igpglass.ca/api/cron/check-overdue
 
 ```bash
 # Test depuis origine non-autorisée (doit échouer)
-curl -X GET https://mecanique.igpglass.ca/api/tickets \
+curl -X GET https://app.igpglass.ca/api/tickets \
   -H "Origin: https://malicious-site.com" \
   -H "Authorization: Bearer [TOKEN]"
 
@@ -342,7 +342,7 @@ npm test
 npm run deploy:prod
 
 # 5. Test login production
-curl https://mecanique.igpglass.ca/api/health
+curl https://app.igpglass.ca/api/health
 
 # 6. Test CORS strict
 # Tenter accès depuis origine non-autorisée

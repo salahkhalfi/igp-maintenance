@@ -189,7 +189,7 @@ fuser -k 7000/tcp
 
 ## 📦 **Versions Déployées**
 
-- **Production**: https://mecanique.igpglass.ca
+- **Production**: https://app.igpglass.ca
 - **Domaine Cloudflare**: https://webapp-7t8.pages.dev
 - **Database ID**: 6e4d996c-994b-4afc-81d2-d67faab07828
 - **Project Name**: webapp

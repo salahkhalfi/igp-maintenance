@@ -37,14 +37,14 @@
 ## 🌍 URLs de Production
 
 ### URL Officielle (Principale)
-**https://mecanique.igpglass.ca**
+**https://app.igpglass.ca**
 
 ### URL Cloudflare Pages (Backup)
 **https://2e8ed28b.webapp-7t8.pages.dev**
 
 ### Tests effectués
 ```bash
-✅ GET https://mecanique.igpglass.ca/ → HTTP 200 (0.15s)
+✅ GET https://app.igpglass.ca/ → HTTP 200 (0.15s)
 ✅ GET /api/push/vapid-public-key → VAPID key returned
 ✅ Worker compiled successfully
 ✅ All endpoints accessible
@@ -99,7 +99,7 @@
 
 ### Test Rapide (Maintenant)
 
-1. **Ouvre l'app en production**: https://mecanique.igpglass.ca
+1. **Ouvre l'app en production**: https://app.igpglass.ca
 2. **Login avec un compte** qui a des messages non lus
 3. **Attends 5-10 secondes**
 4. **Vérifie** si notification reçue sur ton appareil

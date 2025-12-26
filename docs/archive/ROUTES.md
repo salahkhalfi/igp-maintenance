@@ -256,7 +256,7 @@ Lorsqu'on met à jour du contenu (texte, version, features), vérifier:
 
 ## 🔗 Liens Utiles
 
-- **Production**: https://mecanique.igpglass.ca
+- **Production**: https://app.igpglass.ca
 - **Dernière preview**: https://daa187da.webapp-7t8.pages.dev
 - **GitHub**: [À configurer]
 - **Backup**: https://page.gensparksite.com/project_backups/

@@ -1,7 +1,7 @@
 # 📋 TODO - Fin de Semaine
 
 **Date**: 2025-11-21  
-**Projet**: Maintenance App - https://mecanique.igpglass.ca
+**Projet**: Maintenance App - https://app.igpglass.ca
 
 ---
 
@@ -125,7 +125,7 @@ try {
 - ✅ Commit git avec message descriptif
 - ✅ Tester fonctionnalité modifiée
 - ✅ Déployer sur production
-- ✅ Vérifier sur https://mecanique.igpglass.ca
+- ✅ Vérifier sur https://app.igpglass.ca
 
 ---
 

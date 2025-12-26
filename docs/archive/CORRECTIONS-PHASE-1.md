@@ -143,7 +143,7 @@ WHERE last_used < datetime('now', '-90 days')
 **Configuration Cloudflare CRON**:
 ```
 Trigger: Daily at 3:00 AM UTC
-URL: https://mecanique.igpglass.ca/api/cron/cleanup-push-tokens
+URL: https://app.igpglass.ca/api/cron/cleanup-push-tokens
 ```
 
 **Impact**: Base de données propre, performance optimale ✅
@@ -279,4 +279,4 @@ Le système push notifications est maintenant:
 ---
 
 **Déployé**: https://cd1a2cfe.webapp-7t8.pages.dev  
-**Production**: https://mecanique.igpglass.ca (propagation en cours)
+**Production**: https://app.igpglass.ca (propagation en cours)

@@ -353,7 +353,7 @@ Si les tests sont satisfaisants:
 2. ✅ Vérifier les protections de sécurité
 3. 🔄 Merger la branche `security-improvements` dans `main`
 4. 🔄 Déployer sur Cloudflare Pages production
-5. 🔄 Tester sur https://mecanique.igpglass.ca
+5. 🔄 Tester sur https://app.igpglass.ca
 
 ### Option 2: Modifications Supplémentaires
 Si des ajustements sont nécessaires:

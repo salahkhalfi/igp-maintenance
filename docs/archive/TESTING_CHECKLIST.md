@@ -1,7 +1,7 @@
 # ✅ Checklist de Test Avant Déploiement
 
 **Projet**: IGP - Système de Gestion de Maintenance  
-**URL Production**: https://mecanique.igpglass.ca  
+**URL Production**: https://app.igpglass.ca  
 **Utilisation**: Cocher chaque élément avant CHAQUE déploiement en production
 
 ---

@@ -17,7 +17,7 @@
 - **URL principale** : https://webapp-7t8.pages.dev
 
 ### Domaine Personnalisé
-- **URL production** : https://mecanique.igpglass.ca ✅
+- **URL production** : https://app.igpglass.ca ✅
 
 ---
 
@@ -131,7 +131,7 @@
 |----------|--------|----------|
 | GET / | ✅ | Page HTML chargée |
 | GET /api/tickets | ✅ | Authentification requise (normal) |
-| GET https://mecanique.igpglass.ca | ✅ | Domaine fonctionne |
+| GET https://app.igpglass.ca | ✅ | Domaine fonctionne |
 
 ### Tests Base de Données
 | Requête | Statut | Résultat |
@@ -214,4 +214,4 @@ npx wrangler d1 execute maintenance-db --remote \
 
 ---
 
-**Conclusion** : Déploiement test réussi à 100%. Toutes les nouvelles fonctionnalités (messages audio, RBAC, last_login) sont maintenant en production sur https://mecanique.igpglass.ca. La base de données a été migrée sans perte de données. Backup complet créé. Rollback possible en moins de 3 minutes si nécessaire.
+**Conclusion** : Déploiement test réussi à 100%. Toutes les nouvelles fonctionnalités (messages audio, RBAC, last_login) sont maintenant en production sur https://app.igpglass.ca. La base de données a été migrée sans perte de données. Backup complet créé. Rollback possible en moins de 3 minutes si nécessaire.

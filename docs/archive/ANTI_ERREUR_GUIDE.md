@@ -171,7 +171,7 @@ npm run deploy:prod
 
 # Suivre les instructions affichées
 # Mettre à jour DEPLOYMENT_CONFIG.md
-# Tester https://mecanique.igpglass.ca
+# Tester https://app.igpglass.ca
 ```
 
 ---
@@ -253,7 +253,7 @@ Pas grave! C'est pour ça qu'on teste!
 - [ ] DEPLOYMENT_CONFIG.md prêt à être mis à jour ✅
 
 ### Après Déploiement Production:
-- [ ] Production testée: https://mecanique.igpglass.ca
+- [ ] Production testée: https://app.igpglass.ca
 - [ ] DEPLOYMENT_CONFIG.md mis à jour
 - [ ] README.md mis à jour (si nécessaire)
 - [ ] Documentation committée

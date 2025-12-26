@@ -3,7 +3,7 @@
 **Date**: 2025-11-02  
 **Auditeur**: AI Security Analyst  
 **Version**: v1.9.1  
-**URL Production**: https://mecanique.igpglass.ca
+**URL Production**: https://app.igpglass.ca
 
 ---
 
@@ -211,7 +211,7 @@ app.use('/api/*', cors({
 app.use('/api/*', cors({
   origin: (origin) => {
     const allowedOrigins = [
-      'https://mecanique.igpglass.ca',
+      'https://app.igpglass.ca',
       'https://webapp-7t8.pages.dev',
       'http://localhost:3000'  // Pour développement local uniquement
     ];
@@ -224,7 +224,7 @@ app.use('/api/*', cors({
 
 // Solution 2: Restreindre au même domaine uniquement (recommandé)
 app.use('/api/*', cors({
-  origin: 'https://mecanique.igpglass.ca',
+  origin: 'https://app.igpglass.ca',
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -592,7 +592,7 @@ media.post('/upload', authMiddleware, async (c) => {
 ## 📞 CONTACT & SUPPORT
 
 Pour toute question sur ce rapport d'audit :
-- **Application**: https://mecanique.igpglass.ca
+- **Application**: https://app.igpglass.ca
 - **GitHub**: https://github.com/salahkhalfi/igp-maintenance
 - **Date du rapport**: 2025-11-02
 

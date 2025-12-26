@@ -16,7 +16,7 @@
 ### Cloudflare Deployment
 - **Deployment ID:** feb25e5e-bc33-4f41-9ba5-db5da1b4ebe3
 - **URL:** https://feb25e5e.webapp-7t8.pages.dev
-- **Production URL:** https://mecanique.igpglass.ca
+- **Production URL:** https://app.igpglass.ca
 - **Environment:** Production
 - **Branch:** main
 - **Source:** f092e67

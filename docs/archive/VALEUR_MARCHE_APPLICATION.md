@@ -2,7 +2,7 @@
 
 **Date:** 2025-11-26  
 **Application:** Système de Gestion de Maintenance Industrielle IGP  
-**URL Production:** https://mecanique.igpglass.ca
+**URL Production:** https://app.igpglass.ca
 
 ---
 
@@ -395,7 +395,7 @@ Valeur: 6,000 $ CAD
 ```
 ✅ Droits exclusifs code
 ✅ Nom de marque disponible
-✅ Domaine .ca (mecanique.igpglass.ca)
+✅ Domaine .ca (app.igpglass.ca)
 ✅ Design système propriétaire
 ✅ Architecture unique
 
@@ -437,7 +437,7 @@ VALEUR TOTALE: 57,000 $ CAD
 ✅ Push notifications (VAPID)
 ✅ Messages audio innovants
 ✅ Documentation exhaustive (173 MD)
-✅ Déjà en production (mecanique.igpglass.ca)
+✅ Déjà en production (app.igpglass.ca)
 ✅ 11 utilisateurs actifs
 ✅ Testé et stable
 ✅ Mobile-first responsive
@@ -600,7 +600,7 @@ Inclus:
 ✅ Code source complet (22,669 lignes)
 ✅ Infrastructure Cloudflare configurée
 ✅ 173 fichiers documentation
-✅ Domaine mecanique.igpglass.ca
+✅ Domaine app.igpglass.ca
 ✅ Formation 1 journée
 ✅ Support 30 jours
 ✅ Transfer complet

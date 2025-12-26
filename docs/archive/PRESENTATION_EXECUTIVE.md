@@ -251,7 +251,7 @@ Semaine 4: Review et optimisations finales
 
 ## 📞 **CONTACT & SUPPORT**
 
-**Application:** https://mecanique.igpglass.ca
+**Application:** https://app.igpglass.ca
 **Documentation:** GitHub (accessible aux admins)
 **Support:** Disponible pour questions/ajustements
 

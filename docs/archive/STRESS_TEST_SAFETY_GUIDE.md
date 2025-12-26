@@ -74,17 +74,17 @@
 
 ```bash
 # Test 1: Warm-up (100 req, 10 connections)
-npx autocannon -c 10 -d 10 https://mecanique.igpglass.ca
+npx autocannon -c 10 -d 10 https://app.igpglass.ca
 
 # Attendre 5 minutes
 
 # Test 2: Light load (500 req, 25 connections)
-npx autocannon -c 25 -d 10 https://mecanique.igpglass.ca/api/tickets
+npx autocannon -c 25 -d 10 https://app.igpglass.ca/api/tickets
 
 # Attendre 10 minutes
 
 # Test 3: Medium load (1000 req, 50 connections)
-npx autocannon -c 50 -d 10 https://mecanique.igpglass.ca/api/tickets
+npx autocannon -c 50 -d 10 https://app.igpglass.ca/api/tickets
 ```
 
 **Avantages**:
@@ -112,7 +112,7 @@ node stress-test.cjs
 # Gain = (2500 - 150) / 2500 = 94% reduction ✅
 
 # 4. Tester 1 seul endpoint production (safe)
-curl -w "@curl-format.txt" https://mecanique.igpglass.ca/api/tickets
+curl -w "@curl-format.txt" https://app.igpglass.ca/api/tickets
 ```
 
 **Avantages**:
@@ -173,7 +173,7 @@ node stress-test.cjs
 # Tester 1 endpoint avec 10 requêtes séquentielles (safe)
 for i in {1..10}; do
   curl -s -w "Request $i: %{time_total}s\n" \
-    -o /dev/null https://mecanique.igpglass.ca/api/tickets
+    -o /dev/null https://app.igpglass.ca/api/tickets
   sleep 2  # Pause 2s entre requêtes
 done
 

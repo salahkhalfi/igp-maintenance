@@ -6,8 +6,8 @@
 ## 🌐 URLs de Production
 
 ### URL Principale (Domaine Personnalisé)
-- **Production**: https://mecanique.igpglass.ca
-- **API**: https://mecanique.igpglass.ca/api/*
+- **Production**: https://app.igpglass.ca
+- **API**: https://app.igpglass.ca/api/*
 
 ### URL Cloudflare (Dernière Version)
 - **Déploiement 02fd9e0f**: https://02fd9e0f.webapp-7t8.pages.dev
@@ -76,7 +76,7 @@ curl -I https://71e98938.webapp-7t8.pages.dev
 curl -I https://5e61f01a.webapp-7t8.pages.dev
 
 # Test: Le domaine principal doit afficher la version sécurisée
-curl -s https://mecanique.igpglass.ca | grep "React.useState('')"
+curl -s https://app.igpglass.ca | grep "React.useState('')"
 ```
 
 ## 🚀 Déploiement Futur

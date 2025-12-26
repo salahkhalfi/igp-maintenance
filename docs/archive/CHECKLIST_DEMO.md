@@ -11,7 +11,7 @@
 - [ ] Téléphone chargé (pour démo mobile)
 
 ### **Connexion:**
-- [ ] https://mecanique.igpglass.ca ouvert
+- [ ] https://app.igpglass.ca ouvert
 - [ ] Connecté avec: admin@igpglass.ca / password123
 - [ ] Page chargée complètement (tickets visibles)
 - [ ] Téléphone aussi connecté et chargé
@@ -27,7 +27,7 @@
 ## 🎬 **PENDANT LA DÉMO (10 minutes)**
 
 ### **1. Connexion & Vue d'ensemble (2 min)**
-- [ ] Montré l'URL: mecanique.igpglass.ca
+- [ ] Montré l'URL: app.igpglass.ca
 - [ ] Montré le logo IGP
 - [ ] Montré les 6 colonnes du Kanban
 - [ ] Mentionné: "Interface moderne et professionnelle"
@@ -125,7 +125,7 @@
 
 ## 📱 **INFOS DE SECOURS**
 
-**URL Principale:** https://mecanique.igpglass.ca
+**URL Principale:** https://app.igpglass.ca
 **URL Backup:** https://d2debd7f.webapp-7t8.pages.dev
 **Compte:** admin@igpglass.ca / password123
 

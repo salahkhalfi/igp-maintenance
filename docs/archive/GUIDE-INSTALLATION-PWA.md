@@ -21,7 +21,7 @@ L'application **Maintenance IGP** peut maintenant être installée sur votre té
 ### Étape 1: Ouvrir le site
 
 1. **Ouvrez Chrome** sur votre Android
-2. **Allez sur**: `mecanique.igpglass.ca`
+2. **Allez sur**: `app.igpglass.ca`
 3. **Connectez-vous** avec vos identifiants habituels
 
 ### Étape 2: Installer l'app

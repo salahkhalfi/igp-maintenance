@@ -367,7 +367,7 @@ Mode strict disponible avec liste blanche d'origines :
 
 ```javascript
 const ALLOWED_ORIGINS = [
-  'https://mecanique.igpglass.ca',      // Production
+  'https://app.igpglass.ca',      // Production
   'https://webapp-7t8.pages.dev',       // Cloudflare Pages
   'http://localhost:3000'                // Développement
 ];

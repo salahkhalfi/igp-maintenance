@@ -296,7 +296,7 @@ export default {
     console.log('🕐 Cron trigger:', event.cron);
     
     // Exécuter check-overdue-tickets
-    const request = new Request('https://mecanique.igpglass.ca/api/cron/check-overdue-tickets', {
+    const request = new Request('https://app.igpglass.ca/api/cron/check-overdue-tickets', {
       method: 'GET',
       headers: {
         'Authorization': 'Bearer cron_secret_igp_2025_webhook_notifications'
@@ -345,7 +345,7 @@ jobs:
     steps:
       - name: Trigger cron endpoint
         run: |
-          curl -X GET https://mecanique.igpglass.ca/api/cron/check-overdue-tickets \
+          curl -X GET https://app.igpglass.ca/api/cron/check-overdue-tickets \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 ```
 

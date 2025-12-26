@@ -609,7 +609,7 @@ Files changed: 2 (358 insertions, 40 deletions)
 - ✅ Build: Réussi
 - ✅ Tests: Validés
 - ✅ Production: Déployé
-- ✅ URL: https://mecanique.igpglass.ca/guide
+- ✅ URL: https://app.igpglass.ca/guide
 
 **Vérification:**
 ```bash
@@ -649,7 +649,7 @@ Files changed: 2 (358 insertions, 40 deletions)
 Version: Guide v2.8.1 + Premium TOC
 Build: 722.20 kB
 Status: ✅ Production
-URL: https://mecanique.igpglass.ca/guide
+URL: https://app.igpglass.ca/guide
 ```
 
 ---

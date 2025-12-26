@@ -330,7 +330,7 @@ for (const webhook of WEBHOOKS.filter(w => w.enabled)) {
 npm run build
 
 # Tester le cron manuellement
-curl -X GET https://mecanique.igpglass.ca/api/cron/check-overdue-tickets \
+curl -X GET https://app.igpglass.ca/api/cron/check-overdue-tickets \
   -H "Authorization: Bearer cron_secret_igp_2025_webhook_notifications"
 
 # Vérifier les logs

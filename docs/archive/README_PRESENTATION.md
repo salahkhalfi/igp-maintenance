@@ -5,7 +5,7 @@
 Version: **1.9.3 FINALE**  
 Date: **3 novembre 2025**  
 Production: **✅ Déployée et testée**  
-URL: **https://mecanique.igpglass.ca**
+URL: **https://app.igpglass.ca**
 
 ---
 
@@ -42,7 +42,7 @@ URL: **https://mecanique.igpglass.ca**
 ## 🔑 **ACCÈS PRODUCTION**
 
 ### **URL:**
-🌐 **https://mecanique.igpglass.ca**
+🌐 **https://app.igpglass.ca**
 
 ### **Compte Démo:**
 - **Email:** admin@igpglass.ca
@@ -207,7 +207,7 @@ URL: **https://mecanique.igpglass.ca**
 
 **30 minutes avant:**
 - [ ] Internet stable vérifié
-- [ ] https://mecanique.igpglass.ca ouvert et chargé
+- [ ] https://app.igpglass.ca ouvert et chargé
 - [ ] Connecté avec compte admin
 - [ ] Téléphone chargé et connecté aussi
 - [ ] Tous les autres onglets fermés

@@ -372,7 +372,7 @@ npm run deploy
 ### Étape 5: Tester Production
 ```bash
 # Test API audio
-curl https://mecanique.igpglass.ca/api/messages/audio/test
+curl https://app.igpglass.ca/api/messages/audio/test
 # Devrait retourner 401 (auth required)
 
 # Test dans navigateur

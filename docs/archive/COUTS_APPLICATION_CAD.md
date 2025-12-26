@@ -2,7 +2,7 @@
 
 **Date:** 2025-11-26  
 **Application:** Système de Gestion de Maintenance IGP  
-**URL:** https://mecanique.igpglass.ca
+**URL:** https://app.igpglass.ca
 
 ---
 
@@ -46,7 +46,7 @@ L'application utilise **3 services Cloudflare** :
 - ✅ **100,000 requêtes/jour** pour Pages Functions (Workers)
 - ✅ **Bande passante illimitée** (pas de frais egress)
 - ✅ **SSL gratuit** inclus
-- ✅ **Custom domain gratuit** (mecanique.igpglass.ca)
+- ✅ **Custom domain gratuit** (app.igpglass.ca)
 
 **Usage Actuel Estimé:**
 ```
@@ -516,7 +516,7 @@ R: Non pour le free tier. Oui si upgrade vers plan paid.
 R: Non. Cloudflare continue de fonctionner et facture l'excédent.
 
 **Q: Combien coûte un domaine personnalisé?**  
-R: Domaine inclus GRATUIT. mecanique.igpglass.ca ne coûte rien.
+R: Domaine inclus GRATUIT. app.igpglass.ca ne coûte rien.
 
 **Q: Peut-on downgrade si trop cher?**  
 R: Oui, instantanément. Retour au free tier à tout moment.

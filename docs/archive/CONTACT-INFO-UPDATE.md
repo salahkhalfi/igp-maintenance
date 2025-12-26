@@ -62,7 +62,7 @@ Time: 1.38s
 ### Déploiement Production
 ```bash
 URL Temporaire: https://73db0d86.webapp-7t8.pages.dev
-URL Production: https://mecanique.igpglass.ca/guide
+URL Production: https://app.igpglass.ca/guide
 Status: ✅ Déployé avec succès
 ```
 
@@ -78,7 +78,7 @@ curl -s http://localhost:3000/guide | grep -A 3 "Salah"
 
 ### Test Production
 ```bash
-curl -s https://mecanique.igpglass.ca/guide | grep -A 3 "Salah"
+curl -s https://app.igpglass.ca/guide | grep -A 3 "Salah"
 # ✅ Contact visible sur le site public
 ```
 
@@ -161,7 +161,7 @@ Le format `tel:+15244632889` suit le standard E.164:
 ## 📖 Accès Utilisateur
 
 ### URL du Guide
-🌐 **Production**: https://mecanique.igpglass.ca/guide
+🌐 **Production**: https://app.igpglass.ca/guide
 
 ### Chemin de Navigation
 1. Se connecter à l'application IGP Maintenance

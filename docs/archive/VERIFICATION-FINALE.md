@@ -183,8 +183,8 @@ Commit: 05e27eb
 ### Déploiement Cloudflare:
 ```
 ✨ Deployment complete!
-🌎 Production: https://mecanique.igpglass.ca/guide
-✅ Verified: curl -s https://mecanique.igpglass.ca/guide | grep "Triez par Urgence"
+🌎 Production: https://app.igpglass.ca/guide
+✅ Verified: curl -s https://app.igpglass.ca/guide | grep "Triez par Urgence"
 ```
 
 ---
@@ -196,7 +196,7 @@ Commit: 05e27eb
 2. ✅ Vérification **élément par élément** (50+ éléments UI)
 3. ✅ Identification de **1 seule hallucination** (ligne 811)
 4. ✅ Correction **basée sur les faits** (tri Urgence et Planifié)
-5. ✅ Déploiement en **production** (mecanique.igpglass.ca)
+5. ✅ Déploiement en **production** (app.igpglass.ca)
 6. ✅ Documentation **complète** de l'audit
 
 ### Garantie de qualité:

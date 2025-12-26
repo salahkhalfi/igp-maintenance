@@ -113,7 +113,7 @@ b9c8d00 - Docs: Mise à jour README v2.0.1 avec dropdown responsive et 14 rôles
 - **Méthode** : `npx wrangler pages deploy dist --project-name webapp`
 
 ### Domaine personnalisé
-- **URL** : https://mecanique.igpglass.ca
+- **URL** : https://app.igpglass.ca
 - **Status** : ✅ Configuré (pointera vers la dernière version déployée)
 
 ## 📚 Documentation créée

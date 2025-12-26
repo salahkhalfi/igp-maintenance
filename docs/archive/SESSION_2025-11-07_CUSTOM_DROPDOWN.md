@@ -152,7 +152,7 @@ Le `z-[1]` est relatif au parent `z-[9999]`, donc le header reste au-dessus des 
 
 **Production (Cloudflare Pages)** :
 - https://d6297935.webapp-7t8.pages.dev (dernière version)
-- https://mecanique.igpglass.ca (domaine custom)
+- https://app.igpglass.ca (domaine custom)
 
 ## 📝 Commits de la session
 

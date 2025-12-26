@@ -247,7 +247,7 @@ Utiliser la matrice Fonction → Rôle:
 | v1.9.1 | https://3bcae6de.webapp-7t8.pages.dev | Blocage mis à jour |
 | v1.9.2 | https://75206d3b.webapp-7t8.pages.dev | UI 14 rôles ✅ |
 
-**Production**: https://mecanique.igpglass.ca
+**Production**: https://app.igpglass.ca
 
 ---
 

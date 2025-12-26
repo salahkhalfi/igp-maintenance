@@ -147,11 +147,11 @@ curl -s http://localhost:3000/guide | grep "plato-form-widget"
 ### Tests Production ✅
 ```bash
 # Test numéro production
-curl -s https://mecanique.igpglass.ca/guide | grep "514-462-2889"
+curl -s https://app.igpglass.ca/guide | grep "514-462-2889"
 # ✅ Résultat: Numéro correct en prod
 
 # Test formulaire production
-curl -s https://mecanique.igpglass.ca/guide | grep "plato-form-widget"
+curl -s https://app.igpglass.ca/guide | grep "plato-form-widget"
 # ✅ Résultat: Formulaire chargé en prod
 ```
 
@@ -181,7 +181,7 @@ Build Time: 1.25s
 ```
 Platform: Cloudflare Pages
 URL Temp: https://01e2dba7.webapp-7t8.pages.dev
-URL Prod: https://mecanique.igpglass.ca/guide
+URL Prod: https://app.igpglass.ca/guide
 Status: ✅ Déployé avec succès
 Upload Time: 1.41s
 ```
@@ -239,7 +239,7 @@ Build: 716.00 kB (+0.91 kB for form widget code)
 ## 📖 URLs d'Accès
 
 ### Guide Utilisateur
-🌐 **Production**: https://mecanique.igpglass.ca/guide
+🌐 **Production**: https://app.igpglass.ca/guide
 
 ### Section Mise à Jour
 Naviguer vers: **Besoin d'aide ?** (section finale du guide)
@@ -333,4 +333,4 @@ Si Formcan Analytics activé:
 **Date de Mise à Jour**: 2025-11-19  
 **Version**: Guide v2.8.1 + Corrections contact  
 **Build**: 716.00 kB  
-**URL**: https://mecanique.igpglass.ca/guide
+**URL**: https://app.igpglass.ca/guide

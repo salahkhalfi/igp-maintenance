@@ -140,7 +140,7 @@ device_name: "Linux; Android 10; K"
 ### Installation PWA (Progressive Web App)
 
 **Étapes suivies par Salah** :
-1. Ouvrir https://mecanique.igpglass.ca dans Chrome Android
+1. Ouvrir https://app.igpglass.ca dans Chrome Android
 2. Menu Chrome (⋮) → "Installer l'application"
 3. Confirmer installation
 4. Ouvrir l'app depuis écran d'accueil
@@ -317,7 +317,7 @@ git push origin main
 - `2099e25` - Guide installation PWA
 
 **URLs de production** :
-- Application: https://mecanique.igpglass.ca
+- Application: https://app.igpglass.ca
 - Domaine alternatif: https://webapp-7t8.pages.dev
 
 ---

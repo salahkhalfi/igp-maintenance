@@ -280,7 +280,7 @@ npx wrangler pages deploy dist --project-name webapp --branch main
 
 ### URLs de Production
 - **Actuelle**: https://1260b097.webapp-7t8.pages.dev
-- **Custom domain**: https://mecanique.igpglass.ca (si configuré)
+- **Custom domain**: https://app.igpglass.ca (si configuré)
 
 ---
 

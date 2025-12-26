@@ -249,8 +249,8 @@ npx wrangler pages deploy dist --project-name webapp
 
 ### 3. Vérifier Déploiement
 ```bash
-curl -s https://mecanique.igpglass.ca | grep '<title>'
-curl -s https://mecanique.igpglass.ca/api/stats/active-tickets
+curl -s https://app.igpglass.ca | grep '<title>'
+curl -s https://app.igpglass.ca/api/stats/active-tickets
 ```
 
 ### 4. Tag Version

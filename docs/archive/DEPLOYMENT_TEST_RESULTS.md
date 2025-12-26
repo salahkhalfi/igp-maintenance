@@ -14,7 +14,7 @@
 |------|-----|--------|
 | **URL principale de test** | https://security-test.webapp-7t8.pages.dev | ✅ Active |
 | **URL de déploiement** | https://6ac7f44b.webapp-7t8.pages.dev | ✅ Active |
-| **URL de production** | https://mecanique.igpglass.ca | ℹ️ Version stable actuelle |
+| **URL de production** | https://app.igpglass.ca | ℹ️ Version stable actuelle |
 
 ---
 
@@ -172,7 +172,7 @@ npx wrangler d1 execute maintenance-db --command="SELECT id, email, CASE WHEN pa
 ## 📊 COMPARAISON VERSIONS
 
 ### Version stable (main)
-- **URL**: https://mecanique.igpglass.ca
+- **URL**: https://app.igpglass.ca
 - **Hash**: SHA-256 (ancien)
 - **JWT**: Fallback codé en dur
 - **CORS**: Permissif (origin: *)
@@ -248,7 +248,7 @@ Pour considérer le déploiement comme réussi, tous ces critères doivent être
 
 2. **Rollback facile**:
    ```bash
-   # La version stable reste sur mecanique.igpglass.ca
+   # La version stable reste sur app.igpglass.ca
    # Aucune action requise
    ```
 
@@ -298,7 +298,7 @@ Pour considérer le déploiement comme réussi, tous ces critères doivent être
    - `SECURITY_AUDIT_REPORT.md` - Détails techniques
 
 3. **Rollback immédiat** (si nécessaire):
-   - La version stable reste disponible sur mecanique.igpglass.ca
+   - La version stable reste disponible sur app.igpglass.ca
    - Aucune donnée perdue
    - Retour possible en 2 minutes
 
@@ -311,7 +311,7 @@ Pour considérer le déploiement comme réussi, tous ces critères doivent être
 **URLs de test**:
 - 🧪 **Test**: https://security-test.webapp-7t8.pages.dev
 - 📍 **Direct**: https://6ac7f44b.webapp-7t8.pages.dev
-- 🏭 **Production stable**: https://mecanique.igpglass.ca
+- 🏭 **Production stable**: https://app.igpglass.ca
 
 **Tests automatiques**: 3/3 ✅ Passés  
 **Tests manuels**: 0/8 ⏳ À effectuer  

@@ -406,12 +406,12 @@
 - ✅ `src/views/guide.ts` (synchronisé)
 
 **Build:** ✅ Success (1.37s) - 711.70 kB  
-**Production:** ✅ https://mecanique.igpglass.ca/guide
+**Production:** ✅ https://app.igpglass.ca/guide
 
 **Test en production:**
 ```bash
 # Test sur différentes largeurs
-curl -s https://mecanique.igpglass.ca/guide | grep "@media (max-width"
+curl -s https://app.igpglass.ca/guide | grep "@media (max-width"
 ✅ 7 breakpoints trouvés
 ```
 

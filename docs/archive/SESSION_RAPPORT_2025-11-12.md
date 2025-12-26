@@ -202,7 +202,7 @@ GET /api/webhooks/notification-history/:ticketId
 
 ### URLs Production
 - **Application**: https://cd79a9f1.webapp-7t8.pages.dev
-- **Custom Domain**: https://mecanique.igpglass.ca
+- **Custom Domain**: https://app.igpglass.ca
 - **GitHub**: https://github.com/salahkhalfi/igp-maintenance
 
 ### Commits

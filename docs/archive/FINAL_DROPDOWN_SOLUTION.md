@@ -211,7 +211,7 @@ cb5d4b9 - Fix: Remplacer select natif par dropdown custom responsive
 - **Port** : 3000
 
 ### Domaine personnalisé
-- **URL** : https://mecanique.igpglass.ca (pointe vers la dernière version)
+- **URL** : https://app.igpglass.ca (pointe vers la dernière version)
 
 ## 🔮 Améliorations futures possibles
 

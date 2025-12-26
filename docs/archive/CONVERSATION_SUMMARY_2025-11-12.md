@@ -491,7 +491,7 @@ b9f0c9b - feat: système notifications webhook pour tickets expirés + responsiv
 
 ### URLs Actives
 - **Production**: https://cd79a9f1.webapp-7t8.pages.dev
-- **Custom Domain**: https://mecanique.igpglass.ca (configuré)
+- **Custom Domain**: https://app.igpglass.ca (configuré)
 - **GitHub**: https://github.com/salahkhalfi/igp-maintenance
 
 ### Services Externes

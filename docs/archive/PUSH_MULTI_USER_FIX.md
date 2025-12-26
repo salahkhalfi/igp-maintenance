@@ -267,7 +267,7 @@ Prérequis: Se connecter comme admin/superviseur
 5. Résultat attendu: status = 'test_success'
 
 Commande curl:
-curl -X POST "https://mecanique.igpglass.ca/api/push/test-user/6" \
+curl -X POST "https://app.igpglass.ca/api/push/test-user/6" \
   -H "Authorization: Bearer <admin_token>" \
   -H "Content-Type: application/json"
 ```
@@ -334,7 +334,7 @@ LIMIT 10;
 ## 🚀 Déploiement
 
 ### Production
-- **URL**: https://mecanique.igpglass.ca
+- **URL**: https://app.igpglass.ca
 - **Build**: ✅ Succès (789.79 kB)
 - **Déploiement**: ✅ https://ab4cbd0a.webapp-7t8.pages.dev
 

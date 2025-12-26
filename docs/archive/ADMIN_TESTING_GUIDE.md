@@ -386,7 +386,7 @@ deleteUser(3);
    npx wrangler tail --project-name webapp
    ```
 
-3. **La version stable reste disponible** sur https://mecanique.igpglass.ca
+3. **La version stable reste disponible** sur https://app.igpglass.ca
 
 ---
 

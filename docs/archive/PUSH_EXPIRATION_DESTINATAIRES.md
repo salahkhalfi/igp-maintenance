@@ -395,7 +395,7 @@ Global: 75% (3/4 notifications reçues)
 ---
 
 **Pour activer les notifications:**
-1. Se connecter sur https://mecanique.igpglass.ca
+1. Se connecter sur https://app.igpglass.ca
 2. Cliquer sur le bouton push (🔴 → 🟢)
 3. Autoriser les notifications dans le navigateur
 4. Si Android Chrome: Installer l'app en PWA

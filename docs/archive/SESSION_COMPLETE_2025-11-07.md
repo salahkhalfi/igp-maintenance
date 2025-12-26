@@ -223,7 +223,7 @@ bc03b24 - Docs: Documentation complète solution portal + README v2.0.3
 - **Status** : ✅ Active
 
 ### Domaine personnalisé
-- **URL** : https://mecanique.igpglass.ca
+- **URL** : https://app.igpglass.ca
 - **Status** : ✅ Pointe vers la dernière version
 
 ## 🧪 Tests recommandés

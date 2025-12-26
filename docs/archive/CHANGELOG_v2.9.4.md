@@ -276,7 +276,7 @@ Autre        → AUT     → Premier: AUT-2025-0001, 100ème: AUT-2025-0100
 
 5. ✅ **Déploiement production**
    - Deploy Cloudflare: ✅ https://a65e388f.webapp-7t8.pages.dev
-   - Production: ✅ https://mecanique.igpglass.ca
+   - Production: ✅ https://app.igpglass.ca
    - Health check prod: ✅ 200 OK
 
 6. ✅ **Git versioning**
@@ -308,7 +308,7 @@ Autre        → AUT     → Premier: AUT-2025-0001, 100ème: AUT-2025-0100
 
 ## 🔗 Liens
 
-- **Production:** https://mecanique.igpglass.ca
+- **Production:** https://app.igpglass.ca
 - **Déploiement:** https://a65e388f.webapp-7t8.pages.dev
 - **GitHub:** https://github.com/salahkhalfi/igp-maintenance
 - **Tag:** https://github.com/salahkhalfi/igp-maintenance/releases/tag/v2.9.4

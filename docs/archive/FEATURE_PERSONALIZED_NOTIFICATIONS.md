@@ -426,7 +426,7 @@ npx wrangler pages deploy dist --project-name webapp
 
 **URLs:**
 - Production: https://fedd5f83.webapp-7t8.pages.dev
-- Custom Domain: https://mecanique.igpglass.ca
+- Custom Domain: https://app.igpglass.ca
 
 ---
 

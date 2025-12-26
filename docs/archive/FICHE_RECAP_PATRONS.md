@@ -5,7 +5,7 @@
 ## 🔗 **ACCÈS RAPIDE**
 
 ### **Application en Ligne:**
-🌐 **https://mecanique.igpglass.ca**
+🌐 **https://app.igpglass.ca**
 
 ### **Compte Administrateur:**
 - **Email:** admin@igpglass.ca
@@ -186,7 +186,7 @@
 ## 📞 **CONTACTS CLÉS**
 
 ### **Accès Technique:**
-- URL principale: https://mecanique.igpglass.ca
+- URL principale: https://app.igpglass.ca
 - URL backup: https://d2debd7f.webapp-7t8.pages.dev
 - GitHub: https://github.com/salahkhalfi/igp-maintenance
 

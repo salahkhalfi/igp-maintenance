@@ -3,7 +3,7 @@
 ## 📱 **Informations d'Accès**
 
 ### **URL de Production:**
-🔗 **https://mecanique.igpglass.ca**
+🔗 **https://app.igpglass.ca**
 
 ### **Compte de Démonstration:**
 - **Email**: `admin@igpglass.ca`
@@ -17,7 +17,7 @@
 ### **🟢 PARTIE 1: Connexion & Vue d'ensemble (2 minutes)**
 
 **Ce que vous montrez:**
-1. Ouvrez https://mecanique.igpglass.ca sur un grand écran
+1. Ouvrez https://app.igpglass.ca sur un grand écran
 2. Connectez-vous avec le compte admin
 3. **Montrez le tableau Kanban** avec les 6 colonnes de workflow
 
@@ -178,7 +178,7 @@
 ### **📱 PARTIE 6: Responsive Mobile (1 minute)**
 
 **Si vous avez un téléphone:**
-1. Ouvrez https://mecanique.igpglass.ca sur votre téléphone
+1. Ouvrez https://app.igpglass.ca sur votre téléphone
 2. Montrez que **tout fonctionne parfaitement**:
    - Boutons empilés verticalement (faciles à cliquer)
    - Formulaires adaptés à l'écran
@@ -264,7 +264,7 @@
 
 ### **AVANT LA DÉMO:**
 1. ✅ Testez la connexion internet
-2. ✅ Ouvrez https://mecanique.igpglass.ca dans un onglet propre
+2. ✅ Ouvrez https://app.igpglass.ca dans un onglet propre
 3. ✅ Connectez-vous au compte admin AVANT la réunion
 4. ✅ Chargez le site sur votre téléphone aussi
 5. ✅ Fermez tous les autres onglets/notifications

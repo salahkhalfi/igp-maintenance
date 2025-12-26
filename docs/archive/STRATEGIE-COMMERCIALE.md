@@ -132,7 +132,7 @@
 **Objectif:** Valider product-market fit avec IGP Glass comme client pilote
 
 **Actions:**
-- ✅ Déploiement production IGP (mecanique.igpglass.ca)
+- ✅ Déploiement production IGP (app.igpglass.ca)
 - 🔄 Collecte feedback utilisateurs quotidien
 - 🔄 Tracking analytics usage features
 - 🔄 Identification features critiques vs nice-to-have
@@ -1664,7 +1664,7 @@ async function sendEmail(tenant: Tenant, user: User, template: string, data: any
 
 **Phase 4: Production (Semaine 5)**
 - [ ] Migrer IGP vers igpglass.pmeapp.com
-- [ ] Update DNS mecanique.igpglass.ca → CNAME vers igpglass.pmeapp.com (ou redirect)
+- [ ] Update DNS app.igpglass.ca → CNAME vers igpglass.pmeapp.com (ou redirect)
 - [ ] Deploy admin.pmeapp.com portal
 - [ ] Deploy support.pmeapp.com documentation
 - [ ] Monitoring + alertes

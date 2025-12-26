@@ -4,7 +4,7 @@
 
 **Date**: 2025-11-08  
 **Problème**: Page violette vide après connexion dans le sandbox  
-**Statut Production**: ✅ mecanique.igpglass.ca fonctionne parfaitement  
+**Statut Production**: ✅ app.igpglass.ca fonctionne parfaitement  
 **Décision**: Abandonner le debug sandbox, travailler sur la production
 
 ---
@@ -73,7 +73,7 @@ debug-sandbox-issue-2025-11-08 → db6aef5 (fixes complets + logs)
 
 ## ✅ Ce Qui Fonctionne (Production)
 
-- ✅ mecanique.igpglass.ca fonctionne parfaitement
+- ✅ app.igpglass.ca fonctionne parfaitement
 - ✅ Commit f092e67 est stable et testé
 - ✅ 496.74 kB (taille raisonnable)
 - ✅ Toutes les fonctionnalités opérationnelles
@@ -140,7 +140,7 @@ npm run deploy:prod
    - Ne pas perdre du temps à fixer l'environnement de dev
 
 3. **Si ça marche en prod, ne touchez pas**
-   - mecanique.igpglass.ca fonctionne → NE PAS TOUCHER
+   - app.igpglass.ca fonctionne → NE PAS TOUCHER
    - Toute modification doit être testée en prod d'abord
    - Git est votre meilleur ami
 
@@ -154,7 +154,7 @@ npm run deploy:prod
 ## 🚀 Prochaines Étapes
 
 **Court terme** (Si nécessaire):
-- Travailler directement sur mecanique.igpglass.ca
+- Travailler directement sur app.igpglass.ca
 - Faire des petites modifications incrémentales
 - Tester chaque changement immédiatement en prod
 

@@ -209,12 +209,12 @@ npm run build  # ✅ Success (1.29s)
 ```bash
 npx wrangler pages deploy dist --project-name webapp
 ✨ Deployment complete!
-🌎 Production: https://mecanique.igpglass.ca/guide
+🌎 Production: https://app.igpglass.ca/guide
 ```
 
 **Vérification en production:**
 ```bash
-curl -s https://mecanique.igpglass.ca/guide | grep "backdrop-filter"
+curl -s https://app.igpglass.ca/guide | grep "backdrop-filter"
 # ✅ Confirmed: backdrop-filter présent dans le CSS de production
 ```
 

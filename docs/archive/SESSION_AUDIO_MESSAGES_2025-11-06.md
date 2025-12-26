@@ -249,11 +249,11 @@ CREATE INDEX idx_messages_audio ON messages(audio_file_key);
 
 ## 🚀 URLs Déploiement
 
-**Production** : https://mecanique.igpglass.ca  
+**Production** : https://app.igpglass.ca  
 **Dernier déploiement** : https://b13f9184.webapp-7t8.pages.dev
 
-**URL test R2** : https://mecanique.igpglass.ca/api/test/r2  
-**Exemple audio** : https://mecanique.igpglass.ca/api/audio/messages/audio/1/1762449787744-t3mgs.webm
+**URL test R2** : https://app.igpglass.ca/api/test/r2  
+**Exemple audio** : https://app.igpglass.ca/api/audio/messages/audio/1/1762449787744-t3mgs.webm
 
 ---
 
@@ -340,7 +340,7 @@ Headers actuels : `Cache-Control: public, max-age=31536000` (1 an)
 
 **Pour la personne avec iPhone** :
 
-1. **Ouvrir Safari** sur https://mecanique.igpglass.ca
+1. **Ouvrir Safari** sur https://app.igpglass.ca
 2. **Se connecter** avec un compte (ex: operateur@igpglass.ca)
 3. **Aller dans Messagerie** (onglet Messages)
 4. **Test 1 - Lecture messages existants** :

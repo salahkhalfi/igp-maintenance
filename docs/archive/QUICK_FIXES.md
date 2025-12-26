@@ -163,7 +163,7 @@ app.get('/api/audio/*', async (c) => {
 ```typescript
 import axios, { AxiosRequestConfig } from 'axios';
 
-const API_URL = 'https://mecanique.igpglass.ca/api';
+const API_URL = 'https://app.igpglass.ca/api';
 
 // Intercepteur pour ajouter token automatiquement
 axios.interceptors.request.use((config) => {

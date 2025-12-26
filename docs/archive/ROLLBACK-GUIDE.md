@@ -16,7 +16,7 @@ npx wrangler pages secret put PUSH_ENABLED --project-name igp-maintenance-app
 # Quand demandé, entrer: false
 
 # Vérifier
-curl https://mecanique.igpglass.ca
+curl https://app.igpglass.ca
 
 # Résultat: App fonctionne normalement, pas de push
 # Système Pabbly/WhatsApp continue à fonctionner
@@ -96,11 +96,11 @@ Après rollback, vérifier:
 
 ```bash
 # 1. App accessible
-curl -s -o /dev/null -w "%{http_code}" https://mecanique.igpglass.ca
+curl -s -o /dev/null -w "%{http_code}" https://app.igpglass.ca
 # Doit afficher: 200
 
 # 2. Connexion fonctionne
-# Aller sur mecanique.igpglass.ca
+# Aller sur app.igpglass.ca
 # Login avec compte test
 # Créer un ticket → Doit fonctionner
 

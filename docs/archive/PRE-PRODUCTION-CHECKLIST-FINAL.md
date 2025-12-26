@@ -276,7 +276,7 @@ npx wrangler pages deploy dist --project-name webapp
 ```
 Production: https://webapp.pages.dev
 Branch: https://main.webapp.pages.dev
-Custom (si configuré): https://mecanique.igpglass.ca
+Custom (si configuré): https://app.igpglass.ca
 ```
 
 ### Endpoints à Tester

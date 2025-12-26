@@ -137,7 +137,7 @@ Si ReactDOM n'est pas disponible (cas edge), le dropdown se rend normalement.
 
 - **Portal solution** : https://8eb4c9c8.webapp-7t8.pages.dev ✅
 - **Sandbox** : https://3000-i99eg52ghw8axx8tockng-583b4d74.sandbox.novita.ai
-- **Domaine custom** : https://mecanique.igpglass.ca
+- **Domaine custom** : https://app.igpglass.ca
 
 ## 🔍 Comprendre les stacking contexts
 

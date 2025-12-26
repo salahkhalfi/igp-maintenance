@@ -224,7 +224,7 @@ app.get('/api/messages/public', authMiddleware, async (c) => {
 **Build:** 466.46 kB (+1 kB)  
 
 **URLs production:**
-- **Principal:** https://mecanique.igpglass.ca ✅
+- **Principal:** https://app.igpglass.ca ✅
 - **Cloudflare:** https://8a6fb040.webapp-7t8.pages.dev ✅
 
 **Backup:** https://page.gensparksite.com/project_backups/webapp-v1.9.0-maintenance-priority.tar.gz
@@ -377,7 +377,7 @@ L'application est maintenant **hautement maintenable** avec:
 - https://page.gensparksite.com/project_backups/webapp-v1.9.0-maintenance-priority.tar.gz
 
 **Production:**
-- https://mecanique.igpglass.ca
+- https://app.igpglass.ca
 - https://8a6fb040.webapp-7t8.pages.dev
 
 ---

@@ -609,8 +609,8 @@ npx wrangler pages deploy dist --project-name webapp
 # Example: https://abc123.webapp-7t8.pages.dev
 
 # Tester production
-curl https://mecanique.igpglass.ca
-curl https://mecanique.igpglass.ca/api/health
+curl https://app.igpglass.ca
+curl https://app.igpglass.ca/api/health
 ```
 
 ---
@@ -627,7 +627,7 @@ cat > DEPLOYMENT-SUMMARY-v2.0.X.md << EOF
 
 **Date:** $(date +%Y-%m-%d)
 **Features:** [description]
-**URL:** https://mecanique.igpglass.ca
+**URL:** https://app.igpglass.ca
 
 ## Tests Effectués
 - [ ] Desktop Chrome
@@ -746,7 +746,7 @@ find src -name "*.tsx" -o -name "*.ts" | xargs wc -l
 
 ### **Métriques Production**
 
-- **Application:** https://mecanique.igpglass.ca
+- **Application:** https://app.igpglass.ca
 - **Uptime:** Monitored via Cloudflare
 - **Build size:** ~700 KB
 - **Database:** Cloudflare D1 (production)

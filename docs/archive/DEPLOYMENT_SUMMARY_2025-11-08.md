@@ -113,7 +113,7 @@ npx wrangler pages deploy dist --project-name webapp
 **Timestamp**: 2025-11-08 08:16:30  
 **Status**: ✅ SUCCESS  
 **URL**: https://5e97bd0a.webapp-7t8.pages.dev  
-**Production**: https://mecanique.igpglass.ca
+**Production**: https://app.igpglass.ca
 
 ### 3. Enregistrement des Migrations ✅
 ```sql
@@ -172,7 +172,7 @@ Des logs détaillés ont été ajoutés dans `src/routes/users.ts` (endpoint PUT
 ```
 
 **Pour Voir les Logs**:
-1. Ouvrez https://mecanique.igpglass.ca
+1. Ouvrez https://app.igpglass.ca
 2. Ouvrez la Console Développeur (F12)
 3. Effectuez un changement de rôle
 4. Vérifiez les logs 🔍 ✅ ❌
@@ -232,7 +232,7 @@ Si vous rencontrez toujours des problèmes:
 2. Indiquez le **rôle source** et le **rôle cible**
 3. Précisez le **message d'erreur exact** (s'il y en a)
 
-**URL de Production**: https://mecanique.igpglass.ca  
+**URL de Production**: https://app.igpglass.ca  
 **Dernière Mise à Jour**: 2025-11-08 08:20:48 UTC
 
 ---

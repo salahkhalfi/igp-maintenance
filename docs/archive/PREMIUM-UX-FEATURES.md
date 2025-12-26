@@ -491,7 +491,7 @@ npm run build  # ✅ Success (1.24s) - 704.33 kB
 ```bash
 npx wrangler pages deploy dist --project-name webapp
 ✨ Deployment complete!
-🌎 https://mecanique.igpglass.ca/guide
+🌎 https://app.igpglass.ca/guide
 ```
 
 ---

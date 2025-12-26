@@ -222,7 +222,7 @@ cd /home/user/webapp && npm run build
 npx wrangler pages deploy dist --project-name webapp
 
 # 3. Test production URLs
-curl https://mecanique.igpglass.ca
+curl https://app.igpglass.ca
 ```
 
 ---

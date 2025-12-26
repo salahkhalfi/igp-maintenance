@@ -132,7 +132,7 @@ npx wrangler secret put CORS_STRICT_MODE --project-name webapp
 **Liste actuelle des origines autorisées**:
 ```typescript
 const ALLOWED_ORIGINS = [
-  'https://mecanique.igpglass.ca',           // Domaine principal
+  'https://app.igpglass.ca',           // Domaine principal
   'https://webapp-7t8.pages.dev',            // Cloudflare Pages
   'https://02fd9e0f.webapp-7t8.pages.dev',   // Version actuelle
   'http://localhost:3000',                   // Dev local

@@ -277,6 +277,6 @@ Si besoin de plus de flexibilité à l'avenir:
 - `63e36ea` - Infrastructure RBAC + blocage initial
 
 **Déploiement**: `https://3bcae6de.webapp-7t8.pages.dev`  
-**Production**: `https://mecanique.igpglass.ca`
+**Production**: `https://app.igpglass.ca`
 
 **Status**: ✅ **PRODUCTION - STABLE - DOCUMENTÉ**

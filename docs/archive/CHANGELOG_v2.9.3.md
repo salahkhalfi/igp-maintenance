@@ -206,7 +206,7 @@ isValidTicketId('INVALID-123') → false ✅
 
 ## 🔗 Liens
 
-- **Production:** https://mecanique.igpglass.ca
+- **Production:** https://app.igpglass.ca
 - **Déploiement:** https://3507bc75.webapp-7t8.pages.dev
 - **GitHub:** https://github.com/salahkhalfi/igp-maintenance
 - **Tag:** https://github.com/salahkhalfi/igp-maintenance/releases/tag/v2.9.3

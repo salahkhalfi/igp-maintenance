@@ -4,7 +4,7 @@
 ---
 
 ## 📱 Démo en Ligne
-**🌐 Application Live :** https://mecanique.igpglass.ca
+**🌐 Application Live :** https://app.igpglass.ca
 
 **Accès Test :**
 - **Administrateur :** admin@igpglass.ca / password123
@@ -606,7 +606,7 @@
 
 **Email :** contact@igpglass.ca  
 **Téléphone :** [Votre numéro]  
-**Site Web :** https://mecanique.igpglass.ca  
+**Site Web :** https://app.igpglass.ca  
 **GitHub :** [Votre repo si public]
 
 **Disponibilité :**

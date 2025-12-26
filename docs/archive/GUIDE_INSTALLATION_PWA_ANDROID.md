@@ -19,7 +19,7 @@ Sur Android, les notifications des sites web (Chrome) sont **bloquées en arriè
 
 ### Étape 1 : Ouvrir Chrome Android
 
-Ouvrez https://mecanique.igpglass.ca dans **Chrome** (pas Firefox ou autre navigateur).
+Ouvrez https://app.igpglass.ca dans **Chrome** (pas Firefox ou autre navigateur).
 
 ### Étape 2 : Menu Chrome
 

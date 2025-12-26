@@ -562,7 +562,7 @@ Un bouton intelligent apparaît automatiquement sur le côté droit :
 - **Mobile-first**: Touch-friendly 48x48px
 
 ### Déploiement
-- 🌐 **Production**: https://mecanique.igpglass.ca/guide
+- 🌐 **Production**: https://app.igpglass.ca/guide
 - ✅ **Status**: Opérationnel
 - 📱 **Testé**: Desktop + Mobile
 

@@ -10,12 +10,12 @@
 
 ### Primary Application
 ```
-https://mecanique.igpglass.ca/
+https://app.igpglass.ca/
 ```
 
 ### API Health Check
 ```
-https://mecanique.igpglass.ca/api/health
+https://app.igpglass.ca/api/health
 ```
 
 ### Cloudflare Pages
@@ -79,7 +79,7 @@ npx wrangler pages deployment promote 816310df --project-name webapp
 
 ### Test Production Health
 ```bash
-curl https://mecanique.igpglass.ca/api/health
+curl https://app.igpglass.ca/api/health
 ```
 
 ---
@@ -210,10 +210,10 @@ https://dash.cloudflare.com/f7534aad3a745e31c833ce64d50e3fd0/pages/view/webapp
 ### Check Current Status
 ```bash
 # Test main URL
-curl -s -o /dev/null -w "%{http_code}\n" https://mecanique.igpglass.ca/
+curl -s -o /dev/null -w "%{http_code}\n" https://app.igpglass.ca/
 
 # Test API
-curl https://mecanique.igpglass.ca/api/health | jq
+curl https://app.igpglass.ca/api/health | jq
 ```
 
 ### View Recent Deployments

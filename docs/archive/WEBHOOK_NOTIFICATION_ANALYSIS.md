@@ -633,7 +633,7 @@ export interface Bindings {
     "metadata": {
       "delay_hours": 7,
       "delay_minutes": 30,
-      "app_url": "https://mecanique.igpglass.ca"
+      "app_url": "https://app.igpglass.ca"
     }
   }
 }
@@ -732,7 +732,7 @@ describe('NotificationService', () => {
 3. **Test Performance**:
    ```bash
    # Vérifier que l'endpoint reste rapide même si webhook lent
-   time curl -X POST https://mecanique.igpglass.ca/api/alerts/check-overdue
+   time curl -X POST https://app.igpglass.ca/api/alerts/check-overdue
    # Doit être < 2s même si webhook prend 5s
    ```
 

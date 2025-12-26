@@ -75,7 +75,7 @@ app.route('/api/push', push);
 
 **Command**:
 ```bash
-curl https://mecanique.igpglass.ca/api/push/vapid-public-key
+curl https://app.igpglass.ca/api/push/vapid-public-key
 ```
 
 **Résultat**:
@@ -94,15 +94,15 @@ curl https://mecanique.igpglass.ca/api/push/vapid-public-key
 **Commands**:
 ```bash
 # Subscribe (doit être protégé)
-curl https://mecanique.igpglass.ca/api/push/subscribe
+curl https://app.igpglass.ca/api/push/subscribe
 # Résultat: {"error":"Token manquant"} ✅
 
 # Unsubscribe (doit être protégé)
-curl https://mecanique.igpglass.ca/api/push/unsubscribe
+curl https://app.igpglass.ca/api/push/unsubscribe
 # Résultat: {"error":"Token manquant"} ✅
 
 # Test (doit être protégé)
-curl https://mecanique.igpglass.ca/api/push/test
+curl https://app.igpglass.ca/api/push/test
 # Résultat: {"error":"Token manquant"} ✅
 ```
 
@@ -114,7 +114,7 @@ curl https://mecanique.igpglass.ca/api/push/test
 
 **Command**:
 ```bash
-curl https://mecanique.igpglass.ca/api/health
+curl https://app.igpglass.ca/api/health
 ```
 
 **Résultat**:
@@ -151,7 +151,7 @@ curl https://mecanique.igpglass.ca/api/health
 4. ✅ **Deploy Production** (30 sec)
    - Deployment ID: b25b239a
    - URL: https://b25b239a.webapp-7t8.pages.dev
-   - Custom domain: https://mecanique.igpglass.ca
+   - Custom domain: https://app.igpglass.ca
 
 5. ✅ **Tests** (1 min)
    - VAPID endpoint: ✅ Public
@@ -358,9 +358,9 @@ curl https://mecanique.igpglass.ca/api/health
 ---
 
 **URLs de Test**:
-- Production: https://mecanique.igpglass.ca
-- VAPID Test: https://mecanique.igpglass.ca/api/push/vapid-public-key
-- Health: https://mecanique.igpglass.ca/api/health
+- Production: https://app.igpglass.ca
+- VAPID Test: https://app.igpglass.ca/api/push/vapid-public-key
+- Health: https://app.igpglass.ca/api/health
 
 **Deployment**:
 - ID: b25b239a

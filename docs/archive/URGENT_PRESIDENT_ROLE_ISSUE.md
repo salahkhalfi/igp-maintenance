@@ -114,7 +114,7 @@ npm run build
 npx wrangler pages deploy dist --project-name webapp
 
 # 3. Vérifier que le blocage fonctionne
-curl -X POST https://mecanique.igpglass.ca/api/roles \
+curl -X POST https://app.igpglass.ca/api/roles \
   -H "Authorization: Bearer TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"test","display_name":"Test"}'

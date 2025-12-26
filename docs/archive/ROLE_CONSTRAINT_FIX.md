@@ -153,7 +153,7 @@ npm run build
 npx wrangler pages deploy dist --project-name webapp
 ```
 
-**URL de Production**: https://mecanique.igpglass.ca
+**URL de Production**: https://app.igpglass.ca
 
 ---
 

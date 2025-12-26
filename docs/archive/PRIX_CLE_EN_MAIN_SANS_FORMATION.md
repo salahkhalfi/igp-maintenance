@@ -50,7 +50,7 @@ Prix Clé en Main: 23,000 $ CAD
 ✅ Guide utilisateur
 ✅ README détaillé
 ✅ Base de données (26 migrations)
-✅ Domaine mecanique.igpglass.ca (transfer)
+✅ Domaine app.igpglass.ca (transfer)
 ✅ Accès comptes Cloudflare (transfer)
 ✅ Transfer propriété GitHub repository
 ✅ Secrets et variables environnement documentés

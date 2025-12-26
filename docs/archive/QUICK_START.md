@@ -35,7 +35,7 @@ pm2 restart maintenance-app # Redémarrer
 git add -A
 git commit -m "Description des changements"
 npx wrangler pages deploy dist --project-name webapp --branch main
-# Tester: https://mecanique.igpglass.ca
+# Tester: https://app.igpglass.ca
 ```
 
 ### 5️⃣ Si ça casse:

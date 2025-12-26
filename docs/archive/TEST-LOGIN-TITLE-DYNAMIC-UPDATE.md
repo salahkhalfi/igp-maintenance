@@ -157,7 +157,7 @@ curl -X PUT https://e8e528df.webapp-7t8.pages.dev/api/settings/subtitle \
 
 ### Production
 - **URL principale**: https://e8e528df.webapp-7t8.pages.dev
-- **URL custom**: https://mecanique.igpglass.ca (si configuré)
+- **URL custom**: https://app.igpglass.ca (si configuré)
 - **Branche**: main
 - **Commit**: c8065a4
 

@@ -57,7 +57,7 @@ npm run deploy
 ### 5. ✅ Test Production (3 min)
 ```bash
 # Tentative création rôle "president"
-curl -X POST https://mecanique.igpglass.ca/api/roles ...
+curl -X POST https://app.igpglass.ca/api/roles ...
 # Résultat: HTTP 403 Forbidden avec message clair ✅
 ```
 

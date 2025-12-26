@@ -365,7 +365,7 @@ cb5d4b9 - Fix: Remplacer select natif par dropdown custom responsive
 - **Date** : 2025-11-07
 
 ### Domaine personnalisé
-- **URL** : https://mecanique.igpglass.ca
+- **URL** : https://app.igpglass.ca
 - **Status** : ✅ Configuré
 
 ---

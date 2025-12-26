@@ -64,7 +64,7 @@ Script automatisé créé pour la configuration des secrets :
 Liste blanche des origines autorisées :
 
 ```javascript
-✅ https://mecanique.igpglass.ca (production)
+✅ https://app.igpglass.ca (production)
 ✅ https://webapp-7t8.pages.dev (Cloudflare Pages)
 ✅ http://localhost:3000 (développement local uniquement)
 ```

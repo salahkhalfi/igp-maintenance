@@ -232,13 +232,13 @@ Authorization: Bearer {token}
 
 #### Lister les utilisateurs
 ```bash
-curl -X GET "https://mecanique.igpglass.ca/api/users" \
+curl -X GET "https://app.igpglass.ca/api/users" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 #### Créer un utilisateur
 ```bash
-curl -X POST "https://mecanique.igpglass.ca/api/users" \
+curl -X POST "https://app.igpglass.ca/api/users" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -251,7 +251,7 @@ curl -X POST "https://mecanique.igpglass.ca/api/users" \
 
 #### Modifier un utilisateur
 ```bash
-curl -X PUT "https://mecanique.igpglass.ca/api/users/2" \
+curl -X PUT "https://app.igpglass.ca/api/users/2" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{
@@ -262,13 +262,13 @@ curl -X PUT "https://mecanique.igpglass.ca/api/users/2" \
 
 #### Supprimer un utilisateur
 ```bash
-curl -X DELETE "https://mecanique.igpglass.ca/api/users/3" \
+curl -X DELETE "https://app.igpglass.ca/api/users/3" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 #### Réinitialiser un mot de passe
 ```bash
-curl -X POST "https://mecanique.igpglass.ca/api/users/2/reset-password" \
+curl -X POST "https://app.igpglass.ca/api/users/2/reset-password" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{

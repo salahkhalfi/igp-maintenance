@@ -106,7 +106,7 @@
 ---
 
 ### Test Production (10 requêtes, ultra-safe)
-- **URL**: https://mecanique.igpglass.ca/api/tickets
+- **URL**: https://app.igpglass.ca/api/tickets
 - **Méthode**: Séquentiel (pause 2s)
 - **Résultat**: 100% HTTP 401 (Auth requis ✅)
 - **Latence Moyenne**: **~0.175s** (175ms)

@@ -7,7 +7,7 @@
 
 **Application web complète** pour centraliser et optimiser la gestion de la maintenance industrielle.
 
-**✅ Démo Live :** https://mecanique.igpglass.ca
+**✅ Démo Live :** https://app.igpglass.ca
 
 **💰 Investissement :** 29,750$ CAD (FR) ou 36,000$ CAD (FR+EN)  
 **📊 ROI :** 6-9 mois  
@@ -295,7 +295,7 @@ Coûts opérationnels : ~5$/mois
 
 📧 **Email :** contact@igpglass.ca  
 📱 **Tél :** [Votre numéro]  
-🌐 **Démo :** https://mecanique.igpglass.ca  
+🌐 **Démo :** https://app.igpglass.ca  
 
 **Comptes test :**
 - Admin : admin@igpglass.ca / password123

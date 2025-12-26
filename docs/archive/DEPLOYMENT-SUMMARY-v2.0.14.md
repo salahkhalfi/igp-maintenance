@@ -45,7 +45,7 @@ https://133e05a7.webapp-7t8.pages.dev
 
 ### **Production (Domaine Principal)**
 ```
-https://mecanique.igpglass.ca
+https://app.igpglass.ca
 ```
 *(Devrait pointer vers le nouveau déploiement automatiquement)*
 

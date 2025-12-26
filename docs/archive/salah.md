@@ -79,7 +79,7 @@ Commande: `hub_files_tool(action="read", file_name="salah.md", limit=800)`
 
 ### Systèmes Critiques
 **CRON externe:**
-- URL: `mecanique.igpglass.ca` (PAS preview URLs)
+- URL: `app.igpglass.ca` (PAS preview URLs)
 - Auth: `Authorization: cron_secret_igp_2025_webhook_notifications` (SANS "Bearer")
 - Fréquence: toutes les 5 min
 - Appelle: `/api/cron/*`
@@ -179,7 +179,7 @@ const response = await fetch('/static/file.txt');
 **Solution:** Installation PWA (Progressive Web App) OBLIGATOIRE
 
 **Étapes installation PWA:**
-1. Chrome Android → mecanique.igpglass.ca
+1. Chrome Android → app.igpglass.ca
 2. Menu (⋮) → "Installer l'application"
 3. Ouvrir app depuis écran d'accueil
 4. Activer notifications (bouton vert)
@@ -208,7 +208,7 @@ Pas de branches multiples (tout sur main)
 # Test (sur webapp-test)
 npm run deploy:test
 
-# Production (sur mecanique.igpglass.ca)
+# Production (sur app.igpglass.ca)
 npm run deploy:prod
 ```
 
@@ -244,7 +244,7 @@ cd /home/user/webapp && npx wrangler pages deploy dist --project-name webapp
 
 ### Après Déploiement
 ```
-[ ] Tester production: https://mecanique.igpglass.ca
+[ ] Tester production: https://app.igpglass.ca
 [ ] Mettre à jour README.md et docs
 [ ] Commit documentation
 [ ] ProjectBackup si changement majeur
@@ -334,7 +334,7 @@ npm run db:migrate:local
 ### Route Debug Push (Salah)
 ```bash
 # Test push immédiat user_id 11 (Salah)
-curl https://mecanique.igpglass.ca/api/push/send-test-to-salah
+curl https://app.igpglass.ca/api/push/send-test-to-salah
 
 # Retourne:
 # - success: true/false
@@ -434,7 +434,7 @@ pm2 logs --nostream
 2. URIs fonctionnels (paths + params)
 3. Features non implémentées
 4. Prochaines étapes recommandées
-5. URLs production (mecanique.igpglass.ca)
+5. URLs production (app.igpglass.ca)
 6. Data models/storage services utilisés
 7. Guide utilisateur simple
 8. Statut déploiement
@@ -579,7 +579,7 @@ db.query(`SELECT * WHERE id = ${id}`)  // SQL Injection!
 ## 📊 ÉTAT ACTUEL SYSTÈME
 
 ### Versions
-- **Production:** mecanique.igpglass.ca
+- **Production:** app.igpglass.ca
 - **Test:** webapp-test.pages.dev
 - **Version app:** v2.9.10 (27 novembre 2025)
 - **Déploiements:** 375+ (normal, aucun problème)
@@ -671,7 +671,7 @@ npm run deploy:test
 ### Déploiement Prod
 ```bash
 npm run deploy:prod
-# Tester https://mecanique.igpglass.ca
+# Tester https://app.igpglass.ca
 # Mettre à jour DEPLOYMENT_CONFIG.md
 ```
 

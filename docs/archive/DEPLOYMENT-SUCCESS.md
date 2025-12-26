@@ -2,7 +2,7 @@
 
 **Date**: 2025-11-14  
 **Status**: ✅ PRODUCTION LIVE  
-**URL Production**: https://mecanique.igpglass.ca  
+**URL Production**: https://app.igpglass.ca  
 **Dernier Déploiement**: https://d28cba0d.webapp-7t8.pages.dev
 
 ---
@@ -36,12 +36,12 @@
 **Status**: HTTP 200 ✅
 
 ### ✅ Service Worker
-- URL: https://mecanique.igpglass.ca/service-worker.js
+- URL: https://app.igpglass.ca/service-worker.js
 - **Status**: HTTP 200 ✅
 - Cache strategy: Network First avec fallback
 
 ### ✅ Push Notifications
-- URL: https://mecanique.igpglass.ca/push-notifications.js
+- URL: https://app.igpglass.ca/push-notifications.js
 - **Status**: HTTP 200 ✅
 - VAPID, subscription, permissions configurés
 
@@ -57,7 +57,7 @@
 ### Android (Chrome):
 
 1. **Ouvrir Chrome** sur Android
-2. Aller sur: **https://mecanique.igpglass.ca**
+2. Aller sur: **https://app.igpglass.ca**
 3. Message apparaît: **"Installer Maintenance IGP"**
 4. Tap **"Installer"**
 5. Icône IGP bleue sur écran d'accueil
@@ -70,7 +70,7 @@
 ### iOS (Safari):
 
 1. **Ouvrir Safari** (PAS Chrome!)
-2. Aller sur: **https://mecanique.igpglass.ca**
+2. Aller sur: **https://app.igpglass.ca**
 3. Tap **Partager** ⬆️ (bouton bas-centre)
 4. Tap **"Sur l'écran d'accueil"**
 5. Tap **"Ajouter"**
@@ -83,7 +83,7 @@
 
 ### Desktop (Chrome/Edge/Firefox):
 
-1. Aller sur: **https://mecanique.igpglass.ca**
+1. Aller sur: **https://app.igpglass.ca**
 2. Icône d'installation devrait apparaître dans barre d'adresse
 3. Cliquer pour installer (optionnel)
 4. Autoriser notifications si demandé
@@ -96,7 +96,7 @@
 
 ### Console:
 ```
-✅ Service Worker enregistré: https://mecanique.igpglass.ca/
+✅ Service Worker enregistré: https://app.igpglass.ca/
 ```
 
 ### Application → Service Workers:
@@ -219,7 +219,7 @@ Voir: **ROLLBACK-GUIDE.md** pour détails complets
 ---
 
 **Dernier déploiement**: d28cba0d.webapp-7t8.pages.dev  
-**Production active**: mecanique.igpglass.ca  
+**Production active**: app.igpglass.ca  
 **Commits git**: 
 - e668d7f (fix: vite and routes)
 - 75a7e5a (docs: summary)

@@ -167,7 +167,7 @@ Après validation réussie:
 1. Déployer sur l'environnement de production
 2. Configurer le JWT_SECRET en production
 3. Activer le mode CORS strict
-4. Tester avec l'URL de production: https://mecanique.igpglass.ca
+4. Tester avec l'URL de production: https://app.igpglass.ca
 
 ---
 

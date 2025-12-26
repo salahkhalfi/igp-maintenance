@@ -155,7 +155,7 @@ npx wrangler pages secret put NOTIFICATION_TEST_MODE --project-name webapp
 # true
 
 # 2. Deploy et déclencher
-curl -X POST https://mecanique.igpglass.ca/api/alerts/check-overdue \
+curl -X POST https://app.igpglass.ca/api/alerts/check-overdue \
   -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 
 # 3. Vérifier logs (pas d'email envoyé)
