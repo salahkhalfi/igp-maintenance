@@ -1,0 +1,40 @@
+#!/bin/bash
+# Pre-commit hook - Vérifie que dist/ est synchronisé
+# Installation: cp scripts/git-hooks/pre-commit .git/hooks/pre-commit
+
+# Vérifier si des composants ont été modifiés
+if git diff --cached --name-only | grep -q "public/static/js/components/"; then
+    echo "🔍 Composants modifiés détectés..."
+    echo ""
+    
+    # Vérifier dist/_worker.js
+    if [[ ! -f "dist/_worker.js" ]]; then
+        echo "❌ ERREUR: dist/_worker.js manquant"
+        echo ""
+        echo "Exécutez:"
+        echo "  npm run build:full"
+        echo ""
+        exit 1
+    fi
+    
+    # Vérifier si dist/ est récent (< 5 minutes)
+    WORKER_AGE=$(($(date +%s) - $(stat -c %Y dist/_worker.js)))
+    
+    if [[ $WORKER_AGE -gt 300 ]]; then
+        echo "⚠️  ATTENTION: dist/_worker.js a plus de 5 minutes"
+        echo ""
+        echo "Vous avez modifié des composants mais dist/ n'a pas été rebuill."
+        echo ""
+        echo "Exécutez:"
+        echo "  npm run build:full"
+        echo ""
+        echo "Ou pour bypass:"
+        echo "  git commit --no-verify"
+        echo ""
+        exit 1
+    fi
+    
+    echo "✅ dist/ semble à jour"
+fi
+
+exit 0
