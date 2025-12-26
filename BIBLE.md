@@ -1,5 +1,5 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.3 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 6.4 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
 
 ---
 
@@ -56,17 +56,38 @@
 ✅ git push origin main (GitHub Actions builds ~2 min)
 ```
 
-### [LEGACY JS COMPONENTS]
+### [LEGACY JS COMPONENTS - ⚠️ PIÈGE FRÉQUENT]
 ```
 ⚠️ CRITIQUE : Modifier public/static/js/components/*.js NE SUFFIT PAS
 Le navigateur charge dist/*.min.js (pas components/*.js)
 
-PROCÉDURE OBLIGATOIRE :
-1. npm run build:minify (rebuild dist/*.min.js)
-2. Bumper ?v=xxx dans home.ts (nouveau hash)
-3. git push origin main
+PROCÉDURE OBLIGATOIRE (6 étapes, AUCUNE OPTIONNELLE) :
 
-OUBLI = Modification invisible en production (cache)
+1. MODIFIER le fichier source
+   public/static/js/components/FICHIER.js
+
+2. MINIFIER (regénère dist/*.min.js)
+   npm run build:minify
+
+3. VÉRIFIER que le code est dans le minifié
+   grep "MA_STRING" public/static/js/dist/FICHIER.min.js
+   (chercher des strings, pas des variables - Terser les renomme)
+
+4. GÉNÉRER nouveau hash
+   md5sum public/static/js/dist/FICHIER.min.js | cut -c1-7
+
+5. REMPLACER le hash dans home.ts
+   sed -i 's/v=ANCIEN/v=NOUVEAU/g' src/views/home.ts
+
+6. PUSH (GitHub Actions build + deploy)
+   git add -A && git commit -m "..." && git push origin main
+
+7. VÉRIFIER en production (OBLIGATOIRE)
+   curl -s "https://DOMAIN/" | grep "FICHIER.min.js"
+   → Doit afficher le NOUVEAU hash
+
+❌ ERREUR COMMUNE: Faire des commits "bump cache" sans vérifier
+   que le hash a RÉELLEMENT changé = modification invisible
 ```
 
 ### [DATABASE: maintenance-db]
@@ -84,8 +105,10 @@ OUBLI = Modification invisible en production (cache)
 
 ### [CRON EXTERNE]
 ```
-URL: app.igpglass.ca
-Auth: cron_secret_igp_2025_webhook_notifications (NO "Bearer")
+URL: (domaine configuré dans system_settings)
+Auth: CRON_SECRET from .dev.vars/Cloudflare secrets (NO "Bearer" prefix)
+Endpoint: /api/cron/*
+Service: cron-job.org (external, not Cloudflare native)
 ```
 
 ### [TIMEZONE]
@@ -95,27 +118,7 @@ Storage: UTC | Display: Local | Helper: getTimezoneOffset()
 
 ---
 
-## 🟦 MODULE 5: BUSINESS MODEL
-
-### [MODÈLE: INSTALLATION DÉDIÉE]
-```
-1 Client = 1 Instance Isolée (NO multi-tenant for now)
-├── 1 GitHub Fork, 1 Cloudflare Pages, 1 D1, 1 R2, 1 Genspark Hub
-├── Setup: $1,500 | Monthly: $99 | Real cost: ~$5/month
-└── MULTI-TENANT: Only when 10+ clients
-```
-
-### [ONBOARDING]
-```bash
-# 1. Create Genspark Hub "[Client] Maintenance"
-# 2. Fork repo, create Cloudflare resources
-# 3. Configure system_settings + cron-job.org
-# 4. Deploy & test
-```
-
----
-
-## 🟪 MODULE 6: COPILOT OATH
+## 🟦 MODULE 5: COPILOT OATH
 
 ### [🚨 NO BULLSHIT - PRIORITY ZERO]
 ```
@@ -145,7 +148,7 @@ TRIGGER: User dit "bullshit" = reset comportement
 
 ---
 
-## 🟫 MODULE 7: SANCTUARIZED CODE
+## 🟫 MODULE 6: SANCTUARIZED CODE
 
 ### [DO NOT TOUCH WITHOUT VALIDATION]
 | Function | File |
@@ -169,19 +172,19 @@ Duplicate routes: First = ACTIVE, Second = DEAD CODE
 
 ---
 
-## 🔵 MODULE 8: AI STACK
+## 🔵 MODULE 7: AI STACK
 *   **Audio**: Groq Whisper → OpenAI (fallback)
 *   **Logic**: DeepSeek → GPT-4o-mini (fallback)
 *   **Vision**: GPT-4o-mini only
 
 ---
 
-## 🟤 MODULE 9: REACT ISOLATION
+## 🟤 MODULE 8: REACT ISOLATION
 *   Dashboard = Legacy (CDN), Messenger = Modern (Vite). NEVER mix.
 
 ---
 
-## ⚫ MODULE 10: SESSION HYGIENE
+## ⚫ MODULE 9: SESSION HYGIENE
 ```
 RÈGLES:
 - 1 objectif clair = 1 session
@@ -199,57 +202,23 @@ ACTION: Résumer en 3 lignes + nouvelle session
 
 ---
 
-## ⬛ MODULE 11: IMPACT ANALYSIS PROTOCOL
+## ⬛ MODULE 10: IMPACT ANALYSIS PROTOCOL
 
 ```
-⚠️ MANDATORY AVANT TOUTE MODIFICATION ⚠️
+AVANT TOUTE MODIFICATION:
 
-1. GREP GLOBAL (OBLIGATOIRE)
-   grep -rn "fonction\|variable\|endpoint" src/ public/
-   → Identifier TOUTES les dépendances
-   → Chercher hardcoding caché
+1. GREP GLOBAL
+   grep -rn "fonction\|variable" src/ public/
+   → Identifier dépendances + hardcoding caché
 
-2. CARTOGRAPHIER IMPACTS
-   Lister TOUS les fichiers affectés:
-   - Fichier X lit cette valeur
-   - Fichier Y appelle cette fonction
-   - Fichier Z dépend de ce comportement
-   - AI/Voice/Push utilisent cette logique
+2. SIMULATION: "Si je change X → Y continue?"
+   - Tickets, AI, Push, Cache sync fonctionnent?
 
-3. DÉTECTER HARDCODING
-   - Valeurs en dur qui cassent si config change
-   - Constantes dupliquées dans plusieurs fichiers
-   - Defaults assumés dans logique métier
+3. RISQUE > 30% → STOP, lister risques, attendre validation
 
-4. SIMULATION MENTALE
-   "Si je change X → est-ce que Y continue?"
-   - Création ticket fonctionne?
-   - AI propose statuses valides?
-   - Push notifications marchent?
-   - Cache localStorage sync?
-
-5. ÉVALUER RISQUES (%)
-   Probabilité × Impact:
-   - Critique (app cassée): 30%+ = STOP
-   - Majeur (feature cassée): 50%+ = STOP
-   - Mineur (UX dégradé): 70%+ = WARNING
-
-6. SEUIL DE SÉCURITÉ
-   SI risque total > 30% → ARRÊTER
-   - Présenter analyse complète
-   - Lister TOUS les risques
-   - Attendre validation explicite
-
-7. VALIDATION UTILISATEUR
-   AVANT de coder:
-   - Lister fichiers modifiés
-   - Expliquer chaque risque
-   - Proposer alternatives
-   - Demander: "OK pour procéder?"
-
-TRIGGER: Si modification touche >3 fichiers OU fonction sanctuarisée
+TRIGGER: >3 fichiers touchés OU fonction sanctuarisée
 ```
 
 ---
 
-## 🏁 END OF KERNEL (v6.3 - ~250 lines)
+## 🏁 END OF KERNEL (v6.4 - ~220 lines)
