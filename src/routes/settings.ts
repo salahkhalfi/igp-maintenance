@@ -470,6 +470,67 @@ settings.put('/messenger_app_name', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * GET /api/settings/rate_limit_enabled - Récupérer l'état du rate limiting
+ * Accès: Public
+ * Retourne false par défaut si non configuré
+ */
+settings.get('/rate_limit_enabled', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'rate_limit_enabled'
+    `).first();
+
+    if (!result || !(result as any).setting_value) {
+      return c.json({ setting_value: 'false', value: 'false' });
+    }
+
+    return c.json({ 
+      setting_value: (result as any).setting_value,
+      value: (result as any).setting_value 
+    });
+  } catch (error) {
+    console.error('Get rate_limit_enabled error:', error);
+    return c.json({ setting_value: 'false', value: 'false' });
+  }
+});
+
+/**
+ * PUT /api/settings/rate_limit_enabled - Activer/désactiver le rate limiting
+ * Accès: Administrateurs (admin role)
+ */
+settings.put('/rate_limit_enabled', authMiddleware, adminOnly, async (c) => {
+  try {
+    const body = await c.req.json();
+    const { value } = body;
+
+    const boolValue = value === 'true' || value === true ? 'true' : 'false';
+
+    // UPSERT
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'rate_limit_enabled'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'rate_limit_enabled'
+      `).bind(boolValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('rate_limit_enabled', ?)
+      `).bind(boolValue).run();
+    }
+
+    return c.json({ setting_value: boolValue, success: true });
+  } catch (error) {
+    console.error('Update rate_limit_enabled error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
  * PUT /api/settings/ai_custom_context - Mettre à jour le contexte AI
  * Accès: Administrateurs (admin role)
  * Validation: Max 30000 caractères
@@ -523,6 +584,31 @@ settings.put('/ai_custom_context', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * GET /api/settings/title - Récupérer le titre de l'application
+ * Accès: Public
+ * Retourne une valeur par défaut si non configuré
+ */
+settings.get('/title', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'company_title'
+    `).first();
+
+    if (!result || !(result as any).setting_value) {
+      return c.json({ setting_value: 'Gestion de Maintenance', value: 'Gestion de Maintenance' });
+    }
+
+    return c.json({ 
+      setting_value: (result as any).setting_value,
+      value: (result as any).setting_value 
+    });
+  } catch (error) {
+    console.error('Get title error:', error);
+    return c.json({ setting_value: 'Gestion de Maintenance', value: 'Gestion de Maintenance' });
+  }
+});
+
+/**
  * PUT /api/settings/title - Mettre à jour le titre de l'application
  * Accès: Administrateurs (admin role)
  * Validation: Max 100 caractères, échappement HTML, UTF-8
@@ -549,18 +635,23 @@ settings.put('/title', authMiddleware, adminOnly, async (c) => {
       return c.json({ error: 'Le titre ne peut pas dépasser 100 caractères' }, 400);
     }
 
-    // ⚠️ IMPORTANT: Pas d'échappement HTML ici!
-    // React.createElement() échappe automatiquement le contenu à l'affichage.
-    // On stocke la valeur BRUTE en DB (best practice).
-    // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
-    // Protection XSS: React échappe automatiquement dans createElement()
+    // UPSERT: Insert ou Update selon si la clé existe
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'company_title'
+    `).first();
 
-    // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
-    await c.env.DB.prepare(`
-      UPDATE system_settings
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE setting_key = 'company_title'
-    `).bind(trimmedValue).run();
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'company_title'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('company_title', ?)
+      `).bind(trimmedValue).run();
+    }
 
     console.log(`✅ Titre modifié par user ${user.userId}: "${trimmedValue}"`);
 
@@ -571,6 +662,31 @@ settings.put('/title', authMiddleware, adminOnly, async (c) => {
   } catch (error) {
     console.error('Update title error:', error);
     return c.json({ error: 'Erreur lors de la mise à jour du titre' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/subtitle - Récupérer le sous-titre de l'application
+ * Accès: Public
+ * Retourne une valeur par défaut si non configuré
+ */
+settings.get('/subtitle', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'company_subtitle'
+    `).first();
+
+    if (!result || !(result as any).setting_value) {
+      return c.json({ setting_value: '', value: '' });
+    }
+
+    return c.json({ 
+      setting_value: (result as any).setting_value,
+      value: (result as any).setting_value 
+    });
+  } catch (error) {
+    console.error('Get subtitle error:', error);
+    return c.json({ setting_value: '', value: '' });
   }
 });
 
@@ -601,18 +717,23 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
       return c.json({ error: 'Le sous-titre ne peut pas dépasser 150 caractères' }, 400);
     }
 
-    // ⚠️ IMPORTANT: Pas d'échappement HTML ici!
-    // React.createElement() échappe automatiquement le contenu à l'affichage.
-    // On stocke la valeur BRUTE en DB (best practice).
-    // Cela permet d'afficher correctement "Test & Co" au lieu de "Test &amp; Co".
-    // Protection XSS: React échappe automatiquement dans createElement()
+    // UPSERT: Insert ou Update selon si la clé existe
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'company_subtitle'
+    `).first();
 
-    // Mettre à jour la DB avec la valeur brute (trimmed uniquement)
-    await c.env.DB.prepare(`
-      UPDATE system_settings
-      SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE setting_key = 'company_subtitle'
-    `).bind(trimmedValue).run();
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'company_subtitle'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('company_subtitle', ?)
+      `).bind(trimmedValue).run();
+    }
 
     console.log(`✅ Sous-titre modifié par user ${user.userId}: "${trimmedValue}"`);
 
