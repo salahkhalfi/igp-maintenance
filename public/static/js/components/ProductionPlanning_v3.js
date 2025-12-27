@@ -1423,10 +1423,10 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabelCaps}</title>
 <style>
-/* Marges d'impression pour Safari/Chrome/Firefox */
+/* Marges d'impression - IMPORTANT: utiliser padding sur body car @page margin n'est pas fiable */
 @page { 
     size: A4; 
-    margin: 20mm 18mm 20mm 18mm;
+    margin: 0;
 }
 
 * { 
@@ -1435,7 +1435,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
     padding: 0; 
 }
 
-html, body { 
+html { 
     width: 100%;
     height: 100%;
 }
@@ -1445,14 +1445,15 @@ body {
     font-size: 11pt;
     line-height: 1.7;
     color: #333;
-    /* Marges de secours si @page ne fonctionne pas */
-    padding: 15mm 12mm;
+    /* Marges forcées via padding - plus fiable que @page margin */
+    padding: 20mm 18mm 25mm 18mm;
+    min-height: 100%;
 }
 
-/* Wrapper principal avec marges explicites */
+/* Wrapper principal */
 .page-wrapper {
-    max-width: 170mm;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
 }
 
 /* ══════════ HEADER ══════════ */
@@ -1677,23 +1678,14 @@ tr:nth-child(even) { background: #fafafa; }
     body { 
         -webkit-print-color-adjust: exact !important; 
         print-color-adjust: exact !important;
-        padding: 0 !important;
-    }
-    .page-wrapper {
-        max-width: none;
+        /* GARDER le padding pour les marges */
+        padding: 20mm 18mm 25mm 18mm !important;
     }
     .kpi-row, .title-block, .summary-box { 
         page-break-inside: avoid; 
     }
     h1, h2, h3 { 
         page-break-after: avoid; 
-    }
-    .footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 10pt 18mm;
     }
 }
 </style>
