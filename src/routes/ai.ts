@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { getDb } from '../db';
 import { machines, users, systemSettings, tickets, media, ticketComments, planningEvents, userPreferences } from '../db/schema';
-import { inArray, eq, and, ne, lt, desc, or, sql, not, like } from 'drizzle-orm';
+import { inArray, eq, and, ne, lt, desc, or, sql, not, like, isNull, isNotNull } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 import { z } from 'zod';
@@ -894,5 +894,383 @@ ${aiConfig.rules}
 
 app.get('/test-expert', async (c) => c.text("Test Endpoint Active"));
 app.get('/debug-media', async (c) => c.text("Debug Media Endpoint Active"));
+
+// ============================================================
+// POST /api/ai/report - Direction Report Generator (ISOLATED)
+// Model: DeepSeek-Chat (PRIMARY) + GPT-4o-mini (FALLBACK)
+// Configurable via system_settings.ai_report_prompt
+// ============================================================
+app.post('/report', async (c) => {
+    try {
+        const authHeader = c.req.header('Authorization');
+        let token = authHeader?.replace('Bearer ', '') || getCookie(c, 'auth_token');
+        if (!token) return c.json({ error: 'Non autorisé' }, 401);
+        
+        // Utiliser le même secret que le middleware (fallback interne)
+        const payload = await verifyToken(token);
+        if (!payload) return c.json({ error: 'Token invalide' }, 401);
+        
+        const env = c.env as Bindings;
+        const db = getDb(env);
+        
+        // Parse request body
+        const body = await c.req.json();
+        const { period, startDate, endDate, reportType = 'summary', customInstructions } = body;
+        // period: 'day' | 'week' | 'month'
+        // startDate, endDate: ISO date strings (optional, calculated from period if not provided)
+        // reportType: 'summary' | 'detailed'
+        // customInstructions: string (optional) - Focus spécifique demandé par l'utilisateur
+        
+        // Calculate date range
+        const now = new Date();
+        let dateStart: Date, dateEnd: Date;
+        
+        if (startDate && endDate) {
+            dateStart = new Date(startDate);
+            dateEnd = new Date(endDate);
+        } else if (period === 'day') {
+            dateStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            dateEnd = new Date(dateStart);
+            dateEnd.setDate(dateEnd.getDate() + 1);
+        } else if (period === 'week') {
+            const dayOfWeek = now.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            dateStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset);
+            dateEnd = new Date(dateStart);
+            dateEnd.setDate(dateEnd.getDate() + 7);
+        } else { // month
+            dateStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            dateEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        }
+        
+        const startISO = dateStart.toISOString().split('T')[0];
+        const endISO = dateEnd.toISOString().split('T')[0];
+        
+        // ===== FETCH ALL DATA FOR THE PERIOD =====
+        
+        // 1. Tickets created in period
+        const ticketsCreated = await db.select({
+            id: tickets.id,
+            ticket_id: tickets.ticket_id,
+            title: tickets.title,
+            status: tickets.status,
+            priority: tickets.priority,
+            created_at: tickets.created_at,
+            completed_at: tickets.completed_at,
+            machine_id: tickets.machine_id
+        }).from(tickets)
+        .where(and(
+            sql`date(${tickets.created_at}) >= ${startISO}`,
+            sql`date(${tickets.created_at}) < ${endISO}`
+        )).all();
+        
+        // 2. Tickets completed in period
+        const ticketsCompleted = await db.select({
+            id: tickets.id,
+            ticket_id: tickets.ticket_id,
+            title: tickets.title,
+            priority: tickets.priority,
+            created_at: tickets.created_at,
+            completed_at: tickets.completed_at
+        }).from(tickets)
+        .where(and(
+            sql`date(${tickets.completed_at}) >= ${startISO}`,
+            sql`date(${tickets.completed_at}) < ${endISO}`
+        )).all();
+        
+        // 3. Active tickets (open/in progress)
+        const activeTickets = await db.select({
+            id: tickets.id,
+            ticket_id: tickets.ticket_id,
+            title: tickets.title,
+            status: tickets.status,
+            priority: tickets.priority,
+            assigned_to: tickets.assigned_to,
+            created_at: tickets.created_at
+        }).from(tickets)
+        .where(and(
+            not(inArray(tickets.status, ['completed', 'archived', 'closed', 'resolved'])),
+            sql`deleted_at IS NULL`
+        )).all();
+        
+        // 4. Planning events in period
+        const events = await db.select().from(planningEvents)
+        .where(and(
+            sql`date(${planningEvents.date}) >= ${startISO}`,
+            sql`date(${planningEvents.date}) < ${endISO}`,
+            sql`deleted_at IS NULL`
+        )).all();
+        
+        // 5. Machine statistics
+        const machineStats = await db.select({
+            id: machines.id,
+            machine_type: machines.machine_type,
+            status: machines.status,
+            location: machines.location
+        }).from(machines).all();
+        
+        // 6. User/technician workload
+        const technicianWorkload = await db.select({
+            user_id: tickets.assigned_to,
+            count: sql<number>`COUNT(*)`
+        }).from(tickets)
+        .where(and(
+            not(inArray(tickets.status, ['completed', 'archived', 'closed', 'resolved'])),
+            sql`deleted_at IS NULL`,
+            sql`assigned_to IS NOT NULL`
+        ))
+        .groupBy(tickets.assigned_to)
+        .all();
+        
+        // 7. Get user names for technicians
+        const userList = await db.select({
+            id: users.id,
+            full_name: users.full_name,
+            role: users.role
+        }).from(users).all();
+        
+        const userMap = Object.fromEntries(userList.map(u => [u.id, u.full_name]));
+        
+        // ===== CALCULATE KPIs =====
+        const criticalTickets = ticketsCreated.filter(t => t.priority === 'critical' || t.priority === 'high');
+        const avgResolutionTime = ticketsCompleted.length > 0 
+            ? ticketsCompleted.reduce((acc, t) => {
+                if (t.completed_at && t.created_at) {
+                    const created = new Date(t.created_at).getTime();
+                    const completed = new Date(t.completed_at).getTime();
+                    return acc + (completed - created);
+                }
+                return acc;
+            }, 0) / ticketsCompleted.length / (1000 * 60 * 60) // hours
+            : 0;
+        
+        const machinesDown = machineStats.filter(m => m.status === 'out_of_service' || m.status === 'maintenance');
+        
+        // ===== BUILD DATA CONTEXT =====
+        const dataContext = `
+## DONNÉES DE LA PÉRIODE: ${startISO} au ${endISO}
+
+### TICKETS MAINTENANCE
+- Créés: ${ticketsCreated.length}
+- Complétés: ${ticketsCompleted.length}
+- En cours (actifs): ${activeTickets.length}
+- Critiques/Haute priorité: ${criticalTickets.length}
+- MTTR moyen: ${avgResolutionTime.toFixed(1)} heures
+
+### DÉTAIL TICKETS CRÉÉS
+${ticketsCreated.slice(0, 20).map(t => `- [${t.priority?.toUpperCase()}] ${t.title} (${t.status})`).join('\n') || 'Aucun'}
+
+### TICKETS EN ATTENTE (priorité haute)
+${activeTickets.filter(t => t.priority === 'critical' || t.priority === 'high').map(t => `- ${t.title} - Assigné: ${t.assigned_to ? userMap[t.assigned_to] || 'Inconnu' : 'Non assigné'}`).join('\n') || 'Aucun'}
+
+### ÉVÉNEMENTS PLANNING
+${events.length} événements
+${events.slice(0, 15).map(e => `- ${e.date}: ${e.title} (${e.type})`).join('\n') || 'Aucun'}
+
+### MACHINES
+- Total: ${machineStats.length}
+- En panne/maintenance: ${machinesDown.length}
+${machinesDown.map(m => `- ${m.machine_type} (${m.location}): ${m.status}`).join('\n') || ''}
+
+### CHARGE TECHNICIENS
+${technicianWorkload.map(tw => `- ${userMap[tw.user_id as number] || `User ${tw.user_id}`}: ${tw.count} tickets actifs`).join('\n') || 'Aucune charge assignée'}
+`;
+
+        // ===== BUILD EXPERT PROMPT =====
+        
+        // Detect document type from instructions
+        const instructionsLower = (customInstructions || '').toLowerCase();
+        const isNote = instructionsLower.includes('note de service') || instructionsLower.includes('note ');
+        const isCompteRendu = instructionsLower.includes('compte-rendu') || instructionsLower.includes('compte rendu');
+        const isMemo = instructionsLower.includes('mémo') || instructionsLower.includes('memo');
+        const isBilan = instructionsLower.includes('bilan');
+        const isIncident = instructionsLower.includes('incident');
+        
+        // Document type specific instructions
+        let documentType = 'RAPPORT DE SYNTHÈSE';
+        let documentFormat = '';
+        
+        if (isNote) {
+            documentType = 'NOTE DE SERVICE';
+            documentFormat = `
+## FORMAT REQUIS
+**OBJET:** [Titre précis]
+**DATE:** ${new Date().toLocaleDateString('fr-FR')}
+**DE:** Direction
+**À:** [Destinataires selon contexte]
+
+[Corps de la note: contexte, message principal, actions requises si applicable]
+
+**La Direction**`;
+        } else if (isCompteRendu) {
+            documentType = 'COMPTE-RENDU';
+            documentFormat = `
+## FORMAT REQUIS
+**COMPTE-RENDU** - [Sujet]
+**Date:** ${new Date().toLocaleDateString('fr-FR')}
+
+**1. Contexte**
+**2. Points traités**
+**3. Décisions**
+**4. Actions à suivre** (Responsable | Échéance)`;
+        } else if (isMemo) {
+            documentType = 'MÉMO DIRECTION';
+            documentFormat = `
+## FORMAT REQUIS
+**MÉMO** | ${new Date().toLocaleDateString('fr-FR')}
+**Sujet:** [Une ligne]
+**Message clé:** [2-3 phrases maximum]
+**Action recommandée:** [Si applicable]`;
+        } else if (isBilan || isIncident) {
+            documentType = isBilan ? 'BILAN ANALYTIQUE' : 'RAPPORT D\'INCIDENT';
+            documentFormat = `
+## FORMAT REQUIS
+**${documentType}** - Période: ${startISO} au ${endISO}
+
+**Synthèse**
+**Analyse des données**
+**Indicateurs clés** (tableaux si pertinent)
+**Constats**
+**Recommandations**`;
+        } else {
+            documentFormat = `
+## FORMAT REQUIS
+**RAPPORT DE SYNTHÈSE** - ${new Date(startISO).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+
+**1. Synthèse exécutive** (3-4 lignes max)
+**2. Points d'attention** (priorisés par criticité)
+**3. Indicateurs clés** (données chiffrées)
+**4. Analyse opérationnelle**
+**5. Recommandations** (concrètes et actionnables)`;
+        }
+
+        const fullPrompt = `# RÔLE
+Tu es un expert en gestion industrielle et rédaction de documents de direction. Tu produis des documents professionnels de haute qualité pour la direction d'entreprise.
+
+# RÈGLES ABSOLUES
+1. **EXACTITUDE**: Utilise UNIQUEMENT les données fournies ci-dessous. Ne jamais inventer de chiffres, noms, dates ou faits.
+2. **PRÉCISION**: Chaque affirmation doit être traçable aux données sources.
+3. **CONCISION**: Pas de répétitions. Chaque phrase apporte une information nouvelle.
+4. **PERTINENCE**: Focus sur ce qui impacte les décisions de la direction.
+5. **PROFESSIONNALISME**: Ton formel, vocabulaire précis, structure claire.
+
+# INTERDICTIONS
+- ❌ Ne jamais inventer de données non présentes dans le contexte
+- ❌ Ne jamais répéter la même information sous différentes formes
+- ❌ Ne jamais utiliser de formules vagues ("plusieurs", "beaucoup") quand un chiffre exact existe
+- ❌ Ne jamais contredire les données fournies
+- ❌ Ne jamais ajouter de recommandations sans lien avec les données
+
+# DONNÉES SOURCES (période: ${startISO} → ${endISO})
+${dataContext}
+# FIN DES DONNÉES - Toute information hors de ce bloc est interdite.
+
+# DEMANDE
+${customInstructions ? `**Instructions spécifiques:** ${customInstructions}` : `Produis un ${documentType} professionnel.`}
+
+# TYPE DE DOCUMENT: ${documentType}
+${documentFormat}
+
+# CONSIGNES DE RÉDACTION
+- Commence directement par le contenu (pas d'introduction type "Voici le rapport...")
+- Utilise des **gras** pour les points clés
+- Privilégie les listes à puces pour la lisibilité
+- Les chiffres doivent être exacts (copiés des données sources)
+- Termine par des recommandations concrètes liées aux constats`;
+        
+        console.log(`📊 [Report] Generating ${documentType} for period ${startISO} to ${endISO}`);
+
+        // ===== CALL AI (DeepSeek PRIMARY, OpenAI FALLBACK) =====
+        let aiResponse = '';
+        
+        if (env.DEEPSEEK_API_KEY) {
+            try {
+                console.log('📊 [Report] Using DeepSeek-Chat');
+                const response = await fetch('https://api.deepseek.com/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            { role: "system", content: fullPrompt },
+                            { role: "user", content: `Génère le rapport ${period === 'day' ? 'journalier' : period === 'week' ? 'hebdomadaire' : 'mensuel'}.` }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 2000
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json() as any;
+                    aiResponse = data.choices[0]?.message?.content || '';
+                }
+            } catch (e) {
+                console.warn('⚠️ [Report] DeepSeek failed, trying OpenAI fallback');
+            }
+        }
+        
+        // Fallback to OpenAI
+        if (!aiResponse && env.OPENAI_API_KEY) {
+            try {
+                console.log('📊 [Report] Using GPT-4o-mini fallback');
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            { role: "system", content: fullPrompt },
+                            { role: "user", content: `Génère le rapport ${period === 'day' ? 'journalier' : period === 'week' ? 'hebdomadaire' : 'mensuel'}.` }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 2000
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json() as any;
+                    aiResponse = data.choices[0]?.message?.content || '';
+                }
+            } catch (e) {
+                console.error('❌ [Report] OpenAI also failed');
+            }
+        }
+        
+        if (!aiResponse) {
+            return c.json({ 
+                error: 'Impossible de générer le rapport. Vérifiez les clés API.',
+                data: dataContext 
+            }, 500);
+        }
+        
+        // Return structured response
+        return c.json({
+            success: true,
+            period: { start: startISO, end: endISO, type: period },
+            kpis: {
+                ticketsCreated: ticketsCreated.length,
+                ticketsCompleted: ticketsCompleted.length,
+                activeTickets: activeTickets.length,
+                criticalTickets: criticalTickets.length,
+                mttr: parseFloat(avgResolutionTime.toFixed(1)),
+                machinesDown: machinesDown.length,
+                eventsCount: events.length
+            },
+            report: aiResponse,
+            customFocus: customInstructions || null,
+            generatedAt: new Date().toISOString()
+        });
+        
+    } catch (e: any) {
+        console.error('❌ [Report] Error:', e);
+        return c.json({ error: e.message }, 500);
+    }
+});
 
 export default app;

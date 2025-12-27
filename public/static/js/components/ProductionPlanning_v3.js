@@ -152,6 +152,502 @@ const ProductionPlanning = ({ onClose }) => {
         }
     };
 
+    // ========== IMPRESSION PDF PLANNING - MULTI-FORMAT ==========
+    const [showPrintModal, setShowPrintModal] = React.useState(false);
+    const [printFormat, setPrintFormat] = React.useState('month');
+    const [selectedPrintDate, setSelectedPrintDate] = React.useState(null);
+    
+    const handlePrintPlanning = () => {
+        setSelectedPrintDate(new Date(currentDate));
+        setShowPrintModal(true);
+    };
+    
+    const executePrint = async (format, selectedDate) => {
+        setShowPrintModal(false);
+        // Utiliser la date passée par le modal, sinon fallback sur currentDate
+        const baseDate = selectedDate || selectedPrintDate || currentDate;
+        const year = baseDate.getFullYear();
+        const month = baseDate.getMonth();
+        
+        // Charger les infos compagnie
+        let companyTitle = 'Système de Maintenance';
+        let companySubtitle = '';
+        let logoUrl = '';
+        try {
+            const [titleRes, subtitleRes] = await Promise.all([
+                axios.get('/api/settings/company_title').catch(() => null),
+                axios.get('/api/settings/company_subtitle').catch(() => null)
+            ]);
+            if (titleRes?.data?.value) companyTitle = titleRes.data.value;
+            if (subtitleRes?.data?.value) companySubtitle = subtitleRes.data.value;
+            logoUrl = '/api/settings/logo?t=' + Date.now();
+        } catch (e) { /* Utiliser valeurs par défaut */ }
+        
+        // Charger tous les tickets planifiés
+        let allTickets = [];
+        try {
+            const ticketsRes = await axios.get('/api/tickets?status=assigned,in_progress,diagnostic,waiting_parts,received');
+            if (ticketsRes?.data?.tickets) {
+                allTickets = ticketsRes.data.tickets.filter(t => t.scheduled_date);
+            }
+        } catch (e) { /* Ignorer */ }
+        
+        // Couleurs par catégorie
+        const categoryColors = {
+            blue: { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
+            green: { bg: '#dcfce7', border: '#22c55e', text: '#166534' },
+            red: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+            yellow: { bg: '#fef9c3', border: '#eab308', text: '#854d0e' },
+            purple: { bg: '#f3e8ff', border: '#a855f7', text: '#6b21a8' },
+            orange: { bg: '#ffedd5', border: '#f97316', text: '#9a3412' },
+            gray: { bg: '#f3f4f6', border: '#6b7280', text: '#374151' }
+        };
+        
+        const priorityColors = { critical: '#dc2626', high: '#ea580c', medium: '#ca8a04', low: '#16a34a' };
+        const priorityLabels = { critical: 'CRITIQUE', high: 'HAUTE', medium: 'MOYENNE', low: 'BASSE' };
+        const statusLabels = { received: 'Reçu', assigned: 'Assigné', in_progress: 'En cours', diagnostic: 'Diagnostic', waiting_parts: 'Attente pièces', completed: 'Terminé' };
+        
+        let printContent = '';
+        
+        // ===== FORMAT MOIS - Timeline Stratégique =====
+        if (format === 'month') {
+            const monthName = baseDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const monthEvents = events.filter(e => {
+                const d = new Date(e.date);
+                return d.getMonth() === month && d.getFullYear() === year;
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const monthTickets = allTickets.filter(t => {
+                const d = new Date(t.scheduled_date);
+                return d.getMonth() === month && d.getFullYear() === year;
+            }).sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+            
+            // Grouper par jour
+            const dayGroups = {};
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayDate = new Date(year, month, d);
+                const dayEvents = monthEvents.filter(e => e.date === dateStr);
+                const dayTickets = monthTickets.filter(t => new Date(t.scheduled_date).getDate() === d);
+                if (dayEvents.length > 0 || dayTickets.length > 0) {
+                    dayGroups[d] = { date: dayDate, events: dayEvents, tickets: dayTickets };
+                }
+            }
+            
+            // KPIs
+            const totalEvents = monthEvents.length;
+            const totalTickets = monthTickets.length;
+            const criticalTickets = monthTickets.filter(t => t.priority === 'critical' || t.priority === 'high').length;
+            const categoryStats = categories.map(cat => ({
+                ...cat,
+                count: monthEvents.filter(e => e.type === cat.id).length
+            })).filter(c => c.count > 0);
+            
+            // Timeline HTML
+            let timelineHtml = '';
+            Object.keys(dayGroups).forEach(day => {
+                const group = dayGroups[day];
+                const dateLabel = group.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                const isWeekend = group.date.getDay() === 0 || group.date.getDay() === 6;
+                
+                let itemsHtml = '';
+                group.events.forEach(evt => {
+                    const cat = categories.find(c => c.id === evt.type);
+                    const colors = categoryColors[cat?.color] || categoryColors.gray;
+                    itemsHtml += `
+                        <div class="timeline-event" style="border-left-color: ${colors.border}; background: ${colors.bg};">
+                            <div class="event-header">
+                                <span class="event-time">${evt.time || '—'}</span>
+                                <span class="event-category" style="color: ${colors.text};">${cat?.label || evt.type}</span>
+                                <span class="event-status ${evt.status}">${evt.status === 'tentative' ? '⏳' : '✅'}</span>
+                            </div>
+                            <div class="event-title">${evt.title}</div>
+                            ${evt.details ? `<div class="event-details">${evt.details}</div>` : ''}
+                        </div>
+                    `;
+                });
+                group.tickets.forEach(ticket => {
+                    const schedTime = new Date(ticket.scheduled_date);
+                    const timeStr = schedTime.getHours() ? schedTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+                    itemsHtml += `
+                        <div class="timeline-ticket">
+                            <div class="ticket-header">
+                                <span class="ticket-time">${timeStr}</span>
+                                <span class="ticket-priority" style="color: ${priorityColors[ticket.priority] || '#374151'};">${priorityLabels[ticket.priority] || ticket.priority}</span>
+                                <span class="ticket-id">#${ticket.ticket_id}</span>
+                            </div>
+                            <div class="ticket-title">🔧 ${ticket.title}</div>
+                            <div class="ticket-meta">
+                                ${ticket.assignee_name ? `<span>👤 ${ticket.assignee_name}</span>` : '<span class="unassigned">⚠️ Non assigné</span>'}
+                                ${ticket.machine_name ? `<span>🏭 ${ticket.machine_name}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                const itemCount = group.events.length + group.tickets.length;
+                timelineHtml += `
+                    <div class="timeline-day ${isWeekend ? 'weekend' : ''}">
+                        <div class="day-header">
+                            <span class="day-date">${dateLabel}</span>
+                            <span class="day-count">${itemCount} élément${itemCount > 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="day-items">${itemsHtml}</div>
+                    </div>
+                `;
+            });
+            
+            if (Object.keys(dayGroups).length === 0) {
+                timelineHtml = '<div class="no-data">Aucun événement ou maintenance planifié ce mois</div>';
+            }
+            
+            printContent = `
+                <html>
+                <head>
+                    <title>Planning Mensuel - ${monthName}</title>
+                    <style>
+                        @page { margin: 15mm; }
+                        * { box-sizing: border-box; margin: 0; padding: 0; }
+                        body { font-family: 'Segoe UI', -apple-system, Arial, sans-serif; padding: 0; font-size: 11px; color: #1f2937; line-height: 1.4; }
+                        
+                        /* === HEADER PREMIUM === */
+                        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+                        .company-section { display: flex; align-items: center; gap: 14px; }
+                        .company-logo { max-height: 42px; max-width: 100px; }
+                        .company-info { }
+                        .company-title { font-size: 16px; font-weight: 700; color: #1e293b; }
+                        .company-subtitle { font-size: 10px; color: #64748b; margin-top: 2px; }
+                        .report-section { text-align: right; }
+                        .report-badge { display: inline-block; background: #3b82f6; color: white; font-size: 9px; font-weight: 600; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+                        .report-title { font-size: 13px; font-weight: 700; color: #1e293b; text-transform: capitalize; }
+                        .report-generated { font-size: 9px; color: #94a3b8; margin-top: 4px; }
+                        
+                        /* === KPI BAR === */
+                        .kpi-bar { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+                        .kpi-item { flex: 1; text-align: center; padding: 12px 8px; border-right: 1px solid #e2e8f0; background: #fafbfc; }
+                        .kpi-item:last-child { border-right: none; }
+                        .kpi-value { font-size: 22px; font-weight: 700; color: #1e293b; }
+                        .kpi-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+                        .kpi-item.highlight { background: #fef3c7; }
+                        .kpi-item.highlight .kpi-value { color: #b45309; }
+                        .kpi-item.alert .kpi-value { color: #dc2626; }
+                        
+                        /* === CATEGORY BAR === */
+                        .category-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+                        .cat-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+                        
+                        /* === TIMELINE DAYS === */
+                        .timeline-day { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; page-break-inside: avoid; }
+                        .timeline-day.weekend { opacity: 0.7; }
+                        .day-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: linear-gradient(to right, #f8fafc, #f1f5f9); border-bottom: 1px solid #e2e8f0; }
+                        .day-date { font-weight: 600; font-size: 12px; color: #1e293b; text-transform: capitalize; }
+                        .day-count { font-size: 10px; color: #64748b; }
+                        .day-items { padding: 10px 14px; background: white; }
+                        
+                        /* === TIMELINE ITEMS === */
+                        .timeline-event { display: flex; gap: 12px; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 4px solid #e2e8f0; background: #fafbfc; }
+                        .timeline-event:last-child { margin-bottom: 0; }
+                        .event-header { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; font-size: 10px; }
+                        .event-time { font-weight: 600; color: #475569; min-width: 45px; }
+                        .event-category { font-weight: 600; }
+                        .event-status { margin-left: auto; font-size: 9px; color: #64748b; }
+                        .event-title { font-weight: 600; font-size: 12px; color: #1e293b; }
+                        .event-details { font-size: 10px; color: #64748b; margin-top: 3px; }
+                        
+                        .timeline-ticket { display: flex; gap: 12px; padding: 10px 12px; margin-bottom: 8px; border-left: 4px solid #f59e0b; background: #fffbeb; border-radius: 6px; }
+                        .timeline-ticket:last-child { margin-bottom: 0; }
+                        .ticket-header { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; font-size: 10px; }
+                        .ticket-time { font-weight: 600; color: #475569; min-width: 45px; }
+                        .ticket-priority { font-weight: 700; font-size: 9px; background: currentColor; color: white; padding: 2px 8px; border-radius: 10px; }
+                        .ticket-id { margin-left: auto; color: #64748b; font-size: 10px; }
+                        .ticket-title { font-weight: 600; font-size: 12px; color: #92400e; }
+                        .ticket-meta { display: flex; gap: 12px; font-size: 10px; color: #78716c; margin-top: 5px; }
+                        .ticket-meta .unassigned { color: #dc2626; font-weight: 500; }
+                        
+                        .no-data { text-align: center; padding: 40px; color: #94a3b8; font-style: italic; background: #fafbfc; border-radius: 8px; border: 1px solid #e2e8f0; }
+                        
+                        /* === FOOTER === */
+                        .footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8; }
+                        
+                        @media print { 
+                            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } 
+                            .timeline-day { page-break-inside: avoid; } 
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-section">
+                            <img src="${logoUrl}" class="company-logo" onerror="this.style.display='none'" />
+                            <div class="company-info">
+                                <div class="company-title">${companyTitle}</div>
+                                ${companySubtitle ? `<div class="company-subtitle">${companySubtitle}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="report-section">
+                            <div class="report-badge">Vue Mensuelle</div>
+                            <div class="report-title">${monthName}</div>
+                            <div class="report-generated">Généré le ${new Date().toLocaleString('fr-FR')}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-bar">
+                        <div class="kpi-item"><div class="kpi-value">${totalEvents}</div><div class="kpi-label">Événements</div></div>
+                        <div class="kpi-item highlight"><div class="kpi-value">${totalTickets}</div><div class="kpi-label">Maintenances</div></div>
+                        <div class="kpi-item ${criticalTickets > 0 ? 'alert' : ''}"><div class="kpi-value">${criticalTickets}</div><div class="kpi-label">Priorité haute</div></div>
+                        <div class="kpi-item"><div class="kpi-value">${Object.keys(dayGroups).length}</div><div class="kpi-label">Jours actifs</div></div>
+                    </div>
+                    
+                    ${categoryStats.length > 0 ? `<div class="category-bar">${categoryStats.map(cat => {
+                        const colors = categoryColors[cat.color] || categoryColors.gray;
+                        return `<span class="cat-badge" style="background: ${colors.bg}; color: ${colors.text}; border: 1px solid ${colors.border};">${cat.label}: ${cat.count}</span>`;
+                    }).join('')}</div>` : ''}
+                    
+                    ${timelineHtml}
+                    
+                    <div class="footer">
+                        <span>Document confidentiel • Ne pas diffuser</span>
+                        <span>MaintenanceOS</span>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+        
+        // ===== FORMAT SEMAINE - Timeline Vertical (comme le mois) =====
+        else if (format === 'week') {
+            const startOfWeek = new Date(baseDate);
+            const dayOfWeek = startOfWeek.getDay();
+            startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Lundi
+            
+            const weekDays = [];
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(startOfWeek);
+                day.setDate(day.getDate() + i);
+                weekDays.push(day);
+            }
+            
+            const weekStart = weekDays[0].toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+            const weekEnd = weekDays[6].toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const weekNum = Math.ceil((((startOfWeek - new Date(startOfWeek.getFullYear(), 0, 1)) / 86400000) + 1) / 7);
+            
+            // Collecter les données de la semaine
+            let weekEvents = [];
+            let weekTickets = [];
+            weekDays.forEach(day => {
+                const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+                const dayEvts = events.filter(e => e.date === dateStr);
+                const dayTkts = allTickets.filter(t => new Date(t.scheduled_date).toDateString() === day.toDateString());
+                weekEvents.push(...dayEvts);
+                weekTickets.push(...dayTkts);
+            });
+            
+            // KPIs
+            const totalEvents = weekEvents.length;
+            const totalTickets = weekTickets.length;
+            const criticalTickets = weekTickets.filter(t => t.priority === 'critical' || t.priority === 'high').length;
+            const daysWithActivity = weekDays.filter(day => {
+                const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+                return events.some(e => e.date === dateStr) || allTickets.some(t => new Date(t.scheduled_date).toDateString() === day.toDateString());
+            }).length;
+            
+            // Timeline HTML - format vertical par jour
+            let timelineHtml = '';
+            weekDays.forEach((day, idx) => {
+                const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+                const dayEvents = events.filter(e => e.date === dateStr).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                const dayTickets = allTickets.filter(t => new Date(t.scheduled_date).toDateString() === day.toDateString())
+                    .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date));
+                
+                const isToday = day.toDateString() === new Date().toDateString();
+                const isWeekend = idx >= 5;
+                const dateLabel = day.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                const itemCount = dayEvents.length + dayTickets.length;
+                
+                let itemsHtml = '';
+                
+                // Événements du jour
+                dayEvents.forEach(evt => {
+                    const cat = categories.find(c => c.id === evt.type);
+                    const colors = categoryColors[cat?.color] || categoryColors.gray;
+                    itemsHtml += `
+                        <div class="timeline-item event-item" style="border-left-color: ${colors.border}; background: ${colors.bg};">
+                            <div class="item-time">${evt.time || '—'}</div>
+                            <div class="item-content">
+                                <div class="item-header">
+                                    <span class="item-category" style="color: ${colors.text};">${cat?.label || evt.type}</span>
+                                    <span class="item-status">${evt.status === 'tentative' ? '⏳ Provisoire' : '✓ Confirmé'}</span>
+                                </div>
+                                <div class="item-title">${evt.title}</div>
+                                ${evt.details ? `<div class="item-details">${evt.details}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Tickets du jour
+                dayTickets.forEach(ticket => {
+                    const schedTime = new Date(ticket.scheduled_date);
+                    const timeStr = schedTime.getHours() ? schedTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—';
+                    itemsHtml += `
+                        <div class="timeline-item ticket-item">
+                            <div class="item-time">${timeStr}</div>
+                            <div class="item-content">
+                                <div class="item-header">
+                                    <span class="item-priority" style="background: ${priorityColors[ticket.priority] || '#6b7280'};">${priorityLabels[ticket.priority] || 'N/A'}</span>
+                                    <span class="item-ticket-id">#${ticket.ticket_id}</span>
+                                </div>
+                                <div class="item-title">${ticket.title}</div>
+                                <div class="item-meta">
+                                    ${ticket.assignee_name ? `<span class="meta-assignee">👤 ${ticket.assignee_name}</span>` : '<span class="meta-unassigned">⚠ Non assigné</span>'}
+                                    ${ticket.machine_name ? `<span class="meta-machine">⚙ ${ticket.machine_name}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                // Jour sans activité
+                if (!itemsHtml) {
+                    itemsHtml = `<div class="empty-day">${isWeekend ? 'Week-end' : 'Aucune activité planifiée'}</div>`;
+                }
+                
+                timelineHtml += `
+                    <div class="day-block ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''} ${itemCount === 0 ? 'empty' : ''}">
+                        <div class="day-header">
+                            <div class="day-label">
+                                <span class="day-name">${dateLabel}</span>
+                                ${isToday ? '<span class="today-badge">Aujourd\'hui</span>' : ''}
+                            </div>
+                            <span class="day-count">${itemCount > 0 ? itemCount + ' élément' + (itemCount > 1 ? 's' : '') : ''}</span>
+                        </div>
+                        <div class="day-content">${itemsHtml}</div>
+                    </div>
+                `;
+            });
+            
+            printContent = `
+                <html>
+                <head>
+                    <title>Planning Semaine ${weekNum} - ${weekStart} au ${weekEnd}</title>
+                    <style>
+                        @page { margin: 15mm; }
+                        * { box-sizing: border-box; margin: 0; padding: 0; }
+                        body { font-family: 'Segoe UI', -apple-system, Arial, sans-serif; padding: 0; font-size: 11px; color: #1f2937; line-height: 1.4; }
+                        
+                        /* === HEADER PREMIUM === */
+                        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+                        .company-section { display: flex; align-items: center; gap: 14px; }
+                        .company-logo { max-height: 42px; max-width: 100px; }
+                        .company-info { }
+                        .company-title { font-size: 16px; font-weight: 700; color: #1e293b; }
+                        .company-subtitle { font-size: 10px; color: #64748b; margin-top: 2px; }
+                        .report-section { text-align: right; }
+                        .report-badge { display: inline-block; background: #3b82f6; color: white; font-size: 9px; font-weight: 600; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+                        .report-title { font-size: 13px; font-weight: 700; color: #1e293b; }
+                        .report-period { font-size: 11px; color: #64748b; margin-top: 3px; }
+                        .report-generated { font-size: 9px; color: #94a3b8; margin-top: 4px; }
+                        
+                        /* === KPI BAR === */
+                        .kpi-bar { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+                        .kpi-item { flex: 1; text-align: center; padding: 12px 8px; border-right: 1px solid #e2e8f0; background: #fafbfc; }
+                        .kpi-item:last-child { border-right: none; }
+                        .kpi-value { font-size: 22px; font-weight: 700; color: #1e293b; }
+                        .kpi-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+                        .kpi-item.highlight { background: #fef3c7; }
+                        .kpi-item.highlight .kpi-value { color: #b45309; }
+                        .kpi-item.alert .kpi-value { color: #dc2626; }
+                        
+                        /* === TIMELINE DAYS === */
+                        .day-block { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; page-break-inside: avoid; }
+                        .day-block.empty { opacity: 0.6; }
+                        .day-block.weekend { background: #fafafa; }
+                        .day-block.today { border: 2px solid #3b82f6; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15); }
+                        
+                        .day-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: linear-gradient(to right, #f8fafc, #f1f5f9); border-bottom: 1px solid #e2e8f0; }
+                        .day-label { display: flex; align-items: center; gap: 10px; }
+                        .day-name { font-weight: 600; font-size: 12px; color: #1e293b; text-transform: capitalize; }
+                        .today-badge { font-size: 9px; font-weight: 600; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 10px; }
+                        .day-count { font-size: 10px; color: #64748b; }
+                        
+                        .day-content { padding: 10px 14px; background: white; }
+                        
+                        /* === TIMELINE ITEMS === */
+                        .timeline-item { display: flex; gap: 12px; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border-left: 4px solid #e2e8f0; background: #fafbfc; }
+                        .timeline-item:last-child { margin-bottom: 0; }
+                        
+                        .timeline-item.event-item { }
+                        .timeline-item.ticket-item { border-left-color: #f59e0b; background: #fffbeb; }
+                        
+                        .item-time { min-width: 45px; font-weight: 600; font-size: 11px; color: #475569; padding-top: 2px; }
+                        .item-content { flex: 1; }
+                        .item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+                        .item-category { font-size: 10px; font-weight: 600; }
+                        .item-status { font-size: 9px; color: #64748b; margin-left: auto; }
+                        .item-priority { font-size: 9px; font-weight: 600; color: white; padding: 2px 8px; border-radius: 10px; }
+                        .item-ticket-id { font-size: 10px; color: #64748b; margin-left: auto; }
+                        .item-title { font-size: 12px; font-weight: 600; color: #1e293b; }
+                        .item-details { font-size: 10px; color: #64748b; margin-top: 3px; }
+                        .item-meta { display: flex; gap: 12px; margin-top: 5px; font-size: 10px; color: #64748b; }
+                        .meta-unassigned { color: #dc2626; }
+                        
+                        .empty-day { text-align: center; padding: 16px; color: #94a3b8; font-style: italic; font-size: 11px; }
+                        
+                        /* === FOOTER === */
+                        .footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8; }
+                        .footer-left { }
+                        .footer-right { text-align: right; }
+                        
+                        @media print { 
+                            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } 
+                            .day-block { page-break-inside: avoid; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-section">
+                            <img src="${logoUrl}" class="company-logo" onerror="this.style.display='none'" />
+                            <div class="company-info">
+                                <div class="company-title">${companyTitle}</div>
+                                ${companySubtitle ? `<div class="company-subtitle">${companySubtitle}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="report-section">
+                            <div class="report-badge">Semaine ${weekNum}</div>
+                            <div class="report-title">Planning Hebdomadaire</div>
+                            <div class="report-period">${weekStart} — ${weekEnd}</div>
+                            <div class="report-generated">Généré le ${new Date().toLocaleString('fr-FR')}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-bar">
+                        <div class="kpi-item"><div class="kpi-value">${totalEvents}</div><div class="kpi-label">Événements</div></div>
+                        <div class="kpi-item highlight"><div class="kpi-value">${totalTickets}</div><div class="kpi-label">Maintenances</div></div>
+                        <div class="kpi-item ${criticalTickets > 0 ? 'alert' : ''}"><div class="kpi-value">${criticalTickets}</div><div class="kpi-label">Priorité haute</div></div>
+                        <div class="kpi-item"><div class="kpi-value">${daysWithActivity}/7</div><div class="kpi-label">Jours actifs</div></div>
+                    </div>
+                    
+                    ${timelineHtml}
+                    
+                    <div class="footer">
+                        <div class="footer-left">Document confidentiel • Ne pas diffuser</div>
+                        <div class="footer-right">MaintenanceOS</div>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+        
+        const printWindow = window.open('', '_blank', 'width=1000,height=800');
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 500);
+    };
+
     const [notificationPerm, setNotificationPerm] = React.useState(
         typeof Notification !== 'undefined' ? Notification.permission : 'default'
     );
@@ -464,6 +960,12 @@ const ProductionPlanning = ({ onClose }) => {
                         className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition shadow-sm'
                     }, React.createElement('i', { className: 'fas fa-share-alt' })),
 
+                    React.createElement('button', {
+                        onClick: handlePrintPlanning,
+                        title: 'Imprimer le planning (PDF)',
+                        className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-green-50 hover:text-green-600 transition shadow-sm'
+                    }, React.createElement('i', { className: 'fas fa-print' })),
+
                     React.createElement('button', { 
                         onClick: () => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar'),
                         title: viewMode === 'calendar' ? 'Passer en vue TV / Liste' : 'Passer en vue Calendrier',
@@ -747,7 +1249,298 @@ const ProductionPlanning = ({ onClose }) => {
         showShareModal && React.createElement(ShareModal, {
             onClose: () => setShowShareModal(false),
             onShare: handleSharePlanning
+        }),
+
+        // Modal de sélection du format d'impression avec sélecteur de dates
+        showPrintModal && React.createElement(PrintExportModal, {
+            currentDate,
+            onClose: () => setShowPrintModal(false),
+            onPrint: executePrint
         })
+    );
+};
+
+// ========== MODAL D'EXPORT / IMPRESSION ==========
+const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
+    const [selectedFormat, setSelectedFormat] = React.useState('month');
+    const [printDate, setPrintDate] = React.useState(() => {
+        const d = currentDate || new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    });
+    const [isGeneratingAI, setIsGeneratingAI] = React.useState(false);
+    const [aiReport, setAiReport] = React.useState(null);
+    const [customInstructions, setCustomInstructions] = React.useState('');
+    
+    // Suggestions intelligentes - simples et directes
+    const quickSuggestions = [
+        { icon: '📊', label: 'Rapport mensuel', value: 'Rapport de synthèse mensuel pour la direction' },
+        { icon: '📝', label: 'Note de service', value: 'Rédiger une note de service concernant : ' },
+        { icon: '📋', label: 'Compte-rendu', value: 'Compte-rendu de réunion/incident : ' },
+        { icon: '👷', label: 'Bilan technicien', value: 'Analyse de performance des techniciens' },
+        { icon: '🏭', label: 'Bilan machines', value: 'État et disponibilité du parc machines' },
+        { icon: '⚠️', label: 'Incidents critiques', value: 'Rapport sur les incidents critiques du mois' }
+    ];
+    
+    const getDateLabel = () => {
+        const d = new Date(printDate);
+        if (selectedFormat === 'month' || selectedFormat === 'ai-report') {
+            return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        } else {
+            const startOfWeek = new Date(d);
+            const dayOfWeek = startOfWeek.getDay();
+            startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            return `${startOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${endOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        }
+    };
+    
+    const handlePrint = () => {
+        if (selectedFormat === 'ai-report') {
+            generateAIReport();
+        } else {
+            onPrint(selectedFormat, new Date(printDate));
+            onClose();
+        }
+    };
+    
+    // Génération du rapport IA
+    const generateAIReport = async () => {
+        setIsGeneratingAI(true);
+        setAiReport(null);
+        try {
+            const d = new Date(printDate);
+            const response = await axios.post('/api/ai/report', {
+                period: 'month',
+                startDate: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+                endDate: new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString(),
+                reportType: 'summary',
+                customInstructions: customInstructions.trim() || null
+            });
+            
+            if (response.data.success) {
+                setAiReport(response.data);
+            } else {
+                window.showToast && window.showToast('Erreur de génération du rapport', 'error');
+            }
+        } catch (err) {
+            console.error('AI Report error:', err);
+            window.showToast && window.showToast('Erreur: ' + (err.response?.data?.error || err.message), 'error');
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+    
+    // Impression du rapport IA
+    const printAIReport = () => {
+        if (!aiReport) return;
+        const printWindow = window.open('', '_blank');
+        const monthLabel = new Date(printDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        // Déterminer le type de document
+        const docType = customInstructions.toLowerCase().includes('note') ? 'Note de service' 
+            : customInstructions.toLowerCase().includes('compte-rendu') ? 'Compte-rendu'
+            : customInstructions.toLowerCase().includes('mémo') ? 'Mémo'
+            : customInstructions.toLowerCase().includes('bilan') ? 'Bilan'
+            : 'Document Direction';
+        printWindow.document.write(`
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<title>${docType} - ${monthLabel}</title>
+<style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #1e293b; line-height: 1.7; }
+    h1 { color: #0f172a; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; font-size: 24px; }
+    h2 { color: #5b21b6; margin-top: 25px; font-size: 18px; }
+    h3 { color: #6b21a8; margin-top: 20px; font-size: 16px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+    .kpi-card { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid #ddd6fe; }
+    .kpi-value { font-size: 24px; font-weight: bold; color: #5b21b6; }
+    .kpi-label { font-size: 11px; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px; }
+    .report-content { background: #fafafa; padding: 25px; border-radius: 12px; margin-top: 20px; white-space: pre-wrap; border-left: 4px solid #7c3aed; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e9d5ff; }
+    .badge { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .meta { color: #64748b; font-size: 13px; margin-bottom: 20px; }
+    .focus-box { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #d8b4fe; border-radius: 10px; padding: 14px 18px; margin: 15px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e9d5ff; font-size: 11px; color: #94a3b8; text-align: center; }
+    ul, ol { margin: 10px 0; padding-left: 25px; }
+    li { margin: 5px 0; }
+    strong { color: #5b21b6; }
+    @media print { body { margin: 15px; } .no-print { display: none; } }
+</style>
+</head><body>
+<div class="header">
+    <h1>✨ ${docType}</h1>
+    <span class="badge">Assistant IA</span>
+</div>
+<p class="meta"><strong>Période:</strong> ${monthLabel} &nbsp;•&nbsp; <strong>Généré le:</strong> ${new Date().toLocaleString('fr-FR')}</p>
+${aiReport.customFocus ? `<div class="focus-box"><strong style="color: #7c3aed;">🎯 Demande:</strong> <span style="color: #6b21a8;">${aiReport.customFocus}</span></div>` : ''}
+
+<div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-value">${aiReport.kpis.ticketsCreated}</div><div class="kpi-label">Tickets créés</div></div>
+    <div class="kpi-card"><div class="kpi-value">${aiReport.kpis.ticketsCompleted}</div><div class="kpi-label">Terminés</div></div>
+    <div class="kpi-card"><div class="kpi-value">${aiReport.kpis.activeTickets}</div><div class="kpi-label">En cours</div></div>
+    <div class="kpi-card"><div class="kpi-value" style="color: ${aiReport.kpis.criticalTickets > 0 ? '#dc2626' : '#16a34a'}">${aiReport.kpis.criticalTickets}</div><div class="kpi-label">Critiques</div></div>
+</div>
+
+<div class="report-content">${aiReport.report}</div>
+
+<div class="footer">
+    Document confidentiel • Généré par Assistant IA Direction • ${new Date().toLocaleDateString('fr-FR')}
+</div>
+</body></html>`);
+        printWindow.document.close();
+        printWindow.print();
+    };
+    
+    const formatOptions = [
+        { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt', color: 'blue' },
+        { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week', color: 'emerald' },
+        { id: 'ai-report', label: 'Assistant IA', desc: 'Documents sur mesure', icon: 'fa-magic', color: 'purple' }
+    ];
+    
+    const colorStyles = {
+        blue: { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-600', ring: 'ring-blue-200' },
+        emerald: { bg: 'bg-emerald-50', border: 'border-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-200' },
+        purple: { bg: 'bg-purple-50', border: 'border-purple-500', text: 'text-purple-600', ring: 'ring-purple-200' }
+    };
+    
+    // Modal avec scroll et design professionnel
+    return React.createElement('div', { 
+        className: 'fixed inset-0 z-[200] overflow-y-auto',
+        style: { background: 'rgba(0, 0, 0, 0.5)' }
+    },
+        React.createElement('div', { 
+            className: 'min-h-screen px-4 py-8 flex items-start justify-center'
+        },
+            React.createElement('div', { 
+                className: 'w-full max-w-lg bg-white rounded-xl shadow-xl relative',
+                onClick: (e) => e.stopPropagation()
+            },
+                // Header - clean et pro
+                React.createElement('div', { className: 'px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl' },
+                    React.createElement('div', {},
+                        React.createElement('h2', { className: 'text-lg font-semibold text-gray-900' }, 'Exporter le planning'),
+                        React.createElement('p', { className: 'text-sm text-gray-500' }, 'Choisissez le format et la période')
+                    ),
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition'
+                    }, React.createElement('i', { className: 'fas fa-times' }))
+                ),
+                
+                // Content 
+                React.createElement('div', { className: 'p-6 space-y-5' },
+                    // Format selector
+                    React.createElement('div', {},
+                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-3' }, 'Type de document'),
+                        React.createElement('div', { className: 'grid grid-cols-3 gap-3' },
+                            formatOptions.map(opt => {
+                                const isSelected = selectedFormat === opt.id;
+                                return React.createElement('button', {
+                                    key: opt.id,
+                                    onClick: () => setSelectedFormat(opt.id),
+                                    className: `p-4 rounded-lg border-2 text-center transition-all ${
+                                        isSelected 
+                                            ? 'border-gray-900 bg-gray-900 text-white' 
+                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                                    }`
+                                },
+                                    React.createElement('i', { className: `fas ${opt.icon} text-xl mb-2 ${isSelected ? 'text-white' : 'text-gray-400'}` }),
+                                    React.createElement('div', { className: 'text-sm font-medium' }, opt.label),
+                                    React.createElement('div', { className: `text-xs mt-1 ${isSelected ? 'text-gray-300' : 'text-gray-400'}` }, opt.desc)
+                                );
+                            })
+                        )
+                    ),
+                    
+                    // Date picker
+                    React.createElement('div', {},
+                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 
+                            selectedFormat === 'week' ? 'Semaine' : 'Mois'
+                        ),
+                        React.createElement('input', {
+                            type: selectedFormat === 'week' ? 'date' : 'month',
+                            value: selectedFormat === 'week' ? printDate : printDate.substring(0, 7),
+                            onChange: (e) => {
+                                setPrintDate(selectedFormat === 'week' ? e.target.value : e.target.value + '-01');
+                            },
+                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-gray-900'
+                        }),
+                        React.createElement('p', { className: 'mt-2 text-sm text-gray-500' }, 
+                            'Période sélectionnée : ', 
+                            React.createElement('span', { className: 'font-medium text-gray-900' }, getDateLabel())
+                        )
+                    ),
+                    
+                    // Assistant IA section
+                    selectedFormat === 'ai-report' && React.createElement('div', { className: 'bg-gray-50 rounded-lg p-4 border border-gray-200' },
+                        React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
+                            React.createElement('i', { className: 'fas fa-robot text-gray-600' }),
+                            React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Type de document IA')
+                        ),
+                        // Suggestions
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
+                            quickSuggestions.map((s, i) => React.createElement('button', {
+                                key: i,
+                                type: 'button',
+                                onClick: () => setCustomInstructions(s.value),
+                                className: `flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all ${
+                                    customInstructions === s.value 
+                                        ? 'bg-gray-900 text-white' 
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-400'
+                                }`
+                            }, 
+                                React.createElement('span', {}, s.icon),
+                                React.createElement('span', { className: 'truncate' }, s.label)
+                            ))
+                        ),
+                        // Textarea
+                        React.createElement('textarea', {
+                            value: customInstructions,
+                            onChange: (e) => setCustomInstructions(e.target.value),
+                            placeholder: 'Ou décrivez précisément ce dont vous avez besoin...',
+                            rows: 3,
+                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-gray-900 text-sm resize-none'
+                        })
+                    ),
+                    
+                    // Rapport généré
+                    aiReport && React.createElement('div', { className: 'bg-green-50 rounded-lg p-4 border border-green-200' },
+                        React.createElement('div', { className: 'flex items-center justify-between mb-3' },
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('i', { className: 'fas fa-check-circle text-green-600' }),
+                                React.createElement('span', { className: 'text-sm font-medium text-green-800' }, 'Document généré')
+                            ),
+                            React.createElement('button', {
+                                onClick: printAIReport,
+                                className: 'px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition'
+                            }, 'Imprimer')
+                        ),
+                        React.createElement('div', { className: 'bg-white rounded-lg p-3 max-h-40 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap border border-green-100' },
+                            aiReport.report
+                        )
+                    )
+                ),
+                
+                // Footer
+                React.createElement('div', { className: 'px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 rounded-b-xl' },
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition'
+                    }, 'Annuler'),
+                    React.createElement('button', {
+                        onClick: handlePrint,
+                        disabled: isGeneratingAI,
+                        className: `px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition flex items-center gap-2 ${isGeneratingAI ? 'opacity-50 cursor-not-allowed' : ''}`
+                    }, 
+                        isGeneratingAI 
+                            ? React.createElement('i', { className: 'fas fa-spinner fa-spin' })
+                            : React.createElement('i', { className: 'fas fa-download' }),
+                        isGeneratingAI ? 'Génération...' : 'Générer'
+                    )
+                )
+            )
+        )
     );
 };
 
