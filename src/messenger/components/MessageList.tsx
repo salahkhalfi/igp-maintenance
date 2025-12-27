@@ -282,7 +282,10 @@ const MessageList: React.FC<MessageListProps> = ({
                 ? `/api/auth/avatar/${msg.sender_id}?v=${msg.sender_avatar_key}` // Stable cache busting
                 : null;
             
-            const isAI = msg.sender_avatar_key === 'ai_avatar';
+            // FIX: Detect AI messages by sender_id OR avatar_key (robust detection)
+            // - sender_id === 0 means AI (set in ChatWindow.tsx when creating AI messages)
+            // - sender_avatar_key === 'ai_avatar' is the explicit marker
+            const isAI = msg.sender_id === 0 || msg.sender_avatar_key === 'ai_avatar';
             const bubbleClass = isMe 
                 ? 'message-bubble-me text-white rounded-tr-sm' 
                 : isAI 
