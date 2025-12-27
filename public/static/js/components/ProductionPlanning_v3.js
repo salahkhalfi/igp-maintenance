@@ -1585,49 +1585,49 @@ body {
 
 /* ══════════ CONTENT ══════════ */
 .content {
-    line-height: 1.8;
+    line-height: 1.5;
 }
 
 .content h1 {
-    font-size: 13pt;
+    font-size: 12pt;
     font-weight: 700;
     color: #1a1a1a;
     text-transform: uppercase;
-    letter-spacing: 1pt;
-    margin: 28pt 0 14pt;
-    padding-bottom: 8pt;
-    border-bottom: 2pt solid #1a1a1a;
+    letter-spacing: 0.5pt;
+    margin: 16pt 0 8pt;
+    padding-bottom: 5pt;
+    border-bottom: 1.5pt solid #1a1a1a;
 }
 .content h1:first-child { margin-top: 0; }
 
 .content h2 {
-    font-size: 12pt;
+    font-size: 11pt;
     font-weight: 600;
     color: #333;
-    margin: 22pt 0 10pt;
-    padding-left: 10pt;
-    border-left: 3pt solid #0066cc;
+    margin: 12pt 0 6pt;
+    padding-left: 8pt;
+    border-left: 2pt solid #0066cc;
 }
 
 .content h3 {
-    font-size: 11pt;
+    font-size: 10.5pt;
     font-weight: 600;
     color: #444;
-    margin: 18pt 0 8pt;
+    margin: 10pt 0 5pt;
 }
 
 .content p {
-    margin: 12pt 0;
+    margin: 6pt 0;
     text-align: justify;
-    line-height: 1.8;
+    line-height: 1.5;
 }
 
 .content ul, .content ol { 
-    margin: 14pt 0 14pt 24pt;
+    margin: 8pt 0 8pt 20pt;
 }
 .content li { 
-    margin: 8pt 0;
-    line-height: 1.7;
+    margin: 3pt 0;
+    line-height: 1.45;
 }
 
 .content strong { font-weight: 600; }
