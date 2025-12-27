@@ -1378,14 +1378,14 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         if (!aiReport) return;
         
         // Charger les infos de la compagnie depuis l'API
-        let companyName = 'IGP Glass';
+        let companyShortName = 'IGP';
         let companySubtitle = '';
         let logoUrl = '/api/settings/logo';
         let primaryColor = '#0f4c81'; // Bleu corporate par défaut
         try {
             const settingsRes = await axios.get('/api/settings/config/public');
             if (settingsRes.data) {
-                companyName = settingsRes.data.app_name || 'IGP Glass';
+                companyShortName = settingsRes.data.company_short_name || 'IGP';
                 companySubtitle = settingsRes.data.company_subtitle || '';
                 if (settingsRes.data.company_logo_url) {
                     logoUrl = settingsRes.data.company_logo_url;
@@ -1395,6 +1395,9 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                 }
             }
         } catch (e) { console.log('Settings not loaded'); }
+        
+        // Nom de l'app = Nom court + " Gestion"
+        const appName = companyShortName + ' Gestion';
         
         const printWindow = window.open('', '_blank');
         const d = new Date(printDate);
@@ -1682,7 +1685,7 @@ tr:last-child td { border-bottom: none; }
     <div class="header-left">
         <img src="${logoUrl}" alt="" class="logo" onerror="this.style.display='none'">
         <div class="company-info">
-            <div class="name">${companyName}</div>
+            <div class="name">${appName}</div>
             <div class="subtitle">${companySubtitle}</div>
         </div>
     </div>
@@ -1733,7 +1736,7 @@ ${reportHtml}
 
 <div class="footer">
     <span class="badge">Confidentiel</span>
-    <span>${companySubtitle || companyName}</span>
+    <span>${companySubtitle}</span>
 </div>
 
 </body>

@@ -1017,6 +1017,7 @@ settings.get('/config/public', async (c) => {
       'app_base_url',
       'company_title',
       'company_subtitle',
+      'company_short_name',
       'company_logo_url',
       'primary_color',
       'secondary_color',
