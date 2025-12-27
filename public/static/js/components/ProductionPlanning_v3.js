@@ -1319,6 +1319,14 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
             { icon: '📊', label: 'Plan d\'affaires', value: 'Section du plan d\'affaires concernant : ' },
             { icon: '🧾', label: 'Justificatif de dépenses', value: 'Justificatif de dépenses pour le projet/subvention : ' },
             { icon: '📈', label: 'Rapport financier', value: 'Rapport financier périodique incluant : ' }
+        ]},
+        { id: 'creatif', label: 'Créatif / Libre', icon: '🎨', documents: [
+            { icon: '🌐', label: 'Texte site web', value: 'Rédiger un texte promotionnel pour notre site web présentant : ' },
+            { icon: '📰', label: 'Communiqué de presse', value: 'Communiqué de presse annonçant : ' },
+            { icon: '🎤', label: 'Discours / Allocution', value: 'Rédiger un discours pour [occasion] sur le thème : ' },
+            { icon: '📢', label: 'Brochure / Dépliant', value: 'Créer le contenu d\'une brochure de présentation de l\'entreprise mettant en avant : ' },
+            { icon: '💡', label: 'Pitch commercial', value: 'Rédiger un pitch commercial pour présenter nos services à : ' },
+            { icon: '📝', label: 'Autre (libre)', value: '' }
         ]}
     ];
     
