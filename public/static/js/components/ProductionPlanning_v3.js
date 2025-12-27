@@ -1373,73 +1373,192 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
             .replace(/(<\/table>)<\/p>/g, '$1');
     };
     
-    // Impression du rapport IA
+    // Impression du rapport - Design Premium Professionnel
     const printAIReport = () => {
         if (!aiReport) return;
         const printWindow = window.open('', '_blank');
-        const monthLabel = new Date(printDate).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        const d = new Date(printDate);
+        const monthLabel = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        const monthLabelCaps = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
         // Déterminer le type de document
-        const docType = customInstructions.toLowerCase().includes('note') ? 'Note de service' 
-            : customInstructions.toLowerCase().includes('compte-rendu') ? 'Compte-rendu'
-            : customInstructions.toLowerCase().includes('mémo') ? 'Mémo'
-            : customInstructions.toLowerCase().includes('bilan') ? 'Bilan'
-            : 'Rapport Direction';
+        const docType = customInstructions.toLowerCase().includes('note') ? 'NOTE DE SERVICE' 
+            : customInstructions.toLowerCase().includes('compte-rendu') ? 'COMPTE-RENDU'
+            : customInstructions.toLowerCase().includes('mémo') ? 'MÉMO DIRECTION'
+            : customInstructions.toLowerCase().includes('bilan') ? 'BILAN D\'ACTIVITÉ'
+            : customInstructions.toLowerCase().includes('incident') ? 'RAPPORT D\'INCIDENT'
+            : 'RAPPORT DE DIRECTION';
         const reportHtml = markdownToHtml(aiReport.report);
+        const logoUrl = window.location.origin + '/static/logo-igp.png';
         printWindow.document.write(`
 <!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
-<title>${docType} - ${monthLabel}</title>
+<title>${docType} - ${monthLabelCaps}</title>
 <style>
-    body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #1e293b; line-height: 1.6; font-size: 14px; }
-    h1 { color: #0f172a; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; font-size: 22px; margin-top: 0; }
-    h2 { color: #5b21b6; margin-top: 24px; margin-bottom: 12px; font-size: 17px; border-bottom: 1px solid #e9d5ff; padding-bottom: 6px; }
-    h3 { color: #6b21a8; margin-top: 18px; margin-bottom: 8px; font-size: 15px; }
-    p { margin: 8px 0; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
-    .kpi-card { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid #ddd6fe; }
-    .kpi-value { font-size: 22px; font-weight: bold; color: #5b21b6; }
-    .kpi-label { font-size: 10px; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px; }
-    .report-content { background: #fafafa; padding: 25px; border-radius: 12px; margin-top: 20px; border-left: 4px solid #7c3aed; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e9d5ff; }
-    .badge { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .meta { color: #64748b; font-size: 12px; margin-bottom: 15px; }
-    .focus-box { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #d8b4fe; border-radius: 10px; padding: 12px 16px; margin: 15px 0; }
-    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #e9d5ff; font-size: 10px; color: #94a3b8; text-align: center; }
-    ul, ol { margin: 8px 0; padding-left: 24px; }
-    li { margin: 4px 0; }
-    strong { color: #5b21b6; }
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
-    th { background: #f5f3ff; color: #5b21b6; padding: 10px 12px; text-align: left; border: 1px solid #ddd6fe; font-weight: 600; }
-    td { padding: 8px 12px; border: 1px solid #e5e7eb; }
-    tr:nth-child(even) { background: #fafafa; }
+    @page { margin: 20mm 15mm; }
+    * { box-sizing: border-box; }
+    body { 
+        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; 
+        max-width: 210mm; 
+        margin: 0 auto; 
+        padding: 0; 
+        color: #1a1a2e; 
+        line-height: 1.5; 
+        font-size: 11pt;
+        background: white;
+    }
+    
+    /* En-tête avec logo */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #1a1a2e;
+        margin-bottom: 25px;
+    }
+    .logo-section { display: flex; align-items: center; gap: 15px; }
+    .logo { height: 50px; width: auto; }
+    .company-info { }
+    .company-name { font-size: 14pt; font-weight: 700; color: #1a1a2e; letter-spacing: 1px; }
+    .company-subtitle { font-size: 9pt; color: #64748b; margin-top: 2px; }
+    .doc-info { text-align: right; }
+    .doc-date { font-size: 9pt; color: #64748b; }
+    .doc-ref { font-size: 8pt; color: #94a3b8; margin-top: 4px; }
+    
+    /* Titre du document */
+    .doc-title {
+        text-align: center;
+        margin: 30px 0;
+        padding: 20px 0;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .doc-title h1 {
+        font-size: 18pt;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 8px 0;
+        letter-spacing: 2px;
+    }
+    .doc-title .period {
+        font-size: 12pt;
+        color: #475569;
+        font-weight: 400;
+    }
+    
+    /* Objet du document */
+    .doc-object {
+        background: #f8fafc;
+        border-left: 4px solid #1a1a2e;
+        padding: 12px 16px;
+        margin: 20px 0;
+        font-size: 10pt;
+    }
+    .doc-object strong { color: #1a1a2e; }
+    
+    /* KPIs */
+    .kpi-section {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin: 25px 0;
+    }
+    .kpi-box {
+        text-align: center;
+        padding: 15px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+    }
+    .kpi-value { font-size: 24pt; font-weight: 700; color: #1a1a2e; }
+    .kpi-value.critical { color: #dc2626; }
+    .kpi-label { font-size: 8pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+    
+    /* Contenu */
+    .content { margin-top: 25px; }
+    .content h1 { font-size: 14pt; color: #1a1a2e; margin: 25px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #1a1a2e; }
+    .content h2 { font-size: 12pt; color: #1a1a2e; margin: 20px 0 10px; font-weight: 600; }
+    .content h3 { font-size: 11pt; color: #334155; margin: 15px 0 8px; font-weight: 600; }
+    .content p { margin: 8px 0; text-align: justify; }
+    .content ul, .content ol { margin: 10px 0; padding-left: 20px; }
+    .content li { margin: 5px 0; }
+    .content strong { color: #1a1a2e; font-weight: 600; }
+    .content em { font-style: italic; color: #475569; }
+    
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10pt; }
+    th { background: #1a1a2e; color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+    td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) { background: #f8fafc; }
+    
+    /* Pied de page */
+    .footer {
+        margin-top: 40px;
+        padding-top: 15px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        font-size: 8pt;
+        color: #94a3b8;
+    }
+    
     @media print { 
-        body { margin: 15px; font-size: 12px; } 
-        .no-print { display: none; }
-        h2 { page-break-after: avoid; }
+        body { margin: 0; padding: 0; }
+        .header { page-break-inside: avoid; }
+        .kpi-section { page-break-inside: avoid; }
+        h1, h2, h3 { page-break-after: avoid; }
         table { page-break-inside: avoid; }
     }
 </style>
 </head><body>
+
 <div class="header">
-    <h1>📊 ${docType}</h1>
-    <span class="badge">Assistant IA</span>
+    <div class="logo-section">
+        <img src="${logoUrl}" alt="Logo" class="logo" onerror="this.style.display='none'">
+        <div class="company-info">
+            <div class="company-name">IGP GLASS</div>
+            <div class="company-subtitle">Département Maintenance</div>
+        </div>
+    </div>
+    <div class="doc-info">
+        <div class="doc-date">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+        <div class="doc-ref">Réf: RPT-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${Date.now().toString().slice(-4)}</div>
+    </div>
 </div>
-<p class="meta"><strong>Période:</strong> ${monthLabel} &nbsp;•&nbsp; <strong>Généré le:</strong> ${new Date().toLocaleString('fr-FR')}</p>
-${aiReport.customFocus ? `<div class="focus-box"><strong style="color: #7c3aed;">🎯 Demande:</strong> <span style="color: #6b21a8;">${aiReport.customFocus}</span></div>` : ''}
 
-<div class="kpi-grid">
-    <div class="kpi-card"><div class="kpi-value">${aiReport.kpis.ticketsCreated}</div><div class="kpi-label">Tickets créés</div></div>
-    <div class="kpi-card"><div class="kpi-value">${aiReport.kpis.ticketsCompleted}</div><div class="kpi-label">Terminés</div></div>
-    <div class="kpi-card"><div class="kpi-value">${aiReport.kpis.activeTickets}</div><div class="kpi-label">En cours</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color: ${aiReport.kpis.criticalTickets > 0 ? '#dc2626' : '#16a34a'}">${aiReport.kpis.criticalTickets}</div><div class="kpi-label">Critiques</div></div>
+<div class="doc-title">
+    <h1>${docType}</h1>
+    <div class="period">${monthLabelCaps}</div>
 </div>
 
-<div class="report-content">${reportHtml}</div>
+${aiReport.customFocus ? `<div class="doc-object"><strong>Objet :</strong> ${aiReport.customFocus}</div>` : ''}
+
+<div class="kpi-section">
+    <div class="kpi-box">
+        <div class="kpi-value">${aiReport.kpis.ticketsCreated}</div>
+        <div class="kpi-label">Tickets créés</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-value">${aiReport.kpis.ticketsCompleted}</div>
+        <div class="kpi-label">Terminés</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-value">${aiReport.kpis.activeTickets}</div>
+        <div class="kpi-label">En cours</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-value ${aiReport.kpis.criticalTickets > 0 ? 'critical' : ''}">${aiReport.kpis.criticalTickets}</div>
+        <div class="kpi-label">Critiques</div>
+    </div>
+</div>
+
+<div class="content">${reportHtml}</div>
 
 <div class="footer">
-    Document confidentiel • Généré par Assistant IA Direction • ${new Date().toLocaleDateString('fr-FR')}
+    <span>Document confidentiel</span>
+    <span>Page 1</span>
 </div>
+
 </body></html>`);
         printWindow.document.close();
         printWindow.print();
