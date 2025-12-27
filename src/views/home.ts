@@ -88,7 +88,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <script src="/static/js/dist/AppHeader.min.js?v=d352264"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=d352264.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=d352264.0.0"></script>
-    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=29887e4"></script>
+    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=67ab180"></script>
     <script src="/static/js/dist/KanbanBoard.min.js?v=d352264"></script>
     <script src="/static/js/dist/AdminRoles.min.js?v=d352264"></script>
     <script src="/static/js/dist/ManageColumnsModal.min.js?v=d352264"></script>

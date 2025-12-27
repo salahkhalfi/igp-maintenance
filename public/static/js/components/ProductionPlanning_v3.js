@@ -1373,17 +1373,22 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
             .replace(/(<\/table>)<\/p>/g, '$1');
     };
     
-    // Impression du rapport - Design Corporate Premium v2
+    // Impression du rapport - Design Minimaliste Corporate v3
     const printAIReport = async () => {
         if (!aiReport) return;
         
         // Charger les infos de la compagnie depuis l'API
         let companyName = 'IGP Glass';
-        let logoUrl = '/api/settings/logo'; // URL directe vers le logo
+        let companySubtitle = '';
+        let logoUrl = '/api/settings/logo';
         try {
-            const settingsRes = await axios.get('/api/settings/public');
+            const settingsRes = await axios.get('/api/settings/config/public');
             if (settingsRes.data) {
-                companyName = settingsRes.data.company_name || settingsRes.data.app_name || 'IGP Glass';
+                companyName = settingsRes.data.app_name || 'IGP Glass';
+                companySubtitle = settingsRes.data.company_subtitle || '';
+                if (settingsRes.data.company_logo_url) {
+                    logoUrl = settingsRes.data.company_logo_url;
+                }
             }
         } catch (e) { console.log('Settings not loaded'); }
         
@@ -1397,13 +1402,13 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         const ci = (customInstructions || '').toLowerCase();
         const docType = ci.includes('note') ? 'NOTE DE SERVICE' 
             : ci.includes('compte-rendu') ? 'COMPTE-RENDU'
-            : ci.includes('mémo') ? 'MÉMO DIRECTION'
-            : ci.includes('bilan') ? 'BILAN D\'ACTIVITÉ'
+            : ci.includes('mémo') ? 'MÉMO'
+            : ci.includes('bilan') ? 'BILAN'
             : ci.includes('incident') ? 'RAPPORT D\'INCIDENT'
-            : 'RAPPORT DE DIRECTION';
+            : 'RAPPORT ADMINISTRATIF';
         
         const reportHtml = markdownToHtml(aiReport.report);
-        const refNumber = `RPT-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${String(Date.now()).slice(-4)}`;
+        const refNumber = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(Date.now()).slice(-4)}`;
         
         printWindow.document.write(`<!DOCTYPE html>
 <html lang="fr">
@@ -1411,368 +1416,236 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabelCaps}</title>
 <style>
-/* ========== RESET & BASE ========== */
-@page { 
-    size: A4; 
-    margin: 20mm 18mm 18mm 18mm;
-}
-
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-}
+@page { size: A4; margin: 22mm 20mm 20mm 20mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 10pt;
-    line-height: 1.5;
-    color: #1a1a1a;
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #000;
     background: #fff;
-    padding: 0;
-    margin: 0;
 }
 
-/* ========== EN-TÊTE CORPORATE ========== */
+/* EN-TÊTE */
 .header {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 12pt;
-    margin-bottom: 16pt;
-    border-bottom: 2pt solid #1a365d;
+    padding-bottom: 16pt;
+    margin-bottom: 20pt;
+    border-bottom: 1pt solid #000;
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 14pt;
+.logo { 
+    width: 60pt; 
+    height: 60pt; 
+    object-fit: contain; 
+    margin-right: 16pt;
 }
 
-.logo {
-    width: 50pt;
-    height: 50pt;
-    object-fit: contain;
-}
-
-.logo-fallback {
-    width: 50pt;
-    height: 50pt;
-    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
-    border-radius: 6pt;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 700;
-    font-size: 16pt;
-    letter-spacing: 1pt;
-}
-
-.company-info h1 {
-    font-size: 18pt;
-    font-weight: 700;
-    color: #1a365d;
-    letter-spacing: 0.5pt;
-    margin-bottom: 2pt;
-}
-
-.company-info .dept {
-    font-size: 9pt;
-    color: #4a5568;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1pt;
-}
-
-.header-right {
-    text-align: right;
-    font-size: 9pt;
-    color: #4a5568;
-}
-
-.header-right .date {
-    font-weight: 600;
-    color: #1a365d;
-    font-size: 10pt;
-    margin-bottom: 3pt;
-}
-
-.header-right .ref {
-    font-size: 8pt;
-    color: #718096;
-}
-
-/* ========== TITRE DU DOCUMENT ========== */
-.doc-title {
-    text-align: center;
-    margin: 24pt 0 20pt;
-    padding: 16pt 0;
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    border-radius: 4pt;
-}
-
-.doc-title h2 {
-    font-size: 16pt;
-    font-weight: 700;
-    color: #1a365d;
-    text-transform: uppercase;
-    letter-spacing: 4pt;
-    margin-bottom: 6pt;
-}
-
-.doc-title .period {
-    font-size: 11pt;
-    color: #4a5568;
-    font-weight: 500;
-}
-
-/* ========== OBJET ========== */
-.object-section {
-    background: #f7fafc;
-    border-left: 4pt solid #2b6cb0;
-    padding: 10pt 14pt;
-    margin: 16pt 0;
-}
-
-.object-section .label {
-    font-size: 8pt;
-    text-transform: uppercase;
-    letter-spacing: 1.5pt;
-    color: #718096;
-    font-weight: 600;
+.company-info { flex: 1; }
+.company-name {
+    font-size: 20pt;
+    font-weight: bold;
+    color: #000;
     margin-bottom: 4pt;
 }
-
-.object-section .value {
+.company-subtitle {
     font-size: 10pt;
-    color: #2d3748;
-    font-weight: 500;
+    color: #333;
+    font-style: italic;
 }
 
-/* ========== KPI CARDS ========== */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10pt;
-    margin: 20pt 0;
+.doc-info {
+    text-align: right;
+    font-size: 10pt;
+    color: #333;
 }
+.doc-info .date { font-weight: bold; color: #000; }
+.doc-info .ref { font-size: 9pt; color: #666; margin-top: 4pt; }
 
-.kpi-card {
+/* TITRE */
+.title-section {
     text-align: center;
-    padding: 14pt 8pt;
-    background: #fff;
-    border: 1pt solid #e2e8f0;
-    border-radius: 4pt;
+    margin: 28pt 0 24pt;
+    padding: 20pt 0;
+    border-top: 2pt solid #000;
+    border-bottom: 2pt solid #000;
+}
+.title-section h1 {
+    font-size: 18pt;
+    font-weight: bold;
+    letter-spacing: 3pt;
+    margin-bottom: 8pt;
+}
+.title-section .period {
+    font-size: 13pt;
+    font-style: italic;
+    color: #333;
 }
 
-.kpi-card .number {
-    font-size: 26pt;
-    font-weight: 300;
-    color: #1a365d;
-    line-height: 1.1;
+/* OBJET */
+.object-box {
+    margin: 20pt 0;
+    padding: 12pt 16pt;
+    border: 1pt solid #999;
+    background: #fafafa;
 }
+.object-box strong { font-size: 9pt; text-transform: uppercase; letter-spacing: 1pt; }
+.object-box p { margin-top: 6pt; font-size: 10.5pt; }
 
-.kpi-card .number.critical {
-    color: #c53030;
-    font-weight: 600;
+/* KPIs */
+.kpi-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 24pt 0;
+    border: 1pt solid #ccc;
 }
-
-.kpi-card .label {
-    font-size: 7pt;
+.kpi-item {
+    flex: 1;
+    text-align: center;
+    padding: 16pt 8pt;
+    border-right: 1pt solid #ccc;
+}
+.kpi-item:last-child { border-right: none; }
+.kpi-item .value {
+    font-size: 32pt;
+    font-weight: bold;
+    color: #000;
+    line-height: 1;
+}
+.kpi-item .value.alert { color: #b00; }
+.kpi-item .label {
+    font-size: 8pt;
     text-transform: uppercase;
     letter-spacing: 1pt;
-    color: #718096;
-    margin-top: 6pt;
-    font-weight: 600;
+    color: #666;
+    margin-top: 8pt;
 }
 
-/* ========== CONTENU ========== */
-.content {
-    margin-top: 20pt;
-    padding-top: 12pt;
-    border-top: 1pt solid #e2e8f0;
-}
-
+/* CONTENU */
+.content { margin-top: 20pt; }
 .content h1 {
-    font-size: 12pt;
-    font-weight: 700;
-    color: #1a365d;
-    margin: 20pt 0 10pt;
-    padding-bottom: 4pt;
-    border-bottom: 2pt solid #2b6cb0;
-    text-transform: uppercase;
-    letter-spacing: 1pt;
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 24pt 0 12pt;
+    padding-bottom: 6pt;
+    border-bottom: 1pt solid #000;
 }
-
-.content h1:first-child {
-    margin-top: 0;
-}
-
+.content h1:first-child { margin-top: 0; }
 .content h2 {
-    font-size: 11pt;
-    font-weight: 600;
-    color: #2d3748;
-    margin: 16pt 0 8pt;
-    padding-left: 8pt;
-    border-left: 3pt solid #4299e1;
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 18pt 0 10pt;
+    color: #222;
 }
-
 .content h3 {
-    font-size: 10pt;
-    font-weight: 600;
-    color: #4a5568;
-    margin: 12pt 0 6pt;
+    font-size: 11pt;
+    font-weight: bold;
+    font-style: italic;
+    margin: 14pt 0 8pt;
+    color: #333;
 }
-
 .content p {
     margin: 8pt 0;
     text-align: justify;
-    hyphens: auto;
-    color: #2d3748;
 }
+.content ul, .content ol { margin: 10pt 0 10pt 24pt; }
+.content li { margin: 5pt 0; }
+.content strong { font-weight: bold; }
+.content em { font-style: italic; }
 
-.content ul, .content ol {
-    margin: 8pt 0 8pt 18pt;
-}
-
-.content li {
-    margin: 4pt 0;
-    color: #2d3748;
-}
-
-.content strong {
-    font-weight: 600;
-    color: #1a202c;
-}
-
-.content em {
-    font-style: italic;
-    color: #4a5568;
-}
-
-/* ========== TABLEAUX ========== */
+/* TABLEAUX */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 12pt 0;
+    margin: 16pt 0;
+    font-size: 10pt;
+}
+th {
+    background: #333;
+    color: #fff;
+    padding: 10pt 8pt;
+    text-align: left;
+    font-weight: bold;
     font-size: 9pt;
 }
-
-th {
-    background: #1a365d;
-    color: #fff;
-    padding: 8pt 6pt;
-    text-align: left;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 8pt;
-    letter-spacing: 0.5pt;
-}
-
 td {
-    padding: 7pt 6pt;
-    border-bottom: 1pt solid #e2e8f0;
-    vertical-align: top;
-    color: #2d3748;
+    padding: 8pt;
+    border-bottom: 1pt solid #ddd;
 }
+tr:nth-child(even) { background: #f5f5f5; }
 
-tr:nth-child(even) {
-    background: #f7fafc;
-}
-
-/* ========== PIED DE PAGE ========== */
+/* FOOTER */
 .footer {
-    margin-top: 30pt;
-    padding-top: 10pt;
-    border-top: 1pt solid #cbd5e0;
+    margin-top: 40pt;
+    padding-top: 12pt;
+    border-top: 1pt solid #000;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    font-size: 8pt;
-    color: #718096;
+    font-size: 9pt;
+    color: #666;
 }
 
-.footer .confidential {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-}
-
-/* ========== IMPRESSION ========== */
 @media print {
-    body { 
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    .header, .kpi-grid { page-break-inside: avoid; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header, .kpi-row, .title-section { page-break-inside: avoid; }
     h1, h2, h3 { page-break-after: avoid; }
-    table { page-break-inside: avoid; }
 }
-
-/* ========== NO LOGO FALLBACK ========== */
-.logo-container .logo-img.hidden { display: none; }
-.logo-container .logo-fallback.hidden { display: none; }
 </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="header-left">
-        <div class="logo-container">
-            <img src="${logoUrl}" alt="${companyName}" class="logo logo-img" 
-                 onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-            <div class="logo-fallback hidden">IGP</div>
-        </div>
-        <div class="company-info">
-            <h1>${companyName}</h1>
-            <div class="dept">Service Maintenance</div>
-        </div>
+    <img src="${logoUrl}" alt="" class="logo" onerror="this.style.display='none'">
+    <div class="company-info">
+        <div class="company-name">${companyName}</div>
+        <div class="company-subtitle">${companySubtitle || 'Rapport administratif'}</div>
     </div>
-    <div class="header-right">
+    <div class="doc-info">
         <div class="date">${todayFormatted}</div>
         <div class="ref">Réf. ${refNumber}</div>
     </div>
 </div>
 
-<div class="doc-title">
-    <h2>${docType}</h2>
+<div class="title-section">
+    <h1>${docType}</h1>
     <div class="period">${monthLabelCaps}</div>
 </div>
 
 ${aiReport.customFocus ? `
-<div class="object-section">
-    <div class="label">Objet</div>
-    <div class="value">${aiReport.customFocus}</div>
+<div class="object-box">
+    <strong>Objet :</strong>
+    <p>${aiReport.customFocus}</p>
 </div>
 ` : ''}
 
-<div class="kpi-grid">
-    <div class="kpi-card">
-        <div class="number">${aiReport.kpis?.ticketsCreated || 0}</div>
-        <div class="label">Tickets créés</div>
+<div class="kpi-row">
+    <div class="kpi-item">
+        <div class="value">${aiReport.kpis?.ticketsCreated || 0}</div>
+        <div class="label">Créés</div>
     </div>
-    <div class="kpi-card">
-        <div class="number">${aiReport.kpis?.ticketsCompleted || 0}</div>
-        <div class="label">Résolus</div>
+    <div class="kpi-item">
+        <div class="value">${aiReport.kpis?.ticketsCompleted || 0}</div>
+        <div class="label">Terminés</div>
     </div>
-    <div class="kpi-card">
-        <div class="number">${aiReport.kpis?.activeTickets || 0}</div>
+    <div class="kpi-item">
+        <div class="value">${aiReport.kpis?.activeTickets || 0}</div>
         <div class="label">En cours</div>
     </div>
-    <div class="kpi-card">
-        <div class="number${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' critical' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
+    <div class="kpi-item">
+        <div class="value${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' alert' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
         <div class="label">Critiques</div>
     </div>
 </div>
 
 <div class="content">
-    ${reportHtml}
+${reportHtml}
 </div>
 
 <div class="footer">
-    <span class="confidential">Document confidentiel</span>
-    <span>${companyName} — Service Maintenance</span>
+    <span>Document confidentiel</span>
+    <span>${companySubtitle || companyName}</span>
 </div>
 
 </body>
