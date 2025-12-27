@@ -1423,310 +1423,254 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabelCaps}</title>
 <style>
-:root { --primary: ${primaryColor}; }
-@page { size: A4; margin: 15mm; }
+@page { size: A4; margin: 25mm 20mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
-    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 10pt;
-    line-height: 1.55;
-    color: #2d3748;
-    background: #fff;
+    line-height: 1.5;
+    color: #333;
 }
 
-/* ══════════════════ BANDEAU EN-TÊTE ══════════════════ */
-.header-band {
-    background: linear-gradient(135deg, var(--primary) 0%, #1a365d 100%);
-    color: #fff;
-    padding: 20pt 24pt;
-    margin: -15mm -15mm 0 -15mm;
-    width: calc(100% + 30mm);
+/* ══════════ HEADER ══════════ */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30pt;
+}
+.header-left {
     display: flex;
     align-items: center;
-    justify-content: space-between;
 }
-
-.header-left { display: flex; align-items: center; gap: 16pt; }
-
 .logo {
-    width: 55pt;
-    height: 55pt;
-    object-fit: contain;
-    background: #fff;
-    border-radius: 8pt;
-    padding: 6pt;
+    height: 40pt;
+    margin-right: 12pt;
 }
-
-.company-info .name {
-    font-size: 22pt;
-    font-weight: 700;
-    letter-spacing: 0.5pt;
-    margin-bottom: 3pt;
+.brand {
+    border-left: 1pt solid #ccc;
+    padding-left: 12pt;
 }
-.company-info .subtitle {
-    font-size: 9pt;
-    opacity: 0.9;
-    font-weight: 400;
-}
-
-.header-right { text-align: right; }
-.header-right .date {
-    font-size: 11pt;
+.brand-name {
+    font-size: 14pt;
     font-weight: 600;
-    margin-bottom: 4pt;
+    color: #222;
+}
+.brand-sub {
+    font-size: 8pt;
+    color: #666;
+    margin-top: 2pt;
+}
+.header-right {
+    text-align: right;
+    font-size: 9pt;
+    color: #666;
 }
 .header-right .ref {
     font-size: 8pt;
-    opacity: 0.8;
-    background: rgba(255,255,255,0.15);
-    padding: 3pt 8pt;
-    border-radius: 3pt;
-    display: inline-block;
+    color: #999;
+    margin-top: 2pt;
 }
 
-/* ══════════════════ TITRE DOCUMENT ══════════════════ */
-.doc-title {
+/* ══════════ TITLE ══════════ */
+.title-block {
     text-align: center;
-    padding: 28pt 0 20pt;
-    margin-bottom: 20pt;
-    border-bottom: 3pt solid var(--primary);
+    padding: 20pt 0;
+    margin-bottom: 24pt;
+    border-top: 2pt solid #222;
+    border-bottom: 1pt solid #ddd;
 }
-.doc-title h1 {
-    font-size: 20pt;
-    font-weight: 700;
-    color: #1a202c;
-    margin-bottom: 6pt;
-}
-.doc-title .period {
-    font-size: 12pt;
-    color: #718096;
-    font-weight: 500;
-}
-
-/* ══════════════════ OBJET ══════════════════ */
-.object-section {
-    background: linear-gradient(90deg, #f7fafc 0%, #edf2f7 100%);
-    border-left: 4pt solid var(--primary);
-    padding: 14pt 18pt;
-    margin: 18pt 0;
-    border-radius: 0 6pt 6pt 0;
-}
-.object-section .label {
-    font-size: 8pt;
-    text-transform: uppercase;
-    letter-spacing: 1.5pt;
-    color: var(--primary);
-    font-weight: 700;
-    margin-bottom: 6pt;
-}
-.object-section .text {
-    font-size: 10.5pt;
-    color: #2d3748;
-}
-
-/* ══════════════════ KPI CARDS ══════════════════ */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12pt;
-    margin: 24pt 0;
-}
-.kpi-card {
-    background: #fff;
-    border: 1pt solid #e2e8f0;
-    border-radius: 8pt;
-    padding: 18pt 12pt;
-    text-align: center;
-    box-shadow: 0 2pt 4pt rgba(0,0,0,0.04);
-    transition: all 0.2s;
-}
-.kpi-card:hover { box-shadow: 0 4pt 8pt rgba(0,0,0,0.08); }
-.kpi-card .icon {
-    width: 28pt;
-    height: 28pt;
-    margin: 0 auto 10pt;
-    background: linear-gradient(135deg, var(--primary) 0%, #2b6cb0 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 12pt;
-}
-.kpi-card .number {
-    font-size: 28pt;
-    font-weight: 700;
-    color: #1a202c;
-    line-height: 1;
-}
-.kpi-card .number.critical { color: #c53030; }
-.kpi-card .label {
-    font-size: 8pt;
-    text-transform: uppercase;
-    letter-spacing: 0.8pt;
-    color: #718096;
-    margin-top: 8pt;
+.title-block h1 {
+    font-size: 18pt;
     font-weight: 600;
+    color: #222;
+    text-transform: uppercase;
+    letter-spacing: 2pt;
+}
+.title-block .period {
+    font-size: 11pt;
+    color: #666;
+    margin-top: 6pt;
 }
 
-/* ══════════════════ CONTENU ══════════════════ */
-.content { margin-top: 24pt; }
+/* ══════════ SUMMARY BOX ══════════ */
+.summary-box {
+    background: #f8f8f8;
+    padding: 16pt 20pt;
+    margin-bottom: 24pt;
+}
+.summary-box .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    color: #999;
+    margin-bottom: 6pt;
+}
+.summary-box .text {
+    font-size: 10pt;
+    color: #333;
+}
 
+/* ══════════ KPI ROW ══════════ */
+.kpi-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 28pt;
+    padding-bottom: 20pt;
+    border-bottom: 1pt solid #eee;
+}
+.kpi-item {
+    text-align: center;
+    flex: 1;
+}
+.kpi-value {
+    font-size: 32pt;
+    font-weight: 300;
+    color: #222;
+}
+.kpi-value.alert {
+    color: #d32f2f;
+}
+.kpi-label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    color: #999;
+    margin-top: 4pt;
+}
+
+/* ══════════ CONTENT ══════════ */
 .content h1 {
-    font-size: 13pt;
-    font-weight: 700;
-    color: var(--primary);
-    margin: 26pt 0 14pt;
-    padding: 10pt 14pt;
-    background: linear-gradient(90deg, rgba(16,185,129,0.08) 0%, transparent 100%);
-    border-left: 4pt solid var(--primary);
-    border-radius: 0 6pt 6pt 0;
+    font-size: 11pt;
+    font-weight: 600;
+    color: #222;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    margin: 22pt 0 10pt;
+    padding-bottom: 6pt;
+    border-bottom: 1pt solid #222;
 }
 .content h1:first-child { margin-top: 0; }
 
 .content h2 {
-    font-size: 11.5pt;
-    font-weight: 700;
-    color: #2d3748;
-    margin: 20pt 0 10pt;
-    padding-bottom: 6pt;
-    border-bottom: 1pt solid #e2e8f0;
-}
-
-.content h3 {
-    font-size: 10.5pt;
+    font-size: 10pt;
     font-weight: 600;
-    color: #4a5568;
+    color: #444;
     margin: 16pt 0 8pt;
 }
 
+.content h3 {
+    font-size: 10pt;
+    font-weight: 500;
+    color: #555;
+    font-style: italic;
+    margin: 12pt 0 6pt;
+}
+
 .content p {
-    margin: 10pt 0;
+    margin: 8pt 0;
     text-align: justify;
-    color: #2d3748;
 }
 
 .content ul, .content ol { 
-    margin: 12pt 0 12pt 20pt;
+    margin: 8pt 0 8pt 16pt;
 }
 .content li { 
-    margin: 6pt 0;
-    padding-left: 4pt;
+    margin: 4pt 0;
 }
 
-.content strong { font-weight: 700; color: #1a202c; }
-.content em { font-style: italic; color: #4a5568; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
 
-/* ══════════════════ TABLEAUX ══════════════════ */
+/* ══════════ TABLES ══════════ */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 16pt 0;
+    margin: 14pt 0;
     font-size: 9pt;
-    border-radius: 6pt;
-    overflow: hidden;
-    box-shadow: 0 1pt 3pt rgba(0,0,0,0.08);
 }
 th {
-    background: var(--primary);
-    color: #fff;
-    padding: 10pt 10pt;
+    background: #f5f5f5;
+    border: 1pt solid #ddd;
+    padding: 8pt;
     text-align: left;
     font-weight: 600;
     font-size: 8pt;
     text-transform: uppercase;
-    letter-spacing: 0.5pt;
 }
 td {
-    padding: 9pt 10pt;
-    border-bottom: 1pt solid #e2e8f0;
-    color: #2d3748;
+    border: 1pt solid #ddd;
+    padding: 7pt 8pt;
 }
-tr:nth-child(even) { background: #f7fafc; }
-tr:last-child td { border-bottom: none; }
+tr:nth-child(even) { background: #fafafa; }
 
-/* ══════════════════ FOOTER ══════════════════ */
+/* ══════════ FOOTER ══════════ */
 .footer {
-    margin-top: 36pt;
-    padding: 14pt 0;
-    border-top: 2pt solid var(--primary);
+    margin-top: 40pt;
+    padding-top: 12pt;
+    border-top: 1pt solid #ddd;
     display: flex;
     justify-content: space-between;
-    align-items: center;
     font-size: 8pt;
-    color: #718096;
+    color: #999;
 }
-.footer .badge {
-    background: var(--primary);
-    color: #fff;
-    padding: 4pt 10pt;
-    border-radius: 4pt;
-    font-weight: 600;
-    font-size: 7pt;
+.footer .conf {
     text-transform: uppercase;
     letter-spacing: 0.5pt;
 }
 
-/* ══════════════════ PRINT ══════════════════ */
 @media print {
-    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .header-band { -webkit-print-color-adjust: exact !important; }
-    .kpi-card { box-shadow: none; border: 1pt solid #ccc; }
-    .kpi-grid, .header-band, .doc-title { page-break-inside: avoid; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .kpi-row, .title-block { page-break-inside: avoid; }
     h1, h2, h3 { page-break-after: avoid; }
-    table { page-break-inside: avoid; }
 }
 </style>
 </head>
 <body>
 
-<div class="header-band">
+<div class="header">
     <div class="header-left">
         <img src="${logoUrl}" alt="" class="logo" onerror="this.style.display='none'">
-        <div class="company-info">
-            <div class="name">${appName}</div>
-            <div class="subtitle">${companySubtitle}</div>
+        <div class="brand">
+            <div class="brand-name">${appName}</div>
+            <div class="brand-sub">${companySubtitle}</div>
         </div>
     </div>
     <div class="header-right">
-        <div class="date">${todayFormatted}</div>
+        <div>${todayFormatted}</div>
         <div class="ref">Réf. ${refNumber}</div>
     </div>
 </div>
 
-<div class="doc-title">
+<div class="title-block">
     <h1>${docType}</h1>
     <div class="period">${monthLabelCaps}</div>
 </div>
 
 ${aiReport.customFocus ? `
-<div class="object-section">
+<div class="summary-box">
     <div class="label">Objet</div>
     <div class="text">${aiReport.customFocus}</div>
 </div>
 ` : ''}
 
-<div class="kpi-grid">
-    <div class="kpi-card">
-        <div class="icon">📥</div>
-        <div class="number">${aiReport.kpis?.ticketsCreated || 0}</div>
-        <div class="label">Créés</div>
+<div class="kpi-row">
+    <div class="kpi-item">
+        <div class="kpi-value">${aiReport.kpis?.ticketsCreated || 0}</div>
+        <div class="kpi-label">Créés</div>
     </div>
-    <div class="kpi-card">
-        <div class="icon">✓</div>
-        <div class="number">${aiReport.kpis?.ticketsCompleted || 0}</div>
-        <div class="label">Terminés</div>
+    <div class="kpi-item">
+        <div class="kpi-value">${aiReport.kpis?.ticketsCompleted || 0}</div>
+        <div class="kpi-label">Terminés</div>
     </div>
-    <div class="kpi-card">
-        <div class="icon">⏳</div>
-        <div class="number">${aiReport.kpis?.activeTickets || 0}</div>
-        <div class="label">En cours</div>
+    <div class="kpi-item">
+        <div class="kpi-value">${aiReport.kpis?.activeTickets || 0}</div>
+        <div class="kpi-label">En cours</div>
     </div>
-    <div class="kpi-card">
-        <div class="icon">⚠</div>
-        <div class="number${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' critical' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
-        <div class="label">Critiques</div>
+    <div class="kpi-item">
+        <div class="kpi-value${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' alert' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
+        <div class="kpi-label">Critiques</div>
     </div>
 </div>
 
@@ -1735,7 +1679,7 @@ ${reportHtml}
 </div>
 
 <div class="footer">
-    <span class="badge">Confidentiel</span>
+    <span class="conf">Document confidentiel</span>
     <span>${companySubtitle}</span>
 </div>
 
