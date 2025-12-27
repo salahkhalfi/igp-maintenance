@@ -1373,7 +1373,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
             .replace(/(<\/table>)<\/p>/g, '$1');
     };
     
-    // Impression du rapport - Design Minimaliste Corporate v3
+    // Impression du rapport - Design Élégant Corporate v4
     const printAIReport = async () => {
         if (!aiReport) return;
         
@@ -1381,6 +1381,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         let companyName = 'IGP Glass';
         let companySubtitle = '';
         let logoUrl = '/api/settings/logo';
+        let primaryColor = '#0f4c81'; // Bleu corporate par défaut
         try {
             const settingsRes = await axios.get('/api/settings/config/public');
             if (settingsRes.data) {
@@ -1388,6 +1389,9 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                 companySubtitle = settingsRes.data.company_subtitle || '';
                 if (settingsRes.data.company_logo_url) {
                     logoUrl = settingsRes.data.company_logo_url;
+                }
+                if (settingsRes.data.primary_color) {
+                    primaryColor = settingsRes.data.primary_color;
                 }
             }
         } catch (e) { console.log('Settings not loaded'); }
@@ -1400,12 +1404,12 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         
         // Type de document basé sur les instructions
         const ci = (customInstructions || '').toLowerCase();
-        const docType = ci.includes('note') ? 'NOTE DE SERVICE' 
-            : ci.includes('compte-rendu') ? 'COMPTE-RENDU'
-            : ci.includes('mémo') ? 'MÉMO'
-            : ci.includes('bilan') ? 'BILAN'
-            : ci.includes('incident') ? 'RAPPORT D\'INCIDENT'
-            : 'RAPPORT ADMINISTRATIF';
+        const docType = ci.includes('note') ? 'Note de service' 
+            : ci.includes('compte-rendu') ? 'Compte-rendu'
+            : ci.includes('mémo') ? 'Mémo'
+            : ci.includes('bilan') ? 'Bilan d\'activité'
+            : ci.includes('incident') ? 'Rapport d\'incident'
+            : 'Rapport de gestion';
         
         const reportHtml = markdownToHtml(aiReport.report);
         const refNumber = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(Date.now()).slice(-4)}`;
@@ -1416,225 +1420,309 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabelCaps}</title>
 <style>
-@page { size: A4; margin: 22mm 20mm 20mm 20mm; }
+:root { --primary: ${primaryColor}; }
+@page { size: A4; margin: 15mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
-    font-family: 'Times New Roman', Georgia, serif;
-    font-size: 11pt;
-    line-height: 1.6;
-    color: #000;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.55;
+    color: #2d3748;
     background: #fff;
 }
 
-/* EN-TÊTE */
-.header {
+/* ══════════════════ BANDEAU EN-TÊTE ══════════════════ */
+.header-band {
+    background: linear-gradient(135deg, var(--primary) 0%, #1a365d 100%);
+    color: #fff;
+    padding: 20pt 24pt;
+    margin: -15mm -15mm 0 -15mm;
+    width: calc(100% + 30mm);
     display: flex;
-    align-items: flex-start;
-    padding-bottom: 16pt;
-    margin-bottom: 20pt;
-    border-bottom: 1pt solid #000;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.logo { 
-    width: 60pt; 
-    height: 60pt; 
-    object-fit: contain; 
-    margin-right: 16pt;
+.header-left { display: flex; align-items: center; gap: 16pt; }
+
+.logo {
+    width: 55pt;
+    height: 55pt;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 8pt;
+    padding: 6pt;
 }
 
-.company-info { flex: 1; }
-.company-name {
-    font-size: 20pt;
-    font-weight: bold;
-    color: #000;
+.company-info .name {
+    font-size: 22pt;
+    font-weight: 700;
+    letter-spacing: 0.5pt;
+    margin-bottom: 3pt;
+}
+.company-info .subtitle {
+    font-size: 9pt;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.header-right { text-align: right; }
+.header-right .date {
+    font-size: 11pt;
+    font-weight: 600;
     margin-bottom: 4pt;
 }
-.company-subtitle {
-    font-size: 10pt;
-    color: #333;
-    font-style: italic;
+.header-right .ref {
+    font-size: 8pt;
+    opacity: 0.8;
+    background: rgba(255,255,255,0.15);
+    padding: 3pt 8pt;
+    border-radius: 3pt;
+    display: inline-block;
 }
 
-.doc-info {
-    text-align: right;
-    font-size: 10pt;
-    color: #333;
-}
-.doc-info .date { font-weight: bold; color: #000; }
-.doc-info .ref { font-size: 9pt; color: #666; margin-top: 4pt; }
-
-/* TITRE */
-.title-section {
+/* ══════════════════ TITRE DOCUMENT ══════════════════ */
+.doc-title {
     text-align: center;
-    margin: 28pt 0 24pt;
-    padding: 20pt 0;
-    border-top: 2pt solid #000;
-    border-bottom: 2pt solid #000;
+    padding: 28pt 0 20pt;
+    margin-bottom: 20pt;
+    border-bottom: 3pt solid var(--primary);
 }
-.title-section h1 {
-    font-size: 18pt;
-    font-weight: bold;
-    letter-spacing: 3pt;
-    margin-bottom: 8pt;
+.doc-title h1 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 6pt;
 }
-.title-section .period {
-    font-size: 13pt;
-    font-style: italic;
-    color: #333;
+.doc-title .period {
+    font-size: 12pt;
+    color: #718096;
+    font-weight: 500;
 }
 
-/* OBJET */
-.object-box {
-    margin: 20pt 0;
-    padding: 12pt 16pt;
-    border: 1pt solid #999;
-    background: #fafafa;
+/* ══════════════════ OBJET ══════════════════ */
+.object-section {
+    background: linear-gradient(90deg, #f7fafc 0%, #edf2f7 100%);
+    border-left: 4pt solid var(--primary);
+    padding: 14pt 18pt;
+    margin: 18pt 0;
+    border-radius: 0 6pt 6pt 0;
 }
-.object-box strong { font-size: 9pt; text-transform: uppercase; letter-spacing: 1pt; }
-.object-box p { margin-top: 6pt; font-size: 10.5pt; }
-
-/* KPIs */
-.kpi-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 24pt 0;
-    border: 1pt solid #ccc;
-}
-.kpi-item {
-    flex: 1;
-    text-align: center;
-    padding: 16pt 8pt;
-    border-right: 1pt solid #ccc;
-}
-.kpi-item:last-child { border-right: none; }
-.kpi-item .value {
-    font-size: 32pt;
-    font-weight: bold;
-    color: #000;
-    line-height: 1;
-}
-.kpi-item .value.alert { color: #b00; }
-.kpi-item .label {
+.object-section .label {
     font-size: 8pt;
     text-transform: uppercase;
-    letter-spacing: 1pt;
-    color: #666;
-    margin-top: 8pt;
+    letter-spacing: 1.5pt;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 6pt;
+}
+.object-section .text {
+    font-size: 10.5pt;
+    color: #2d3748;
 }
 
-/* CONTENU */
-.content { margin-top: 20pt; }
+/* ══════════════════ KPI CARDS ══════════════════ */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12pt;
+    margin: 24pt 0;
+}
+.kpi-card {
+    background: #fff;
+    border: 1pt solid #e2e8f0;
+    border-radius: 8pt;
+    padding: 18pt 12pt;
+    text-align: center;
+    box-shadow: 0 2pt 4pt rgba(0,0,0,0.04);
+    transition: all 0.2s;
+}
+.kpi-card:hover { box-shadow: 0 4pt 8pt rgba(0,0,0,0.08); }
+.kpi-card .icon {
+    width: 28pt;
+    height: 28pt;
+    margin: 0 auto 10pt;
+    background: linear-gradient(135deg, var(--primary) 0%, #2b6cb0 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12pt;
+}
+.kpi-card .number {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #1a202c;
+    line-height: 1;
+}
+.kpi-card .number.critical { color: #c53030; }
+.kpi-card .label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.8pt;
+    color: #718096;
+    margin-top: 8pt;
+    font-weight: 600;
+}
+
+/* ══════════════════ CONTENU ══════════════════ */
+.content { margin-top: 24pt; }
+
 .content h1 {
     font-size: 13pt;
-    font-weight: bold;
-    margin: 24pt 0 12pt;
-    padding-bottom: 6pt;
-    border-bottom: 1pt solid #000;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 26pt 0 14pt;
+    padding: 10pt 14pt;
+    background: linear-gradient(90deg, rgba(16,185,129,0.08) 0%, transparent 100%);
+    border-left: 4pt solid var(--primary);
+    border-radius: 0 6pt 6pt 0;
 }
 .content h1:first-child { margin-top: 0; }
-.content h2 {
-    font-size: 12pt;
-    font-weight: bold;
-    margin: 18pt 0 10pt;
-    color: #222;
-}
-.content h3 {
-    font-size: 11pt;
-    font-weight: bold;
-    font-style: italic;
-    margin: 14pt 0 8pt;
-    color: #333;
-}
-.content p {
-    margin: 8pt 0;
-    text-align: justify;
-}
-.content ul, .content ol { margin: 10pt 0 10pt 24pt; }
-.content li { margin: 5pt 0; }
-.content strong { font-weight: bold; }
-.content em { font-style: italic; }
 
-/* TABLEAUX */
+.content h2 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 20pt 0 10pt;
+    padding-bottom: 6pt;
+    border-bottom: 1pt solid #e2e8f0;
+}
+
+.content h3 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #4a5568;
+    margin: 16pt 0 8pt;
+}
+
+.content p {
+    margin: 10pt 0;
+    text-align: justify;
+    color: #2d3748;
+}
+
+.content ul, .content ol { 
+    margin: 12pt 0 12pt 20pt;
+}
+.content li { 
+    margin: 6pt 0;
+    padding-left: 4pt;
+}
+
+.content strong { font-weight: 700; color: #1a202c; }
+.content em { font-style: italic; color: #4a5568; }
+
+/* ══════════════════ TABLEAUX ══════════════════ */
 table {
     width: 100%;
     border-collapse: collapse;
     margin: 16pt 0;
-    font-size: 10pt;
+    font-size: 9pt;
+    border-radius: 6pt;
+    overflow: hidden;
+    box-shadow: 0 1pt 3pt rgba(0,0,0,0.08);
 }
 th {
-    background: #333;
+    background: var(--primary);
     color: #fff;
-    padding: 10pt 8pt;
+    padding: 10pt 10pt;
     text-align: left;
-    font-weight: bold;
-    font-size: 9pt;
+    font-weight: 600;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
 }
 td {
-    padding: 8pt;
-    border-bottom: 1pt solid #ddd;
+    padding: 9pt 10pt;
+    border-bottom: 1pt solid #e2e8f0;
+    color: #2d3748;
 }
-tr:nth-child(even) { background: #f5f5f5; }
+tr:nth-child(even) { background: #f7fafc; }
+tr:last-child td { border-bottom: none; }
 
-/* FOOTER */
+/* ══════════════════ FOOTER ══════════════════ */
 .footer {
-    margin-top: 40pt;
-    padding-top: 12pt;
-    border-top: 1pt solid #000;
+    margin-top: 36pt;
+    padding: 14pt 0;
+    border-top: 2pt solid var(--primary);
     display: flex;
     justify-content: space-between;
-    font-size: 9pt;
-    color: #666;
+    align-items: center;
+    font-size: 8pt;
+    color: #718096;
+}
+.footer .badge {
+    background: var(--primary);
+    color: #fff;
+    padding: 4pt 10pt;
+    border-radius: 4pt;
+    font-weight: 600;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
 }
 
+/* ══════════════════ PRINT ══════════════════ */
 @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .header, .kpi-row, .title-section { page-break-inside: avoid; }
+    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .header-band { -webkit-print-color-adjust: exact !important; }
+    .kpi-card { box-shadow: none; border: 1pt solid #ccc; }
+    .kpi-grid, .header-band, .doc-title { page-break-inside: avoid; }
     h1, h2, h3 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-    <img src="${logoUrl}" alt="" class="logo" onerror="this.style.display='none'">
-    <div class="company-info">
-        <div class="company-name">${companyName}</div>
-        <div class="company-subtitle">${companySubtitle || 'Rapport administratif'}</div>
+<div class="header-band">
+    <div class="header-left">
+        <img src="${logoUrl}" alt="" class="logo" onerror="this.style.display='none'">
+        <div class="company-info">
+            <div class="name">${companyName}</div>
+            <div class="subtitle">${companySubtitle}</div>
+        </div>
     </div>
-    <div class="doc-info">
+    <div class="header-right">
         <div class="date">${todayFormatted}</div>
         <div class="ref">Réf. ${refNumber}</div>
     </div>
 </div>
 
-<div class="title-section">
+<div class="doc-title">
     <h1>${docType}</h1>
     <div class="period">${monthLabelCaps}</div>
 </div>
 
 ${aiReport.customFocus ? `
-<div class="object-box">
-    <strong>Objet :</strong>
-    <p>${aiReport.customFocus}</p>
+<div class="object-section">
+    <div class="label">Objet</div>
+    <div class="text">${aiReport.customFocus}</div>
 </div>
 ` : ''}
 
-<div class="kpi-row">
-    <div class="kpi-item">
-        <div class="value">${aiReport.kpis?.ticketsCreated || 0}</div>
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="icon">📥</div>
+        <div class="number">${aiReport.kpis?.ticketsCreated || 0}</div>
         <div class="label">Créés</div>
     </div>
-    <div class="kpi-item">
-        <div class="value">${aiReport.kpis?.ticketsCompleted || 0}</div>
+    <div class="kpi-card">
+        <div class="icon">✓</div>
+        <div class="number">${aiReport.kpis?.ticketsCompleted || 0}</div>
         <div class="label">Terminés</div>
     </div>
-    <div class="kpi-item">
-        <div class="value">${aiReport.kpis?.activeTickets || 0}</div>
+    <div class="kpi-card">
+        <div class="icon">⏳</div>
+        <div class="number">${aiReport.kpis?.activeTickets || 0}</div>
         <div class="label">En cours</div>
     </div>
-    <div class="kpi-item">
-        <div class="value${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' alert' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
+    <div class="kpi-card">
+        <div class="icon">⚠</div>
+        <div class="number${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' critical' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
         <div class="label">Critiques</div>
     </div>
 </div>
@@ -1644,7 +1732,7 @@ ${reportHtml}
 </div>
 
 <div class="footer">
-    <span>Document confidentiel</span>
+    <span class="badge">Confidentiel</span>
     <span>${companySubtitle || companyName}</span>
 </div>
 
