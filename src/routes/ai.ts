@@ -1055,7 +1055,7 @@ app.post('/report', async (c) => {
 - Complétés: ${ticketsCompleted.length}
 - En cours (actifs): ${activeTickets.length}
 - Critiques/Haute priorité: ${criticalTickets.length}
-- MTTR moyen: ${avgResolutionTime.toFixed(1)} heures
+- Temps moyen de réparation (TMR): ${avgResolutionTime.toFixed(1)} heures
 
 ### DÉTAIL TICKETS CRÉÉS
 ${ticketsCreated.slice(0, 20).map(t => `- [${t.priority?.toUpperCase()}] ${t.title} (${t.status})`).join('\n') || 'Aucun'}
@@ -1193,7 +1193,17 @@ Traduis systématiquement les termes techniques anglais:
 - operational → opérationnel
 - maintenance → en maintenance
 - out_of_service → hors service
-Ne jamais afficher les codes anglais bruts dans le document final.`;
+
+**Abréviations techniques (utiliser les termes français):**
+- MTTR (Mean Time To Repair) → TMR (Temps Moyen de Réparation)
+- MTBF (Mean Time Between Failures) → MTBP (Moyenne des Temps de Bon fonctionnement entre Pannes)
+- KPI (Key Performance Indicator) → ICP (Indicateur Clé de Performance)
+- SLA (Service Level Agreement) → ANS (Accord de Niveau de Service)
+- ETA (Estimated Time of Arrival) → HAP (Heure d'Arrivée Prévue)
+- OEE (Overall Equipment Effectiveness) → TRS (Taux de Rendement Synthétique)
+- GMAO → GMAO (Gestion de Maintenance Assistée par Ordinateur) - déjà français
+
+Ne jamais afficher les codes anglais bruts ou abréviations anglaises dans le document final.`;
         
         console.log(`📊 [Report] Generating ${documentType} for period ${startISO} to ${endISO}`);
 
