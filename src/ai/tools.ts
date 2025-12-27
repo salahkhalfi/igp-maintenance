@@ -879,23 +879,51 @@ export const ToolFunctions = {
     async search_machines(db: any, args: { query: string }) {
         const searchPattern = `%${args.query}%`;
         
-        const results = await db.select({
-            id: machines.id,
-            name: machines.machine_type,
-            model: machines.model,
-            status: machines.status,
-            location: machines.location
-        })
+        // Utiliser select() sans colonnes pour récupérer TOUS les champs (y compris operator_id, ai_context, technical_specs)
+        const results = await db.select()
         .from(machines)
-        .where(or(
-            like(machines.machine_type, searchPattern),
-            like(machines.model, searchPattern),
-            like(machines.manufacturer, searchPattern)
+        .where(and(
+            or(
+                like(machines.machine_type, searchPattern),
+                like(machines.model, searchPattern),
+                like(machines.manufacturer, searchPattern),
+                like(machines.location, searchPattern)
+            ),
+            sql`deleted_at IS NULL`
         ))
         .limit(5)
         .all();
 
-        return JSON.stringify(results.length > 0 ? results : "Aucune machine trouvée.");
+        // Enrichir avec le nom de l'opérateur si présent
+        if (results.length > 0) {
+            const operatorIds = results.map((m: any) => m.operator_id).filter((id: any) => id != null);
+            let operatorMap = new Map();
+            
+            if (operatorIds.length > 0) {
+                const operators = await db.select({ id: users.id, name: users.full_name })
+                    .from(users)
+                    .where(inArray(users.id, operatorIds))
+                    .all();
+                operators.forEach((o: any) => operatorMap.set(o.id, o.name));
+            }
+            
+            const enrichedResults = results.map((m: any) => ({
+                id: m.id,
+                machine_type: m.machine_type,
+                model: m.model,
+                manufacturer: m.manufacturer,
+                status: m.status,
+                location: m.location,
+                serial_number: m.serial_number,
+                technical_specs: m.technical_specs ? m.technical_specs.substring(0, 200) : null,
+                operator: m.operator_id ? operatorMap.get(m.operator_id) || null : null,
+                ai_context: m.ai_context ? m.ai_context.substring(0, 200) : null
+            }));
+            
+            return JSON.stringify(enrichedResults);
+        }
+
+        return JSON.stringify({ message: "Aucune machine trouvée." });
     },
 
     async get_machine_details(db: any, args: { machine_id: number }) {
