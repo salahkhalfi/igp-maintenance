@@ -1373,195 +1373,412 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
             .replace(/(<\/table>)<\/p>/g, '$1');
     };
     
-    // Impression du rapport - Design Premium Professionnel
-    const printAIReport = () => {
+    // Impression du rapport - Design Corporate Premium v2
+    const printAIReport = async () => {
         if (!aiReport) return;
+        
+        // Charger les infos de la compagnie depuis l'API
+        let companyName = 'IGP Glass';
+        let logoUrl = '/api/settings/logo'; // URL directe vers le logo
+        try {
+            const settingsRes = await axios.get('/api/settings/public');
+            if (settingsRes.data) {
+                companyName = settingsRes.data.company_name || settingsRes.data.app_name || 'IGP Glass';
+            }
+        } catch (e) { console.log('Settings not loaded'); }
+        
         const printWindow = window.open('', '_blank');
         const d = new Date(printDate);
         const monthLabel = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
         const monthLabelCaps = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
-        // Déterminer le type de document
-        const docType = customInstructions.toLowerCase().includes('note') ? 'NOTE DE SERVICE' 
-            : customInstructions.toLowerCase().includes('compte-rendu') ? 'COMPTE-RENDU'
-            : customInstructions.toLowerCase().includes('mémo') ? 'MÉMO DIRECTION'
-            : customInstructions.toLowerCase().includes('bilan') ? 'BILAN D\'ACTIVITÉ'
-            : customInstructions.toLowerCase().includes('incident') ? 'RAPPORT D\'INCIDENT'
+        const todayFormatted = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        // Type de document basé sur les instructions
+        const ci = (customInstructions || '').toLowerCase();
+        const docType = ci.includes('note') ? 'NOTE DE SERVICE' 
+            : ci.includes('compte-rendu') ? 'COMPTE-RENDU'
+            : ci.includes('mémo') ? 'MÉMO DIRECTION'
+            : ci.includes('bilan') ? 'BILAN D\'ACTIVITÉ'
+            : ci.includes('incident') ? 'RAPPORT D\'INCIDENT'
             : 'RAPPORT DE DIRECTION';
+        
         const reportHtml = markdownToHtml(aiReport.report);
-        const logoUrl = window.location.origin + '/static/logo-igp.png';
-        printWindow.document.write(`
-<!DOCTYPE html>
-<html><head>
+        const refNumber = `RPT-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${String(Date.now()).slice(-4)}`;
+        
+        printWindow.document.write(`<!DOCTYPE html>
+<html lang="fr">
+<head>
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabelCaps}</title>
 <style>
-    @page { margin: 20mm 15mm; }
-    * { box-sizing: border-box; }
+/* ========== RESET & BASE ========== */
+@page { 
+    size: A4; 
+    margin: 20mm 18mm 18mm 18mm;
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+body { 
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 0;
+    margin: 0;
+}
+
+/* ========== EN-TÊTE CORPORATE ========== */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12pt;
+    margin-bottom: 16pt;
+    border-bottom: 2pt solid #1a365d;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14pt;
+}
+
+.logo {
+    width: 50pt;
+    height: 50pt;
+    object-fit: contain;
+}
+
+.logo-fallback {
+    width: 50pt;
+    height: 50pt;
+    background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+    border-radius: 6pt;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16pt;
+    letter-spacing: 1pt;
+}
+
+.company-info h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #1a365d;
+    letter-spacing: 0.5pt;
+    margin-bottom: 2pt;
+}
+
+.company-info .dept {
+    font-size: 9pt;
+    color: #4a5568;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+}
+
+.header-right {
+    text-align: right;
+    font-size: 9pt;
+    color: #4a5568;
+}
+
+.header-right .date {
+    font-weight: 600;
+    color: #1a365d;
+    font-size: 10pt;
+    margin-bottom: 3pt;
+}
+
+.header-right .ref {
+    font-size: 8pt;
+    color: #718096;
+}
+
+/* ========== TITRE DU DOCUMENT ========== */
+.doc-title {
+    text-align: center;
+    margin: 24pt 0 20pt;
+    padding: 16pt 0;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-radius: 4pt;
+}
+
+.doc-title h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1a365d;
+    text-transform: uppercase;
+    letter-spacing: 4pt;
+    margin-bottom: 6pt;
+}
+
+.doc-title .period {
+    font-size: 11pt;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+/* ========== OBJET ========== */
+.object-section {
+    background: #f7fafc;
+    border-left: 4pt solid #2b6cb0;
+    padding: 10pt 14pt;
+    margin: 16pt 0;
+}
+
+.object-section .label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    color: #718096;
+    font-weight: 600;
+    margin-bottom: 4pt;
+}
+
+.object-section .value {
+    font-size: 10pt;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+/* ========== KPI CARDS ========== */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10pt;
+    margin: 20pt 0;
+}
+
+.kpi-card {
+    text-align: center;
+    padding: 14pt 8pt;
+    background: #fff;
+    border: 1pt solid #e2e8f0;
+    border-radius: 4pt;
+}
+
+.kpi-card .number {
+    font-size: 26pt;
+    font-weight: 300;
+    color: #1a365d;
+    line-height: 1.1;
+}
+
+.kpi-card .number.critical {
+    color: #c53030;
+    font-weight: 600;
+}
+
+.kpi-card .label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    color: #718096;
+    margin-top: 6pt;
+    font-weight: 600;
+}
+
+/* ========== CONTENU ========== */
+.content {
+    margin-top: 20pt;
+    padding-top: 12pt;
+    border-top: 1pt solid #e2e8f0;
+}
+
+.content h1 {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #1a365d;
+    margin: 20pt 0 10pt;
+    padding-bottom: 4pt;
+    border-bottom: 2pt solid #2b6cb0;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+}
+
+.content h1:first-child {
+    margin-top: 0;
+}
+
+.content h2 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 16pt 0 8pt;
+    padding-left: 8pt;
+    border-left: 3pt solid #4299e1;
+}
+
+.content h3 {
+    font-size: 10pt;
+    font-weight: 600;
+    color: #4a5568;
+    margin: 12pt 0 6pt;
+}
+
+.content p {
+    margin: 8pt 0;
+    text-align: justify;
+    hyphens: auto;
+    color: #2d3748;
+}
+
+.content ul, .content ol {
+    margin: 8pt 0 8pt 18pt;
+}
+
+.content li {
+    margin: 4pt 0;
+    color: #2d3748;
+}
+
+.content strong {
+    font-weight: 600;
+    color: #1a202c;
+}
+
+.content em {
+    font-style: italic;
+    color: #4a5568;
+}
+
+/* ========== TABLEAUX ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12pt 0;
+    font-size: 9pt;
+}
+
+th {
+    background: #1a365d;
+    color: #fff;
+    padding: 8pt 6pt;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.5pt;
+}
+
+td {
+    padding: 7pt 6pt;
+    border-bottom: 1pt solid #e2e8f0;
+    vertical-align: top;
+    color: #2d3748;
+}
+
+tr:nth-child(even) {
+    background: #f7fafc;
+}
+
+/* ========== PIED DE PAGE ========== */
+.footer {
+    margin-top: 30pt;
+    padding-top: 10pt;
+    border-top: 1pt solid #cbd5e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    color: #718096;
+}
+
+.footer .confidential {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+}
+
+/* ========== IMPRESSION ========== */
+@media print {
     body { 
-        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; 
-        max-width: 210mm; 
-        margin: 0 auto; 
-        padding: 0; 
-        color: #1a1a2e; 
-        line-height: 1.5; 
-        font-size: 11pt;
-        background: white;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
-    
-    /* En-tête avec logo */
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding-bottom: 20px;
-        border-bottom: 3px solid #1a1a2e;
-        margin-bottom: 25px;
-    }
-    .logo-section { display: flex; align-items: center; gap: 15px; }
-    .logo { height: 50px; width: auto; }
-    .company-info { }
-    .company-name { font-size: 14pt; font-weight: 700; color: #1a1a2e; letter-spacing: 1px; }
-    .company-subtitle { font-size: 9pt; color: #64748b; margin-top: 2px; }
-    .doc-info { text-align: right; }
-    .doc-date { font-size: 9pt; color: #64748b; }
-    .doc-ref { font-size: 8pt; color: #94a3b8; margin-top: 4px; }
-    
-    /* Titre du document */
-    .doc-title {
-        text-align: center;
-        margin: 30px 0;
-        padding: 20px 0;
-        border-top: 1px solid #e2e8f0;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    .doc-title h1 {
-        font-size: 18pt;
-        font-weight: 700;
-        color: #1a1a2e;
-        margin: 0 0 8px 0;
-        letter-spacing: 2px;
-    }
-    .doc-title .period {
-        font-size: 12pt;
-        color: #475569;
-        font-weight: 400;
-    }
-    
-    /* Objet du document */
-    .doc-object {
-        background: #f8fafc;
-        border-left: 4px solid #1a1a2e;
-        padding: 12px 16px;
-        margin: 20px 0;
-        font-size: 10pt;
-    }
-    .doc-object strong { color: #1a1a2e; }
-    
-    /* KPIs */
-    .kpi-section {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 15px;
-        margin: 25px 0;
-    }
-    .kpi-box {
-        text-align: center;
-        padding: 15px 10px;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-    }
-    .kpi-value { font-size: 24pt; font-weight: 700; color: #1a1a2e; }
-    .kpi-value.critical { color: #dc2626; }
-    .kpi-label { font-size: 8pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
-    
-    /* Contenu */
-    .content { margin-top: 25px; }
-    .content h1 { font-size: 14pt; color: #1a1a2e; margin: 25px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #1a1a2e; }
-    .content h2 { font-size: 12pt; color: #1a1a2e; margin: 20px 0 10px; font-weight: 600; }
-    .content h3 { font-size: 11pt; color: #334155; margin: 15px 0 8px; font-weight: 600; }
-    .content p { margin: 8px 0; text-align: justify; }
-    .content ul, .content ol { margin: 10px 0; padding-left: 20px; }
-    .content li { margin: 5px 0; }
-    .content strong { color: #1a1a2e; font-weight: 600; }
-    .content em { font-style: italic; color: #475569; }
-    
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10pt; }
-    th { background: #1a1a2e; color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
-    td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-    tr:nth-child(even) { background: #f8fafc; }
-    
-    /* Pied de page */
-    .footer {
-        margin-top: 40px;
-        padding-top: 15px;
-        border-top: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: space-between;
-        font-size: 8pt;
-        color: #94a3b8;
-    }
-    
-    @media print { 
-        body { margin: 0; padding: 0; }
-        .header { page-break-inside: avoid; }
-        .kpi-section { page-break-inside: avoid; }
-        h1, h2, h3 { page-break-after: avoid; }
-        table { page-break-inside: avoid; }
-    }
+    .header, .kpi-grid { page-break-inside: avoid; }
+    h1, h2, h3 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+}
+
+/* ========== NO LOGO FALLBACK ========== */
+.logo-container .logo-img.hidden { display: none; }
+.logo-container .logo-fallback.hidden { display: none; }
 </style>
-</head><body>
+</head>
+<body>
 
 <div class="header">
-    <div class="logo-section">
-        <img src="${logoUrl}" alt="Logo" class="logo" onerror="this.style.display='none'">
+    <div class="header-left">
+        <div class="logo-container">
+            <img src="${logoUrl}" alt="${companyName}" class="logo logo-img" 
+                 onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+            <div class="logo-fallback hidden">IGP</div>
+        </div>
         <div class="company-info">
-            <div class="company-name">IGP GLASS</div>
-            <div class="company-subtitle">Département Maintenance</div>
+            <h1>${companyName}</h1>
+            <div class="dept">Service Maintenance</div>
         </div>
     </div>
-    <div class="doc-info">
-        <div class="doc-date">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-        <div class="doc-ref">Réf: RPT-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${Date.now().toString().slice(-4)}</div>
+    <div class="header-right">
+        <div class="date">${todayFormatted}</div>
+        <div class="ref">Réf. ${refNumber}</div>
     </div>
 </div>
 
 <div class="doc-title">
-    <h1>${docType}</h1>
+    <h2>${docType}</h2>
     <div class="period">${monthLabelCaps}</div>
 </div>
 
-${aiReport.customFocus ? `<div class="doc-object"><strong>Objet :</strong> ${aiReport.customFocus}</div>` : ''}
+${aiReport.customFocus ? `
+<div class="object-section">
+    <div class="label">Objet</div>
+    <div class="value">${aiReport.customFocus}</div>
+</div>
+` : ''}
 
-<div class="kpi-section">
-    <div class="kpi-box">
-        <div class="kpi-value">${aiReport.kpis.ticketsCreated}</div>
-        <div class="kpi-label">Tickets créés</div>
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="number">${aiReport.kpis?.ticketsCreated || 0}</div>
+        <div class="label">Tickets créés</div>
     </div>
-    <div class="kpi-box">
-        <div class="kpi-value">${aiReport.kpis.ticketsCompleted}</div>
-        <div class="kpi-label">Terminés</div>
+    <div class="kpi-card">
+        <div class="number">${aiReport.kpis?.ticketsCompleted || 0}</div>
+        <div class="label">Résolus</div>
     </div>
-    <div class="kpi-box">
-        <div class="kpi-value">${aiReport.kpis.activeTickets}</div>
-        <div class="kpi-label">En cours</div>
+    <div class="kpi-card">
+        <div class="number">${aiReport.kpis?.activeTickets || 0}</div>
+        <div class="label">En cours</div>
     </div>
-    <div class="kpi-box">
-        <div class="kpi-value ${aiReport.kpis.criticalTickets > 0 ? 'critical' : ''}">${aiReport.kpis.criticalTickets}</div>
-        <div class="kpi-label">Critiques</div>
+    <div class="kpi-card">
+        <div class="number${(aiReport.kpis?.criticalTickets || 0) > 0 ? ' critical' : ''}">${aiReport.kpis?.criticalTickets || 0}</div>
+        <div class="label">Critiques</div>
     </div>
 </div>
 
-<div class="content">${reportHtml}</div>
+<div class="content">
+    ${reportHtml}
+</div>
 
 <div class="footer">
-    <span>Document confidentiel</span>
-    <span>Page 1</span>
+    <span class="confidential">Document confidentiel</span>
+    <span>${companyName} — Service Maintenance</span>
 </div>
 
-</body></html>`);
+</body>
+</html>`);
         printWindow.document.close();
-        printWindow.print();
+        setTimeout(() => printWindow.print(), 400);
     };
     
     const formatOptions = [
