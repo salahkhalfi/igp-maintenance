@@ -1,10 +1,10 @@
 {
-  "generated": "2025-12-27T13:28:46.961Z",
+  "generated": "2025-12-27T13:37:10.048Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
       "minified": "AIChatModal_v4.min.js",
-      "savings": "50.9%"
+      "savings": "39.8%"
     },
     {
       "original": "AdminRoles.js",
@@ -177,5 +177,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "49.1%"
+  "totalSavings": "48.8%"
 }

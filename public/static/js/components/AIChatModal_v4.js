@@ -5,6 +5,198 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
     const [markedLoaded, setMarkedLoaded] = React.useState(!!window.marked);
     const messagesEndRef = React.useRef(null);
 
+    // Fonction d'impression des conseils
+    const handlePrint = () => {
+        if (messages.length === 0) {
+            window.showToast && window.showToast('Aucun conseil à imprimer', 'warning');
+            return;
+        }
+
+        // Filtrer uniquement les messages de l'assistant (conseils)
+        const assistantMessages = messages.filter(m => m.role === 'assistant');
+        if (assistantMessages.length === 0) {
+            window.showToast && window.showToast('Aucun conseil à imprimer', 'warning');
+            return;
+        }
+
+        // Traiter le contenu markdown
+        const processContent = (content) => {
+            if (!content) return '';
+            if (window.marked) {
+                try {
+                    const parse = (typeof window.marked.parse === 'function') ? window.marked.parse : window.marked;
+                    return parse(content);
+                } catch (e) {
+                    console.error('Marked parse error:', e);
+                }
+            }
+            // Fallback simple
+            return content
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^### (.*)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+                .replace(/^\s*-\s+(.*)$/gm, '<li>$1</li>')
+                .replace(/^\s*\d+\.\s+(.*)$/gm, '<li>$1</li>')
+                .replace(/\n/g, '<br/>');
+        };
+
+        // Générer le contenu HTML des conseils
+        const conseilsHTML = assistantMessages.map((msg, idx) => `
+            <div class="conseil">
+                <div class="conseil-content">
+                    ${processContent(msg.content)}
+                </div>
+            </div>
+        `).join('');
+
+        const ticketInfo = ticket ? `
+            <div class="ticket-info">
+                <strong>Équipement:</strong> ${ticket.machine_type || ''} ${ticket.model || ''}<br/>
+                <strong>Problème:</strong> ${ticket.title || 'Non spécifié'}
+            </div>
+        ` : '';
+
+        const printContent = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Conseils Expert Industriel</title>
+    <style>
+        @page { margin: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; }
+        body {
+            font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #1f2937;
+            padding: 18mm 15mm 20mm 15mm;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12pt;
+            padding-bottom: 12pt;
+            border-bottom: 2pt solid #7c3aed;
+            margin-bottom: 16pt;
+        }
+        .header-icon {
+            width: 40pt;
+            height: 40pt;
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18pt;
+        }
+        .header-text h1 {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+        .header-text p {
+            font-size: 9pt;
+            color: #6b7280;
+            margin: 2pt 0 0 0;
+        }
+        .date {
+            margin-left: auto;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+        
+        .ticket-info {
+            background: #f3f4f6;
+            border-left: 3pt solid #7c3aed;
+            padding: 10pt 12pt;
+            margin-bottom: 16pt;
+            font-size: 10pt;
+        }
+        
+        .conseil {
+            margin-bottom: 14pt;
+            page-break-inside: avoid;
+        }
+        .conseil-content {
+            background: #fafafa;
+            border: 1pt solid #e5e7eb;
+            border-radius: 6pt;
+            padding: 12pt 14pt;
+        }
+        .conseil-content h1, .conseil-content h2, .conseil-content h3 {
+            color: #1f2937;
+            margin: 10pt 0 6pt 0;
+        }
+        .conseil-content h1 { font-size: 13pt; }
+        .conseil-content h2 { font-size: 12pt; }
+        .conseil-content h3 { font-size: 11pt; }
+        .conseil-content p {
+            margin: 6pt 0;
+            line-height: 1.5;
+        }
+        .conseil-content ul, .conseil-content ol {
+            margin: 6pt 0 6pt 16pt;
+            padding: 0;
+        }
+        .conseil-content li {
+            margin: 4pt 0;
+            line-height: 1.45;
+        }
+        .conseil-content strong {
+            color: #4f46e5;
+        }
+        
+        .footer {
+            margin-top: 20pt;
+            padding-top: 10pt;
+            border-top: 1pt solid #e5e7eb;
+            font-size: 8pt;
+            color: #9ca3af;
+            text-align: center;
+        }
+        
+        @media print {
+            body { padding: 18mm 15mm 20mm 15mm !important; }
+            .conseil { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-icon">🤖</div>
+        <div class="header-text">
+            <h1>Expert Industriel</h1>
+            <p>Conseils Techniques & Maintenance</p>
+        </div>
+        <div class="date">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+    </div>
+    
+    ${ticketInfo}
+    
+    ${conseilsHTML}
+    
+    <div class="footer">
+        Document généré automatiquement • Les conseils sont fournis à titre indicatif • Vérifiez toujours les procédures de sécurité
+    </div>
+</body>
+</html>`;
+
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+            }, 300);
+        }
+    };
+
     // Scroll to bottom
     React.useEffect(() => {
         if (messagesEndRef.current) {
@@ -181,11 +373,22 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
                         React.createElement('p', { className: 'text-xs text-purple-200 opacity-90' }, 'Assistant Technique & Maintenance')
                     )
                 ),
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'p-2 hover:bg-white/20 rounded-full transition-colors'
-                },
-                    React.createElement('i', { className: 'fas fa-times text-lg' })
+                React.createElement('div', { className: 'flex items-center gap-2' },
+                    // Bouton Imprimer
+                    messages.length > 0 && React.createElement('button', {
+                        onClick: handlePrint,
+                        className: 'p-2 hover:bg-white/20 rounded-full transition-colors',
+                        title: 'Imprimer les conseils'
+                    },
+                        React.createElement('i', { className: 'fas fa-print text-lg' })
+                    ),
+                    // Bouton Fermer
+                    React.createElement('button', {
+                        onClick: onClose,
+                        className: 'p-2 hover:bg-white/20 rounded-full transition-colors'
+                    },
+                        React.createElement('i', { className: 'fas fa-times text-lg' })
+                    )
                 )
             ),
 
