@@ -1271,7 +1271,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
     const [aiReport, setAiReport] = React.useState(null);
     const [customInstructions, setCustomInstructions] = React.useState('');
     
-    // Suggestions intelligentes - simples et directes
+    // Suggestions intelligentes - simples et directes (Rapports)
     const quickSuggestions = [
         { icon: '📊', label: 'Rapport mensuel', value: 'Rapport de synthèse mensuel pour la direction' },
         { icon: '📝', label: 'Note de service', value: 'Rédiger une note de service concernant : ' },
@@ -1280,6 +1280,52 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         { icon: '🏭', label: 'Bilan machines', value: 'État et disponibilité du parc machines' },
         { icon: '⚠️', label: 'Incidents critiques', value: 'Rapport sur les incidents critiques du mois' }
     ];
+    
+    // Catégories de documents Secrétaire de Direction
+    const secretaryCategories = [
+        { id: 'correspondance', label: 'Correspondance', icon: '✉️', documents: [
+            { icon: '📧', label: 'Lettre officielle', value: 'Rédiger une lettre officielle à [destinataire] concernant : ' },
+            { icon: '🤝', label: 'Lettre de partenariat', value: 'Proposition de partenariat commercial avec : ' },
+            { icon: '📬', label: 'Réponse fournisseur', value: 'Réponse à une demande de fournisseur concernant : ' },
+            { icon: '🙏', label: 'Lettre de remerciement', value: 'Lettre de remerciement adressée à : ' }
+        ]},
+        { id: 'subventions', label: 'Subventions', icon: '💰', documents: [
+            { icon: '🇨🇦', label: 'Subvention fédérale (PARI-CNRC)', value: 'Demande de subvention au Programme d\'aide à la recherche industrielle (PARI-CNRC) pour le projet : ' },
+            { icon: '⚜️', label: 'Subvention Québec (Investissement QC)', value: 'Demande de subvention à Investissement Québec pour le projet de : ' },
+            { icon: '🔬', label: 'Crédit R&D (RS&DE)', value: 'Préparation du dossier de crédit d\'impôt RS&DE pour les activités de recherche et développement : ' },
+            { icon: '🌱', label: 'Programme écologique', value: 'Demande au Fonds Écoleader / Fonds vert pour le projet environnemental : ' },
+            { icon: '👷', label: 'Subvention formation', value: 'Demande de subvention à Emploi-Québec pour la formation des employés sur : ' }
+        ]},
+        { id: 'administratif', label: 'Administratif', icon: '📁', documents: [
+            { icon: '📜', label: 'Procès-verbal', value: 'Rédiger le procès-verbal de la réunion du conseil d\'administration du : ' },
+            { icon: '📋', label: 'Politique interne', value: 'Rédiger une politique interne concernant : ' },
+            { icon: '📑', label: 'Contrat type', value: 'Préparer un contrat type pour : ' },
+            { icon: '⚖️', label: 'Mise en demeure', value: 'Rédiger une mise en demeure adressée à [nom] pour : ' }
+        ]},
+        { id: 'rh', label: 'Ressources Humaines', icon: '👥', documents: [
+            { icon: '📄', label: 'Offre d\'emploi', value: 'Rédiger une offre d\'emploi pour le poste de : ' },
+            { icon: '✅', label: 'Lettre d\'embauche', value: 'Lettre d\'offre d\'embauche pour [nom] au poste de : ' },
+            { icon: '📝', label: 'Évaluation employé', value: 'Formulaire d\'évaluation de performance pour : ' },
+            { icon: '🚪', label: 'Lettre de fin d\'emploi', value: 'Lettre de fin d\'emploi / cessation pour : ' }
+        ]},
+        { id: 'technique', label: 'Documents Techniques', icon: '🔧', documents: [
+            { icon: '📖', label: 'Manuel de procédure', value: 'Rédiger un manuel de procédure pour : ' },
+            { icon: '🔒', label: 'Fiche de sécurité', value: 'Fiche de données de sécurité (FDS) pour le produit : ' },
+            { icon: '📐', label: 'Spécification technique', value: 'Spécification technique détaillée pour : ' },
+            { icon: '✔️', label: 'Liste de vérification', value: 'Checklist / liste de vérification pour : ' }
+        ]},
+        { id: 'financier', label: 'Documents Financiers', icon: '💼', documents: [
+            { icon: '💵', label: 'Demande de financement', value: 'Demande de financement bancaire pour le projet : ' },
+            { icon: '📊', label: 'Plan d\'affaires', value: 'Section du plan d\'affaires concernant : ' },
+            { icon: '🧾', label: 'Justificatif de dépenses', value: 'Justificatif de dépenses pour le projet/subvention : ' },
+            { icon: '📈', label: 'Rapport financier', value: 'Rapport financier périodique incluant : ' }
+        ]}
+    ];
+    
+    const [selectedSecretaryCategory, setSelectedSecretaryCategory] = React.useState('correspondance');
+    const [secretaryInstructions, setSecretaryInstructions] = React.useState('');
+    const [secretaryReport, setSecretaryReport] = React.useState(null);
+    const [isGeneratingSecretary, setIsGeneratingSecretary] = React.useState(false);
     
     const getDateLabel = () => {
         const d = new Date(printDate);
@@ -1298,6 +1344,8 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
     const handlePrint = () => {
         if (selectedFormat === 'ai-report') {
             generateAIReport();
+        } else if (selectedFormat === 'secretary') {
+            generateSecretaryDocument();
         } else {
             onPrint(selectedFormat, new Date(printDate));
             onClose();
@@ -1757,13 +1805,128 @@ ${reportHtml}
     const formatOptions = [
         { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt', color: 'blue' },
         { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week', color: 'emerald' },
-        { id: 'ai-report', label: 'Rapports Automatisés', desc: 'Documents professionnels', icon: 'fa-file-alt', color: 'purple' }
+        { id: 'ai-report', label: 'Rapports Automatisés', desc: 'Documents professionnels', icon: 'fa-file-alt', color: 'purple' },
+        { id: 'secretary', label: 'Secrétaire de Direction', desc: 'Correspondance & Subventions', icon: 'fa-user-tie', color: 'indigo' }
     ];
     
     const colorStyles = {
         blue: { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-600', ring: 'ring-blue-200' },
         emerald: { bg: 'bg-emerald-50', border: 'border-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-200' },
-        purple: { bg: 'bg-purple-50', border: 'border-purple-500', text: 'text-purple-600', ring: 'ring-purple-200' }
+        purple: { bg: 'bg-purple-50', border: 'border-purple-500', text: 'text-purple-600', ring: 'ring-purple-200' },
+        indigo: { bg: 'bg-indigo-50', border: 'border-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-200' }
+    };
+    
+    // Génération document Secrétaire de Direction
+    const generateSecretaryDocument = async () => {
+        if (!secretaryInstructions.trim()) {
+            window.showToast && window.showToast('Veuillez décrire le document souhaité', 'warning');
+            return;
+        }
+        setIsGeneratingSecretary(true);
+        setSecretaryReport(null);
+        try {
+            const response = await axios.post('/api/ai/secretary', {
+                documentType: selectedSecretaryCategory,
+                instructions: secretaryInstructions.trim()
+            });
+            
+            if (response.data.success) {
+                setSecretaryReport(response.data);
+            } else {
+                window.showToast && window.showToast('Erreur de génération', 'error');
+            }
+        } catch (err) {
+            console.error('Secretary AI error:', err);
+            window.showToast && window.showToast('Erreur: ' + (err.response?.data?.error || err.message), 'error');
+        } finally {
+            setIsGeneratingSecretary(false);
+        }
+    };
+    
+    // Impression document Secrétaire
+    const printSecretaryDocument = async () => {
+        if (!secretaryReport) return;
+        
+        let companyShortName = 'IGP';
+        let companySubtitle = '';
+        let logoUrl = '/api/settings/logo';
+        try {
+            const settingsRes = await axios.get('/api/settings/config/public');
+            if (settingsRes.data) {
+                companyShortName = settingsRes.data.company_short_name || 'IGP';
+                companySubtitle = settingsRes.data.company_subtitle || '';
+                if (settingsRes.data.company_logo_url) logoUrl = settingsRes.data.company_logo_url;
+            }
+        } catch (e) { }
+        
+        const printWindow = window.open('', '_blank');
+        const todayFormatted = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const reportHtml = markdownToHtml(secretaryReport.document);
+        const docTitle = secretaryReport.title || 'Document';
+        
+        printWindow.document.write(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>${docTitle}</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11pt; line-height: 1.7; color: #333;
+    padding: 20mm 18mm 25mm 18mm;
+}
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25pt; padding-bottom: 15pt; border-bottom: 1pt solid #e0e0e0; }
+.header-left { display: flex; align-items: center; }
+.logo { height: 45pt; margin-right: 15pt; }
+.brand { border-left: 2pt solid #4f46e5; padding-left: 15pt; }
+.brand-name { font-size: 16pt; font-weight: 600; color: #1a1a1a; }
+.brand-sub { font-size: 9pt; color: #555; margin-top: 4pt; max-width: 250pt; }
+.header-right { text-align: right; font-size: 10pt; color: #555; }
+.title-block { text-align: center; padding: 20pt 0; margin-bottom: 20pt; border-bottom: 2pt solid #4f46e5; }
+.title-block h1 { font-size: 18pt; font-weight: 700; color: #1a1a1a; }
+.content { font-size: 11pt; }
+.content h2 { font-size: 14pt; color: #1a1a1a; margin: 18pt 0 10pt; border-bottom: 1pt solid #eee; padding-bottom: 6pt; }
+.content h3 { font-size: 12pt; color: #333; margin: 15pt 0 8pt; }
+.content p { margin-bottom: 10pt; text-align: justify; }
+.content ul, .content ol { margin: 10pt 0 10pt 20pt; }
+.content li { margin-bottom: 5pt; }
+.content strong { color: #1a1a1a; }
+.content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 10pt; }
+.content th, .content td { border: 1pt solid #ddd; padding: 8pt; text-align: left; }
+.content th { background: #f8f8f8; font-weight: 600; }
+.footer { margin-top: 30pt; padding-top: 15pt; border-top: 1pt solid #ddd; font-size: 9pt; color: #666; text-align: center; }
+@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<div class="header">
+    <div class="header-left">
+        <img src="${logoUrl}" class="logo" onerror="this.style.display='none'">
+        <div class="brand">
+            <div class="brand-name">${companyShortName}</div>
+            <div class="brand-sub">${companySubtitle}</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div>${todayFormatted}</div>
+    </div>
+</div>
+<div class="title-block">
+    <h1>${docTitle}</h1>
+</div>
+<div class="content">
+    ${reportHtml}
+</div>
+<div class="footer">
+    Document généré par ${companyShortName} - Secrétariat de Direction
+</div>
+</body>
+</html>`);
+        
+        printWindow.document.close();
+        setTimeout(() => { printWindow.print(); }, 300);
     };
     
     // Modal avec scroll et design professionnel
@@ -1795,7 +1958,7 @@ ${reportHtml}
                     // Format selector
                     React.createElement('div', {},
                         React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-3' }, 'Type de document'),
-                        React.createElement('div', { className: 'grid grid-cols-3 gap-3' },
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
                             formatOptions.map(opt => {
                                 const isSelected = selectedFormat === opt.id;
                                 return React.createElement('button', {
@@ -1866,8 +2029,83 @@ ${reportHtml}
                         })
                     ),
                     
+                    // Section Secrétaire de Direction
+                    selectedFormat === 'secretary' && React.createElement('div', { className: 'bg-indigo-50 rounded-lg p-4 border border-indigo-200' },
+                        React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
+                            React.createElement('i', { className: 'fas fa-user-tie text-indigo-600' }),
+                            React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Secrétaire de Direction IA'),
+                            React.createElement('span', { className: 'text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full' }, 'Lois QC/CA')
+                        ),
+                        // Catégories de documents
+                        React.createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
+                            secretaryCategories.map(cat => React.createElement('button', {
+                                key: cat.id,
+                                type: 'button',
+                                onClick: () => { setSelectedSecretaryCategory(cat.id); setSecretaryInstructions(''); },
+                                className: `flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all ${
+                                    selectedSecretaryCategory === cat.id 
+                                        ? 'bg-indigo-600 text-white' 
+                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-indigo-300'
+                                }`
+                            }, 
+                                React.createElement('span', {}, cat.icon),
+                                React.createElement('span', {}, cat.label)
+                            ))
+                        ),
+                        // Types de documents de la catégorie sélectionnée
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
+                            (secretaryCategories.find(c => c.id === selectedSecretaryCategory)?.documents || []).map((doc, i) => 
+                                React.createElement('button', {
+                                    key: i,
+                                    type: 'button',
+                                    onClick: () => setSecretaryInstructions(doc.value),
+                                    className: `flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all text-left ${
+                                        secretaryInstructions === doc.value 
+                                            ? 'bg-indigo-600 text-white' 
+                                            : 'bg-white text-gray-700 border border-gray-200 hover:border-indigo-400'
+                                    }`
+                                }, 
+                                    React.createElement('span', { className: 'text-base' }, doc.icon),
+                                    React.createElement('span', { className: 'truncate' }, doc.label)
+                                )
+                            )
+                        ),
+                        // Textarea pour instructions personnalisées
+                        React.createElement('textarea', {
+                            value: secretaryInstructions,
+                            onChange: (e) => setSecretaryInstructions(e.target.value),
+                            placeholder: 'Décrivez le document souhaité avec tous les détails pertinents (destinataire, objet, contexte, montants, dates, etc.)...',
+                            rows: 4,
+                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-gray-900 text-sm resize-none'
+                        }),
+                        // Info sur les connaissances légales
+                        React.createElement('div', { className: 'mt-3 p-3 bg-white rounded-lg border border-indigo-100' },
+                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                React.createElement('span', { className: 'font-medium text-indigo-700' }, '💡 Connaissances intégrées: '),
+                                'Lois canadiennes et québécoises applicables à l\'industrie manufacturière, programmes de subventions (PARI-CNRC, IQ, RS&DE, Emploi-Québec), normes de rédaction administrative.'
+                            )
+                        )
+                    ),
+                    
+                    // Document Secrétaire généré
+                    secretaryReport && selectedFormat === 'secretary' && React.createElement('div', { className: 'bg-green-50 rounded-lg p-4 border border-green-200' },
+                        React.createElement('div', { className: 'flex items-center justify-between mb-3' },
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('i', { className: 'fas fa-check-circle text-green-600' }),
+                                React.createElement('span', { className: 'text-sm font-medium text-green-800' }, secretaryReport.title || 'Document généré')
+                            ),
+                            React.createElement('button', {
+                                onClick: printSecretaryDocument,
+                                className: 'px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition'
+                            }, 'Imprimer')
+                        ),
+                        React.createElement('div', { className: 'bg-white rounded-lg p-3 max-h-48 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap border border-green-100' },
+                            secretaryReport.document
+                        )
+                    ),
+                    
                     // Rapport généré
-                    aiReport && React.createElement('div', { className: 'bg-green-50 rounded-lg p-4 border border-green-200' },
+                    aiReport && selectedFormat === 'ai-report' && React.createElement('div', { className: 'bg-green-50 rounded-lg p-4 border border-green-200' },
                         React.createElement('div', { className: 'flex items-center justify-between mb-3' },
                             React.createElement('div', { className: 'flex items-center gap-2' },
                                 React.createElement('i', { className: 'fas fa-check-circle text-green-600' }),
@@ -1890,16 +2128,26 @@ ${reportHtml}
                         onClick: onClose,
                         className: 'px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition'
                     }, 'Annuler'),
-                    React.createElement('button', {
-                        onClick: handlePrint,
-                        disabled: isGeneratingAI,
-                        className: `px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition flex items-center gap-2 ${isGeneratingAI ? 'opacity-50 cursor-not-allowed' : ''}`
-                    }, 
-                        isGeneratingAI 
-                            ? React.createElement('i', { className: 'fas fa-spinner fa-spin' })
-                            : React.createElement('i', { className: 'fas fa-download' }),
-                        isGeneratingAI ? 'Génération...' : 'Générer'
-                    )
+                    (selectedFormat === 'ai-report' || selectedFormat === 'secretary') 
+                        ? React.createElement('button', {
+                            onClick: handlePrint,
+                            disabled: isGeneratingAI || isGeneratingSecretary,
+                            className: `px-5 py-2.5 text-sm font-medium text-white rounded-lg transition flex items-center gap-2 ${
+                                selectedFormat === 'secretary' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-900 hover:bg-gray-800'
+                            } ${(isGeneratingAI || isGeneratingSecretary) ? 'opacity-50 cursor-not-allowed' : ''}`
+                        }, 
+                            (isGeneratingAI || isGeneratingSecretary)
+                                ? React.createElement('i', { className: 'fas fa-spinner fa-spin' })
+                                : React.createElement('i', { className: selectedFormat === 'secretary' ? 'fas fa-magic' : 'fas fa-file-alt' }),
+                            (isGeneratingAI || isGeneratingSecretary) ? 'Génération IA...' : (selectedFormat === 'secretary' ? 'Rédiger le document' : 'Générer le rapport')
+                        )
+                        : React.createElement('button', {
+                            onClick: handlePrint,
+                            className: 'px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition flex items-center gap-2'
+                        }, 
+                            React.createElement('i', { className: 'fas fa-download' }),
+                            'Exporter'
+                        )
                 )
             )
         )

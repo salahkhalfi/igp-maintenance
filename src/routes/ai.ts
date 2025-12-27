@@ -1310,4 +1310,317 @@ Ne jamais afficher les codes anglais bruts ou abréviations anglaises dans le do
     }
 });
 
+// ============================================================
+// POST /api/ai/secretary - Secrétaire de Direction IA
+// Génère des documents administratifs, correspondance, subventions
+// Connaissances: Lois canadiennes/québécoises, programmes de subventions
+// ============================================================
+app.post('/secretary', async (c) => {
+    try {
+        const authHeader = c.req.header('Authorization');
+        let token = authHeader?.replace('Bearer ', '') || getCookie(c, 'auth_token');
+        if (!token) return c.json({ error: 'Non autorisé' }, 401);
+        
+        const payload = await verifyToken(token);
+        if (!payload) return c.json({ error: 'Token invalide' }, 401);
+        
+        // Only admin and supervisor can use secretary
+        if (!['admin', 'supervisor'].includes(payload.role)) {
+            return c.json({ error: 'Accès réservé à la direction' }, 403);
+        }
+        
+        const env = c.env as Bindings;
+        const db = getDb(env);
+        
+        const body = await c.req.json();
+        const { documentType, instructions } = body;
+        
+        if (!instructions || instructions.trim().length < 10) {
+            return c.json({ error: 'Veuillez fournir des instructions détaillées (min. 10 caractères)' }, 400);
+        }
+        
+        // ===== LOAD COMPANY CONTEXT =====
+        let companyName = '';
+        let companySubtitle = '';
+        let companyContext = '';
+        
+        try {
+            const settings = await db.select().from(systemSettings)
+                .where(inArray(systemSettings.setting_key, [
+                    'company_title', 'company_subtitle', 'ai_custom_context', 'company_short_name'
+                ]))
+                .all();
+            
+            settings.forEach((s: any) => {
+                if (s.setting_key === 'company_title') companyName = s.setting_value;
+                if (s.setting_key === 'company_subtitle') companySubtitle = s.setting_value;
+                if (s.setting_key === 'ai_custom_context') companyContext = s.setting_value;
+            });
+        } catch (e) {
+            console.warn('[Secretary] Failed to load company settings');
+        }
+        
+        // ===== BUILD EXPERT PROMPT WITH LEGAL KNOWLEDGE =====
+        const legalKnowledgeBlock = `
+# CADRE LÉGAL ET RÉGLEMENTAIRE (CANADA / QUÉBEC)
+
+## LOIS FÉDÉRALES APPLICABLES À L'INDUSTRIE MANUFACTURIÈRE
+- **Loi canadienne sur la santé et la sécurité au travail** (Code canadien du travail, Partie II)
+- **Loi sur les produits dangereux** et SIMDUT 2015 (Système d'information sur les matières dangereuses)
+- **Loi de l'impôt sur le revenu** - Crédits RS&DE (Recherche scientifique et développement expérimental)
+- **Loi sur l'équité en matière d'emploi** (pour entreprises fédérales)
+- **Règlement sur les substances appauvrissant la couche d'ozone** (RSACO)
+- **Loi canadienne sur la protection de l'environnement** (LCPE)
+
+## LOIS QUÉBÉCOISES APPLICABLES
+- **Loi sur la santé et la sécurité du travail** (LSST) - CNESST
+- **Loi sur les accidents du travail et les maladies professionnelles** (LATMP)
+- **Loi sur les normes du travail** (LNT) - salaire minimum, congés, vacances
+- **Code civil du Québec** - contrats, responsabilité civile
+- **Loi sur la qualité de l'environnement** (LQE) - permis, attestations
+- **Loi sur l'équité salariale** - obligatoire pour entreprises 10+ employés
+- **Charte de la langue française** (Loi 101) - affichage, contrats, sécurité en français
+
+## PROGRAMMES DE SUBVENTIONS - FÉDÉRAL
+
+### PARI-CNRC (Programme d'aide à la recherche industrielle)
+- **Organisme**: Conseil national de recherches Canada
+- **Cible**: PME innovantes
+- **Financement**: Jusqu'à 80% des coûts de projet (max variable)
+- **Critères**: Projet R&D, potentiel commercial, capacité de l'entreprise
+- **Contact**: Conseiller en technologie industrielle (CTI) régional
+
+### RS&DE (Recherche scientifique et développement expérimental)
+- **Type**: Crédit d'impôt remboursable
+- **Taux**: Jusqu'à 35% pour SPCC (société privée sous contrôle canadien)
+- **Dépenses admissibles**: Salaires, matériaux, contrats de R&D, frais généraux
+- **Important**: Documentation contemporaine obligatoire
+
+### Fonds stratégique pour l'innovation (FSI)
+- **Organisme**: Innovation, Sciences et Développement économique Canada
+- **Montant**: Contribution remboursable, généralement > 10 M$
+- **Projets**: R&D à grande échelle, expansion d'installations
+
+### Programme Travail partagé
+- **Organisme**: Service Canada / EDSC
+- **But**: Éviter les mises à pied temporaires
+- **Durée**: 6 à 76 semaines
+
+## PROGRAMMES DE SUBVENTIONS - QUÉBEC
+
+### Investissement Québec
+- **ESSOR**: Prêt ou garantie de prêt (jusqu'à 50% du projet)
+- **PIVOT**: Transformation numérique, IA, automatisation
+- **Crédit d'impôt R&D Québec**: 14% à 30% selon la taille
+
+### Emploi-Québec
+- **MFOR (Mesure de formation)**: Jusqu'à 50% des coûts de formation
+- **PRIIME**: Intégration immigrants en emploi
+- **Subvention salariale**: Employés en difficulté d'emploi
+
+### Fonds Écoleader
+- **But**: Projets de développement durable, économie circulaire
+- **Aide**: Jusqu'à 50% des dépenses admissibles (max 100 000$)
+
+### RECYC-QUÉBEC
+- **Appels à projets**: Économie circulaire, gestion des matières résiduelles
+
+## NORMES SECTORIELLES MANUFACTURIÈRES
+- **ISO 9001**: Système de management de la qualité
+- **ISO 14001**: Management environnemental
+- **ISO 45001**: Santé et sécurité au travail
+- **CSA (Association canadienne de normalisation)**: Normes de sécurité produits
+- **BNQ (Bureau de normalisation du Québec)**: Normes québécoises`;
+
+        const documentTypeInstructions: Record<string, string> = {
+            'correspondance': `
+CONSIGNES SPÉCIFIQUES - CORRESPONDANCE OFFICIELLE
+- Format lettre d'affaires standard (en-tête, date, destinataire, objet, corps, salutation, signature)
+- Ton professionnel et respectueux
+- Structure claire avec paragraphes distincts
+- Formule de politesse appropriée selon le destinataire`,
+
+            'subventions': `
+CONSIGNES SPÉCIFIQUES - DEMANDE DE SUBVENTION
+- Structure selon les exigences du programme visé
+- Présentation claire du projet et de ses objectifs
+- Budget prévisionnel détaillé si demandé
+- Démonstration de l'admissibilité au programme
+- Arguments de retombées économiques/sociales
+- Conformité aux critères d'évaluation du programme
+- Références aux lois et règlements pertinents`,
+
+            'administratif': `
+CONSIGNES SPÉCIFIQUES - DOCUMENT ADMINISTRATIF
+- Structure formelle avec numérotation si applicable
+- Références légales précises (articles de loi, règlements)
+- Clarté et absence d'ambiguïté
+- Conformité aux pratiques juridiques québécoises`,
+
+            'rh': `
+CONSIGNES SPÉCIFIQUES - RESSOURCES HUMAINES
+- Conformité à la Loi sur les normes du travail (LNT)
+- Respect de la Charte des droits et libertés de la personne
+- Utilisation des termes légaux appropriés
+- Mention des obligations de l'employeur si applicable
+- Confidentialité des informations personnelles (Loi 25)`,
+
+            'technique': `
+CONSIGNES SPÉCIFIQUES - DOCUMENT TECHNIQUE
+- Langage technique précis et uniforme
+- Conformité SIMDUT 2015 si applicable
+- Références aux normes CSA/ISO pertinentes
+- Structure logique avec sections numérotées`,
+
+            'financier': `
+CONSIGNES SPÉCIFIQUES - DOCUMENT FINANCIER
+- Présentation professionnelle des chiffres
+- Conformité aux PCGR canadiens si applicable
+- Justifications claires des projections
+- Références aux programmes de financement pertinents`
+        };
+
+        const typeInstructions = documentTypeInstructions[documentType] || documentTypeInstructions['correspondance'];
+        
+        const today = new Date().toLocaleDateString('fr-CA', { 
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+        });
+
+        const systemPrompt = `# RÔLE
+Tu es une **Secrétaire de Direction d'élite** pour une entreprise manufacturière québécoise. Tu rédiges des documents professionnels impeccables: correspondance officielle, demandes de subventions, documents administratifs, RH et financiers.
+
+# IDENTITÉ DE L'ENTREPRISE
+- **Nom**: ${companyName || '[Nom de l\'entreprise]'}
+- **Description**: ${companySubtitle || '[Description]'}
+- **Contexte additionnel**: ${companyContext || 'Entreprise manufacturière québécoise'}
+
+# DATE ACTUELLE
+${today}
+
+${legalKnowledgeBlock}
+
+${typeInstructions}
+
+# RÈGLES ABSOLUES DE RÉDACTION
+1. **PROFESSIONNALISME**: Ton formel, vocabulaire précis, zéro faute
+2. **CONFORMITÉ LÉGALE**: Toute référence à une loi doit être exacte et vérifiable
+3. **FRANÇAIS IMPECCABLE**: Qualité Académie française, terminologie Office québécois de la langue française
+4. **STRUCTURE CLAIRE**: Paragraphes logiques, titres si nécessaire
+5. **ADAPTÉ AU DESTINATAIRE**: Registre approprié (gouvernement, partenaire, employé, etc.)
+6. **PRÊT À L'EMPLOI**: Le document doit pouvoir être utilisé tel quel
+
+# INTERDICTIONS
+- ❌ Ne jamais inventer de numéros de loi ou d'articles inexistants
+- ❌ Ne jamais inclure de placeholders visibles [À COMPLÉTER] - inventer des données réalistes cohérentes avec le contexte
+- ❌ Ne jamais utiliser de ton familier ou de jargon inapproprié
+- ❌ Ne jamais contredire les lois canadiennes/québécoises
+
+# FORMAT DE SORTIE
+Commence DIRECTEMENT par le document (pas d'introduction "Voici le document...").
+Le document doit être complet et prêt à imprimer.
+Utilise le format Markdown pour la structure (## titres, **gras**, listes).`;
+
+        console.log(`📝 [Secretary] Generating ${documentType} document`);
+
+        // ===== CALL AI =====
+        let aiResponse = '';
+        
+        if (env.DEEPSEEK_API_KEY) {
+            try {
+                console.log('📝 [Secretary] Using DeepSeek-Chat');
+                const response = await fetch('https://api.deepseek.com/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: instructions }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 3000
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json() as any;
+                    aiResponse = data.choices[0]?.message?.content || '';
+                }
+            } catch (e) {
+                console.warn('⚠️ [Secretary] DeepSeek failed, trying OpenAI');
+            }
+        }
+        
+        // Fallback to OpenAI
+        if (!aiResponse && env.OPENAI_API_KEY) {
+            try {
+                console.log('📝 [Secretary] Using GPT-4o-mini fallback');
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: instructions }
+                        ],
+                        temperature: 0.3,
+                        max_tokens: 3000
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json() as any;
+                    aiResponse = data.choices[0]?.message?.content || '';
+                }
+            } catch (e) {
+                console.error('❌ [Secretary] OpenAI also failed');
+            }
+        }
+        
+        if (!aiResponse) {
+            return c.json({ 
+                error: 'Impossible de générer le document. Vérifiez les clés API.' 
+            }, 500);
+        }
+        
+        // Extract title from document if possible
+        let title = 'Document';
+        const titleMatch = aiResponse.match(/^#+ (.+)$/m) || aiResponse.match(/^\*\*(.+?)\*\*/m);
+        if (titleMatch) {
+            title = titleMatch[1].replace(/\*\*/g, '').trim();
+        } else {
+            // Generate title from document type
+            const titleMap: Record<string, string> = {
+                'correspondance': 'Correspondance officielle',
+                'subventions': 'Demande de subvention',
+                'administratif': 'Document administratif',
+                'rh': 'Document RH',
+                'technique': 'Document technique',
+                'financier': 'Document financier'
+            };
+            title = titleMap[documentType] || 'Document de direction';
+        }
+        
+        return c.json({
+            success: true,
+            documentType,
+            title,
+            document: aiResponse,
+            generatedAt: new Date().toISOString(),
+            generatedBy: payload.full_name || payload.email
+        });
+        
+    } catch (e: any) {
+        console.error('❌ [Secretary] Error:', e);
+        return c.json({ error: e.message }, 500);
+    }
+});
+
 export default app;
