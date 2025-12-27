@@ -1,8 +1,8 @@
 /**
- * Système de Gestion de Maintenance - MaintenanceOS
+ * Système de Gestion de Maintenance
  *
  * @author Salah Khalfi
- * @organization MaintenanceOS
+ * @organization Gestion Maintenance (White-Label)
  * @department Département des Technologies de l'Information
  * @description Application de gestion de maintenance pour équipements industriels
  * @version 2.0.0 - Refactored Architecture
@@ -364,10 +364,12 @@ app.get("/", async (c) => {
   c.header('Pragma', 'no-cache');
   c.header('Expires', '0');
   
-  // Dynamic baseUrl for SEO meta tags (multi-tenant ready)
+  // Dynamic baseUrl and appName for SEO meta tags (multi-tenant/white-label ready)
   const config = createConfigService(c.env.DB);
   const baseUrl = await config.getBaseUrl();
-  return c.html(generateHomeHTML(baseUrl));
+  const companyShortName = await config.get('company_short_name', 'IGP');
+  const appName = companyShortName + ' Gestion';
+  return c.html(generateHomeHTML(baseUrl, appName));
 });
 
 

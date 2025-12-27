@@ -437,7 +437,7 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                                 <h2 className="text-white font-display font-bold text-lg tracking-wide leading-tight group-hover/card:text-emerald-400 transition-colors truncate">
                                     {firstName}
                                 </h2>
-                                <p className="text-emerald-500/70 text-[9px] font-bold uppercase tracking-wide mt-0.5 leading-tight whitespace-normal">MaintenanceOS</p>
+                                <p className="text-emerald-500/70 text-[9px] font-bold uppercase tracking-wide mt-0.5 leading-tight whitespace-normal">Gestion Maintenance</p>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[9px] font-bold text-gray-400 uppercase tracking-wider backdrop-blur-md truncate">
                                         {getRoleDisplayName(currentUserRole)}

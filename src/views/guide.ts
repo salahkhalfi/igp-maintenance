@@ -7,7 +7,7 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guide Utilisateur - MaintenanceOS</title>
+    <title>Guide Utilisateur - Système de Gestion</title>
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -101,7 +101,7 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">Guide Utilisateur</h1>
-                        <p class="text-gray-500 text-sm">MaintenanceOS - Version Janvier 2025</p>
+                        <p class="text-gray-500 text-sm">Système de Gestion - Version Janvier 2025</p>
                     </div>
                 </div>
                 <a href="/" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -747,7 +747,7 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
             <p class="text-gray-600 mb-2">Besoin d'aide supplémentaire?</p>
             <p class="text-gray-500 text-sm">Contactez votre administrateur ou utilisez l'Expert IA <span class="btn-icon bg-purple-100 text-purple-600 inline-flex mx-1"><i class="fas fa-robot"></i></span></p>
             <div class="mt-4 pt-4 border-t border-gray-200">
-                <p class="text-gray-400 text-xs">MaintenanceOS © 2025 - Guide v2.0</p>
+                <p class="text-gray-400 text-xs">Système de Gestion © 2025 - Guide v2.0</p>
             </div>
         </div>
 

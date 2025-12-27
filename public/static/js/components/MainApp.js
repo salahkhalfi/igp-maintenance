@@ -23,6 +23,21 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
     const [showAIChat, setShowAIChat] = React.useState(false);
     const [showDataImport, setShowDataImport] = React.useState(false);
     const [dataImportTab, setDataImportTab] = React.useState('users');
+    
+    // Nom dynamique de l'application (chargé depuis l'API)
+    const [appName, setAppName] = React.useState('');
+    
+    // Charger le nom de l'application au démarrage
+    React.useEffect(() => {
+        axios.get('/api/settings/config/public')
+            .then(res => {
+                if (res.data) {
+                    const shortName = res.data.company_short_name || 'IGP';
+                    setAppName(shortName + ' Gestion');
+                }
+            })
+            .catch(() => setAppName('Gestion Maintenance'));
+    }, []);
 
     // Gestion des modules (Feature Flipping)
     const [activeModules, setActiveModules] = React.useState({ planning: true, statistics: true, notifications: true, messaging: true, machines: true });
@@ -473,7 +488,7 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
                 'Application conçue et développée par ',
                 React.createElement('span', { style: { fontWeight: '900', color: '#003366' } }, "Le département des Technologies de l'Information")
             ),
-                React.createElement('p', { className: 'text-xs', style: { color: '#1a1a1a', fontWeight: '700' } }, '© ' + new Date().getFullYear() + ' - MaintenanceOS')
+                React.createElement('p', { className: 'text-xs', style: { color: '#1a1a1a', fontWeight: '700' } }, '© ' + new Date().getFullYear() + (appName ? ' - ' + appName : ''))
             )
         ),
 

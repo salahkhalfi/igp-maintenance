@@ -226,7 +226,7 @@ export async function sendPushNotification(
 
     // Valider et nettoyer le payload
     if (!payload.title || payload.title.trim() === '') {
-      payload.title = 'MaintenanceOS';
+      payload.title = 'Gestion Maintenance';
     }
     if (payload.title.length > 100) {
       payload.title = payload.title.substring(0, 97) + '...';

@@ -13,8 +13,8 @@
 // These patterns trigger pre-commit hook failure:
 // - app.igpglass.ca (use getBrandingConfig().domain or system_settings)
 // - igpglass.com (use getBrandingConfig().domain or system_settings)
-// - MaintenanceOS (use getBrandingConfig().appName or system_settings)
-// - IGP Glass (use getBrandingConfig().companyName or system_settings)
+// - Hardcoded app names (use company_short_name + ' Gestion' from system_settings)
+// - Hardcoded company names (use company_subtitle from system_settings)
 // - support@maintenance-app.com (use getBrandingConfig().supportEmail)
 // =============================================================================
 
@@ -43,15 +43,16 @@ export interface BrandingConfig {
 /**
  * Default branding config (SaaS vendor defaults)
  * For tenant-specific values, use system_settings from DB
+ * NOTE: appName should be dynamically built as: company_short_name + ' Gestion'
  */
 export const DEFAULT_BRANDING: BrandingConfig = {
-  // App identity
-  appName: 'MaintenanceOS',
+  // App identity - Generic defaults (tenant overrides via company_short_name + ' Gestion')
+  appName: 'Gestion Maintenance',
   appTagline: 'Système de Gestion de Maintenance',
   version: '3.0.0',
   
   // Vendor (us)
-  vendorName: 'MaintenanceOS',
+  vendorName: 'Gestion Maintenance',
   supportEmail: 'support@maintenance-app.com',
   
   // Default domain (tenant can override via custom domain)

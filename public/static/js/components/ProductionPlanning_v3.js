@@ -409,7 +409,7 @@ const ProductionPlanning = ({ onClose }) => {
                     
                     <div class="footer">
                         <span>Document confidentiel • Ne pas diffuser</span>
-                        <span>MaintenanceOS</span>
+                        <span>${companySubtitle || 'Gestion Maintenance'}</span>
                     </div>
                 </body>
                 </html>
@@ -634,7 +634,7 @@ const ProductionPlanning = ({ onClose }) => {
                     
                     <div class="footer">
                         <div class="footer-left">Document confidentiel • Ne pas diffuser</div>
-                        <div class="footer-right">MaintenanceOS</div>
+                        <div class="footer-right">${companySubtitle || 'Gestion Maintenance'}</div>
                     </div>
                 </body>
                 </html>

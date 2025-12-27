@@ -2,9 +2,9 @@
 -- Date: 2024-12-21
 -- Phase 1.2 of modernization plan
 
--- App branding (if not exists)
+-- App branding (if not exists) - NOTE: app_name is dynamically generated from company_short_name + ' Gestion'
 INSERT OR IGNORE INTO system_settings (setting_key, setting_value) VALUES 
-  ('app_name', 'MaintenanceOS'),
+  ('app_name', 'Gestion Maintenance'),
   ('app_tagline', 'Gestion intelligente de maintenance'),
   ('primary_color', '#10b981'),
   ('secondary_color', '#1f2937'),

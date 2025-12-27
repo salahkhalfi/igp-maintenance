@@ -2,24 +2,26 @@
  * ConfigService - Centralized configuration management
  * 
  * All business values must come from DB (system_settings) or ENV.
- * ZERO hardcoding policy.
+ * ZERO hardcoding policy - app name is dynamically generated from company_short_name.
  * 
  * Usage:
  *   const config = new ConfigService(c.env.DB);
- *   const appName = await config.get('app_name', 'MaintenanceOS');
+ *   const appName = await config.get('app_name', 'Gestion Maintenance');
  *   const aiPrompt = await config.get('ai_identity_block');
  */
 
 import { D1Database } from '@cloudflare/workers-types';
 
 // Default values (generic, not business-specific)
+// NOTE: app_name should be dynamically built as: company_short_name + ' Gestion'
 const DEFAULTS: Record<string, string> = {
-  // App branding
-  app_name: 'MaintenanceOS',
+  // App branding - Generic defaults, override via DB
+  app_name: 'Gestion Maintenance',
   app_tagline: 'Gestion intelligente de maintenance',
   app_base_url: 'https://example.com',
   primary_color: '#10b981',
   secondary_color: '#1f2937',
+  company_short_name: 'IGP',
   
   // AI defaults
   ai_expert_name: 'Assistant IA',

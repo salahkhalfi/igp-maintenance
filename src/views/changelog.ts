@@ -4,7 +4,7 @@ export const changelogHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique des Versions - MaintenanceOS</title>
+    <title>Historique des Versions - Système de Gestion</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" href="/icon-192.png">
     <link rel="stylesheet" href="/static/styles.css">
@@ -2088,7 +2088,7 @@ export const changelogHTML = `
         </div>
 
         <div class="mt-6 text-center text-white text-sm">
-            <p>© 2025 - MaintenanceOS</p>
+            <p>© 2025 - Système de Gestion</p>
             <p class="mt-1 opacity-75">Développé par le Département des Technologies de l'Information</p>
         </div>
     </div>

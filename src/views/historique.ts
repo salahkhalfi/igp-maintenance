@@ -3,7 +3,7 @@ export const historiqueHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique des Améliorations - MaintenanceOS</title>
+    <title>Historique des Améliorations - Système de Gestion</title>
     <link rel="icon" type="image/png" href="/static/logo-igp.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -152,7 +152,7 @@ export const historiqueHTML = `<!DOCTYPE html>
                     </div>
                     <div>
                         <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Historique des Améliorations</h1>
-                        <p class="text-sm text-gray-600 mt-1">Évolution chronologique du système MaintenanceOS</p>
+                        <p class="text-sm text-gray-600 mt-1">Évolution chronologique du système Système de Gestion</p>
                     </div>
                 </div>
                 <button onclick="window.location.href='/'" class="back-button">
@@ -461,7 +461,7 @@ export const historiqueHTML = `<!DOCTYPE html>
                 Retour à l'application
             </button>
             <p class="text-white text-sm mt-4">
-                © 2025 MaintenanceOS - Système de Gestion de Maintenance v2.8.1
+                © 2025 Système de Gestion - Système de Gestion de Maintenance v2.8.1
             </p>
         </div>
     </div>

@@ -1,5 +1,5 @@
 /**
- * Service Worker pour PWA MaintenanceOS
+ * Service Worker pour PWA Gestion Maintenance
  * 
  * ⚠️ AVERTISSEMENT IMPORTANT:
  * Ce Service Worker NE FOURNIT PAS de fonctionnalité hors-ligne pour l'application.
@@ -203,7 +203,7 @@ self.addEventListener('push', (event) => {
   // ... (Code existant conservé)
   console.log('[SW] Push received');
   
-  let data = { title: 'MaintenanceOS', body: 'Nouvelle notification' };
+  let data = { title: 'Gestion Maintenance', body: 'Nouvelle notification' };
   
   if (event.data) {
     try {

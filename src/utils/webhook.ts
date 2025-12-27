@@ -84,7 +84,7 @@ export async function sendWebhook(
     const payload = {
       event_type: eventType,
       timestamp: new Date().toISOString(),
-      source: 'MaintenanceOS',
+      source: 'Gestion Maintenance',
       ...data
     };
 

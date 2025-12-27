@@ -1,15 +1,19 @@
 /**
- * Generate home HTML with dynamic baseUrl for SEO meta tags
+ * Generate home HTML with dynamic baseUrl and appName for SEO meta tags
  * @param baseUrl - The base URL of the app (e.g., https://app.example.com)
+ * @param appName - The dynamic application name (e.g., "IGP Gestion")
  */
-export function generateHomeHTML(baseUrl: string = ''): string {
+export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestion Maintenance'): string {
+  const pageTitle = appName ? `${appName} - Système de Gestion de Maintenance` : 'Système de Gestion de Maintenance';
+  const metaDescription = `${appName || 'Système'} - Gestion de maintenance industrielle. Gérez vos tickets, machines et équipes de techniciens en temps réel.`;
+  
   return `
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MaintenanceOS - Système de Gestion de Maintenance</title>
+    <title>${pageTitle}</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" href="/icon-192.png">
     <link rel="manifest" href="/manifest.json">
@@ -22,21 +26,21 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <meta name="theme-color" content="#003B73">
     
     <!-- SEO & Social Meta Tags -->
-    <meta name="description" content="MaintenanceOS - Système de gestion de maintenance industrielle. Gérez vos tickets, machines et équipes de techniciens en temps réel.">
+    <meta name="description" content="${metaDescription}">
     <meta name="keywords" content="maintenance, industriel, GMAO, tickets, machines, techniciens, PWA">
-    <meta name="author" content="MaintenanceOS">
+    <meta name="author" content="${appName || 'Gestion Maintenance'}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="${baseUrl}/">
-    <meta property="og:title" content="MaintenanceOS - Gestion de Maintenance Industrielle">
+    <meta property="og:title" content="${appName || 'Gestion'} - Maintenance Industrielle">
     <meta property="og:description" content="Système complet de gestion de maintenance pour l'industrie. Tickets, machines, planification et IA intégrée.">
     <meta property="og:image" content="${baseUrl}/static/og-image.png">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="${baseUrl}/">
-    <meta property="twitter:title" content="MaintenanceOS - Gestion de Maintenance Industrielle">
+    <meta property="twitter:title" content="${appName || 'Gestion'} - Maintenance Industrielle">
     <meta property="twitter:description" content="Système complet de gestion de maintenance pour l'industrie.">
     <meta property="twitter:image" content="${baseUrl}/static/og-image.png">
     
@@ -50,7 +54,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <link rel="dns-prefetch" href="https://api.deepseek.com">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="MaintenanceOS">
+    <meta name="apple-mobile-web-app-title" content="${appName || 'Gestion'}">
     <link rel="apple-touch-icon" href="/icon-192.png">
     <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -88,7 +92,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <script src="/static/js/dist/AppHeader.min.js?v=d352264"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=d352264.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=d352264.0.0"></script>
-    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=48daecc"></script>
+    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=69ab2a4"></script>
     <script src="/static/js/dist/KanbanBoard.min.js?v=d352264"></script>
     <script src="/static/js/dist/AdminRoles.min.js?v=d352264"></script>
     <script src="/static/js/dist/ManageColumnsModal.min.js?v=d352264"></script>
@@ -99,7 +103,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
     <script src="/static/js/dist/UserManagementModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/DataImportModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/VoiceTicketFab.min.js?v=d352264"></script>
-    <script src="/static/js/dist/MainApp.min.js?v=d352264"></script>
+    <script src="/static/js/dist/MainApp.min.js?v=e811ed5"></script>
     <script src="/static/js/dist/App.min.js?v=d352264"></script>
     <!-- DISABLED: main.js conflicts with CDN React - uses bundled React which breaks Legacy MainApp hooks -->
     <!-- <script type="module" src="/static/client/main.js"></script> -->
@@ -638,7 +642,7 @@ export function generateHomeHTML(baseUrl: string = ''): string {
         // OverdueTicketsModal - DÉPLACÉ VERS /static/js/dist/OverdueTicketsModal.min.js?v=d352264
         // PushDevicesModal - DÉPLACÉ VERS /static/js/dist/PushDevicesModal.min.js?v=d352264
         // UserManagementModal - DÉPLACÉ VERS /static/js/dist/UserManagementModal.min.js?v=d352264
-        // MainApp - DÉPLACÉ VERS /static/js/dist/MainApp.min.js?v=d352264
+        // MainApp - DÉPLACÉ VERS /static/js/dist/MainApp.min.js?v=e811ed5
         // App - DÉPLACÉ VERS /static/js/dist/App.min.js?v=d352264
 
         // --- TV DASHBOARD MODAL ---
@@ -860,5 +864,5 @@ export function generateHomeHTML(baseUrl: string = ''): string {
 `;
 }
 
-// Legacy export for backward compatibility (uses empty baseUrl)
-export const homeHTML = generateHomeHTML('');
+// Legacy export for backward compatibility (uses empty baseUrl and default appName)
+export const homeHTML = generateHomeHTML('', 'Gestion Maintenance');
