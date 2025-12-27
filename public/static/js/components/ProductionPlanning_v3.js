@@ -1423,14 +1423,36 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabelCaps}</title>
 <style>
-@page { size: A4; margin: 25mm 20mm; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* Marges d'impression pour Safari/Chrome/Firefox */
+@page { 
+    size: A4; 
+    margin: 20mm 18mm 20mm 18mm;
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+html, body { 
+    width: 100%;
+    height: 100%;
+}
 
 body { 
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 10pt;
-    line-height: 1.5;
+    font-size: 11pt;
+    line-height: 1.7;
     color: #333;
+    /* Marges de secours si @page ne fonctionne pas */
+    padding: 15mm 12mm;
+}
+
+/* Wrapper principal avec marges explicites */
+.page-wrapper {
+    max-width: 170mm;
+    margin: 0 auto;
 }
 
 /* ══════════ HEADER ══════════ */
@@ -1438,146 +1460,173 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 30pt;
+    margin-bottom: 25pt;
+    padding-bottom: 15pt;
+    border-bottom: 1pt solid #e0e0e0;
 }
 .header-left {
     display: flex;
     align-items: center;
 }
 .logo {
-    height: 40pt;
-    margin-right: 12pt;
+    height: 45pt;
+    margin-right: 15pt;
 }
 .brand {
-    border-left: 1pt solid #ccc;
-    padding-left: 12pt;
+    border-left: 2pt solid #0066cc;
+    padding-left: 15pt;
 }
 .brand-name {
-    font-size: 14pt;
+    font-size: 16pt;
     font-weight: 600;
-    color: #222;
+    color: #1a1a1a;
+    letter-spacing: 0.5pt;
 }
 .brand-sub {
-    font-size: 8pt;
-    color: #666;
-    margin-top: 2pt;
+    font-size: 9pt;
+    color: #555;
+    margin-top: 4pt;
+    max-width: 250pt;
 }
 .header-right {
     text-align: right;
-    font-size: 9pt;
-    color: #666;
+    font-size: 10pt;
+    color: #555;
 }
 .header-right .ref {
-    font-size: 8pt;
-    color: #999;
-    margin-top: 2pt;
+    font-size: 9pt;
+    color: #888;
+    margin-top: 4pt;
 }
 
 /* ══════════ TITLE ══════════ */
 .title-block {
     text-align: center;
-    padding: 20pt 0;
-    margin-bottom: 24pt;
-    border-top: 2pt solid #222;
+    padding: 25pt 0;
+    margin-bottom: 25pt;
+    background: linear-gradient(to right, #f8f9fa, #fff, #f8f9fa);
+    border-top: 3pt solid #1a1a1a;
     border-bottom: 1pt solid #ddd;
 }
 .title-block h1 {
-    font-size: 18pt;
-    font-weight: 600;
-    color: #222;
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1a1a1a;
     text-transform: uppercase;
-    letter-spacing: 2pt;
+    letter-spacing: 3pt;
 }
 .title-block .period {
-    font-size: 11pt;
-    color: #666;
-    margin-top: 6pt;
+    font-size: 12pt;
+    color: #555;
+    margin-top: 10pt;
+    font-weight: 400;
 }
 
 /* ══════════ SUMMARY BOX ══════════ */
 .summary-box {
-    background: #f8f8f8;
-    padding: 16pt 20pt;
-    margin-bottom: 24pt;
+    background: #f5f7fa;
+    padding: 18pt 22pt;
+    margin-bottom: 25pt;
+    border-left: 4pt solid #0066cc;
+    border-radius: 0 4pt 4pt 0;
 }
 .summary-box .label {
-    font-size: 7pt;
+    font-size: 8pt;
     text-transform: uppercase;
-    letter-spacing: 1pt;
-    color: #999;
-    margin-bottom: 6pt;
+    letter-spacing: 1.5pt;
+    color: #888;
+    margin-bottom: 8pt;
+    font-weight: 600;
 }
 .summary-box .text {
-    font-size: 10pt;
+    font-size: 11pt;
     color: #333;
+    line-height: 1.6;
 }
 
 /* ══════════ KPI ROW ══════════ */
 .kpi-row {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 28pt;
-    padding-bottom: 20pt;
-    border-bottom: 1pt solid #eee;
+    justify-content: space-around;
+    margin-bottom: 30pt;
+    padding: 20pt 0;
+    background: #fafbfc;
+    border: 1pt solid #e8e8e8;
+    border-radius: 4pt;
 }
 .kpi-item {
     text-align: center;
     flex: 1;
+    padding: 0 10pt;
+    border-right: 1pt solid #e0e0e0;
+}
+.kpi-item:last-child {
+    border-right: none;
 }
 .kpi-value {
-    font-size: 32pt;
+    font-size: 36pt;
     font-weight: 300;
-    color: #222;
+    color: #1a1a1a;
+    line-height: 1.2;
 }
 .kpi-value.alert {
-    color: #d32f2f;
+    color: #c62828;
+    font-weight: 500;
 }
 .kpi-label {
-    font-size: 7pt;
+    font-size: 8pt;
     text-transform: uppercase;
-    letter-spacing: 1pt;
-    color: #999;
-    margin-top: 4pt;
+    letter-spacing: 1.5pt;
+    color: #777;
+    margin-top: 8pt;
+    font-weight: 500;
 }
 
 /* ══════════ CONTENT ══════════ */
+.content {
+    line-height: 1.8;
+}
+
 .content h1 {
-    font-size: 11pt;
-    font-weight: 600;
-    color: #222;
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1a1a1a;
     text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    margin: 22pt 0 10pt;
-    padding-bottom: 6pt;
-    border-bottom: 1pt solid #222;
+    letter-spacing: 1pt;
+    margin: 28pt 0 14pt;
+    padding-bottom: 8pt;
+    border-bottom: 2pt solid #1a1a1a;
 }
 .content h1:first-child { margin-top: 0; }
 
 .content h2 {
-    font-size: 10pt;
+    font-size: 12pt;
     font-weight: 600;
-    color: #444;
-    margin: 16pt 0 8pt;
+    color: #333;
+    margin: 22pt 0 10pt;
+    padding-left: 10pt;
+    border-left: 3pt solid #0066cc;
 }
 
 .content h3 {
-    font-size: 10pt;
-    font-weight: 500;
-    color: #555;
-    font-style: italic;
-    margin: 12pt 0 6pt;
+    font-size: 11pt;
+    font-weight: 600;
+    color: #444;
+    margin: 18pt 0 8pt;
 }
 
 .content p {
-    margin: 8pt 0;
+    margin: 12pt 0;
     text-align: justify;
+    line-height: 1.8;
 }
 
 .content ul, .content ol { 
-    margin: 8pt 0 8pt 16pt;
+    margin: 14pt 0 14pt 24pt;
 }
 .content li { 
-    margin: 4pt 0;
+    margin: 8pt 0;
+    line-height: 1.7;
 }
 
 .content strong { font-weight: 600; }
@@ -1587,47 +1636,70 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 14pt 0;
-    font-size: 9pt;
+    margin: 18pt 0;
+    font-size: 10pt;
 }
 th {
-    background: #f5f5f5;
+    background: #f0f2f5;
     border: 1pt solid #ddd;
-    padding: 8pt;
+    padding: 10pt 8pt;
     text-align: left;
     font-weight: 600;
-    font-size: 8pt;
+    font-size: 9pt;
     text-transform: uppercase;
+    color: #444;
 }
 td {
     border: 1pt solid #ddd;
-    padding: 7pt 8pt;
+    padding: 9pt 8pt;
+    line-height: 1.5;
 }
 tr:nth-child(even) { background: #fafafa; }
 
 /* ══════════ FOOTER ══════════ */
 .footer {
-    margin-top: 40pt;
-    padding-top: 12pt;
+    margin-top: 50pt;
+    padding-top: 15pt;
     border-top: 1pt solid #ddd;
     display: flex;
     justify-content: space-between;
-    font-size: 8pt;
-    color: #999;
+    font-size: 9pt;
+    color: #888;
 }
 .footer .conf {
     text-transform: uppercase;
-    letter-spacing: 0.5pt;
+    letter-spacing: 1pt;
+    font-weight: 500;
 }
 
+/* ══════════ PRINT STYLES ══════════ */
 @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .kpi-row, .title-block { page-break-inside: avoid; }
-    h1, h2, h3 { page-break-after: avoid; }
+    body { 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important;
+        padding: 0 !important;
+    }
+    .page-wrapper {
+        max-width: none;
+    }
+    .kpi-row, .title-block, .summary-box { 
+        page-break-inside: avoid; 
+    }
+    h1, h2, h3 { 
+        page-break-after: avoid; 
+    }
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 10pt 18mm;
+    }
 }
 </style>
 </head>
 <body>
+<div class="page-wrapper">
 
 <div class="header">
     <div class="header-left">
@@ -1683,10 +1755,11 @@ ${reportHtml}
     <span>${companySubtitle}</span>
 </div>
 
+</div>
 </body>
 </html>`);
         printWindow.document.close();
-        setTimeout(() => printWindow.print(), 400);
+        setTimeout(() => printWindow.print(), 500);
     };
     
     const formatOptions = [
