@@ -1304,7 +1304,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         }
     };
     
-    // Génération du rapport IA
+    // Génération du rapport automatisé
     const generateAIReport = async () => {
         setIsGeneratingAI(true);
         setAiReport(null);
@@ -1757,7 +1757,7 @@ ${reportHtml}
     const formatOptions = [
         { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt', color: 'blue' },
         { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week', color: 'emerald' },
-        { id: 'ai-report', label: 'Assistant IA', desc: 'Documents sur mesure', icon: 'fa-magic', color: 'purple' }
+        { id: 'ai-report', label: 'Rapports Automatisés', desc: 'Documents professionnels', icon: 'fa-file-alt', color: 'purple' }
     ];
     
     const colorStyles = {
@@ -1834,11 +1834,11 @@ ${reportHtml}
                         )
                     ),
                     
-                    // Assistant IA section
+                    // Section Rapports Automatisés
                     selectedFormat === 'ai-report' && React.createElement('div', { className: 'bg-gray-50 rounded-lg p-4 border border-gray-200' },
                         React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
-                            React.createElement('i', { className: 'fas fa-robot text-gray-600' }),
-                            React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Type de document IA')
+                            React.createElement('i', { className: 'fas fa-file-invoice text-gray-600' }),
+                            React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Type de document')
                         ),
                         // Suggestions
                         React.createElement('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
