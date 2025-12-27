@@ -1,5 +1,5 @@
-import { eq, like, or, and, desc, sql, not, inArray, gte, lte, aliasedTable } from 'drizzle-orm';
-import { tickets, machines, users, ticketComments, systemSettings, planningEvents, plannerNotes, media } from '../db/schema';
+import { eq, like, or, and, desc, sql, not, inArray, gte, lte, aliasedTable, isNull } from 'drizzle-orm';
+import { tickets, machines, users, ticketComments, systemSettings, planningEvents, plannerNotes, media, pushSubscriptions } from '../db/schema';
 
 // --- TYPE DEFINITIONS ---
 export type ToolDefinition = {
