@@ -42,15 +42,6 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
                 .replace(/\n/g, '<br/>');
         };
 
-        // Générer le contenu HTML des conseils
-        const conseilsHTML = assistantMessages.map((msg, idx) => `
-            <div class="conseil">
-                <div class="conseil-content">
-                    ${processContent(msg.content)}
-                </div>
-            </div>
-        `).join('');
-
         const ticketInfo = ticket ? `
             <div class="ticket-info">
                 <strong>Équipement:</strong> ${ticket.machine_type || ''} ${ticket.model || ''}<br/>
@@ -64,106 +55,86 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
     <meta charset="UTF-8">
     <title>Conseils Expert Industriel</title>
     <style>
-        @page { margin: 0; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { width: 100%; height: 100%; }
+        @page { margin: 15mm 12mm; }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.5;
+            font-size: 10pt;
+            line-height: 1.4;
             color: #1f2937;
-            padding: 18mm 15mm 20mm 15mm;
+            margin: 0;
+            padding: 0;
         }
-        
         .header {
             display: flex;
             align-items: center;
-            gap: 12pt;
-            padding-bottom: 12pt;
+            gap: 10pt;
+            padding-bottom: 8pt;
             border-bottom: 2pt solid #7c3aed;
-            margin-bottom: 16pt;
+            margin-bottom: 10pt;
         }
         .header-icon {
-            width: 40pt;
-            height: 40pt;
-            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            width: 32pt;
+            height: 32pt;
+            background: #7c3aed;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 18pt;
+            font-size: 14pt;
         }
         .header-text h1 {
-            font-size: 16pt;
+            font-size: 14pt;
             font-weight: 700;
             color: #1f2937;
             margin: 0;
         }
         .header-text p {
-            font-size: 9pt;
+            font-size: 8pt;
             color: #6b7280;
-            margin: 2pt 0 0 0;
+            margin: 1pt 0 0 0;
         }
         .date {
             margin-left: auto;
-            font-size: 9pt;
+            font-size: 8pt;
             color: #6b7280;
         }
-        
         .ticket-info {
             background: #f3f4f6;
-            border-left: 3pt solid #7c3aed;
-            padding: 10pt 12pt;
-            margin-bottom: 16pt;
-            font-size: 10pt;
+            border-left: 2pt solid #7c3aed;
+            padding: 6pt 10pt;
+            margin-bottom: 10pt;
+            font-size: 9pt;
         }
-        
-        .conseil {
-            margin-bottom: 14pt;
-            page-break-inside: avoid;
-        }
-        .conseil-content {
-            background: #fafafa;
-            border: 1pt solid #e5e7eb;
-            border-radius: 6pt;
-            padding: 12pt 14pt;
-        }
-        .conseil-content h1, .conseil-content h2, .conseil-content h3 {
+        .content h1, .content h2, .content h3 {
             color: #1f2937;
-            margin: 10pt 0 6pt 0;
+            margin: 8pt 0 4pt 0;
         }
-        .conseil-content h1 { font-size: 13pt; }
-        .conseil-content h2 { font-size: 12pt; }
-        .conseil-content h3 { font-size: 11pt; }
-        .conseil-content p {
-            margin: 6pt 0;
-            line-height: 1.5;
+        .content h1 { font-size: 12pt; font-weight: 700; }
+        .content h2 { font-size: 11pt; font-weight: 600; color: #4f46e5; }
+        .content h3 { font-size: 10pt; font-weight: 600; }
+        .content p {
+            margin: 4pt 0;
+            line-height: 1.4;
         }
-        .conseil-content ul, .conseil-content ol {
-            margin: 6pt 0 6pt 16pt;
+        .content ul, .content ol {
+            margin: 4pt 0 4pt 14pt;
             padding: 0;
         }
-        .conseil-content li {
-            margin: 4pt 0;
-            line-height: 1.45;
+        .content li {
+            margin: 2pt 0;
+            line-height: 1.35;
         }
-        .conseil-content strong {
-            color: #4f46e5;
-        }
-        
+        .content strong { color: #4f46e5; }
+        .content a { color: #7c3aed; }
         .footer {
-            margin-top: 20pt;
-            padding-top: 10pt;
+            margin-top: 14pt;
+            padding-top: 6pt;
             border-top: 1pt solid #e5e7eb;
-            font-size: 8pt;
+            font-size: 7pt;
             color: #9ca3af;
             text-align: center;
-        }
-        
-        @media print {
-            body { padding: 18mm 15mm 20mm 15mm !important; }
-            .conseil { page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -174,13 +145,10 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
             <h1>Expert Industriel</h1>
             <p>Conseils Techniques & Maintenance</p>
         </div>
-        <div class="date">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+        <div class="date">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
-    
     ${ticketInfo}
-    
-    ${conseilsHTML}
-    
+    <div class="content">${assistantMessages.map(m => processContent(m.content)).join('<hr style="border:none;border-top:1pt solid #e5e7eb;margin:10pt 0;">')}</div>
     <div class="footer">
         Document généré automatiquement • Les conseils sont fournis à titre indicatif • Vérifiez toujours les procédures de sécurité
     </div>

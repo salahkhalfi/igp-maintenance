@@ -83,7 +83,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/RoleDropdown.min.js?v=d352264"></script>
     <script src="/static/js/dist/SystemSettingsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PerformanceModal.min.js?v=d352264"></script>
-    <script src="/static/js/dist/AIChatModal_v4.min.js?v=7e26fb0"></script>
+    <script src="/static/js/dist/AIChatModal_v4.min.js?v=d389a53"></script>
     <script src="/static/js/dist/OverdueTicketsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PushDevicesModal.min.js?v=d352264"></script>
     <!-- MISSING SCRIPTS RESTORED -->
