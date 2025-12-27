@@ -1339,25 +1339,95 @@ app.post('/secretary', async (c) => {
             return c.json({ error: 'Veuillez fournir des instructions détaillées (min. 10 caractères)' }, 400);
         }
         
-        // ===== LOAD COMPANY CONTEXT =====
+        // ===== LOAD COMPANY IDENTITY FROM AI CONFIG (Cerveau de l'IA) =====
+        // Utilise les mêmes blocs que l'Expert IA pour une cohérence parfaite
+        const aiConfig = await getAiConfig(db);
+        
+        // ===== LOAD ADDITIONAL COMPANY SETTINGS =====
         let companyName = '';
         let companySubtitle = '';
-        let companyContext = '';
+        let companyShortName = '';
         
         try {
             const settings = await db.select().from(systemSettings)
                 .where(inArray(systemSettings.setting_key, [
-                    'company_title', 'company_subtitle', 'ai_custom_context', 'company_short_name'
+                    'company_title', 'company_subtitle', 'company_short_name'
                 ]))
                 .all();
             
             settings.forEach((s: any) => {
                 if (s.setting_key === 'company_title') companyName = s.setting_value;
                 if (s.setting_key === 'company_subtitle') companySubtitle = s.setting_value;
-                if (s.setting_key === 'ai_custom_context') companyContext = s.setting_value;
+                if (s.setting_key === 'company_short_name') companyShortName = s.setting_value;
             });
         } catch (e) {
             console.warn('[Secretary] Failed to load company settings');
+        }
+        
+        // ===== LOAD OPERATIONAL DATA FOR CONTEXT =====
+        // Ces données peuvent être utiles pour les documents (subventions, rapports, etc.)
+        let operationalContext = '';
+        try {
+            // Charger les machines (équipement industriel)
+            const machinesData = await db.select({
+                id: machines.id,
+                machine_type: machines.machine_type,
+                model: machines.model,
+                manufacturer: machines.manufacturer,
+                year: machines.year,
+                location: machines.location,
+                status: machines.status,
+                technical_specs: machines.technical_specs
+            }).from(machines)
+              .where(isNull(machines.deleted_at))
+              .all();
+            
+            // Charger les employés (effectif)
+            const usersData = await db.select({
+                id: users.id,
+                full_name: users.full_name,
+                role: users.role
+            }).from(users)
+              .where(isNull(users.deleted_at))
+              .all();
+            
+            // Construire le contexte opérationnel
+            const machinesByType: Record<string, any[]> = {};
+            machinesData.forEach((m: any) => {
+                const type = m.machine_type || 'Autre';
+                if (!machinesByType[type]) machinesByType[type] = [];
+                machinesByType[type].push(m);
+            });
+            
+            const roleLabels: Record<string, string> = {
+                'admin': 'Administrateur',
+                'supervisor': 'Superviseur',
+                'technician': 'Technicien de maintenance',
+                'operator': 'Opérateur',
+                'furnace_operator': 'Opérateur de fournaise'
+            };
+            
+            const usersByRole: Record<string, number> = {};
+            usersData.forEach((u: any) => {
+                const roleLabel = roleLabels[u.role] || u.role;
+                usersByRole[roleLabel] = (usersByRole[roleLabel] || 0) + 1;
+            });
+            
+            operationalContext = `
+## DONNÉES OPÉRATIONNELLES ACTUELLES
+
+### Équipement industriel (${machinesData.length} machines)
+${Object.entries(machinesByType).map(([type, items]) => 
+    `- **${type}**: ${items.length} unité(s) ${items.map((m: any) => m.manufacturer ? `(${m.manufacturer} ${m.model || ''})` : '').filter(Boolean).slice(0, 3).join(', ')}`
+).join('\n')}
+
+### Effectif (${usersData.length} employés)
+${Object.entries(usersByRole).map(([role, count]) => 
+    `- ${role}: ${count}`
+).join('\n')}
+`;
+        } catch (e) {
+            console.warn('[Secretary] Could not load operational data');
         }
         
         // ===== BUILD EXPERT PROMPT WITH LEGAL KNOWLEDGE =====
@@ -1486,13 +1556,35 @@ CONSIGNES SPÉCIFIQUES - DOCUMENT FINANCIER
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
         });
 
-        const systemPrompt = `# RÔLE
-Tu es une **Secrétaire de Direction d'élite** pour une entreprise manufacturière québécoise. Tu rédiges des documents professionnels impeccables: correspondance officielle, demandes de subventions, documents administratifs, RH et financiers.
+        // Construire le bloc d'identité complet à partir du "Cerveau de l'IA"
+        const companyIdentityBlock = `
+# CARTE D'IDENTITÉ DE L'ENTREPRISE (Source: Cerveau de l'IA)
 
-# IDENTITÉ DE L'ENTREPRISE
-- **Nom**: ${companyName || '[Nom de l\'entreprise]'}
-- **Description**: ${companySubtitle || '[Description]'}
-- **Contexte additionnel**: ${companyContext || 'Entreprise manufacturière québécoise'}
+## Informations officielles
+- **Nom complet**: ${companyName || '[Non configuré]'}
+- **Nom court**: ${companyShortName || '[Non configuré]'}
+- **Description**: ${companySubtitle || '[Non configuré]'}
+
+## Identité et structure organisationnelle
+${aiConfig.identity}
+
+## Hiérarchie et organigramme
+${aiConfig.hierarchy}
+
+## Expertise et savoir-faire
+${aiConfig.knowledge}
+
+## Contexte spécifique de l'entreprise
+${aiConfig.custom || 'Aucun contexte additionnel configuré.'}
+${operationalContext}
+`;
+
+        const systemPrompt = `# RÔLE
+Tu es une **Secrétaire de Direction d'élite** travaillant pour l'entreprise décrite ci-dessous. Tu rédiges des documents professionnels impeccables: correspondance officielle, demandes de subventions gouvernementales, documents administratifs, RH, techniques et financiers.
+
+Tu connais parfaitement l'entreprise, son histoire, ses activités, sa structure et ses objectifs. Tu utilises ces informations pour personnaliser chaque document.
+
+${companyIdentityBlock}
 
 # DATE ACTUELLE
 ${today}
@@ -1501,6 +1593,12 @@ ${legalKnowledgeBlock}
 
 ${typeInstructions}
 
+# RÈGLES DE PERSONNALISATION
+- Utilise le nom officiel de l'entreprise dans les documents formels
+- Adapte le ton selon la culture d'entreprise décrite
+- Mentionne les compétences et l'expertise de l'entreprise quand c'est pertinent
+- Pour les subventions, valorise les points forts de l'entreprise
+
 # RÈGLES ABSOLUES DE RÉDACTION
 1. **PROFESSIONNALISME**: Ton formel, vocabulaire précis, zéro faute
 2. **CONFORMITÉ LÉGALE**: Toute référence à une loi doit être exacte et vérifiable
@@ -1508,12 +1606,14 @@ ${typeInstructions}
 4. **STRUCTURE CLAIRE**: Paragraphes logiques, titres si nécessaire
 5. **ADAPTÉ AU DESTINATAIRE**: Registre approprié (gouvernement, partenaire, employé, etc.)
 6. **PRÊT À L'EMPLOI**: Le document doit pouvoir être utilisé tel quel
+7. **PERSONNALISÉ**: Utilise les informations de la carte d'identité pour personnaliser le document
 
 # INTERDICTIONS
 - ❌ Ne jamais inventer de numéros de loi ou d'articles inexistants
-- ❌ Ne jamais inclure de placeholders visibles [À COMPLÉTER] - inventer des données réalistes cohérentes avec le contexte
+- ❌ Ne jamais inclure de placeholders visibles [À COMPLÉTER] - utiliser les vraies données de l'entreprise
 - ❌ Ne jamais utiliser de ton familier ou de jargon inapproprié
 - ❌ Ne jamais contredire les lois canadiennes/québécoises
+- ❌ Ne jamais ignorer les informations d'identité de l'entreprise
 
 # FORMAT DE SORTIE
 Commence DIRECTEMENT par le document (pas d'introduction "Voici le document...").
