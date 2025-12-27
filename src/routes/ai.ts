@@ -350,7 +350,7 @@ app.post('/analyze-ticket', async (c) => {
         const machinesList = await db.select({
             id: machines.id, type: machines.machine_type, model: machines.model, manufacturer: machines.manufacturer, 
             location: machines.location, status: machines.status, year: machines.year, serial_number: machines.serial_number,
-            technical_specs: machines.technical_specs
+            technical_specs: machines.technical_specs, operator_id: machines.operator_id, ai_context: machines.ai_context
         }).from(machines).where(sql`deleted_at IS NULL`).all();
         
         // Dynamic Tech List: Don't hardcode roles. Fetch all internal users.
@@ -366,7 +366,12 @@ app.post('/analyze-ticket', async (c) => {
                 m.serial_number ? `S/N:${m.serial_number}` : null
             ].filter(Boolean).join(' ');
             const specs = m.technical_specs ? ` - Specs: ${m.technical_specs.substring(0, 100)}` : '';
-            return `ID ${m.id}: ${m.type} ${details} [Loc: ${m.location || '?'}] [Status: ${m.status || 'unknown'}]${specs}`;
+            // Trouver le nom de l'opérateur si assigné
+            const operatorInfo = m.operator_id ? techsList.find(t => t.id === m.operator_id) : null;
+            const operatorStr = operatorInfo ? ` [Opérateur: ${operatorInfo.name}]` : '';
+            // Contexte IA spécifique à la machine
+            const aiCtx = m.ai_context ? ` [INFO: ${m.ai_context.substring(0, 150)}]` : '';
+            return `ID ${m.id}: ${m.type} ${details} [Loc: ${m.location || '?'}] [Status: ${m.status || 'unknown'}]${operatorStr}${specs}${aiCtx}`;
         }).join('\n');
         const techsContext = techsList.map(t => `ID ${t.id}: ${t.name} (${t.role})`).join('\n');
 
@@ -542,8 +547,13 @@ app.post('/chat', async (c) => {
                      state = (m.status === 'out_of_service') ? '🔴 ARRÊT (Confirmé)' : '⚠️ INCIDENTS EN COURS';
                 }
 
-                // --- ENRICHISSEMENT DU CONTEXTE (Données Techniques) ---
+                // --- ENRICHISSEMENT DU CONTEXTE (Données Techniques + Opérateur + Contexte IA) ---
                 const specs = m.technical_specs ? `\n   [SPECS]: ${m.technical_specs.replace(/\n/g, ' ')}` : '';
+                // Trouver l'opérateur assigné à cette machine
+                const operatorInfo = (m as any).operator_id ? usersList.find(u => u.id === (m as any).operator_id) : null;
+                const operatorStr = operatorInfo ? `\n   [OPÉRATEUR]: ${operatorInfo.name}` : '';
+                // Contexte IA spécifique à cette machine (historique, particularités)
+                const machineAiCtx = (m as any).ai_context ? `\n   [CONTEXTE MACHINE]: ${(m as any).ai_context.replace(/\n/g, ' ')}` : '';
                 const details = [
                     m.manufacturer ? `Fab: ${m.manufacturer}` : null,
                     m.year ? `Année: ${m.year}` : null,
@@ -551,7 +561,7 @@ app.post('/chat', async (c) => {
                     m.location ? `Loc: ${m.location}` : null
                 ].filter(Boolean).join(' | ');
 
-                return `[ID:${m.id}] ${m.machine_type} ${m.model || ''}\n   [DETAILS]: ${details} - ÉTAT: ${state} ${activeIssues ? `(Tickets: ${activeIssues.join(', ')})` : '(RAS)'}${specs}`;
+                return `[ID:${m.id}] ${m.machine_type} ${m.model || ''}\n   [DETAILS]: ${details} - ÉTAT: ${state} ${activeIssues ? `(Tickets: ${activeIssues.join(', ')})` : '(RAS)'}${operatorStr}${specs}${machineAiCtx}`;
             }).join('\n');
             
             usersSummary = usersList.map(u => {

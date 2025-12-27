@@ -5,14 +5,14 @@ import { Hono } from 'hono';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
-import { machines, tickets } from '../db/schema';
+import { machines, tickets, users } from '../db/schema';
 import { adminOnly } from '../middlewares/auth';
 import { machineIdParamSchema, getMachinesQuerySchema, createMachineSchema, updateMachineSchema } from '../schemas/machines';
 import type { Bindings } from '../types';
 
 const machinesRoute = new Hono<{ Bindings: Bindings }>();
 
-// GET /api/machines - Liste toutes les machines
+// GET /api/machines - Liste toutes les machines (avec opérateur)
 machinesRoute.get('/', zValidator('query', getMachinesQuerySchema), async (c) => {
   try {
     const { status } = c.req.valid('query');
@@ -24,9 +24,29 @@ machinesRoute.get('/', zValidator('query', getMachinesQuerySchema), async (c) =>
     }
 
     // AUDIT FIX: Exclure les machines soft-deleted
+    // LEFT JOIN pour inclure les infos de l'opérateur
     const results = await db
-      .select()
+      .select({
+        id: machines.id,
+        machine_type: machines.machine_type,
+        model: machines.model,
+        manufacturer: machines.manufacturer,
+        year: machines.year,
+        serial_number: machines.serial_number,
+        location: machines.location,
+        technical_specs: machines.technical_specs,
+        status: machines.status,
+        operator_id: machines.operator_id,
+        ai_context: machines.ai_context,
+        deleted_at: machines.deleted_at,
+        created_at: machines.created_at,
+        updated_at: machines.updated_at,
+        // Infos opérateur (si existe)
+        operator_name: users.full_name,
+        operator_email: users.email,
+      })
       .from(machines)
+      .leftJoin(users, eq(machines.operator_id, users.id))
       .where(and(...conditions, sql`${machines.deleted_at} IS NULL`))
       .orderBy(machines.location, machines.machine_type);
 
@@ -78,7 +98,7 @@ machinesRoute.get('/:id', zValidator('param', machineIdParamSchema), async (c) =
 machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), async (c) => {
   try {
     const body = c.req.valid('json');
-    const { machine_type, model, serial_number, location, manufacturer, year, technical_specs } = body;
+    const { machine_type, model, serial_number, location, manufacturer, year, technical_specs, operator_id, ai_context } = body;
 
     const db = getDb(c.env);
     
@@ -90,6 +110,8 @@ machinesRoute.post('/', adminOnly, zValidator('json', createMachineSchema), asyn
       manufacturer: manufacturer ? manufacturer.trim() : null,
       year: year || null,
       technical_specs: technical_specs ? technical_specs.trim() : null,
+      operator_id: operator_id || null,
+      ai_context: ai_context ? ai_context.trim() : null,
       status: 'operational'
     }).returning();
 
@@ -119,6 +141,8 @@ machinesRoute.patch('/:id', adminOnly, zValidator('param', machineIdParamSchema)
     if (body.year !== undefined) updates.year = body.year;
     if (body.technical_specs !== undefined) updates.technical_specs = body.technical_specs ? body.technical_specs.trim() : null;
     if (body.status !== undefined) updates.status = body.status;
+    if (body.operator_id !== undefined) updates.operator_id = body.operator_id || null;
+    if (body.ai_context !== undefined) updates.ai_context = body.ai_context ? body.ai_context.trim() : null;
 
     const result = await db.update(machines)
       .set(updates)

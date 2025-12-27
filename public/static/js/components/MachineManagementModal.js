@@ -13,13 +13,20 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
         placeholder_serial_number: 'Ex: SN-001, ABC123...'
     });
     
-    // Charger les placeholders au montage
+    // Charger les placeholders et les opérateurs au montage
     React.useEffect(() => {
         if (show) {
+            // Charger placeholders
             fetch('/api/settings/placeholders')
                 .then(res => res.ok ? res.json() : {})
                 .then(data => setPlaceholders(prev => ({ ...prev, ...data })))
                 .catch(() => {}); // Silently fail, defaults already set
+            
+            // Charger la liste des opérateurs (utilisateurs)
+            fetch('/api/users')
+                .then(res => res.ok ? res.json() : { users: [] })
+                .then(data => setOperators(data.users || []))
+                .catch(() => setOperators([]));
         }
     }, [show]);
 
@@ -31,6 +38,8 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
     const [newManufacturer, setNewManufacturer] = React.useState("");
     const [newYear, setNewYear] = React.useState("");
     const [newTechnicalSpecs, setNewTechnicalSpecs] = React.useState("");
+    const [newOperatorId, setNewOperatorId] = React.useState("");
+    const [newAiContext, setNewAiContext] = React.useState("");
 
     // Formulaire édition
     const [editType, setEditType] = React.useState("");
@@ -41,6 +50,11 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
     const [editYear, setEditYear] = React.useState("");
     const [editTechnicalSpecs, setEditTechnicalSpecs] = React.useState("");
     const [editStatus, setEditStatus] = React.useState("");
+    const [editOperatorId, setEditOperatorId] = React.useState("");
+    const [editAiContext, setEditAiContext] = React.useState("");
+    
+    // Liste des opérateurs disponibles
+    const [operators, setOperators] = React.useState([]);
 
     // Référence pour le scroll
     const scrollContainerRef = React.useRef(null);
@@ -167,7 +181,9 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                 location: newLocation || null,
                 manufacturer: newManufacturer || null,
                 year: newYear ? parseInt(newYear) : null,
-                technical_specs: newTechnicalSpecs || null
+                technical_specs: newTechnicalSpecs || null,
+                operator_id: newOperatorId ? parseInt(newOperatorId) : null,
+                ai_context: newAiContext || null
             });
             alert("Machine creee avec succes!");
             setNewType("");
@@ -177,6 +193,8 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
             setNewManufacturer("");
             setNewYear("");
             setNewTechnicalSpecs("");
+            setNewOperatorId("");
+            setNewAiContext("");
             setShowCreateForm(false);
             onRefresh();
         } catch (error) {
@@ -194,6 +212,8 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
         setEditYear(machine.year || "");
         setEditTechnicalSpecs(machine.technical_specs || "");
         setEditStatus(machine.status);
+        setEditOperatorId(machine.operator_id || "");
+        setEditAiContext(machine.ai_context || "");
 
         // Scroller vers le haut pour voir le formulaire
         setTimeout(() => {
@@ -214,7 +234,9 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                 manufacturer: editManufacturer || null,
                 year: editYear ? parseInt(editYear) : null,
                 technical_specs: editTechnicalSpecs || null,
-                status: editStatus
+                status: editStatus,
+                operator_id: editOperatorId ? parseInt(editOperatorId) : null,
+                ai_context: editAiContext || null
             });
             alert("Machine mise a jour!");
             setEditingMachine(null);
@@ -390,6 +412,40 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 placeholder: "Ex: Puissance 40kW, 5 axes...",
                                 rows: 3
                             })
+                        ),
+                        // Opérateur assigné
+                        React.createElement("div", {},
+                            React.createElement("label", { className: "block font-semibold mb-2" }, 
+                                React.createElement("i", { className: "fas fa-user-cog mr-2 text-blue-500" }),
+                                "Opérateur Principal"
+                            ),
+                            React.createElement("select", {
+                                value: newOperatorId,
+                                onChange: (e) => setNewOperatorId(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none bg-white"
+                            },
+                                React.createElement("option", { value: "" }, "-- Aucun opérateur --"),
+                                operators.map(op => 
+                                    React.createElement("option", { key: op.id, value: op.id }, 
+                                        op.full_name || (op.first_name + ' ' + op.last_name) || op.email
+                                    )
+                                )
+                            )
+                        ),
+                        // Contexte IA
+                        React.createElement("div", { className: "md:col-span-2" },
+                            React.createElement("label", { className: "block font-semibold mb-2" }, 
+                                React.createElement("i", { className: "fas fa-brain mr-2 text-purple-500" }),
+                                "Contexte IA ",
+                                React.createElement("span", { className: "text-xs text-gray-500 font-normal" }, "(historique, particularités, procédures)")
+                            ),
+                            React.createElement("textarea", {
+                                value: newAiContext,
+                                onChange: (e) => setNewAiContext(e.target.value),
+                                className: "w-full px-4 py-2 border border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none bg-purple-50/30",
+                                placeholder: "Ex: Machine sensible aux variations de température. Historique de pannes hydrauliques fréquentes. Procédure spéciale de démarrage requise après arrêt prolongé...",
+                                rows: 4
+                            })
                         )
                     ),
                     React.createElement("button", {
@@ -478,6 +534,40 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                 React.createElement("option", { value: "maintenance" }, "En maintenance"),
                                 React.createElement("option", { value: "out_of_service" }, "Hors service")
                             )
+                        ),
+                        // Opérateur assigné (édition)
+                        React.createElement("div", {},
+                            React.createElement("label", { className: "block font-semibold mb-2" }, 
+                                React.createElement("i", { className: "fas fa-user-cog mr-2 text-blue-500" }),
+                                "Opérateur Principal"
+                            ),
+                            React.createElement("select", {
+                                value: editOperatorId,
+                                onChange: (e) => setEditOperatorId(e.target.value),
+                                className: "w-full px-4 py-2 border border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none bg-white"
+                            },
+                                React.createElement("option", { value: "" }, "-- Aucun opérateur --"),
+                                operators.map(op => 
+                                    React.createElement("option", { key: op.id, value: op.id }, 
+                                        op.full_name || (op.first_name + ' ' + op.last_name) || op.email
+                                    )
+                                )
+                            )
+                        ),
+                        // Contexte IA (édition)
+                        React.createElement("div", { className: "md:col-span-2" },
+                            React.createElement("label", { className: "block font-semibold mb-2" }, 
+                                React.createElement("i", { className: "fas fa-brain mr-2 text-purple-500" }),
+                                "Contexte IA ",
+                                React.createElement("span", { className: "text-xs text-gray-500 font-normal" }, "(historique, particularités, procédures)")
+                            ),
+                            React.createElement("textarea", {
+                                value: editAiContext,
+                                onChange: (e) => setEditAiContext(e.target.value),
+                                className: "w-full px-4 py-2 border border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none bg-purple-50/30",
+                                placeholder: "Ex: Machine sensible aux variations de température. Historique de pannes hydrauliques fréquentes...",
+                                rows: 4
+                            })
                         )
                     ),
                     React.createElement("div", { className: "flex gap-3 mt-4" },
@@ -531,12 +621,25 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                                                 machine.manufacturer,
                                                 machine.year ? `(${machine.year})` : null
                                             ].filter(Boolean).join(" ")
+                                        ) : null,
+                                        // Afficher l'opérateur assigné
+                                        machine.operator_name ? React.createElement("p", { className: "text-sm text-blue-600 flex items-center gap-2" },
+                                            React.createElement("i", { className: "fas fa-user-cog text-blue-400 w-5 text-center" }),
+                                            machine.operator_name
                                         ) : null
                                     ),
                                     
                                     machine.technical_specs ? React.createElement("div", { className: "mt-3 pl-3 border-l-2 border-gray-100" },
                                         React.createElement("p", { className: "text-xs text-gray-500 italic line-clamp-2" },
                                             machine.technical_specs
+                                        )
+                                    ) : null,
+                                    
+                                    // Afficher indicateur contexte IA si présent
+                                    machine.ai_context ? React.createElement("div", { className: "mt-2 flex items-center gap-2" },
+                                        React.createElement("span", { className: "inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full text-xs font-medium" },
+                                            React.createElement("i", { className: "fas fa-brain text-purple-400" }),
+                                            "Contexte IA"
                                         )
                                     ) : null
                                 ),

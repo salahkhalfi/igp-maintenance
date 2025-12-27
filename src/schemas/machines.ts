@@ -15,7 +15,9 @@ export const createMachineSchema = z.object({
   year: z.coerce.number().int().min(1900).max(2100).optional().nullable(),
   serial_number: z.string().max(50, "Numéro de série trop long").optional().nullable(),
   location: z.string().max(100, "Localisation trop longue").optional().nullable(),
-  technical_specs: z.string().max(2000, "Spécifications trop longues").optional().nullable()
+  technical_specs: z.string().max(2000, "Spécifications trop longues").optional().nullable(),
+  operator_id: z.coerce.number().int().positive().optional().nullable(),
+  ai_context: z.string().max(5000, "Contexte IA trop long (max 5000 caractères)").optional().nullable()
 });
 
 export const updateMachineSchema = z.object({
@@ -26,5 +28,7 @@ export const updateMachineSchema = z.object({
   serial_number: z.string().max(50).optional().nullable(),
   location: z.string().max(100).optional().nullable(),
   technical_specs: z.string().max(2000).optional().nullable(),
-  status: z.enum(['operational', 'maintenance', 'broken', 'offline']).optional()
+  status: z.enum(['operational', 'maintenance', 'broken', 'offline']).optional(),
+  operator_id: z.coerce.number().int().positive().optional().nullable(),
+  ai_context: z.string().max(5000).optional().nullable()
 });

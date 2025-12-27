@@ -109,6 +109,8 @@ export const machines = sqliteTable('machines', {
   location: text('location'),
   technical_specs: text('technical_specs'),
   status: text('status').default('operational'), // 'operational', 'maintenance', 'out_of_service'
+  operator_id: integer('operator_id').references(() => users.id), // Opérateur principal assigné
+  ai_context: text('ai_context'), // Contexte supplémentaire pour l'IA (historique, particularités, procédures)
   deleted_at: text('deleted_at'), // Soft delete
   created_at: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
