@@ -1176,7 +1176,24 @@ ${documentFormat}
 - Utilise des **gras** pour les points clés
 - Privilégie les listes à puces pour la lisibilité
 - Les chiffres doivent être exacts (copiés des données sources)
-- Termine par des recommandations concrètes liées aux constats`;
+- Termine par des recommandations concrètes liées aux constats
+
+# TRADUCTION OBLIGATOIRE (TOUT EN FRANÇAIS)
+Traduis systématiquement les termes techniques anglais:
+- CRITICAL → CRITIQUE
+- HIGH → HAUTE  
+- MEDIUM → MOYENNE
+- LOW → BASSE
+- waiting_parts → en attente de pièces
+- received → nouveau/reçu
+- in_progress → en cours
+- diagnostic → en diagnostic
+- completed → terminé
+- archived → archivé
+- operational → opérationnel
+- maintenance → en maintenance
+- out_of_service → hors service
+Ne jamais afficher les codes anglais bruts dans le document final.`;
         
         console.log(`📊 [Report] Generating ${documentType} for period ${startISO} to ${endISO}`);
 
