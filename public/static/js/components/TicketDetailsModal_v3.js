@@ -17,6 +17,41 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
     
     // État pour le chat AI
     const [isAIChatOpen, setIsAIChatOpen] = React.useState(false);
+    
+    // État pour le bouton copier lien
+    const [linkCopied, setLinkCopied] = React.useState(false);
+    
+    // Fonction pour copier le lien du ticket
+    const handleCopyLink = async () => {
+        if (!ticket) return;
+        
+        const baseUrl = window.location.origin;
+        const ticketUrl = `${baseUrl}/?ticket=${ticket.id}`;
+        
+        try {
+            await navigator.clipboard.writeText(ticketUrl);
+            setLinkCopied(true);
+            window.showToast && window.showToast('Lien copié !', 'success');
+            setTimeout(() => setLinkCopied(false), 2000);
+        } catch (err) {
+            // Fallback pour les navigateurs qui ne supportent pas clipboard API
+            const textArea = document.createElement('textarea');
+            textArea.value = ticketUrl;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                setLinkCopied(true);
+                window.showToast && window.showToast('Lien copié !', 'success');
+                setTimeout(() => setLinkCopied(false), 2000);
+            } catch (e) {
+                window.showToast && window.showToast('Erreur de copie', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
 
     // Fonction d'impression du ticket
     const handlePrint = async () => {
@@ -443,19 +478,30 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                      loading ? 'Chargement...' : (ticket ? `#${ticket.ticket_id} - ${ticket.title}` : 'Détails')
                 ),
 
-                // DELETE BUTTON
-                (ticket && currentUser && (
-                    (currentUser?.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
-                    (currentUser?.role === 'supervisor') ||
-                    (currentUser?.role === 'admin') ||
-                    (currentUser?.role === 'operator' && ticket.reported_by === currentUser.id)
-                )) ? React.createElement('button', {
-                    onClick: handleDeleteTicket,
-                    className: 'text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors',
-                    title: 'Supprimer'
-                },
-                    React.createElement('i', { className: 'fas fa-trash-alt text-lg' })
-                ) : React.createElement('div', { className: 'w-10' })
+                // ACTION BUTTONS (COPY LINK + DELETE)
+                React.createElement('div', { className: 'flex items-center gap-1' },
+                    // COPY LINK BUTTON
+                    ticket && React.createElement('button', {
+                        onClick: handleCopyLink,
+                        className: 'text-gray-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-colors',
+                        title: 'Copier le lien'
+                    },
+                        React.createElement('i', { className: linkCopied ? 'fas fa-check text-green-500' : 'fas fa-link text-lg' })
+                    ),
+                    // DELETE BUTTON
+                    (ticket && currentUser && (
+                        (currentUser?.role === 'technician' && (!ticket.scheduled_date || ticket.reported_by === currentUser.id)) ||
+                        (currentUser?.role === 'supervisor') ||
+                        (currentUser?.role === 'admin') ||
+                        (currentUser?.role === 'operator' && ticket.reported_by === currentUser.id)
+                    )) ? React.createElement('button', {
+                        onClick: handleDeleteTicket,
+                        className: 'text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors',
+                        title: 'Supprimer'
+                    },
+                        React.createElement('i', { className: 'fas fa-trash-alt text-lg' })
+                    ) : null
+                )
             ),
 
             // MAIN CONTENT
