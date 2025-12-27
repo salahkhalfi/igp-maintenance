@@ -93,6 +93,30 @@ VIOLATION = BULLSHIT = USER PERD CONFIANCE
 ✅ git push origin main (GitHub Actions builds ~2 min)
 ```
 
+### [⚠️ CORE DUMP - CRASH SILENCIEUX]
+```
+SYMPTÔME:
+- Sandbox freeze total (commandes timeout)
+- Fichier "core" de 500MB+ dans /home/user/webapp/
+- Reset sandbox ne suffit pas → freeze revient
+
+CAUSE:
+- Process Node.js crash (mémoire, boucle infinie, etc.)
+- Génère un fichier core dump qui remplit le disque
+- Sandbox devient inutilisable
+
+DÉTECTION:
+ls -lh /home/user/webapp/core 2>/dev/null && echo "⚠️ CORE DUMP DÉTECTÉ"
+
+SOLUTION IMMÉDIATE:
+rm -f /home/user/webapp/core
+
+PRÉVENTION:
+- Après ResetSandbox → TOUJOURS vérifier: ls -la | grep core
+- Si core existe → supprimer AVANT toute autre action
+- Build timeout > 2min → kill processes, chercher core dump
+```
+
 ### [LEGACY JS COMPONENTS - ⚠️ PIÈGE FRÉQUENT]
 ```
 ⚠️ CRITIQUE : Modifier public/static/js/components/*.js NE SUFFIT PAS
