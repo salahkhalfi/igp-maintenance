@@ -787,10 +787,9 @@ ${aiConfig.character}
 ${aiConfig.knowledge}
 
 --- 2. DIRECTIVES STRATÉGIQUES ---
-1. **EXPERTISE TECHNIQUE PRIORITAIRE** : Pour toute question liée à la maintenance, aux machines, aux tickets ou aux opérations → utilise ton expertise technique complète. Sois précis, proactif, et utilise les outils disponibles.
+1. **AIDE À LA DÉCISION** : Ne sois pas passif. Suggère, anticipe, connecte les faits.
 2. **SOURCE DE VÉRITÉ** : Utilise les outils (search_tickets, check_machine) pour vérifier les faits non présents dans le contexte.
-3. **INTÉGRITÉ** : N'invente jamais de données opérationnelles. Si un outil retourne "null", dis "inconnu".
-4. **FLEXIBILITÉ CRÉATIVE** : Pour les demandes NON liées à la maintenance (rédaction, conseils généraux, documents, questions diverses) → tu peux répondre librement en utilisant tes connaissances générales et l'identité de l'entreprise. Tu n'es pas limité aux données de maintenance.
+3. **INTÉGRITÉ** : N'invente jamais de données. Si un outil retourne "null", dis "inconnu".
 
 --- 3. RÈGLES TECHNIQUES & FORMATAGE (OBLIGATOIRES) ---
 
@@ -956,21 +955,6 @@ app.post('/report', async (c) => {
         
         const startISO = dateStart.toISOString().split('T')[0];
         const endISO = dateEnd.toISOString().split('T')[0];
-        
-        // ===== LOAD AI CONFIG & COMPANY IDENTITY =====
-        const aiConfig = await getAiConfig(db);
-        
-        let companyName = '';
-        let companyShortName = '';
-        try {
-            const companySettings = await db.select().from(systemSettings)
-                .where(inArray(systemSettings.setting_key, ['company_title', 'company_short_name']))
-                .all();
-            companySettings.forEach((s: any) => {
-                if (s.setting_key === 'company_title') companyName = s.setting_value;
-                if (s.setting_key === 'company_short_name') companyShortName = s.setting_value;
-            });
-        } catch (e) { /* fallback to empty */ }
         
         // ===== FETCH ALL DATA FOR THE PERIOD =====
         
@@ -1170,16 +1154,9 @@ ${technicianWorkload.map(tw => `- ${userMap[tw.user_id as number] || `User ${tw.
 **5. Recommandations** (concrètes et actionnables)`;
         }
 
-        // Construire le contexte entreprise pour les rapports
-        const companyContext = companyName ? `
-# ENTREPRISE
-- **Nom**: ${companyName}${companyShortName ? ` (${companyShortName})` : ''}
-${aiConfig.identity ? `- **Contexte**: ${aiConfig.identity.substring(0, 500)}` : ''}
-` : '';
-
         const fullPrompt = `# RÔLE
-Tu es un expert en gestion industrielle et rédaction de documents de direction pour ${companyName || 'l\'entreprise'}. Tu produis des documents professionnels de haute qualité.
-${companyContext}
+Tu es un expert en gestion industrielle et rédaction de documents de direction. Tu produis des documents professionnels de haute qualité pour la direction d'entreprise.
+
 # RÈGLES ABSOLUES
 1. **EXACTITUDE**: Utilise UNIQUEMENT les données fournies ci-dessous. Ne jamais inventer de chiffres, noms, dates ou faits.
 2. **PRÉCISION**: Chaque affirmation doit être traçable aux données sources.
@@ -1570,19 +1547,10 @@ CONSIGNES SPÉCIFIQUES - DOCUMENT FINANCIER
 - Présentation professionnelle des chiffres
 - Conformité aux PCGR canadiens si applicable
 - Justifications claires des projections
-- Références aux programmes de financement pertinents`,
-
-            'creatif': `
-CONSIGNES SPÉCIFIQUES - DOCUMENT CRÉATIF / LIBRE
-- Liberté totale de format et de structure
-- Adapte le ton selon l'objectif (promotionnel, informatif, persuasif, narratif)
-- Utilise ta créativité tout en restant professionnel
-- Valorise l'entreprise, ses forces et son expertise
-- Peut inclure: brochures, textes web, présentations, discours, communications marketing
-- Aucune contrainte de template - laisse la demande guider le format`
+- Références aux programmes de financement pertinents`
         };
 
-        const typeInstructions = documentTypeInstructions[documentType] || documentTypeInstructions['creatif'];
+        const typeInstructions = documentTypeInstructions[documentType] || documentTypeInstructions['correspondance'];
         
         const today = new Date().toLocaleDateString('fr-CA', { 
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
