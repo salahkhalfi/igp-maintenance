@@ -1331,6 +1331,48 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         }
     };
     
+    // Convertir Markdown en HTML pour impression
+    const markdownToHtml = (md) => {
+        if (!md) return '';
+        return md
+            // Tables Markdown
+            .replace(/\|(.+)\|\n\|[-:\s|]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
+                const headers = header.split('|').filter(h => h.trim()).map(h => `<th>${h.trim()}</th>`).join('');
+                const bodyRows = rows.trim().split('\n').map(row => {
+                    const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                return `<table><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+            })
+            // Headers
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            // Bold et Italic
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+            // Listes à puces
+            .replace(/^\* (.+)$/gm, '<li>$1</li>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+            // Listes numérotées
+            .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+            // Paragraphes (lignes vides)
+            .replace(/\n\n/g, '</p><p>')
+            // Retours à la ligne simples
+            .replace(/\n/g, '<br>')
+            // Wrapper
+            .replace(/^/, '<p>').replace(/$/, '</p>')
+            // Nettoyage
+            .replace(/<p><\/p>/g, '')
+            .replace(/<p>(<h[123]>)/g, '$1')
+            .replace(/(<\/h[123]>)<\/p>/g, '$1')
+            .replace(/<p>(<ul>)/g, '$1')
+            .replace(/(<\/ul>)<\/p>/g, '$1')
+            .replace(/<p>(<table>)/g, '$1')
+            .replace(/(<\/table>)<\/p>/g, '$1');
+    };
+    
     // Impression du rapport IA
     const printAIReport = () => {
         if (!aiReport) return;
@@ -1341,35 +1383,46 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
             : customInstructions.toLowerCase().includes('compte-rendu') ? 'Compte-rendu'
             : customInstructions.toLowerCase().includes('mémo') ? 'Mémo'
             : customInstructions.toLowerCase().includes('bilan') ? 'Bilan'
-            : 'Document Direction';
+            : 'Rapport Direction';
+        const reportHtml = markdownToHtml(aiReport.report);
         printWindow.document.write(`
 <!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
 <title>${docType} - ${monthLabel}</title>
 <style>
-    body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #1e293b; line-height: 1.7; }
-    h1 { color: #0f172a; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; font-size: 24px; }
-    h2 { color: #5b21b6; margin-top: 25px; font-size: 18px; }
-    h3 { color: #6b21a8; margin-top: 20px; font-size: 16px; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #1e293b; line-height: 1.6; font-size: 14px; }
+    h1 { color: #0f172a; border-bottom: 3px solid #7c3aed; padding-bottom: 10px; font-size: 22px; margin-top: 0; }
+    h2 { color: #5b21b6; margin-top: 24px; margin-bottom: 12px; font-size: 17px; border-bottom: 1px solid #e9d5ff; padding-bottom: 6px; }
+    h3 { color: #6b21a8; margin-top: 18px; margin-bottom: 8px; font-size: 15px; }
+    p { margin: 8px 0; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
     .kpi-card { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid #ddd6fe; }
-    .kpi-value { font-size: 24px; font-weight: bold; color: #5b21b6; }
-    .kpi-label { font-size: 11px; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px; }
-    .report-content { background: #fafafa; padding: 25px; border-radius: 12px; margin-top: 20px; white-space: pre-wrap; border-left: 4px solid #7c3aed; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e9d5ff; }
+    .kpi-value { font-size: 22px; font-weight: bold; color: #5b21b6; }
+    .kpi-label { font-size: 10px; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.5px; }
+    .report-content { background: #fafafa; padding: 25px; border-radius: 12px; margin-top: 20px; border-left: 4px solid #7c3aed; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e9d5ff; }
     .badge { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .meta { color: #64748b; font-size: 13px; margin-bottom: 20px; }
-    .focus-box { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #d8b4fe; border-radius: 10px; padding: 14px 18px; margin: 15px 0; }
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e9d5ff; font-size: 11px; color: #94a3b8; text-align: center; }
-    ul, ol { margin: 10px 0; padding-left: 25px; }
-    li { margin: 5px 0; }
+    .meta { color: #64748b; font-size: 12px; margin-bottom: 15px; }
+    .focus-box { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #d8b4fe; border-radius: 10px; padding: 12px 16px; margin: 15px 0; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #e9d5ff; font-size: 10px; color: #94a3b8; text-align: center; }
+    ul, ol { margin: 8px 0; padding-left: 24px; }
+    li { margin: 4px 0; }
     strong { color: #5b21b6; }
-    @media print { body { margin: 15px; } .no-print { display: none; } }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 13px; }
+    th { background: #f5f3ff; color: #5b21b6; padding: 10px 12px; text-align: left; border: 1px solid #ddd6fe; font-weight: 600; }
+    td { padding: 8px 12px; border: 1px solid #e5e7eb; }
+    tr:nth-child(even) { background: #fafafa; }
+    @media print { 
+        body { margin: 15px; font-size: 12px; } 
+        .no-print { display: none; }
+        h2 { page-break-after: avoid; }
+        table { page-break-inside: avoid; }
+    }
 </style>
 </head><body>
 <div class="header">
-    <h1>✨ ${docType}</h1>
+    <h1>📊 ${docType}</h1>
     <span class="badge">Assistant IA</span>
 </div>
 <p class="meta"><strong>Période:</strong> ${monthLabel} &nbsp;•&nbsp; <strong>Généré le:</strong> ${new Date().toLocaleString('fr-FR')}</p>
@@ -1382,7 +1435,7 @@ ${aiReport.customFocus ? `<div class="focus-box"><strong style="color: #7c3aed;"
     <div class="kpi-card"><div class="kpi-value" style="color: ${aiReport.kpis.criticalTickets > 0 ? '#dc2626' : '#16a34a'}">${aiReport.kpis.criticalTickets}</div><div class="kpi-label">Critiques</div></div>
 </div>
 
-<div class="report-content">${aiReport.report}</div>
+<div class="report-content">${reportHtml}</div>
 
 <div class="footer">
     Document confidentiel • Généré par Assistant IA Direction • ${new Date().toLocaleDateString('fr-FR')}
