@@ -8,6 +8,41 @@ function getAssigneeName(assigned_to: number | null, assignee_name: string | nul
     return assignee_name || `Technicien #${assigned_to}`;
 }
 
+// --- HELPER: Load closed statuses from DB (respects BIBLE: no hardcoding) ---
+// Default fallback only used if DB query fails
+const DEFAULT_CLOSED_STATUSES = ['completed', 'cancelled', 'archived'];
+
+async function getClosedStatuses(db: any): Promise<string[]> {
+    try {
+        const settings = await db.select()
+            .from(systemSettings)
+            .where(inArray(systemSettings.setting_key, ['ticket_closed_statuses', 'ticket_statuses_config']))
+            .all();
+        
+        let closedStatuses = [...DEFAULT_CLOSED_STATUSES];
+        
+        for (const s of settings) {
+            try {
+                const parsed = JSON.parse(s.setting_value);
+                if (s.setting_key === 'ticket_closed_statuses' && Array.isArray(parsed)) {
+                    closedStatuses = parsed;
+                } else if (s.setting_key === 'ticket_statuses_config' && Array.isArray(parsed)) {
+                    // Extract closed statuses from config
+                    parsed.forEach((item: any) => {
+                        if (item.id && (item.type === 'closed' || item.is_closed)) {
+                            if (!closedStatuses.includes(item.id)) closedStatuses.push(item.id);
+                        }
+                    });
+                }
+            } catch (e) { /* ignore parse errors */ }
+        }
+        return closedStatuses;
+    } catch (e) {
+        console.warn('[tools.ts] Failed to load closed statuses from DB, using defaults', e);
+        return DEFAULT_CLOSED_STATUSES;
+    }
+}
+
 // --- TYPE DEFINITIONS ---
 export type ToolDefinition = {
     type: "function";
@@ -33,7 +68,7 @@ export const TOOLS: ToolDefinition[] = [
                 type: "object",
                 properties: {
                     query: { type: "string", description: "Mots-clés (titre, description, ou nom de fichier joint)" },
-                    status: { type: "string", enum: ["received", "assigned", "in_progress", "diagnostic", "waiting_parts", "completed", "cancelled", "archived"], description: "Filtrer par statut (received=Reçu, assigned=Assigné, in_progress=En cours, diagnostic, waiting_parts=Attente pièces, completed=Terminé, cancelled=Annulé, archived)" },
+                    status: { type: "string", description: "Filtrer par statut exact (ex: 'completed' pour terminé, 'in_progress' pour en cours). Les statuts disponibles varient selon la configuration." },
                     technician: { type: "string", description: "Nom du technicien assigné (ex: 'Brahim')" },
                     creator: { type: "string", description: "Nom de la personne qui a créé/signalé le ticket (ex: 'Marc')" },
                     machine: { type: "string", description: "Nom ou type de la machine (ex: 'Four')" },
@@ -251,6 +286,9 @@ export const ToolFunctions = {
     async generate_team_report(db: any, args: { role_filter?: string }) {
         const roleFilter = args.role_filter || 'all';
         
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+        
         // 1. Fetch Users (filtered if needed)
         let userQuery = db.select().from(users);
         if (roleFilter !== 'all') {
@@ -282,7 +320,7 @@ export const ToolFunctions = {
             title: tickets.title
         })
         .from(tickets)
-        .where(not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])))
+        .where(not(inArray(tickets.status, closedStatuses)))
         .all();
 
         // 4. Fetch Machines (Context)
@@ -565,6 +603,9 @@ export const ToolFunctions = {
     },
 
     async get_overdue_tickets(db: any, args: {}, baseUrl: string) {
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+        
         // 1. Get Timezone Offset
         const settings = await db.select().from(systemSettings).where(eq(systemSettings.setting_key, 'timezone_offset_hours')).get();
         const offset = settings ? parseInt(settings.setting_value) : -5; // Default -5 (EST)
@@ -591,8 +632,8 @@ export const ToolFunctions = {
         .from(tickets)
         .leftJoin(assignee, eq(tickets.assigned_to, assignee.id))
         .where(and(
-            // Exclude completed/cancelled/archived (Standard "Done" statuses)
-            not(inArray(tickets.status, ['completed', 'resolved', 'closed', 'cancelled', 'archived'])),
+            // Exclude closed statuses (loaded from DB)
+            not(inArray(tickets.status, closedStatuses)),
             // Only fetch scheduled tickets
             sql`${tickets.scheduled_date} IS NOT NULL`
         ))
@@ -1045,6 +1086,9 @@ export const ToolFunctions = {
         
         if (!machine) return "Machine introuvable.";
 
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+
         // 1. Fetch ACTIVE tickets (Priority for current context)
         const activeTickets = await db.select({
             id: tickets.id, 
@@ -1057,7 +1101,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.machine_id, args.machine_id),
-            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))
+            not(inArray(tickets.status, closedStatuses))
         ))
         .orderBy(desc(tickets.priority), desc(tickets.created_at))
         .all();
@@ -1073,7 +1117,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.machine_id, args.machine_id),
-            inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])
+            inArray(tickets.status, closedStatuses)
         ))
         .orderBy(desc(tickets.created_at))
         .limit(3)
@@ -1140,6 +1184,9 @@ export const ToolFunctions = {
         const machine = await db.select().from(machines).where(eq(machines.id, args.machine_id)).get();
         if (!machine) return "Machine introuvable.";
 
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+
         // 2. Check Active BLOCKING Tickets (Critical/High)
         const blockingTickets = await db.select({
             internal_id: tickets.id, // Primary Key for join
@@ -1152,7 +1199,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.machine_id, args.machine_id),
-            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived'])),
+            not(inArray(tickets.status, closedStatuses)),
             inArray(tickets.priority, ['critical', 'high'])
         ))
         .all();
@@ -1233,6 +1280,9 @@ export const ToolFunctions = {
         
         if (!user) return `Technicien '${args.technician_name}' introuvable.`;
 
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+
         // 2. Count Active Tickets (Omniscient View)
         const activeTickets = await db.select({
             id: tickets.ticket_id,
@@ -1242,7 +1292,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.assigned_to, user.id),
-            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))
+            not(inArray(tickets.status, closedStatuses))
         ))
         .all();
 
@@ -1254,7 +1304,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.assigned_to, user.id),
-            inArray(tickets.status, ['resolved', 'closed'])
+            inArray(tickets.status, closedStatuses)
         ))
         .orderBy(desc(tickets.updated_at))
         .limit(1)
@@ -1278,6 +1328,9 @@ export const ToolFunctions = {
         // Comprehensive stats tool for reports
         const period = args.period || 'this_month';
         
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+        
         // Date filter based on period
         let dateFilter = sql`1=1`;
         const now = new Date();
@@ -1296,12 +1349,12 @@ export const ToolFunctions = {
         
         const resolvedTickets = await db.select({ count: sql<number>`count(*)` })
             .from(tickets)
-            .where(and(dateFilter, inArray(tickets.status, ['resolved', 'closed', 'completed'])))
+            .where(and(dateFilter, inArray(tickets.status, closedStatuses)))
             .get();
         
         const activeTickets = await db.select({ count: sql<number>`count(*)` })
             .from(tickets)
-            .where(and(dateFilter, not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))))
+            .where(and(dateFilter, not(inArray(tickets.status, closedStatuses))))
             .get();
 
         // 2. Priority breakdown
@@ -1325,11 +1378,13 @@ export const ToolFunctions = {
         .all();
 
         // 4. Technician performance (with names)
+        // Build SQL-safe list of closed statuses for the CASE statement
+        const closedStatusesSql = closedStatuses.map(s => `'${s}'`).join(',');
         const techPerformance = await db.select({
             tech_id: tickets.assigned_to,
             tech_name: users.full_name,
             total_assigned: sql<number>`count(*)`,
-            resolved: sql<number>`sum(case when ${tickets.status} in ('resolved', 'closed', 'completed') then 1 else 0 end)`
+            resolved: sql.raw<number>(`sum(case when status in (${closedStatusesSql}) then 1 else 0 end)`)
         })
         .from(tickets)
         .leftJoin(users, eq(tickets.assigned_to, users.id))
@@ -1381,7 +1436,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             dateFilter,
-            inArray(tickets.status, ['resolved', 'closed', 'completed']),
+            inArray(tickets.status, closedStatuses),
             sql`${tickets.completed_at} IS NOT NULL`
         ))
         .get();
@@ -1445,6 +1500,9 @@ export const ToolFunctions = {
 
         if (!user) return "Technicien introuvable.";
 
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+
         // Active tickets with machine names
         const activeTickets = await db.select({
             id: tickets.id,
@@ -1460,7 +1518,7 @@ export const ToolFunctions = {
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .where(and(
             eq(tickets.assigned_to, user.id),
-            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))
+            not(inArray(tickets.status, closedStatuses))
         ))
         .all();
 
@@ -1479,7 +1537,7 @@ export const ToolFunctions = {
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .where(and(
             eq(tickets.assigned_to, user.id),
-            inArray(tickets.status, ['resolved', 'closed', 'completed'])
+            inArray(tickets.status, closedStatuses)
         ))
         .orderBy(desc(tickets.completed_at))
         .limit(5)
@@ -1536,6 +1594,9 @@ export const ToolFunctions = {
 
         if (!user) return "Utilisateur introuvable.";
 
+        // Load closed statuses from DB (BIBLE: no hardcoding)
+        const closedStatuses = await getClosedStatuses(db);
+
         const activeTickets = await db.select({
             id: tickets.id,
             display_id: tickets.ticket_id, // Add Display ID
@@ -1546,7 +1607,7 @@ export const ToolFunctions = {
         .where(and(
             eq(tickets.assigned_to, user.id),
             // Use NEGATIVE logic to capture ALL active statuses (pending_parts, diagnosis, etc.)
-            not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))
+            not(inArray(tickets.status, closedStatuses))
         ))
         .all();
 
@@ -1560,7 +1621,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.assigned_to, user.id),
-            or(eq(tickets.status, 'resolved'), eq(tickets.status, 'closed'))
+            inArray(tickets.status, closedStatuses)
         ))
         .orderBy(desc(tickets.updated_at))
         .limit(5)
