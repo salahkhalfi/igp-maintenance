@@ -354,21 +354,50 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         const html = markdownToHtml(generatedDoc.document);
         const title = generatedDoc.title || 'Document';
+        // CSS simplifié - les styles inline dans markdownToHtml font le gros du travail
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
-<style>@page{size:A4;margin:20mm 18mm 25mm 18mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;line-height:1.7;color:#333}
-.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30pt;padding-bottom:15pt;border-bottom:1pt solid #e0e0e0}
-.header-left{display:flex;align-items:center}.logo{height:50pt;margin-right:15pt}.brand{border-left:3pt solid #3b82f6;padding-left:15pt}
-.brand-name{font-size:18pt;font-weight:700;color:#0f172a}.brand-sub{font-size:9pt;color:#64748b;margin-top:4pt}
-.header-right{text-align:right;font-size:10pt;color:#64748b}
-.title-block{text-align:center;padding:25pt 0;margin-bottom:25pt;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-radius:8pt}
-.title-block h1{font-size:20pt;font-weight:700;color:#0f172a;margin:0}
-${documentStyles.replace(/\\.doc-content /g,'.content ')}
-.footer{margin-top:40pt;padding-top:15pt;border-top:1pt solid #e2e8f0;font-size:9pt;color:#94a3b8;text-align:center}
-@media print{body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.header,.title-block{page-break-inside:avoid}h1,h2,h3,h4{page-break-after:avoid}table{border-collapse:collapse!important;page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}th,td{border:1pt solid #334155!important;padding:6pt!important}th{background-color:#e2e8f0!important;font-weight:700!important}}</style></head>
-<body><div class="header"><div class="header-left"><img src="${logoUrl}" class="logo" onerror="this.style.display='none'"><div class="brand"><div class="brand-name">${companyShortName}</div><div class="brand-sub">${companySubtitle}</div></div></div>
-<div class="header-right"><div style="font-weight:600;color:#334155">${today}</div></div></div>
-<div class="title-block"><h1>${title}</h1></div><div class="content">${html}</div>
-<div class="footer">Document généré par ${companyShortName} — Secrétariat de Direction</div></body></html>`;
+<style>
+@page { size: A4; margin: 20mm 18mm 25mm 18mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.7; color: #333; padding: 0; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+.header-left { display: flex; align-items: center; }
+.logo { height: 50px; margin-right: 15px; }
+.brand { border-left: 3px solid #3b82f6; padding-left: 15px; }
+.brand-name { font-size: 18pt; font-weight: 700; color: #0f172a; }
+.brand-sub { font-size: 9pt; color: #64748b; margin-top: 4px; }
+.header-right { text-align: right; font-size: 10pt; color: #64748b; }
+.title-block { text-align: center; padding: 25px 0; margin-bottom: 25px; background: #f1f5f9; border-radius: 8px; }
+.title-block h1 { font-size: 20pt; font-weight: 700; color: #0f172a; margin: 0; }
+.content { font-family: Georgia, serif; font-size: 11pt; line-height: 1.8; }
+.content p { margin: 0 0 12px; }
+.content ul, .content ol { margin: 10px 0; padding-left: 25px; }
+.content li { margin: 5px 0; }
+.footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 9pt; color: #94a3b8; text-align: center; }
+@media print {
+  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .header, .title-block { page-break-inside: avoid; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+}
+</style></head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <img src="${logoUrl}" class="logo" onerror="this.style.display='none'">
+    <div class="brand">
+      <div class="brand-name">${companyShortName}</div>
+      <div class="brand-sub">${companySubtitle}</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div style="font-weight:600;color:#334155">${today}</div>
+  </div>
+</div>
+<div class="title-block"><h1>${title}</h1></div>
+<div class="content">${html}</div>
+<div class="footer">Document généré par ${companyShortName} — Secrétariat de Direction</div>
+</body></html>`;
         const w = window.open('', '_blank');
         if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
         else { window.showToast && window.showToast('Popup bloquée', 'error'); }

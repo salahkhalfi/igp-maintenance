@@ -2077,7 +2077,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     status: tickets.status,
                     priority: tickets.priority,
                     machine_id: tickets.machine_id,
-                    assigned_to_id: tickets.assigned_to_id,
+                    assigned_to: tickets.assigned_to,
                     created_at: tickets.created_at,
                     completed_at: tickets.completed_at,
                     downtime_hours: tickets.downtime_hours
@@ -2093,7 +2093,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     id: tickets.id,
                     status: tickets.status,
                     priority: tickets.priority,
-                    assigned_to_id: tickets.assigned_to_id,
+                    assigned_to: tickets.assigned_to,
                     created_at: tickets.created_at,
                     completed_at: tickets.completed_at,
                     downtime_hours: tickets.downtime_hours
@@ -2131,7 +2131,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                   .all();
                 
                 techUsers.forEach((tech: any) => {
-                    const techTickets = ticketsData.filter((t: any) => t.assigned_to_id === tech.id);
+                    const techTickets = ticketsData.filter((t: any) => t.assigned_to === tech.id);
                     // Filtrer les tickets fermés (completed, resolved, closed)
                     const resolvedTickets = techTickets.filter((t: any) => ['completed', 'resolved', 'closed'].includes(t.status));
                     let avgResTime = 0;
@@ -2151,6 +2151,12 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                         avgTime: Math.round(avgResTime * 10) / 10
                     };
                 });
+                
+                // Tickets non assignés
+                const unassignedTickets = ticketsData.filter((t: any) => !t.assigned_to);
+                const unassignedCompleted = unassignedTickets.filter((t: any) => 
+                    ['completed', 'resolved', 'closed'].includes(t.status)
+                ).length;
                 
                 // Incidents critiques (priorité critical/urgent)
                 const criticalIncidents = ticketsData.filter((t: any) => 
@@ -2190,6 +2196,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
 ### Statistiques globales
 - **Tickets créés ce mois**: ${ticketsData.length}
 - **Tickets terminés ce mois**: ${statusCounts['completed'] || 0}
+- **Tickets non assignés**: ${unassignedTickets.length} (dont ${unassignedCompleted} terminés)
 - **Temps moyen de résolution**: ${resolvedCount > 0 ? Math.round(totalResolutionTime / resolvedCount * 10) / 10 : 'N/A'} heures
 - **Temps d'arrêt total**: ${Math.round(totalDowntime * 10) / 10} heures
 - **Total historique**: ${allTicketsData.length} tickets
