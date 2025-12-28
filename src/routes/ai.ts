@@ -2305,665 +2305,120 @@ ${Object.entries(machineTicketCounts)
 
         const documentTypeInstructions: Record<string, string> = {
             'correspondance': `
-CONSIGNES SPÉCIFIQUES - CORRESPONDANCE OFFICIELLE PREMIUM
+CORRESPONDANCE OFFICIELLE
 
-📄 **STRUCTURE VISUELLE OBLIGATOIRE**
-
-\`\`\`
-┌─────────────────────────────────────────────────────────┐
-│  [LOGO/NOM ENTREPRISE]                                  │
-│  [Adresse • Téléphone • Courriel]                       │
-├─────────────────────────────────────────────────────────┤
-│  Date: [Date complète]                                  │
-│  Réf.: [Numéro de référence si applicable]              │
-├─────────────────────────────────────────────────────────┤
-│  DESTINATAIRE                                           │
-│  [Nom, Titre]                                           │
-│  [Organisation]                                         │
-│  [Adresse]                                              │
-├─────────────────────────────────────────────────────────┤
-│  **OBJET:** [Objet clair et précis]                     │
-└─────────────────────────────────────────────────────────┘
-\`\`\`
-
-**CORPS DE LA LETTRE:**
-- Formule d'appel appropriée (Madame, Monsieur, / Cher Monsieur X,)
-- §1: Contexte / Référence à communication précédente
-- §2: Message principal / Proposition / Demande
-- §3: Conclusion / Action attendue / Échéance
+Structure:
+- En-tête avec coordonnées entreprise
+- Date et référence
+- Destinataire complet
+- Objet en gras
+- Corps: 3 paragraphes max (contexte, message, conclusion)
 - Formule de politesse adaptée au destinataire
-- Signature avec titre
+- Signature
 
-**NIVEAU DE FORMALITÉ:**
-| Destinataire | Appel | Clôture |
-|--------------|-------|---------|
-| Ministre/Haut fonctionnaire | Madame la Ministre, | Veuillez agréer l'expression de ma haute considération. |
-| Directeur/Cadre | Madame la Directrice, | Veuillez recevoir mes salutations distinguées. |
-| Partenaire commercial | Madame, Monsieur, | Cordialement, |
-| Fournisseur | Madame, Monsieur, | Meilleures salutations, |`,
+Niveaux de formalité:
+- Gouvernement/Ministre: "Veuillez agréer l'expression de ma haute considération"
+- Direction/Cadre: "Veuillez recevoir mes salutations distinguées"
+- Partenaire: "Cordialement"`,
 
             'subventions': `
-CONSIGNES SPÉCIFIQUES - DEMANDE DE SUBVENTION PREMIUM
+DEMANDE DE SUBVENTION
 
-📋 **STRUCTURE PROFESSIONNELLE OBLIGATOIRE**
+Structure obligatoire:
+1. Présentation de l'entreprise (raison sociale, NEQ, effectif, CA, secteur)
+2. Description du projet (problématique, solution, innovation)
+3. Budget détaillé (postes, montants, sources de financement)
+4. Retombées attendues (emplois, CA, investissements)
+5. Calendrier de réalisation (phases, jalons, livrables)
 
-## 📌 Page de garde
-> **DEMANDE DE FINANCEMENT**
-> Programme: [Nom du programme]
-> Organisme: [Nom de l'organisme]
-> Date de soumission: [Date]
-> Entreprise requérante: [Nom complet]
-
----
-
-## 1. 🏢 PRÉSENTATION DE L'ENTREPRISE
-
-### Fiche d'identité
-| Élément | Information |
-|---------|-------------|
-| Raison sociale | [Nom légal] |
-| NEQ/Incorporation | [Numéro] |
-| Date de fondation | [Date] |
-| Effectif | [Nombre] employés |
-| Chiffre d'affaires | [Montant] $ |
-| Secteur SCIAN | [Code et description] |
-
-### Forces distinctives
-- ✅ [Force 1]
-- ✅ [Force 2]
-- ✅ [Force 3]
-
----
-
-## 2. 🎯 DESCRIPTION DU PROJET
-
-### Problématique
-> [Encadré décrivant le défi à résoudre]
-
-### Solution proposée
-[Description claire de la solution]
-
-### Caractère innovant
-| Aspect | État de l'art | Notre approche |
-|--------|---------------|----------------|
-| [Aspect 1] | [Actuel] | [Innovation] |
-
-### Objectifs SMART
-| Objectif | Indicateur | Cible | Échéance |
-|----------|------------|-------|----------|
-| [Obj 1] | [KPI] | [Valeur] | [Date] |
-
----
-
-## 3. 💰 BUDGET DÉTAILLÉ
-
-| Poste de dépense | Montant | Admissible | Source |
-|------------------|---------|------------|--------|
-| Salaires R&D | $ | ✅ | Subvention |
-| Équipements | $ | ⚠️ Partiel | Mixte |
-| Sous-traitance | $ | ✅ | Subvention |
-| **TOTAL** | **$** | | |
-
-### Montage financier
-| Source | Montant | % |
-|--------|---------|---|
-| Subvention demandée | $ | % |
-| Mise de fonds | $ | % |
-| Autres sources | $ | % |
-
----
-
-## 4. 📈 RETOMBÉES ATTENDUES
-
-### Retombées économiques
-| Indicateur | Année 1 | Année 2 | Année 3 |
-|------------|---------|---------|---------|
-| Emplois créés | | | |
-| CA additionnel | $ | $ | $ |
-| Investissements | $ | $ | $ |
-
-### Retombées sociales/environnementales
-- 🌱 [Retombée 1]
-- 🌱 [Retombée 2]
-
----
-
-## 5. 📅 CALENDRIER DE RÉALISATION
-
-| Phase | Description | Début | Fin | Jalon |
-|-------|-------------|-------|-----|-------|
-| 1 | [Description] | [Date] | [Date] | [Livrable] |
-| 2 | [Description] | [Date] | [Date] | [Livrable] |`,
+Utiliser des tableaux pour les données chiffrées.
+Valoriser les forces de l'entreprise sans exagération.`,
 
             'administratif': `
-CONSIGNES SPÉCIFIQUES - DOCUMENT ADMINISTRATIF PREMIUM
+DOCUMENT ADMINISTRATIF
 
-📑 **FORMAT OFFICIEL**
+Structure:
+1. Titre et références (numéro, date, classification)
+2. Objet
+3. Contexte et fondements juridiques
+4. Dispositions détaillées
+5. Modalités d'application
+6. Signatures
 
-## [TITRE DU DOCUMENT]
----
-**Référence:** [Numéro de référence]
-**Date:** [Date]
-**Classification:** [Public/Interne/Confidentiel]
-
----
-
-### 1. OBJET
-[Description claire de l'objet du document]
-
-### 2. CONTEXTE ET FONDEMENTS JURIDIQUES
-
-> **Références légales applicables:**
-> - [Loi/Règlement 1] - Art. [X]
-> - [Loi/Règlement 2] - Art. [Y]
-
-### 3. DISPOSITIONS
-
-#### 3.1 [Première disposition]
-[Contenu détaillé]
-
-#### 3.2 [Deuxième disposition]
-[Contenu détaillé]
-
-### 4. MODALITÉS D'APPLICATION
-
-| Aspect | Modalité |
-|--------|----------|
-| Entrée en vigueur | [Date] |
-| Responsable | [Nom/Fonction] |
-| Révision | [Fréquence] |
-
-### 5. SIGNATURES
-
-| Fonction | Nom | Signature | Date |
-|----------|-----|-----------|------|
-| [Titre] | [Nom] | _________ | [Date] |
-
----
-*Document officiel - [Nom de l'entreprise]*`,
+Citer les références légales exactes (lois, articles, règlements).`,
 
             'rh': `
-CONSIGNES SPÉCIFIQUES - DOCUMENT RH PREMIUM
+DOCUMENT RESSOURCES HUMAINES
 
-👥 **FORMAT RESSOURCES HUMAINES**
+Structure:
+1. Identification (employé, matricule, poste, département)
+2. Objet et contexte
+3. Cadre légal (LNT, Code civil, politiques internes)
+4. Dispositions/Décision
+5. Engagements des parties
+6. Signatures
 
----
-## 📋 [TITRE DU DOCUMENT RH]
-
-**Service:** Ressources humaines
-**Date:** [Date]
-**Confidentialité:** 🔒 Document confidentiel
-
----
-
-### ℹ️ Informations générales
-
-| Champ | Valeur |
-|-------|--------|
-| Employé(e) concerné(e) | [Nom] |
-| Matricule | [Numéro] |
-| Poste | [Titre] |
-| Département | [Service] |
-| Date d'embauche | [Date] |
-
----
-
-### 📌 Objet
-
-[Description claire de l'objet]
-
-### 📖 Contexte
-
-[Contexte factuel et objectif]
-
-### ⚖️ Cadre légal applicable
-
-> **Références:**
-> - Loi sur les normes du travail (LNT) - Art. [X]
-> - Code civil du Québec - Art. [Y]
-> - Politique interne [Nom] - Section [Z]
-
-### 📝 Dispositions / Décision
-
-[Contenu principal]
-
-### ✅ Engagements et obligations
-
-**De l'employeur:**
-- [Obligation 1]
-- [Obligation 2]
-
-**De l'employé(e):**
-- [Obligation 1]
-- [Obligation 2]
-
-### 📅 Échéances
-
-| Action | Responsable | Date limite |
-|--------|-------------|-------------|
-| [Action 1] | [Qui] | [Date] |
-
----
-
-**Signatures requises:**
-
-| | Employé(e) | Représentant RH |
-|---|------------|-----------------|
-| Nom | ___________ | ___________ |
-| Date | ___________ | ___________ |
-| Signature | ___________ | ___________ |
-
----
-*Ce document est confidentiel et protégé par la Loi 25 sur la protection des renseignements personnels.*`,
+Mentionner la confidentialité (Loi 25).`,
 
             'technique': `
-CONSIGNES SPÉCIFIQUES - DOCUMENT TECHNIQUE PREMIUM
+DOCUMENT TECHNIQUE
 
-🔧 **FORMAT TECHNIQUE INDUSTRIEL**
+Structure:
+1. Métadonnées (référence, version, rédacteur, approbateur)
+2. Objet et portée
+3. Documents de référence (normes ISO, CSA)
+4. Définitions
+5. Responsabilités
+6. Équipements et matériaux
+7. Mesures de sécurité (EPI, cadenassage si applicable)
+8. Procédure détaillée
+9. Contrôle qualité
+10. Enregistrements
 
----
-# 📘 [TITRE DU DOCUMENT TECHNIQUE]
-
-| Métadonnées | |
-|-------------|---|
-| **Référence** | [Code document] |
-| **Version** | [X.Y] |
-| **Date** | [Date] |
-| **Rédacteur** | [Nom] |
-| **Approbateur** | [Nom] |
-| **Classification** | [Type: Procédure/Instruction/Spécification] |
-
----
-
-## 📑 TABLE DES MATIÈRES
-1. [Objet et portée](#1-objet-et-portée)
-2. [Documents de référence](#2-documents-de-référence)
-3. [Définitions](#3-définitions)
-4. [Responsabilités](#4-responsabilités)
-5. [Équipements et matériaux](#5-équipements-et-matériaux)
-6. [Mesures de sécurité](#6-mesures-de-sécurité)
-7. [Procédure](#7-procédure)
-8. [Contrôle qualité](#8-contrôle-qualité)
-9. [Enregistrements](#9-enregistrements)
-
----
-
-## 1. OBJET ET PORTÉE
-
-**Objet:** [Description]
-
-**Portée:** [Équipements/processus concernés]
-
----
-
-## 2. DOCUMENTS DE RÉFÉRENCE
-
-| Code | Titre | Version |
-|------|-------|---------|
-| [Réf 1] | [Titre] | [Ver] |
-| ISO XXXX | [Norme] | [Année] |
-| CSA XXXX | [Norme] | [Année] |
-
----
-
-## 3. DÉFINITIONS
-
-| Terme | Définition |
-|-------|------------|
-| [Terme 1] | [Définition] |
-| [Acronyme] | [Signification] |
-
----
-
-## 4. RESPONSABILITÉS
-
-| Rôle | Responsabilités |
-|------|-----------------|
-| Superviseur | [Liste] |
-| Technicien | [Liste] |
-| Opérateur | [Liste] |
-
----
-
-## 5. ÉQUIPEMENTS ET MATÉRIAUX
-
-### Équipements requis
-- [ ] [Équipement 1]
-- [ ] [Équipement 2]
-
-### Matériaux/Consommables
-| Article | Spécification | Quantité |
-|---------|---------------|----------|
-| [Article] | [Spec] | [Qté] |
-
----
-
-## 6. ⚠️ MESURES DE SÉCURITÉ
-
-> **🛑 DANGER**
-> [Risque critique nécessitant attention immédiate]
-
-> **⚠️ ATTENTION**
-> [Risque modéré]
-
-### EPI Obligatoires
-| EPI | Norme | Requis |
-|-----|-------|--------|
-| Lunettes de sécurité | CSA Z94.3 | ✅ |
-| Gants | [Type] | ✅ |
-| Chaussures de sécurité | CSA Z195 | ✅ |
-
-### Cadenassage (si applicable)
-- [ ] Procédure de cadenassage #[Réf]
-- [ ] Points d'isolation identifiés
-- [ ] Vérification énergie zéro
-
----
-
-## 7. PROCÉDURE
-
-### 7.1 Préparation
-1. [Étape 1]
-2. [Étape 2]
-
-### 7.2 Exécution
-1. **[Action]** - [Détails]
-   > 💡 *Conseil: [Astuce]*
-2. **[Action]** - [Détails]
-
-### 7.3 Finalisation
-1. [Étape finale]
-
----
-
-## 8. CONTRÔLE QUALITÉ
-
-| Point de contrôle | Critère | Tolérance | ✓ |
-|-------------------|---------|-----------|---|
-| [Paramètre 1] | [Valeur] | ± [X] | ☐ |
-| [Paramètre 2] | [Valeur] | ± [X] | ☐ |
-
----
-
-## 9. ENREGISTREMENTS
-
-| Formulaire | Code | Conservation |
-|------------|------|--------------|
-| [Nom form.] | [Code] | [Durée] |
-
----
-*Document contrôlé - Vérifier la version avant utilisation*`,
+Pour la sécurité: mentionner clairement DANGER ou ATTENTION selon le risque.`,
 
             'financier': `
-CONSIGNES SPÉCIFIQUES - DOCUMENT FINANCIER PREMIUM
+DOCUMENT FINANCIER
 
-💰 **FORMAT FINANCIER PROFESSIONNEL**
+Structure:
+1. Période et métadonnées
+2. Sommaire exécutif (3-4 lignes)
+3. Indicateurs clés avec comparaison période précédente
+4. États financiers (revenus, dépenses, résultat)
+5. Projections et hypothèses
+6. Recommandations priorisées
 
----
-# 📊 [TITRE DU DOCUMENT FINANCIER]
-
-| Information | Valeur |
-|-------------|--------|
-| **Période** | [Du ... au ...] |
-| **Date de préparation** | [Date] |
-| **Préparé par** | [Nom, Titre] |
-| **Approuvé par** | [Nom, Titre] |
-
----
-
-## 📌 SOMMAIRE EXÉCUTIF
-
-> [Résumé en 3-4 lignes des points clés du document]
-
----
-
-## 1. 📈 INDICATEURS CLÉS
-
-| Indicateur | Période actuelle | Période précédente | Variation |
-|------------|------------------|-------------------|-----------|
-| [KPI 1] | $ | $ | ↑↓ % |
-| [KPI 2] | $ | $ | ↑↓ % |
-| [KPI 3] | $ | $ | ↑↓ % |
-
-### Tendances
-- 📈 **En hausse:** [Éléments positifs]
-- 📉 **En baisse:** [Éléments à surveiller]
-- ➡️ **Stable:** [Éléments constants]
-
----
-
-## 2. 💵 ÉTATS FINANCIERS
-
-### Revenus
-| Source | Montant | % du total |
-|--------|---------|------------|
-| [Source 1] | $ | % |
-| [Source 2] | $ | % |
-| **Total revenus** | **$** | **100%** |
-
-### Dépenses
-| Catégorie | Budget | Réel | Écart |
-|-----------|--------|------|-------|
-| [Cat. 1] | $ | $ | $ (%) |
-| [Cat. 2] | $ | $ | $ (%) |
-| **Total dépenses** | **$** | **$** | **$** |
-
-### Résultat
-| | Montant |
-|---|---------|
-| Revenus totaux | $ |
-| Dépenses totales | ($) |
-| **Résultat net** | **$** |
-
----
-
-## 3. 🔮 PROJECTIONS
-
-| Période | Revenus prévus | Dépenses prévues | Résultat |
-|---------|----------------|------------------|----------|
-| [Mois 1] | $ | $ | $ |
-| [Mois 2] | $ | $ | $ |
-| [Mois 3] | $ | $ | $ |
-
-### Hypothèses
-1. [Hypothèse 1]
-2. [Hypothèse 2]
-
----
-
-## 4. 💡 RECOMMANDATIONS
-
-| Priorité | Action | Impact estimé | Échéance |
-|----------|--------|---------------|----------|
-| 🔴 Haute | [Action] | $ | [Date] |
-| 🟡 Moyenne | [Action] | $ | [Date] |
-
----
-
-## 5. 📎 ANNEXES
-
-- Annexe A: [Détail]
-- Annexe B: [Détail]
-
----
-*Document financier confidentiel - Distribution restreinte*`,
+Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-CONSIGNES SPÉCIFIQUES - RAPPORTS DE MAINTENANCE PREMIUM
+RAPPORT DE MAINTENANCE
 
-📊 **FORMAT RAPPORT EXÉCUTIF**
+OBLIGATION: Utiliser les outils (check_database_stats, search_tickets, get_technician_info) pour les vraies données.
 
-⚠️ **OBLIGATION:** Utilise les outils (check_database_stats, search_tickets, get_technician_info, generate_team_report) pour obtenir les VRAIES données avant de rédiger.
+Structure:
+1. Synthèse exécutive (message clé, indicateur phare, action prioritaire)
+2. Indicateurs: tickets traités, taux résolution, TMR, tickets en retard
+3. Répartition par priorité
+4. Performance équipe (par technicien)
+5. État parc machines
+6. Points d'attention (critiques, importants, à surveiller)
+7. Recommandations avec responsable et échéance
 
----
-# 📋 RAPPORT DE MAINTENANCE
-
-| | |
-|---|---|
-| **Période** | [Du ... au ...] |
-| **Date du rapport** | [Date] |
-| **Préparé par** | IA Secrétaire de Direction |
-
----
-
-## 🎯 SYNTHÈSE EXÉCUTIVE
-
-> **Message clé:** [Résumé en 2-3 phrases des points essentiels]
->
-> **Indicateur phare:** [Le chiffre le plus important à retenir]
->
-> **Action prioritaire:** [Recommandation #1]
-
----
-
-## 📈 TABLEAU DE BORD
-
-### Indicateurs clés de performance (ICP)
-
-| Indicateur | Valeur | Tendance | Objectif | Statut |
-|------------|--------|----------|----------|--------|
-| Tickets traités | **X** | ↑↓ | Y | 🟢🟡🔴 |
-| Taux de résolution | **X%** | ↑↓ | Y% | 🟢🟡🔴 |
-| TMR (h) | **X.X** | ↑↓ | Y | 🟢🟡🔴 |
-| Tickets en retard | **X** | ↑↓ | 0 | 🟢🟡🔴 |
-
-### Répartition par priorité
-
-| Priorité | Nombre | % | Barre |
-|----------|--------|---|-------|
-| 🔴 Critique | **X** | X% | ████░░░░░░ |
-| 🟠 Haute | **X** | X% | ██░░░░░░░░ |
-| 🟡 Moyenne | **X** | X% | ██████░░░░ |
-| 🟢 Basse | **X** | X% | █░░░░░░░░░ |
-
----
-
-## 👥 PERFORMANCE DE L'ÉQUIPE
-
-| Technicien | Assignés | Résolus | Taux | TMR | Charge |
-|------------|----------|---------|------|-----|--------|
-| [Nom 1] | X | X | X% | Xh | 🟢🟡🔴 |
-| [Nom 2] | X | X | X% | Xh | 🟢🟡🔴 |
-| **ÉQUIPE** | **X** | **X** | **X%** | **Xh** | |
-
-### Légende charge de travail
-- 🟢 Optimal (< 5 tickets actifs)
-- 🟡 Chargé (5-10 tickets)
-- 🔴 Surchargé (> 10 tickets)
-
----
-
-## 🔧 ÉTAT DU PARC MACHINES
-
-| Statut | Nombre | % |
-|--------|--------|---|
-| 🟢 Opérationnel | X | X% |
-| 🟡 En maintenance | X | X% |
-| 🔴 Hors service | X | X% |
-
-### Machines critiques (si applicable)
-| Machine | Problème | Depuis | Impact |
-|---------|----------|--------|--------|
-| [Nom] | [Description] | [Date] | [Impact] |
-
-### Top 5 machines les plus sollicitées
-| # | Machine | Interventions | Type principal |
-|---|---------|---------------|----------------|
-| 1 | [Nom] | X | [Type panne] |
-| 2 | [Nom] | X | [Type panne] |
-
----
-
-## ⚠️ POINTS D'ATTENTION
-
-> **🔴 CRITIQUE**
-> [Point critique nécessitant action immédiate]
-
-> **🟠 IMPORTANT**
-> [Point important à traiter rapidement]
-
-> **🟡 À SURVEILLER**
-> [Point à monitorer]
-
----
-
-## 📝 RECOMMANDATIONS
-
-| # | Recommandation | Responsable | Priorité | Échéance |
-|---|----------------|-------------|----------|----------|
-| 1 | [Action recommandée] | [Qui] | 🔴 | [Date] |
-| 2 | [Action recommandée] | [Qui] | 🟠 | [Date] |
-| 3 | [Action recommandée] | [Qui] | 🟡 | [Date] |
-
----
-
-## 📊 ANNEXE: DONNÉES DÉTAILLÉES
-
-<details>
-<summary>Voir tous les tickets de la période</summary>
-
-| Réf | Titre | Priorité | Statut | Technicien |
-|-----|-------|----------|--------|------------|
-| [X] | [Titre] | [P] | [S] | [Nom] |
-
-</details>
-
----
-*Rapport généré automatiquement - Données extraites du système de GMAO*`,
+Données en tableaux. Pas d'invention.`,
 
             'creatif': `
-CONSIGNES SPÉCIFIQUES - DOCUMENT CRÉATIF PREMIUM
+DOCUMENT CRÉATIF
 
-🎨 **LIBERTÉ CRÉATIVE AVEC EXCELLENCE**
+Liberté de format selon le type demandé:
+- Communiqué de presse
+- Texte site web
+- Communication interne
+- Discours
+- Brochure
+- Pitch commercial
 
-Tu as une liberté totale sur le format, mais le résultat doit être **visuellement impressionnant**.
-
-### Outils à ta disposition:
-
-**Mise en valeur:**
-- Utilise des **encadrés** (\`> texte\`) pour les citations/messages clés
-- Utilise des **tableaux** pour structurer l'information
-- Utilise des **listes à puces** avec émojis pertinents
-- Utilise des **séparateurs** (---) pour aérer
-
-**Émojis suggérés par contexte:**
-| Contexte | Émojis |
-|----------|--------|
-| Succès/Positif | ✅ 🎉 🏆 ⭐ 💪 |
-| Attention | ⚠️ 📌 💡 🔔 |
-| Temps/Planning | 📅 ⏰ 🗓️ |
-| Équipe/Personnes | 👥 👤 🤝 |
-| Croissance | 📈 🚀 💰 |
-| Qualité | ⭐ ✨ 💎 |
-| Communication | 📧 📞 💬 |
-| Objectifs | 🎯 🏁 |
-
-**Types de documents possibles:**
-- 📰 Communiqué de presse
-- 🌐 Texte site web / Landing page
-- 📢 Communication interne
-- 🎤 Discours / Allocution
-- 📑 Brochure / Dépliant
-- 🎬 Script vidéo
-- 📱 Posts réseaux sociaux
-- 📧 Newsletter
-- 🏷️ Pitch commercial
-
-**Adapter le ton:**
-| Public | Ton | Style |
-|--------|-----|-------|
-| Direction/CA | Formel, stratégique | Données, ROI |
-| Employés | Chaleureux, motivant | Inclusif, clair |
-| Clients | Professionnel, engageant | Bénéfices, confiance |
-| Médias | Factuel, percutant | Accroche, citations |
-| Partenaires | Collaboratif | Win-win, opportunités |
-
-**Structure type document marketing:**
-1. **Accroche** - Phrase percutante
-2. **Problème** - Ce que le lecteur vit
-3. **Solution** - Ce que nous offrons
-4. **Preuves** - Chiffres, témoignages
-5. **Appel à l'action** - Prochaine étape claire`
+Adapter le ton au public cible.
+Structure marketing: Accroche > Problème > Solution > Preuves > Appel à l'action`
         };
 
         const typeInstructions = documentTypeInstructions[documentType] || documentTypeInstructions['creatif'];
@@ -3054,108 +2509,29 @@ STRATÉGIE D'EXTRACTION DE DONNÉES (OBLIGATOIRE):
 - ❌ Ne jamais contredire les lois canadiennes/québécoises
 - ❌ Ne jamais ignorer les informations d'identité de l'entreprise
 
-# FORMAT DE SORTIE PREMIUM - QUALITÉ DIRECTION
+# FORMAT DE SORTIE
 
-Tu produis des documents de **qualité institutionnelle**, dignes d'être présentés au conseil d'administration.
+Produire un document Markdown professionnel, sobre et lisible.
 
-## 🎨 RÈGLES DE MISE EN FORME
+## Structure
+- # pour le titre principal
+- ## pour les sections
+- ### pour les sous-sections
+- Tableaux pour toutes données chiffrées
+- **Gras** pour les valeurs importantes
 
-### Structure hiérarchique
-- \`#\` = Titre principal du document (1 seul)
-- \`##\` = Sections majeures
-- \`###\` = Sous-sections
-- \`####\` = Points détaillés
+## Règles
+- Commencer directement par le contenu (pas de "Voici...")
+- Données chiffrées en tableaux, jamais en texte plat
+- Phrases courtes et directes
+- Omettre les sections sans données plutôt que dire "non disponible"
+- Personnaliser avec le nom de l'entreprise
 
-### Éléments visuels obligatoires
-
-**1. EN-TÊTE DE DOCUMENT**
-Commence TOUJOURS par un bloc d'information:
-\`\`\`
-# [TITRE DU DOCUMENT]
-
-| | |
-|---|---|
-| **Date** | [Date du jour] |
-| **Période** | [Si applicable] |
-| **Préparé par** | Secrétaire de Direction IA |
-\`\`\`
-
-**2. SYNTHÈSE EXÉCUTIVE**
-Utilise un bloc citation pour le message clé:
-\`\`\`
-> **💡 Point clé:** [Message essentiel en 1-2 phrases]
-\`\`\`
-
-**3. DONNÉES CHIFFRÉES**
-TOUJOURS en tableau avec mise en valeur:
-\`\`\`
-| Indicateur | Valeur | Tendance |
-|------------|--------|----------|
-| [Nom] | **XX** | ↑ +X% |
-\`\`\`
-
-**4. ALERTES ET POINTS D'ATTENTION**
-\`\`\`
-> **🔴 CRITIQUE:** [Message urgent]
-
-> **🟠 ATTENTION:** [Point important]
-
-> **💡 RECOMMANDATION:** [Suggestion]
-\`\`\`
-
-**5. INDICATEURS VISUELS**
-| Élément | Icône |
-|---------|-------|
-| Priorité critique | 🔴 |
-| Priorité haute | 🟠 |
-| Priorité moyenne | 🟡 |
-| Priorité basse | 🟢 |
-| Tendance hausse | 📈 ↑ |
-| Tendance baisse | 📉 ↓ |
-| Stable | ➡️ |
-| Succès/OK | ✅ |
-| Échec/KO | ❌ |
-| Attention | ⚠️ |
-| Information | ℹ️ |
-| Action requise | 📌 |
-
-**6. TABLEAUX PREMIUM**
-- Aligner les valeurs numériques à droite visuellement
-- Utiliser **gras** pour les totaux et valeurs importantes
-- Ajouter des barres de progression ASCII si pertinent: \`████░░░░░░\`
-
-**7. SECTIONS REPLIABLES** (pour les détails)
-\`\`\`
-<details>
-<summary>📎 Voir les détails</summary>
-
-[Contenu détaillé]
-
-</details>
-\`\`\`
-
-**8. SÉPARATEURS**
-Utilise \`---\` pour séparer les sections majeures.
-
-## ❌ INTERDICTIONS ABSOLUES
-
-- ❌ Texte plat sans mise en forme
-- ❌ Données sans tableau
-- ❌ "Données non disponibles" (omets la section)
-- ❌ Paragraphes > 5 lignes sans structure
-- ❌ Listes > 5 items sans regroupement
-- ❌ Document sans synthèse exécutive
-- ❌ Placeholders visibles [À COMPLÉTER]
-- ❌ Introduction type "Voici le document..."
-
-## ✅ QUALITÉS ATTENDUES
-
-- ✅ Prêt à imprimer / présenter
-- ✅ Hiérarchie visuelle claire
-- ✅ Données mises en valeur
-- ✅ Actions identifiables immédiatement
-- ✅ Ton professionnel et concis
-- ✅ Personnalisé avec l'identité de l'entreprise`;
+## Style
+- Ton professionnel et institutionnel
+- Vocabulaire précis
+- Pas d'émojis sauf pour les indicateurs de priorité dans les rapports de maintenance
+- Document prêt à l'emploi`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
 
