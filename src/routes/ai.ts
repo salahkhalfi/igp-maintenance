@@ -2340,6 +2340,15 @@ CONSIGNES SPÉCIFIQUES - DOCUMENT FINANCIER
 - Justifications claires des projections
 - Références aux programmes de financement pertinents`,
 
+            'rapports': `
+CONSIGNES SPÉCIFIQUES - RAPPORTS DE MAINTENANCE
+- UTILISE OBLIGATOIREMENT les outils (check_database_stats, search_tickets, get_technician_info) pour obtenir les VRAIES données
+- Structure professionnelle avec sections clairement définies
+- Présentation des KPIs en TABLEAUX Markdown (obligatoire)
+- Comparaison avec périodes précédentes si pertinent
+- Recommandations actionables basées sur les données
+- Graphiques suggérés sous forme de tableaux de synthèse`,
+
             'creatif': `
 CONSIGNES SPÉCIFIQUES - DOCUMENT CRÉATIF / LIBRE
 - Liberté totale de format et de structure
@@ -2534,8 +2543,11 @@ INTERDIT:
                 });
                 
                 if (!response.ok) {
-                    console.error('❌ [Secretary] OpenAI API error:', await response.text());
-                    break;
+                    const errorText = await response.text();
+                    console.error('❌ [Secretary] OpenAI API error:', response.status, errorText);
+                    return c.json({ 
+                        error: `Erreur API OpenAI (${response.status}): ${errorText.substring(0, 200)}` 
+                    }, 500);
                 }
                 
                 const data = await response.json() as any;
@@ -2591,7 +2603,9 @@ INTERDIT:
                 
             } catch (e: any) {
                 console.error('❌ [Secretary] API call failed:', e);
-                break;
+                return c.json({ 
+                    error: `Erreur lors de l'appel IA: ${e.message}` 
+                }, 500);
             }
         }
         
