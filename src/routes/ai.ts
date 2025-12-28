@@ -2065,6 +2065,9 @@ ${Object.entries(usersByRole).map(([role, count]) =>
         let maintenanceDataContext = '';
         if (documentType === 'rapports') {
             try {
+                // BIBLE COMPLIANCE: Charger les statuts/priorités dynamiquement depuis DB
+                const { statusMap: statusLabels, priorityMap: priorityLabels, closedStatuses } = await getTicketMaps(db);
+                
                 // Période: dernier mois
                 const oneMonthAgo = new Date();
                 oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -2112,8 +2115,8 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
                     priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1;
                     if (t.downtime_hours) totalDowntime += parseFloat(t.downtime_hours) || 0;
-                    // Compter les tickets fermés (completed, resolved, closed)
-                    if (['completed', 'resolved', 'closed'].includes(t.status) && t.completed_at && t.created_at) {
+                    // Compter les tickets fermés (utilise closedStatuses depuis DB)
+                    if (closedStatuses.includes(t.status) && t.completed_at && t.created_at) {
                         resolvedCount++;
                         const created = new Date(t.created_at).getTime();
                         const completed = new Date(t.completed_at).getTime();
@@ -2132,8 +2135,8 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                 
                 techUsers.forEach((tech: any) => {
                     const techTickets = ticketsData.filter((t: any) => t.assigned_to === tech.id);
-                    // Filtrer les tickets fermés (completed, resolved, closed)
-                    const resolvedTickets = techTickets.filter((t: any) => ['completed', 'resolved', 'closed'].includes(t.status));
+                    // Filtrer les tickets fermés (utilise closedStatuses depuis DB)
+                    const resolvedTickets = techTickets.filter((t: any) => closedStatuses.includes(t.status));
                     let avgResTime = 0;
                     if (resolvedTickets.length > 0) {
                         const totalTime = resolvedTickets.reduce((sum: number, t: any) => {
@@ -2155,12 +2158,12 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                 // Tickets non assignés (ce mois)
                 const unassignedTickets = ticketsData.filter((t: any) => !t.assigned_to);
                 const unassignedCompleted = unassignedTickets.filter((t: any) => 
-                    ['completed', 'resolved', 'closed'].includes(t.status)
+                    closedStatuses.includes(t.status)
                 ).length;
                 
                 // Tickets non assignés (TOUS - historique complet)
                 const allUnassignedCompleted = allTicketsData.filter((t: any) => 
-                    !t.assigned_to && ['completed', 'resolved', 'closed'].includes(t.status)
+                    !t.assigned_to && closedStatuses.includes(t.status)
                 ).length;
                 const allUnassigned = allTicketsData.filter((t: any) => !t.assigned_to).length;
                 
@@ -2177,24 +2180,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     }
                 });
                 
-                const statusLabels: Record<string, string> = {
-                    'received': 'Reçu',
-                    'assigned': 'Assigné',
-                    'in_progress': 'En cours',
-                    'diagnostic': 'Diagnostic',
-                    'waiting_parts': 'Attente pièces',
-                    'completed': 'Terminé',
-                    'cancelled': 'Annulé',
-                    'archived': 'Archivé'
-                };
-                
-                const priorityLabels: Record<string, string> = {
-                    'low': 'Basse',
-                    'medium': 'Moyenne',
-                    'high': 'Haute',
-                    'urgent': 'Urgente',
-                    'critical': 'Critique'
-                };
+                // statusLabels et priorityLabels sont déjà chargés depuis getTicketMaps() (BIBLE compliance)
                 
                 maintenanceDataContext = `
 ## DONNÉES DE MAINTENANCE - DERNIER MOIS (${ticketsData.length} tickets)
