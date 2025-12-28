@@ -2152,11 +2152,17 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     };
                 });
                 
-                // Tickets non assignés
+                // Tickets non assignés (ce mois)
                 const unassignedTickets = ticketsData.filter((t: any) => !t.assigned_to);
                 const unassignedCompleted = unassignedTickets.filter((t: any) => 
                     ['completed', 'resolved', 'closed'].includes(t.status)
                 ).length;
+                
+                // Tickets non assignés (TOUS - historique complet)
+                const allUnassignedCompleted = allTicketsData.filter((t: any) => 
+                    !t.assigned_to && ['completed', 'resolved', 'closed'].includes(t.status)
+                ).length;
+                const allUnassigned = allTicketsData.filter((t: any) => !t.assigned_to).length;
                 
                 // Incidents critiques (priorité critical/urgent)
                 const criticalIncidents = ticketsData.filter((t: any) => 
@@ -2196,7 +2202,8 @@ ${Object.entries(usersByRole).map(([role, count]) =>
 ### Statistiques globales
 - **Tickets créés ce mois**: ${ticketsData.length}
 - **Tickets terminés ce mois**: ${statusCounts['completed'] || 0}
-- **Tickets non assignés**: ${unassignedTickets.length} (dont ${unassignedCompleted} terminés)
+- **Tickets non assignés ce mois**: ${unassignedTickets.length} (dont ${unassignedCompleted} terminés)
+- **Tickets non assignés (historique)**: ${allUnassigned} total (dont ${allUnassignedCompleted} terminés)
 - **Temps moyen de résolution**: ${resolvedCount > 0 ? Math.round(totalResolutionTime / resolvedCount * 10) / 10 : 'N/A'} heures
 - **Temps d'arrêt total**: ${Math.round(totalDowntime * 10) / 10} heures
 - **Total historique**: ${allTicketsData.length} tickets
