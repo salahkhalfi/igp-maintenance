@@ -2519,27 +2519,35 @@ INTERDIT:
         ];
         
         let turns = 0;
-        const MAX_TURNS = 3; // Limiter pour éviter les timeouts
+        const MAX_TURNS = 5; // Augmenté pour permettre plus d'appels d'outils
         
         while (turns < MAX_TURNS) {
             turns++;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}`);
+            const isLastTurn = turns === MAX_TURNS;
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}${isLastTurn ? ' (FINAL - no tools)' : ''}`);
             
             try {
+                // Au dernier tour, forcer l'IA à répondre sans outils
+                const requestBody: any = {
+                    model: "gpt-4o-mini",
+                    messages,
+                    temperature: 0.3,
+                    max_tokens: 4000
+                };
+                
+                if (!isLastTurn) {
+                    requestBody.tools = SECRETARY_TOOLS;
+                    requestBody.tool_choice = "auto";
+                }
+                // Dernier tour: pas de tools = l'IA DOIT produire du contenu
+                
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
                         'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
                         'Content-Type': 'application/json' 
                     },
-                    body: JSON.stringify({
-                        model: "gpt-4o-mini",
-                        messages,
-                        temperature: 0.3,
-                        max_tokens: 4000,
-                        tools: SECRETARY_TOOLS,
-                        tool_choice: turns === 1 ? "auto" : "auto" // Premier tour peut utiliser tools
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 if (!response.ok) {
