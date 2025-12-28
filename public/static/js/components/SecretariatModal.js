@@ -263,31 +263,34 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     const markdownToHtml = (md) => {
         if (!md) return '';
         
-        // Fonction pour parser les tableaux Markdown
+        // Fonction pour parser les tableaux Markdown avec styles inline pour impression
         const parseTable = (tableText) => {
             const lines = tableText.trim().split('\n').filter(l => l.trim());
-            if (lines.length < 2) return tableText; // Pas assez de lignes pour un tableau
+            if (lines.length < 2) return tableText;
             
-            // Vérifier si c'est un tableau (ligne 2 doit être le séparateur)
             const separatorLine = lines[1];
             if (!/^[\s|:-]+$/.test(separatorLine)) return tableText;
             
             const headerCells = lines[0].split('|').map(c => c.trim()).filter(c => c);
-            const headerHtml = headerCells.map(c => `<th>${c}</th>`).join('');
+            const thStyle = 'style="border:1px solid #1e293b;padding:8px 10px;text-align:left;font-weight:700;background-color:#e2e8f0;color:#0f172a"';
+            const headerHtml = headerCells.map(c => `<th ${thStyle}>${c}</th>`).join('');
             
-            const bodyRows = lines.slice(2).map(row => {
+            const tdStyle = 'style="border:1px solid #1e293b;padding:8px 10px"';
+            const bodyRows = lines.slice(2).map((row, idx) => {
                 const cells = row.split('|').map(c => c.trim()).filter(c => c);
-                return `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+                const rowBg = idx % 2 === 1 ? 'background-color:#f8fafc;' : '';
+                return `<tr style="${rowBg}">${cells.map(c => `<td ${tdStyle}>${c}</td>`).join('')}</tr>`;
             }).join('');
             
-            return `<table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+            const tableStyle = 'style="width:100%;border-collapse:collapse;margin:15px 0;font-size:10pt;border:1px solid #1e293b"';
+            return `<table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
         };
         
         // 1. INLINE FORMATTING FIRST (avant tableaux pour que **bold** fonctionne dans les cellules)
         let html = md
-            // Bold et italic EN PREMIER
-            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+            // Bold et italic EN PREMIER (avec styles inline pour impression)
+            .replace(/\*\*([^*]+)\*\*/g, '<strong style="font-weight:700;color:#0f172a">$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em style="font-style:italic">$1</em>')
             // Détecter et convertir les tableaux (blocs commençant par |)
             .replace(/((?:^\|.+\|$\n?)+)/gm, (match) => parseTable(match))
             // Séparateurs horizontaux (---, ***, ___)
@@ -296,11 +299,11 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:4pt;">')
             // Liens [text](url)
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6;text-decoration:underline;">$1</a>')
-            // Headers
-            .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            // Headers avec styles inline pour impression
+            .replace(/^#### (.+)$/gm, '<h4 style="font-size:11pt;font-weight:600;color:#475569;margin:12px 0 6px">$1</h4>')
+            .replace(/^### (.+)$/gm, '<h3 style="font-size:12pt;font-weight:600;color:#334155;margin:16px 0 8px">$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2 style="font-size:14pt;font-weight:600;color:#1e293b;margin:20px 0 10px;padding-left:10px;border-left:3px solid #3b82f6">$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1 style="font-size:18pt;font-weight:700;color:#0f172a;margin:24px 0 12px;padding-bottom:8px;border-bottom:2px solid #3b82f6">$1</h1>')
             // Code inline `code`
             .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2pt 4pt;border-radius:3pt;font-family:monospace;font-size:10pt;">$1</code>')
             // Listes
