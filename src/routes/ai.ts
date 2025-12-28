@@ -929,13 +929,15 @@ app.post('/chat', async (c) => {
         const aiConfig = await getAiConfig(db);
         
         // --- DOCUMENT GENERATION: Détection d'intention ---
+        // RESTRICTION: Mode document réservé aux admin et supervisor
+        const canGenerateDocuments = ['admin', 'supervisor'].includes(userRole);
         const documentIntent = detectDocumentIntent(message);
-        const isDocumentRequest = documentMode === true || (documentIntent.isDocument && documentIntent.confidence > 0.6);
+        const isDocumentRequest = canGenerateDocuments && (documentMode === true || (documentIntent.isDocument && documentIntent.confidence > 0.6));
         let documentData: Record<string, any> = {};
         let documentPromptBlock = "";
         
         if (isDocumentRequest && documentIntent.type !== 'conversation') {
-            console.log(`📄 [AI] Document request detected: ${documentIntent.type} (confidence: ${documentIntent.confidence})`);
+            console.log(`📄 [AI] Document request detected: ${documentIntent.type} (confidence: ${documentIntent.confidence}) - User: ${userName} (${userRole})`);
             
             // Collecter les données enrichies pour le document
             documentData = await collectDocumentData(db, c.env, documentIntent.needsData);
