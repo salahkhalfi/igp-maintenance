@@ -1,5 +1,7 @@
 // Composant : Modales (Ajout Événement + Gestion Catégories)
-console.log('PlanningModals loaded v3.0.1 - URL Fix & Logging');
+// v3.1.0 - UX Améliorée avec aide contextuelle
+console.log('PlanningModals loaded v3.1.0 - UX Improved');
+
 const PlanningModals = ({ 
     showAddModal, 
     setShowAddModal, 
@@ -20,14 +22,15 @@ const PlanningModals = ({
     const [showTvExtras, setShowTvExtras] = React.useState(false);
     const [uploading, setUploading] = React.useState(false);
     const [imageUrl, setImageUrl] = React.useState(null);
+    const [showTvHelp, setShowTvHelp] = React.useState(false);
 
     // Update state when modal opens or event changes
     React.useEffect(() => {
         if (showAddModal) {
-            // Default to true if creating new, or use existing value
             const isVisible = selectedEvent ? (selectedEvent.show_on_tv !== 0 && selectedEvent.show_on_tv !== false) : true;
             setShowTvExtras(isVisible);
             setImageUrl(selectedEvent ? selectedEvent.image_url : '');
+            setShowTvHelp(false);
         }
     }, [showAddModal, selectedEvent]);
 
@@ -67,202 +70,324 @@ const PlanningModals = ({
         // ADD EVENT MODAL
         showAddModal && React.createElement('div', { className: 'fixed inset-0 z-[200] bg-black/50 overflow-y-auto animate-fadeIn' },
             React.createElement('div', { className: 'flex min-h-full items-center justify-center p-4' },
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-scaleIn relative' },
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-scaleIn relative' },
                     // Modal Header
-                    React.createElement('div', { className: 'bg-slate-50 px-6 py-4 border-b flex justify-between items-center' },
-                        React.createElement('h3', { className: 'font-bold text-lg text-slate-800' }, selectedEvent ? 'Modifier l\'Événement' : 'Ajouter un Événement'),
-                        React.createElement('button', { 
-                            onClick: () => setShowAddModal(false),
-                            className: 'text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition'
-                        }, React.createElement('i', { className: 'fas fa-times' }))
-                    ),
-                    // Modal Form
-                    React.createElement('form', { onSubmit: onSaveEvent, className: 'p-6 space-y-5' },
-                        // Date & Time & Type Row
-                        React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-3 gap-4' },
-                            React.createElement('div', null,
-                                React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Date'),
-                                React.createElement('input', { 
-                                    name: 'date', 
-                                    type: 'date',
-                                    defaultValue: newEventDate,
-                                    required: true,
-                                    className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700' 
-                                })
+                    React.createElement('div', { className: 'bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4 flex justify-between items-center' },
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('div', { className: 'w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center' },
+                                React.createElement('i', { className: 'fas fa-calendar-plus text-white text-lg' })
                             ),
-                            React.createElement('div', null,
-                                React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Heure'),
-                                React.createElement('input', { 
-                                    name: 'time', 
-                                    type: 'time', 
-                                    defaultValue: selectedEvent ? selectedEvent.time : '',
-                                    className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700' 
-                                })
-                            ),
-                            React.createElement('div', null,
-                                React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Type'),
-                                React.createElement('select', { 
-                                    name: 'type', 
-                                    defaultValue: selectedEvent ? selectedEvent.type : (categories[0]?.id || ''),
-                                    className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700' 
-                                },
-                                    categories.map(cat => 
-                                        React.createElement('option', { key: cat.id, value: cat.id }, cat.label)
-                                    )
-                                )
+                            React.createElement('div', {},
+                                React.createElement('h3', { className: 'font-bold text-lg text-white' }, selectedEvent ? 'Modifier l\'Événement' : 'Nouvel Événement'),
+                                React.createElement('p', { className: 'text-xs text-slate-300' }, 'Planning de production')
                             )
                         ),
+                        React.createElement('button', { 
+                            onClick: () => setShowAddModal(false),
+                            className: 'text-white/70 hover:text-white w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition'
+                        }, React.createElement('i', { className: 'fas fa-times' }))
+                    ),
+
+                    // Modal Form
+                    React.createElement('form', { onSubmit: onSaveEvent, className: 'p-6 space-y-5' },
                         
-                        // Title Input
-                        React.createElement('div', null,
-                            React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Titre de l\'événement'),
-                            React.createElement('input', { 
-                                name: 'title', 
-                                type: 'text', 
-                                defaultValue: selectedEvent ? selectedEvent.title : '',
-                                placeholder: 'Ex: Commande #1234 - Client ABC',
-                                required: true,
-                                className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700' 
-                            })
-                        ),
-
-                        // Details Input
-                        React.createElement('div', null,
-                            React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Détails / Notes'),
-                            React.createElement('textarea', { 
-                                name: 'details', 
-                                rows: 3,
-                                defaultValue: selectedEvent ? selectedEvent.details : '',
-                                placeholder: 'Spécifications, contacts, contraintes...',
-                                className: 'w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-medium text-slate-700 resize-none' 
-                            })
-                        ),
-
-                        // Show on TV Section
-                        React.createElement('div', { className: 'bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 space-y-3' },
-                            // Main Toggle
-                            React.createElement('div', { className: 'flex items-center gap-3' },
-                                React.createElement('div', { className: 'relative inline-block w-10 h-6 align-middle select-none transition duration-200 ease-in' },
+                        // === SECTION 1: INFORMATIONS DE BASE ===
+                        React.createElement('div', { className: 'space-y-4' },
+                            // Date & Time & Type Row
+                            React.createElement('div', { className: 'grid grid-cols-3 gap-3' },
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-xs font-semibold text-slate-500 uppercase mb-1.5' }, 'Date'),
                                     React.createElement('input', { 
-                                        type: 'checkbox', 
-                                        name: 'show_on_tv', 
-                                        id: 'show_on_tv',
-                                        checked: showTvExtras,
-                                        onChange: (e) => setShowTvExtras(e.target.checked),
-                                        className: 'toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-4 top-1',
-                                    }),
-                                    React.createElement('label', { 
-                                        htmlFor: 'show_on_tv', 
-                                        className: `toggle-label block overflow-hidden h-6 rounded-full cursor-pointer ${showTvExtras ? 'bg-blue-600' : 'bg-gray-300'}` 
+                                        name: 'date', 
+                                        type: 'date',
+                                        defaultValue: newEventDate,
+                                        required: true,
+                                        className: 'w-full p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition text-sm font-medium text-slate-700' 
                                     })
                                 ),
-                                React.createElement('label', { htmlFor: 'show_on_tv', className: 'text-sm font-bold text-slate-700 cursor-pointer select-none' }, 
-                                    React.createElement('i', { className: 'fas fa-tv mr-2 text-slate-500' }),
-                                    'Afficher sur le TV Board'
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-xs font-semibold text-slate-500 uppercase mb-1.5' }, 'Heure'),
+                                    React.createElement('input', { 
+                                        name: 'time', 
+                                        type: 'time', 
+                                        defaultValue: selectedEvent ? selectedEvent.time : '',
+                                        className: 'w-full p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition text-sm font-medium text-slate-700' 
+                                    })
+                                ),
+                                React.createElement('div', null,
+                                    React.createElement('label', { className: 'block text-xs font-semibold text-slate-500 uppercase mb-1.5' }, 'Catégorie'),
+                                    React.createElement('select', { 
+                                        name: 'type', 
+                                        defaultValue: selectedEvent ? selectedEvent.type : (categories[0]?.id || ''),
+                                        className: 'w-full p-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition text-sm font-medium text-slate-700' 
+                                    },
+                                        categories.map(cat => 
+                                            React.createElement('option', { key: cat.id, value: cat.id }, cat.label)
+                                        )
+                                    )
                                 )
                             ),
                             
-                            // Extra Options (Conditional)
-                            showTvExtras && React.createElement('div', { className: 'pl-2 pt-2 grid grid-cols-1 gap-4 animate-fadeIn border-t border-slate-200 mt-2' },
-                                // Popup Option
-                                React.createElement('div', { className: 'flex items-start gap-2 p-2 rounded hover:bg-white transition' },
+                            // Title Input
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-xs font-semibold text-slate-500 uppercase mb-1.5' }, 
+                                    React.createElement('i', { className: 'fas fa-heading mr-1.5 text-slate-400' }),
+                                    'Titre'
+                                ),
+                                React.createElement('input', { 
+                                    name: 'title', 
+                                    type: 'text', 
+                                    defaultValue: selectedEvent ? selectedEvent.title : '',
+                                    placeholder: 'Ex: Commande #1234 - Client ABC',
+                                    required: true,
+                                    className: 'w-full p-3 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition text-sm font-medium text-slate-700 placeholder-slate-400' 
+                                })
+                            ),
+
+                            // Details Input
+                            React.createElement('div', null,
+                                React.createElement('label', { className: 'block text-xs font-semibold text-slate-500 uppercase mb-1.5' }, 
+                                    React.createElement('i', { className: 'fas fa-align-left mr-1.5 text-slate-400' }),
+                                    'Description'
+                                ),
+                                React.createElement('textarea', { 
+                                    name: 'details', 
+                                    rows: 2,
+                                    defaultValue: selectedEvent ? selectedEvent.details : '',
+                                    placeholder: 'Spécifications, contacts, contraintes...',
+                                    className: 'w-full p-3 border border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition text-sm font-medium text-slate-700 resize-none placeholder-slate-400' 
+                                })
+                            )
+                        ),
+
+                        // === SECTION 2: DIFFUSION TV (Redesigned) ===
+                        React.createElement('div', { className: 'rounded-xl border-2 border-dashed border-slate-200 overflow-hidden' },
+                            // Header avec toggle
+                            React.createElement('div', { 
+                                className: `p-4 cursor-pointer transition-all ${showTvExtras ? 'bg-purple-50 border-b border-purple-100' : 'bg-slate-50 hover:bg-slate-100'}`,
+                                onClick: () => setShowTvExtras(!showTvExtras)
+                            },
+                                React.createElement('div', { className: 'flex items-center justify-between' },
+                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                        React.createElement('div', { className: `w-10 h-10 rounded-lg flex items-center justify-center transition-all ${showTvExtras ? 'bg-purple-500 text-white' : 'bg-slate-200 text-slate-500'}` },
+                                            React.createElement('i', { className: 'fas fa-tv' })
+                                        ),
+                                        React.createElement('div', {},
+                                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                                React.createElement('span', { className: 'font-bold text-slate-800' }, 'Diffuser sur l\'écran TV'),
+                                                React.createElement('button', {
+                                                    type: 'button',
+                                                    onClick: (e) => { e.stopPropagation(); setShowTvHelp(!showTvHelp); },
+                                                    className: 'w-5 h-5 rounded-full bg-slate-200 hover:bg-purple-200 text-slate-500 hover:text-purple-600 flex items-center justify-center text-xs transition'
+                                                }, React.createElement('i', { className: 'fas fa-question' }))
+                                            ),
+                                            React.createElement('p', { className: 'text-xs text-slate-500' }, 'Afficher cet événement sur l\'écran de l\'usine')
+                                        )
+                                    ),
+                                    // Toggle switch
+                                    React.createElement('div', { 
+                                        className: 'relative',
+                                        onClick: (e) => e.stopPropagation()
+                                    },
+                                        React.createElement('input', { 
+                                            type: 'checkbox', 
+                                            name: 'show_on_tv', 
+                                            id: 'show_on_tv',
+                                            checked: showTvExtras,
+                                            onChange: (e) => setShowTvExtras(e.target.checked),
+                                            className: 'sr-only peer'
+                                        }),
+                                        React.createElement('div', { 
+                                            className: 'w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-purple-500 transition-colors cursor-pointer',
+                                            onClick: () => setShowTvExtras(!showTvExtras)
+                                        }),
+                                        React.createElement('div', { 
+                                            className: `absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${showTvExtras ? 'translate-x-5' : ''}`,
+                                            onClick: () => setShowTvExtras(!showTvExtras)
+                                        })
+                                    )
+                                )
+                            ),
+
+                            // Info bulle d'aide (conditionnel)
+                            showTvHelp && React.createElement('div', { className: 'mx-4 mt-3 mb-1 p-3 bg-blue-50 border border-blue-200 rounded-lg' },
+                                React.createElement('div', { className: 'flex gap-2' },
+                                    React.createElement('i', { className: 'fas fa-info-circle text-blue-500 mt-0.5' }),
+                                    React.createElement('div', { className: 'text-xs text-blue-700' },
+                                        React.createElement('p', { className: 'font-semibold mb-1' }, 'Qu\'est-ce que la diffusion TV ?'),
+                                        React.createElement('p', {}, 'L\'écran TV de l\'usine affiche automatiquement les événements du planning. Vous pouvez :'),
+                                        React.createElement('ul', { className: 'mt-1 ml-3 list-disc space-y-0.5' },
+                                            React.createElement('li', {}, 'Ajouter une image qui s\'affichera avec l\'événement'),
+                                            React.createElement('li', {}, 'Choisir le mode POPUP pour les annonces importantes'),
+                                            React.createElement('li', {}, 'Définir combien de temps l\'image reste affichée')
+                                        )
+                                    )
+                                )
+                            ),
+                            
+                            // Options TV (conditionnel)
+                            showTvExtras && React.createElement('div', { className: 'p-4 space-y-4 bg-white' },
+                                
+                                // Mode POPUP avec explication visuelle
+                                React.createElement('div', { className: 'flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition cursor-pointer',
+                                    onClick: () => {
+                                        const checkbox = document.getElementById('is_popup');
+                                        if (checkbox) checkbox.click();
+                                    }
+                                },
                                     React.createElement('input', { 
                                         type: 'checkbox', 
                                         name: 'is_popup', 
                                         id: 'is_popup',
                                         defaultChecked: selectedEvent ? (selectedEvent.is_popup === 1 || selectedEvent.is_popup === true) : false,
-                                        className: 'mt-1 w-4 h-4 text-purple-600 rounded focus:ring-purple-500 border-gray-300' 
+                                        className: 'mt-1 w-5 h-5 text-purple-600 rounded focus:ring-purple-500 border-slate-300 cursor-pointer' 
                                     }),
-                                    React.createElement('div', null,
-                                        React.createElement('label', { htmlFor: 'is_popup', className: 'block text-sm font-bold text-slate-700 cursor-pointer' }, 'Mode POPUP (Prioritaire)'),
-                                        React.createElement('p', { className: 'text-xs text-slate-500' }, 'S\'affiche en plein écran par dessus le planning')
+                                    React.createElement('div', { className: 'flex-1' },
+                                        React.createElement('div', { className: 'flex items-center gap-2' },
+                                            React.createElement('span', { className: 'font-semibold text-slate-800' }, 'Mode Alerte'),
+                                            React.createElement('span', { className: 'px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded-full' }, 'PRIORITAIRE')
+                                        ),
+                                        React.createElement('p', { className: 'text-xs text-slate-500 mt-0.5' }, 
+                                            'L\'événement s\'affiche en ', 
+                                            React.createElement('strong', {}, 'plein écran'),
+                                            ' et interrompt le défilement normal. Idéal pour les annonces urgentes.'
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'hidden sm:flex items-center justify-center w-12 h-12 bg-slate-100 rounded-lg' },
+                                        React.createElement('i', { className: 'fas fa-expand text-slate-400' })
                                     )
                                 ),
 
-                                // Image URL
-                                React.createElement('div', null,
-                                    React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Image (Upload ou URL)'),
-                                    React.createElement('div', { className: 'flex flex-col gap-2' },
-                                        // Upload Button
-                                        React.createElement('div', { className: 'flex items-center gap-2' },
-                                            React.createElement('label', { 
-                                                className: `flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer transition text-sm font-medium border border-slate-300 ${uploading ? 'opacity-50 pointer-events-none' : ''}`
-                                            },
-                                                React.createElement('i', { className: uploading ? 'fas fa-spinner fa-spin' : 'fas fa-cloud-upload-alt' }),
-                                                uploading ? 'Envoi...' : 'Choisir un fichier',
-                                                React.createElement('input', {
-                                                    type: 'file',
-                                                    accept: 'image/*',
-                                                    className: 'hidden',
-                                                    onChange: handleImageUpload,
-                                                    disabled: uploading
-                                                })
-                                            ),
-                                            imageUrl && React.createElement('span', { className: 'text-xs text-green-600 font-bold flex items-center' },
-                                                React.createElement('i', { className: 'fas fa-check-circle mr-1' }), 'Image chargée'
-                                            )
+                                // Section Image avec instructions claires
+                                React.createElement('div', { className: 'space-y-3' },
+                                    React.createElement('div', { className: 'flex items-center justify-between' },
+                                        React.createElement('label', { className: 'flex items-center gap-2 text-sm font-semibold text-slate-700' },
+                                            React.createElement('i', { className: 'fas fa-image text-purple-500' }),
+                                            'Image à diffuser'
                                         ),
-                                        
-                                        // URL Input (Auto-filled)
-                                        React.createElement('div', { className: 'relative flex-1' },
-                                            React.createElement('i', { className: 'fas fa-link absolute left-3 top-3 text-slate-400' }),
+                                        imageUrl && React.createElement('button', {
+                                            type: 'button',
+                                            onClick: () => setImageUrl(''),
+                                            className: 'text-xs text-red-500 hover:text-red-700 flex items-center gap-1'
+                                        }, React.createElement('i', { className: 'fas fa-trash-alt' }), 'Supprimer')
+                                    ),
+                                    
+                                    // Zone de drop / upload
+                                    !imageUrl ? React.createElement('div', { className: 'relative' },
+                                        React.createElement('label', { 
+                                            className: 'flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition group'
+                                        },
+                                            React.createElement('div', { className: 'flex flex-col items-center justify-center pt-2 pb-3' },
+                                                React.createElement('i', { className: `fas ${uploading ? 'fa-spinner fa-spin' : 'fa-cloud-upload-alt'} text-3xl text-slate-400 group-hover:text-purple-500 mb-2 transition` }),
+                                                React.createElement('p', { className: 'text-sm text-slate-600 font-medium' }, 
+                                                    uploading ? 'Envoi en cours...' : 'Cliquez pour choisir une image'
+                                                ),
+                                                React.createElement('p', { className: 'text-xs text-slate-400 mt-1' }, 'PNG, JPG jusqu\'à 5MB')
+                                            ),
+                                            React.createElement('input', {
+                                                type: 'file',
+                                                accept: 'image/*',
+                                                className: 'hidden',
+                                                onChange: handleImageUpload,
+                                                disabled: uploading
+                                            })
+                                        ),
+                                        // OU divider avec URL
+                                        React.createElement('div', { className: 'flex items-center gap-3 mt-3' },
+                                            React.createElement('div', { className: 'flex-1 h-px bg-slate-200' }),
+                                            React.createElement('span', { className: 'text-xs text-slate-400 font-medium' }, 'OU'),
+                                            React.createElement('div', { className: 'flex-1 h-px bg-slate-200' })
+                                        ),
+                                        // URL input
+                                        React.createElement('div', { className: 'relative mt-3' },
+                                            React.createElement('i', { className: 'fas fa-link absolute left-3 top-1/2 -translate-y-1/2 text-slate-400' }),
                                             React.createElement('input', { 
                                                 name: 'image_url', 
                                                 type: 'text', 
                                                 value: imageUrl || '',
                                                 onChange: (e) => setImageUrl(e.target.value),
-                                                placeholder: 'https://... ou URL automatique',
-                                                className: 'w-full pl-9 p-2.5 border border-slate-300 rounded-lg text-sm bg-white font-mono text-xs text-slate-600' 
+                                                placeholder: 'Coller l\'URL d\'une image (https://...)',
+                                                className: 'w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-slate-400' 
                                             })
-                                        ),
-                                        
-                                        // Preview
-                                        imageUrl && React.createElement('div', { className: 'mt-1 relative h-24 w-full rounded-lg overflow-hidden border border-slate-200 bg-slate-100' },
+                                        )
+                                    ) : 
+                                    // Preview de l'image
+                                    React.createElement('div', { className: 'relative group' },
+                                        React.createElement('div', { className: 'relative h-40 w-full rounded-xl overflow-hidden border-2 border-purple-200 bg-slate-100' },
                                             React.createElement('img', { 
                                                 src: imageUrl, 
                                                 className: 'h-full w-full object-contain',
-                                                onError: (e) => e.target.style.display = 'none' 
-                                            })
-                                        )
+                                                onError: (e) => { e.target.style.display = 'none'; }
+                                            }),
+                                            // Badge de confirmation
+                                            React.createElement('div', { className: 'absolute top-2 right-2 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-lg flex items-center gap-1' },
+                                                React.createElement('i', { className: 'fas fa-check' }),
+                                                'Prête à diffuser'
+                                            )
+                                        ),
+                                        // Input caché pour le formulaire
+                                        React.createElement('input', { 
+                                            type: 'hidden',
+                                            name: 'image_url', 
+                                            value: imageUrl || ''
+                                        })
                                     )
                                 ),
 
-                                // Duration
-                                React.createElement('div', null,
-                                    React.createElement('label', { className: 'block text-xs font-bold text-slate-500 uppercase mb-1' }, 'Durée (secondes)'),
-                                    React.createElement('div', { className: 'relative w-32' },
-                                        React.createElement('i', { className: 'fas fa-clock absolute left-3 top-3 text-slate-400' }),
+                                // Durée avec slider visuel
+                                React.createElement('div', { className: 'space-y-2' },
+                                    React.createElement('div', { className: 'flex items-center justify-between' },
+                                        React.createElement('label', { className: 'flex items-center gap-2 text-sm font-semibold text-slate-700' },
+                                            React.createElement('i', { className: 'fas fa-stopwatch text-purple-500' }),
+                                            'Durée d\'affichage'
+                                        ),
+                                        React.createElement('span', { className: 'text-sm font-bold text-purple-600', id: 'duration-display' }, 
+                                            (selectedEvent?.display_duration || 15) + ' sec'
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                        React.createElement('span', { className: 'text-xs text-slate-400' }, '5s'),
                                         React.createElement('input', { 
                                             name: 'display_duration', 
-                                            type: 'number', 
-                                            min: 5, max: 300,
+                                            type: 'range', 
+                                            min: 5, 
+                                            max: 60,
+                                            step: 5,
                                             defaultValue: selectedEvent ? (selectedEvent.display_duration || 15) : 15,
-                                            className: 'w-full pl-9 p-2.5 border border-slate-300 rounded-lg text-sm bg-white' 
-                                        })
+                                            className: 'flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-500',
+                                            onChange: (e) => {
+                                                const display = document.getElementById('duration-display');
+                                                if (display) display.textContent = e.target.value + ' sec';
+                                            }
+                                        }),
+                                        React.createElement('span', { className: 'text-xs text-slate-400' }, '60s')
+                                    ),
+                                    React.createElement('p', { className: 'text-xs text-slate-500' }, 
+                                        'Temps pendant lequel l\'image reste visible avant de passer à la suivante'
                                     )
                                 )
                             )
                         ),
 
                         // Footer Buttons
-                        React.createElement('div', { className: 'flex flex-col-reverse sm:flex-row justify-between items-center gap-3 pt-2' },
+                        React.createElement('div', { className: 'flex flex-col-reverse sm:flex-row justify-between items-center gap-3 pt-3 border-t border-slate-100' },
                             // Delete Button (Only in Edit Mode)
                             selectedEvent ? React.createElement('button', {
                                 type: 'button',
                                 onClick: onDeleteEvent,
-                                className: 'w-full sm:w-auto text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg font-medium transition text-sm flex items-center justify-center gap-2'
+                                className: 'w-full sm:w-auto text-red-500 hover:text-red-700 hover:bg-red-50 px-4 py-2.5 rounded-lg font-medium transition text-sm flex items-center justify-center gap-2'
                             }, React.createElement('i', { className: 'fas fa-trash-alt' }), 'Supprimer') : React.createElement('div', { className: 'hidden sm:block' }),
 
                             React.createElement('div', { className: 'flex w-full sm:w-auto gap-3' },
                                 React.createElement('button', { 
                                     type: 'button',
                                     onClick: () => setShowAddModal(false),
-                                    className: 'flex-1 sm:flex-none px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition text-center' 
+                                    className: 'flex-1 sm:flex-none px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition text-center' 
                                 }, 'Annuler'),
                                 React.createElement('button', { 
                                     type: 'submit',
-                                    className: 'flex-1 sm:flex-none px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-lg shadow-blue-200 transition flex items-center justify-center gap-2' 
-                                }, React.createElement('i', { className: 'fas fa-check' }), selectedEvent ? 'Enregistrer' : 'Ajouter')
+                                    className: 'flex-1 sm:flex-none px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg font-bold shadow-lg shadow-blue-200 transition flex items-center justify-center gap-2' 
+                                }, React.createElement('i', { className: 'fas fa-check' }), selectedEvent ? 'Enregistrer' : 'Créer')
                             )
                         )
                     )
@@ -275,11 +400,16 @@ const PlanningModals = ({
             React.createElement('div', { className: 'flex min-h-full items-center justify-center p-4' },
                 React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-scaleIn relative' },
                     // Header
-                    React.createElement('div', { className: 'bg-slate-50 px-6 py-4 border-b flex justify-between items-center' },
-                        React.createElement('h3', { className: 'font-bold text-lg text-slate-800' }, 'Gérer les Catégories'),
+                    React.createElement('div', { className: 'bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4 flex justify-between items-center' },
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('div', { className: 'w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center' },
+                                React.createElement('i', { className: 'fas fa-tags text-white text-lg' })
+                            ),
+                            React.createElement('h3', { className: 'font-bold text-lg text-white' }, 'Gérer les Catégories')
+                        ),
                         React.createElement('button', { 
                             onClick: () => setShowCategoryModal(false),
-                            className: 'text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition'
+                            className: 'text-white/70 hover:text-white w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition'
                         }, React.createElement('i', { className: 'fas fa-times' }))
                     ),
                     
@@ -314,7 +444,7 @@ const PlanningModals = ({
 
                         // Add/Edit Form
                         React.createElement('form', { 
-                            key: editingCategory ? editingCategory.id : 'new', // Re-mount to reset default values
+                            key: editingCategory ? editingCategory.id : 'new',
                             onSubmit: onSaveCategory, 
                             className: `p-4 rounded-xl border transition ${editingCategory ? 'bg-blue-50 border-blue-200 shadow-md' : 'bg-slate-50 border-slate-200'}` 
                         },
@@ -337,50 +467,30 @@ const PlanningModals = ({
                                     required: true, 
                                     className: 'w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                 }),
-                                React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
-                                    React.createElement('select', { 
-                                        name: 'icon', 
-                                        defaultValue: editingCategory ? editingCategory.icon : 'fa-circle',
-                                        className: 'w-full p-2 border border-slate-300 rounded-lg text-sm' 
-                                    },
-                                        React.createElement('option', { value: 'fa-circle' }, '⚫ Cercle'),
-                                        React.createElement('option', { value: 'fa-star' }, '⭐ Étoile'),
-                                        React.createElement('option', { value: 'fa-user' }, '👤 Utilisateur'),
-                                        React.createElement('option', { value: 'fa-truck' }, '🚚 Camion'),
-                                        React.createElement('option', { value: 'fa-tools' }, '🛠️ Outils'),
-                                        React.createElement('option', { value: 'fa-bolt' }, '⚡ Éclair'),
-                                        React.createElement('option', { value: 'fa-file-alt' }, '📄 Document'),
-                                        React.createElement('option', { value: 'fa-exclamation-triangle' }, '⚠️ Attention'),
-                                        React.createElement('option', { value: 'fa-ban' }, '🚫 Interdit'),
-                                        React.createElement('option', { value: 'fa-info-circle' }, 'ℹ️ Info'),
-                                        React.createElement('option', { value: 'fa-check-circle' }, '✅ Valide'),
-                                        React.createElement('option', { value: 'fa-clock' }, '🕒 Horloge')
-                                    ),
+                                React.createElement('div', { className: 'grid grid-cols-2 gap-2' },
                                     React.createElement('select', { 
                                         name: 'color', 
                                         defaultValue: editingCategory ? editingCategory.color : 'blue',
-                                        className: 'w-full p-2 border border-slate-300 rounded-lg text-sm' 
+                                        className: 'p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                     },
-                                        React.createElement('option', { value: 'blue' }, '🔵 Bleu'),
-                                        React.createElement('option', { value: 'green' }, '🟢 Vert'),
-                                        React.createElement('option', { value: 'red' }, '🔴 Rouge'),
-                                        React.createElement('option', { value: 'yellow' }, '🟡 Jaune'),
-                                        React.createElement('option', { value: 'purple' }, '🟣 Violet'),
-                                        React.createElement('option', { value: 'orange' }, '🟠 Orange'),
-                                        React.createElement('option', { value: 'gray' }, '⚪ Gris')
+                                        [['blue', 'Bleu'], ['green', 'Vert'], ['red', 'Rouge'], ['yellow', 'Jaune'], ['purple', 'Violet'], ['orange', 'Orange']].map(([val, label]) =>
+                                            React.createElement('option', { key: val, value: val }, label)
+                                        )
+                                    ),
+                                    React.createElement('select', { 
+                                        name: 'icon', 
+                                        defaultValue: editingCategory ? editingCategory.icon : 'fa-tag',
+                                        className: 'p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                                    },
+                                        [['fa-tag', 'Tag'], ['fa-cog', 'Engrenage'], ['fa-truck', 'Camion'], ['fa-wrench', 'Clé'], ['fa-calendar', 'Calendrier'], ['fa-star', 'Étoile'], ['fa-bolt', 'Éclair'], ['fa-shield-alt', 'SST']].map(([val, label]) =>
+                                            React.createElement('option', { key: val, value: val }, label)
+                                        )
                                     )
                                 ),
-                                React.createElement('button', { 
+                                React.createElement('button', {
                                     type: 'submit',
-                                    className: `w-full py-2 rounded-lg font-bold text-sm transition shadow-sm flex items-center justify-center gap-2 ${
-                                        editingCategory 
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                            : 'bg-slate-800 text-white hover:bg-slate-900'
-                                    }`
-                                }, 
-                                    React.createElement('i', { className: editingCategory ? 'fas fa-save' : 'fas fa-plus' }),
-                                    editingCategory ? 'Enregistrer les modifications' : 'Ajouter'
-                                )
+                                    className: `w-full py-2 rounded-lg font-medium text-sm transition ${editingCategory ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`
+                                }, editingCategory ? 'Enregistrer' : 'Ajouter')
                             )
                         )
                     )
@@ -390,5 +500,4 @@ const PlanningModals = ({
     );
 };
 
-// Exposer le composant globalement
 window.PlanningModals = PlanningModals;
