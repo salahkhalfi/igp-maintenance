@@ -1,5 +1,5 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.6 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 6.7 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
 
 ---
 
@@ -369,4 +369,60 @@ LEÇON:
 
 ---
 
-## 🏁 END OF KERNEL (v6.6 - ~320 lines)
+## 🔴 MODULE 12: AUDIT CODE MORT - PRUDENCE EXTRÊME
+
+```
+⚠️ RÈGLE D'OR: NE JAMAIS SUPPRIMER DU CODE SANS CERTITUDE 100%
+
+SCRIPT D'AUDIT DISPONIBLE:
+npm run audit   # ou ./scripts/audit-dead-code.sh
+
+CE QUE L'AUDIT DÉTECTE:
+- Erreurs syntaxe JS
+- Références window.* potentiellement non définies
+- États React utilisés peu de fois
+- Fichiers JS non référencés dans home.ts
+- Routes API potentiellement obsolètes
+
+⚠️ FAUX POSITIFS FRÉQUENTS:
+L'audit signale "utilisé 1-2 fois" mais ce N'EST PAS du code mort si:
+- Le state est passé comme PROP à un composant enfant
+- Le state est utilisé dans un useEffect/useCallback
+- Le state est affiché conditionnellement (ternaire)
+- Le state est stocké pour usage futur (cache local)
+- La fonction est un CALLBACK passé à un enfant
+- La variable est dans un template string ou interpolation
+
+AVANT DE SUPPRIMER, VÉRIFIER:
+1. grep -rn "nomVariable" public/static/js/  # Chercher PARTOUT
+2. Chercher aussi: setNomVariable (pour les states)
+3. Chercher dans les props des composants enfants
+4. Vérifier les fichiers .min.js (code peut être renommé)
+5. Tester la fonctionnalité en local AVANT de supprimer
+
+WORKFLOW CORRECT:
+1. npm run audit                    # Identifier candidats
+2. Pour CHAQUE candidat:
+   a. grep -rn "candidat" .         # Vérifier tous usages
+   b. Comprendre POURQUOI il existe # Chesterton's Fence
+   c. Si doute → NE PAS TOUCHER
+3. Supprimer UNIQUEMENT si certitude 100%
+4. Tester la fonctionnalité impactée
+5. Commit avec message explicatif
+
+❌ INTERDIT:
+- Supprimer car "utilisé 1 fois" sans vérifier contexte
+- Supprimer du code qu'on ne comprend pas
+- Supprimer plusieurs éléments d'un coup sans tester
+- Faire confiance aveuglément à l'audit
+
+✅ OBLIGATOIRE:
+- Comprendre le code avant suppression
+- Vérifier toutes les dépendances (grep global)
+- Tester après chaque suppression
+- Documenter pourquoi c'était du code mort
+```
+
+---
+
+## 🏁 END OF KERNEL (v6.7 - ~400 lines)
