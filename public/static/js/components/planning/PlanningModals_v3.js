@@ -1,6 +1,6 @@
 // Composant : Modales (Ajout Événement + Gestion Catégories)
-// v3.2.0 - Responsive optimisé pour mobile
-console.log('PlanningModals loaded v3.2.0 - Mobile Responsive');
+// v3.3.0 - UX clarifiée - Options TV simplifiées et optionnelles
+console.log('PlanningModals loaded v3.3.0 - Clearer UX');
 
 const PlanningModals = ({ 
     showAddModal, 
@@ -22,15 +22,16 @@ const PlanningModals = ({
     const [showTvExtras, setShowTvExtras] = React.useState(false);
     const [uploading, setUploading] = React.useState(false);
     const [imageUrl, setImageUrl] = React.useState(null);
-    const [showTvHelp, setShowTvHelp] = React.useState(false);
+    const [showImageSection, setShowImageSection] = React.useState(false);
 
     // Update state when modal opens or event changes
     React.useEffect(() => {
         if (showAddModal) {
             const isVisible = selectedEvent ? (selectedEvent.show_on_tv !== 0 && selectedEvent.show_on_tv !== false) : true;
             setShowTvExtras(isVisible);
-            setImageUrl(selectedEvent ? selectedEvent.image_url : '');
-            setShowTvHelp(false);
+            const hasImage = selectedEvent?.image_url && selectedEvent.image_url.length > 0;
+            setImageUrl(hasImage ? selectedEvent.image_url : '');
+            setShowImageSection(hasImage);
         }
     }, [showAddModal, selectedEvent]);
 
@@ -168,196 +169,210 @@ const PlanningModals = ({
                             )
                         ),
 
-                        // === SECTION 2: DIFFUSION TV (Responsive) ===
-                        React.createElement('div', { className: 'rounded-xl border-2 border-dashed border-slate-200 overflow-hidden' },
-                            // Header avec toggle - Design compact
+                        // === SECTION 2: DIFFUSION TV - Design simplifié ===
+                        React.createElement('div', { className: 'rounded-xl border border-slate-200 overflow-hidden bg-slate-50' },
+                            // Header simple - toggle only
                             React.createElement('div', { 
-                                className: `p-3 sm:p-4 cursor-pointer transition-all ${showTvExtras ? 'bg-purple-50 border-b border-purple-100' : 'bg-slate-50 hover:bg-slate-100'}`,
+                                className: 'p-3 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition',
                                 onClick: () => setShowTvExtras(!showTvExtras)
                             },
-                                React.createElement('div', { className: 'flex items-center justify-between gap-2' },
-                                    React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 min-w-0' },
-                                        React.createElement('div', { className: `w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${showTvExtras ? 'bg-purple-500 text-white' : 'bg-slate-200 text-slate-500'}` },
-                                            React.createElement('i', { className: 'fas fa-tv text-sm sm:text-base' })
-                                        ),
-                                        React.createElement('div', { className: 'min-w-0' },
-                                            React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2' },
-                                                React.createElement('span', { className: 'font-bold text-slate-800 text-sm sm:text-base' }, 'Diffuser TV'),
-                                                React.createElement('button', {
-                                                    type: 'button',
-                                                    onClick: (e) => { e.stopPropagation(); setShowTvHelp(!showTvHelp); },
-                                                    className: 'w-5 h-5 rounded-full bg-slate-200 hover:bg-purple-200 text-slate-500 hover:text-purple-600 flex items-center justify-center text-xs transition'
-                                                }, React.createElement('i', { className: 'fas fa-question' }))
-                                            ),
-                                            React.createElement('p', { className: 'text-xs text-slate-500 hidden sm:block' }, 'Afficher sur l\'écran usine')
-                                        )
-                                    ),
-                                    // Toggle switch
-                                    React.createElement('div', { 
-                                        className: 'relative flex-shrink-0',
-                                        onClick: (e) => e.stopPropagation()
-                                    },
-                                        React.createElement('input', { 
-                                            type: 'checkbox', 
-                                            name: 'show_on_tv', 
-                                            id: 'show_on_tv',
-                                            checked: showTvExtras,
-                                            onChange: (e) => setShowTvExtras(e.target.checked),
-                                            className: 'sr-only peer'
-                                        }),
-                                        React.createElement('div', { 
-                                            className: 'w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-purple-500 transition-colors cursor-pointer',
-                                            onClick: () => setShowTvExtras(!showTvExtras)
-                                        }),
-                                        React.createElement('div', { 
-                                            className: `absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${showTvExtras ? 'translate-x-5' : ''}`,
-                                            onClick: () => setShowTvExtras(!showTvExtras)
-                                        })
-                                    )
-                                )
-                            ),
-
-                            // Info bulle d'aide (conditionnel)
-                            showTvHelp && React.createElement('div', { className: 'mx-3 sm:mx-4 mt-2 sm:mt-3 mb-1 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg' },
-                                React.createElement('div', { className: 'flex gap-2' },
-                                    React.createElement('i', { className: 'fas fa-info-circle text-blue-500 mt-0.5 flex-shrink-0' }),
-                                    React.createElement('div', { className: 'text-xs text-blue-700' },
-                                        React.createElement('p', { className: 'font-semibold mb-1' }, 'Diffusion TV'),
-                                        React.createElement('ul', { className: 'ml-3 list-disc space-y-0.5' },
-                                            React.createElement('li', {}, 'Ajouter une image'),
-                                            React.createElement('li', {}, 'Mode POPUP pour urgences'),
-                                            React.createElement('li', {}, 'Définir la durée')
-                                        )
-                                    )
-                                )
-                            ),
-                            
-                            // Options TV (conditionnel) - Compact sur mobile
-                            showTvExtras && React.createElement('div', { className: 'p-3 sm:p-4 space-y-3 sm:space-y-4 bg-white' },
-                                
-                                // Mode POPUP - Plus compact sur mobile
-                                React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50/50 transition cursor-pointer',
-                                    onClick: () => {
-                                        const checkbox = document.getElementById('is_popup');
-                                        if (checkbox) checkbox.click();
-                                    }
+                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                    React.createElement('i', { className: `fas fa-tv ${showTvExtras ? 'text-purple-500' : 'text-slate-400'}` }),
+                                    React.createElement('span', { className: 'font-medium text-slate-700 text-sm' }, 'Afficher sur l\'écran TV'),
+                                    React.createElement('span', { className: 'text-xs text-slate-400' }, '(usine)')
+                                ),
+                                // Toggle switch
+                                React.createElement('div', { 
+                                    className: 'relative',
+                                    onClick: (e) => e.stopPropagation()
                                 },
                                     React.createElement('input', { 
                                         type: 'checkbox', 
-                                        name: 'is_popup', 
-                                        id: 'is_popup',
-                                        defaultChecked: selectedEvent ? (selectedEvent.is_popup === 1 || selectedEvent.is_popup === true) : false,
-                                        className: 'w-5 h-5 text-purple-600 rounded focus:ring-purple-500 border-slate-300 cursor-pointer flex-shrink-0' 
+                                        name: 'show_on_tv', 
+                                        id: 'show_on_tv',
+                                        checked: showTvExtras,
+                                        onChange: (e) => setShowTvExtras(e.target.checked),
+                                        className: 'sr-only peer'
                                     }),
-                                    React.createElement('div', { className: 'flex-1 min-w-0' },
-                                        React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2 flex-wrap' },
-                                            React.createElement('span', { className: 'font-semibold text-slate-800 text-sm' }, 'Mode Alerte'),
-                                            React.createElement('span', { className: 'px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded' }, 'URGENT')
-                                        ),
-                                        React.createElement('p', { className: 'text-xs text-slate-500 mt-0.5 line-clamp-1 sm:line-clamp-none' }, 
-                                            'Plein écran, interrompt le défilement'
-                                        )
-                                    )
-                                ),
-
-                                // Section Image - Simplifiée sur mobile
-                                React.createElement('div', { className: 'space-y-2 sm:space-y-3' },
-                                    React.createElement('div', { className: 'flex items-center justify-between' },
-                                        React.createElement('label', { className: 'flex items-center gap-1 sm:gap-2 text-sm font-semibold text-slate-700' },
-                                            React.createElement('i', { className: 'fas fa-image text-purple-500' }),
-                                            'Image'
-                                        ),
-                                        imageUrl && React.createElement('button', {
-                                            type: 'button',
-                                            onClick: () => setImageUrl(''),
-                                            className: 'text-xs text-red-500 hover:text-red-700 flex items-center gap-1 p-1'
-                                        }, React.createElement('i', { className: 'fas fa-trash-alt' }))
-                                    ),
-                                    
-                                    // Zone de drop / upload - Compact sur mobile
-                                    !imageUrl ? React.createElement('div', { className: 'space-y-2' },
-                                        React.createElement('label', { 
-                                            className: 'flex flex-col items-center justify-center w-full h-24 sm:h-32 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition group'
-                                        },
-                                            React.createElement('div', { className: 'flex flex-col items-center justify-center p-2' },
-                                                React.createElement('i', { className: `fas ${uploading ? 'fa-spinner fa-spin' : 'fa-cloud-upload-alt'} text-2xl sm:text-3xl text-slate-400 group-hover:text-purple-500 mb-1 sm:mb-2 transition` }),
-                                                React.createElement('p', { className: 'text-xs sm:text-sm text-slate-600 font-medium text-center' }, 
-                                                    uploading ? 'Envoi...' : 'Choisir une image'
-                                                ),
-                                                React.createElement('p', { className: 'text-xs text-slate-400 hidden sm:block' }, 'PNG, JPG (max 5MB)')
-                                            ),
-                                            React.createElement('input', {
-                                                type: 'file',
-                                                accept: 'image/*',
-                                                className: 'hidden',
-                                                onChange: handleImageUpload,
-                                                disabled: uploading
-                                            })
-                                        ),
-                                        // URL input - Toujours visible mais compact
-                                        React.createElement('div', { className: 'relative' },
-                                            React.createElement('i', { className: 'fas fa-link absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm' }),
-                                            React.createElement('input', { 
-                                                name: 'image_url', 
-                                                type: 'text', 
-                                                value: imageUrl || '',
-                                                onChange: (e) => setImageUrl(e.target.value),
-                                                placeholder: 'Ou coller une URL...',
-                                                className: 'w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-slate-400' 
-                                            })
-                                        )
-                                    ) : 
-                                    // Preview de l'image - Compact sur mobile
-                                    React.createElement('div', { className: 'relative' },
-                                        React.createElement('div', { className: 'relative h-28 sm:h-40 w-full rounded-xl overflow-hidden border-2 border-purple-200 bg-slate-100' },
-                                            React.createElement('img', { 
-                                                src: imageUrl, 
-                                                className: 'h-full w-full object-contain',
-                                                onError: (e) => { e.target.style.display = 'none'; }
-                                            }),
-                                            React.createElement('div', { className: 'absolute top-1 right-1 sm:top-2 sm:right-2 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500 text-white text-xs font-bold rounded flex items-center gap-1' },
-                                                React.createElement('i', { className: 'fas fa-check text-xs' }),
-                                                React.createElement('span', { className: 'hidden sm:inline' }, 'Prête')
-                                            )
-                                        ),
-                                        React.createElement('input', { 
-                                            type: 'hidden',
-                                            name: 'image_url', 
-                                            value: imageUrl || ''
-                                        })
-                                    )
-                                ),
-
-                                // Durée avec slider - Compact sur mobile
-                                React.createElement('div', { className: 'space-y-1.5 sm:space-y-2' },
-                                    React.createElement('div', { className: 'flex items-center justify-between' },
-                                        React.createElement('label', { className: 'flex items-center gap-1 sm:gap-2 text-sm font-semibold text-slate-700' },
-                                            React.createElement('i', { className: 'fas fa-stopwatch text-purple-500' }),
-                                            React.createElement('span', { className: 'hidden sm:inline' }, 'Durée d\'affichage'),
-                                            React.createElement('span', { className: 'sm:hidden' }, 'Durée')
-                                        ),
-                                        React.createElement('span', { className: 'text-sm font-bold text-purple-600', id: 'duration-display' }, 
-                                            (selectedEvent?.display_duration || 15) + 's'
-                                        )
-                                    ),
-                                    React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3' },
-                                        React.createElement('span', { className: 'text-xs text-slate-400' }, '5s'),
-                                        React.createElement('input', { 
-                                            name: 'display_duration', 
-                                            type: 'range', 
-                                            min: 5, 
-                                            max: 60,
-                                            step: 5,
-                                            defaultValue: selectedEvent ? (selectedEvent.display_duration || 15) : 15,
-                                            className: 'flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-500',
-                                            onChange: (e) => {
-                                                const display = document.getElementById('duration-display');
-                                                if (display) display.textContent = e.target.value + 's';
-                                            }
-                                        }),
-                                        React.createElement('span', { className: 'text-xs text-slate-400' }, '60s')
-                                    )
+                                    React.createElement('div', { 
+                                        className: 'w-11 h-6 bg-slate-300 rounded-full peer peer-checked:bg-purple-500 transition-colors cursor-pointer',
+                                        onClick: () => setShowTvExtras(!showTvExtras)
+                                    }),
+                                    React.createElement('div', { 
+                                        className: `absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${showTvExtras ? 'translate-x-5' : ''}`,
+                                        onClick: () => setShowTvExtras(!showTvExtras)
+                                    })
                                 )
+                            ),
+                            
+                            // Options TV (conditionnel) - Design épuré avec options clairement optionnelles
+                            showTvExtras && React.createElement('div', { className: 'border-t border-slate-200 bg-white p-3 space-y-3' },
+                                
+                                // Message informatif
+                                React.createElement('p', { className: 'text-xs text-slate-500 flex items-center gap-1.5' },
+                                    React.createElement('i', { className: 'fas fa-info-circle' }),
+                                    'L\'événement s\'affichera sur l\'écran. Les options ci-dessous sont ',
+                                    React.createElement('strong', {}, 'facultatives'),
+                                    '.'
+                                ),
+
+                                // Options sous forme de cartes cliquables
+                                React.createElement('div', { className: 'space-y-2' },
+                                    
+                                    // Option 1: Mode Alerte (facultatif)
+                                    React.createElement('div', { 
+                                        className: `flex items-center gap-3 p-2.5 rounded-lg border transition cursor-pointer ${
+                                            document.getElementById('is_popup')?.checked 
+                                                ? 'border-orange-300 bg-orange-50' 
+                                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                        }`,
+                                        onClick: () => {
+                                            const checkbox = document.getElementById('is_popup');
+                                            if (checkbox) checkbox.click();
+                                        }
+                                    },
+                                        React.createElement('input', { 
+                                            type: 'checkbox', 
+                                            name: 'is_popup', 
+                                            id: 'is_popup',
+                                            defaultChecked: selectedEvent ? (selectedEvent.is_popup === 1 || selectedEvent.is_popup === true) : false,
+                                            className: 'w-4 h-4 text-orange-500 rounded focus:ring-orange-500 border-slate-300 cursor-pointer flex-shrink-0' 
+                                        }),
+                                        React.createElement('div', { className: 'flex-1 min-w-0' },
+                                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                                React.createElement('i', { className: 'fas fa-exclamation-triangle text-orange-500 text-sm' }),
+                                                React.createElement('span', { className: 'font-medium text-slate-700 text-sm' }, 'Mode Alerte')
+                                            ),
+                                            React.createElement('p', { className: 'text-xs text-slate-500 mt-0.5' }, 
+                                                'Interrompt le défilement pour afficher en plein écran'
+                                            )
+                                        )
+                                    ),
+
+                                    // Option 2: Ajouter une image (facultatif) - Collapsible
+                                    React.createElement('div', { className: 'rounded-lg border border-slate-200 overflow-hidden' },
+                                        // Header cliquable
+                                        React.createElement('div', { 
+                                            className: `flex items-center gap-3 p-2.5 cursor-pointer transition ${showImageSection ? 'bg-purple-50 border-b border-purple-100' : 'hover:bg-slate-50'}`,
+                                            onClick: () => setShowImageSection(!showImageSection)
+                                        },
+                                            React.createElement('div', { className: `w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition ${showImageSection ? 'bg-purple-500 border-purple-500 text-white' : 'border-slate-300'}` },
+                                                showImageSection && React.createElement('i', { className: 'fas fa-check text-xs' })
+                                            ),
+                                            React.createElement('div', { className: 'flex-1 min-w-0' },
+                                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                                    React.createElement('i', { className: `fas fa-image ${showImageSection ? 'text-purple-500' : 'text-slate-400'} text-sm` }),
+                                                    React.createElement('span', { className: 'font-medium text-slate-700 text-sm' }, 'Ajouter une image'),
+                                                    React.createElement('span', { className: 'text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded' }, 'optionnel')
+                                                ),
+                                                React.createElement('p', { className: 'text-xs text-slate-500 mt-0.5' }, 
+                                                    'Afficher une image avec l\'événement sur le TV'
+                                                )
+                                            ),
+                                            React.createElement('i', { className: `fas fa-chevron-${showImageSection ? 'up' : 'down'} text-slate-400 text-sm` })
+                                        ),
+                                        
+                                        // Contenu image (conditionnel)
+                                        showImageSection && React.createElement('div', { className: 'p-3 bg-white space-y-2' },
+                                            // Zone de drop / upload - Compact
+                                            !imageUrl ? React.createElement('div', { className: 'space-y-2' },
+                                                React.createElement('label', { 
+                                                    className: 'flex flex-col items-center justify-center w-full py-6 border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition group'
+                                                },
+                                                    React.createElement('i', { className: `fas ${uploading ? 'fa-spinner fa-spin' : 'fa-cloud-upload-alt'} text-2xl text-slate-400 group-hover:text-purple-500 mb-1 transition` }),
+                                                    React.createElement('p', { className: 'text-sm text-slate-600 font-medium' }, 
+                                                        uploading ? 'Envoi en cours...' : 'Choisir une image'
+                                                    ),
+                                                    React.createElement('p', { className: 'text-xs text-slate-400' }, 'PNG, JPG (max 5MB)'),
+                                                    React.createElement('input', {
+                                                        type: 'file',
+                                                        accept: 'image/*',
+                                                        className: 'hidden',
+                                                        onChange: handleImageUpload,
+                                                        disabled: uploading
+                                                    })
+                                                ),
+                                                // URL input
+                                                React.createElement('div', { className: 'flex items-center gap-2' },
+                                                    React.createElement('div', { className: 'flex-1 h-px bg-slate-200' }),
+                                                    React.createElement('span', { className: 'text-xs text-slate-400' }, 'ou'),
+                                                    React.createElement('div', { className: 'flex-1 h-px bg-slate-200' })
+                                                ),
+                                                React.createElement('input', { 
+                                                    name: 'image_url', 
+                                                    type: 'text', 
+                                                    value: imageUrl || '',
+                                                    onChange: (e) => setImageUrl(e.target.value),
+                                                    placeholder: 'Coller une URL d\'image...',
+                                                    className: 'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 placeholder-slate-400' 
+                                                })
+                                            ) : 
+                                            // Preview de l'image avec option supprimer
+                                            React.createElement('div', { className: 'relative' },
+                                                React.createElement('div', { className: 'relative h-32 w-full rounded-lg overflow-hidden border border-purple-200 bg-slate-100' },
+                                                    React.createElement('img', { 
+                                                        src: imageUrl, 
+                                                        className: 'h-full w-full object-contain',
+                                                        onError: (e) => { e.target.style.display = 'none'; }
+                                                    }),
+                                                    React.createElement('button', {
+                                                        type: 'button',
+                                                        onClick: () => setImageUrl(''),
+                                                        className: 'absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition shadow'
+                                                    }, React.createElement('i', { className: 'fas fa-times text-sm' }))
+                                                ),
+                                                React.createElement('p', { className: 'text-xs text-green-600 mt-1 flex items-center gap-1' },
+                                                    React.createElement('i', { className: 'fas fa-check-circle' }),
+                                                    'Image prête à être diffusée'
+                                                ),
+                                                React.createElement('input', { 
+                                                    type: 'hidden',
+                                                    name: 'image_url', 
+                                                    value: imageUrl || ''
+                                                })
+                                            ),
+                                            
+                                            // Durée (seulement si image)
+                                            imageUrl && React.createElement('div', { className: 'pt-2 border-t border-slate-100' },
+                                                React.createElement('div', { className: 'flex items-center justify-between mb-1' },
+                                                    React.createElement('label', { className: 'text-xs font-medium text-slate-600' }, 'Durée d\'affichage'),
+                                                    React.createElement('span', { className: 'text-xs font-bold text-purple-600', id: 'duration-display' }, 
+                                                        (selectedEvent?.display_duration || 15) + ' secondes'
+                                                    )
+                                                ),
+                                                React.createElement('input', { 
+                                                    name: 'display_duration', 
+                                                    type: 'range', 
+                                                    min: 5, 
+                                                    max: 60,
+                                                    step: 5,
+                                                    defaultValue: selectedEvent ? (selectedEvent.display_duration || 15) : 15,
+                                                    className: 'w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-500',
+                                                    onChange: (e) => {
+                                                        const display = document.getElementById('duration-display');
+                                                        if (display) display.textContent = e.target.value + ' secondes';
+                                                    }
+                                                }),
+                                                React.createElement('div', { className: 'flex justify-between text-xs text-slate-400 mt-0.5' },
+                                                    React.createElement('span', {}, '5s'),
+                                                    React.createElement('span', {}, '60s')
+                                                )
+                                            )
+                                        )
+                                    )
+                                ),
+
+                                // Input hidden pour la durée si pas d'image
+                                !showImageSection && React.createElement('input', { 
+                                    type: 'hidden',
+                                    name: 'display_duration', 
+                                    value: 15
+                                }),
+                                !showImageSection && React.createElement('input', { 
+                                    type: 'hidden',
+                                    name: 'image_url', 
+                                    value: ''
+                                })
                             )
                         )
                     ),
