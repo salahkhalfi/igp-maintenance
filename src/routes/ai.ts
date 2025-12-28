@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { getDb } from '../db';
 import { machines, users, systemSettings, tickets, media, ticketComments, planningEvents, userPreferences } from '../db/schema';
-import { inArray, eq, and, ne, lt, desc, or, sql, not, like, isNull, isNotNull } from 'drizzle-orm';
+import { inArray, eq, and, ne, lt, gte, desc, or, sql, not, like, isNull, isNotNull } from 'drizzle-orm';
 import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 import { z } from 'zod';
@@ -2045,6 +2045,170 @@ ${Object.entries(usersByRole).map(([role, count]) =>
             console.warn('[Secretary] Could not load operational data');
         }
         
+        // ===== LOAD MAINTENANCE DATA FOR REPORTS =====
+        // Essentiel pour les rapports: tickets, performance techniciens, incidents
+        let maintenanceDataContext = '';
+        if (documentType === 'rapports') {
+            try {
+                // Période: dernier mois
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                const oneMonthAgoStr = oneMonthAgo.toISOString();
+                
+                // Charger tous les tickets du dernier mois
+                const ticketsData = await db.select({
+                    id: tickets.id,
+                    title: tickets.title,
+                    status: tickets.status,
+                    priority: tickets.priority,
+                    machine_id: tickets.machine_id,
+                    assigned_to_id: tickets.assigned_to_id,
+                    created_at: tickets.created_at,
+                    resolved_at: tickets.resolved_at,
+                    downtime_hours: tickets.downtime_hours
+                }).from(tickets)
+                  .where(and(
+                      isNull(tickets.deleted_at),
+                      gte(tickets.created_at, oneMonthAgoStr)
+                  ))
+                  .all();
+                
+                // Charger tous les tickets (pour stats globales)
+                const allTicketsData = await db.select({
+                    id: tickets.id,
+                    status: tickets.status,
+                    priority: tickets.priority,
+                    assigned_to_id: tickets.assigned_to_id,
+                    created_at: tickets.created_at,
+                    resolved_at: tickets.resolved_at,
+                    downtime_hours: tickets.downtime_hours
+                }).from(tickets)
+                  .where(isNull(tickets.deleted_at))
+                  .all();
+                
+                // Statistiques par statut
+                const statusCounts: Record<string, number> = {};
+                const priorityCounts: Record<string, number> = {};
+                let totalDowntime = 0;
+                let resolvedCount = 0;
+                let totalResolutionTime = 0;
+                
+                ticketsData.forEach((t: any) => {
+                    statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
+                    priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1;
+                    if (t.downtime_hours) totalDowntime += parseFloat(t.downtime_hours) || 0;
+                    if (t.status === 'resolved' && t.resolved_at && t.created_at) {
+                        resolvedCount++;
+                        const created = new Date(t.created_at).getTime();
+                        const resolved = new Date(t.resolved_at).getTime();
+                        totalResolutionTime += (resolved - created) / (1000 * 60 * 60); // en heures
+                    }
+                });
+                
+                // Performance par technicien
+                const technicianStats: Record<string, { name: string, assigned: number, resolved: number, avgTime: number }> = {};
+                const techUsers = await db.select({
+                    id: users.id,
+                    full_name: users.full_name
+                }).from(users)
+                  .where(and(isNull(users.deleted_at), eq(users.role, 'technician')))
+                  .all();
+                
+                techUsers.forEach((tech: any) => {
+                    const techTickets = ticketsData.filter((t: any) => t.assigned_to_id === tech.id);
+                    const resolvedTickets = techTickets.filter((t: any) => t.status === 'resolved');
+                    let avgResTime = 0;
+                    if (resolvedTickets.length > 0) {
+                        const totalTime = resolvedTickets.reduce((sum: number, t: any) => {
+                            if (t.resolved_at && t.created_at) {
+                                return sum + (new Date(t.resolved_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60);
+                            }
+                            return sum;
+                        }, 0);
+                        avgResTime = totalTime / resolvedTickets.length;
+                    }
+                    technicianStats[tech.id] = {
+                        name: tech.full_name,
+                        assigned: techTickets.length,
+                        resolved: resolvedTickets.length,
+                        avgTime: Math.round(avgResTime * 10) / 10
+                    };
+                });
+                
+                // Incidents critiques (priorité critical/urgent)
+                const criticalIncidents = ticketsData.filter((t: any) => 
+                    t.priority === 'critical' || t.priority === 'urgent'
+                );
+                
+                // Machines avec le plus de pannes
+                const machineTicketCounts: Record<string, number> = {};
+                ticketsData.forEach((t: any) => {
+                    if (t.machine_id) {
+                        machineTicketCounts[t.machine_id] = (machineTicketCounts[t.machine_id] || 0) + 1;
+                    }
+                });
+                
+                const statusLabels: Record<string, string> = {
+                    'new': 'Nouveau',
+                    'assigned': 'Assigné',
+                    'in_progress': 'En cours',
+                    'diagnostic': 'Diagnostic',
+                    'waiting_parts': 'Attente pièces',
+                    'resolved': 'Résolu',
+                    'closed': 'Fermé'
+                };
+                
+                const priorityLabels: Record<string, string> = {
+                    'low': 'Basse',
+                    'medium': 'Moyenne',
+                    'high': 'Haute',
+                    'urgent': 'Urgente',
+                    'critical': 'Critique'
+                };
+                
+                maintenanceDataContext = `
+## DONNÉES DE MAINTENANCE - DERNIER MOIS (${ticketsData.length} tickets)
+
+### Statistiques globales
+- **Tickets créés ce mois**: ${ticketsData.length}
+- **Tickets résolus ce mois**: ${statusCounts['resolved'] || 0}
+- **Temps moyen de résolution**: ${resolvedCount > 0 ? Math.round(totalResolutionTime / resolvedCount * 10) / 10 : 'N/A'} heures
+- **Temps d'arrêt total**: ${Math.round(totalDowntime * 10) / 10} heures
+- **Total historique**: ${allTicketsData.length} tickets
+
+### Répartition par statut
+${Object.entries(statusCounts).map(([status, count]) => 
+    `- ${statusLabels[status] || status}: ${count}`
+).join('\n')}
+
+### Répartition par priorité
+${Object.entries(priorityCounts).map(([priority, count]) => 
+    `- ${priorityLabels[priority] || priority}: ${count}`
+).join('\n')}
+
+### Performance des techniciens
+${Object.values(technicianStats).map((tech: any) => 
+    `- **${tech.name}**: ${tech.assigned} assignés, ${tech.resolved} résolus, temps moyen: ${tech.avgTime}h`
+).join('\n') || '- Aucun technicien enregistré'}
+
+### Incidents critiques/urgents (${criticalIncidents.length})
+${criticalIncidents.slice(0, 10).map((t: any) => 
+    `- [${priorityLabels[t.priority]}] ${t.title} (${statusLabels[t.status] || t.status})`
+).join('\n') || '- Aucun incident critique ce mois'}
+
+### Machines les plus sollicitées
+${Object.entries(machineTicketCounts)
+    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .slice(0, 5)
+    .map(([machineId, count]) => `- Machine #${machineId}: ${count} interventions`)
+    .join('\n') || '- Données non disponibles'}
+`;
+                console.log('[Secretary] Loaded maintenance data for reports');
+            } catch (e) {
+                console.warn('[Secretary] Could not load maintenance data:', e);
+            }
+        }
+        
         // ===== BUILD EXPERT PROMPT WITH LEGAL KNOWLEDGE =====
         const legalKnowledgeBlock = `
 # CADRE LÉGAL ET RÉGLEMENTAIRE (CANADA / QUÉBEC)
@@ -2201,6 +2365,7 @@ ${aiConfig.knowledge}
 ## Contexte spécifique de l'entreprise
 ${aiConfig.custom || 'Aucun contexte additionnel configuré.'}
 ${operationalContext}
+${maintenanceDataContext}
 `;
 
         const systemPrompt = `# RÔLE
