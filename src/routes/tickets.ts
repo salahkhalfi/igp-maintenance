@@ -380,13 +380,8 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
       // Permet aux rapports IA de calculer le temps de résolution
       if (['completed', 'resolved', 'closed'].includes(body.status)) {
         updates.completed_at = sql`CURRENT_TIMESTAMP`;
-        
-        // AUTO-ASSIGN TO "Équipe" (ID 0): When completing a ticket with no assignee
-        // Ensures no orphan tickets in reports and stats
-        if (!currentTicket.assigned_to && body.assigned_to === undefined) {
-          updates.assigned_to = 0; // 0 = "Équipe"
-          console.log(`[Auto-Assign] Ticket #${id} auto-assigned to Équipe (0) on completion - was unassigned`);
-        }
+        // NOTE: On ne fait PAS d'auto-assignation à "Équipe" (ID 0) car ça casse
+        // les JOINs, filtres IS NOT NULL, et la logique if(assigned_to) en JS
       }
       // AUTO-ASSIGN: When moving to "in_progress" and no one is assigned yet
       // The person who takes the ticket becomes responsible
