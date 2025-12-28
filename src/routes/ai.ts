@@ -2546,13 +2546,14 @@ INTERDIT:
         while (turns < MAX_TURNS) {
             turns++;
             const isLastTurn = turns === MAX_TURNS;
-            const usingDeepSeek = !!env.DEEPSEEK_API_KEY;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using ${usingDeepSeek ? 'DeepSeek' : 'OpenAI'}${isLastTurn ? ' (FINAL - no tools)' : ''}`);
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using OpenAI${isLastTurn ? ' (FINAL - no tools)' : ''}`);
             
             try {
                 // Au dernier tour, forcer l'IA à répondre sans outils
+                // NOTE: On utilise OpenAI pour le Secrétaire car DeepSeek a des problèmes
+                // avec le function calling (génère du format DSML au lieu de JSON)
                 const requestBody: any = {
-                    model: env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini",
+                    model: "gpt-4o-mini",
                     messages,
                     temperature: 0.3,
                     max_tokens: 4000
@@ -2564,12 +2565,9 @@ INTERDIT:
                 }
                 // Dernier tour: pas de tools = l'IA DOIT produire du contenu
                 
-                // Utiliser DeepSeek si disponible, sinon OpenAI
-                const apiUrl = env.DEEPSEEK_API_KEY 
-                    ? 'https://api.deepseek.com/chat/completions'
-                    : 'https://api.openai.com/v1/chat/completions';
-                const apiKey = env.DEEPSEEK_API_KEY || env.OPENAI_API_KEY;
-                const apiName = env.DEEPSEEK_API_KEY ? 'DeepSeek' : 'OpenAI';
+                const apiUrl = 'https://api.openai.com/v1/chat/completions';
+                const apiKey = env.OPENAI_API_KEY;
+                const apiName = 'OpenAI';
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
