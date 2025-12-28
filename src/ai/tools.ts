@@ -1,6 +1,13 @@
 import { eq, like, or, and, desc, sql, not, inArray, gte, lte, aliasedTable, isNull } from 'drizzle-orm';
 import { tickets, machines, users, ticketComments, systemSettings, planningEvents, plannerNotes, media, pushSubscriptions } from '../db/schema';
 
+// --- HELPER: Resolve assignee name (handles ID 0 = "Équipe") ---
+function getAssigneeName(assigned_to: number | null, assignee_name: string | null): string {
+    if (assigned_to === 0) return "Équipe";
+    if (assigned_to === null) return "Non assigné";
+    return assignee_name || `Technicien #${assigned_to}`;
+}
+
 // --- TYPE DEFINITIONS ---
 export type ToolDefinition = {
     type: "function";
@@ -626,7 +633,7 @@ export const ToolFunctions = {
                     title: t.title,
                     priority: t.priority,
                     status: t.status,
-                    assignee: t.assignee_name || "Non assigné",
+                    assignee: getAssigneeName(t.assigned_to, t.assignee_name),
                     scheduled: localScheduled, // Now human-readable local time
                     delay_hours: Math.round((now.getTime() - new Date(t.scheduled_date!).getTime()) / 3600000 * 10) / 10,
                     // LIEN PRÉ-CALCULÉ
@@ -853,6 +860,7 @@ export const ToolFunctions = {
                 
                 return {
                     ...r,
+                    assignee: getAssigneeName(r.assigned_to_id, r.assignee_name), // Handle ID 0 = "Équipe"
                     description: descriptionWithMedia, // Use the enriched description
                     machine: `${r.machine_name} ${r.machine_model || ''}`.trim(), // Explicit machine context string
                     media_count: myMedia.length,
@@ -897,9 +905,11 @@ export const ToolFunctions = {
         
         if (!ticket) return "Ticket introuvable.";
 
-        // Resolve Assigned User Name
+        // Resolve Assigned User Name (handles ID 0 = "Équipe")
         let assignedToName = "Non assigné";
-        if (ticket.assigned_to) {
+        if (ticket.assigned_to === 0) {
+            assignedToName = "Équipe";
+        } else if (ticket.assigned_to) {
             const user = await db.select({ name: users.full_name }).from(users).where(eq(users.id, ticket.assigned_to)).get();
             if (user) assignedToName = user.name;
         }
@@ -1335,6 +1345,7 @@ export const ToolFunctions = {
             priority: tickets.priority,
             machine_type: machines.machine_type,
             machine_model: machines.model,
+            tech_id: tickets.assigned_to,
             tech_name: users.full_name,
             created_at: tickets.created_at
         })
@@ -1372,7 +1383,7 @@ export const ToolFunctions = {
             by_priority: priorityBreakdown,
             by_status: statusBreakdown,
             technician_performance: techPerformance.map((t: any) => ({
-                name: t.tech_name || 'Non assigné',
+                name: t.tech_id === 0 ? 'Équipe' : (t.tech_name || 'Non assigné'),
                 assigned: t.total_assigned,
                 resolved: t.resolved || 0,
                 resolution_rate: t.total_assigned > 0 
@@ -1387,7 +1398,7 @@ export const ToolFunctions = {
                 ref: t.display_id,
                 title: t.title,
                 machine: `${t.machine_type || ''} ${t.machine_model || ''}`.trim() || 'N/A',
-                technician: t.tech_name || 'Non assigné',
+                technician: t.tech_id === 0 ? 'Équipe' : (t.tech_name || 'Non assigné'),
                 status: t.status,
                 priority: t.priority,
                 date: t.created_at
