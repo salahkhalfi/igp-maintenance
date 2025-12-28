@@ -2751,12 +2751,20 @@ Commence directement par le contenu du document (pas de "Voici...").`;
                         if (ToolFunctions[fnName as keyof typeof ToolFunctions]) {
                             try {
                                 // Route les arguments correctement selon l'outil
-                                if (['search_tickets', 'get_overdue_tickets'].includes(fnName)) {
+                                // Outils qui ont besoin de baseUrl pour les URLs
+                                if (['search_tickets', 'get_overdue_tickets', 'get_unassigned_tickets'].includes(fnName)) {
                                     // @ts-ignore
-                                    toolResult = await ToolFunctions[fnName](db, fnArgs, baseUrl || "https://app.example.com");
-                                } else {
+                                    toolResult = await ToolFunctions[fnName](db, fnArgs, baseUrl || "https://app.igpglass.ca");
+                                } 
+                                // Outils qui ont besoin de userId pour les permissions
+                                else if (['get_planning'].includes(fnName)) {
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs, payload.userId);
+                                }
+                                // Autres outils - juste db et args
+                                else {
+                                    // @ts-ignore
+                                    toolResult = await ToolFunctions[fnName](db, fnArgs);
                                 }
                             } catch (err: any) {
                                 toolResult = `Erreur: ${err.message}`;

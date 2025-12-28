@@ -906,18 +906,16 @@ export const ToolFunctions = {
                 let descriptionWithMedia = r.description || "";
                 
                 const myMedia = mediaList.filter((m: any) => m.ticket_id === r.id).map((m: any) => {
-                    // USE ROBUST ID-BASED URL
-                    const publicUrl = `/api/media/${m.id}`;
+                    // USE ABSOLUTE URL with baseUrl for images to display correctly
+                    const publicUrl = baseUrl ? `${baseUrl}/api/media/${m.id}` : `/api/media/${m.id}`;
                     
                     // Générer le lien vers le ticket pour le contexte AI
-                    // DYNAMIC URL based on passed context
                     const ticketUrl = `${baseUrl}/?ticket=${r.id}`;
                     
-                    // REVERT UX FIX: Return to side-by-side format to avoid breaking Frontend Regex Parser
-                    // Nested markdown [![Img](Url)](Link) breaks the simple parser in AIChatModal.
+                    // Format Markdown avec URL absolue
                     const mdLink = m.file_type.startsWith('image') 
-                        ? `![${m.file_name}](${publicUrl}) \n\n[➡ Ouvrir Ticket #${r.ticket_id || r.id}](${ticketUrl})`
-                        : `[📄 ${m.file_name}](${publicUrl}) [➡ Ouvrir Ticket](${ticketUrl})`;
+                        ? `![${m.file_name}](${publicUrl})`
+                        : `[📄 ${m.file_name}](${publicUrl})`;
                         
                     // FORCE INJECTION INTO DESCRIPTION
                     descriptionWithMedia += `\n\n${mdLink}`;
@@ -925,6 +923,7 @@ export const ToolFunctions = {
                     return {
                         name: m.file_name,
                         type: m.file_type,
+                        url: publicUrl,
                         // Provide READY-TO-USE Markdown for the AI
                         markdown: mdLink
                     };
