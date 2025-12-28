@@ -2432,21 +2432,67 @@ Pour un bilan des incidents → utilise search_tickets avec filtre priorité
 - ❌ Ne jamais contredire les lois canadiennes/québécoises
 - ❌ Ne jamais ignorer les informations d'identité de l'entreprise
 
-# FORMAT DE SORTIE
-**CRITIQUE - TITRE DU DOCUMENT:**
-- Le document DOIT commencer par un titre approprié au format: ## [Titre précis et descriptif]
-- Le titre DOIT refléter exactement le sujet demandé par l'utilisateur
-- Exemples de bons titres:
-  - "## Rapport Mensuel de Maintenance - Décembre 2024"
-  - "## Fiche de Données de Sécurité - Nettoyant Industriel XYZ"
-  - "## Demande de Subvention PARI-CNRC - Projet Automatisation"
-  - "## Bilan de Performance des Techniciens - Q4 2024"
-- NE PAS utiliser de titres génériques comme "Document" ou "Rapport"
+# FORMAT DE SORTIE - DOCUMENT PROFESSIONNEL
 
-**STRUCTURE:**
-Commence DIRECTEMENT par le titre ## puis le contenu (pas d'introduction "Voici le document...").
-Le document doit être complet et prêt à imprimer.
-Utilise le format Markdown pour la structure (## titres, ### sous-titres, **gras**, listes).`;
+**RÈGLE ABSOLUE**: Produire un document VISUELLEMENT PROFESSIONNEL avec mise en page soignée.
+
+**TITRE:**
+- Commencer par ## [Titre précis] (ex: ## Bilan de Performance - Décembre 2024)
+
+**STRUCTURE OBLIGATOIRE pour les RAPPORTS:**
+\`\`\`markdown
+## Titre du Rapport
+
+### Résumé Exécutif
+[2-3 phrases clés avec les chiffres importants en **gras**]
+
+### Statistiques Clés
+
+| Indicateur | Valeur | Évolution |
+|------------|--------|-----------|
+| Total tickets | **23** | - |
+| Résolus | **2** | 8.7% |
+| En cours | **19** | - |
+
+### Répartition par Priorité
+
+| Priorité | Nombre | % du Total |
+|----------|--------|------------|
+| 🔴 Critique | 7 | 30% |
+| 🟠 Élevée | 3 | 13% |
+| 🟡 Moyenne | 12 | 52% |
+| 🟢 Basse | 1 | 4% |
+
+### Performance des Techniciens
+
+| Technicien | Assignés | Résolus | Temps moyen |
+|------------|----------|---------|-------------|
+| Jean Dupont | 8 | 5 | 4.2h |
+| Marie Martin | 6 | 3 | 3.8h |
+
+### Points d'Attention
+- **Point 1**: Description
+- **Point 2**: Description
+
+### Recommandations
+1. Première recommandation
+2. Deuxième recommandation
+\`\`\`
+
+**RÈGLES DE FORMATAGE:**
+- TOUJOURS utiliser des **tableaux** pour les données chiffrées
+- TOUJOURS utiliser **gras** pour les chiffres importants
+- TOUJOURS inclure des émojis pour les priorités (🔴🟠🟡🟢)
+- TOUJOURS calculer les pourcentages quand pertinent
+- Sections claires avec ### sous-titres
+- Résumé exécutif en début de rapport
+- Recommandations en fin de rapport
+
+**INTERDIT:**
+- ❌ Listes plates sans structure (ex: "Critique : 7" sur une ligne)
+- ❌ Données sans contexte (toujours ajouter % ou évolution)
+- ❌ "Données non disponibles" - calculer ou omettre la section
+- ❌ Texte monotone sans mise en forme`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
 
