@@ -132,5 +132,6 @@ export interface Bindings {
   OPENAI_API_KEY?: string; // Clé API OpenAI (Fallback)
   GROQ_API_KEY?: string; // Clé API Groq (Audio)
   DEEPSEEK_API_KEY?: string; // Clé API DeepSeek (Intelligence)
+  OPENROUTER_API_KEY?: string; // Clé API OpenRouter (Multi-modèles: Claude, GPT, etc.)
   ASSETS: Fetcher;
 }

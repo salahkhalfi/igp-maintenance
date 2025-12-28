@@ -2546,13 +2546,22 @@ INTERDIT:
         while (turns < MAX_TURNS) {
             turns++;
             const isLastTurn = turns === MAX_TURNS;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using GPT-4o${isLastTurn ? ' (FINAL - no tools)' : ''}`);
+            
+            // Priorité: OpenRouter (Claude 3.5 Sonnet) > OpenAI (GPT-4o)
+            const useOpenRouter = !!env.OPENROUTER_API_KEY;
+            const apiUrl = useOpenRouter 
+                ? 'https://openrouter.ai/api/v1/chat/completions'
+                : 'https://api.openai.com/v1/chat/completions';
+            const apiKey = useOpenRouter ? env.OPENROUTER_API_KEY : env.OPENAI_API_KEY;
+            const modelName = useOpenRouter ? 'anthropic/claude-3.5-sonnet' : 'gpt-4o';
+            const apiName = useOpenRouter ? 'Claude 3.5 Sonnet (OpenRouter)' : 'GPT-4o (OpenAI)';
+            
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using ${apiName}${isLastTurn ? ' (FINAL - no tools)' : ''}`);
             
             try {
                 // Au dernier tour, forcer l'IA à répondre sans outils
-                // GPT-4o pour meilleure qualité de rédaction et function calling
                 const requestBody: any = {
-                    model: "gpt-4o",
+                    model: modelName,
                     messages,
                     temperature: 0.3,
                     max_tokens: 4000
@@ -2564,16 +2573,19 @@ INTERDIT:
                 }
                 // Dernier tour: pas de tools = l'IA DOIT produire du contenu
                 
-                const apiUrl = 'https://api.openai.com/v1/chat/completions';
-                const apiKey = env.OPENAI_API_KEY;
-                const apiName = 'OpenAI';
+                const headers: Record<string, string> = { 
+                    'Authorization': `Bearer ${apiKey}`, 
+                    'Content-Type': 'application/json' 
+                };
+                // OpenRouter nécessite des headers supplémentaires
+                if (useOpenRouter) {
+                    headers['HTTP-Referer'] = baseUrl || 'https://app.igpglass.ca';
+                    headers['X-Title'] = 'IGP Secrétaire de Direction';
+                }
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${apiKey}`, 
-                        'Content-Type': 'application/json' 
-                    },
+                    headers,
                     body: JSON.stringify(requestBody)
                 });
                 
