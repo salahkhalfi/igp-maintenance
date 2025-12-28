@@ -83,7 +83,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/RoleDropdown.min.js?v=d352264"></script>
     <script src="/static/js/dist/SystemSettingsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PerformanceModal.min.js?v=d352264"></script>
-    <script src="/static/js/dist/AIChatModal_v4.min.js?v=ad64926"></script>
+    <script src="/static/js/dist/AIChatModal_v4.min.js?v=1b0237d"></script>
     <script src="/static/js/dist/OverdueTicketsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PushDevicesModal.min.js?v=d352264"></script>
     <!-- MISSING SCRIPTS RESTORED -->
@@ -92,7 +92,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/AppHeader.min.js?v=d352264"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=d352264.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=d352264.0.0"></script>
-    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=268ce74"></script>
+    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=edbba4a"></script>
     <script src="/static/js/dist/KanbanBoard.min.js?v=d352264"></script>
     <script src="/static/js/dist/AdminRoles.min.js?v=d352264"></script>
     <script src="/static/js/dist/ManageColumnsModal.min.js?v=d352264"></script>

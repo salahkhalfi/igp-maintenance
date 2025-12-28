@@ -1334,6 +1334,17 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
     const [secretaryInstructions, setSecretaryInstructions] = React.useState('');
     const [secretaryReport, setSecretaryReport] = React.useState(null);
     const [isGeneratingSecretary, setIsGeneratingSecretary] = React.useState(false);
+    const [showSecretaryHelp, setShowSecretaryHelp] = React.useState(false);
+    
+    // Trucs & Astuces pour la Secrétaire IA
+    const secretaryHelpTips = [
+        '💡 Soyez précis : "Lettre au fournisseur ABC pour retard livraison" > "Lettre fournisseur"',
+        '📅 Incluez les dates : "réunion du 15 janvier", "projet démarré en mars 2024"',
+        '💰 Montants exacts : "subvention de 50 000$", "investissement de 200 000$"',
+        '👤 Nommez les destinataires : "M. Jean Tremblay, Directeur", "Mme Lavoie de Investissement Québec"',
+        '🎯 Précisez l\'objectif : "pour obtenir un financement", "pour relancer la commande"',
+        '📊 L\'IA utilise vos données réelles : tickets, machines, équipes pour enrichir les documents'
+    ];
     
     const getDateLabel = () => {
         const d = new Date(printDate);
@@ -2039,10 +2050,36 @@ body {
                     
                     // Section Secrétaire de Direction
                     selectedFormat === 'secretary' && React.createElement('div', { className: 'bg-indigo-50 rounded-lg p-4 border border-indigo-200' },
-                        React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
-                            React.createElement('i', { className: 'fas fa-user-tie text-indigo-600' }),
-                            React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Secrétaire de Direction IA'),
-                            React.createElement('span', { className: 'text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full' }, 'Lois QC/CA')
+                        React.createElement('div', { className: 'flex items-center justify-between mb-4' },
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('i', { className: 'fas fa-user-tie text-indigo-600' }),
+                                React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Secrétaire de Direction IA'),
+                                React.createElement('span', { className: 'text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full' }, 'Lois QC/CA')
+                            ),
+                            React.createElement('button', {
+                                onClick: () => setShowSecretaryHelp(!showSecretaryHelp),
+                                className: `p-1.5 rounded-full transition-colors ${showSecretaryHelp ? 'bg-indigo-200 text-indigo-800' : 'hover:bg-indigo-100 text-indigo-600'}`,
+                                title: 'Trucs & Astuces'
+                            },
+                                React.createElement('i', { className: 'fas fa-question-circle' })
+                            )
+                        ),
+                        // Panneau d'aide
+                        showSecretaryHelp && React.createElement('div', { 
+                            className: 'mb-4 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200'
+                        },
+                            React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                React.createElement('i', { className: 'fas fa-lightbulb text-amber-600' }),
+                                React.createElement('span', { className: 'text-sm font-semibold text-amber-800' }, 'Trucs & Astuces pour de meilleurs résultats')
+                            ),
+                            React.createElement('ul', { className: 'space-y-1' },
+                                secretaryHelpTips.map((tip, i) => 
+                                    React.createElement('li', { key: i, className: 'text-xs text-amber-700 flex items-start gap-1.5' },
+                                        React.createElement('span', { className: 'mt-0.5' }, '•'),
+                                        React.createElement('span', {}, tip)
+                                    )
+                                )
+                            )
                         ),
                         // Catégories de documents
                         React.createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },

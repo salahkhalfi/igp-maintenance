@@ -3,78 +3,7 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
     const [input, setInput] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [markedLoaded, setMarkedLoaded] = React.useState(!!window.marked);
-    const [showHelp, setShowHelp] = React.useState(false);
     const messagesEndRef = React.useRef(null);
-    
-    // Vérifier si l'utilisateur est admin/supervisor
-    const isAdmin = React.useMemo(() => {
-        try {
-            const token = localStorage.getItem('auth_token');
-            if (!token) return false;
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            return ['admin', 'supervisor'].includes(payload.role);
-        } catch { return false; }
-    }, []);
-    
-    // Trucs & Astuces personnalisés pour IGP Glass
-    const helpContent = {
-        categories: [
-            {
-                title: '📊 Rapports & Bilans',
-                icon: 'fa-chart-line',
-                examples: [
-                    { label: 'Bilan mensuel', prompt: 'Prépare-moi un rapport mensuel complet sur les opérations de maintenance avec les KPIs clés' },
-                    { label: 'Analyse équipements', prompt: 'Fais une analyse des pannes récurrentes par type de machine ce mois-ci' },
-                    { label: 'Performance équipe', prompt: 'Génère un rapport de performance de l\'équipe technique avec les temps de réponse' },
-                    { label: 'Tendances', prompt: 'Analyse les tendances de maintenance sur les 3 derniers mois et propose des améliorations' }
-                ]
-            },
-            {
-                title: '✉️ Correspondance',
-                icon: 'fa-envelope',
-                examples: [
-                    { label: 'Lettre fournisseur', prompt: 'Rédige une lettre de relance au fournisseur concernant la livraison en retard de pièces détachées' },
-                    { label: 'Remerciement partenaire', prompt: 'Écris une lettre de remerciement à notre partenaire pour leur collaboration sur le projet d\'optimisation' },
-                    { label: 'Communication interne', prompt: 'Rédige une note de service concernant les nouvelles procédures de sécurité' }
-                ]
-            },
-            {
-                title: '💰 Subventions',
-                icon: 'fa-hand-holding-usd',
-                examples: [
-                    { label: 'PARI-CNRC', prompt: 'Aide-moi à préparer une demande PARI-CNRC pour notre projet d\'automatisation des fours' },
-                    { label: 'RS&DE', prompt: 'Documente nos activités R&D de l\'année pour la demande de crédit RS&DE' },
-                    { label: 'Investissement Québec', prompt: 'Rédige un argumentaire pour une demande de financement ESSOR pour moderniser notre équipement' }
-                ]
-            },
-            {
-                title: '📋 Documents Techniques',
-                icon: 'fa-cogs',
-                examples: [
-                    { label: 'Procédure cadenassage', prompt: 'Crée une procédure de cadenassage complète selon la norme CSA Z460 pour le four de trempe' },
-                    { label: 'Fiche de sécurité', prompt: 'Génère une fiche de sécurité pour les opérations de manutention de verre' },
-                    { label: 'Manuel opérateur', prompt: 'Rédige un mode opératoire pour le démarrage et l\'arrêt sécuritaire de la ligne de découpe' },
-                    { label: 'Checklist maintenance', prompt: 'Crée une checklist de maintenance préventive mensuelle pour les équipements critiques' }
-                ]
-            },
-            {
-                title: '✨ Communication & Marketing',
-                icon: 'fa-bullhorn',
-                examples: [
-                    { label: 'Page À propos', prompt: 'Écris une page "À propos" professionnelle pour notre site web mettant en valeur notre expertise' },
-                    { label: 'Communiqué', prompt: 'Rédige un communiqué de presse pour annoncer notre nouvelle certification ISO' },
-                    { label: 'Pitch', prompt: 'Prépare un pitch de 2 minutes pour présenter nos capacités à un nouveau client potentiel' }
-                ]
-            }
-        ],
-        tips: [
-            '💡 Soyez précis: "Rapport sur le four de trempe" > "Fais-moi un rapport"',
-            '📅 Précisez la période: "ce mois-ci", "depuis janvier", "semaine dernière"',
-            '🎯 Indiquez le destinataire: "pour la direction", "pour le client", "pour l\'équipe"',
-            '📊 Demandez des chiffres: L\'IA a accès aux données réelles de vos tickets et machines',
-            '🔄 Itérez: Vous pouvez demander des modifications après la première génération'
-        ]
-    };
 
     // Fonction d'impression des conseils
     const handlePrint = () => {
@@ -535,14 +464,6 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
                     )
                 ),
                 React.createElement('div', { className: 'flex items-center gap-2' },
-                    // Bouton Aide (admin/supervisor seulement)
-                    isAdmin && React.createElement('button', {
-                        onClick: () => setShowHelp(!showHelp),
-                        className: `p-2 rounded-full transition-colors ${showHelp ? 'bg-white/30' : 'hover:bg-white/20'}`,
-                        title: 'Aide & Exemples'
-                    },
-                        React.createElement('i', { className: 'fas fa-question-circle text-lg' })
-                    ),
                     // Bouton Imprimer
                     messages.length > 0 && React.createElement('button', {
                         onClick: handlePrint,
@@ -557,57 +478,6 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
                         className: 'p-2 hover:bg-white/20 rounded-full transition-colors'
                     },
                         React.createElement('i', { className: 'fas fa-times text-lg' })
-                    )
-                )
-            ),
-
-            // Panneau d'aide (admin/supervisor seulement)
-            showHelp && isAdmin && React.createElement('div', { 
-                className: 'bg-gradient-to-br from-indigo-50 to-purple-50 border-b border-indigo-100 max-h-80 overflow-y-auto'
-            },
-                // Tips en haut
-                React.createElement('div', { className: 'px-4 py-3 border-b border-indigo-100/50' },
-                    React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                        React.createElement('i', { className: 'fas fa-magic text-indigo-600' }),
-                        React.createElement('span', { className: 'text-sm font-semibold text-indigo-800' }, 'Conseils pour de meilleurs résultats')
-                    ),
-                    React.createElement('div', { className: 'grid grid-cols-1 gap-1' },
-                        helpContent.tips.map((tip, i) => 
-                            React.createElement('p', { key: i, className: 'text-xs text-indigo-700/80' }, tip)
-                        )
-                    )
-                ),
-                // Catégories avec exemples
-                React.createElement('div', { className: 'p-4 space-y-3' },
-                    helpContent.categories.map((cat, catIndex) => 
-                        React.createElement('div', { key: catIndex, className: 'bg-white rounded-lg shadow-sm border border-indigo-100/50 overflow-hidden' },
-                            React.createElement('div', { className: 'px-3 py-2 bg-indigo-50/50 border-b border-indigo-100/50 flex items-center gap-2' },
-                                React.createElement('i', { className: `fas ${cat.icon} text-indigo-600 text-sm` }),
-                                React.createElement('span', { className: 'text-sm font-medium text-indigo-800' }, cat.title)
-                            ),
-                            React.createElement('div', { className: 'p-2 flex flex-wrap gap-1.5' },
-                                cat.examples.map((ex, exIndex) => 
-                                    React.createElement('button', {
-                                        key: exIndex,
-                                        onClick: () => {
-                                            setInput(ex.prompt);
-                                            setShowHelp(false);
-                                        },
-                                        className: 'px-2.5 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-full transition-colors border border-indigo-100 hover:border-indigo-200'
-                                    }, ex.label)
-                                )
-                            )
-                        )
-                    )
-                ),
-                // Bouton fermer le panneau
-                React.createElement('div', { className: 'px-4 py-2 bg-indigo-50/50 border-t border-indigo-100/50 flex justify-center' },
-                    React.createElement('button', {
-                        onClick: () => setShowHelp(false),
-                        className: 'text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1'
-                    },
-                        React.createElement('i', { className: 'fas fa-chevron-up' }),
-                        'Fermer l\'aide'
                     )
                 )
             ),

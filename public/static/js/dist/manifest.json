@@ -1,10 +1,10 @@
 {
-  "generated": "2025-12-28T07:15:02.165Z",
+  "generated": "2025-12-28T07:28:12.013Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
       "minified": "AIChatModal_v4.min.js",
-      "savings": "39.4%"
+      "savings": "39.3%"
     },
     {
       "original": "AdminRoles.js",
@@ -94,7 +94,7 @@
     {
       "original": "ProductionPlanning_v3.js",
       "minified": "ProductionPlanning_v3.min.js",
-      "savings": "37.2%"
+      "savings": "37.3%"
     },
     {
       "original": "PromptModal.js",
@@ -177,5 +177,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "48.4%"
+  "totalSavings": "48.5%"
 }
