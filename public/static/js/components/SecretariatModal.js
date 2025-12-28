@@ -283,8 +283,13 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
         };
         
-        // Détecter et convertir les tableaux (blocs commençant par |)
-        let html = md.replace(/((?:^\|.+\|$\n?)+)/gm, (match) => parseTable(match))
+        // 1. INLINE FORMATTING FIRST (avant tableaux pour que **bold** fonctionne dans les cellules)
+        let html = md
+            // Bold et italic EN PREMIER
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+            // Détecter et convertir les tableaux (blocs commençant par |)
+            .replace(/((?:^\|.+\|$\n?)+)/gm, (match) => parseTable(match))
             // Séparateurs horizontaux (---, ***, ___)
             .replace(/^[-*_]{3,}\s*$/gm, '<hr class="doc-separator">')
             // Images ![alt](url) - AVANT les liens pour éviter conflit
@@ -296,9 +301,6 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             .replace(/^### (.+)$/gm, '<h3>$1</h3>')
             .replace(/^## (.+)$/gm, '<h2>$1</h2>')
             .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-            // Bold et italic
-            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
             // Code inline `code`
             .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2pt 4pt;border-radius:3pt;font-family:monospace;font-size:10pt;">$1</code>')
             // Listes

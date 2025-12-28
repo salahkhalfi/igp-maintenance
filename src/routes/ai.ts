@@ -2432,66 +2432,54 @@ Pour un bilan des incidents → utilise search_tickets avec filtre priorité
 - ❌ Ne jamais contredire les lois canadiennes/québécoises
 - ❌ Ne jamais ignorer les informations d'identité de l'entreprise
 
-# FORMAT DE SORTIE - DOCUMENT PROFESSIONNEL
+# FORMAT DE SORTIE - CRITIQUE
 
-**RÈGLE ABSOLUE**: Produire un document VISUELLEMENT PROFESSIONNEL avec mise en page soignée.
+Tu DOIS produire du Markdown bien formaté. Voici les règles OBLIGATOIRES:
 
-**TITRE:**
-- Commencer par ## [Titre précis] (ex: ## Bilan de Performance - Décembre 2024)
+1. TITRE: Commencer par ## suivi du titre (ex: ## Bilan de Performance - Décembre 2024)
 
-**STRUCTURE OBLIGATOIRE pour les RAPPORTS:**
-\`\`\`markdown
-## Titre du Rapport
+2. SECTIONS: Utiliser ### pour chaque section
+
+3. TABLEAUX OBLIGATOIRES: Toute donnée chiffrée DOIT être dans un tableau Markdown:
+   | Colonne 1 | Colonne 2 |
+   |-----------|-----------|
+   | Valeur 1  | Valeur 2  |
+
+4. GRAS: Les chiffres importants en **gras**
+
+5. ÉMOJIS PRIORITÉS: 🔴 Critique, 🟠 Haute, 🟡 Moyenne, 🟢 Basse
+
+EXEMPLE DE SORTIE CORRECTE:
+
+## Bilan de Performance - Décembre 2024
 
 ### Résumé Exécutif
-[2-3 phrases clés avec les chiffres importants en **gras**]
+Ce mois, **23 tickets** ont été traités avec un taux de résolution de **8.7%**.
 
 ### Statistiques Clés
-
-| Indicateur | Valeur | Évolution |
-|------------|--------|-----------|
-| Total tickets | **23** | - |
-| Résolus | **2** | 8.7% |
-| En cours | **19** | - |
+| Indicateur | Valeur |
+|------------|--------|
+| Total tickets | **23** |
+| Résolus | **2** |
+| En cours | **19** |
 
 ### Répartition par Priorité
-
-| Priorité | Nombre | % du Total |
-|----------|--------|------------|
-| 🔴 Critique | 7 | 30% |
-| 🟠 Élevée | 3 | 13% |
-| 🟡 Moyenne | 12 | 52% |
-| 🟢 Basse | 1 | 4% |
+| Priorité | Nombre | % |
+|----------|--------|---|
+| 🔴 Critique | **7** | 30% |
+| 🟠 Haute | **3** | 13% |
+| 🟡 Moyenne | **12** | 52% |
+| 🟢 Basse | **1** | 4% |
 
 ### Performance des Techniciens
+| Technicien | Tickets | Résolus | Taux |
+|------------|---------|---------|------|
+| Jean Dupont | 8 | 5 | 63% |
 
-| Technicien | Assignés | Résolus | Temps moyen |
-|------------|----------|---------|-------------|
-| Jean Dupont | 8 | 5 | 4.2h |
-| Marie Martin | 6 | 3 | 3.8h |
-
-### Points d'Attention
-- **Point 1**: Description
-- **Point 2**: Description
-
-### Recommandations
-1. Première recommandation
-2. Deuxième recommandation
-\`\`\`
-
-**RÈGLES DE FORMATAGE:**
-- TOUJOURS utiliser des **tableaux** pour les données chiffrées
-- TOUJOURS utiliser **gras** pour les chiffres importants
-- TOUJOURS inclure des émojis pour les priorités (🔴🟠🟡🟢)
-- TOUJOURS calculer les pourcentages quand pertinent
-- Sections claires avec ### sous-titres
-- Résumé exécutif en début de rapport
-- Recommandations en fin de rapport
-
-**INTERDIT:**
-- ❌ Listes plates sans structure (ex: "Critique : 7" sur une ligne)
-- ❌ Données sans contexte (toujours ajouter % ou évolution)
-- ❌ "Données non disponibles" - calculer ou omettre la section
+INTERDIT:
+- ❌ Texte plat comme "Total tickets : 23" (utilise un tableau!)
+- ❌ "Données non disponibles" (omets la section si pas de données)
+- ❌ Listes simples pour les stats (utilise des tableaux!)
 - ❌ Texte monotone sans mise en forme`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
