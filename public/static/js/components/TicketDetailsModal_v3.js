@@ -831,7 +831,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                                         className: 'w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all font-semibold'
                                     },
                                         React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                        React.createElement('option', { value: '0' }, '👥 À Équipe'),
+                                        React.createElement('option', { value: '0' }, '👥 Équipe'),
                                         technicians.filter(tech => tech.id !== 0).map(tech =>
                                             React.createElement('option', {
                                                 key: tech.id,

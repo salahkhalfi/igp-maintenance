@@ -526,7 +526,7 @@ const CreateTicketModal = ({ show, onClose, machines = [], onTicketCreated, curr
                                 }
                             },
                                 React.createElement('option', { value: '' }, '-- Non assigné --'),
-                                React.createElement('option', { value: '0' }, '👥 À Équipe'),
+                                React.createElement('option', { value: '0' }, '👥 Équipe'),
                                 technicians.filter(tech => tech.id !== 0).map(tech =>
                                     React.createElement('option', { key: tech.id, value: tech.id }, '👤 ' + tech.first_name)
                                 )
