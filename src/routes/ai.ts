@@ -1954,6 +1954,18 @@ app.post('/secretary', async (c) => {
             return c.json({ error: 'Veuillez fournir des instructions détaillées (min. 10 caractères)' }, 400);
         }
         
+        // ===== LOAD BASE URL FOR TOOLS =====
+        let baseUrl = '';
+        try {
+            const baseUrlSetting = await db.select()
+                .from(systemSettings)
+                .where(eq(systemSettings.setting_key, 'app_base_url'))
+                .get();
+            baseUrl = baseUrlSetting?.setting_value || '';
+        } catch (e) {
+            console.warn('[Secretary] Could not load base URL');
+        }
+        
         // ===== LOAD COMPANY IDENTITY FROM AI CONFIG (Cerveau de l'IA) =====
         // Utilise les mêmes blocs que l'Expert IA pour une cohérence parfaite
         const aiConfig = await getAiConfig(db);
@@ -2397,7 +2409,23 @@ ${typeInstructions}
 6. **PRÊT À L'EMPLOI**: Le document doit pouvoir être utilisé tel quel
 7. **PERSONNALISÉ**: Utilise les informations de la carte d'identité pour personnaliser le document
 
+# OUTILS DISPONIBLES
+Tu as accès à des outils pour interroger la base de données en temps réel:
+- **search_tickets**: Chercher des tickets par mots-clés, statut, technicien, machine
+- **get_ticket_details**: Détails complets d'un ticket spécifique
+- **search_machines**: Chercher des machines par nom/type
+- **get_machine_details**: Fiche technique complète d'une machine
+- **get_technician_info**: Info et charge de travail d'un technicien
+- **check_database_stats**: Statistiques globales (tickets par priorité/statut, top pannes)
+- **get_overdue_tickets**: Tickets en retard
+
+⚠️ **UTILISE CES OUTILS** pour obtenir des données réelles. Ne jamais inventer de chiffres ou de noms.
+Pour un rapport de performance → utilise check_database_stats et get_technician_info
+Pour un état des machines → utilise search_machines et get_machine_details
+Pour un bilan des incidents → utilise search_tickets avec filtre priorité
+
 # INTERDICTIONS
+- ❌ Ne jamais inventer de données opérationnelles (UTILISE LES OUTILS)
 - ❌ Ne jamais inventer de numéros de loi ou d'articles inexistants
 - ❌ Ne jamais inclure de placeholders visibles [À COMPLÉTER] - utiliser les vraies données de l'entreprise
 - ❌ Ne jamais utiliser de ton familier ou de jargon inapproprié
@@ -2422,42 +2450,39 @@ Utilise le format Markdown pour la structure (## titres, ### sous-titres, **gras
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
 
-        // ===== CALL AI =====
+        // ===== CALL AI WITH TOOLS (AGENTIC LOOP) =====
+        // Le Secrétaire peut maintenant interroger la base de données comme l'Expert IA
         let aiResponse = '';
         
-        if (env.DEEPSEEK_API_KEY) {
-            try {
-                console.log('📝 [Secretary] Using DeepSeek-Chat');
-                const response = await fetch('https://api.deepseek.com/chat/completions', {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${env.DEEPSEEK_API_KEY}`, 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify({
-                        model: "deepseek-chat",
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: instructions }
-                        ],
-                        temperature: 0.3,
-                        max_tokens: 3000
-                    })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json() as any;
-                    aiResponse = data.choices[0]?.message?.content || '';
-                }
-            } catch (e) {
-                console.warn('⚠️ [Secretary] DeepSeek failed, trying OpenAI');
-            }
+        if (!env.OPENAI_API_KEY) {
+            return c.json({ error: 'Clé API OpenAI manquante' }, 500);
         }
         
-        // Fallback to OpenAI
-        if (!aiResponse && env.OPENAI_API_KEY) {
+        // Outils disponibles pour le Secrétaire (sous-ensemble pertinent pour les rapports)
+        const SECRETARY_TOOLS = TOOLS.filter(t => [
+            'search_tickets',
+            'get_ticket_details', 
+            'search_machines',
+            'get_machine_details',
+            'get_technician_info',
+            'check_database_stats',
+            'get_overdue_tickets'
+        ].includes(t.function.name));
+        
+        // Messages pour la boucle agentic
+        const messages: any[] = [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: instructions }
+        ];
+        
+        let turns = 0;
+        const MAX_TURNS = 3; // Limiter pour éviter les timeouts
+        
+        while (turns < MAX_TURNS) {
+            turns++;
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}`);
+            
             try {
-                console.log('📝 [Secretary] Using GPT-4o-mini fallback');
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
@@ -2466,27 +2491,79 @@ Utilise le format Markdown pour la structure (## titres, ### sous-titres, **gras
                     },
                     body: JSON.stringify({
                         model: "gpt-4o-mini",
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: instructions }
-                        ],
+                        messages,
                         temperature: 0.3,
-                        max_tokens: 3000
+                        max_tokens: 4000,
+                        tools: SECRETARY_TOOLS,
+                        tool_choice: turns === 1 ? "auto" : "auto" // Premier tour peut utiliser tools
                     })
                 });
                 
-                if (response.ok) {
-                    const data = await response.json() as any;
-                    aiResponse = data.choices[0]?.message?.content || '';
+                if (!response.ok) {
+                    console.error('❌ [Secretary] OpenAI API error:', await response.text());
+                    break;
                 }
-            } catch (e) {
-                console.error('❌ [Secretary] OpenAI also failed');
+                
+                const data = await response.json() as any;
+                const responseMessage = data.choices[0]?.message;
+                
+                if (!responseMessage) {
+                    console.error('❌ [Secretary] No response message');
+                    break;
+                }
+                
+                messages.push(responseMessage);
+                
+                // Si l'IA veut utiliser des outils
+                if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+                    console.log(`🔧 [Secretary] Using ${responseMessage.tool_calls.length} tool(s)`);
+                    
+                    for (const toolCall of responseMessage.tool_calls) {
+                        const fnName = toolCall.function.name;
+                        const fnArgs = JSON.parse(toolCall.function.arguments || '{}');
+                        let toolResult = "Erreur: Outil inconnu";
+                        
+                        console.log(`🔧 [Secretary] Calling tool: ${fnName}`);
+                        
+                        if (ToolFunctions[fnName as keyof typeof ToolFunctions]) {
+                            try {
+                                // Route les arguments correctement selon l'outil
+                                if (['search_tickets', 'get_overdue_tickets'].includes(fnName)) {
+                                    // @ts-ignore
+                                    toolResult = await ToolFunctions[fnName](db, fnArgs, baseUrl || "https://app.example.com");
+                                } else {
+                                    // @ts-ignore
+                                    toolResult = await ToolFunctions[fnName](db, fnArgs, payload.userId);
+                                }
+                            } catch (err: any) {
+                                toolResult = `Erreur: ${err.message}`;
+                                console.error(`❌ [Secretary] Tool ${fnName} failed:`, err);
+                            }
+                        }
+                        
+                        messages.push({ 
+                            role: "tool", 
+                            tool_call_id: toolCall.id, 
+                            content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult)
+                        });
+                    }
+                    // Continue la boucle pour que l'IA traite les résultats
+                    continue;
+                }
+                
+                // L'IA a fini (pas de tool_calls) - on a la réponse finale
+                aiResponse = responseMessage.content || '';
+                break;
+                
+            } catch (e: any) {
+                console.error('❌ [Secretary] API call failed:', e);
+                break;
             }
         }
         
         if (!aiResponse) {
             return c.json({ 
-                error: 'Impossible de générer le document. Vérifiez les clés API.' 
+                error: 'Impossible de générer le document. L\'IA n\'a pas pu produire de réponse.' 
             }, 500);
         }
         
