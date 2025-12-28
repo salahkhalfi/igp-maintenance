@@ -2252,105 +2252,119 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                 !t.is_closed && new Date(t.created_at) < overdueThreshold
             );
             
-            // Construire le contexte complet
+            // Construire le contexte en texte lisible (PAS de JSON)
+            const statsThisMonth = calcStats(ticketsThisMonth);
+            const statsLastMonth = calcStats(ticketsLastMonth);
+            
+            // Variation mois sur mois
+            const ticketVariation = statsLastMonth.total > 0 
+                ? Math.round((statsThisMonth.total - statsLastMonth.total) / statsLastMonth.total * 100)
+                : 0;
+            const resolutionVariation = statsLastMonth.resolution_rate > 0
+                ? statsThisMonth.resolution_rate - statsLastMonth.resolution_rate
+                : 0;
+            
             fullDatabaseContext = `
-# BASE DE DONNÉES COMPLÈTE - ${now.toLocaleDateString('fr-CA')}
+═══════════════════════════════════════════════════════════════
+                    DONNÉES DE MAINTENANCE
+                    Date du rapport: ${now.toLocaleDateString('fr-CA')}
+═══════════════════════════════════════════════════════════════
 
-## CONFIGURATION SYSTÈME
-- Statuts fermés: ${closedStatuses.join(', ')}
-- Labels statuts: ${JSON.stringify(statusLabels)}
-- Labels priorités: ${JSON.stringify(priorityLabels)}
+SECTION 1: INDICATEURS CE MOIS (${thisMonth.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })})
+─────────────────────────────────────────────────────────────────
+Tickets créés:        ${statsThisMonth.total}
+Tickets fermés:       ${statsThisMonth.closed}
+Tickets en cours:     ${statsThisMonth.open}
+Taux de résolution:   ${statsThisMonth.resolution_rate}%
+TMR moyen:            ${statsThisMonth.avg_resolution_hours} heures
 
-## STATISTIQUES GLOBALES
+Par priorité:
+  - Critique: ${statsThisMonth.by_priority.critical}
+  - Haute:    ${statsThisMonth.by_priority.high}
+  - Moyenne:  ${statsThisMonth.by_priority.medium}
+  - Basse:    ${statsThisMonth.by_priority.low}
 
-### Ce mois (${thisMonth.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })})
-${JSON.stringify(calcStats(ticketsThisMonth), null, 2)}
+Par statut:
+${Object.entries(statsThisMonth.by_status).map(([s, c]) => `  - ${s}: ${c}`).join('\n')}
 
-### Mois précédent
-${JSON.stringify(calcStats(ticketsLastMonth), null, 2)}
+SECTION 2: COMPARAISON MOIS PRÉCÉDENT
+─────────────────────────────────────────────────────────────────
+Mois précédent - Tickets créés:      ${statsLastMonth.total}
+Mois précédent - Tickets fermés:     ${statsLastMonth.closed}
+Mois précédent - Taux résolution:    ${statsLastMonth.resolution_rate}%
+Mois précédent - TMR moyen:          ${statsLastMonth.avg_resolution_hours} heures
 
-### 3 derniers mois
-${JSON.stringify(calcStats(ticketsLast3Months), null, 2)}
+Évolution:
+  - Volume tickets: ${ticketVariation > 0 ? '+' : ''}${ticketVariation}%
+  - Taux résolution: ${resolutionVariation > 0 ? '+' : ''}${resolutionVariation} points
 
-### Historique complet
-- Total tickets: ${allTickets.length}
-- Total machines: ${allMachines.length}
-- Total utilisateurs: ${allUsers.length}
+SECTION 3: PERFORMANCE TECHNICIENS
+─────────────────────────────────────────────────────────────────
+${technicianPerformance.length === 0 ? 'Aucun technicien enregistré.' : technicianPerformance.map(t => `
+${t.name} (${t.role})
+  Tickets assignés (3 mois):  ${t.tickets_assigned_3months}
+  Tickets fermés (3 mois):    ${t.tickets_closed_3months}
+  Taux de résolution:         ${t.resolution_rate}%
+  TMR moyen:                  ${t.avg_resolution_hours} heures
+  Tickets en cours:           ${t.current_open_tickets}
+  Dernière connexion:         ${t.last_login || 'Jamais'}
+`).join('')}
 
-## PERFORMANCE PAR TECHNICIEN (3 derniers mois)
-${JSON.stringify(technicianPerformance, null, 2)}
+SECTION 4: ÉTAT DU PARC MACHINES
+─────────────────────────────────────────────────────────────────
+Total machines: ${allMachines.length}
+Opérationnelles: ${allMachines.filter(m => m.status === 'operational').length}
+En maintenance: ${allMachines.filter(m => m.status === 'maintenance').length}
+Hors service: ${allMachines.filter(m => m.status === 'out_of_service').length}
 
-## PERFORMANCE PAR MACHINE (3 derniers mois, triées par interventions)
-${JSON.stringify(machinePerformance.slice(0, 15), null, 2)}
+Machines avec le plus d'interventions (3 derniers mois):
+${machinePerformance.filter(m => m.tickets_3months > 0).slice(0, 10).map((m, i) => `
+${i + 1}. ${m.name}
+   Localisation: ${m.location || 'Non spécifiée'}
+   Statut: ${m.status}
+   Interventions: ${m.tickets_3months}
+   Tickets ouverts: ${m.open_tickets}
+   Temps d'arrêt: ${m.downtime_hours} heures
+`).join('') || 'Aucune intervention enregistrée.'}
 
-## TICKETS EN RETARD (ouverts > 7 jours)
-${overdueTickets.length} tickets en retard:
-${JSON.stringify(overdueTickets.map((t: any) => ({
-    id: t.id,
-    ref: t.ticket_id,
-    title: t.title,
-    priority: t.priority_label,
-    status: t.status_label,
-    machine: t.machine_name,
-    assigned_to: t.assigned_to_name,
-    created_at: t.created_at,
-    days_open: Math.floor((now.getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24))
-})), null, 2)}
+SECTION 5: TICKETS EN RETARD (ouverts > 7 jours)
+─────────────────────────────────────────────────────────────────
+Nombre total: ${overdueTickets.length}
+${overdueTickets.length === 0 ? 'Aucun ticket en retard.' : overdueTickets.slice(0, 15).map(t => `
+- ${t.ticket_id}: ${t.title}
+  Priorité: ${t.priority_label} | Statut: ${t.status_label}
+  Machine: ${t.machine_name || 'Non spécifiée'}
+  Assigné à: ${t.assigned_to_name || 'Non assigné'}
+  Créé le: ${new Date(t.created_at).toLocaleDateString('fr-CA')}
+  Jours ouverts: ${Math.floor((now.getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24))}
+`).join('')}
 
-## TICKETS CRITIQUES/HAUTE PRIORITÉ OUVERTS
-${JSON.stringify(enrichedTickets.filter((t: any) => !t.is_closed && ['critical', 'high'].includes(t.priority)).map((t: any) => ({
-    id: t.id,
-    ref: t.ticket_id,
-    title: t.title,
-    priority: t.priority_label,
-    status: t.status_label,
-    machine: t.machine_name,
-    assigned_to: t.assigned_to_name,
-    created_at: t.created_at
-})), null, 2)}
+SECTION 6: TICKETS CRITIQUES/HAUTE PRIORITÉ EN COURS
+─────────────────────────────────────────────────────────────────
+${(() => {
+    const critical = enrichedTickets.filter((t: any) => !t.is_closed && ['critical', 'high'].includes(t.priority));
+    if (critical.length === 0) return 'Aucun ticket critique ou haute priorité en cours.';
+    return critical.map(t => `
+- ${t.ticket_id}: ${t.title}
+  Priorité: ${t.priority_label} | Statut: ${t.status_label}
+  Machine: ${t.machine_name || 'Non spécifiée'}
+  Assigné à: ${t.assigned_to_name || 'Non assigné'}
+  Créé le: ${new Date(t.created_at).toLocaleDateString('fr-CA')}
+`).join('');
+})()}
 
-## LISTE COMPLÈTE DES TICKETS (${ticketsLast3Months.length} derniers 3 mois)
-${JSON.stringify(ticketsLast3Months.map((t: any) => ({
-    id: t.id,
-    ref: t.ticket_id,
-    title: t.title,
-    description: t.description?.substring(0, 200),
-    priority: t.priority_label,
-    status: t.status_label,
-    machine: t.machine_name,
-    assigned_to: t.assigned_to_name,
-    reported_by: t.reported_by_name,
-    created_at: t.created_at,
-    completed_at: t.completed_at,
-    resolution_hours: t.resolution_time_hours,
-    downtime_hours: t.downtime_hours,
-    resolution_notes: t.resolution_notes?.substring(0, 200)
-})), null, 2)}
+SECTION 7: LISTE ÉQUIPE
+─────────────────────────────────────────────────────────────────
+${allUsers.map(u => `- ${u.full_name} (${u.role}) - ${u.email}`).join('\n')}
 
-## LISTE DES MACHINES
-${JSON.stringify(allMachines.map(m => ({
-    id: m.id,
-    type: m.machine_type,
-    manufacturer: m.manufacturer,
-    model: m.model,
-    serial: m.serial_number,
-    year: m.year,
-    location: m.location,
-    status: m.status,
-    operator: m.operator_id && userMap[m.operator_id] ? userMap[m.operator_id].full_name : null
-})), null, 2)}
+SECTION 8: LISTE MACHINES
+─────────────────────────────────────────────────────────────────
+${allMachines.map(m => `- ${m.machine_type} ${m.manufacturer || ''} ${m.model || ''} | ${m.location || 'N/A'} | ${m.status}`).join('\n')}
 
-## LISTE DES UTILISATEURS
-${JSON.stringify(allUsers.map(u => ({
-    id: u.id,
-    name: u.full_name,
-    role: u.role,
-    email: u.email,
-    last_login: u.last_login
-})), null, 2)}
-
-## ÉVÉNEMENTS PLANNING (3 derniers mois)
-${JSON.stringify(planningData, null, 2)}
+═══════════════════════════════════════════════════════════════
+                    FIN DES DONNÉES
+    Ces données sont EXHAUSTIVES. Tout chiffre du rapport DOIT provenir de ces sections.
+═══════════════════════════════════════════════════════════════
 `;
             console.log('[Secretary] Loaded complete database context');
         } catch (e) {
@@ -2517,20 +2531,55 @@ Structure:
 Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-RAPPORT DE MAINTENANCE
+RAPPORT DE MAINTENANCE - RÈGLES STRICTES
 
-Tu as accès à la BASE DE DONNÉES COMPLÈTE ci-dessous. Analyse ces données et produis un rapport de direction de la plus haute qualité professionnelle.
+⚠️ RÈGLE FONDAMENTALE: ZÉRO HALLUCINATION
+Tu dois UNIQUEMENT utiliser les données des SECTIONS 1-8 fournies ci-dessus.
+- Chaque chiffre que tu cites DOIT être présent dans les données
+- Si une donnée n'existe pas dans les sections, tu dois l'omettre ou écrire "Non disponible"
+- INTERDIT d'inventer des chiffres, des noms, des pourcentages ou des tendances
 
-STANDARDS ATTENDUS:
-- Qualité d'un cabinet de conseil de premier plan (McKinsey, Deloitte)
-- Document destiné au conseil d'administration
-- Analyse approfondie, pas une simple liste de chiffres
-- Insights actionnables, pas des généralités
-- Comparaisons temporelles (ce mois vs précédent)
-- Identification des tendances et anomalies
-- Recommandations priorisées avec justification
+STRUCTURE OBLIGATOIRE DU RAPPORT:
 
-Le document doit démontrer une compréhension stratégique des opérations de maintenance et fournir une valeur ajoutée décisionnelle au lecteur.`,
+## 1. SYNTHÈSE EXÉCUTIVE (4-5 lignes max)
+Message clé pour un dirigeant pressé.
+
+## 2. INDICATEURS DE PERFORMANCE - CE MOIS
+COPIER les valeurs exactes de la SECTION 1:
+| Indicateur | Valeur |
+|------------|--------|
+| Tickets créés | [COPIER depuis SECTION 1] |
+| Tickets fermés | [COPIER depuis SECTION 1] |
+| Taux de résolution | [COPIER depuis SECTION 1] |
+| TMR moyen | [COPIER depuis SECTION 1] |
+
+## 3. COMPARAISON AVEC LE MOIS PRÉCÉDENT
+COPIER les valeurs exactes de la SECTION 2.
+
+## 4. PERFORMANCE DE L'ÉQUIPE
+COPIER les données exactes de la SECTION 3 (Performance Techniciens).
+Présenter sous forme de tableau avec les noms réels des techniciens.
+
+## 5. ÉTAT DU PARC MACHINES
+COPIER les données exactes de la SECTION 4.
+Identifier les machines problématiques (celles avec le plus d'interventions).
+
+## 6. POINTS D'ATTENTION CRITIQUES
+Basé sur:
+- SECTION 5: Tickets en retard (ouverts > 7 jours)
+- SECTION 6: Tickets critiques/haute priorité en cours
+LISTER les tickets exacts avec leurs ID et titres réels.
+
+## 7. RECOMMANDATIONS
+3-5 recommandations BASÉES SUR les données ci-dessus (pas de généralités).
+Chaque recommandation doit référencer un problème identifié dans les données.
+
+FORMAT DE CITATION OBLIGATOIRE:
+Quand tu cites un chiffre, il doit correspondre EXACTEMENT aux données fournies.
+Exemple correct: "Le taux de résolution ce mois est de 75%" (si la SECTION 1 dit 75%)
+Exemple INTERDIT: "Le taux de résolution ce mois est de 78%" (si la SECTION 1 dit 75%)
+
+RAPPEL: Les SECTIONS 1-8 contiennent TOUTES les données disponibles. Ne rien ajouter.`,
 
             'creatif': `
 DOCUMENT CRÉATIF
@@ -2620,9 +2669,12 @@ Tu produis des documents au niveau des plus hauts standards professionnels:
 - Français impeccable, terminologie OQLF
 - Prêt à être présenté en conseil d'administration
 
-# INTERDICTIONS
-- Ne jamais inventer de données (tout doit provenir du contexte fourni)
+# INTERDICTIONS ABSOLUES (VIOLATION = ÉCHEC)
+- **ZÉRO HALLUCINATION**: Tout chiffre, nom, pourcentage DOIT provenir des SECTIONS 1-8 fournies
+- Si une donnée n'existe pas → écrire "Non disponible" ou omettre
+- Ne jamais inventer de tendances, comparaisons ou statistiques non présentes
 - Ne jamais inclure de placeholders [À COMPLÉTER]
+- Ne jamais arrondir ou "améliorer" les chiffres (utiliser les valeurs EXACTES)
 - Ne jamais commencer par "Voici le document..."
 - Ne jamais utiliser de ton familier
 
