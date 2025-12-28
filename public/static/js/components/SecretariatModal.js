@@ -263,6 +263,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     const markdownToHtml = (md) => {
         if (!md) return '';
         let html = md
+            // Tables
             .replace(/\|(.+)\|\n\|[-:\s|]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
                 const headers = header.split('|').filter(h => h.trim()).map(h => `<th>${h.trim()}</th>`).join('');
                 const bodyRows = rows.trim().split('\n').map(row => {
@@ -271,19 +272,33 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 }).join('');
                 return `<table><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table>`;
             })
+            // Séparateurs horizontaux (---, ***, ___)
+            .replace(/^[-*_]{3,}\s*$/gm, '<hr class="doc-separator">')
+            // Images ![alt](url) - AVANT les liens pour éviter conflit
+            .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:4pt;">')
+            // Liens [text](url)
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6;text-decoration:underline;">$1</a>')
+            // Headers
             .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
             .replace(/^### (.+)$/gm, '<h3>$1</h3>')
             .replace(/^## (.+)$/gm, '<h2>$1</h2>')
             .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            // Bold et italic
             .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
             .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+            // Code inline `code`
+            .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2pt 4pt;border-radius:3pt;font-family:monospace;font-size:10pt;">$1</code>')
+            // Listes
             .replace(/^(\s*)[\*\-] (.+)$/gm, (m, indent, content) => `<li data-level="${Math.floor((indent||'').length/2)}">${content}</li>`)
             .replace(/^\d+\. (.+)$/gm, '<li class="numbered">$1</li>');
+        // Grouper les listes
         html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, m => m.includes('class="numbered"') ? `<ol>${m}</ol>` : `<ul>${m}</ul>`);
+        // Paragraphes
         html = html.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>')
             .replace(/<p><\/p>/g, '').replace(/<p>(<h[1234]>)/g, '$1').replace(/(<\/h[1234]>)<\/p>/g, '$1')
             .replace(/<p>(<ul>)/g, '$1').replace(/(<\/ul>)<\/p>/g, '$1').replace(/<p>(<ol>)/g, '$1').replace(/(<\/ol>)<\/p>/g, '$1')
-            .replace(/<p>(<table>)/g, '$1').replace(/(<\/table>)<\/p>/g, '$1');
+            .replace(/<p>(<table>)/g, '$1').replace(/(<\/table>)<\/p>/g, '$1')
+            .replace(/<p>(<hr[^>]*>)<\/p>/g, '$1').replace(/<p>(<img[^>]*>)<\/p>/g, '$1');
         return html;
     };
 
@@ -292,12 +307,17 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         .doc-content h1 { font-size: 16pt; font-weight: 700; color: #0f172a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #3b82f6; }
         .doc-content h2 { font-size: 13pt; font-weight: 600; color: #1e293b; margin: 16pt 0 8pt; padding-left: 10pt; border-left: 3pt solid #3b82f6; }
         .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 12pt 0 6pt; }
+        .doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 5pt; }
         .doc-content p { margin: 0 0 10pt; text-align: justify; }
         .doc-content ul, .doc-content ol { margin: 10pt 0; padding-left: 20pt; }
         .doc-content li { margin: 4pt 0; }
         .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; }
-        .doc-content th { background: #f1f5f9; border: 1pt solid #cbd5e1; padding: 8pt; text-align: left; }
+        .doc-content th { background: #f1f5f9; border: 1pt solid #cbd5e1; padding: 8pt; text-align: left; font-weight: 600; }
         .doc-content td { border: 1pt solid #cbd5e1; padding: 8pt; }
+        .doc-content hr, .doc-content .doc-separator { border: none; border-top: 1pt solid #e2e8f0; margin: 16pt 0; }
+        .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 12pt 0; border-radius: 4pt; display: block; }
+        .doc-content a { color: #3b82f6; text-decoration: underline; }
+        .doc-content code { background: #f1f5f9; padding: 2pt 4pt; border-radius: 3pt; font-family: monospace; font-size: 10pt; }
     `;
 
     const printDocument = async () => {
