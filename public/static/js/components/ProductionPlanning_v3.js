@@ -1261,39 +1261,94 @@ const ProductionPlanning = ({ onClose }) => {
 };
 
 // ========== MODAL D'EXPORT / IMPRESSION ==========
-// v2.0 - Nettoyé: uniquement export planning (mois/semaine)
+// v3.0 - Période flexible: mois, semaine, trimestre, année, personnalisée
 const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
     const [selectedFormat, setSelectedFormat] = React.useState('month');
     const [printDate, setPrintDate] = React.useState(() => {
         const d = currentDate || new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     });
+    // Pour la période personnalisée
+    const [customStartDate, setCustomStartDate] = React.useState(() => {
+        const d = currentDate || new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+    });
+    const [customEndDate, setCustomEndDate] = React.useState(() => {
+        const d = currentDate || new Date();
+        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${lastDay}`;
+    });
     
     const getDateLabel = () => {
         const d = new Date(printDate);
-        if (selectedFormat === 'month') {
-            return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-        } else {
-            const startOfWeek = new Date(d);
-            const dayOfWeek = startOfWeek.getDay();
-            startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-            return `${startOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${endOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        switch (selectedFormat) {
+            case 'month':
+                return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            case 'week':
+                const startOfWeek = new Date(d);
+                const dayOfWeek = startOfWeek.getDay();
+                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                return `${startOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${endOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+            case 'quarter':
+                const quarter = Math.floor(d.getMonth() / 3) + 1;
+                return `T${quarter} ${d.getFullYear()}`;
+            case 'year':
+                return `Année ${d.getFullYear()}`;
+            case 'custom':
+                const start = new Date(customStartDate);
+                const end = new Date(customEndDate);
+                return `${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+            default:
+                return '';
         }
+    };
+
+    // Calculer le nombre de jours pour la période personnalisée
+    const getCustomDays = () => {
+        const start = new Date(customStartDate);
+        const end = new Date(customEndDate);
+        const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        return diff > 0 ? diff : 0;
     };
     
     const handlePrint = () => {
-        onPrint(selectedFormat, new Date(printDate));
+        if (selectedFormat === 'custom') {
+            // Passer les dates de début et fin
+            onPrint(selectedFormat, new Date(customStartDate), new Date(customEndDate));
+        } else {
+            onPrint(selectedFormat, new Date(printDate));
+        }
         onClose();
     };
     
     const formatOptions = [
-        { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt' },
-        { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week' }
+        { id: 'week', label: 'Semaine', icon: 'fa-calendar-week', desc: '7 jours' },
+        { id: 'month', label: 'Mois', icon: 'fa-calendar-alt', desc: '1 mois' },
+        { id: 'quarter', label: 'Trimestre', icon: 'fa-calendar', desc: '3 mois' },
+        { id: 'year', label: 'Année', icon: 'fa-calendar-check', desc: '12 mois' },
+        { id: 'custom', label: 'Personnalisé', icon: 'fa-sliders-h', desc: 'Libre' }
     ];
+
+    // Raccourcis rapides pour période personnalisée
+    const quickRanges = [
+        { label: '7 jours', days: 7 },
+        { label: '14 jours', days: 14 },
+        { label: '30 jours', days: 30 },
+        { label: '60 jours', days: 60 },
+        { label: '90 jours', days: 90 }
+    ];
+
+    const applyQuickRange = (days) => {
+        const start = new Date();
+        const end = new Date();
+        end.setDate(end.getDate() + days - 1);
+        setCustomStartDate(`${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`);
+        setCustomEndDate(`${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`);
+    };
     
-    // Modal simple et propre
+    // Modal
     return React.createElement('div', { 
         className: 'fixed inset-0 z-[200] overflow-y-auto',
         style: { background: 'rgba(0, 0, 0, 0.5)' },
@@ -1310,7 +1365,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                 React.createElement('div', { className: 'px-6 py-4 border-b border-gray-200 flex justify-between items-center' },
                     React.createElement('div', {},
                         React.createElement('h2', { className: 'text-lg font-semibold text-gray-900' }, 'Exporter le planning'),
-                        React.createElement('p', { className: 'text-sm text-gray-500' }, 'Choisissez le format et la période')
+                        React.createElement('p', { className: 'text-sm text-gray-500' }, 'Choisissez la période à exporter')
                     ),
                     React.createElement('button', {
                         onClick: onClose,
@@ -1319,47 +1374,107 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                 ),
                 
                 // Content 
-                React.createElement('div', { className: 'p-6 space-y-5' },
-                    // Format selector
+                React.createElement('div', { className: 'p-6 space-y-4' },
+                    // Format selector - Grid 5 colonnes compacte
                     React.createElement('div', {},
-                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-3' }, 'Type d\'export'),
-                        React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
+                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Type de période'),
+                        React.createElement('div', { className: 'flex flex-wrap gap-2' },
                             formatOptions.map(opt => {
                                 const isSelected = selectedFormat === opt.id;
                                 return React.createElement('button', {
                                     key: opt.id,
                                     onClick: () => setSelectedFormat(opt.id),
-                                    className: `p-4 rounded-lg border-2 text-center transition-all ${
+                                    className: `flex-1 min-w-[70px] p-2 rounded-lg border-2 text-center transition-all ${
                                         isSelected 
                                             ? 'border-blue-600 bg-blue-50 text-blue-700' 
-                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                                     }`
                                 },
-                                    React.createElement('i', { className: `fas ${opt.icon} text-xl mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}` }),
-                                    React.createElement('div', { className: 'text-sm font-medium' }, opt.label),
-                                    React.createElement('div', { className: `text-xs mt-1 ${isSelected ? 'text-blue-500' : 'text-gray-400'}` }, opt.desc)
+                                    React.createElement('i', { className: `fas ${opt.icon} text-lg mb-1 ${isSelected ? 'text-blue-600' : 'text-gray-400'}` }),
+                                    React.createElement('div', { className: 'text-xs font-medium' }, opt.label)
                                 );
                             })
                         )
                     ),
                     
-                    // Date picker
-                    React.createElement('div', {},
+                    // Sélecteur de date selon le format
+                    selectedFormat !== 'custom' ? React.createElement('div', {},
                         React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 
-                            selectedFormat === 'week' ? 'Semaine' : 'Mois'
+                            selectedFormat === 'week' ? 'Semaine du' : 
+                            selectedFormat === 'quarter' ? 'Trimestre' :
+                            selectedFormat === 'year' ? 'Année' : 'Mois'
                         ),
                         React.createElement('input', {
-                            type: selectedFormat === 'week' ? 'date' : 'month',
-                            value: selectedFormat === 'week' ? printDate : printDate.substring(0, 7),
+                            type: selectedFormat === 'year' ? 'number' : 
+                                  selectedFormat === 'week' ? 'date' : 'month',
+                            value: selectedFormat === 'year' ? new Date(printDate).getFullYear() :
+                                   selectedFormat === 'week' ? printDate : printDate.substring(0, 7),
+                            min: selectedFormat === 'year' ? 2020 : undefined,
+                            max: selectedFormat === 'year' ? 2030 : undefined,
                             onChange: (e) => {
-                                setPrintDate(selectedFormat === 'week' ? e.target.value : e.target.value + '-01');
+                                if (selectedFormat === 'year') {
+                                    setPrintDate(`${e.target.value}-01-01`);
+                                } else if (selectedFormat === 'week') {
+                                    setPrintDate(e.target.value);
+                                } else {
+                                    setPrintDate(e.target.value + '-01');
+                                }
                             },
                             className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-gray-900'
-                        }),
-                        React.createElement('p', { className: 'mt-2 text-sm text-gray-500' }, 
-                            'Période : ', 
-                            React.createElement('span', { className: 'font-medium text-gray-900' }, getDateLabel())
+                        })
+                    ) : 
+                    // Période personnalisée
+                    React.createElement('div', { className: 'space-y-3' },
+                        // Raccourcis rapides
+                        React.createElement('div', {},
+                            React.createElement('label', { className: 'block text-xs font-medium text-gray-500 mb-1.5' }, 'Raccourcis'),
+                            React.createElement('div', { className: 'flex flex-wrap gap-1.5' },
+                                quickRanges.map(range => 
+                                    React.createElement('button', {
+                                        key: range.days,
+                                        type: 'button',
+                                        onClick: () => applyQuickRange(range.days),
+                                        className: 'px-2.5 py-1 text-xs font-medium rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition'
+                                    }, range.label)
+                                )
+                            )
+                        ),
+                        // Date début
+                        React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
+                            React.createElement('div', {},
+                                React.createElement('label', { className: 'block text-xs font-medium text-gray-500 mb-1' }, 'Date début'),
+                                React.createElement('input', {
+                                    type: 'date',
+                                    value: customStartDate,
+                                    onChange: (e) => setCustomStartDate(e.target.value),
+                                    className: 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-gray-900 text-sm'
+                                })
+                            ),
+                            React.createElement('div', {},
+                                React.createElement('label', { className: 'block text-xs font-medium text-gray-500 mb-1' }, 'Date fin'),
+                                React.createElement('input', {
+                                    type: 'date',
+                                    value: customEndDate,
+                                    min: customStartDate,
+                                    onChange: (e) => setCustomEndDate(e.target.value),
+                                    className: 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-gray-900 text-sm'
+                                })
+                            )
                         )
+                    ),
+
+                    // Résumé de la période
+                    React.createElement('div', { className: 'p-3 bg-gray-50 rounded-lg border border-gray-200' },
+                        React.createElement('div', { className: 'flex items-center justify-between' },
+                            React.createElement('div', { className: 'flex items-center gap-2' },
+                                React.createElement('i', { className: 'fas fa-calendar-check text-blue-500' }),
+                                React.createElement('span', { className: 'text-sm text-gray-600' }, 'Période sélectionnée')
+                            ),
+                            selectedFormat === 'custom' && React.createElement('span', { className: 'text-xs text-gray-500' }, 
+                                getCustomDays() + ' jours'
+                            )
+                        ),
+                        React.createElement('p', { className: 'mt-1 text-sm font-semibold text-gray-900' }, getDateLabel())
                     )
                 ),
                 
@@ -1371,10 +1486,13 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                     }, 'Annuler'),
                     React.createElement('button', {
                         onClick: handlePrint,
-                        className: 'px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2'
+                        disabled: selectedFormat === 'custom' && getCustomDays() <= 0,
+                        className: `px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 ${
+                            selectedFormat === 'custom' && getCustomDays() <= 0 ? 'opacity-50 cursor-not-allowed' : ''
+                        }`
                     }, 
                         React.createElement('i', { className: 'fas fa-print' }),
-                        'Imprimer'
+                        'Exporter'
                     )
                 )
             )
