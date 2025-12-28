@@ -1378,19 +1378,33 @@ export const ToolFunctions = {
         .all();
 
         // 4. Technician performance (with names)
-        // Build SQL-safe list of closed statuses for the CASE statement
-        const closedStatusesSql = closedStatuses.map(s => `'${s}'`).join(',');
+        // Count resolved tickets separately to avoid SQL injection with dynamic status list
         const techPerformance = await db.select({
             tech_id: tickets.assigned_to,
             tech_name: users.full_name,
-            total_assigned: sql<number>`count(*)`,
-            resolved: sql.raw<number>(`sum(case when status in (${closedStatusesSql}) then 1 else 0 end)`)
+            total_assigned: sql<number>`count(*)`
         })
         .from(tickets)
         .leftJoin(users, eq(tickets.assigned_to, users.id))
         .where(and(dateFilter, sql`${tickets.assigned_to} IS NOT NULL`))
         .groupBy(tickets.assigned_to, users.full_name)
         .all();
+        
+        // Count resolved tickets per technician
+        const techResolved = await db.select({
+            tech_id: tickets.assigned_to,
+            resolved: sql<number>`count(*)`
+        })
+        .from(tickets)
+        .where(and(dateFilter, sql`${tickets.assigned_to} IS NOT NULL`, inArray(tickets.status, closedStatuses)))
+        .groupBy(tickets.assigned_to)
+        .all();
+        
+        // Merge resolved counts into performance
+        const resolvedMap = new Map(techResolved.map((t: any) => [t.tech_id, t.resolved]));
+        techPerformance.forEach((t: any) => {
+            t.resolved = resolvedMap.get(t.tech_id) || 0;
+        });
 
         // 5. Machine breakdown (top 10 with most tickets)
         const machineBreakdown = await db.select({
