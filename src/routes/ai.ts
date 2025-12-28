@@ -2438,10 +2438,16 @@ Tu as accès à des outils pour interroger la base de données en temps réel:
 - **check_database_stats**: Statistiques globales (tickets par priorité/statut, top pannes)
 - **get_overdue_tickets**: Tickets en retard
 
-⚠️ **UTILISE CES OUTILS** pour obtenir des données réelles. Ne jamais inventer de chiffres ou de noms.
-Pour un rapport de performance → utilise check_database_stats et get_technician_info
-Pour un état des machines → utilise search_machines et get_machine_details
-Pour un bilan des incidents → utilise search_tickets avec filtre priorité
+⚠️ **UTILISE CES OUTILS SYSTÉMATIQUEMENT** pour obtenir des données réelles. Ne jamais inventer de chiffres ou de noms.
+
+STRATÉGIE D'EXTRACTION DE DONNÉES (OBLIGATOIRE):
+1. **Rapport de performance techniciens** → APPELLE check_database_stats(period:'this_month') + generate_team_report() + get_technician_info pour chaque technicien mentionné
+2. **État des machines** → APPELLE search_machines() puis get_machine_details(id) pour les machines pertinentes
+3. **Bilan des incidents** → APPELLE search_tickets(status:'completed') + get_overdue_tickets() + get_unassigned_tickets(filter:'completed')
+4. **Disponibilité équipe** → APPELLE check_technician_availability(name) pour chaque technicien
+5. **Tickets non résolus** → APPELLE get_unassigned_tickets(filter:'open') + get_overdue_tickets()
+
+🔴 RÈGLE CRITIQUE: Avant de rédiger, tu DOIS faire AU MOINS 2-3 appels d'outils pour collecter les données. Un document sans appel d'outil = document inventé = INTERDIT.
 
 # INTERDICTIONS
 - ❌ Ne jamais inventer de données opérationnelles (UTILISE LES OUTILS)
@@ -2512,14 +2518,20 @@ INTERDIT:
         }
         
         // Outils disponibles pour le Secrétaire (sous-ensemble pertinent pour les rapports)
+        // Secrétaire a accès à TOUS les outils de données comme l'Expert
         const SECRETARY_TOOLS = TOOLS.filter(t => [
             'search_tickets',
             'get_ticket_details', 
             'search_machines',
             'get_machine_details',
             'get_technician_info',
+            'check_machine_status',
+            'check_technician_availability',
             'check_database_stats',
-            'get_overdue_tickets'
+            'get_user_details',
+            'get_overdue_tickets',
+            'get_unassigned_tickets',
+            'generate_team_report'
         ].includes(t.function.name));
         
         // Messages pour la boucle agentic
