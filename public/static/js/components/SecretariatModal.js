@@ -108,48 +108,132 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
     };
 
-    // Convertir markdown en HTML basique
-    const markdownToHtml = (text) => {
-        if (!text) return '';
-        return text
-            .replace(/^### (.*)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
-            .replace(/^## (.*)$/gm, '<h2 class="text-xl font-bold mt-5 mb-3">$1</h2>')
-            .replace(/^# (.*)$/gm, '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/^\s*[-•]\s+(.*)$/gm, '<li class="ml-4">$1</li>')
-            .replace(/^\s*\d+\.\s+(.*)$/gm, '<li class="ml-4 list-decimal">$1</li>')
-            .replace(/\n\n/g, '</p><p class="mb-3">')
-            .replace(/\n/g, '<br/>');
+    // Convertir Markdown en HTML pour impression
+    const markdownToHtml = (md) => {
+        if (!md) return '';
+        return md
+            // Tables Markdown
+            .replace(/\|(.+)\|\n\|[-:\s|]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
+                const headers = header.split('|').filter(h => h.trim()).map(h => `<th>${h.trim()}</th>`).join('');
+                const bodyRows = rows.trim().split('\n').map(row => {
+                    const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                return `<table><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+            })
+            // Headers
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            // Bold et Italic
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+            // Listes à puces
+            .replace(/^\* (.+)$/gm, '<li>$1</li>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+            // Listes numérotées
+            .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+            // Paragraphes (lignes vides)
+            .replace(/\n\n/g, '</p><p>')
+            // Retours à la ligne simples
+            .replace(/\n/g, '<br>')
+            // Wrapper
+            .replace(/^/, '<p>').replace(/$/, '</p>')
+            // Nettoyage
+            .replace(/<p><\/p>/g, '')
+            .replace(/<p>(<h[123]>)/g, '$1')
+            .replace(/(<\/h[123]>)<\/p>/g, '$1')
+            .replace(/<p>(<ul>)/g, '$1')
+            .replace(/(<\/ul>)<\/p>/g, '$1')
+            .replace(/<p>(<table>)/g, '$1')
+            .replace(/(<\/table>)<\/p>/g, '$1');
     };
 
-    // Imprimer le document
-    const printDocument = () => {
+    // Imprimer le document - Design Professionnel Corporate
+    const printDocument = async () => {
         if (!generatedDoc) return;
+
+        // Charger les infos de la compagnie depuis l'API
+        let companyShortName = 'IGP';
+        let companySubtitle = '';
+        let logoUrl = '/api/settings/logo';
+        try {
+            const settingsRes = await axios.get('/api/settings/config/public');
+            if (settingsRes.data) {
+                companyShortName = settingsRes.data.company_short_name || 'IGP';
+                companySubtitle = settingsRes.data.company_subtitle || '';
+                if (settingsRes.data.company_logo_url) logoUrl = settingsRes.data.company_logo_url;
+            }
+        } catch (e) { console.log('Settings not loaded for print'); }
+
+        const todayFormatted = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const reportHtml = markdownToHtml(generatedDoc.document);
+        const docTitle = generatedDoc.title || 'Document';
 
         const printHtml = `<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>${generatedDoc.title || 'Document'}</title>
-    <style>
-        @page { margin: 20mm 15mm; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1f2937; }
-        h1 { font-size: 18pt; border-bottom: 2px solid #4f46e5; padding-bottom: 8pt; margin-bottom: 15pt; }
-        h2 { font-size: 14pt; color: #374151; margin-top: 20pt; }
-        h3 { font-size: 12pt; color: #4b5563; margin-top: 15pt; }
-        p { margin: 8pt 0; }
-        ul, ol { margin: 8pt 0; padding-left: 20pt; }
-        li { margin: 4pt 0; }
-        strong { color: #1f2937; }
-        .header { text-align: right; font-size: 9pt; color: #6b7280; margin-bottom: 20pt; }
-        .footer { margin-top: 30pt; padding-top: 10pt; border-top: 1px solid #e5e7eb; font-size: 9pt; color: #9ca3af; text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<title>${docTitle}</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11pt; line-height: 1.7; color: #333;
+    padding: 20mm 18mm 25mm 18mm;
+}
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25pt; padding-bottom: 15pt; border-bottom: 1pt solid #e0e0e0; }
+.header-left { display: flex; align-items: center; }
+.logo { height: 45pt; margin-right: 15pt; }
+.brand { border-left: 2pt solid #4f46e5; padding-left: 15pt; }
+.brand-name { font-size: 16pt; font-weight: 600; color: #1a1a1a; }
+.brand-sub { font-size: 9pt; color: #555; margin-top: 4pt; max-width: 250pt; }
+.header-right { text-align: right; font-size: 10pt; color: #555; }
+.title-block { text-align: center; padding: 20pt 0; margin-bottom: 20pt; border-bottom: 2pt solid #4f46e5; }
+.title-block h1 { font-size: 18pt; font-weight: 700; color: #1a1a1a; }
+.content { font-size: 11pt; line-height: 1.6; }
+.content h1 { font-size: 14pt; font-weight: 700; color: #1a1a1a; margin: 18pt 0 10pt; padding-bottom: 5pt; border-bottom: 1.5pt solid #1a1a1a; }
+.content h2 { font-size: 12pt; font-weight: 600; color: #333; margin: 15pt 0 8pt; padding-left: 8pt; border-left: 2pt solid #4f46e5; }
+.content h3 { font-size: 11pt; font-weight: 600; color: #444; margin: 12pt 0 6pt; }
+.content p { margin-bottom: 10pt; text-align: justify; }
+.content ul, .content ol { margin: 10pt 0 10pt 20pt; }
+.content li { margin-bottom: 5pt; }
+.content strong { color: #1a1a1a; }
+.content table { width: 100%; border-collapse: collapse; margin: 15pt 0; font-size: 10pt; }
+.content th { background: #f0f2f5; border: 1pt solid #ddd; padding: 8pt; text-align: left; font-weight: 600; }
+.content td { border: 1pt solid #ddd; padding: 8pt; }
+.content tr:nth-child(even) { background: #fafafa; }
+.footer { margin-top: 40pt; padding-top: 15pt; border-top: 1pt solid #ddd; font-size: 9pt; color: #666; text-align: center; }
+@media print { 
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 20mm 18mm 25mm 18mm !important; }
+    .header, .title-block { page-break-inside: avoid; }
+}
+</style>
 </head>
 <body>
-    <div class="header">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-    <div class="content">${markdownToHtml(generatedDoc.document)}</div>
-    <div class="footer">Document généré par le Secrétariat</div>
+<div class="header">
+    <div class="header-left">
+        <img src="${logoUrl}" class="logo" onerror="this.style.display='none'">
+        <div class="brand">
+            <div class="brand-name">${companyShortName}</div>
+            <div class="brand-sub">${companySubtitle}</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div>${todayFormatted}</div>
+    </div>
+</div>
+<div class="title-block">
+    <h1>${docTitle}</h1>
+</div>
+<div class="content">
+    ${reportHtml}
+</div>
+<div class="footer">
+    Document généré par ${companyShortName} - Secrétariat de Direction
+</div>
 </body>
 </html>`;
 
