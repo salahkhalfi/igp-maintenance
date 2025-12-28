@@ -104,7 +104,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/UserManagementModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/DataImportModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/VoiceTicketFab.min.js?v=d352264"></script>
-    <script src="/static/js/dist/TVDashboardModal.min.js?v=ca374e1"></script>
+    <script src="/static/js/dist/TVDashboardModal.min.js?v=f444989"></script>
     <script src="/static/js/dist/MainApp.min.js?v=f0389ce"></script>
     <script src="/static/js/dist/App.min.js?v=d352264"></script>
     <!-- DISABLED: main.js conflicts with CDN React - uses bundled React which breaks Legacy MainApp hooks -->

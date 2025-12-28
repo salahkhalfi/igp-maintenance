@@ -1,6 +1,11 @@
 // TVDashboardModal - Modal pour configurer l'affichage TV
-// v1.0.0 - Lien sécurisé + régénération de clé
-console.log('TVDashboardModal loaded v1.0.0');
+// v1.1.0 - Protection contre double-chargement + Lien sécurisé + régénération de clé
+
+// Protection contre double-déclaration
+if (typeof window.TVDashboardModal !== 'undefined') {
+    console.log('TVDashboardModal already loaded, skipping');
+} else {
+    console.log('TVDashboardModal loaded v1.1.0');
 
 const TVDashboardModal = ({ isOpen, onClose }) => {
     const [loading, setLoading] = React.useState(true);
@@ -196,3 +201,4 @@ const TVDashboardModal = ({ isOpen, onClose }) => {
 };
 
 window.TVDashboardModal = TVDashboardModal;
+} // Fin protection double-chargement
