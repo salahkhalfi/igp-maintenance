@@ -93,7 +93,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/AppHeader.min.js?v=19f54c1"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=d352264.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=1f84a8b"></script>
-    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=473625a"></script>
+    <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=f550ee3"></script>
     <script src="/static/js/dist/KanbanBoard.min.js?v=d352264"></script>
     <script src="/static/js/dist/AdminRoles.min.js?v=d352264"></script>
     <script src="/static/js/dist/ManageColumnsModal.min.js?v=d352264"></script>

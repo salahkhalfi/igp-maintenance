@@ -1261,6 +1261,7 @@ const ProductionPlanning = ({ onClose }) => {
 };
 
 // ========== MODAL D'EXPORT / IMPRESSION ==========
+// v2.0 - Nettoyé: uniquement export planning (mois/semaine)
 const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
     const [selectedFormat, setSelectedFormat] = React.useState('month');
     const [printDate, setPrintDate] = React.useState(() => {
@@ -1287,38 +1288,33 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
         onClose();
     };
     
-    
     const formatOptions = [
-        { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt', color: 'blue' },
-        { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week', color: 'emerald' }
+        { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt' },
+        { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week' }
     ];
     
-    const colorStyles = {
-        blue: { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-600', ring: 'ring-blue-200' },
-        emerald: { bg: 'bg-emerald-50', border: 'border-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-200' }
-    };
-    
-    // Modal avec scroll et design professionnel
+    // Modal simple et propre
     return React.createElement('div', { 
         className: 'fixed inset-0 z-[200] overflow-y-auto',
-        style: { background: 'rgba(0, 0, 0, 0.5)' }
+        style: { background: 'rgba(0, 0, 0, 0.5)' },
+        onClick: onClose
     },
         React.createElement('div', { 
-            className: 'min-h-screen px-4 py-8 flex items-start justify-center'
+            className: 'min-h-screen px-4 py-8 flex items-center justify-center'
         },
             React.createElement('div', { 
-                className: 'w-full max-w-lg bg-white rounded-xl shadow-xl relative',
+                className: 'w-full max-w-md bg-white rounded-xl shadow-xl relative',
                 onClick: (e) => e.stopPropagation()
             },
-                // Header - clean et pro
-                React.createElement('div', { className: 'px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl' },
+                // Header
+                React.createElement('div', { className: 'px-6 py-4 border-b border-gray-200 flex justify-between items-center' },
                     React.createElement('div', {},
                         React.createElement('h2', { className: 'text-lg font-semibold text-gray-900' }, 'Exporter le planning'),
                         React.createElement('p', { className: 'text-sm text-gray-500' }, 'Choisissez le format et la période')
                     ),
                     React.createElement('button', {
                         onClick: onClose,
-                        className: 'w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition'
+                        className: 'w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition'
                     }, React.createElement('i', { className: 'fas fa-times' }))
                 ),
                 
@@ -1326,7 +1322,7 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                 React.createElement('div', { className: 'p-6 space-y-5' },
                     // Format selector
                     React.createElement('div', {},
-                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-3' }, 'Type de document'),
+                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-3' }, 'Type d\'export'),
                         React.createElement('div', { className: 'grid grid-cols-2 gap-3' },
                             formatOptions.map(opt => {
                                 const isSelected = selectedFormat === opt.id;
@@ -1335,13 +1331,13 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                                     onClick: () => setSelectedFormat(opt.id),
                                     className: `p-4 rounded-lg border-2 text-center transition-all ${
                                         isSelected 
-                                            ? 'border-gray-900 bg-gray-900 text-white' 
+                                            ? 'border-blue-600 bg-blue-50 text-blue-700' 
                                             : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                                     }`
                                 },
-                                    React.createElement('i', { className: `fas ${opt.icon} text-xl mb-2 ${isSelected ? 'text-white' : 'text-gray-400'}` }),
+                                    React.createElement('i', { className: `fas ${opt.icon} text-xl mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}` }),
                                     React.createElement('div', { className: 'text-sm font-medium' }, opt.label),
-                                    React.createElement('div', { className: `text-xs mt-1 ${isSelected ? 'text-gray-300' : 'text-gray-400'}` }, opt.desc)
+                                    React.createElement('div', { className: `text-xs mt-1 ${isSelected ? 'text-blue-500' : 'text-gray-400'}` }, opt.desc)
                                 );
                             })
                         )
@@ -1358,191 +1354,28 @@ const PrintExportModal = ({ currentDate, onClose, onPrint }) => {
                             onChange: (e) => {
                                 setPrintDate(selectedFormat === 'week' ? e.target.value : e.target.value + '-01');
                             },
-                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-gray-900'
+                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-gray-900'
                         }),
                         React.createElement('p', { className: 'mt-2 text-sm text-gray-500' }, 
-                            'Période sélectionnée : ', 
+                            'Période : ', 
                             React.createElement('span', { className: 'font-medium text-gray-900' }, getDateLabel())
-                        )
-                    ),
-                    
-                    // Section Rapports Automatisés
-                    selectedFormat === 'ai-report' && React.createElement('div', { className: 'bg-gray-50 rounded-lg p-4 border border-gray-200' },
-                        React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
-                            React.createElement('i', { className: 'fas fa-file-invoice text-gray-600' }),
-                            React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Type de document')
-                        ),
-                        // Suggestions
-                        React.createElement('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
-                            quickSuggestions.map((s, i) => React.createElement('button', {
-                                key: i,
-                                type: 'button',
-                                onClick: () => setCustomInstructions(s.value),
-                                className: `flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all ${
-                                    customInstructions === s.value 
-                                        ? 'bg-gray-900 text-white' 
-                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-400'
-                                }`
-                            }, 
-                                React.createElement('span', {}, s.icon),
-                                React.createElement('span', { className: 'truncate' }, s.label)
-                            ))
-                        ),
-                        // Textarea
-                        React.createElement('textarea', {
-                            value: customInstructions,
-                            onChange: (e) => setCustomInstructions(e.target.value),
-                            placeholder: 'Ou décrivez précisément ce dont vous avez besoin...',
-                            rows: 3,
-                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-gray-900 text-sm resize-none'
-                        })
-                    ),
-                    
-                    // Section Secrétaire de Direction
-                    selectedFormat === 'secretary' && React.createElement('div', { className: 'bg-indigo-50 rounded-lg p-4 border border-indigo-200' },
-                        React.createElement('div', { className: 'flex items-center justify-between mb-4' },
-                            React.createElement('div', { className: 'flex items-center gap-2' },
-                                React.createElement('i', { className: 'fas fa-user-tie text-indigo-600' }),
-                                React.createElement('span', { className: 'text-sm font-medium text-gray-900' }, 'Secrétaire de Direction IA'),
-                                React.createElement('span', { className: 'text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full' }, 'Lois QC/CA')
-                            ),
-                            React.createElement('button', {
-                                onClick: () => setShowSecretaryHelp(!showSecretaryHelp),
-                                className: `p-1.5 rounded-full transition-colors ${showSecretaryHelp ? 'bg-indigo-200 text-indigo-800' : 'hover:bg-indigo-100 text-indigo-600'}`,
-                                title: 'Trucs & Astuces'
-                            },
-                                React.createElement('i', { className: 'fas fa-question-circle' })
-                            )
-                        ),
-                        // Panneau d'aide
-                        showSecretaryHelp && React.createElement('div', { 
-                            className: 'mb-4 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200'
-                        },
-                            React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
-                                React.createElement('i', { className: 'fas fa-lightbulb text-amber-600' }),
-                                React.createElement('span', { className: 'text-sm font-semibold text-amber-800' }, 'Trucs & Astuces pour de meilleurs résultats')
-                            ),
-                            React.createElement('ul', { className: 'space-y-1' },
-                                secretaryHelpTips.map((tip, i) => 
-                                    React.createElement('li', { key: i, className: 'text-xs text-amber-700 flex items-start gap-1.5' },
-                                        React.createElement('span', { className: 'mt-0.5' }, '•'),
-                                        React.createElement('span', {}, tip)
-                                    )
-                                )
-                            )
-                        ),
-                        // Catégories de documents
-                        React.createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
-                            secretaryCategories.map(cat => React.createElement('button', {
-                                key: cat.id,
-                                type: 'button',
-                                onClick: () => { setSelectedSecretaryCategory(cat.id); setSecretaryInstructions(''); },
-                                className: `flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all ${
-                                    selectedSecretaryCategory === cat.id 
-                                        ? 'bg-indigo-600 text-white' 
-                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-indigo-300'
-                                }`
-                            }, 
-                                React.createElement('span', {}, cat.icon),
-                                React.createElement('span', {}, cat.label)
-                            ))
-                        ),
-                        // Types de documents de la catégorie sélectionnée
-                        React.createElement('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
-                            (secretaryCategories.find(c => c.id === selectedSecretaryCategory)?.documents || []).map((doc, i) => 
-                                React.createElement('button', {
-                                    key: i,
-                                    type: 'button',
-                                    onClick: () => setSecretaryInstructions(doc.value),
-                                    className: `flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all text-left ${
-                                        secretaryInstructions === doc.value 
-                                            ? 'bg-indigo-600 text-white' 
-                                            : 'bg-white text-gray-700 border border-gray-200 hover:border-indigo-400'
-                                    }`
-                                }, 
-                                    React.createElement('span', { className: 'text-base' }, doc.icon),
-                                    React.createElement('span', { className: 'truncate' }, doc.label)
-                                )
-                            )
-                        ),
-                        // Textarea pour instructions personnalisées
-                        React.createElement('textarea', {
-                            value: secretaryInstructions,
-                            onChange: (e) => setSecretaryInstructions(e.target.value),
-                            placeholder: 'Décrivez le document souhaité avec tous les détails pertinents (destinataire, objet, contexte, montants, dates, etc.)...',
-                            rows: 4,
-                            className: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-gray-900 text-sm resize-none'
-                        }),
-                        // Info sur les connaissances légales
-                        React.createElement('div', { className: 'mt-3 p-3 bg-white rounded-lg border border-indigo-100' },
-                            React.createElement('div', { className: 'text-xs text-gray-600' },
-                                React.createElement('span', { className: 'font-medium text-indigo-700' }, '💡 Connaissances intégrées: '),
-                                'Lois canadiennes et québécoises applicables à l\'industrie manufacturière, programmes de subventions (PARI-CNRC, IQ, RS&DE, Emploi-Québec), normes de rédaction administrative.'
-                            )
-                        )
-                    ),
-                    
-                    // Document Secrétaire généré
-                    secretaryReport && selectedFormat === 'secretary' && React.createElement('div', { className: 'bg-green-50 rounded-lg p-4 border border-green-200' },
-                        React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                            React.createElement('div', { className: 'flex items-center gap-2' },
-                                React.createElement('i', { className: 'fas fa-check-circle text-green-600' }),
-                                React.createElement('span', { className: 'text-sm font-medium text-green-800' }, secretaryReport.title || 'Document généré')
-                            ),
-                            React.createElement('button', {
-                                onClick: printSecretaryDocument,
-                                className: 'px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition'
-                            }, 'Imprimer')
-                        ),
-                        React.createElement('div', { className: 'bg-white rounded-lg p-3 max-h-48 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap border border-green-100' },
-                            secretaryReport.document
-                        )
-                    ),
-                    
-                    // Rapport généré
-                    aiReport && selectedFormat === 'ai-report' && React.createElement('div', { className: 'bg-green-50 rounded-lg p-4 border border-green-200' },
-                        React.createElement('div', { className: 'flex items-center justify-between mb-3' },
-                            React.createElement('div', { className: 'flex items-center gap-2' },
-                                React.createElement('i', { className: 'fas fa-check-circle text-green-600' }),
-                                React.createElement('span', { className: 'text-sm font-medium text-green-800' }, 'Document généré')
-                            ),
-                            React.createElement('button', {
-                                onClick: printAIReport,
-                                className: 'px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition'
-                            }, 'Imprimer')
-                        ),
-                        React.createElement('div', { className: 'bg-white rounded-lg p-3 max-h-40 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap border border-green-100' },
-                            aiReport.report
                         )
                     )
                 ),
                 
                 // Footer
-                React.createElement('div', { className: 'px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 rounded-b-xl' },
+                React.createElement('div', { className: 'px-6 py-4 border-t border-gray-200 flex justify-end gap-3' },
                     React.createElement('button', {
                         onClick: onClose,
                         className: 'px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition'
                     }, 'Annuler'),
-                    (selectedFormat === 'ai-report' || selectedFormat === 'secretary') 
-                        ? React.createElement('button', {
-                            onClick: handlePrint,
-                            disabled: isGeneratingAI || isGeneratingSecretary,
-                            className: `px-5 py-2.5 text-sm font-medium text-white rounded-lg transition flex items-center gap-2 ${
-                                selectedFormat === 'secretary' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-900 hover:bg-gray-800'
-                            } ${(isGeneratingAI || isGeneratingSecretary) ? 'opacity-50 cursor-not-allowed' : ''}`
-                        }, 
-                            (isGeneratingAI || isGeneratingSecretary)
-                                ? React.createElement('i', { className: 'fas fa-spinner fa-spin' })
-                                : React.createElement('i', { className: selectedFormat === 'secretary' ? 'fas fa-magic' : 'fas fa-file-alt' }),
-                            (isGeneratingAI || isGeneratingSecretary) ? 'Génération IA...' : (selectedFormat === 'secretary' ? 'Rédiger le document' : 'Générer le rapport')
-                        )
-                        : React.createElement('button', {
-                            onClick: handlePrint,
-                            className: 'px-5 py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition flex items-center gap-2'
-                        }, 
-                            React.createElement('i', { className: 'fas fa-download' }),
-                            'Exporter'
-                        )
+                    React.createElement('button', {
+                        onClick: handlePrint,
+                        className: 'px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2'
+                    }, 
+                        React.createElement('i', { className: 'fas fa-print' }),
+                        'Imprimer'
+                    )
                 )
             )
         )
