@@ -2679,21 +2679,8 @@ Commence directement par le contenu du document (pas de "Voici...").`;
             return c.json({ error: 'Clé API OpenAI manquante' }, 500);
         }
         
-        // TOUJOURS utiliser les outils - comme l'Expert Industriel
-        const SECRETARY_TOOLS = TOOLS.filter(t => [
-            'search_tickets',
-            'get_ticket_details', 
-            'search_machines',
-            'get_machine_details',
-            'get_technician_info',
-            'check_machine_status',
-            'check_technician_availability',
-            'check_database_stats',
-            'get_user_details',
-            'get_overdue_tickets',
-            'get_unassigned_tickets',
-            'generate_team_report'
-        ].includes(t.function.name));
+        // TOUS les outils - accès complet à la base de données
+        const SECRETARY_TOOLS = TOOLS;
         
         const messages: any[] = [
             { role: "system", content: systemPrompt },

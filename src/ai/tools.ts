@@ -277,6 +277,20 @@ export const TOOLS: ToolDefinition[] = [
                 required: []
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "list_users",
+            description: "Lister tous les utilisateurs/employés. Sans paramètre = tous. Peut filtrer par rôle.",
+            parameters: {
+                type: "object",
+                properties: {
+                    role: { type: "string", enum: ["all", "admin", "supervisor", "technician", "senior_technician", "operator", "viewer"], description: "Filtrer par rôle (défaut: all)" }
+                },
+                required: []
+            }
+        }
     }
 ];
 
@@ -1734,6 +1748,67 @@ export const ToolFunctions = {
             personal_notes: targetUserId === callerUserId ? notes : [],
             access_log: accessMessage,
             message: `Voici les données de planning récupérées selon vos droits d'accès.\n${accessMessage}`
+        });
+    },
+
+    async list_users(db: any, args: { role?: string }) {
+        const roleFilter = args.role || 'all';
+        
+        let query = db.select({
+            id: users.id,
+            full_name: users.full_name,
+            email: users.email,
+            role: users.role,
+            created_at: users.created_at,
+            last_login: users.last_login
+        }).from(users).where(isNull(users.deleted_at));
+        
+        if (roleFilter !== 'all') {
+            if (roleFilter === 'technician') {
+                query = db.select({
+                    id: users.id,
+                    full_name: users.full_name,
+                    email: users.email,
+                    role: users.role,
+                    created_at: users.created_at,
+                    last_login: users.last_login
+                }).from(users).where(and(
+                    isNull(users.deleted_at),
+                    inArray(users.role, ['technician', 'senior_technician', 'team_leader'])
+                ));
+            } else {
+                query = db.select({
+                    id: users.id,
+                    full_name: users.full_name,
+                    email: users.email,
+                    role: users.role,
+                    created_at: users.created_at,
+                    last_login: users.last_login
+                }).from(users).where(and(
+                    isNull(users.deleted_at),
+                    eq(users.role, roleFilter)
+                ));
+            }
+        }
+        
+        const usersList = await query.all();
+        
+        // Résumé par rôle
+        const byRole: Record<string, number> = {};
+        usersList.forEach((u: any) => {
+            byRole[u.role] = (byRole[u.role] || 0) + 1;
+        });
+        
+        return JSON.stringify({
+            total: usersList.length,
+            by_role: byRole,
+            users: usersList.map((u: any) => ({
+                id: u.id,
+                name: u.full_name,
+                email: u.email,
+                role: u.role,
+                last_login: u.last_login
+            }))
         });
     }
 };
