@@ -2076,7 +2076,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     machine_id: tickets.machine_id,
                     assigned_to_id: tickets.assigned_to_id,
                     created_at: tickets.created_at,
-                    resolved_at: tickets.resolved_at,
+                    completed_at: tickets.completed_at,
                     downtime_hours: tickets.downtime_hours
                 }).from(tickets)
                   .where(and(
@@ -2092,7 +2092,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     priority: tickets.priority,
                     assigned_to_id: tickets.assigned_to_id,
                     created_at: tickets.created_at,
-                    resolved_at: tickets.resolved_at,
+                    completed_at: tickets.completed_at,
                     downtime_hours: tickets.downtime_hours
                 }).from(tickets)
                   .where(isNull(tickets.deleted_at))
@@ -2109,11 +2109,12 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                     statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
                     priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1;
                     if (t.downtime_hours) totalDowntime += parseFloat(t.downtime_hours) || 0;
-                    if (t.status === 'resolved' && t.resolved_at && t.created_at) {
+                    // Compter les tickets fermés (completed, resolved, closed)
+                    if (['completed', 'resolved', 'closed'].includes(t.status) && t.completed_at && t.created_at) {
                         resolvedCount++;
                         const created = new Date(t.created_at).getTime();
-                        const resolved = new Date(t.resolved_at).getTime();
-                        totalResolutionTime += (resolved - created) / (1000 * 60 * 60); // en heures
+                        const completed = new Date(t.completed_at).getTime();
+                        totalResolutionTime += (completed - created) / (1000 * 60 * 60); // en heures
                     }
                 });
                 
@@ -2128,12 +2129,13 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                 
                 techUsers.forEach((tech: any) => {
                     const techTickets = ticketsData.filter((t: any) => t.assigned_to_id === tech.id);
-                    const resolvedTickets = techTickets.filter((t: any) => t.status === 'resolved');
+                    // Filtrer les tickets fermés (completed, resolved, closed)
+                    const resolvedTickets = techTickets.filter((t: any) => ['completed', 'resolved', 'closed'].includes(t.status));
                     let avgResTime = 0;
                     if (resolvedTickets.length > 0) {
                         const totalTime = resolvedTickets.reduce((sum: number, t: any) => {
-                            if (t.resolved_at && t.created_at) {
-                                return sum + (new Date(t.resolved_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60);
+                            if (t.completed_at && t.created_at) {
+                                return sum + (new Date(t.completed_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60);
                             }
                             return sum;
                         }, 0);
