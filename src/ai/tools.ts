@@ -1161,21 +1161,157 @@ export const ToolFunctions = {
     },
 
     async check_database_stats(db: any, args: { period: string }) {
-        // Simple analytic tool
-        const totalTickets = await db.select({ count: sql<number>`count(*)` }).from(tickets).get();
-        const activeTickets = await db.select({ count: sql<number>`count(*)` }).from(tickets).where(not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))).get();
-        const closedTickets = await db.select({ count: sql<number>`count(*)` }).from(tickets).where(inArray(tickets.status, ['resolved', 'closed', 'completed'])).get();
+        // Comprehensive stats tool for reports
+        const period = args.period || 'this_month';
         
-        const priorityBreakdown = await db.select({ priority: tickets.priority, count: sql<number>`count(*)` })
+        // Date filter based on period
+        let dateFilter = sql`1=1`;
+        const now = new Date();
+        if (period === 'today') {
+            const today = now.toISOString().split('T')[0];
+            dateFilter = sql`date(${tickets.created_at}) = ${today}`;
+        } else if (period === 'this_month') {
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            dateFilter = sql`date(${tickets.created_at}) >= ${firstOfMonth}`;
+        }
+        // 'all_time' = no filter
+
+        // 1. Basic counts
+        const totalTickets = await db.select({ count: sql<number>`count(*)` })
+            .from(tickets).where(dateFilter).get();
+        
+        const resolvedTickets = await db.select({ count: sql<number>`count(*)` })
             .from(tickets)
-            .groupBy(tickets.priority)
-            .all();
+            .where(and(dateFilter, inArray(tickets.status, ['resolved', 'closed', 'completed'])))
+            .get();
+        
+        const activeTickets = await db.select({ count: sql<number>`count(*)` })
+            .from(tickets)
+            .where(and(dateFilter, not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))))
+            .get();
+
+        // 2. Priority breakdown
+        const priorityBreakdown = await db.select({ 
+            priority: tickets.priority, 
+            count: sql<number>`count(*)` 
+        })
+        .from(tickets)
+        .where(dateFilter)
+        .groupBy(tickets.priority)
+        .all();
+
+        // 3. Status breakdown
+        const statusBreakdown = await db.select({ 
+            status: tickets.status, 
+            count: sql<number>`count(*)` 
+        })
+        .from(tickets)
+        .where(dateFilter)
+        .groupBy(tickets.status)
+        .all();
+
+        // 4. Technician performance (with names)
+        const techPerformance = await db.select({
+            tech_id: tickets.assigned_to,
+            tech_name: users.full_name,
+            total_assigned: sql<number>`count(*)`,
+            resolved: sql<number>`sum(case when ${tickets.status} in ('resolved', 'closed', 'completed') then 1 else 0 end)`
+        })
+        .from(tickets)
+        .leftJoin(users, eq(tickets.assigned_to, users.id))
+        .where(and(dateFilter, sql`${tickets.assigned_to} IS NOT NULL`))
+        .groupBy(tickets.assigned_to, users.full_name)
+        .all();
+
+        // 5. Machine breakdown (top 10 with most tickets)
+        const machineBreakdown = await db.select({
+            machine_id: tickets.machine_id,
+            machine_type: machines.machine_type,
+            machine_model: machines.model,
+            ticket_count: sql<number>`count(*)`
+        })
+        .from(tickets)
+        .leftJoin(machines, eq(tickets.machine_id, machines.id))
+        .where(and(dateFilter, sql`${tickets.machine_id} IS NOT NULL`))
+        .groupBy(tickets.machine_id, machines.machine_type, machines.model)
+        .orderBy(sql`count(*) DESC`)
+        .limit(10)
+        .all();
+
+        // 6. Recent tickets with details (last 10)
+        const recentTickets = await db.select({
+            id: tickets.id,
+            display_id: tickets.ticket_id,
+            title: tickets.title,
+            status: tickets.status,
+            priority: tickets.priority,
+            machine_type: machines.machine_type,
+            machine_model: machines.model,
+            tech_name: users.full_name,
+            created_at: tickets.created_at
+        })
+        .from(tickets)
+        .leftJoin(machines, eq(tickets.machine_id, machines.id))
+        .leftJoin(users, eq(tickets.assigned_to, users.id))
+        .where(dateFilter)
+        .orderBy(desc(tickets.created_at))
+        .limit(10)
+        .all();
+
+        // 7. Average resolution time (for resolved tickets)
+        const resolutionStats = await db.select({
+            avg_hours: sql<number>`avg((julianday(${tickets.completed_at}) - julianday(${tickets.created_at})) * 24)`,
+            total_downtime: sql<number>`sum(${tickets.downtime_hours})`
+        })
+        .from(tickets)
+        .where(and(
+            dateFilter,
+            inArray(tickets.status, ['resolved', 'closed', 'completed']),
+            sql`${tickets.completed_at} IS NOT NULL`
+        ))
+        .get();
 
         return JSON.stringify({
-            total_db_tickets: totalTickets.count,
-            active_now: activeTickets.count,
-            closed_total: closedTickets.count,
-            by_priority: priorityBreakdown
+            period: period,
+            summary: {
+                total: totalTickets?.count || 0,
+                resolved: resolvedTickets?.count || 0,
+                active: activeTickets?.count || 0,
+                resolution_rate: totalTickets?.count > 0 
+                    ? Math.round((resolvedTickets?.count / totalTickets?.count) * 100) 
+                    : 0
+            },
+            by_priority: priorityBreakdown,
+            by_status: statusBreakdown,
+            technician_performance: techPerformance.map((t: any) => ({
+                name: t.tech_name || 'Non assigné',
+                assigned: t.total_assigned,
+                resolved: t.resolved || 0,
+                resolution_rate: t.total_assigned > 0 
+                    ? Math.round((t.resolved / t.total_assigned) * 100) 
+                    : 0
+            })),
+            machines_most_issues: machineBreakdown.map((m: any) => ({
+                machine: `${m.machine_type || 'Inconnu'} ${m.machine_model || ''}`.trim(),
+                tickets: m.ticket_count
+            })),
+            recent_tickets: recentTickets.map((t: any) => ({
+                ref: t.display_id,
+                title: t.title,
+                machine: `${t.machine_type || ''} ${t.machine_model || ''}`.trim() || 'N/A',
+                technician: t.tech_name || 'Non assigné',
+                status: t.status,
+                priority: t.priority,
+                date: t.created_at
+            })),
+            metrics: {
+                avg_resolution_hours: resolutionStats?.avg_hours 
+                    ? Math.round(resolutionStats.avg_hours * 10) / 10 
+                    : null,
+                total_downtime_hours: resolutionStats?.total_downtime 
+                    ? Math.round(resolutionStats.total_downtime * 10) / 10 
+                    : 0
+            }
         });
     },
 
@@ -1194,40 +1330,81 @@ export const ToolFunctions = {
 
         if (!user) return "Technicien introuvable.";
 
+        // Active tickets with machine names
         const activeTickets = await db.select({
             id: tickets.id,
-            display_id: tickets.ticket_id, // Add Display ID
+            display_id: tickets.ticket_id,
             title: tickets.title,
-            status: tickets.status
+            status: tickets.status,
+            priority: tickets.priority,
+            machine_type: machines.machine_type,
+            machine_model: machines.model,
+            created_at: tickets.created_at
         })
         .from(tickets)
+        .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .where(and(
             eq(tickets.assigned_to, user.id),
-            // Use NEGATIVE logic to capture ALL active statuses (pending_parts, diagnosis, etc.)
             not(inArray(tickets.status, ['resolved', 'closed', 'completed', 'cancelled', 'archived']))
         ))
         .all();
 
+        // Recent resolved with machine names and resolution time
         const recentHistory = await db.select({
             id: tickets.id,
-            display_id: tickets.ticket_id, // Add Display ID
+            display_id: tickets.ticket_id,
             title: tickets.title,
             status: tickets.status,
-            date: tickets.updated_at
+            machine_type: machines.machine_type,
+            machine_model: machines.model,
+            created_at: tickets.created_at,
+            completed_at: tickets.completed_at
         })
         .from(tickets)
+        .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .where(and(
             eq(tickets.assigned_to, user.id),
-            or(eq(tickets.status, 'resolved'), eq(tickets.status, 'closed'))
+            inArray(tickets.status, ['resolved', 'closed', 'completed'])
         ))
-        .orderBy(desc(tickets.updated_at))
-        .limit(3)
+        .orderBy(desc(tickets.completed_at))
+        .limit(5)
         .all();
+
+        // Calculate stats
+        const totalResolved = recentHistory.length;
+        let avgResolutionHours = null;
+        if (totalResolved > 0) {
+            const totalHours = recentHistory.reduce((sum: number, t: any) => {
+                if (t.completed_at && t.created_at) {
+                    const hours = (new Date(t.completed_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60);
+                    return sum + hours;
+                }
+                return sum;
+            }, 0);
+            avgResolutionHours = Math.round(totalHours / totalResolved * 10) / 10;
+        }
 
         return JSON.stringify({
             technician: user,
-            active_load: activeTickets,
-            recent_history: recentHistory
+            stats: {
+                active_tickets: activeTickets.length,
+                recent_resolved: totalResolved,
+                avg_resolution_hours: avgResolutionHours
+            },
+            active_load: activeTickets.map((t: any) => ({
+                ref: t.display_id,
+                title: t.title,
+                machine: `${t.machine_type || ''} ${t.machine_model || ''}`.trim() || 'N/A',
+                priority: t.priority,
+                status: t.status,
+                since: t.created_at
+            })),
+            recent_history: recentHistory.map((t: any) => ({
+                ref: t.display_id,
+                title: t.title,
+                machine: `${t.machine_type || ''} ${t.machine_model || ''}`.trim() || 'N/A',
+                resolved_at: t.completed_at
+            }))
         });
     },
 
