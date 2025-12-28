@@ -96,13 +96,14 @@ export const TOOLS: ToolDefinition[] = [
         type: "function",
         function: {
             name: "search_machines",
-            description: "Trouver des machines par nom, type ou localisation.",
+            description: "Lister les machines. Sans paramètre = toutes les machines. Avec query = filtrer par nom/type/localisation.",
             parameters: {
                 type: "object",
                 properties: {
-                    query: { type: "string", description: "Nom ou type de machine (ex: 'CNC', 'Bavelloni', 'Four')" }
+                    query: { type: "string", description: "Optionnel: filtrer par nom, type ou localisation (ex: 'CNC', 'Four'). Laisser vide pour toutes les machines." },
+                    status: { type: "string", description: "Optionnel: filtrer par statut (operational, maintenance, out_of_service)" }
                 },
-                required: ["query"]
+                required: []
             }
         }
     },
@@ -1031,22 +1032,31 @@ export const ToolFunctions = {
         });
     },
 
-    async search_machines(db: any, args: { query: string }) {
-        const searchPattern = `%${args.query}%`;
+    async search_machines(db: any, args: { query?: string; status?: string }) {
+        // Construire les conditions
+        const conditions: any[] = [sql`deleted_at IS NULL`];
         
-        // Utiliser select() sans colonnes pour récupérer TOUS les champs (y compris operator_id, ai_context, technical_specs)
-        const results = await db.select()
-        .from(machines)
-        .where(and(
-            or(
+        // Filtre par recherche texte (optionnel)
+        if (args.query && args.query.trim()) {
+            const searchPattern = `%${args.query}%`;
+            conditions.push(or(
                 like(machines.machine_type, searchPattern),
                 like(machines.model, searchPattern),
                 like(machines.manufacturer, searchPattern),
                 like(machines.location, searchPattern)
-            ),
-            sql`deleted_at IS NULL`
-        ))
-        .limit(5)
+            ));
+        }
+        
+        // Filtre par statut (optionnel)
+        if (args.status) {
+            conditions.push(eq(machines.status, args.status));
+        }
+        
+        // Récupérer les machines (limit 20 pour les rapports)
+        const results = await db.select()
+        .from(machines)
+        .where(and(...conditions))
+        .limit(20)
         .all();
 
         // Enrichir avec le nom de l'opérateur si présent
