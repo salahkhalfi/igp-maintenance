@@ -2405,9 +2405,20 @@ ${typeInstructions}
 - ❌ Ne jamais ignorer les informations d'identité de l'entreprise
 
 # FORMAT DE SORTIE
-Commence DIRECTEMENT par le document (pas d'introduction "Voici le document...").
+**CRITIQUE - TITRE DU DOCUMENT:**
+- Le document DOIT commencer par un titre approprié au format: ## [Titre précis et descriptif]
+- Le titre DOIT refléter exactement le sujet demandé par l'utilisateur
+- Exemples de bons titres:
+  - "## Rapport Mensuel de Maintenance - Décembre 2024"
+  - "## Fiche de Données de Sécurité - Nettoyant Industriel XYZ"
+  - "## Demande de Subvention PARI-CNRC - Projet Automatisation"
+  - "## Bilan de Performance des Techniciens - Q4 2024"
+- NE PAS utiliser de titres génériques comme "Document" ou "Rapport"
+
+**STRUCTURE:**
+Commence DIRECTEMENT par le titre ## puis le contenu (pas d'introduction "Voici le document...").
 Le document doit être complet et prêt à imprimer.
-Utilise le format Markdown pour la structure (## titres, **gras**, listes).`;
+Utilise le format Markdown pour la structure (## titres, ### sous-titres, **gras**, listes).`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
 
@@ -2492,9 +2503,28 @@ Utilise le format Markdown pour la structure (## titres, **gras**, listes).`;
                 'administratif': 'Document administratif',
                 'rh': 'Document RH',
                 'technique': 'Document technique',
-                'financier': 'Document financier'
+                'financier': 'Document financier',
+                'rapports': 'Rapport de maintenance',
+                'securite': 'Fiche de sécurité'
             };
-            title = titleMap[documentType] || 'Document de direction';
+            // Use extracted title, or try to infer from instructions
+            if (!titleMatch) {
+                // Try to extract meaningful title from instructions
+                const instructionKeywords = instructions.toLowerCase();
+                if (instructionKeywords.includes('fds') || instructionKeywords.includes('fiche de sécurité') || instructionKeywords.includes('simdut')) {
+                    title = 'Fiche de Données de Sécurité';
+                } else if (instructionKeywords.includes('bilan') && instructionKeywords.includes('performance')) {
+                    title = 'Bilan de Performance';
+                } else if (instructionKeywords.includes('rapport mensuel')) {
+                    title = 'Rapport Mensuel de Maintenance';
+                } else if (instructionKeywords.includes('incident')) {
+                    title = 'Rapport d\'Incidents';
+                } else if (instructionKeywords.includes('état') && instructionKeywords.includes('machine')) {
+                    title = 'État du Parc Machines';
+                } else {
+                    title = titleMap[documentType] || 'Document de direction';
+                }
+            }
         }
         
         return c.json({
