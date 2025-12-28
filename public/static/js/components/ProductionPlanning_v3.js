@@ -1821,11 +1821,10 @@ ${reportHtml}
         setTimeout(() => printWindow.print(), 500);
     };
     
+    // NOTE: ai-report et secretary ont été déplacés vers SecretariatModal (bouton Secrétariat dans le header)
     const formatOptions = [
         { id: 'month', label: 'Planning mensuel', desc: 'Vue calendrier du mois', icon: 'fa-calendar-alt', color: 'blue' },
-        { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week', color: 'emerald' },
-        { id: 'ai-report', label: 'Rapports Automatisés', desc: 'Documents professionnels', icon: 'fa-file-alt', color: 'purple' },
-        { id: 'secretary', label: 'Secrétaire de Direction', desc: 'Correspondance & Subventions', icon: 'fa-user-tie', color: 'indigo' }
+        { id: 'week', label: 'Planning hebdo', desc: 'Vue de la semaine', icon: 'fa-calendar-week', color: 'emerald' }
     ];
     
     const colorStyles = {

@@ -23,6 +23,7 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
     const [showAIChat, setShowAIChat] = React.useState(false);
     const [showDataImport, setShowDataImport] = React.useState(false);
     const [dataImportTab, setDataImportTab] = React.useState('users');
+    const [showSecretariat, setShowSecretariat] = React.useState(false);
     
     // Nom dynamique de l'application (chargé depuis l'API)
     const [appName, setAppName] = React.useState('');
@@ -441,11 +442,25 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
                 }
                 setShowMobileMenu(false); 
             },
-            onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); }
+            onOpenDetails: (id) => { setSelectedTicketId(id); setShowDetailsModal(true); setShowMobileMenu(false); },
+            onOpenSecretariat: () => { 
+                if (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') {
+                    setShowSecretariat(true); 
+                } else {
+                    window.showToast && window.showToast("Accès réservé aux administrateurs", "warning");
+                }
+                setShowMobileMenu(false); 
+            }
         }),
 
         // --- PRODUCTION PLANNING (FULL SCREEN MODAL) ---
         showProductionPlanning && React.createElement(window.ProductionPlanning, { onClose: () => setShowProductionPlanning(false) }),
+        
+        // --- SECRETARIAT MODAL (Admin/Supervisor only) ---
+        showSecretariat && window.SecretariatModal && React.createElement(window.SecretariatModal, { 
+            isOpen: showSecretariat, 
+            onClose: () => setShowSecretariat(false) 
+        }),
 
         // --- KANBAN BOARD ---
         React.createElement('div', { className: 'max-w-[1600px] mx-auto px-4 py-6', style: { ...kanbanContainerStyle, display: (showAdminRoles || showProductionPlanning) ? 'none' : 'block' } },

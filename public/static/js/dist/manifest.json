@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-28T07:28:12.013Z",
+  "generated": "2025-12-28T07:42:37.359Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -19,7 +19,7 @@
     {
       "original": "AppHeader.js",
       "minified": "AppHeader.min.js",
-      "savings": "53.0%"
+      "savings": "52.8%"
     },
     {
       "original": "ConfirmModal.js",
@@ -94,7 +94,7 @@
     {
       "original": "ProductionPlanning_v3.js",
       "minified": "ProductionPlanning_v3.min.js",
-      "savings": "37.3%"
+      "savings": "37.4%"
     },
     {
       "original": "PromptModal.js",
@@ -115,6 +115,11 @@
       "original": "ScheduledCountdown.js",
       "minified": "ScheduledCountdown.min.js",
       "savings": "66.6%"
+    },
+    {
+      "original": "SecretariatModal.js",
+      "minified": "SecretariatModal.min.js",
+      "savings": "35.1%"
     },
     {
       "original": "SystemSettingsModal.js",
@@ -177,5 +182,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "48.5%"
+  "totalSavings": "48.2%"
 }

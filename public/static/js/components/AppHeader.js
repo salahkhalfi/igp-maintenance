@@ -25,6 +25,7 @@ const AppHeader = ({
     onOpenAIChat,
     onOpenPlanning,
     onOpenDetails,
+    onOpenSecretariat,
     activeModules = { planning: true, statistics: true, notifications: true, messaging: true, machines: true }, // Default
     hasPermission = () => false // Safety fallback
 }) => {
@@ -389,6 +390,12 @@ const AppHeader = ({
                             className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-purple-600 transition-all',
                             onClick: onOpenAIChat, title: 'Expert Industriel (IA)'
                         }, React.createElement('i', { className: 'fas fa-robot' })),
+
+                        // Secrétariat Button (Desktop) - Admin/Supervisor only
+                        (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
+                            className: 'hidden md:flex w-8 h-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-all',
+                            onClick: onOpenSecretariat, title: 'Secrétariat'
+                        }, React.createElement('i', { className: 'fas fa-file-signature' })),
 
                         // IGP Connect / Messenger (Desktop) - RESTORED: High-frequency critical function
                         React.createElement('button', {
@@ -793,6 +800,16 @@ const AppHeader = ({
                                             React.createElement('i', { className: 'fas fa-robot text-white text-sm' })
                                         ),
                                         React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Expert Industriel (IA)')
+                                    ),
+                                    // Secrétariat (Admin/Supervisor only)
+                                    (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
+                                        onClick: () => { onOpenSecretariat(); setShowMobileMenu(false); },
+                                        className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-indigo-50/50 transition-colors border-b border-slate-100'
+                                    },
+                                        React.createElement('div', { className: 'w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center shadow-md shadow-indigo-500/20' },
+                                            React.createElement('i', { className: 'fas fa-file-signature text-white text-sm' })
+                                        ),
+                                        React.createElement('span', { className: 'flex-1 text-left text-sm font-semibold text-slate-700' }, 'Secrétariat')
                                     ),
                                     // Connect Messenger
                                     React.createElement('button', {
