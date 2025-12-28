@@ -28,13 +28,14 @@ export const TOOLS: ToolDefinition[] = [
         type: "function",
         function: {
             name: "search_tickets",
-            description: "Rechercher des tickets. Peut filtrer par mots-clés, statut, nom du technicien (assigné) ou nom de la machine. Peut aussi chercher par nom de fichier joint (photo).",
+            description: "Rechercher des tickets. Peut filtrer par mots-clés, statut, nom du technicien (assigné), nom du créateur (qui a signalé), ou nom de la machine. Peut aussi chercher par nom de fichier joint (photo).",
             parameters: {
                 type: "object",
                 properties: {
                     query: { type: "string", description: "Mots-clés (titre, description, ou nom de fichier joint)" },
-                    status: { type: "string", enum: ["open", "in_progress", "resolved", "closed"], description: "Filtrer par statut" },
+                    status: { type: "string", enum: ["received", "assigned", "in_progress", "diagnostic", "waiting_parts", "completed", "cancelled", "archived"], description: "Filtrer par statut (received=Reçu, assigned=Assigné, in_progress=En cours, diagnostic, waiting_parts=Attente pièces, completed=Terminé, cancelled=Annulé, archived)" },
                     technician: { type: "string", description: "Nom du technicien assigné (ex: 'Brahim')" },
+                    creator: { type: "string", description: "Nom de la personne qui a créé/signalé le ticket (ex: 'Marc')" },
                     machine: { type: "string", description: "Nom ou type de la machine (ex: 'Four')" },
                     limit: { type: "number", description: "Nombre max de résultats (défaut 5)" }
                 },
@@ -653,10 +654,12 @@ export const ToolFunctions = {
         ];
         
         // Appliquer le filtre de statut
+        // Statuts terminés: completed (le seul vrai statut "terminé" dans le système)
         if (filter === 'completed') {
-            conditions.push(inArray(tickets.status, ['completed', 'resolved', 'closed']));
+            conditions.push(eq(tickets.status, 'completed'));
         } else if (filter === 'open') {
-            conditions.push(not(inArray(tickets.status, ['completed', 'resolved', 'closed', 'cancelled', 'archived'])));
+            // Tickets non terminés/annulés/archivés
+            conditions.push(not(inArray(tickets.status, ['completed', 'cancelled', 'archived'])));
         }
         // 'all' = pas de filtre supplémentaire
         
@@ -715,7 +718,7 @@ export const ToolFunctions = {
         });
     },
 
-    async search_tickets(db: any, args: { query?: string, status?: string, technician?: string, machine?: string, limit?: number }, baseUrl: string) {
+    async search_tickets(db: any, args: { query?: string, status?: string, technician?: string, creator?: string, machine?: string, limit?: number }, baseUrl: string) {
         const limit = args.limit || 5;
         const conditions = [];
 
@@ -778,8 +781,21 @@ export const ToolFunctions = {
             }
         }
 
+        // 5. Creator Filter (reported_by) - pour chercher les tickets créés par une personne
+        if (args.creator) {
+            const creatorPattern = `%${args.creator}%`;
+            const matchingCreators = await db.select({ id: users.id }).from(users).where(like(users.full_name, creatorPattern)).all();
+            
+            if (matchingCreators.length > 0) {
+                const creatorIds = matchingCreators.map((u: any) => u.id);
+                conditions.push(inArray(tickets.reported_by, creatorIds));
+            } else {
+                return JSON.stringify({ message: `Aucun utilisateur trouvé pour '${args.creator}'` });
+            }
+        }
+
         if (conditions.length === 0) {
-            return JSON.stringify({ message: "Veuillez spécifier au moins un critère (query, technician, machine)." });
+            return JSON.stringify({ message: "Veuillez spécifier au moins un critère (query, technician, machine, creator)." });
         }
 
         // TOUJOURS exclure les tickets supprimés
