@@ -2264,6 +2264,10 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                 ? statsThisMonth.resolution_rate - statsLastMonth.resolution_rate
                 : 0;
             
+            // LOG: Vérifier les données chargées
+            console.log(`[Secretary] Data loaded: ${allTickets.length} tickets, ${allUsers.length} users, ${allMachines.length} machines`);
+            console.log(`[Secretary] This month: ${ticketsThisMonth.length} tickets, Last month: ${ticketsLastMonth.length} tickets`);
+            
             fullDatabaseContext = `
 ═══════════════════════════════════════════════════════════════
                     DONNÉES DE MAINTENANCE
@@ -2367,8 +2371,19 @@ ${allMachines.map(m => `- ${m.machine_type} ${m.manufacturer || ''} ${m.model ||
 ═══════════════════════════════════════════════════════════════
 `;
             console.log('[Secretary] Loaded complete database context');
-        } catch (e) {
-            console.warn('[Secretary] Could not load database:', e);
+            console.log(`[Secretary] Context length: ${fullDatabaseContext.length} chars`);
+        } catch (e: any) {
+            console.error('[Secretary] FAILED to load database:', e.message, e.stack);
+            fullDatabaseContext = `
+═══════════════════════════════════════════════════════════════
+                    ERREUR DE CHARGEMENT DES DONNÉES
+═══════════════════════════════════════════════════════════════
+Les données de maintenance n'ont pas pu être chargées.
+Erreur: ${e.message}
+
+Veuillez réessayer ou contacter l'administrateur.
+═══════════════════════════════════════════════════════════════
+`;
         }
         
         // ===== BUILD EXPERT PROMPT WITH LEGAL KNOWLEDGE =====
@@ -2531,55 +2546,49 @@ Structure:
 Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-RAPPORT DE MAINTENANCE - RÈGLES STRICTES
+RAPPORT DE MAINTENANCE
 
-⚠️ RÈGLE FONDAMENTALE: ZÉRO HALLUCINATION
-Tu dois UNIQUEMENT utiliser les données des SECTIONS 1-8 fournies ci-dessus.
-- Chaque chiffre que tu cites DOIT être présent dans les données
-- Si une donnée n'existe pas dans les sections, tu dois l'omettre ou écrire "Non disponible"
-- INTERDIT d'inventer des chiffres, des noms, des pourcentages ou des tendances
+Tu es un analyste de maintenance expert. Les DONNÉES DE MAINTENANCE ci-dessus contiennent toutes les informations de la base de données.
 
-STRUCTURE OBLIGATOIRE DU RAPPORT:
+RÈGLE ABSOLUE: Utilise UNIQUEMENT les chiffres présents dans les SECTIONS 1-8 ci-dessus. Ne jamais inventer.
 
-## 1. SYNTHÈSE EXÉCUTIVE (4-5 lignes max)
-Message clé pour un dirigeant pressé.
+STRUCTURE DU RAPPORT:
 
-## 2. INDICATEURS DE PERFORMANCE - CE MOIS
-COPIER les valeurs exactes de la SECTION 1:
-| Indicateur | Valeur |
-|------------|--------|
-| Tickets créés | [COPIER depuis SECTION 1] |
-| Tickets fermés | [COPIER depuis SECTION 1] |
-| Taux de résolution | [COPIER depuis SECTION 1] |
-| TMR moyen | [COPIER depuis SECTION 1] |
+# Rapport de Maintenance - [Mois Année]
 
-## 3. COMPARAISON AVEC LE MOIS PRÉCÉDENT
-COPIER les valeurs exactes de la SECTION 2.
+## Synthèse Exécutive
+Résumé en 3-4 phrases des points clés de la période.
 
-## 4. PERFORMANCE DE L'ÉQUIPE
-COPIER les données exactes de la SECTION 3 (Performance Techniciens).
-Présenter sous forme de tableau avec les noms réels des techniciens.
+## Indicateurs Clés
+Présente les chiffres EXACTS de la SECTION 1 sous forme de tableau:
+- Tickets créés, fermés, en cours
+- Taux de résolution
+- Temps moyen de résolution (TMR)
 
-## 5. ÉTAT DU PARC MACHINES
-COPIER les données exactes de la SECTION 4.
-Identifier les machines problématiques (celles avec le plus d'interventions).
+## Évolution vs Mois Précédent  
+Compare avec les chiffres de la SECTION 2.
+Indique si la tendance est positive ou négative.
 
-## 6. POINTS D'ATTENTION CRITIQUES
-Basé sur:
-- SECTION 5: Tickets en retard (ouverts > 7 jours)
-- SECTION 6: Tickets critiques/haute priorité en cours
-LISTER les tickets exacts avec leurs ID et titres réels.
+## Performance de l'Équipe
+Utilise les données de la SECTION 3 pour présenter chaque technicien.
+Inclure: tickets assignés, résolus, taux de résolution, TMR.
 
-## 7. RECOMMANDATIONS
-3-5 recommandations BASÉES SUR les données ci-dessus (pas de généralités).
-Chaque recommandation doit référencer un problème identifié dans les données.
+## État du Parc Machines
+Basé sur SECTION 4:
+- Nombre total de machines
+- Répartition par statut (opérationnelles, maintenance, hors service)
+- Machines avec le plus d'interventions
 
-FORMAT DE CITATION OBLIGATOIRE:
-Quand tu cites un chiffre, il doit correspondre EXACTEMENT aux données fournies.
-Exemple correct: "Le taux de résolution ce mois est de 75%" (si la SECTION 1 dit 75%)
-Exemple INTERDIT: "Le taux de résolution ce mois est de 78%" (si la SECTION 1 dit 75%)
+## Points d'Attention
+Basé sur SECTION 5 (tickets en retard) et SECTION 6 (tickets critiques):
+- Lister les tickets problématiques avec leur ID réel
+- Prioriser par urgence
 
-RAPPEL: Les SECTIONS 1-8 contiennent TOUTES les données disponibles. Ne rien ajouter.`,
+## Recommandations
+3-5 recommandations concrètes basées sur les problèmes identifiés.
+Chaque recommandation doit référencer un élément des données.
+
+IMPORTANT: Les chiffres que tu cites doivent correspondre EXACTEMENT aux valeurs dans les sections. Ne pas arrondir, ne pas estimer.`,
 
             'creatif': `
 DOCUMENT CRÉATIF
