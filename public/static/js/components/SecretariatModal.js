@@ -326,13 +326,15 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         .doc-content p { margin: 0 0 10pt; text-align: justify; }
         .doc-content ul, .doc-content ol { margin: 10pt 0; padding-left: 20pt; }
         .doc-content li { margin: 4pt 0; }
-        .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; }
-        .doc-content th { background: #f1f5f9; border: 1pt solid #cbd5e1; padding: 8pt; text-align: left; font-weight: 600; }
-        .doc-content td { border: 1pt solid #cbd5e1; padding: 8pt; }
+        .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; border: 1pt solid #334155 !important; }
+        .doc-content th { background-color: #e2e8f0 !important; border: 1pt solid #334155 !important; padding: 8pt; text-align: left; font-weight: 600; color: #0f172a !important; }
+        .doc-content td { border: 1pt solid #334155 !important; padding: 8pt; }
+        .doc-content tr:nth-child(even) td { background-color: #f8fafc !important; }
         .doc-content hr, .doc-content .doc-separator { border: none; border-top: 1pt solid #e2e8f0; margin: 16pt 0; }
         .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 12pt 0; border-radius: 4pt; display: block; }
         .doc-content a { color: #3b82f6; text-decoration: underline; }
         .doc-content code { background: #f1f5f9; padding: 2pt 4pt; border-radius: 3pt; font-family: monospace; font-size: 10pt; }
+        .doc-content strong { font-weight: 700; color: #0f172a; }
     `;
 
     const printDocument = async () => {
@@ -359,7 +361,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 .title-block h1{font-size:20pt;font-weight:700;color:#0f172a;margin:0}
 ${documentStyles.replace(/\\.doc-content /g,'.content ')}
 .footer{margin-top:40pt;padding-top:15pt;border-top:1pt solid #e2e8f0;font-size:9pt;color:#94a3b8;text-align:center}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.header,.title-block{page-break-inside:avoid}h1,h2,h3,h4{page-break-after:avoid}}</style></head>
+@media print{body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.header,.title-block{page-break-inside:avoid}h1,h2,h3,h4{page-break-after:avoid}table{border-collapse:collapse!important;page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}th,td{border:1pt solid #334155!important;padding:6pt!important}th{background-color:#e2e8f0!important;font-weight:700!important}}</style></head>
 <body><div class="header"><div class="header-left"><img src="${logoUrl}" class="logo" onerror="this.style.display='none'"><div class="brand"><div class="brand-name">${companyShortName}</div><div class="brand-sub">${companySubtitle}</div></div></div>
 <div class="header-right"><div style="font-weight:600;color:#334155">${today}</div></div></div>
 <div class="title-block"><h1>${title}</h1></div><div class="content">${html}</div>
