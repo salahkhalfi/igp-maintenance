@@ -262,16 +262,29 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 
     const markdownToHtml = (md) => {
         if (!md) return '';
-        let html = md
-            // Tables
-            .replace(/\|(.+)\|\n\|[-:\s|]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
-                const headers = header.split('|').filter(h => h.trim()).map(h => `<th>${h.trim()}</th>`).join('');
-                const bodyRows = rows.trim().split('\n').map(row => {
-                    const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
-                    return `<tr>${cells}</tr>`;
-                }).join('');
-                return `<table><thead><tr>${headers}</tr></thead><tbody>${bodyRows}</tbody></table>`;
-            })
+        
+        // Fonction pour parser les tableaux Markdown
+        const parseTable = (tableText) => {
+            const lines = tableText.trim().split('\n').filter(l => l.trim());
+            if (lines.length < 2) return tableText; // Pas assez de lignes pour un tableau
+            
+            // Vérifier si c'est un tableau (ligne 2 doit être le séparateur)
+            const separatorLine = lines[1];
+            if (!/^[\s|:-]+$/.test(separatorLine)) return tableText;
+            
+            const headerCells = lines[0].split('|').map(c => c.trim()).filter(c => c);
+            const headerHtml = headerCells.map(c => `<th>${c}</th>`).join('');
+            
+            const bodyRows = lines.slice(2).map(row => {
+                const cells = row.split('|').map(c => c.trim()).filter(c => c);
+                return `<tr>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+            }).join('');
+            
+            return `<table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+        };
+        
+        // Détecter et convertir les tableaux (blocs commençant par |)
+        let html = md.replace(/((?:^\|.+\|$\n?)+)/gm, (match) => parseTable(match))
             // Séparateurs horizontaux (---, ***, ___)
             .replace(/^[-*_]{3,}\s*$/gm, '<hr class="doc-separator">')
             // Images ![alt](url) - AVANT les liens pour éviter conflit
