@@ -355,7 +355,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 .header-right{text-align:right;font-size:10pt;color:#64748b}
 .title-block{text-align:center;padding:25pt 0;margin-bottom:25pt;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-radius:8pt}
 .title-block h1{font-size:20pt;font-weight:700;color:#0f172a;margin:0}
-${documentStyles.replace('.doc-content ','.content ')}
+${documentStyles.replace(/\\.doc-content /g,'.content ')}
 .footer{margin-top:40pt;padding-top:15pt;border-top:1pt solid #e2e8f0;font-size:9pt;color:#94a3b8;text-align:center}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.header,.title-block{page-break-inside:avoid}h1,h2,h3,h4{page-break-after:avoid}}</style></head>
 <body><div class="header"><div class="header-left"><img src="${logoUrl}" class="logo" onerror="this.style.display='none'"><div class="brand"><div class="brand-name">${companyShortName}</div><div class="brand-sub">${companySubtitle}</div></div></div>
