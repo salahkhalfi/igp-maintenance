@@ -2573,26 +2573,11 @@ Produire un document Markdown professionnel, sobre et lisible.
             turns++;
             const isLastTurn = turns === MAX_TURNS;
             
-            // Priorité: OpenRouter (Claude 3.5 Sonnet) > OpenAI (GPT-4o)
-            // Note: Pour les tours avec tools, on utilise toujours OpenAI car plus fiable avec function calling
-            const hasOpenRouter = !!env.OPENROUTER_API_KEY;
-            const needsTools = !isLastTurn && SECRETARY_TOOLS.length > 0;
-            
-            // Utiliser OpenRouter uniquement pour le tour final (sans tools) pour la génération premium
-            const useOpenRouter = hasOpenRouter && isLastTurn;
-            const apiUrl = useOpenRouter 
-                ? 'https://openrouter.ai/api/v1/chat/completions'
-                : 'https://api.openai.com/v1/chat/completions';
-            const apiKey = useOpenRouter ? env.OPENROUTER_API_KEY : env.OPENAI_API_KEY;
-            const modelName = useOpenRouter ? 'anthropic/claude-3.5-sonnet' : 'gpt-4o';
-            const apiName = useOpenRouter ? 'Claude 3.5 Sonnet (OpenRouter)' : 'GPT-4o (OpenAI)';
-            
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using ${apiName}${isLastTurn ? ' (FINAL - premium generation)' : ' (tools enabled)'}`);
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}${isLastTurn ? ' (FINAL)' : ''}`);
             
             try {
-                // Au dernier tour, forcer l'IA à répondre sans outils
                 const requestBody: any = {
-                    model: modelName,
+                    model: 'gpt-4o',
                     messages,
                     temperature: 0.3,
                     max_tokens: 4000
@@ -2602,19 +2587,13 @@ Produire un document Markdown professionnel, sobre et lisible.
                     requestBody.tools = SECRETARY_TOOLS;
                     requestBody.tool_choice = "auto";
                 }
-                // Dernier tour: pas de tools = l'IA DOIT produire du contenu
                 
                 const headers: Record<string, string> = { 
-                    'Authorization': `Bearer ${apiKey}`, 
+                    'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
                     'Content-Type': 'application/json' 
                 };
-                // OpenRouter nécessite des headers supplémentaires
-                if (useOpenRouter) {
-                    headers['HTTP-Referer'] = baseUrl || 'https://app.igpglass.ca';
-                    headers['X-Title'] = 'IGP Secretary';
-                }
                 
-                const response = await fetch(apiUrl, {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify(requestBody)
@@ -2622,37 +2601,9 @@ Produire un document Markdown professionnel, sobre et lisible.
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error(`❌ [Secretary] ${apiName} API error:`, response.status, errorText);
-                    
-                    // Fallback: si OpenRouter échoue au tour final, réessayer avec OpenAI
-                    if (useOpenRouter && env.OPENAI_API_KEY) {
-                        console.log(`🔄 [Secretary] Fallback to OpenAI GPT-4o`);
-                        const fallbackResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-                            method: 'POST',
-                            headers: { 
-                                'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
-                                'Content-Type': 'application/json' 
-                            },
-                            body: JSON.stringify({
-                                model: 'gpt-4o',
-                                messages,
-                                temperature: 0.3,
-                                max_tokens: 4000
-                            })
-                        });
-                        
-                        if (fallbackResponse.ok) {
-                            const fallbackData = await fallbackResponse.json() as any;
-                            const fallbackMessage = fallbackData.choices[0]?.message;
-                            if (fallbackMessage?.content) {
-                                aiResponse = fallbackMessage.content;
-                                break;
-                            }
-                        }
-                    }
-                    
+                    console.error(`❌ [Secretary] OpenAI API error:`, response.status, errorText);
                     return c.json({ 
-                        error: `Erreur API ${apiName} (${response.status}): ${errorText.substring(0, 200)}` 
+                        error: `Erreur API OpenAI (${response.status}): ${errorText.substring(0, 200)}` 
                     }, 500);
                 }
                 
