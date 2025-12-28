@@ -162,6 +162,20 @@ export const TOOLS: ToolDefinition[] = [
     {
         type: "function",
         function: {
+            name: "get_unassigned_tickets",
+            description: "Obtenir la liste des tickets non assignés (sans technicien). Peut filtrer par statut: 'all' (tous), 'open' (ouverts), 'completed' (terminés/résolus).",
+            parameters: {
+                type: "object",
+                properties: {
+                    filter: { type: "string", enum: ["all", "open", "completed"], description: "Filtre: 'all' (tous), 'open' (non terminés), 'completed' (terminés/résolus). Défaut: 'all'." }
+                },
+                required: []
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
             name: "get_planning",
             description: "Obtenir le planning global (événements de production) et l'agenda personnel (notes, rendez-vous) de l'utilisateur (admin ou technicien).",
             parameters: {
@@ -623,6 +637,77 @@ export const ToolFunctions = {
         });
     },
 
+    async get_unassigned_tickets(db: any, args: { filter?: string }, baseUrl: string) {
+        const filter = args.filter || 'all';
+        
+        const conditions = [
+            isNull(tickets.assigned_to),
+            isNull(tickets.deleted_at)
+        ];
+        
+        // Appliquer le filtre de statut
+        if (filter === 'completed') {
+            conditions.push(inArray(tickets.status, ['completed', 'resolved', 'closed']));
+        } else if (filter === 'open') {
+            conditions.push(not(inArray(tickets.status, ['completed', 'resolved', 'closed', 'cancelled', 'archived'])));
+        }
+        // 'all' = pas de filtre supplémentaire
+        
+        const results = await db.select({
+            id: tickets.id,
+            display_id: tickets.ticket_id,
+            title: tickets.title,
+            status: tickets.status,
+            priority: tickets.priority,
+            machine_id: tickets.machine_id,
+            created_at: tickets.created_at,
+            completed_at: tickets.completed_at
+        })
+        .from(tickets)
+        .where(and(...conditions))
+        .orderBy(desc(tickets.created_at))
+        .limit(20)
+        .all();
+        
+        if (results.length === 0) {
+            return JSON.stringify({
+                filter: filter,
+                count: 0,
+                message: filter === 'completed' 
+                    ? "Aucun ticket non assigné résolu/terminé." 
+                    : filter === 'open'
+                    ? "Aucun ticket non assigné ouvert."
+                    : "Aucun ticket non assigné."
+            });
+        }
+        
+        // Charger les machines pour contexte
+        const machineIds = [...new Set(results.filter((r: any) => r.machine_id).map((r: any) => r.machine_id))];
+        let machineMap: Record<number, string> = {};
+        if (machineIds.length > 0) {
+            const machineData = await db.select({ id: machines.id, type: machines.machine_type, model: machines.model })
+                .from(machines).where(inArray(machines.id, machineIds)).all();
+            machineData.forEach((m: any) => { machineMap[m.id] = `${m.type} ${m.model || ''}`.trim(); });
+        }
+        
+        return JSON.stringify({
+            filter: filter,
+            count: results.length,
+            tickets: results.map((t: any) => ({
+                id: t.id,
+                display_id: t.display_id,
+                title: t.title,
+                status: t.status,
+                priority: t.priority,
+                machine: machineMap[t.machine_id] || 'Non spécifiée',
+                created_at: t.created_at,
+                completed_at: t.completed_at,
+                url: `${baseUrl}/?ticket=${t.id}`,
+                markdown: `[${t.display_id}](${baseUrl}/?ticket=${t.id})`
+            }))
+        });
+    },
+
     async search_tickets(db: any, args: { query?: string, status?: string, technician?: string, machine?: string, limit?: number }, baseUrl: string) {
         const limit = args.limit || 5;
         const conditions = [];
@@ -689,6 +774,9 @@ export const ToolFunctions = {
         if (conditions.length === 0) {
             return JSON.stringify({ message: "Veuillez spécifier au moins un critère (query, technician, machine)." });
         }
+
+        // TOUJOURS exclure les tickets supprimés
+        conditions.push(isNull(tickets.deleted_at));
 
         const assignee = aliasedTable(users, 'assignee');
         const reporter = aliasedTable(users, 'reporter');
