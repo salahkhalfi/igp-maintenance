@@ -1994,6 +1994,7 @@ app.post('/secretary', async (c) => {
         // ===== LOAD OPERATIONAL DATA FOR CONTEXT =====
         // Ces données peuvent être utiles pour les documents (subventions, rapports, etc.)
         let operationalContext = '';
+        let machinesMap: Record<number, { type: string, model: string, manufacturer: string }> = {};
         try {
             // Charger les machines (équipement industriel)
             const machinesData = await db.select({
@@ -2018,12 +2019,14 @@ app.post('/secretary', async (c) => {
               .where(isNull(users.deleted_at))
               .all();
             
-            // Construire le contexte opérationnel
+            // Construire le contexte opérationnel + map pour lookup par ID
             const machinesByType: Record<string, any[]> = {};
             machinesData.forEach((m: any) => {
                 const type = m.machine_type || 'Autre';
                 if (!machinesByType[type]) machinesByType[type] = [];
                 machinesByType[type].push(m);
+                // Stocker pour lookup dans les rapports
+                machinesMap[m.id] = { type: m.machine_type || 'Inconnu', model: m.model || '', manufacturer: m.manufacturer || '' };
             });
             
             const roleLabels: Record<string, string> = {
@@ -2163,13 +2166,14 @@ ${Object.entries(usersByRole).map(([role, count]) =>
                 });
                 
                 const statusLabels: Record<string, string> = {
-                    'new': 'Nouveau',
+                    'received': 'Reçu',
                     'assigned': 'Assigné',
                     'in_progress': 'En cours',
                     'diagnostic': 'Diagnostic',
                     'waiting_parts': 'Attente pièces',
-                    'resolved': 'Résolu',
-                    'closed': 'Fermé'
+                    'completed': 'Terminé',
+                    'cancelled': 'Annulé',
+                    'archived': 'Archivé'
                 };
                 
                 const priorityLabels: Record<string, string> = {
@@ -2185,7 +2189,7 @@ ${Object.entries(usersByRole).map(([role, count]) =>
 
 ### Statistiques globales
 - **Tickets créés ce mois**: ${ticketsData.length}
-- **Tickets résolus ce mois**: ${statusCounts['resolved'] || 0}
+- **Tickets terminés ce mois**: ${statusCounts['completed'] || 0}
 - **Temps moyen de résolution**: ${resolvedCount > 0 ? Math.round(totalResolutionTime / resolvedCount * 10) / 10 : 'N/A'} heures
 - **Temps d'arrêt total**: ${Math.round(totalDowntime * 10) / 10} heures
 - **Total historique**: ${allTicketsData.length} tickets
@@ -2214,7 +2218,11 @@ ${criticalIncidents.slice(0, 10).map((t: any) =>
 ${Object.entries(machineTicketCounts)
     .sort(([,a], [,b]) => (b as number) - (a as number))
     .slice(0, 5)
-    .map(([machineId, count]) => `- Machine #${machineId}: ${count} interventions`)
+    .map(([machineId, count]) => {
+        const m = machinesMap[parseInt(machineId)];
+        const machineName = m ? `${m.type}${m.manufacturer ? ' ' + m.manufacturer : ''}${m.model ? ' ' + m.model : ''}` : `Machine #${machineId}`;
+        return `- **${machineName}**: ${count} interventions`;
+    })
     .join('\n') || '- Données non disponibles'}
 `;
                 console.log('[Secretary] Loaded maintenance data for reports');
