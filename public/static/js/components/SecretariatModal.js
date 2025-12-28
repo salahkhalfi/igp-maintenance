@@ -351,55 +351,54 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             }
         } catch (e) {}
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-        let html = markdownToHtml(generatedDoc.document);
+        const html = markdownToHtml(generatedDoc.document);
         const title = generatedDoc.title || 'Document';
-        // Supprimer le premier H1 du contenu s'il existe (évite le doublon avec title-block)
-        html = html.replace(/^(\s*<h1[^>]*>.*?<\/h1>\s*)/i, '');
-        // CSS professionnel pour impression
+        // Réutiliser les mêmes styles que l'affichage + header corporate
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
 <style>
-@page { size: A4; margin: 18mm 20mm 20mm 20mm; }
+@page { size: A4; margin: 15mm 18mm 18mm 18mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.65; color: #1a1a1a; padding: 0; }
-.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
-.header-left { display: flex; align-items: center; }
-.logo { height: 45px; margin-right: 12px; }
-.brand { border-left: 3px solid #2563eb; padding-left: 12px; }
-.brand-name { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 16pt; font-weight: 700; color: #1e3a5f; letter-spacing: 0.5px; }
-.brand-sub { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 8pt; color: #64748b; margin-top: 2px; }
-.header-right { text-align: right; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #475569; font-weight: 500; }
-.title-block { text-align: center; padding: 18px 30px; margin: 20px 0 30px; background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); border-radius: 4px; }
-.title-block h1 { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 18pt; font-weight: 600; color: #ffffff; margin: 0; letter-spacing: 0.5px; }
-.content { padding: 0 5px; }
-.content h2 { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13pt; font-weight: 600; color: #1e3a5f; margin: 22px 0 10px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; }
-.content h3 { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; font-weight: 600; color: #334155; margin: 16px 0 8px; }
-.content p { margin: 0 0 12px; text-align: justify; }
-.content ul, .content ol { margin: 10px 0 15px 0; padding-left: 22px; }
-.content li { margin: 4px 0; }
-.content strong { font-weight: 600; color: #1e3a5f; }
-.footer { margin-top: 35px; padding-top: 12px; border-top: 1px solid #cbd5e1; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 8pt; color: #94a3b8; text-align: center; }
+body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
+/* Header corporate */
+.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; }
+.print-header-left { display: flex; align-items: center; gap: 12px; }
+.print-header-left img { height: 40px; }
+.print-header-left .brand { border-left: 3px solid #3b82f6; padding-left: 10px; }
+.print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; color: #0f172a; }
+.print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #64748b; }
+.print-header-right { font-family: Arial, sans-serif; font-size: 10pt; color: #64748b; }
+/* Même styles que doc-content */
+.doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
+.doc-content h1 { font-size: 16pt; font-weight: 700; color: #0f172a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #3b82f6; }
+.doc-content h2 { font-size: 13pt; font-weight: 600; color: #1e293b; margin: 16pt 0 8pt; padding-left: 10pt; border-left: 3pt solid #3b82f6; }
+.doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 12pt 0 6pt; }
+.doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 5pt; }
+.doc-content p { margin: 0 0 10pt; text-align: justify; }
+.doc-content ul, .doc-content ol { margin: 10pt 0; padding-left: 20pt; }
+.doc-content li { margin: 4pt 0; }
+.doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; border: 1pt solid #334155; }
+.doc-content th { background-color: #e2e8f0; border: 1pt solid #334155; padding: 8pt; text-align: left; font-weight: 600; }
+.doc-content td { border: 1pt solid #334155; padding: 8pt; }
+.doc-content hr { border: none; border-top: 1pt solid #e2e8f0; margin: 16pt 0; }
+.doc-content strong { font-weight: 700; color: #0f172a; }
 @media print {
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .header, .title-block { page-break-inside: avoid; }
-  .title-block { background: #1e3a5f !important; -webkit-print-color-adjust: exact; }
-  table { page-break-inside: auto; }
-  tr { page-break-inside: avoid; }
+  .print-header { page-break-inside: avoid; }
+  .doc-content th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; }
 }
 </style></head>
 <body>
-<div class="header">
-  <div class="header-left">
-    <img src="${logoUrl}" class="logo" onerror="this.style.display='none'">
+<div class="print-header">
+  <div class="print-header-left">
+    <img src="${logoUrl}" onerror="this.style.display='none'">
     <div class="brand">
       <div class="brand-name">${companyShortName}</div>
       <div class="brand-sub">${companySubtitle}</div>
     </div>
   </div>
-  <div class="header-right">${today}</div>
+  <div class="print-header-right">${today}</div>
 </div>
-<div class="title-block"><h1>${title}</h1></div>
-<div class="content">${html}</div>
-<div class="footer">Document généré par ${companyShortName} • Secrétariat de Direction</div>
+<div class="doc-content">${html}</div>
 </body></html>`;
         const w = window.open('', '_blank');
         if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
