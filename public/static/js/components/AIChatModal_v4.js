@@ -223,7 +223,11 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
                 content: response.data.reply,
-                timestamp: new Date()
+                timestamp: new Date(),
+                // Document detection
+                isDocument: response.data.isDocument || false,
+                documentType: response.data.documentType || null,
+                documentTitle: response.data.documentTitle || null
             };
 
             setMessages(prev => [...prev, aiMsg]);
@@ -291,6 +295,84 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
             return text;
         };
 
+        // Fonction d'impression d'un document spécifique
+        const handlePrintDocument = (msg) => {
+            const processedContent = processContent(msg.content);
+            const docTitle = msg.documentTitle || 'Document';
+            
+            const printHtml = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>${docTitle}</title>
+    <style>
+        @page { margin: 20mm 15mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 18pt; margin-bottom: 10pt; color: #111827; border-bottom: 2px solid #7c3aed; padding-bottom: 5pt; }
+        h2 { font-size: 14pt; margin-top: 15pt; margin-bottom: 8pt; color: #374151; }
+        h3 { font-size: 12pt; margin-top: 12pt; margin-bottom: 6pt; color: #4b5563; }
+        p { margin: 6pt 0; }
+        ul, ol { margin: 6pt 0; padding-left: 20pt; }
+        li { margin: 3pt 0; }
+        table { border-collapse: collapse; width: 100%; margin: 10pt 0; font-size: 10pt; }
+        th, td { border: 1px solid #d1d5db; padding: 6pt 8pt; text-align: left; }
+        th { background-color: #f3f4f6; font-weight: 600; }
+        strong { color: #111827; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15pt;
+            padding-bottom: 10pt;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .header-title { font-size: 10pt; color: #6b7280; }
+        .header-date { font-size: 9pt; color: #9ca3af; }
+        .footer { margin-top: 20pt; padding-top: 10pt; border-top: 1px solid #e5e7eb; font-size: 9pt; color: #9ca3af; text-align: center; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="header-title">📄 ${docTitle}</span>
+        <span class="header-date">${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+    </div>
+    <div class="content">
+        ${processedContent}
+    </div>
+    <div class="footer">
+        Document généré par l'Assistant IA
+    </div>
+</body>
+</html>`;
+
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            if (printWindow) {
+                printWindow.document.write(printHtml);
+                printWindow.document.close();
+                setTimeout(() => printWindow.print(), 300);
+            }
+        };
+
+        // Fonction de copie du document
+        const handleCopyDocument = (msg) => {
+            navigator.clipboard.writeText(msg.content).then(() => {
+                window.showToast && window.showToast('Document copié !', 'success');
+            }).catch(() => {
+                window.showToast && window.showToast('Erreur lors de la copie', 'error');
+            });
+        };
+
         return messages.map(msg => 
             React.createElement('div', {
                 key: msg.id,
@@ -298,25 +380,65 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
             },
                 msg.role !== 'system' && React.createElement('div', {
                     className: `w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                        msg.role === 'assistant' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'
+                        msg.role === 'assistant' 
+                            ? (msg.isDocument ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700')
+                            : 'bg-gray-200 text-gray-600'
                     }`
                 },
-                    React.createElement('i', { className: msg.role === 'assistant' ? 'fas fa-robot' : 'fas fa-user' })
+                    React.createElement('i', { 
+                        className: msg.role === 'assistant' 
+                            ? (msg.isDocument ? 'fas fa-file-alt' : 'fas fa-robot') 
+                            : 'fas fa-user' 
+                    })
                 ),
                 React.createElement('div', {
-                    className: `max-w-[85%] p-3 rounded-2xl text-sm shadow-sm prose-sm ${
+                    className: `max-w-[85%] rounded-2xl text-sm shadow-sm ${
                         msg.role === 'user' 
-                            ? 'bg-purple-600 text-white rounded-tr-none' 
+                            ? 'bg-purple-600 text-white rounded-tr-none p-3' 
                             : msg.role === 'system'
-                            ? 'bg-red-50 text-red-600 border border-red-100 w-full text-center'
-                            : 'bg-white border border-gray-100 text-gray-900 rounded-tl-none overflow-hidden shadow-sm'
-                    }`,
-                    dangerouslySetInnerHTML: { 
-                        __html: (msg.role !== 'user') 
-                            ? processContent(msg.content)
-                            : msg.content.replace(/\n/g, '<br/>')
-                    }
-                })
+                            ? 'bg-red-50 text-red-600 border border-red-100 w-full text-center p-3'
+                            : msg.isDocument
+                            ? 'bg-white border-2 border-indigo-200 text-gray-900 rounded-tl-none overflow-hidden'
+                            : 'bg-white border border-gray-100 text-gray-900 rounded-tl-none overflow-hidden shadow-sm p-3'
+                    }`
+                },
+                    // Header pour les documents
+                    msg.isDocument && React.createElement('div', {
+                        className: 'bg-indigo-50 px-3 py-2 border-b border-indigo-100 flex items-center justify-between'
+                    },
+                        React.createElement('div', { className: 'flex items-center gap-2' },
+                            React.createElement('i', { className: 'fas fa-file-alt text-indigo-600' }),
+                            React.createElement('span', { className: 'text-xs font-semibold text-indigo-700 uppercase tracking-wide' }, 
+                                msg.documentTitle || 'Document'
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center gap-1' },
+                            React.createElement('button', {
+                                onClick: () => handleCopyDocument(msg),
+                                className: 'p-1.5 hover:bg-indigo-100 rounded text-indigo-600 transition-colors',
+                                title: 'Copier le document'
+                            },
+                                React.createElement('i', { className: 'fas fa-copy text-sm' })
+                            ),
+                            React.createElement('button', {
+                                onClick: () => handlePrintDocument(msg),
+                                className: 'p-1.5 hover:bg-indigo-100 rounded text-indigo-600 transition-colors',
+                                title: 'Imprimer le document'
+                            },
+                                React.createElement('i', { className: 'fas fa-print text-sm' })
+                            )
+                        )
+                    ),
+                    // Contenu
+                    React.createElement('div', {
+                        className: `prose-sm ${msg.isDocument ? 'p-3' : ''}`,
+                        dangerouslySetInnerHTML: { 
+                            __html: (msg.role !== 'user') 
+                                ? processContent(msg.content)
+                                : msg.content.replace(/\n/g, '<br/>')
+                        }
+                    })
+                )
             )
         );
     }, [messages]);

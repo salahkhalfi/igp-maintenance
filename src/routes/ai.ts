@@ -85,6 +85,493 @@ async function getTicketMaps(db: any) {
     return { statusMap, priorityMap, closedStatuses };
 }
 
+// --- DOCUMENT GENERATION: PROMPTS EXPERTS PAR DÉFAUT ---
+const DEFAULT_DOCUMENT_PROMPTS: Record<string, { prompt: string; temperature: number; triggers: string[] }> = {
+    reports: {
+        temperature: 0.3,
+        triggers: ['rapport', 'report', 'bilan', 'synthèse', 'analyse', 'kpi', 'statistiques', 'mensuel', 'hebdomadaire', 'journalier'],
+        prompt: `# RÔLE : Analyste Exécutif Senior - Rapports de Direction
+
+Tu génères des rapports professionnels de qualité institutionnelle pour la direction.
+
+## STRUCTURE OBLIGATOIRE
+
+1. **SYNTHÈSE EXÉCUTIVE** (3-5 lignes max)
+   - Message clé en première phrase
+   - Chiffre le plus important mis en évidence
+   - Recommandation principale
+
+2. **INDICATEURS CLÉS** (tableau ou liste structurée)
+   - Comparer à la période précédente si disponible
+   - Mettre en évidence les écarts significatifs (>10%)
+   - Format: Indicateur | Valeur | Tendance
+
+3. **ANALYSE DÉTAILLÉE** (puces concises)
+   - Faits observés uniquement (pas d'interprétation sans données)
+   - Causes identifiées ou hypothèses explicites
+   - Impact opérationnel quantifié
+
+4. **RECOMMANDATIONS** (max 5, actionnables)
+   - Format: Action + Responsable suggéré + Échéance proposée
+   - Priorisées par impact/urgence
+
+## RÈGLES DE STYLE
+- Phrases courtes (max 20 mots)
+- Voix active, jamais de conditionnel vague
+- Chiffres exacts, pas d'approximations ("plusieurs" → "7")
+- Tableaux markdown pour données comparatives
+- **Gras** pour les points critiques
+
+## TRADUCTIONS OBLIGATOIRES
+- CRITICAL → CRITIQUE | HIGH → HAUTE | MEDIUM → MOYENNE | LOW → BASSE
+- waiting_parts → En attente pièces | in_progress → En cours
+- completed → Terminé | operational → Opérationnel
+- out_of_service → Hors service | maintenance → En maintenance
+- MTTR → TMR (Temps Moyen de Réparation)
+- KPI → ICP (Indicateur Clé de Performance)
+
+## ANTI-PATTERNS (INTERDIT)
+❌ "Il serait souhaitable de..." → ✅ "Recommandation : [Action] avant le [Date]"
+❌ Introduction "Voici le rapport..." → ✅ Commencer directement par le contenu
+❌ Paragraphes > 4 lignes
+❌ Inventer des données non fournies`
+    },
+    
+    correspondence: {
+        temperature: 0.3,
+        triggers: ['lettre', 'correspondance', 'courrier', 'réponse', 'partenariat', 'remerciement', 'invitation'],
+        prompt: `# RÔLE : Secrétaire de Direction Exécutive - Correspondance Officielle
+
+Tu rédiges la correspondance officielle avec un niveau de professionnalisme institutionnel québécois.
+
+## FORMAT LETTRE STANDARD
+
+[EN-TÊTE ENTREPRISE - sera ajouté automatiquement]
+[DATE]
+
+[Destinataire]
+[Fonction]
+[Organisation]
+[Adresse]
+
+**Objet :** [Précis et informatif - une ligne]
+
+[Formule d'appel],
+
+[CORPS - 3 paragraphes max]
+- §1: Contexte/référence à une communication précédente
+- §2: Message principal / proposition / demande
+- §3: Conclusion / action attendue / prochaines étapes
+
+[Formule de politesse],
+
+[Signature]
+[Titre du signataire]
+
+## FORMULES PAR DESTINATAIRE
+
+| Destinataire | Appel | Clôture |
+|--------------|-------|---------|
+| Ministre/Haut fonctionnaire | Madame la Ministre, / Monsieur le Ministre, | Veuillez agréer l'expression de ma haute considération |
+| Directeur/Cadre | Madame la Directrice, / Monsieur le Directeur, | Veuillez recevoir mes salutations distinguées |
+| Partenaire commercial | Madame, / Monsieur, | Cordialement |
+| Fournisseur | Madame, / Monsieur, | Meilleures salutations |
+| Collègue/Interne | [Prénom], | Bien cordialement |
+
+## RÈGLES
+- Vouvoiement par défaut (tutoiement SEULEMENT si explicitement demandé)
+- Aucun anglicisme si équivalent français existe
+- Phrases directes mais courtoises
+- Terminer par une action claire ou une ouverture
+- Ton adapté au contexte (formel/semi-formel/cordial)`
+    },
+    
+    grants: {
+        temperature: 0.2,
+        triggers: ['subvention', 'financement', 'pari', 'cnrc', 'rsde', 'investissement québec', 'emploi-québec', 'écoleader', 'crédit d\'impôt', 'programme'],
+        prompt: `# RÔLE : Expert en Financement Gouvernemental - Demandes de Subventions
+
+Tu es spécialiste des programmes de subventions canadiens et québécois pour le secteur manufacturier.
+
+## PROGRAMMES CONNUS
+
+### Fédéral
+- **PARI-CNRC** : PME innovantes, jusqu'à 80% coûts, via Conseiller en technologie industrielle
+- **RS&DE** : Crédit d'impôt 35% (SPCC), documentation contemporaine OBLIGATOIRE
+- **FSI** : Projets >10M$, contributions remboursables
+- **Travail partagé** : Éviter mises à pied, 6-76 semaines
+
+### Québec
+- **ESSOR (Investissement Québec)** : Prêt/garantie jusqu'à 50%
+- **PIVOT** : Transformation numérique, IA, automatisation
+- **MFOR (Emploi-Québec)** : Formation, jusqu'à 50% des coûts
+- **Fonds Écoleader** : Projets durables, max 100k$
+- **Crédit R&D Québec** : 14-30% selon taille entreprise
+
+## STRUCTURE DEMANDE TYPE
+
+### 1. PRÉSENTATION DE L'ENTREPRISE (½ page)
+- Historique, date de fondation, évolution
+- Effectif actuel, chiffre d'affaires
+- Forces distinctives, avantages compétitifs
+- Certifications (ISO, etc.)
+
+### 2. DESCRIPTION DU PROJET (1 page)
+- Problématique / Opportunité de marché
+- Solution proposée et caractère innovant
+- Différenciation vs état de l'art
+- Objectifs SMART
+
+### 3. RETOMBÉES ATTENDUES (argumentaire ROI)
+- Emplois créés/maintenus (nombre, types)
+- Investissements privés générés
+- Bénéfices environnementaux/sociaux
+- Impact sur la compétitivité
+
+### 4. BUDGET DÉTAILLÉ (tableau)
+| Poste | Montant | Admissible | Source |
+|-------|---------|------------|--------|
+| Salaires R&D | X $ | Oui | Subvention |
+| Équipements | X $ | Partiel | Privé + Sub |
+| ... | ... | ... | ... |
+
+### 5. CALENDRIER (jalons)
+- Phase 1: [Description] - [Date]
+- Phase 2: [Description] - [Date]
+- Livraison finale: [Date]
+
+## RÈGLES
+- Valoriser les données opérationnelles réelles de l'entreprise
+- Ne JAMAIS inventer de chiffres - indiquer "[À compléter]" si manquant
+- Mentionner certifications et normes si pertinent
+- Langage aligné avec les critères d'évaluation du programme
+- Quantifier les retombées autant que possible`
+    },
+    
+    technical: {
+        temperature: 0.1,
+        triggers: ['procédure', 'manuel', 'fiche', 'sécurité', 'technique', 'spécification', 'checklist', 'protocole', 'mode opératoire'],
+        prompt: `# RÔLE : Ingénieur Documentaliste Senior - Documents Techniques
+
+Tu rédiges des documents techniques conformes aux standards industriels québécois/canadiens.
+
+## NORMES APPLICABLES
+
+### Sécurité (CNESST / CSA)
+- Cadenassage: CSA Z460
+- EPI: CSA Z94.1 (Casques), Z94.3 (Lunettes), Z195 (Chaussures)
+- SIMDUT 2015: Fiches de données de sécurité (16 sections)
+
+### Qualité
+- ISO 9001: Management qualité
+- ISO 14001: Management environnemental
+- ISO 45001: Santé et sécurité au travail
+
+### Électricité/Mécanique
+- CSA C22.1: Code électrique canadien
+- ASME: Chaudières et appareils sous pression
+
+## TYPES DE DOCUMENTS
+
+### Procédure Opérationnelle Standard (POS)
+1. **Objectif et portée**
+2. **Documents de référence**
+3. **Responsabilités** (qui fait quoi)
+4. **Équipements/matériaux requis**
+5. **Mesures de sécurité** (EPI, cadenassage)
+6. **Étapes détaillées** (numérotées, une action par point)
+7. **Critères de conformité** (comment vérifier)
+8. **Actions correctives** (si non-conformité)
+9. **Enregistrements** (formulaires à remplir)
+
+### Fiche de Sécurité (selon SIMDUT 2015)
+- 16 sections obligatoires
+- Pictogrammes SGH appropriés
+- Phrases H (Hazard) et P (Precaution)
+
+### Spécification Technique
+- Exigences fonctionnelles
+- Exigences de performance (mesurables)
+- Conditions d'essai
+- Critères d'acceptation/rejet
+
+## RÈGLES DE RÉDACTION
+- Verbes d'action à l'IMPÉRATIF (Vérifier, Appliquer, Contrôler)
+- ⚠️ DANGER / ⚠️ ATTENTION en début de section si risque
+- Unités SI avec équivalents impériaux entre parenthèses si pertinent
+- Numérotation hiérarchique (1, 1.1, 1.1.1)
+- Tableaux pour paramètres et tolérances
+- Schémas décrits textuellement si impossibles à afficher`
+    },
+    
+    creative: {
+        temperature: 0.5,
+        triggers: ['brochure', 'site web', 'communiqué', 'presse', 'discours', 'présentation', 'pitch', 'marketing', 'promotion'],
+        prompt: `# RÔLE : Directeur de Communication - Documents Créatifs
+
+Tu crées des contenus de communication valorisant l'entreprise et ses activités.
+
+## TYPES DE CONTENUS
+
+### Texte Site Web / Page À Propos
+- Accroche percutante (première phrase mémorable)
+- Histoire de l'entreprise (storytelling)
+- Valeurs et mission
+- Chiffres clés mis en avant
+- Appel à l'action clair
+
+### Communiqué de Presse
+- Titre accrocheur (< 10 mots)
+- Chapeau (qui, quoi, quand, où, pourquoi - 2 phrases)
+- Corps (contexte, détails, citations)
+- À propos de [Entreprise] (boilerplate)
+- Contact presse
+
+### Discours / Allocution
+- Ouverture captivante (anecdote, question, statistique choc)
+- 3 points clés maximum (règle de 3)
+- Exemples concrets et histoires
+- Conclusion mémorable avec appel à l'action
+
+### Pitch Commercial
+- Hook (problème client en 1 phrase)
+- Solution (notre offre en 2-3 phrases)
+- Preuves (chiffres, témoignages, certifications)
+- Différenciateurs (pourquoi nous vs concurrence)
+- Call-to-action
+
+## RÈGLES CRÉATIVES
+- Adapter le ton au public cible
+- Valoriser sans exagérer (crédibilité)
+- Utiliser les données réelles de l'entreprise
+- Phrases courtes et rythmées
+- Éviter le jargon sauf si public technique`
+    }
+};
+
+// --- DOCUMENT GENERATION: DÉTECTION D'INTENTION ---
+type DocumentIntent = {
+    isDocument: boolean;
+    type: 'reports' | 'correspondence' | 'grants' | 'technical' | 'creative' | 'conversation';
+    confidence: number;
+    needsData: string[];
+};
+
+function detectDocumentIntent(message: string): DocumentIntent {
+    const lowerMessage = message.toLowerCase();
+    
+    // Patterns qui indiquent clairement une demande de document
+    const documentPatterns = [
+        /(?:rédige|écris|prépare|génère|crée|fais|produis)[\s-]*(moi\s+)?(?:un|une|le|la|des)/i,
+        /(?:j'ai besoin|il me faut|peux-tu faire|pourrais-tu)/i,
+        /(?:pour (?:la réunion|le ca|demain|lundi|la direction|mon boss|le patron))/i,
+        /document|rapport|lettre|note de service|procédure|demande de/i
+    ];
+    
+    const isLikelyDocument = documentPatterns.some(p => p.test(message));
+    
+    if (!isLikelyDocument) {
+        return { isDocument: false, type: 'conversation', confidence: 0.9, needsData: [] };
+    }
+    
+    // Détecter le type spécifique
+    for (const [type, config] of Object.entries(DEFAULT_DOCUMENT_PROMPTS)) {
+        const matchCount = config.triggers.filter(t => lowerMessage.includes(t)).length;
+        if (matchCount > 0) {
+            // Déterminer les données nécessaires selon le type
+            let needsData: string[] = ['company'];
+            if (type === 'reports') needsData = ['company', 'tickets', 'machines', 'users', 'kpis'];
+            if (type === 'grants') needsData = ['company', 'machines', 'users', 'operational'];
+            if (type === 'technical') needsData = ['company', 'machines'];
+            
+            return {
+                isDocument: true,
+                type: type as DocumentIntent['type'],
+                confidence: Math.min(0.5 + (matchCount * 0.2), 0.95),
+                needsData
+            };
+        }
+    }
+    
+    // Document générique détecté mais type non identifié → créatif par défaut
+    return { isDocument: true, type: 'creative', confidence: 0.6, needsData: ['company'] };
+}
+
+// --- DOCUMENT GENERATION: COLLECTE DE DONNÉES ENRICHIES ---
+async function collectDocumentData(db: any, env: any, needsData: string[], period?: { start: string; end: string }) {
+    const data: Record<string, any> = {};
+    
+    // Période par défaut: ce mois
+    const now = new Date();
+    const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const defaultEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split('T')[0];
+    const startDate = period?.start || defaultStart;
+    const endDate = period?.end || defaultEnd;
+    
+    // Company info
+    if (needsData.includes('company')) {
+        try {
+            const companySettings = await db.select().from(systemSettings)
+                .where(inArray(systemSettings.setting_key, ['company_title', 'company_short_name', 'company_subtitle']))
+                .all();
+            data.company = {};
+            companySettings.forEach((s: any) => {
+                if (s.setting_key === 'company_title') data.company.name = s.setting_value;
+                if (s.setting_key === 'company_short_name') data.company.shortName = s.setting_value;
+                if (s.setting_key === 'company_subtitle') data.company.description = s.setting_value;
+            });
+        } catch (e) { console.warn('[AI] Failed to load company data'); }
+    }
+    
+    // Tickets avec stats
+    if (needsData.includes('tickets') || needsData.includes('kpis')) {
+        try {
+            const { statusMap, priorityMap, closedStatuses } = await getTicketMaps(db);
+            
+            // Tickets créés dans la période
+            const ticketsCreated = await db.select({
+                id: tickets.id,
+                ticket_id: tickets.ticket_id,
+                title: tickets.title,
+                status: tickets.status,
+                priority: tickets.priority,
+                created_at: tickets.created_at,
+                completed_at: tickets.completed_at,
+                machine_id: tickets.machine_id,
+                assigned_to: tickets.assigned_to
+            }).from(tickets)
+            .where(and(
+                sql`date(${tickets.created_at}) >= ${startDate}`,
+                sql`date(${tickets.created_at}) < ${endDate}`
+            )).all();
+            
+            // Tickets terminés dans la période
+            const ticketsCompleted = await db.select({
+                id: tickets.id,
+                created_at: tickets.created_at,
+                completed_at: tickets.completed_at
+            }).from(tickets)
+            .where(and(
+                sql`date(${tickets.completed_at}) >= ${startDate}`,
+                sql`date(${tickets.completed_at}) < ${endDate}`
+            )).all();
+            
+            // Tickets actifs
+            const activeTickets = await db.select({
+                id: tickets.id,
+                ticket_id: tickets.ticket_id,
+                title: tickets.title,
+                status: tickets.status,
+                priority: tickets.priority,
+                assigned_to: tickets.assigned_to
+            }).from(tickets)
+            .where(and(
+                not(inArray(tickets.status, closedStatuses)),
+                sql`deleted_at IS NULL`
+            )).all();
+            
+            // Calcul TMR (Temps Moyen de Réparation)
+            let avgResolutionHours = 0;
+            if (ticketsCompleted.length > 0) {
+                const totalMs = ticketsCompleted.reduce((acc: number, t: any) => {
+                    if (t.completed_at && t.created_at) {
+                        return acc + (new Date(t.completed_at).getTime() - new Date(t.created_at).getTime());
+                    }
+                    return acc;
+                }, 0);
+                avgResolutionHours = totalMs / ticketsCompleted.length / (1000 * 60 * 60);
+            }
+            
+            data.tickets = {
+                period: { start: startDate, end: endDate },
+                created: ticketsCreated.length,
+                completed: ticketsCompleted.length,
+                active: activeTickets.length,
+                critical: ticketsCreated.filter((t: any) => t.priority === 'critical' || t.priority === 'high').length,
+                tmr: avgResolutionHours.toFixed(1),
+                byPriority: {
+                    critical: ticketsCreated.filter((t: any) => t.priority === 'critical').length,
+                    high: ticketsCreated.filter((t: any) => t.priority === 'high').length,
+                    medium: ticketsCreated.filter((t: any) => t.priority === 'medium').length,
+                    low: ticketsCreated.filter((t: any) => t.priority === 'low').length
+                },
+                activeList: activeTickets.slice(0, 10).map((t: any) => ({
+                    ref: t.ticket_id,
+                    title: t.title,
+                    status: statusMap[t.status] || t.status,
+                    priority: priorityMap[t.priority] || t.priority
+                }))
+            };
+        } catch (e) { console.warn('[AI] Failed to load tickets data', e); }
+    }
+    
+    // Machines
+    if (needsData.includes('machines') || needsData.includes('operational')) {
+        try {
+            const machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all();
+            const machinesDown = machinesList.filter((m: any) => m.status === 'out_of_service' || m.status === 'maintenance');
+            
+            // Grouper par type
+            const byType: Record<string, any[]> = {};
+            machinesList.forEach((m: any) => {
+                const type = m.machine_type || 'Autre';
+                if (!byType[type]) byType[type] = [];
+                byType[type].push(m);
+            });
+            
+            data.machines = {
+                total: machinesList.length,
+                operational: machinesList.filter((m: any) => m.status === 'operational').length,
+                down: machinesDown.length,
+                byType: Object.entries(byType).map(([type, items]) => ({
+                    type,
+                    count: items.length,
+                    samples: items.slice(0, 3).map((m: any) => `${m.manufacturer || ''} ${m.model || ''}`.trim()).filter(Boolean)
+                })),
+                downList: machinesDown.map((m: any) => ({
+                    name: `${m.machine_type} ${m.model || ''}`.trim(),
+                    location: m.location,
+                    status: m.status
+                }))
+            };
+        } catch (e) { console.warn('[AI] Failed to load machines data', e); }
+    }
+    
+    // Users/Équipe
+    if (needsData.includes('users') || needsData.includes('operational')) {
+        try {
+            const usersList = await db.select({
+                id: users.id,
+                full_name: users.full_name,
+                role: users.role
+            }).from(users).where(sql`deleted_at IS NULL`).all();
+            
+            // Compter par rôle
+            const byRole: Record<string, number> = {};
+            const roleLabels: Record<string, string> = {
+                'admin': 'Administrateur',
+                'supervisor': 'Superviseur',
+                'technician': 'Technicien',
+                'senior_technician': 'Technicien Senior',
+                'operator': 'Opérateur',
+                'furnace_operator': 'Opérateur Fournaise'
+            };
+            
+            usersList.forEach((u: any) => {
+                const label = roleLabels[u.role] || u.role;
+                byRole[label] = (byRole[label] || 0) + 1;
+            });
+            
+            data.users = {
+                total: usersList.length,
+                byRole
+            };
+        } catch (e) { console.warn('[AI] Failed to load users data', e); }
+    }
+    
+    return data;
+}
+
 // --- HELPER: VISION RELAY (OpenAI) ---
 async function analyzeImageWithOpenAI(arrayBuffer: ArrayBuffer, contentType: string, apiKey: string): Promise<string | null> {
     try {
@@ -154,13 +641,24 @@ async function getAiConfig(db: any) {
         'ai_rules_block', 
         'ai_custom_context',
         'ai_voice_extraction_prompt',
-        'ai_whisper_context'
+        'ai_whisper_context',
+        'ai_document_prompts'
     ];
     
     const settings = await db.select().from(systemSettings).where(inArray(systemSettings.setting_key, keys)).all();
     
     const config: Record<string, string> = {};
     settings.forEach((s: any) => config[s.setting_key] = s.setting_value);
+
+    // Parse document prompts JSON or use defaults
+    let documentPrompts = DEFAULT_DOCUMENT_PROMPTS;
+    if (config['ai_document_prompts']) {
+        try {
+            documentPrompts = { ...DEFAULT_DOCUMENT_PROMPTS, ...JSON.parse(config['ai_document_prompts']) };
+        } catch (e) {
+            console.warn('[AI] Failed to parse ai_document_prompts, using defaults');
+        }
+    }
 
     return {
         identity: config['ai_identity_block'] || "RÔLE : Expert Industriel Senior.",
@@ -179,7 +677,8 @@ RÈGLES D'EXTRACTION STRICTES :
 4. **PRIORITÉ** : Déduis la priorité (critical/high/medium/low) selon les mots-clés.
 5. **DATES** : Convertis les termes relatifs en format ISO 8601 strict basé sur la Date Actuelle.
 6. **ASSIGNATION** : Assigne machine_id ou assigned_to_id SEULEMENT si la correspondance est parfaite.`,
-        whisperContext: config['ai_whisper_context'] || "Context: Industrial maintenance. Languages: English or French (including Quebec dialect)."
+        whisperContext: config['ai_whisper_context'] || "Context: Industrial maintenance. Languages: English or French (including Quebec dialect).",
+        documentPrompts
     };
 }
 
@@ -414,7 +913,7 @@ app.post('/chat', async (c) => {
         }
 
         const body = await c.req.json();
-        const { message, ticketContext, history } = body;
+        const { message, ticketContext, history, documentMode } = body;
 
         const db = getDb(c.env);
 
@@ -428,6 +927,68 @@ app.post('/chat', async (c) => {
         } 
 
         const aiConfig = await getAiConfig(db);
+        
+        // --- DOCUMENT GENERATION: Détection d'intention ---
+        const documentIntent = detectDocumentIntent(message);
+        const isDocumentRequest = documentMode === true || (documentIntent.isDocument && documentIntent.confidence > 0.6);
+        let documentData: Record<string, any> = {};
+        let documentPromptBlock = "";
+        
+        if (isDocumentRequest && documentIntent.type !== 'conversation') {
+            console.log(`📄 [AI] Document request detected: ${documentIntent.type} (confidence: ${documentIntent.confidence})`);
+            
+            // Collecter les données enrichies pour le document
+            documentData = await collectDocumentData(db, c.env, documentIntent.needsData);
+            
+            // Récupérer le prompt expert approprié
+            const expertConfig = aiConfig.documentPrompts[documentIntent.type];
+            if (expertConfig) {
+                documentPromptBlock = `
+
+--- 📄 MODE DOCUMENT ACTIVÉ ---
+TYPE: ${documentIntent.type.toUpperCase()}
+${expertConfig.prompt}
+
+## DONNÉES OPÉRATIONNELLES INJECTÉES
+${documentIntent.needsData.includes('company') && documentData.company ? `
+### Entreprise
+- Nom: ${documentData.company.name || '[Non configuré]'}
+- Abréviation: ${documentData.company.shortName || ''}
+- Description: ${documentData.company.description || ''}
+` : ''}
+${documentIntent.needsData.includes('tickets') && documentData.tickets ? `
+### Tickets (Période: ${documentData.tickets.period?.start} → ${documentData.tickets.period?.end})
+- Créés: ${documentData.tickets.created}
+- Terminés: ${documentData.tickets.completed}
+- Actifs: ${documentData.tickets.active}
+- Critiques/Hauts: ${documentData.tickets.critical}
+- TMR: ${documentData.tickets.tmr}h
+- Par priorité: Critique(${documentData.tickets.byPriority?.critical}) | Haute(${documentData.tickets.byPriority?.high}) | Moyenne(${documentData.tickets.byPriority?.medium}) | Basse(${documentData.tickets.byPriority?.low})
+${documentData.tickets.activeList?.length > 0 ? `\nTickets actifs:\n${documentData.tickets.activeList.map((t: any) => `- [${t.priority}] ${t.ref}: ${t.title} (${t.status})`).join('\n')}` : ''}
+` : ''}
+${documentIntent.needsData.includes('machines') && documentData.machines ? `
+### Parc Machines
+- Total: ${documentData.machines.total}
+- Opérationnelles: ${documentData.machines.operational}
+- Hors service/Maintenance: ${documentData.machines.down}
+${documentData.machines.byType?.map((t: any) => `- ${t.type}: ${t.count} unités${t.samples.length > 0 ? ` (${t.samples.join(', ')})` : ''}`).join('\n') || ''}
+${documentData.machines.downList?.length > 0 ? `\nMachines arrêtées:\n${documentData.machines.downList.map((m: any) => `- ${m.name} [${m.location}] - ${m.status}`).join('\n')}` : ''}
+` : ''}
+${documentIntent.needsData.includes('users') && documentData.users ? `
+### Effectif
+- Total: ${documentData.users.total} employés
+${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${role}: ${count}`).join('\n')}
+` : ''}
+
+## INSTRUCTIONS SPÉCIALES DOCUMENT
+1. Commence DIRECTEMENT par le contenu du document (pas de "Voici le document...")
+2. Utilise le format Markdown avec **gras**, listes, tableaux
+3. Ne mentionne PAS que tu es une IA ou que c'est généré automatiquement
+4. Le document doit être PRÊT À L'EMPLOI (copier-coller ou impression)
+5. À la fin, ajoute sur une nouvelle ligne: <!-- DOCUMENT_TYPE:${documentIntent.type} -->
+`;
+            }
+        }
 
         // 2. FETCH CONTEXT
         let machinesList: any[] = [];
@@ -767,6 +1328,7 @@ CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analy
 ${aiConfig.identity}
 
 ${ticketContextBlock}
+${documentPromptBlock}
 
 --- 1. CONTEXTE OPÉRATIONNEL ---
 - UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})${currentUserAiContext ? `\n- PROFIL UTILISATEUR : ${currentUserAiContext}` : ''}
@@ -836,7 +1398,13 @@ ${aiConfig.rules}
 
         while (turns < 5) {
             turns++;
-            const payload: any = { messages, temperature: 0.2, tools: TOOLS, tool_choice: "auto", model: "gpt-4o-mini" };
+            // Ajuster la température selon le type de document (plus basse = plus déterministe)
+            let temperature = 0.2;
+            if (isDocumentRequest && documentIntent.type !== 'conversation') {
+                const expertConfig = aiConfig.documentPrompts[documentIntent.type];
+                temperature = expertConfig?.temperature ?? 0.3;
+            }
+            const payload: any = { messages, temperature, tools: TOOLS, tool_choice: "auto", model: "gpt-4o-mini" };
             if (!c.env.OPENAI_API_KEY) throw new Error("API Key missing");
 
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -895,7 +1463,29 @@ ${aiConfig.rules}
         finalReply = finalReply
             .replace(/\/ticket\/([a-zA-Z0-9-]+)/g, '/?ticket=$1'); // Fix /ticket/ID -> /?ticket=ID
 
-        return c.json({ reply: finalReply });
+        // --- DOCUMENT GENERATION: Détecter si la réponse est un document ---
+        let detectedDocType: string | null = null;
+        const docTypeMatch = finalReply.match(/<!-- DOCUMENT_TYPE:(\w+) -->/);
+        if (docTypeMatch) {
+            detectedDocType = docTypeMatch[1];
+            // Retirer le marqueur du contenu visible
+            finalReply = finalReply.replace(/<!-- DOCUMENT_TYPE:\w+ -->/g, '').trim();
+        }
+
+        // Construire la réponse enrichie
+        const response: any = { reply: finalReply };
+        
+        if (isDocumentRequest && detectedDocType) {
+            response.isDocument = true;
+            response.documentType = detectedDocType;
+            response.documentTitle = documentIntent.type === 'reports' ? 'Rapport' :
+                                     documentIntent.type === 'correspondence' ? 'Correspondance' :
+                                     documentIntent.type === 'grants' ? 'Demande de subvention' :
+                                     documentIntent.type === 'technical' ? 'Document technique' :
+                                     'Document';
+        }
+
+        return c.json(response);
 
     } catch (e: any) {
         console.error("Chat AI Error:", e);
