@@ -2505,32 +2505,41 @@ Citer les références légales exactes (lois, articles, règlements).`,
             'rh': `
 DOCUMENT RESSOURCES HUMAINES
 
-Structure:
-1. Identification (employé, matricule, poste, département)
+Si le document concerne un employé spécifique, utilise:
+- get_user_details() pour les informations de l'employé
+- get_technician_info() pour les techniciens
+
+STRUCTURE:
+1. Identification (employé, poste, département)
 2. Objet et contexte
-3. Cadre légal (LNT, Code civil, politiques internes)
+3. Cadre légal (LNT, Code civil, CNESST si SST)
 4. Dispositions/Décision
 5. Engagements des parties
 6. Signatures
 
-Mentionner la confidentialité (Loi 25).`,
+CONFORMITÉ:
+- Loi 25 (protection des renseignements personnels)
+- Normes du travail québécoises
+- CNESST si lié à la santé-sécurité`,
 
             'technique': `
 DOCUMENT TECHNIQUE
 
-Structure:
-1. Métadonnées (référence, version, rédacteur, approbateur)
+Si le document concerne une machine ou un équipement, utilise:
+- search_machines() puis get_machine_details() pour les spécifications
+- search_tickets() pour l'historique des interventions
+
+STRUCTURE:
+1. Métadonnées (référence, version, rédacteur)
 2. Objet et portée
 3. Documents de référence (normes ISO, CSA)
-4. Définitions
-5. Responsabilités
-6. Équipements et matériaux
-7. Mesures de sécurité (EPI, cadenassage si applicable)
-8. Procédure détaillée
-9. Contrôle qualité
-10. Enregistrements
+4. Équipements concernés (avec specs réelles si disponibles)
+5. Mesures de sécurité (EPI, cadenassage si applicable)
+6. Procédure détaillée
+7. Contrôle qualité
 
-Pour la sécurité: mentionner clairement DANGER ou ATTENTION selon le risque.`,
+SÉCURITÉ: Mentionner DANGER ou ATTENTION selon le niveau de risque.
+NORMES: Référencer les normes canadiennes (CSA, CNESST) quand applicable.`,
 
             'financier': `
 DOCUMENT FINANCIER
@@ -2546,16 +2555,31 @@ Structure:
 Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-RAPPORT DE MAINTENANCE
+RAPPORT DE MAINTENANCE - QUALITÉ DIRECTION
 
-Utilise les outils disponibles pour collecter les données:
-- check_database_stats() pour les statistiques globales
-- search_tickets() pour les tickets récents
-- get_overdue_tickets() pour les retards
-- generate_team_report() pour la performance de l'équipe
-- search_machines() pour l'état du parc
+Tu rédiges un rapport destiné au conseil d'administration ou à la direction générale.
 
-Puis rédige un rapport de maintenance complet et professionnel.`,
+OUTILS À UTILISER:
+- check_database_stats() → statistiques globales et KPIs
+- search_tickets() → tickets de la période
+- get_overdue_tickets() → retards et urgences
+- generate_team_report() → performance des techniciens
+- search_machines() → état du parc machines
+
+CONTENU ATTENDU:
+1. Synthèse exécutive (3-4 phrases pour un dirigeant pressé)
+2. Indicateurs clés avec comparaison période précédente
+3. Performance de l'équipe (par technicien si pertinent)
+4. État du parc machines
+5. Points d'attention critiques (retards, urgences)
+6. Recommandations actionnables
+
+QUALITÉ:
+- Niveau cabinet de conseil (McKinsey, Deloitte)
+- Données factuelles issues des outils (jamais inventées)
+- Tableaux pour les chiffres
+- Analyse et insights, pas juste des listes
+- Prêt à être présenté tel quel`,
 
             'creatif': `
 DOCUMENT CRÉATIF
@@ -2602,25 +2626,41 @@ ${operationalContext}
 ${fullDatabaseContext}
 `;
 
-        const systemPrompt = `Tu es une secrétaire de direction experte. Tu rédiges des documents professionnels de haute qualité en français.
+        const systemPrompt = `Tu es une **Secrétaire de Direction d'élite** - experte en rédaction de documents professionnels.
 
 # ENTREPRISE
-${companyName || 'Entreprise'} - ${companySubtitle || ''}
+**${companyName || 'Entreprise'}**
+${companySubtitle || ''}
 
-# CONTEXTE
 ${aiConfig.identity || ''}
+${aiConfig.hierarchy || ''}
 ${aiConfig.knowledge || ''}
 
-# DATE
-${today}
+# DATE: ${today}
+
+# OUTILS DISPONIBLES
+Tu as accès à la base de données via des outils. **UTILISE-LES** pour obtenir des données réelles:
+- check_database_stats() - KPIs et statistiques
+- search_tickets() - Recherche de tickets
+- get_ticket_details() - Détails d'un ticket
+- search_machines() - Liste des machines
+- get_machine_details() - Détails d'une machine
+- get_technician_info() - Info technicien
+- generate_team_report() - Rapport d'équipe
+- get_overdue_tickets() - Tickets en retard
+
+# RÈGLES
+1. **DONNÉES RÉELLES**: Utilise les outils pour obtenir des données. Ne jamais inventer.
+2. **QUALITÉ PROFESSIONNELLE**: Documents prêts à l'emploi, niveau direction.
+3. **FRANÇAIS IMPECCABLE**: Qualité Académie française, terminologie OQLF.
+4. **FORMAT**: Markdown avec tableaux pour les données chiffrées.
 
 ${documentType !== 'rapports' ? legalKnowledgeBlock : ''}
 
-# TÂCHE
+# DOCUMENT DEMANDÉ
 ${typeInstructions}
 
-Tu as accès à des outils pour consulter la base de données. Utilise-les pour obtenir des données précises avant de rédiger.
-Format de sortie: Markdown professionnel.`;
+Commence directement par le contenu du document (pas de "Voici...").`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
         console.log(`📝 [Secretary] System prompt length: ${systemPrompt.length} chars`);
