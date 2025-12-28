@@ -376,7 +376,9 @@ ticketsRoute.patch('/:id', zValidator('param', ticketIdParamSchema), zValidator(
     if (body.description) updates.description = body.description;
     if (body.status) {
       updates.status = body.status;
-      if (body.status === 'completed') {
+      // Marquer completed_at pour tous les statuts de fermeture (completed, resolved, closed)
+      // Permet aux rapports IA de calculer le temps de résolution
+      if (['completed', 'resolved', 'closed'].includes(body.status)) {
         updates.completed_at = sql`CURRENT_TIMESTAMP`;
       }
       // AUTO-ASSIGN: When moving to "in_progress" and no one is assigned yet
