@@ -1,7 +1,7 @@
 /**
  * SecretariatModal - Secrétariat de Direction
  * Design Premium - Génération de documents professionnels
- * v2.1 - Aide contextuelle dynamique
+ * v2.2 - Responsive amélioré (mobile-first)
  */
 const SecretariatModal = ({ isOpen, onClose }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('correspondance');
@@ -10,320 +10,149 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     const [generatedDoc, setGeneratedDoc] = React.useState(null);
     const [isGenerating, setIsGenerating] = React.useState(false);
     const [viewMode, setViewMode] = React.useState('form');
+    const [mobileView, setMobileView] = React.useState('categories'); // 'categories' | 'form'
 
     // Textes d'aide dynamiques pour chaque type de document
     const helpTexts = {
         // Correspondance
         'Lettre officielle': {
-            tips: [
-                '📝 Précisez le nom complet et le titre du destinataire',
-                '🏢 Mentionnez le nom de l\'entreprise ou l\'organisme',
-                '📋 Décrivez clairement l\'objet et le contexte',
-                '📅 Indiquez les dates ou échéances importantes'
-            ],
-            example: 'Exemple : Lettre à M. Jean Tremblay, Directeur des achats chez Hydro-Québec, concernant notre proposition de fourniture de verre trempé pour le projet de modernisation des postes électriques. Budget approximatif : 150 000$.'
+            tips: ['📝 Nom et titre du destinataire', '🏢 Entreprise ou organisme', '📋 Objet et contexte', '📅 Dates importantes'],
+            example: 'Ex: Lettre à M. Tremblay, Directeur chez Hydro-Québec, concernant notre proposition de verre trempé. Budget : 150 000$.'
         },
         'Lettre de partenariat': {
-            tips: [
-                '🤝 Identifiez clairement l\'entreprise partenaire potentielle',
-                '💡 Décrivez les bénéfices mutuels du partenariat',
-                '📊 Mentionnez les chiffres clés (volumes, marchés)',
-                '🎯 Précisez vos objectifs communs'
-            ],
-            example: 'Exemple : Proposition de partenariat avec Vitrerie Nationale pour la distribution exclusive de nos produits dans la région de Montréal. Volume estimé : 500 unités/an. Objectif : couvrir 30% du marché montréalais.'
+            tips: ['🤝 Entreprise partenaire', '💡 Bénéfices mutuels', '📊 Volumes et marchés', '🎯 Objectifs communs'],
+            example: 'Ex: Partenariat avec Vitrerie Nationale pour distribution exclusive à Montréal. Volume : 500 unités/an.'
         },
         'Réponse fournisseur': {
-            tips: [
-                '📦 Indiquez le nom du fournisseur et son représentant',
-                '📄 Référencez le numéro de soumission ou demande',
-                '✅ Précisez si c\'est une acceptation ou un refus',
-                '💰 Mentionnez les conditions négociées si applicable'
-            ],
-            example: 'Exemple : Réponse à la soumission #2024-089 de Verre & Miroirs Inc. concernant la fourniture de float glass 6mm. Acceptation conditionnelle avec demande de réduction de 5% sur volumes > 1000m².'
+            tips: ['📦 Nom du fournisseur', '📄 Numéro de soumission', '✅ Acceptation ou refus', '💰 Conditions négociées'],
+            example: 'Ex: Réponse à soumission #2024-089 de Verre & Miroirs Inc. Acceptation avec -5% sur volumes > 1000m².'
         },
         'Lettre de remerciement': {
-            tips: [
-                '🙏 Identifiez clairement la personne ou l\'organisation',
-                '⭐ Précisez l\'action ou contribution à remercier',
-                '📅 Mentionnez la date de l\'événement si pertinent',
-                '🔮 Évoquez une collaboration future si souhaité'
-            ],
-            example: 'Exemple : Remerciement à l\'équipe de Boisvert Construction pour leur collaboration exemplaire sur le projet du Complexe Desjardins. Livraison complétée le 15 janvier avec zéro défaut.'
+            tips: ['🙏 Personne ou organisation', '⭐ Action à remercier', '📅 Date de l\'événement', '🔮 Collaboration future'],
+            example: 'Ex: Remerciement à Boisvert Construction pour le projet Complexe Desjardins. Livraison zéro défaut.'
         },
-
         // Subventions
         'PARI-CNRC': {
-            tips: [
-                '🔬 Décrivez l\'innovation technologique de votre projet',
-                '💰 Indiquez le budget total et la contribution demandée (jusqu\'à 80%)',
-                '👥 Mentionnez le nombre d\'emplois créés/maintenus',
-                '📈 Expliquez le potentiel commercial au Canada'
-            ],
-            example: 'Exemple : Développement d\'un procédé automatisé de trempe du verre à basse consommation énergétique. Budget : 250 000$. Demande PARI : 175 000$. Création de 3 postes techniques. Réduction de 40% des coûts énergétiques.'
+            tips: ['🔬 Innovation technologique', '💰 Budget (jusqu\'à 80%)', '👥 Emplois créés', '📈 Potentiel commercial'],
+            example: 'Ex: Procédé de trempe basse consommation. Budget: 250k$. Demande: 175k$. 3 postes créés.'
         },
         'Investissement Québec': {
-            tips: [
-                '🏭 Décrivez l\'investissement prévu au Québec',
-                '👷 Indiquez le nombre d\'emplois créés/maintenus',
-                '🌍 Précisez l\'impact sur l\'exportation',
-                '🏢 Mentionnez la région d\'implantation'
-            ],
-            example: 'Exemple : Acquisition d\'une ligne de production automatisée pour verre trempé. Investissement : 1,2M$. Création de 8 emplois à Drummondville. Objectif export : 25% de la production vers les USA.'
+            tips: ['🏭 Investissement au Québec', '👷 Emplois créés', '🌍 Impact export', '🏢 Région d\'implantation'],
+            example: 'Ex: Ligne automatisée verre trempé. 1,2M$. 8 emplois à Drummondville. Export 25% USA.'
         },
         'Crédit RS&DE': {
-            tips: [
-                '🧪 Décrivez les incertitudes technologiques surmontées',
-                '📊 Listez les dépenses admissibles (salaires, matériaux, sous-traitance)',
-                '📅 Précisez la période couverte (année fiscale)',
-                '🔬 Expliquez les avancées technologiques réalisées'
-            ],
-            example: 'Exemple : Recherche sur les propriétés mécaniques du verre feuilleté pour application architecturale. Année 2024. Salaires R&D : 180 000$. Matériaux : 45 000$. Incertitude : résistance aux impacts à basse température.'
+            tips: ['🧪 Incertitudes technologiques', '📊 Dépenses admissibles', '📅 Période couverte', '🔬 Avancées réalisées'],
+            example: 'Ex: Recherche verre feuilleté architectural 2024. Salaires R&D: 180k$. Matériaux: 45k$.'
         },
         'Fonds écologique': {
-            tips: [
-                '🌱 Décrivez l\'impact environnemental positif du projet',
-                '📉 Quantifiez les réductions (GES, énergie, déchets)',
-                '💵 Précisez le coût total et l\'aide demandée',
-                '🔄 Expliquez comment le projet s\'inscrit en économie circulaire'
-            ],
-            example: 'Exemple : Installation d\'un système de récupération de chaleur sur nos fours de trempe. Économie : 35% d\'énergie. Réduction GES : 120 tonnes CO2/an. Investissement : 85 000$. Demande : 42 500$ (50%).'
+            tips: ['🌱 Impact environnemental', '📉 Réductions (GES, énergie)', '💵 Coût et aide demandée', '🔄 Économie circulaire'],
+            example: 'Ex: Récupération chaleur fours. -35% énergie. -120t CO2/an. Investissement: 85k$.'
         },
         'Formation Emploi-QC': {
-            tips: [
-                '📚 Décrivez le programme de formation souhaité',
-                '👥 Indiquez le nombre d\'employés concernés',
-                '⏰ Précisez la durée et le calendrier de formation',
-                '🎯 Expliquez les compétences visées'
-            ],
-            example: 'Exemple : Formation CNC pour 6 opérateurs sur les nouvelles tables de découpe. Durée : 40h/personne. Période : mars-avril 2025. Organisme : Centre de formation professionnelle de Drummondville. Coût total : 18 000$.'
+            tips: ['📚 Programme de formation', '👥 Employés concernés', '⏰ Durée et calendrier', '🎯 Compétences visées'],
+            example: 'Ex: Formation CNC 6 opérateurs. 40h/pers. Mars-avril 2025. Coût: 18k$.'
         },
-
         // Administratif
         'Procès-verbal': {
-            tips: [
-                '📅 Indiquez la date, l\'heure et le lieu de la réunion',
-                '👥 Listez les participants présents et absents',
-                '📋 Énumérez les points à l\'ordre du jour',
-                '✅ Précisez les décisions prises et actions à suivre'
-            ],
-            example: 'Exemple : PV du Conseil d\'administration du 15 janvier 2025. Présents : P. Gagnon (PDG), M. Lavoie (CFO), S. Chen (COO). Points : Approbation budget Q1, Projet expansion Montréal, Nomination directeur RH.'
+            tips: ['📅 Date, heure, lieu', '👥 Présents et absents', '📋 Ordre du jour', '✅ Décisions et actions'],
+            example: 'Ex: PV CA du 15 janvier. Présents: PDG, CFO, COO. Points: Budget Q1, Expansion Montréal.'
         },
         'Politique interne': {
-            tips: [
-                '📜 Définissez clairement le sujet de la politique',
-                '👥 Précisez les employés/départements concernés',
-                '⚖️ Mentionnez les lois ou normes applicables',
-                '📅 Indiquez la date d\'entrée en vigueur'
-            ],
-            example: 'Exemple : Politique de télétravail pour les employés administratifs. Applicable dès février 2025. Maximum 2 jours/semaine. Équipement fourni par l\'entreprise. Conformité aux normes SST du Québec.'
+            tips: ['📜 Sujet de la politique', '👥 Personnes concernées', '⚖️ Lois applicables', '📅 Date d\'entrée en vigueur'],
+            example: 'Ex: Politique télétravail. Employés admin. Max 2j/sem. Février 2025. Conforme SST QC.'
         },
         'Contrat type': {
-            tips: [
-                '📝 Précisez le type de contrat (service, vente, location)',
-                '👥 Identifiez les parties contractantes typiques',
-                '💰 Décrivez les conditions financières standards',
-                '⏰ Indiquez les durées et conditions de résiliation'
-            ],
-            example: 'Exemple : Contrat type de fourniture de verre pour entrepreneurs généraux. Conditions : paiement 30 jours, livraison franco chantier, garantie 5 ans. Pénalités de retard : 2%/semaine. Juridiction : Québec.'
+            tips: ['📝 Type de contrat', '👥 Parties contractantes', '💰 Conditions financières', '⏰ Durée et résiliation'],
+            example: 'Ex: Contrat fourniture verre. Paiement 30j. Livraison franco. Garantie 5 ans.'
         },
         'Mise en demeure': {
-            tips: [
-                '⚠️ Identifiez précisément le débiteur/contrevenant',
-                '💰 Détaillez le montant dû ou le préjudice',
-                '📅 Précisez les dates et délais de paiement accordés',
-                '⚖️ Mentionnez les recours légaux envisagés'
-            ],
-            example: 'Exemple : Mise en demeure à Construction ABC Inc. pour facture impayée #2024-567 de 45 000$ + intérêts. Échue depuis 90 jours. Délai accordé : 10 jours. Défaut de paiement = poursuite au civil.'
+            tips: ['⚠️ Débiteur/contrevenant', '💰 Montant ou préjudice', '📅 Délais accordés', '⚖️ Recours légaux'],
+            example: 'Ex: Mise en demeure Construction ABC. Facture 45k$ impayée 90j. Délai: 10 jours.'
         },
-
-        // Ressources Humaines
+        // RH
         'Offre d\'emploi': {
-            tips: [
-                '💼 Décrivez le poste et les responsabilités principales',
-                '🎓 Listez les qualifications et expérience requises',
-                '💰 Indiquez la fourchette salariale et avantages',
-                '📍 Précisez le lieu de travail et horaire'
-            ],
-            example: 'Exemple : Technicien en transformation du verre. 5 ans d\'expérience minimum. DEP en techniques de fabrication. Salaire : 55 000-65 000$/an + assurances complètes. Drummondville, jour 7h-16h.'
+            tips: ['💼 Poste et responsabilités', '🎓 Qualifications requises', '💰 Salaire et avantages', '📍 Lieu et horaire'],
+            example: 'Ex: Technicien verre. 5 ans exp. DEP. 55-65k$/an + assurances. Drummondville, jour.'
         },
         'Lettre d\'embauche': {
-            tips: [
-                '👤 Nom complet du candidat retenu',
-                '💼 Titre du poste et département',
-                '📅 Date d\'entrée en fonction',
-                '💰 Salaire, avantages et conditions d\'emploi'
-            ],
-            example: 'Exemple : Offre à Marie Tremblay pour le poste de Superviseure de production. Début : 1er mars 2025. Salaire : 72 000$/an. Période probatoire : 3 mois. Assurance collective dès jour 1. 4 semaines vacances.'
+            tips: ['👤 Nom du candidat', '💼 Poste et département', '📅 Date d\'entrée', '💰 Salaire et conditions'],
+            example: 'Ex: Marie Tremblay, Superviseure production. 1er mars. 72k$/an. Probation 3 mois.'
         },
         'Évaluation employé': {
-            tips: [
-                '👤 Identifiez l\'employé et son poste',
-                '📅 Période d\'évaluation couverte',
-                '📊 Points forts et axes d\'amélioration',
-                '🎯 Objectifs pour la prochaine période'
-            ],
-            example: 'Exemple : Évaluation annuelle de Jean-Pierre Bouchard, Opérateur CNC. Période : 2024. Points forts : précision, assiduité. À améliorer : communication équipe. Objectif 2025 : formation leadership.'
+            tips: ['👤 Employé et poste', '📅 Période d\'évaluation', '📊 Forces et améliorations', '🎯 Objectifs suivants'],
+            example: 'Ex: Jean-Pierre Bouchard, Opérateur CNC. 2024. Forces: précision. Objectif: leadership.'
         },
         'Fin d\'emploi': {
-            tips: [
-                '👤 Nom de l\'employé et poste occupé',
-                '📅 Date de fin d\'emploi et dernier jour travaillé',
-                '💰 Détails de l\'indemnité de départ si applicable',
-                '📋 Raison de la fin d\'emploi (si approprié)'
-            ],
-            example: 'Exemple : Fin d\'emploi de Robert Martin, Manutentionnaire. Dernier jour : 28 février 2025. Motif : abolition de poste. Indemnité : 8 semaines de salaire. Lettre de recommandation fournie.'
+            tips: ['👤 Nom et poste', '📅 Dernier jour', '💰 Indemnité de départ', '📋 Motif si approprié'],
+            example: 'Ex: Robert Martin, Manutentionnaire. 28 février. Motif: abolition poste. Indemnité: 8 sem.'
         },
-
         // Technique
         'Manuel procédure': {
-            tips: [
-                '🔧 Décrivez le processus ou l\'équipement concerné',
-                '📋 Listez les étapes principales à documenter',
-                '⚠️ Mentionnez les points de sécurité critiques',
-                '👥 Précisez le personnel visé par cette procédure'
-            ],
-            example: 'Exemple : Manuel de procédure pour la trempe du verre 10mm. Étapes : inspection initiale, chargement four, cycle thermique, refroidissement, contrôle qualité. Opérateurs et superviseurs concernés.'
+            tips: ['🔧 Processus ou équipement', '📋 Étapes principales', '⚠️ Points de sécurité', '👥 Personnel visé'],
+            example: 'Ex: Manuel trempe verre 10mm. Étapes: inspection, chargement, cycle, contrôle qualité.'
         },
         'Fiche sécurité': {
-            tips: [
-                '⚠️ Identifiez le produit ou l\'équipement concerné',
-                '🛡️ Listez les EPI requis',
-                '🚨 Décrivez les risques et mesures d\'urgence',
-                '📞 Précisez les contacts en cas d\'incident'
-            ],
-            example: 'Exemple : FDS pour le nettoyant industriel utilisé sur les tables de découpe. Composants chimiques, risques d\'inhalation, EPI requis (gants nitrile, lunettes), procédure en cas de contact cutané.'
+            tips: ['⚠️ Produit ou équipement', '🛡️ EPI requis', '🚨 Risques et urgences', '📞 Contacts incident'],
+            example: 'Ex: FDS nettoyant industriel. Risques inhalation. EPI: gants, lunettes.'
         },
         'Spécification technique': {
-            tips: [
-                '📐 Décrivez le produit ou composant en détail',
-                '📏 Listez les dimensions et tolérances',
-                '🔬 Précisez les propriétés physiques requises',
-                '✅ Mentionnez les normes de certification'
-            ],
-            example: 'Exemple : Spécification pour verre trempé architectural. Épaisseur : 10mm ±0.2mm. Résistance flexion : 120 MPa min. Certification CSA A440. Traitement bords polis. Livraison sur chevalet A.'
+            tips: ['📐 Produit en détail', '📏 Dimensions et tolérances', '🔬 Propriétés physiques', '✅ Normes certification'],
+            example: 'Ex: Verre trempé architectural. 10mm ±0.2mm. Flexion 120 MPa. Certif CSA A440.'
         },
         'Checklist': {
-            tips: [
-                '📋 Décrivez l\'opération ou inspection visée',
-                '✅ Listez les points de vérification essentiels',
-                '📅 Précisez la fréquence (quotidien, hebdo, mensuel)',
-                '👤 Identifiez le responsable de la vérification'
-            ],
-            example: 'Exemple : Checklist quotidienne de démarrage four de trempe. Points : température initiale, pression air, niveau huile hydraulique, état convoyeurs, calibration capteurs. Responsable : opérateur de quart.'
+            tips: ['📋 Opération ou inspection', '✅ Points de vérification', '📅 Fréquence', '👤 Responsable'],
+            example: 'Ex: Checklist démarrage four. Points: temp, pression, huile, convoyeurs. Quotidien.'
         },
-
         // Financier
         'Demande financement': {
-            tips: [
-                '💰 Précisez le montant demandé et l\'utilisation',
-                '📊 Décrivez la situation financière actuelle',
-                '📈 Présentez les projections de revenus',
-                '🏦 Mentionnez les garanties offertes'
-            ],
-            example: 'Exemple : Demande de marge de crédit de 500 000$ à la Banque Nationale pour fonds de roulement. CA 2024 : 4,2M$. Croissance prévue : 15%. Garantie : équipements et comptes clients.'
+            tips: ['💰 Montant et utilisation', '📊 Situation financière', '📈 Projections revenus', '🏦 Garanties offertes'],
+            example: 'Ex: Marge crédit 500k$ Banque Nationale. CA 2024: 4,2M$. Croissance 15%.'
         },
         'Plan d\'affaires': {
-            tips: [
-                '📊 Précisez la section du plan à rédiger',
-                '🎯 Décrivez les objectifs stratégiques',
-                '📈 Incluez les données financières clés',
-                '🏭 Mentionnez les avantages concurrentiels'
-            ],
-            example: 'Exemple : Section "Analyse de marché" du plan d\'affaires. Focus : marché du verre architectural au Québec. Taille : 180M$/an. Croissance : 8%/an. Part de marché visée : 12% d\'ici 2027.'
+            tips: ['📊 Section à rédiger', '🎯 Objectifs stratégiques', '📈 Données financières', '🏭 Avantages concurrentiels'],
+            example: 'Ex: Section Analyse de marché. Verre architectural QC: 180M$/an. Part visée: 12%.'
         },
         'Justificatif dépenses': {
-            tips: [
-                '📝 Décrivez la nature des dépenses',
-                '💰 Listez les montants et les fournisseurs',
-                '📅 Précisez les dates des transactions',
-                '📂 Mentionnez le projet ou compte associé'
-            ],
-            example: 'Exemple : Justificatif pour dépenses R&D Q4 2024. Équipement de test : 25 000$ (Instruments QC). Matériaux : 8 000$ (divers fournisseurs). Main-d\'œuvre : 45 000$. Projet : Optimisation trempe.'
+            tips: ['📝 Nature des dépenses', '💰 Montants et fournisseurs', '📅 Dates transactions', '📂 Projet associé'],
+            example: 'Ex: Dépenses R&D Q4 2024. Équipement: 25k$. Matériaux: 8k$. Projet: Optimisation.'
         },
         'Rapport financier': {
-            tips: [
-                '📅 Précisez la période couverte',
-                '📊 Listez les indicateurs à inclure',
-                '📈 Mentionnez les comparatifs souhaités',
-                '💡 Indiquez les analyses spécifiques voulues'
-            ],
-            example: 'Exemple : Rapport financier mensuel janvier 2025. Incluant : revenus par ligne de produits, marge brute, dépenses par département, comparatif budget vs réel, prévisions Q1.'
+            tips: ['📅 Période couverte', '📊 Indicateurs à inclure', '📈 Comparatifs souhaités', '💡 Analyses spécifiques'],
+            example: 'Ex: Rapport janvier 2025. Revenus, marge, dépenses, budget vs réel, prévisions Q1.'
         },
-
         // Rapports
         'Rapport mensuel': {
-            tips: [
-                '📅 Le rapport utilisera vos données opérationnelles réelles',
-                '📊 KPIs inclus : tickets, temps réponse, disponibilité machines',
-                '👥 Performance par technicien disponible',
-                '🔧 État du parc machines intégré'
-            ],
-            example: 'L\'IA générera automatiquement un rapport complet basé sur vos données du mois : nombre de tickets traités, temps moyen de résolution, incidents critiques, et recommandations d\'amélioration.'
+            tips: ['📅 Données opérationnelles', '📊 KPIs automatiques', '👥 Performance techniciens', '🔧 État machines'],
+            example: 'Rapport automatique: tickets traités, temps résolution, incidents, recommandations.'
         },
         'Bilan performance': {
-            tips: [
-                '👥 Analyse de la performance de l\'équipe technique',
-                '⏱️ Temps de réponse et de résolution',
-                '📈 Tendances et comparaisons',
-                '🎯 Recommandations d\'amélioration'
-            ],
-            example: 'Génération d\'un bilan de performance incluant : productivité par technicien, taux de résolution premier contact, satisfaction client interne, et axes d\'amélioration identifiés.'
+            tips: ['👥 Équipe technique', '⏱️ Temps réponse/résolution', '📈 Tendances', '🎯 Recommandations'],
+            example: 'Bilan: productivité/technicien, taux résolution, satisfaction, axes amélioration.'
         },
         'État machines': {
-            tips: [
-                '🏭 Inventaire complet du parc machines',
-                '📊 Taux de disponibilité et pannes récurrentes',
-                '🔧 Maintenance préventive vs corrective',
-                '💰 Coûts de maintenance par équipement'
-            ],
-            example: 'Rapport détaillé sur l\'état du parc : disponibilité par machine, historique des pannes, maintenance effectuée, prévisions de remplacement, et budget maintenance.'
+            tips: ['🏭 Parc machines', '📊 Disponibilité et pannes', '🔧 Maintenance préventive', '💰 Coûts maintenance'],
+            example: 'Rapport: disponibilité/machine, historique pannes, prévisions remplacement.'
         },
         'Incidents critiques': {
-            tips: [
-                '🚨 Analyse des incidents majeurs du mois',
-                '⏱️ Impact sur la production',
-                '🔍 Causes racines identifiées',
-                '✅ Actions correctives mises en place'
-            ],
-            example: 'Rapport sur les incidents critiques : arrêts de production > 2h, pannes majeures, analyse des causes, mesures correctives appliquées, et recommandations préventives.'
+            tips: ['🚨 Incidents majeurs', '⏱️ Impact production', '🔍 Causes racines', '✅ Actions correctives'],
+            example: 'Rapport: arrêts > 2h, pannes majeures, causes, mesures correctives.'
         },
-
         // Créatif
         'Texte site web': {
-            tips: [
-                '🌐 Précisez la page ou section du site',
-                '🎯 Décrivez le message clé à transmettre',
-                '👥 Identifiez le public cible',
-                '✨ Mentionnez le ton souhaité (professionnel, dynamique...)'
-            ],
-            example: 'Exemple : Texte pour page "Nos services" du site web. Public : architectes et entrepreneurs. Message : expertise en verre architectural sur mesure. Ton : professionnel mais accessible. Inclure : 30 ans d\'expérience, certifications.'
+            tips: ['🌐 Page ou section', '🎯 Message clé', '👥 Public cible', '✨ Ton souhaité'],
+            example: 'Ex: Page Services. Public: architectes. Message: expertise sur mesure. Ton: professionnel.'
         },
         'Communiqué presse': {
-            tips: [
-                '📰 Décrivez l\'annonce ou l\'événement',
-                '📅 Précisez la date de diffusion souhaitée',
-                '🎤 Incluez les citations des dirigeants',
-                '📞 Mentionnez le contact média'
-            ],
-            example: 'Exemple : Communiqué annonçant l\'acquisition d\'une nouvelle ligne de trempe automatisée. Investissement : 1,5M$. 10 nouveaux emplois créés. Citation du PDG. Diffusion : 1er février 2025.'
+            tips: ['📰 Annonce ou événement', '📅 Date diffusion', '🎤 Citations dirigeants', '📞 Contact média'],
+            example: 'Ex: Acquisition ligne trempe. 1,5M$. 10 emplois. Citation PDG. Diffusion: 1er février.'
         },
         'Discours': {
-            tips: [
-                '🎤 Précisez l\'occasion et l\'audience',
-                '⏱️ Indiquez la durée souhaitée',
-                '💬 Décrivez les messages clés à transmettre',
-                '🎯 Mentionnez le ton désiré'
-            ],
-            example: 'Exemple : Discours pour le party de Noël des employés. Durée : 5 minutes. Thèmes : remerciements équipe, bilan 2024 positif, perspectives 2025 prometteuses. Ton : chaleureux et motivant.'
+            tips: ['🎤 Occasion et audience', '⏱️ Durée souhaitée', '💬 Messages clés', '🎯 Ton désiré'],
+            example: 'Ex: Party Noël employés. 5 min. Thèmes: remerciements, bilan 2024, perspectives.'
         },
         'Pitch commercial': {
-            tips: [
-                '🎯 Identifiez le client cible et son secteur',
-                '💡 Décrivez votre proposition de valeur',
-                '📊 Incluez des chiffres clés et références',
-                '✅ Mentionnez vos différenciateurs'
-            ],
-            example: 'Exemple : Pitch pour présentation à Pomerleau Construction. Services : fourniture verre architectural grands projets. Avantages : stock local, délais 2 semaines, service technique intégré. Références : Place Ville-Marie, Complexe Desjardins.'
+            tips: ['🎯 Client cible', '💡 Proposition de valeur', '📊 Chiffres et références', '✅ Différenciateurs'],
+            example: 'Ex: Pitch Pomerleau. Services: verre grands projets. Réf: Place Ville-Marie.'
         }
     };
 
@@ -347,7 +176,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             { icon: 'fa-file-contract', label: 'Contrat type', value: 'Préparer un contrat type pour : ' },
             { icon: 'fa-balance-scale', label: 'Mise en demeure', value: 'Rédiger une mise en demeure adressée à [nom] pour : ' }
         ]},
-        { id: 'rh', label: 'Ressources Humaines', icon: 'fa-users', color: 'purple', documents: [
+        { id: 'rh', label: 'RH', icon: 'fa-users', color: 'purple', documents: [
             { icon: 'fa-user-plus', label: 'Offre d\'emploi', value: 'Rédiger une offre d\'emploi pour le poste de : ' },
             { icon: 'fa-file-signature', label: 'Lettre d\'embauche', value: 'Lettre d\'offre d\'embauche pour [nom] au poste de : ' },
             { icon: 'fa-chart-line', label: 'Évaluation employé', value: 'Formulaire d\'évaluation de performance pour : ' },
@@ -390,10 +219,16 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         pink: { bg: 'bg-pink-500', light: 'bg-pink-50', text: 'text-pink-600', border: 'border-pink-200', ring: 'ring-pink-500' }
     };
 
-    // Sélection document avec mise à jour aide
     const selectDocument = (doc) => {
         setSelectedDocType(doc.label);
         setInstructions(doc.value);
+        setMobileView('form');
+    };
+
+    const selectCategory = (catId) => {
+        setSelectedCategory(catId);
+        setInstructions('');
+        setSelectedDocType(null);
     };
 
     const generateDocument = async () => {
@@ -425,7 +260,6 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
     };
 
-    // Markdown vers HTML amélioré
     const markdownToHtml = (md) => {
         if (!md) return '';
         let html = md
@@ -443,56 +277,31 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             .replace(/^# (.+)$/gm, '<h1>$1</h1>')
             .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
             .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-            .replace(/^(\s*)[\*\-] (.+)$/gm, (match, indent, content) => {
-                const level = Math.floor((indent || '').length / 2);
-                return `<li data-level="${level}">${content}</li>`;
-            })
+            .replace(/^(\s*)[\*\-] (.+)$/gm, (m, indent, content) => `<li data-level="${Math.floor((indent||'').length/2)}">${content}</li>`)
             .replace(/^\d+\. (.+)$/gm, '<li class="numbered">$1</li>');
-        
-        html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, (match) => {
-            if (match.includes('class="numbered"')) {
-                return `<ol>${match}</ol>`;
-            }
-            return `<ul>${match}</ul>`;
-        });
-        
-        html = html
-            .replace(/\n\n+/g, '</p><p>')
-            .replace(/\n/g, '<br>')
-            .replace(/^/, '<p>').replace(/$/, '</p>')
-            .replace(/<p><\/p>/g, '')
-            .replace(/<p>(<h[1234]>)/g, '$1')
-            .replace(/(<\/h[1234]>)<\/p>/g, '$1')
-            .replace(/<p>(<ul>)/g, '$1')
-            .replace(/(<\/ul>)<\/p>/g, '$1')
-            .replace(/<p>(<ol>)/g, '$1')
-            .replace(/(<\/ol>)<\/p>/g, '$1')
-            .replace(/<p>(<table>)/g, '$1')
-            .replace(/(<\/table>)<\/p>/g, '$1');
-        
+        html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, m => m.includes('class="numbered"') ? `<ol>${m}</ol>` : `<ul>${m}</ul>`);
+        html = html.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>')
+            .replace(/<p><\/p>/g, '').replace(/<p>(<h[1234]>)/g, '$1').replace(/(<\/h[1234]>)<\/p>/g, '$1')
+            .replace(/<p>(<ul>)/g, '$1').replace(/(<\/ul>)<\/p>/g, '$1').replace(/<p>(<ol>)/g, '$1').replace(/(<\/ol>)<\/p>/g, '$1')
+            .replace(/<p>(<table>)/g, '$1').replace(/(<\/table>)<\/p>/g, '$1');
         return html;
     };
 
     const documentStyles = `
-        .doc-content { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
-        .doc-content h1 { font-size: 18pt; font-weight: 700; color: #0f172a; margin: 24pt 0 12pt; padding-bottom: 8pt; border-bottom: 2pt solid #3b82f6; }
-        .doc-content h2 { font-size: 14pt; font-weight: 600; color: #1e293b; margin: 20pt 0 10pt; padding-left: 12pt; border-left: 3pt solid #3b82f6; }
-        .doc-content h3 { font-size: 12pt; font-weight: 600; color: #334155; margin: 16pt 0 8pt; }
-        .doc-content h4 { font-size: 11pt; font-weight: 600; color: #475569; margin: 14pt 0 6pt; }
-        .doc-content p { margin: 0 0 12pt; text-align: justify; }
-        .doc-content ul, .doc-content ol { margin: 12pt 0; padding-left: 24pt; }
-        .doc-content li { margin: 6pt 0; }
-        .doc-content strong { font-weight: 700; color: #0f172a; }
-        .doc-content em { font-style: italic; }
-        .doc-content table { width: 100%; border-collapse: collapse; margin: 16pt 0; font-size: 10pt; }
-        .doc-content th { background: #f1f5f9; border: 1pt solid #cbd5e1; padding: 10pt; text-align: left; font-weight: 600; }
-        .doc-content td { border: 1pt solid #cbd5e1; padding: 10pt; }
-        .doc-content tr:nth-child(even) { background: #f8fafc; }
+        .doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
+        .doc-content h1 { font-size: 16pt; font-weight: 700; color: #0f172a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #3b82f6; }
+        .doc-content h2 { font-size: 13pt; font-weight: 600; color: #1e293b; margin: 16pt 0 8pt; padding-left: 10pt; border-left: 3pt solid #3b82f6; }
+        .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 12pt 0 6pt; }
+        .doc-content p { margin: 0 0 10pt; text-align: justify; }
+        .doc-content ul, .doc-content ol { margin: 10pt 0; padding-left: 20pt; }
+        .doc-content li { margin: 4pt 0; }
+        .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; }
+        .doc-content th { background: #f1f5f9; border: 1pt solid #cbd5e1; padding: 8pt; text-align: left; }
+        .doc-content td { border: 1pt solid #cbd5e1; padding: 8pt; }
     `;
 
     const printDocument = async () => {
         if (!generatedDoc) return;
-        
         let companyShortName = 'IGP', companySubtitle = '', logoUrl = '/api/settings/logo';
         try {
             const res = await axios.get('/api/settings/config/public');
@@ -502,89 +311,32 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 if (res.data.company_logo_url) logoUrl = res.data.company_logo_url;
             }
         } catch (e) {}
-        
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         const html = markdownToHtml(generatedDoc.document);
         const title = generatedDoc.title || 'Document';
-        
-        const printHtml = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>${title}</title>
-    <style>
-        @page { size: A4; margin: 20mm 18mm 25mm 18mm; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.7; color: #333; }
-        
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30pt; padding-bottom: 15pt; border-bottom: 1pt solid #e0e0e0; }
-        .header-left { display: flex; align-items: center; }
-        .logo { height: 50pt; margin-right: 15pt; }
-        .brand { border-left: 3pt solid #3b82f6; padding-left: 15pt; }
-        .brand-name { font-size: 18pt; font-weight: 700; color: #0f172a; letter-spacing: -0.5pt; }
-        .brand-sub { font-size: 9pt; color: #64748b; margin-top: 4pt; }
-        .header-right { text-align: right; font-size: 10pt; color: #64748b; }
-        
-        .title-block { text-align: center; padding: 25pt 0; margin-bottom: 25pt; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 8pt; }
-        .title-block h1 { font-size: 20pt; font-weight: 700; color: #0f172a; margin: 0; }
-        
-        ${documentStyles.replace('.doc-content ', '.content ')}
-        
-        .footer { margin-top: 40pt; padding-top: 15pt; border-top: 1pt solid #e2e8f0; font-size: 9pt; color: #94a3b8; text-align: center; }
-        
-        @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .header, .title-block { page-break-inside: avoid; }
-            h1, h2, h3, h4 { page-break-after: avoid; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="header-left">
-            <img src="${logoUrl}" class="logo" onerror="this.style.display='none'">
-            <div class="brand">
-                <div class="brand-name">${companyShortName}</div>
-                <div class="brand-sub">${companySubtitle}</div>
-            </div>
-        </div>
-        <div class="header-right">
-            <div style="font-weight: 600; color: #334155;">${today}</div>
-        </div>
-    </div>
-    
-    <div class="title-block">
-        <h1>${title}</h1>
-    </div>
-    
-    <div class="content">${html}</div>
-    
-    <div class="footer">
-        Document généré par ${companyShortName} — Secrétariat de Direction
-    </div>
-</body>
-</html>`;
-        
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(printHtml);
-            printWindow.document.close();
-            printWindow.onload = () => {
-                setTimeout(() => {
-                    printWindow.focus();
-                    printWindow.print();
-                }, 250);
-            };
-        } else {
-            window.showToast && window.showToast('Popup bloquée. Autorisez les popups pour imprimer.', 'error');
-        }
+        const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
+<style>@page{size:A4;margin:20mm 18mm 25mm 18mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11pt;line-height:1.7;color:#333}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30pt;padding-bottom:15pt;border-bottom:1pt solid #e0e0e0}
+.header-left{display:flex;align-items:center}.logo{height:50pt;margin-right:15pt}.brand{border-left:3pt solid #3b82f6;padding-left:15pt}
+.brand-name{font-size:18pt;font-weight:700;color:#0f172a}.brand-sub{font-size:9pt;color:#64748b;margin-top:4pt}
+.header-right{text-align:right;font-size:10pt;color:#64748b}
+.title-block{text-align:center;padding:25pt 0;margin-bottom:25pt;background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);border-radius:8pt}
+.title-block h1{font-size:20pt;font-weight:700;color:#0f172a;margin:0}
+${documentStyles.replace('.doc-content ','.content ')}
+.footer{margin-top:40pt;padding-top:15pt;border-top:1pt solid #e2e8f0;font-size:9pt;color:#94a3b8;text-align:center}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.header,.title-block{page-break-inside:avoid}h1,h2,h3,h4{page-break-after:avoid}}</style></head>
+<body><div class="header"><div class="header-left"><img src="${logoUrl}" class="logo" onerror="this.style.display='none'"><div class="brand"><div class="brand-name">${companyShortName}</div><div class="brand-sub">${companySubtitle}</div></div></div>
+<div class="header-right"><div style="font-weight:600;color:#334155">${today}</div></div></div>
+<div class="title-block"><h1>${title}</h1></div><div class="content">${html}</div>
+<div class="footer">Document généré par ${companyShortName} — Secrétariat de Direction</div></body></html>`;
+        const w = window.open('', '_blank');
+        if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
+        else { window.showToast && window.showToast('Popup bloquée', 'error'); }
     };
 
     const copyDocument = () => {
         if (!generatedDoc?.document) return;
-        navigator.clipboard.writeText(generatedDoc.document).then(() => {
-            window.showToast && window.showToast('Document copié', 'success');
-        });
+        navigator.clipboard.writeText(generatedDoc.document).then(() => window.showToast && window.showToast('Document copié', 'success'));
     };
 
     const newDocument = () => {
@@ -592,6 +344,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         setViewMode('form');
         setInstructions('');
         setSelectedDocType(null);
+        setMobileView('categories');
     };
 
     if (!isOpen) return null;
@@ -600,221 +353,228 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     const colors = colorMap[currentCat?.color || 'indigo'];
     const currentHelp = selectedDocType ? helpTexts[selectedDocType] : null;
 
-    // Vue Preview (document généré)
+    // Vue Preview
     if (viewMode === 'preview' && generatedDoc) {
         return React.createElement('div', {
-            className: 'fixed inset-0 z-[9999] flex items-center justify-center',
+            className: 'fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4',
             style: { background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(4px)' }
         },
             React.createElement('div', {
-                className: 'bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden m-4',
+                className: 'bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl h-[95vh] sm:h-[90vh] flex flex-col overflow-hidden',
                 onClick: e => e.stopPropagation()
             },
-                // Header
-                React.createElement('div', { 
-                    className: 'bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between flex-shrink-0'
-                },
-                    React.createElement('div', { className: 'flex items-center gap-3 text-white' },
-                        React.createElement('i', { className: 'fas fa-file-alt text-xl' }),
-                        React.createElement('div', {},
-                            React.createElement('h2', { className: 'text-lg font-bold' }, generatedDoc.title || 'Document'),
-                            React.createElement('p', { className: 'text-xs text-emerald-100' }, 'Document généré avec succès')
+                // Header responsive
+                React.createElement('div', { className: 'bg-gradient-to-r from-emerald-600 to-teal-600 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0' },
+                    React.createElement('div', { className: 'flex items-center gap-2 sm:gap-3 text-white min-w-0' },
+                        React.createElement('i', { className: 'fas fa-file-alt text-lg sm:text-xl flex-shrink-0' }),
+                        React.createElement('div', { className: 'min-w-0' },
+                            React.createElement('h2', { className: 'text-base sm:text-lg font-bold truncate' }, generatedDoc.title || 'Document'),
+                            React.createElement('p', { className: 'text-xs text-emerald-100 hidden sm:block' }, 'Document généré')
                         )
                     ),
-                    React.createElement('div', { className: 'flex items-center gap-2' },
-                        React.createElement('button', {
-                            onClick: copyDocument,
-                            className: 'px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium transition-all flex items-center gap-2'
-                        }, React.createElement('i', { className: 'fas fa-copy' }), 'Copier'),
-                        React.createElement('button', {
-                            onClick: printDocument,
-                            className: 'px-4 py-2 bg-white text-emerald-600 rounded-lg text-sm font-semibold hover:bg-emerald-50 transition-all flex items-center gap-2'
-                        }, React.createElement('i', { className: 'fas fa-print' }), 'Imprimer'),
-                        React.createElement('button', {
-                            onClick: onClose,
-                            className: 'ml-2 w-9 h-9 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all'
-                        }, React.createElement('i', { className: 'fas fa-times' }))
-                    )
-                ),
-
-                // Document scrollable
-                React.createElement('div', { 
-                    className: 'flex-1 overflow-y-auto bg-slate-100 p-6'
-                },
-                    React.createElement('div', { 
-                        className: 'bg-white rounded-xl shadow-lg max-w-3xl mx-auto'
-                    },
-                        React.createElement('div', { className: 'p-8 md:p-12' },
-                            React.createElement('style', {}, documentStyles),
-                            React.createElement('div', { 
-                                className: 'doc-content',
-                                dangerouslySetInnerHTML: { __html: markdownToHtml(generatedDoc.document) }
-                            })
+                    React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2 flex-shrink-0' },
+                        React.createElement('button', { onClick: copyDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-all flex items-center gap-1 sm:gap-2' },
+                            React.createElement('i', { className: 'fas fa-copy' }),
+                            React.createElement('span', { className: 'hidden sm:inline' }, 'Copier')
+                        ),
+                        React.createElement('button', { onClick: printDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white text-emerald-600 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 sm:gap-2' },
+                            React.createElement('i', { className: 'fas fa-print' }),
+                            React.createElement('span', { className: 'hidden sm:inline' }, 'Imprimer')
+                        ),
+                        React.createElement('button', { onClick: onClose, className: 'ml-1 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center text-white' },
+                            React.createElement('i', { className: 'fas fa-times' })
                         )
                     )
                 ),
-
+                // Document
+                React.createElement('div', { className: 'flex-1 overflow-y-auto bg-slate-100 p-3 sm:p-6' },
+                    React.createElement('div', { className: 'bg-white rounded-lg sm:rounded-xl shadow-lg max-w-3xl mx-auto' },
+                        React.createElement('div', { className: 'p-4 sm:p-8 md:p-12' },
+                            React.createElement('style', {}, documentStyles),
+                            React.createElement('div', { className: 'doc-content', dangerouslySetInnerHTML: { __html: markdownToHtml(generatedDoc.document) } })
+                        )
+                    )
+                ),
                 // Footer
-                React.createElement('div', { className: 'px-6 py-4 bg-white border-t border-slate-200 flex items-center justify-between flex-shrink-0' },
-                    React.createElement('button', {
-                        onClick: newDocument,
-                        className: 'px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-2'
-                    }, React.createElement('i', { className: 'fas fa-plus' }), 'Nouveau document'),
-                    React.createElement('button', {
-                        onClick: onClose,
-                        className: 'px-5 py-2.5 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-xl transition-all'
-                    }, 'Fermer')
+                React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex items-center justify-between flex-shrink-0' },
+                    React.createElement('button', { onClick: newDocument, className: 'px-3 sm:px-5 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg sm:rounded-xl flex items-center gap-2' },
+                        React.createElement('i', { className: 'fas fa-plus' }),
+                        React.createElement('span', { className: 'hidden sm:inline' }, 'Nouveau')
+                    ),
+                    React.createElement('button', { onClick: onClose, className: 'px-4 sm:px-5 py-2 text-sm font-medium text-white bg-slate-800 rounded-lg sm:rounded-xl' }, 'Fermer')
                 )
             )
         );
     }
 
-    // Vue formulaire
+    // Vue Formulaire - Mobile : 2 écrans (catégories / formulaire)
     return React.createElement('div', {
-        className: 'fixed inset-0 z-[9999] flex items-center justify-center',
+        className: 'fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4',
         style: { background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(4px)' }
     },
         React.createElement('div', {
-            className: 'bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden m-4',
+            className: 'bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-5xl h-[95vh] sm:max-h-[92vh] flex flex-col overflow-hidden',
             onClick: e => e.stopPropagation()
         },
             // Header
-            React.createElement('div', { 
-                className: 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-8 py-5 flex items-center justify-between flex-shrink-0'
-            },
-                React.createElement('div', { className: 'flex items-center gap-4' },
-                    React.createElement('div', { className: 'w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center' },
-                        React.createElement('i', { className: 'fas fa-file-signature text-2xl text-white' })
+            React.createElement('div', { className: 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0' },
+                React.createElement('div', { className: 'flex items-center gap-3' },
+                    // Bouton retour mobile
+                    mobileView === 'form' && React.createElement('button', {
+                        onClick: () => setMobileView('categories'),
+                        className: 'sm:hidden w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-white mr-1'
+                    }, React.createElement('i', { className: 'fas fa-arrow-left' })),
+                    React.createElement('div', { className: 'w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0' },
+                        React.createElement('i', { className: 'fas fa-file-signature text-lg sm:text-2xl text-white' })
                     ),
-                    React.createElement('div', {},
-                        React.createElement('h2', { className: 'text-xl font-bold text-white tracking-tight' }, 'Secrétariat de Direction'),
-                        React.createElement('p', { className: 'text-sm text-slate-400' }, 'Génération de documents professionnels')
+                    React.createElement('div', { className: 'min-w-0' },
+                        React.createElement('h2', { className: 'text-base sm:text-xl font-bold text-white truncate' }, 'Secrétariat'),
+                        React.createElement('p', { className: 'text-xs text-slate-400 hidden sm:block' }, 'Documents professionnels')
                     )
                 ),
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all'
-                }, React.createElement('i', { className: 'fas fa-times' }))
+                React.createElement('button', { onClick: onClose, className: 'w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white' },
+                    React.createElement('i', { className: 'fas fa-times' })
+                )
             ),
 
-            // Corps avec sidebar
+            // Corps
             React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
-                // Sidebar
-                React.createElement('div', { className: 'w-52 bg-slate-50 border-r border-slate-200 p-3 overflow-y-auto flex-shrink-0' },
-                    React.createElement('div', { className: 'text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-2' }, 'Catégories'),
-                    categories.map(cat => {
-                        const catColors = colorMap[cat.color];
-                        const isActive = selectedCategory === cat.id;
-                        return React.createElement('button', {
-                            key: cat.id,
-                            onClick: () => { setSelectedCategory(cat.id); setInstructions(''); setSelectedDocType(null); },
-                            className: `w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg mb-0.5 transition-all text-left ${
-                                isActive ? `${catColors.light} ${catColors.text}` : 'hover:bg-slate-100 text-slate-600'
-                            }`
-                        },
-                            React.createElement('div', { 
-                                className: `w-7 h-7 rounded-lg ${isActive ? catColors.bg : 'bg-slate-200'} flex items-center justify-center transition-all`
+                
+                // MOBILE: Vue catégories OU formulaire
+                // DESKTOP: Les deux côte à côte
+                
+                // Sidebar / Liste catégories (visible sur desktop, ou mobile si mobileView='categories')
+                React.createElement('div', { 
+                    className: `${mobileView === 'categories' ? 'flex' : 'hidden'} sm:flex flex-col w-full sm:w-48 lg:w-52 bg-slate-50 border-r border-slate-200 overflow-hidden flex-shrink-0`
+                },
+                    // Titre catégories
+                    React.createElement('div', { className: 'p-3 border-b border-slate-200 bg-white sm:bg-transparent' },
+                        React.createElement('div', { className: 'text-xs font-semibold text-slate-500 uppercase tracking-wider' }, 'Catégories')
+                    ),
+                    // Liste catégories scrollable
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto p-2' },
+                        categories.map(cat => {
+                            const catColors = colorMap[cat.color];
+                            const isActive = selectedCategory === cat.id;
+                            return React.createElement('button', {
+                                key: cat.id,
+                                onClick: () => selectCategory(cat.id),
+                                className: `w-full flex items-center gap-2.5 px-3 py-2.5 sm:py-2 rounded-lg mb-1 transition-all text-left ${
+                                    isActive ? `${catColors.light} ${catColors.text} ring-1 ${catColors.ring}` : 'hover:bg-white text-slate-600'
+                                }`
                             },
-                                React.createElement('i', { className: `fas ${cat.icon} text-xs ${isActive ? 'text-white' : 'text-slate-500'}` })
-                            ),
-                            React.createElement('span', { className: `text-sm font-medium` }, cat.label)
-                        );
-                    })
+                                React.createElement('div', { className: `w-8 h-8 sm:w-7 sm:h-7 rounded-lg ${isActive ? catColors.bg : 'bg-slate-200'} flex items-center justify-center` },
+                                    React.createElement('i', { className: `fas ${cat.icon} text-sm sm:text-xs ${isActive ? 'text-white' : 'text-slate-500'}` })
+                                ),
+                                React.createElement('span', { className: 'text-sm font-medium flex-1' }, cat.label),
+                                React.createElement('i', { className: 'fas fa-chevron-right text-xs text-slate-400 sm:hidden' })
+                            );
+                        })
+                    ),
+                    // Documents de la catégorie (mobile only, dans le panneau catégories)
+                    React.createElement('div', { className: 'sm:hidden border-t border-slate-200 bg-white' },
+                        React.createElement('div', { className: 'p-3 pb-2' },
+                            React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                React.createElement('i', { className: `fas ${currentCat?.icon} ${colors.text}` }),
+                                React.createElement('span', { className: 'text-sm font-semibold text-slate-800' }, currentCat?.label)
+                            )
+                        ),
+                        React.createElement('div', { className: 'px-3 pb-3 grid grid-cols-2 gap-2' },
+                            (currentCat?.documents || []).map((doc, i) => 
+                                React.createElement('button', {
+                                    key: i,
+                                    onClick: () => selectDocument(doc),
+                                    className: `flex items-center gap-2 px-3 py-2.5 rounded-lg text-left text-sm bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200`
+                                },
+                                    React.createElement('i', { className: `fas ${doc.icon} text-xs text-slate-400` }),
+                                    React.createElement('span', { className: 'truncate flex-1' }, doc.label)
+                                )
+                            )
+                        )
+                    )
                 ),
 
-                // Zone principale
-                React.createElement('div', { className: 'flex-1 flex flex-col overflow-hidden' },
-                    // Modèles
-                    React.createElement('div', { className: 'p-5 border-b border-slate-200 bg-white flex-shrink-0' },
-                        React.createElement('div', { className: 'flex items-center gap-2 mb-3' },
+                // Zone principale (visible sur desktop, ou mobile si mobileView='form')
+                React.createElement('div', { 
+                    className: `${mobileView === 'form' ? 'flex' : 'hidden'} sm:flex flex-1 flex-col overflow-hidden`
+                },
+                    // Documents (desktop only)
+                    React.createElement('div', { className: 'hidden sm:block p-4 border-b border-slate-200 bg-white flex-shrink-0' },
+                        React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
                             React.createElement('i', { className: `fas ${currentCat?.icon} ${colors.text}` }),
-                            React.createElement('h3', { className: 'text-base font-semibold text-slate-800' }, currentCat?.label)
+                            React.createElement('h3', { className: 'text-sm font-semibold text-slate-800' }, currentCat?.label)
                         ),
-                        React.createElement('div', { className: 'grid grid-cols-2 lg:grid-cols-4 gap-2' },
+                        React.createElement('div', { className: 'flex flex-wrap gap-2' },
                             (currentCat?.documents || []).map((doc, i) => {
                                 const isSelected = selectedDocType === doc.label;
                                 return React.createElement('button', {
                                     key: i,
                                     onClick: () => selectDocument(doc),
-                                    className: `flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-sm ${
-                                        isSelected 
-                                            ? `${colors.light} ${colors.text} ring-2 ${colors.ring}` 
-                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
+                                    className: `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                                        isSelected ? `${colors.light} ${colors.text} ring-1 ${colors.ring}` : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                                     }`
                                 },
-                                    React.createElement('i', { className: `fas ${doc.icon} text-xs ${isSelected ? colors.text : 'text-slate-400'}` }),
-                                    React.createElement('span', { className: 'truncate' }, doc.label)
+                                    React.createElement('i', { className: `fas ${doc.icon} text-xs` }),
+                                    React.createElement('span', {}, doc.label)
                                 );
                             })
                         )
                     ),
 
-                    // Zone scrollable : Instructions + Aide
-                    React.createElement('div', { className: 'flex-1 overflow-y-auto bg-slate-50 p-5' },
-                        // Aide contextuelle (si un document est sélectionné)
-                        currentHelp && React.createElement('div', { 
-                            className: `mb-4 p-4 rounded-xl border-2 ${colors.border} ${colors.light}`
-                        },
-                            React.createElement('div', { className: 'flex items-center gap-2 mb-3' },
-                                React.createElement('i', { className: `fas fa-lightbulb ${colors.text}` }),
-                                React.createElement('span', { className: `text-sm font-semibold ${colors.text}` }, 'Trucs & Astuces')
+                    // Zone scrollable
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto bg-slate-50 p-3 sm:p-4' },
+                        // Type sélectionné (mobile)
+                        selectedDocType && React.createElement('div', { className: 'sm:hidden mb-3 flex items-center gap-2' },
+                            React.createElement('div', { className: `px-3 py-1.5 rounded-full ${colors.light} ${colors.text} text-sm font-medium flex items-center gap-2` },
+                                React.createElement('i', { className: 'fas fa-file-alt text-xs' }),
+                                selectedDocType
+                            )
+                        ),
+                        
+                        // Aide contextuelle
+                        currentHelp && React.createElement('div', { className: `mb-3 p-3 rounded-lg border ${colors.border} ${colors.light}` },
+                            React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
+                                React.createElement('i', { className: `fas fa-lightbulb ${colors.text} text-sm` }),
+                                React.createElement('span', { className: `text-xs font-semibold ${colors.text}` }, 'Conseils')
                             ),
-                            // Tips
-                            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-2 mb-3' },
+                            React.createElement('div', { className: 'grid grid-cols-2 gap-1.5 mb-2' },
                                 currentHelp.tips.map((tip, i) => 
-                                    React.createElement('div', { 
-                                        key: i, 
-                                        className: 'flex items-start gap-2 text-sm text-slate-700'
-                                    },
-                                        React.createElement('span', {}, tip)
-                                    )
+                                    React.createElement('div', { key: i, className: 'text-xs text-slate-600' }, tip)
                                 )
                             ),
-                            // Exemple
-                            React.createElement('div', { className: 'mt-3 pt-3 border-t border-slate-200' },
-                                React.createElement('p', { className: 'text-xs text-slate-600 italic' }, currentHelp.example)
-                            )
+                            React.createElement('p', { className: 'text-xs text-slate-500 italic border-t border-slate-200 pt-2 mt-1' }, currentHelp.example)
                         ),
 
                         // Instructions
                         React.createElement('label', { className: 'flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2' },
-                            React.createElement('i', { className: 'fas fa-pen text-slate-400' }),
-                            'Instructions détaillées'
+                            React.createElement('i', { className: 'fas fa-pen text-slate-400 text-xs' }),
+                            'Instructions'
                         ),
                         React.createElement('textarea', {
                             value: instructions,
                             onChange: e => setInstructions(e.target.value),
-                            placeholder: selectedDocType 
-                                ? `Complétez les informations pour votre ${selectedDocType.toLowerCase()}...`
-                                : 'Sélectionnez un type de document ci-dessus, puis décrivez précisément le document souhaité...',
-                            rows: 8,
-                            className: 'w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-slate-400 focus:ring-4 focus:ring-slate-100 outline-none resize-none text-slate-700 placeholder-slate-400 bg-white transition-all'
+                            placeholder: selectedDocType ? `Décrivez votre ${selectedDocType.toLowerCase()}...` : 'Sélectionnez un type de document...',
+                            rows: 6,
+                            className: 'w-full px-3 py-2.5 rounded-lg border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-100 outline-none resize-none text-sm text-slate-700 placeholder-slate-400 bg-white'
                         }),
-                        React.createElement('p', { className: 'mt-3 text-xs text-slate-500' },
+                        React.createElement('p', { className: 'mt-2 text-xs text-slate-500' },
                             React.createElement('i', { className: 'fas fa-info-circle mr-1' }),
-                            'L\'IA utilise les lois CA/QC, programmes de subventions et vos données opérationnelles.'
+                            'L\'IA utilise les lois CA/QC et vos données.'
                         )
                     ),
 
                     // Footer
-                    React.createElement('div', { className: 'px-5 py-4 bg-white border-t border-slate-200 flex items-center justify-end gap-3 flex-shrink-0' },
-                        React.createElement('button', {
-                            onClick: onClose,
-                            className: 'px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all'
-                        }, 'Annuler'),
+                    React.createElement('div', { className: 'px-3 sm:px-4 py-3 bg-white border-t flex items-center justify-end gap-2 flex-shrink-0' },
+                        React.createElement('button', { onClick: onClose, className: 'px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg' }, 'Annuler'),
                         React.createElement('button', {
                             onClick: generateDocument,
                             disabled: isGenerating || !instructions.trim(),
-                            className: `px-6 py-2.5 text-sm font-semibold text-white rounded-xl transition-all flex items-center gap-2 ${
-                                isGenerating || !instructions.trim() 
-                                    ? 'bg-slate-300 cursor-not-allowed' 
-                                    : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-500/25'
+                            className: `px-4 sm:px-5 py-2 text-sm font-semibold text-white rounded-lg flex items-center gap-2 ${
+                                isGenerating || !instructions.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-200'
                             }`
                         },
-                            isGenerating 
-                                ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' })
-                                : React.createElement('i', { className: 'fas fa-wand-magic-sparkles' }),
-                            isGenerating ? 'Génération en cours...' : 'Générer le document'
+                            isGenerating ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' }) : React.createElement('i', { className: 'fas fa-wand-magic-sparkles' }),
+                            React.createElement('span', {}, isGenerating ? 'Génération...' : 'Générer')
                         )
                     )
                 )
