@@ -2546,12 +2546,13 @@ INTERDIT:
         while (turns < MAX_TURNS) {
             turns++;
             const isLastTurn = turns === MAX_TURNS;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}${isLastTurn ? ' (FINAL - no tools)' : ''}`);
+            const usingDeepSeek = !!env.DEEPSEEK_API_KEY;
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using ${usingDeepSeek ? 'DeepSeek' : 'OpenAI'}${isLastTurn ? ' (FINAL - no tools)' : ''}`);
             
             try {
                 // Au dernier tour, forcer l'IA à répondre sans outils
                 const requestBody: any = {
-                    model: "gpt-4o-mini",
+                    model: env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini",
                     messages,
                     temperature: 0.3,
                     max_tokens: 4000
@@ -2563,10 +2564,17 @@ INTERDIT:
                 }
                 // Dernier tour: pas de tools = l'IA DOIT produire du contenu
                 
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                // Utiliser DeepSeek si disponible, sinon OpenAI
+                const apiUrl = env.DEEPSEEK_API_KEY 
+                    ? 'https://api.deepseek.com/chat/completions'
+                    : 'https://api.openai.com/v1/chat/completions';
+                const apiKey = env.DEEPSEEK_API_KEY || env.OPENAI_API_KEY;
+                const apiName = env.DEEPSEEK_API_KEY ? 'DeepSeek' : 'OpenAI';
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 
-                        'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
+                        'Authorization': `Bearer ${apiKey}`, 
                         'Content-Type': 'application/json' 
                     },
                     body: JSON.stringify(requestBody)
@@ -2574,9 +2582,9 @@ INTERDIT:
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('❌ [Secretary] OpenAI API error:', response.status, errorText);
+                    console.error(`❌ [Secretary] ${apiName} API error:`, response.status, errorText);
                     return c.json({ 
-                        error: `Erreur API OpenAI (${response.status}): ${errorText.substring(0, 200)}` 
+                        error: `Erreur API ${apiName} (${response.status}): ${errorText.substring(0, 200)}` 
                     }, 500);
                 }
                 
