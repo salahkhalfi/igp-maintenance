@@ -55,7 +55,8 @@
     "test:search": "node scripts/test-search.js",
     "hub:check": "bash check-hub-sync.sh",
     "hub:version": "grep -m1 'Version:' LESSONS-LEARNED-MEMOIRE.md",
-    "hub:changelog": "grep -A 20 'HISTORIQUE DES MODIFICATIONS' LESSONS-LEARNED-MEMOIRE.md"
+    "hub:changelog": "grep -A 20 'HISTORIQUE DES MODIFICATIONS' LESSONS-LEARNED-MEMOIRE.md",
+    "audit": "./scripts/audit-dead-code.sh"
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "^1.0.2",
