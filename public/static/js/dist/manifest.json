@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-28T09:56:51.177Z",
+  "generated": "2025-12-28T10:10:53.310Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -125,6 +125,11 @@
       "original": "SystemSettingsModal.js",
       "minified": "SystemSettingsModal.min.js",
       "savings": "56.1%"
+    },
+    {
+      "original": "TVDashboardModal.js",
+      "minified": "TVDashboardModal.min.js",
+      "savings": "45.8%"
     },
     {
       "original": "TicketAttachments.js",
