@@ -3198,7 +3198,12 @@ Utilise \`---\` pour séparer les sections majeures.
             const isLastTurn = turns === MAX_TURNS;
             
             // Priorité: OpenRouter (Claude 3.5 Sonnet) > OpenAI (GPT-4o)
-            const useOpenRouter = !!env.OPENROUTER_API_KEY;
+            // Note: Pour les tours avec tools, on utilise toujours OpenAI car plus fiable avec function calling
+            const hasOpenRouter = !!env.OPENROUTER_API_KEY;
+            const needsTools = !isLastTurn && SECRETARY_TOOLS.length > 0;
+            
+            // Utiliser OpenRouter uniquement pour le tour final (sans tools) pour la génération premium
+            const useOpenRouter = hasOpenRouter && isLastTurn;
             const apiUrl = useOpenRouter 
                 ? 'https://openrouter.ai/api/v1/chat/completions'
                 : 'https://api.openai.com/v1/chat/completions';
@@ -3206,7 +3211,7 @@ Utilise \`---\` pour séparer les sections majeures.
             const modelName = useOpenRouter ? 'anthropic/claude-3.5-sonnet' : 'gpt-4o';
             const apiName = useOpenRouter ? 'Claude 3.5 Sonnet (OpenRouter)' : 'GPT-4o (OpenAI)';
             
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using ${apiName}${isLastTurn ? ' (FINAL - no tools)' : ''}`);
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using ${apiName}${isLastTurn ? ' (FINAL - premium generation)' : ' (tools enabled)'}`);
             
             try {
                 // Au dernier tour, forcer l'IA à répondre sans outils
@@ -3230,7 +3235,7 @@ Utilise \`---\` pour séparer les sections majeures.
                 // OpenRouter nécessite des headers supplémentaires
                 if (useOpenRouter) {
                     headers['HTTP-Referer'] = baseUrl || 'https://app.igpglass.ca';
-                    headers['X-Title'] = 'IGP Secrétaire de Direction';
+                    headers['X-Title'] = 'IGP Secretary';
                 }
                 
                 const response = await fetch(apiUrl, {
@@ -3242,6 +3247,34 @@ Utilise \`---\` pour séparer les sections majeures.
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error(`❌ [Secretary] ${apiName} API error:`, response.status, errorText);
+                    
+                    // Fallback: si OpenRouter échoue au tour final, réessayer avec OpenAI
+                    if (useOpenRouter && env.OPENAI_API_KEY) {
+                        console.log(`🔄 [Secretary] Fallback to OpenAI GPT-4o`);
+                        const fallbackResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: { 
+                                'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify({
+                                model: 'gpt-4o',
+                                messages,
+                                temperature: 0.3,
+                                max_tokens: 4000
+                            })
+                        });
+                        
+                        if (fallbackResponse.ok) {
+                            const fallbackData = await fallbackResponse.json() as any;
+                            const fallbackMessage = fallbackData.choices[0]?.message;
+                            if (fallbackMessage?.content) {
+                                aiResponse = fallbackMessage.content;
+                                break;
+                            }
+                        }
+                    }
+                    
                     return c.json({ 
                         error: `Erreur API ${apiName} (${response.status}): ${errorText.substring(0, 200)}` 
                     }, 500);
