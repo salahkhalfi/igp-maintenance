@@ -2546,7 +2546,16 @@ Structure:
 Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-Rédige un rapport de maintenance professionnel basé sur les données fournies ci-dessus.`,
+RAPPORT DE MAINTENANCE
+
+Utilise les outils disponibles pour collecter les données:
+- check_database_stats() pour les statistiques globales
+- search_tickets() pour les tickets récents
+- get_overdue_tickets() pour les retards
+- generate_team_report() pour la performance de l'équipe
+- search_machines() pour l'état du parc
+
+Puis rédige un rapport de maintenance complet et professionnel.`,
 
             'creatif': `
 DOCUMENT CRÉATIF
@@ -2595,15 +2604,23 @@ ${fullDatabaseContext}
 
         const systemPrompt = `Tu es une secrétaire de direction experte. Tu rédiges des documents professionnels de haute qualité en français.
 
-${companyIdentityBlock}
+# ENTREPRISE
+${companyName || 'Entreprise'} - ${companySubtitle || ''}
 
-Date: ${today}
+# CONTEXTE
+${aiConfig.identity || ''}
+${aiConfig.knowledge || ''}
 
-${documentType === 'rapports' ? '' : legalKnowledgeBlock}
+# DATE
+${today}
 
+${documentType !== 'rapports' ? legalKnowledgeBlock : ''}
+
+# TÂCHE
 ${typeInstructions}
 
-Utilise les données fournies ci-dessus pour rédiger le document demandé. Format: Markdown.`;
+Tu as accès à des outils pour consulter la base de données. Utilise-les pour obtenir des données précises avant de rédiger.
+Format de sortie: Markdown professionnel.`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
         console.log(`📝 [Secretary] System prompt length: ${systemPrompt.length} chars`);
@@ -2622,12 +2639,8 @@ Utilise les données fournies ci-dessus pour rédiger le document demandé. Form
             return c.json({ error: 'Clé API OpenAI manquante' }, 500);
         }
         
-        // Pour les rapports, on a déjà toutes les données dans le contexte
-        // Pas besoin de tools, appel direct
-        const useTools = documentType !== 'rapports';
-        
-        // Outils disponibles pour les autres types de documents
-        const SECRETARY_TOOLS = useTools ? TOOLS.filter(t => [
+        // TOUJOURS utiliser les outils - comme l'Expert Industriel
+        const SECRETARY_TOOLS = TOOLS.filter(t => [
             'search_tickets',
             'get_ticket_details', 
             'search_machines',
@@ -2640,7 +2653,7 @@ Utilise les données fournies ci-dessus pour rédiger le document demandé. Form
             'get_overdue_tickets',
             'get_unassigned_tickets',
             'generate_team_report'
-        ].includes(t.function.name)) : [];
+        ].includes(t.function.name));
         
         const messages: any[] = [
             { role: "system", content: systemPrompt },
@@ -2648,7 +2661,7 @@ Utilise les données fournies ci-dessus pour rédiger le document demandé. Form
         ];
         
         let turns = 0;
-        const MAX_TURNS = useTools ? 5 : 1; // Un seul tour pour les rapports (données déjà fournies)
+        const MAX_TURNS = 5; // Permettre plusieurs tours pour les appels d'outils
         
         while (turns < MAX_TURNS) {
             turns++;
@@ -2657,20 +2670,14 @@ Utilise les données fournies ci-dessus pour rédiger le document demandé. Form
             console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}${isLastTurn ? ' (FINAL)' : ''}`);
             
             try {
-                // Plus de tokens pour les rapports élaborés
-                const maxTokens = documentType === 'rapports' ? 16000 : 4000;
-                
                 const requestBody: any = {
                     model: 'gpt-4o',
                     messages,
                     temperature: 0.3,
-                    max_tokens: maxTokens
+                    max_tokens: 8000,
+                    tools: SECRETARY_TOOLS,
+                    tool_choice: "auto"
                 };
-                
-                if (!isLastTurn) {
-                    requestBody.tools = SECRETARY_TOOLS;
-                    requestBody.tool_choice = "auto";
-                }
                 
                 const headers: Record<string, string> = { 
                     'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
