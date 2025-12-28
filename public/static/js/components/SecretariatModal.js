@@ -320,20 +320,20 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     };
 
     const documentStyles = `
-        .doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
-        .doc-content h1 { font-size: 16pt; font-weight: 700; color: #0f172a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #3b82f6; }
-        .doc-content h2 { font-size: 13pt; font-weight: 600; color: #1e293b; margin: 16pt 0 8pt; padding-left: 10pt; border-left: 3pt solid #3b82f6; }
-        .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 12pt 0 6pt; }
-        .doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 5pt; }
-        .doc-content p { margin: 0 0 10pt; text-align: justify; }
-        .doc-content ul, .doc-content ol { margin: 10pt 0; padding-left: 20pt; }
-        .doc-content li { margin: 4pt 0; }
-        .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; border: 1pt solid #334155 !important; }
-        .doc-content th { background-color: #e2e8f0 !important; border: 1pt solid #334155 !important; padding: 8pt; text-align: left; font-weight: 600; color: #0f172a !important; }
-        .doc-content td { border: 1pt solid #334155 !important; padding: 8pt; }
+        .doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
+        .doc-content h1 { font-size: 15pt; font-weight: 700; color: #0f172a; margin: 18pt 0 8pt; padding-bottom: 4pt; border-bottom: 2pt solid #3b82f6; }
+        .doc-content h2 { font-size: 12pt; font-weight: 600; color: #1e293b; margin: 14pt 0 6pt; padding-left: 8pt; border-left: 3pt solid #3b82f6; }
+        .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 10pt 0 4pt; }
+        .doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 8pt 0 4pt; }
+        .doc-content p { margin: 0 0 8pt; text-align: justify; }
+        .doc-content ul, .doc-content ol { margin: 6pt 0 8pt; padding-left: 18pt; }
+        .doc-content li { margin: 3pt 0; }
+        .doc-content table { width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 9pt; border: 1pt solid #334155 !important; }
+        .doc-content th { background-color: #e2e8f0 !important; border: 1pt solid #334155 !important; padding: 6pt 8pt; text-align: left; font-weight: 600; color: #0f172a !important; }
+        .doc-content td { border: 1pt solid #334155 !important; padding: 6pt 8pt; }
         .doc-content tr:nth-child(even) td { background-color: #f8fafc !important; }
-        .doc-content hr, .doc-content .doc-separator { border: none; border-top: 1pt solid #e2e8f0; margin: 16pt 0; }
-        .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 12pt 0; border-radius: 4pt; display: block; }
+        .doc-content hr, .doc-content .doc-separator { border: none; border-top: 1pt solid #cbd5e1; margin: 12pt 0; }
+        .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 10pt 0; border-radius: 4pt; display: block; }
         .doc-content a { color: #3b82f6; text-decoration: underline; }
         .doc-content code { background: #f1f5f9; padding: 2pt 4pt; border-radius: 3pt; font-family: monospace; font-size: 10pt; }
         .doc-content strong { font-weight: 700; color: #0f172a; }
@@ -358,28 +358,28 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 <style>
 @page { size: A4; margin: 15mm 18mm 18mm 18mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
+body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
 /* Header corporate */
-.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; }
-.print-header-left { display: flex; align-items: center; gap: 12px; }
-.print-header-left img { height: 40px; }
-.print-header-left .brand { border-left: 3px solid #3b82f6; padding-left: 10px; }
-.print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; color: #0f172a; }
+.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; }
+.print-header-left { display: flex; align-items: center; gap: 10px; }
+.print-header-left img { height: 36px; }
+.print-header-left .brand { border-left: 2px solid #3b82f6; padding-left: 8px; }
+.print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 13pt; font-weight: 700; color: #0f172a; }
 .print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #64748b; }
-.print-header-right { font-family: Arial, sans-serif; font-size: 10pt; color: #64748b; }
-/* Même styles que doc-content */
-.doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.8; color: #1a1a1a; }
-.doc-content h1 { font-size: 16pt; font-weight: 700; color: #0f172a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #3b82f6; }
-.doc-content h2 { font-size: 13pt; font-weight: 600; color: #1e293b; margin: 16pt 0 8pt; padding-left: 10pt; border-left: 3pt solid #3b82f6; }
-.doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 12pt 0 6pt; }
-.doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 5pt; }
-.doc-content p { margin: 0 0 10pt; text-align: justify; }
-.doc-content ul, .doc-content ol { margin: 10pt 0; padding-left: 20pt; }
-.doc-content li { margin: 4pt 0; }
-.doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; border: 1pt solid #334155; }
-.doc-content th { background-color: #e2e8f0; border: 1pt solid #334155; padding: 8pt; text-align: left; font-weight: 600; }
-.doc-content td { border: 1pt solid #334155; padding: 8pt; }
-.doc-content hr { border: none; border-top: 1pt solid #e2e8f0; margin: 16pt 0; }
+.print-header-right { font-family: Arial, sans-serif; font-size: 9pt; color: #64748b; }
+/* Même styles que doc-content - espacements cohérents */
+.doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
+.doc-content h1 { font-size: 15pt; font-weight: 700; color: #0f172a; margin: 18pt 0 8pt; padding-bottom: 4pt; border-bottom: 2pt solid #3b82f6; }
+.doc-content h2 { font-size: 12pt; font-weight: 600; color: #1e293b; margin: 14pt 0 6pt; padding-left: 8pt; border-left: 3pt solid #3b82f6; }
+.doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 10pt 0 4pt; }
+.doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 8pt 0 4pt; }
+.doc-content p { margin: 0 0 8pt; text-align: justify; }
+.doc-content ul, .doc-content ol { margin: 6pt 0 8pt; padding-left: 18pt; }
+.doc-content li { margin: 3pt 0; }
+.doc-content table { width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 9pt; border: 1pt solid #334155; }
+.doc-content th { background-color: #e2e8f0; border: 1pt solid #334155; padding: 6pt 8pt; text-align: left; font-weight: 600; }
+.doc-content td { border: 1pt solid #334155; padding: 6pt 8pt; }
+.doc-content hr { border: none; border-top: 1pt solid #cbd5e1; margin: 12pt 0; }
 .doc-content strong { font-weight: 700; color: #0f172a; }
 @media print {
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
