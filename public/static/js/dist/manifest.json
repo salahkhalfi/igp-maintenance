@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-28T10:27:32.748Z",
+  "generated": "2025-12-28T10:32:40.314Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -94,7 +94,7 @@
     {
       "original": "ProductionPlanning_v3.js",
       "minified": "ProductionPlanning_v3.min.js",
-      "savings": "39.6%"
+      "savings": "39.7%"
     },
     {
       "original": "PromptModal.js",

@@ -28,6 +28,9 @@ const ProductionPlanning = ({ onClose }) => {
     const [categories, setCategories] = React.useState(DEFAULT_CATEGORIES);
     const [showCategoryModal, setShowCategoryModal] = React.useState(false);
     const [editingCategory, setEditingCategory] = React.useState(null);
+    
+    // Modal TV Dashboard
+    const [showTvModal, setShowTvModal] = React.useState(false);
 
     const [events, setEvents] = React.useState([]);
     const [plannerNotes, setPlannerNotes] = React.useState([]);
@@ -972,9 +975,9 @@ const ProductionPlanning = ({ onClose }) => {
                         className: `w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm ${viewMode === 'list' ? 'bg-slate-800 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`
                     }, React.createElement('i', { className: viewMode === 'calendar' ? 'fas fa-tv' : 'fas fa-calendar-alt' })),
 
-                    // Bouton Admin TV
+                    // Bouton Admin TV - Ouvre le modal TVDashboardModal
                     React.createElement('button', { 
-                        onClick: () => window.open('/admin/tv', '_blank'),
+                        onClick: () => setShowTvModal(true),
                         title: 'Configuration écran TV',
                         className: 'w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm bg-white border-slate-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300'
                     }, React.createElement('i', { className: 'fas fa-desktop' })),
@@ -1256,6 +1259,12 @@ const ProductionPlanning = ({ onClose }) => {
             currentDate,
             onClose: () => setShowPrintModal(false),
             onPrint: executePrint
+        }),
+
+        // Modal TV Dashboard
+        showTvModal && window.TVDashboardModal && React.createElement(window.TVDashboardModal, {
+            isOpen: showTvModal,
+            onClose: () => setShowTvModal(false)
         })
     );
 };
