@@ -272,17 +272,16 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             if (!/^[\s|:-]+$/.test(separatorLine)) return tableText;
             
             const headerCells = lines[0].split('|').map(c => c.trim()).filter(c => c);
-            const thStyle = 'style="border:1px solid #1e293b;padding:8px 10px;text-align:left;font-weight:700;background-color:#e2e8f0;color:#0f172a"';
+            const thStyle = 'style="border:2px solid #000 !important;padding:10px 12px;text-align:left;font-weight:bold;background:#d1d5db !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important"';
             const headerHtml = headerCells.map(c => `<th ${thStyle}>${c}</th>`).join('');
             
-            const tdStyle = 'style="border:1px solid #1e293b;padding:8px 10px"';
+            const tdStyle = 'style="border:1px solid #000 !important;padding:8px 12px"';
             const bodyRows = lines.slice(2).map((row, idx) => {
                 const cells = row.split('|').map(c => c.trim()).filter(c => c);
-                const rowBg = idx % 2 === 1 ? 'background-color:#f8fafc;' : '';
-                return `<tr style="${rowBg}">${cells.map(c => `<td ${tdStyle}>${c}</td>`).join('')}</tr>`;
+                return `<tr>${cells.map(c => `<td ${tdStyle}>${c}</td>`).join('')}</tr>`;
             }).join('');
             
-            const tableStyle = 'style="width:100%;border-collapse:collapse;margin:15px 0;font-size:10pt;border:1px solid #1e293b"';
+            const tableStyle = 'style="width:100%;border-collapse:collapse;margin:15px 0;font-size:10pt;border:2px solid #000 !important"';
             return `<table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
         };
         
