@@ -2060,175 +2060,301 @@ ${Object.entries(usersByRole).map(([role, count]) =>
             console.warn('[Secretary] Could not load operational data');
         }
         
-        // ===== LOAD MAINTENANCE DATA FOR REPORTS =====
-        // Essentiel pour les rapports: tickets, performance techniciens, incidents
-        let maintenanceDataContext = '';
-        if (documentType === 'rapports') {
-            try {
-                // BIBLE COMPLIANCE: Charger les statuts/priorités dynamiquement depuis DB
-                const { statusMap: statusLabels, priorityMap: priorityLabels, closedStatuses } = await getTicketMaps(db);
-                
-                // Période: dernier mois
-                const oneMonthAgo = new Date();
-                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                const oneMonthAgoStr = oneMonthAgo.toISOString();
-                
-                // Charger tous les tickets du dernier mois
-                const ticketsData = await db.select({
-                    id: tickets.id,
-                    title: tickets.title,
-                    status: tickets.status,
-                    priority: tickets.priority,
-                    machine_id: tickets.machine_id,
-                    assigned_to: tickets.assigned_to,
-                    created_at: tickets.created_at,
-                    completed_at: tickets.completed_at,
-                    downtime_hours: tickets.downtime_hours
-                }).from(tickets)
-                  .where(and(
-                      isNull(tickets.deleted_at),
-                      gte(tickets.created_at, oneMonthAgoStr)
-                  ))
-                  .all();
-                
-                // Charger tous les tickets (pour stats globales)
-                const allTicketsData = await db.select({
-                    id: tickets.id,
-                    status: tickets.status,
-                    priority: tickets.priority,
-                    assigned_to: tickets.assigned_to,
-                    created_at: tickets.created_at,
-                    completed_at: tickets.completed_at,
-                    downtime_hours: tickets.downtime_hours
-                }).from(tickets)
-                  .where(isNull(tickets.deleted_at))
-                  .all();
-                
-                // Statistiques par statut
-                const statusCounts: Record<string, number> = {};
-                const priorityCounts: Record<string, number> = {};
-                let totalDowntime = 0;
-                let resolvedCount = 0;
-                let totalResolutionTime = 0;
-                
-                ticketsData.forEach((t: any) => {
-                    statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
-                    priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1;
-                    if (t.downtime_hours) totalDowntime += parseFloat(t.downtime_hours) || 0;
-                    // Compter les tickets fermés (utilise closedStatuses depuis DB)
-                    if (closedStatuses.includes(t.status) && t.completed_at && t.created_at) {
-                        resolvedCount++;
-                        const created = new Date(t.created_at).getTime();
-                        const completed = new Date(t.completed_at).getTime();
-                        totalResolutionTime += (completed - created) / (1000 * 60 * 60); // en heures
-                    }
-                });
-                
-                // Performance par technicien
-                const technicianStats: Record<string, { name: string, assigned: number, resolved: number, avgTime: number }> = {};
-                const techUsers = await db.select({
-                    id: users.id,
-                    full_name: users.full_name
-                }).from(users)
-                  .where(and(isNull(users.deleted_at), eq(users.role, 'technician')))
-                  .all();
-                
-                techUsers.forEach((tech: any) => {
-                    const techTickets = ticketsData.filter((t: any) => t.assigned_to === tech.id);
-                    // Filtrer les tickets fermés (utilise closedStatuses depuis DB)
-                    const resolvedTickets = techTickets.filter((t: any) => closedStatuses.includes(t.status));
-                    let avgResTime = 0;
-                    if (resolvedTickets.length > 0) {
-                        const totalTime = resolvedTickets.reduce((sum: number, t: any) => {
-                            if (t.completed_at && t.created_at) {
-                                return sum + (new Date(t.completed_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60);
-                            }
-                            return sum;
-                        }, 0);
-                        avgResTime = totalTime / resolvedTickets.length;
-                    }
-                    technicianStats[tech.id] = {
+        // ===== LOAD COMPLETE DATABASE FOR SECRETARY =====
+        // Fournir TOUTES les données brutes pour que l'IA puisse analyser librement
+        let fullDatabaseContext = '';
+        try {
+            const { statusMap: statusLabels, priorityMap: priorityLabels, closedStatuses } = await getTicketMaps(db);
+            
+            // Périodes de référence
+            const now = new Date();
+            const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            
+            // === TOUS LES TICKETS ===
+            const allTickets = await db.select({
+                id: tickets.id,
+                ticket_id: tickets.ticket_id,
+                title: tickets.title,
+                description: tickets.description,
+                status: tickets.status,
+                priority: tickets.priority,
+                machine_id: tickets.machine_id,
+                assigned_to: tickets.assigned_to,
+                reported_by: tickets.reported_by,
+                created_at: tickets.created_at,
+                updated_at: tickets.updated_at,
+                completed_at: tickets.completed_at,
+                downtime_hours: tickets.downtime_hours,
+                resolution_notes: tickets.resolution_notes
+            }).from(tickets)
+              .where(isNull(tickets.deleted_at))
+              .orderBy(desc(tickets.created_at))
+              .all();
+            
+            // === TOUS LES UTILISATEURS ===
+            const allUsers = await db.select({
+                id: users.id,
+                full_name: users.full_name,
+                email: users.email,
+                role: users.role,
+                created_at: users.created_at,
+                last_login: users.last_login
+            }).from(users)
+              .where(isNull(users.deleted_at))
+              .all();
+            
+            // === TOUTES LES MACHINES ===
+            const allMachines = await db.select({
+                id: machines.id,
+                machine_type: machines.machine_type,
+                model: machines.model,
+                manufacturer: machines.manufacturer,
+                serial_number: machines.serial_number,
+                year: machines.year,
+                location: machines.location,
+                status: machines.status,
+                technical_specs: machines.technical_specs,
+                operator_id: machines.operator_id
+            }).from(machines)
+              .where(isNull(machines.deleted_at))
+              .all();
+            
+            // === ÉVÉNEMENTS PLANNING (3 derniers mois) ===
+            const planningData = await db.select({
+                id: planningEvents.id,
+                title: planningEvents.title,
+                date: planningEvents.date,
+                time: planningEvents.time,
+                type: planningEvents.type,
+                description: planningEvents.description
+            }).from(planningEvents)
+              .where(and(
+                  isNull(planningEvents.deleted_at),
+                  gte(planningEvents.date, threeMonthsAgo.toISOString().split('T')[0])
+              ))
+              .orderBy(desc(planningEvents.date))
+              .all();
+            
+            // === COMMENTAIRES RÉCENTS (pour contexte) ===
+            const recentComments = await db.select({
+                id: ticketComments.id,
+                ticket_id: ticketComments.ticket_id,
+                user_id: ticketComments.user_id,
+                content: ticketComments.content,
+                created_at: ticketComments.created_at
+            }).from(ticketComments)
+              .orderBy(desc(ticketComments.created_at))
+              .limit(100)
+              .all();
+            
+            // Créer des maps pour les lookups
+            const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
+            const machineMap = Object.fromEntries(allMachines.map(m => [m.id, m]));
+            
+            // Enrichir les tickets avec noms
+            const enrichedTickets = allTickets.map((t: any) => ({
+                ...t,
+                status_label: statusLabels[t.status] || t.status,
+                priority_label: priorityLabels[t.priority] || t.priority,
+                machine_name: t.machine_id && machineMap[t.machine_id] 
+                    ? `${machineMap[t.machine_id].machine_type} ${machineMap[t.machine_id].manufacturer || ''} ${machineMap[t.machine_id].model || ''}`.trim()
+                    : null,
+                assigned_to_name: t.assigned_to && userMap[t.assigned_to] ? userMap[t.assigned_to].full_name : null,
+                reported_by_name: t.reported_by && userMap[t.reported_by] ? userMap[t.reported_by].full_name : null,
+                is_closed: closedStatuses.includes(t.status),
+                resolution_time_hours: t.completed_at && t.created_at 
+                    ? Math.round((new Date(t.completed_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60) * 10) / 10
+                    : null
+            }));
+            
+            // Séparer par période
+            const ticketsThisMonth = enrichedTickets.filter((t: any) => new Date(t.created_at) >= thisMonth);
+            const ticketsLastMonth = enrichedTickets.filter((t: any) => {
+                const d = new Date(t.created_at);
+                return d >= lastMonth && d < thisMonth;
+            });
+            const ticketsLast3Months = enrichedTickets.filter((t: any) => new Date(t.created_at) >= threeMonthsAgo);
+            
+            // Statistiques calculées
+            const calcStats = (ticketList: any[]) => {
+                const closed = ticketList.filter((t: any) => t.is_closed);
+                const avgResTime = closed.filter((t: any) => t.resolution_time_hours).length > 0
+                    ? closed.reduce((sum: number, t: any) => sum + (t.resolution_time_hours || 0), 0) / closed.filter((t: any) => t.resolution_time_hours).length
+                    : 0;
+                return {
+                    total: ticketList.length,
+                    closed: closed.length,
+                    open: ticketList.length - closed.length,
+                    resolution_rate: ticketList.length > 0 ? Math.round(closed.length / ticketList.length * 100) : 0,
+                    avg_resolution_hours: Math.round(avgResTime * 10) / 10,
+                    by_priority: {
+                        critical: ticketList.filter((t: any) => t.priority === 'critical').length,
+                        high: ticketList.filter((t: any) => t.priority === 'high').length,
+                        medium: ticketList.filter((t: any) => t.priority === 'medium').length,
+                        low: ticketList.filter((t: any) => t.priority === 'low').length
+                    },
+                    by_status: ticketList.reduce((acc: any, t: any) => {
+                        acc[t.status_label] = (acc[t.status_label] || 0) + 1;
+                        return acc;
+                    }, {})
+                };
+            };
+            
+            // Stats par technicien
+            const technicianPerformance = allUsers
+                .filter(u => ['technician', 'senior_technician'].includes(u.role))
+                .map(tech => {
+                    const techTickets = ticketsLast3Months.filter((t: any) => t.assigned_to === tech.id);
+                    const closed = techTickets.filter((t: any) => t.is_closed);
+                    const avgTime = closed.filter((t: any) => t.resolution_time_hours).length > 0
+                        ? closed.reduce((sum: number, t: any) => sum + (t.resolution_time_hours || 0), 0) / closed.filter((t: any) => t.resolution_time_hours).length
+                        : 0;
+                    return {
+                        id: tech.id,
                         name: tech.full_name,
-                        assigned: techTickets.length,
-                        resolved: resolvedTickets.length,
-                        avgTime: Math.round(avgResTime * 10) / 10
+                        role: tech.role,
+                        last_login: tech.last_login,
+                        tickets_assigned_3months: techTickets.length,
+                        tickets_closed_3months: closed.length,
+                        resolution_rate: techTickets.length > 0 ? Math.round(closed.length / techTickets.length * 100) : 0,
+                        avg_resolution_hours: Math.round(avgTime * 10) / 10,
+                        current_open_tickets: enrichedTickets.filter((t: any) => t.assigned_to === tech.id && !t.is_closed).length,
+                        tickets_by_priority: {
+                            critical: techTickets.filter((t: any) => t.priority === 'critical').length,
+                            high: techTickets.filter((t: any) => t.priority === 'high').length,
+                            medium: techTickets.filter((t: any) => t.priority === 'medium').length,
+                            low: techTickets.filter((t: any) => t.priority === 'low').length
+                        }
                     };
                 });
-                
-                // Tickets non assignés (ce mois)
-                const unassignedTickets = ticketsData.filter((t: any) => !t.assigned_to);
-                const unassignedCompleted = unassignedTickets.filter((t: any) => 
-                    closedStatuses.includes(t.status)
-                ).length;
-                
-                // Tickets non assignés (TOUS - historique complet)
-                const allUnassignedCompleted = allTicketsData.filter((t: any) => 
-                    !t.assigned_to && closedStatuses.includes(t.status)
-                ).length;
-                const allUnassigned = allTicketsData.filter((t: any) => !t.assigned_to).length;
-                
-                // Incidents critiques (priorité critical/urgent)
-                const criticalIncidents = ticketsData.filter((t: any) => 
-                    t.priority === 'critical' || t.priority === 'urgent'
-                );
-                
-                // Machines avec le plus de pannes
-                const machineTicketCounts: Record<string, number> = {};
-                ticketsData.forEach((t: any) => {
-                    if (t.machine_id) {
-                        machineTicketCounts[t.machine_id] = (machineTicketCounts[t.machine_id] || 0) + 1;
-                    }
-                });
-                
-                // statusLabels et priorityLabels sont déjà chargés depuis getTicketMaps() (BIBLE compliance)
-                
-                maintenanceDataContext = `
-## DONNÉES DE MAINTENANCE - DERNIER MOIS (${ticketsData.length} tickets)
+            
+            // Stats par machine
+            const machinePerformance = allMachines.map(machine => {
+                const machineTickets = ticketsLast3Months.filter((t: any) => t.machine_id === machine.id);
+                return {
+                    id: machine.id,
+                    name: `${machine.machine_type} ${machine.manufacturer || ''} ${machine.model || ''}`.trim(),
+                    location: machine.location,
+                    status: machine.status,
+                    year: machine.year,
+                    tickets_3months: machineTickets.length,
+                    open_tickets: machineTickets.filter((t: any) => !t.is_closed).length,
+                    downtime_hours: machineTickets.reduce((sum: number, t: any) => sum + (parseFloat(t.downtime_hours) || 0), 0),
+                    common_issues: machineTickets.slice(0, 5).map((t: any) => t.title)
+                };
+            }).sort((a, b) => b.tickets_3months - a.tickets_3months);
+            
+            // Tickets en retard (ouverts depuis plus de 7 jours)
+            const overdueThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const overdueTickets = enrichedTickets.filter((t: any) => 
+                !t.is_closed && new Date(t.created_at) < overdueThreshold
+            );
+            
+            // Construire le contexte complet
+            fullDatabaseContext = `
+# BASE DE DONNÉES COMPLÈTE - ${now.toLocaleDateString('fr-CA')}
 
-### Statistiques globales
-- **Tickets créés ce mois**: ${ticketsData.length}
-- **Tickets terminés ce mois**: ${statusCounts['completed'] || 0}
-- **Tickets non assignés ce mois**: ${unassignedTickets.length} (dont ${unassignedCompleted} terminés)
-- **Tickets non assignés (historique)**: ${allUnassigned} total (dont ${allUnassignedCompleted} terminés)
-- **Temps moyen de résolution**: ${resolvedCount > 0 ? Math.round(totalResolutionTime / resolvedCount * 10) / 10 : 'N/A'} heures
-- **Temps d'arrêt total**: ${Math.round(totalDowntime * 10) / 10} heures
-- **Total historique**: ${allTicketsData.length} tickets
+## CONFIGURATION SYSTÈME
+- Statuts fermés: ${closedStatuses.join(', ')}
+- Labels statuts: ${JSON.stringify(statusLabels)}
+- Labels priorités: ${JSON.stringify(priorityLabels)}
 
-### Répartition par statut
-${Object.entries(statusCounts).map(([status, count]) => 
-    `- ${statusLabels[status] || status}: ${count}`
-).join('\n')}
+## STATISTIQUES GLOBALES
 
-### Répartition par priorité
-${Object.entries(priorityCounts).map(([priority, count]) => 
-    `- ${priorityLabels[priority] || priority}: ${count}`
-).join('\n')}
+### Ce mois (${thisMonth.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })})
+${JSON.stringify(calcStats(ticketsThisMonth), null, 2)}
 
-### Performance des techniciens
-${Object.values(technicianStats).map((tech: any) => 
-    `- **${tech.name}**: ${tech.assigned} assignés, ${tech.resolved} résolus, temps moyen: ${tech.avgTime}h`
-).join('\n') || '- Aucun technicien enregistré'}
+### Mois précédent
+${JSON.stringify(calcStats(ticketsLastMonth), null, 2)}
 
-### Incidents critiques/urgents (${criticalIncidents.length})
-${criticalIncidents.slice(0, 10).map((t: any) => 
-    `- [${priorityLabels[t.priority]}] ${t.title} (${statusLabels[t.status] || t.status})`
-).join('\n') || '- Aucun incident critique ce mois'}
+### 3 derniers mois
+${JSON.stringify(calcStats(ticketsLast3Months), null, 2)}
 
-### Machines les plus sollicitées
-${Object.entries(machineTicketCounts)
-    .sort(([,a], [,b]) => (b as number) - (a as number))
-    .slice(0, 5)
-    .map(([machineId, count]) => {
-        const m = machinesMap[parseInt(machineId)];
-        const machineName = m ? `${m.type}${m.manufacturer ? ' ' + m.manufacturer : ''}${m.model ? ' ' + m.model : ''}` : `Machine #${machineId}`;
-        return `- **${machineName}**: ${count} interventions`;
-    })
-    .join('\n') || '- Données non disponibles'}
+### Historique complet
+- Total tickets: ${allTickets.length}
+- Total machines: ${allMachines.length}
+- Total utilisateurs: ${allUsers.length}
+
+## PERFORMANCE PAR TECHNICIEN (3 derniers mois)
+${JSON.stringify(technicianPerformance, null, 2)}
+
+## PERFORMANCE PAR MACHINE (3 derniers mois, triées par interventions)
+${JSON.stringify(machinePerformance.slice(0, 15), null, 2)}
+
+## TICKETS EN RETARD (ouverts > 7 jours)
+${overdueTickets.length} tickets en retard:
+${JSON.stringify(overdueTickets.map((t: any) => ({
+    id: t.id,
+    ref: t.ticket_id,
+    title: t.title,
+    priority: t.priority_label,
+    status: t.status_label,
+    machine: t.machine_name,
+    assigned_to: t.assigned_to_name,
+    created_at: t.created_at,
+    days_open: Math.floor((now.getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24))
+})), null, 2)}
+
+## TICKETS CRITIQUES/HAUTE PRIORITÉ OUVERTS
+${JSON.stringify(enrichedTickets.filter((t: any) => !t.is_closed && ['critical', 'high'].includes(t.priority)).map((t: any) => ({
+    id: t.id,
+    ref: t.ticket_id,
+    title: t.title,
+    priority: t.priority_label,
+    status: t.status_label,
+    machine: t.machine_name,
+    assigned_to: t.assigned_to_name,
+    created_at: t.created_at
+})), null, 2)}
+
+## LISTE COMPLÈTE DES TICKETS (${ticketsLast3Months.length} derniers 3 mois)
+${JSON.stringify(ticketsLast3Months.map((t: any) => ({
+    id: t.id,
+    ref: t.ticket_id,
+    title: t.title,
+    description: t.description?.substring(0, 200),
+    priority: t.priority_label,
+    status: t.status_label,
+    machine: t.machine_name,
+    assigned_to: t.assigned_to_name,
+    reported_by: t.reported_by_name,
+    created_at: t.created_at,
+    completed_at: t.completed_at,
+    resolution_hours: t.resolution_time_hours,
+    downtime_hours: t.downtime_hours,
+    resolution_notes: t.resolution_notes?.substring(0, 200)
+})), null, 2)}
+
+## LISTE DES MACHINES
+${JSON.stringify(allMachines.map(m => ({
+    id: m.id,
+    type: m.machine_type,
+    manufacturer: m.manufacturer,
+    model: m.model,
+    serial: m.serial_number,
+    year: m.year,
+    location: m.location,
+    status: m.status,
+    operator: m.operator_id && userMap[m.operator_id] ? userMap[m.operator_id].full_name : null
+})), null, 2)}
+
+## LISTE DES UTILISATEURS
+${JSON.stringify(allUsers.map(u => ({
+    id: u.id,
+    name: u.full_name,
+    role: u.role,
+    email: u.email,
+    last_login: u.last_login
+})), null, 2)}
+
+## ÉVÉNEMENTS PLANNING (3 derniers mois)
+${JSON.stringify(planningData, null, 2)}
 `;
-                console.log('[Secretary] Loaded maintenance data for reports');
-            } catch (e) {
-                console.warn('[Secretary] Could not load maintenance data:', e);
-            }
+            console.log('[Secretary] Loaded complete database context');
+        } catch (e) {
+            console.warn('[Secretary] Could not load database:', e);
         }
         
         // ===== BUILD EXPERT PROMPT WITH LEGAL KNOWLEDGE =====
@@ -2391,97 +2517,20 @@ Structure:
 Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-RAPPORT DE MAINTENANCE - QUALITÉ DIRECTION
+RAPPORT DE MAINTENANCE
 
-OBLIGATION ABSOLUE: Appeler les outils (check_database_stats, search_tickets, get_technician_info, get_overdue_tickets, generate_team_report) AVANT de rédiger. Ne jamais inventer de données.
+Tu as accès à la BASE DE DONNÉES COMPLÈTE ci-dessous. Analyse ces données et produis un rapport de direction de la plus haute qualité professionnelle.
 
-STRUCTURE COMPLÈTE OBLIGATOIRE:
+STANDARDS ATTENDUS:
+- Qualité d'un cabinet de conseil de premier plan (McKinsey, Deloitte)
+- Document destiné au conseil d'administration
+- Analyse approfondie, pas une simple liste de chiffres
+- Insights actionnables, pas des généralités
+- Comparaisons temporelles (ce mois vs précédent)
+- Identification des tendances et anomalies
+- Recommandations priorisées avec justification
 
-## 1. SYNTHÈSE EXÉCUTIVE
-Paragraphe de 4-5 phrases destiné à un dirigeant pressé:
-- Situation globale en une phrase
-- Chiffre clé de la période (tickets, résolution, TMR)
-- Tendance par rapport à la période précédente si disponible
-- Point critique nécessitant attention immédiate
-- Recommandation principale
-
-## 2. INDICATEURS DE PERFORMANCE
-
-### 2.1 Volume d'activité
-Tableau avec: Tickets créés, Tickets résolus, Tickets en cours, Tickets en retard
-Calculer le taux de résolution (résolus/créés × 100)
-
-### 2.2 Temps de réponse
-- TMR (Temps Moyen de Réparation) en heures
-- Comparer à l'objectif si connu
-- Identifier les tickets ayant dépassé le délai normal
-
-### 2.3 Répartition par priorité
-Tableau: Priorité | Nombre | Pourcentage | Résolus | En cours
-
-## 3. ANALYSE PAR TECHNICIEN
-
-Pour CHAQUE technicien actif:
-- Nombre de tickets assignés
-- Nombre de tickets résolus
-- Taux de résolution individuel
-- TMR individuel
-- Charge actuelle (tickets en cours)
-
-Tableau comparatif de l'équipe. Identifier le technicien le plus performant et celui nécessitant support.
-
-## 4. ÉTAT DU PARC MACHINES
-
-### 4.1 Vue d'ensemble
-- Machines opérationnelles vs en panne/maintenance
-- Taux de disponibilité du parc
-
-### 4.2 Machines problématiques
-Lister les machines avec le plus d'interventions:
-- Nom de la machine
-- Nombre d'interventions sur la période
-- Types de pannes récurrentes
-- Recommandation (maintenance préventive, remplacement, formation)
-
-### 4.3 Machines critiques arrêtées
-Si machines hors service: depuis quand, impact estimé, plan de remise en service
-
-## 5. ANALYSE DES TENDANCES
-
-- Évolution vs période précédente (si données disponibles)
-- Types de pannes les plus fréquents
-- Pics d'activité identifiés
-- Corrélations observées (ex: machine X génère 40% des tickets)
-
-## 6. POINTS D'ATTENTION
-
-### Critiques (action immédiate requise)
-Problèmes bloquants, risques sécurité, machines arrêtées impactant la production
-
-### Importants (action sous 7 jours)
-Retards accumulés, surcharge technicien, maintenance préventive en retard
-
-### À surveiller (suivi mensuel)
-Tendances négatives, équipements vieillissants, besoins formation
-
-## 7. RECOMMANDATIONS
-
-Tableau structuré:
-| Priorité | Action | Responsable suggéré | Échéance | Impact attendu |
-
-Minimum 3 recommandations concrètes et actionnables basées sur les données analysées.
-
-## 8. ANNEXES (si pertinent)
-
-Liste détaillée des tickets de la période (référence, titre, statut, technicien)
-
-RÈGLES DE RÉDACTION:
-- Chaque affirmation doit être traçable aux données des outils
-- Utiliser des pourcentages et comparaisons, pas juste des chiffres bruts
-- Analyser, ne pas juste lister
-- Proposer des actions concrètes, pas des généralités
-- Longueur minimale: 800 mots
-- Ton: professionnel, analytique, orienté décision`,
+Le document doit démontrer une compréhension stratégique des opérations de maintenance et fournir une valeur ajoutée décisionnelle au lecteur.`,
 
             'creatif': `
 DOCUMENT CRÉATIF
@@ -2525,7 +2574,7 @@ ${aiConfig.knowledge}
 ## Contexte spécifique de l'entreprise
 ${aiConfig.custom || 'Aucun contexte additionnel configuré.'}
 ${operationalContext}
-${maintenanceDataContext}
+${fullDatabaseContext}
 `;
 
         const systemPrompt = `# RÔLE
@@ -2557,72 +2606,44 @@ ${typeInstructions}
 6. **PRÊT À L'EMPLOI**: Le document doit pouvoir être utilisé tel quel
 7. **PERSONNALISÉ**: Utilise les informations de la carte d'identité pour personnaliser le document
 
-# OUTILS DISPONIBLES
-Tu as accès à des outils pour interroger la base de données en temps réel:
-- **search_tickets**: Chercher des tickets par mots-clés, statut, technicien, machine
-- **get_ticket_details**: Détails complets d'un ticket spécifique
-- **search_machines**: Chercher des machines par nom/type
-- **get_machine_details**: Fiche technique complète d'une machine
-- **get_technician_info**: Info et charge de travail d'un technicien
-- **check_database_stats**: Statistiques globales (tickets par priorité/statut, top pannes)
-- **get_overdue_tickets**: Tickets en retard
+# DONNÉES DISPONIBLES
 
-⚠️ **UTILISE CES OUTILS SYSTÉMATIQUEMENT** pour obtenir des données réelles. Ne jamais inventer de chiffres ou de noms.
+La BASE DE DONNÉES COMPLÈTE est fournie ci-dessus. Tu disposes de toutes les informations nécessaires pour produire des analyses approfondies sans avoir besoin d'outils supplémentaires.
 
-STRATÉGIE D'EXTRACTION DE DONNÉES (OBLIGATOIRE):
-1. **Rapport de performance techniciens** → APPELLE check_database_stats(period:'this_month') + generate_team_report() + get_technician_info pour chaque technicien mentionné
-2. **État des machines** → APPELLE search_machines() puis get_machine_details(id) pour les machines pertinentes
-3. **Bilan des incidents** → APPELLE search_tickets(status:'completed') + get_overdue_tickets() + get_unassigned_tickets(filter:'completed')
-4. **Disponibilité équipe** → APPELLE check_technician_availability(name) pour chaque technicien
-5. **Tickets non résolus** → APPELLE get_unassigned_tickets(filter:'open') + get_overdue_tickets()
+# STANDARDS DE QUALITÉ
 
-🔴 RÈGLE CRITIQUE: Avant de rédiger, tu DOIS faire AU MOINS 2-3 appels d'outils pour collecter les données. Un document sans appel d'outil = document inventé = INTERDIT.
+Tu produis des documents au niveau des plus hauts standards professionnels:
+- Qualité cabinet de conseil international
+- Rigueur analytique et factuelle
+- Insights stratégiques, pas de simples listes
+- Recommandations actionnables et priorisées
+- Français impeccable, terminologie OQLF
+- Prêt à être présenté en conseil d'administration
 
 # INTERDICTIONS
-- ❌ Ne jamais inventer de données opérationnelles (UTILISE LES OUTILS)
-- ❌ Ne jamais inventer de numéros de loi ou d'articles inexistants
-- ❌ Ne jamais inclure de placeholders visibles [À COMPLÉTER] - utiliser les vraies données de l'entreprise
-- ❌ Ne jamais utiliser de ton familier ou de jargon inapproprié
-- ❌ Ne jamais contredire les lois canadiennes/québécoises
-- ❌ Ne jamais ignorer les informations d'identité de l'entreprise
+- Ne jamais inventer de données (tout doit provenir du contexte fourni)
+- Ne jamais inclure de placeholders [À COMPLÉTER]
+- Ne jamais commencer par "Voici le document..."
+- Ne jamais utiliser de ton familier
 
-# FORMAT DE SORTIE
-
-Produire un document Markdown professionnel, sobre et lisible.
-
-## Structure
-- # pour le titre principal
-- ## pour les sections
-- ### pour les sous-sections
-- Tableaux pour toutes données chiffrées
-- **Gras** pour les valeurs importantes
-
-## Règles
-- Commencer directement par le contenu (pas de "Voici...")
-- Données chiffrées en tableaux, jamais en texte plat
-- Phrases courtes et directes
-- Omettre les sections sans données plutôt que dire "non disponible"
-- Personnaliser avec le nom de l'entreprise
-
-## Style
-- Ton professionnel et institutionnel
-- Vocabulaire précis
-- Pas d'émojis sauf pour les indicateurs de priorité dans les rapports de maintenance
-- Document prêt à l'emploi`;
+# FORMAT
+Document Markdown professionnel. Utiliser des tableaux pour les données chiffrées. Commencer directement par le contenu.`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
 
-        // ===== CALL AI WITH TOOLS (AGENTIC LOOP) =====
-        // Le Secrétaire peut maintenant interroger la base de données comme l'Expert IA
+        // ===== CALL AI =====
         let aiResponse = '';
         
         if (!env.OPENAI_API_KEY) {
             return c.json({ error: 'Clé API OpenAI manquante' }, 500);
         }
         
-        // Outils disponibles pour le Secrétaire (sous-ensemble pertinent pour les rapports)
-        // Secrétaire a accès à TOUS les outils de données comme l'Expert
-        const SECRETARY_TOOLS = TOOLS.filter(t => [
+        // Pour les rapports, on a déjà toutes les données dans le contexte
+        // Pas besoin de tools, appel direct
+        const useTools = documentType !== 'rapports';
+        
+        // Outils disponibles pour les autres types de documents
+        const SECRETARY_TOOLS = useTools ? TOOLS.filter(t => [
             'search_tickets',
             'get_ticket_details', 
             'search_machines',
@@ -2635,16 +2656,15 @@ Produire un document Markdown professionnel, sobre et lisible.
             'get_overdue_tickets',
             'get_unassigned_tickets',
             'generate_team_report'
-        ].includes(t.function.name));
+        ].includes(t.function.name)) : [];
         
-        // Messages pour la boucle agentic
         const messages: any[] = [
             { role: "system", content: systemPrompt },
             { role: "user", content: instructions }
         ];
         
         let turns = 0;
-        const MAX_TURNS = 5; // Augmenté pour permettre plus d'appels d'outils
+        const MAX_TURNS = useTools ? 5 : 1; // Un seul tour pour les rapports (données déjà fournies)
         
         while (turns < MAX_TURNS) {
             turns++;
@@ -2654,7 +2674,7 @@ Produire un document Markdown professionnel, sobre et lisible.
             
             try {
                 // Plus de tokens pour les rapports élaborés
-                const maxTokens = documentType === 'rapports' ? 8000 : 4000;
+                const maxTokens = documentType === 'rapports' ? 16000 : 4000;
                 
                 const requestBody: any = {
                     model: 'gpt-4o',
