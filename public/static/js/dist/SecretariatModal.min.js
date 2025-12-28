@@ -351,31 +351,37 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             }
         } catch (e) {}
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-        const html = markdownToHtml(generatedDoc.document);
+        let html = markdownToHtml(generatedDoc.document);
         const title = generatedDoc.title || 'Document';
-        // CSS simplifié - les styles inline dans markdownToHtml font le gros du travail
+        // Supprimer le premier H1 du contenu s'il existe (évite le doublon avec title-block)
+        html = html.replace(/^(\s*<h1[^>]*>.*?<\/h1>\s*)/i, '');
+        // CSS professionnel pour impression
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
 <style>
-@page { size: A4; margin: 20mm 18mm 25mm 18mm; }
+@page { size: A4; margin: 18mm 20mm 20mm 20mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.7; color: #333; padding: 0; }
-.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0; }
+body { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.65; color: #1a1a1a; padding: 0; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
 .header-left { display: flex; align-items: center; }
-.logo { height: 50px; margin-right: 15px; }
-.brand { border-left: 3px solid #3b82f6; padding-left: 15px; }
-.brand-name { font-size: 18pt; font-weight: 700; color: #0f172a; }
-.brand-sub { font-size: 9pt; color: #64748b; margin-top: 4px; }
-.header-right { text-align: right; font-size: 10pt; color: #64748b; }
-.title-block { text-align: center; padding: 25px 0; margin-bottom: 25px; background: #f1f5f9; border-radius: 8px; }
-.title-block h1 { font-size: 20pt; font-weight: 700; color: #0f172a; margin: 0; }
-.content { font-family: Georgia, serif; font-size: 11pt; line-height: 1.8; }
-.content p { margin: 0 0 12px; }
-.content ul, .content ol { margin: 10px 0; padding-left: 25px; }
-.content li { margin: 5px 0; }
-.footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 9pt; color: #94a3b8; text-align: center; }
+.logo { height: 45px; margin-right: 12px; }
+.brand { border-left: 3px solid #2563eb; padding-left: 12px; }
+.brand-name { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 16pt; font-weight: 700; color: #1e3a5f; letter-spacing: 0.5px; }
+.brand-sub { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 8pt; color: #64748b; margin-top: 2px; }
+.header-right { text-align: right; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #475569; font-weight: 500; }
+.title-block { text-align: center; padding: 18px 30px; margin: 20px 0 30px; background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); border-radius: 4px; }
+.title-block h1 { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 18pt; font-weight: 600; color: #ffffff; margin: 0; letter-spacing: 0.5px; }
+.content { padding: 0 5px; }
+.content h2 { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13pt; font-weight: 600; color: #1e3a5f; margin: 22px 0 10px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; }
+.content h3 { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; font-weight: 600; color: #334155; margin: 16px 0 8px; }
+.content p { margin: 0 0 12px; text-align: justify; }
+.content ul, .content ol { margin: 10px 0 15px 0; padding-left: 22px; }
+.content li { margin: 4px 0; }
+.content strong { font-weight: 600; color: #1e3a5f; }
+.footer { margin-top: 35px; padding-top: 12px; border-top: 1px solid #cbd5e1; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 8pt; color: #94a3b8; text-align: center; }
 @media print {
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .header, .title-block { page-break-inside: avoid; }
+  .title-block { background: #1e3a5f !important; -webkit-print-color-adjust: exact; }
   table { page-break-inside: auto; }
   tr { page-break-inside: avoid; }
 }
@@ -389,13 +395,11 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 1
       <div class="brand-sub">${companySubtitle}</div>
     </div>
   </div>
-  <div class="header-right">
-    <div style="font-weight:600;color:#334155">${today}</div>
-  </div>
+  <div class="header-right">${today}</div>
 </div>
 <div class="title-block"><h1>${title}</h1></div>
 <div class="content">${html}</div>
-<div class="footer">Document généré par ${companyShortName} — Secrétariat de Direction</div>
+<div class="footer">Document généré par ${companyShortName} • Secrétariat de Direction</div>
 </body></html>`;
         const w = window.open('', '_blank');
         if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
