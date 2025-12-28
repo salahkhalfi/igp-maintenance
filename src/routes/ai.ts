@@ -2678,19 +2678,23 @@ Tu produis des documents au niveau des plus hauts standards professionnels:
 - Français impeccable, terminologie OQLF
 - Prêt à être présenté en conseil d'administration
 
-# INTERDICTIONS ABSOLUES (VIOLATION = ÉCHEC)
-- **ZÉRO HALLUCINATION**: Tout chiffre, nom, pourcentage DOIT provenir des SECTIONS 1-8 fournies
-- Si une donnée n'existe pas → écrire "Non disponible" ou omettre
-- Ne jamais inventer de tendances, comparaisons ou statistiques non présentes
+# INTERDICTIONS
+- Ne jamais inventer de données qui ne sont pas dans les SECTIONS ci-dessus
 - Ne jamais inclure de placeholders [À COMPLÉTER]
-- Ne jamais arrondir ou "améliorer" les chiffres (utiliser les valeurs EXACTES)
 - Ne jamais commencer par "Voici le document..."
-- Ne jamais utiliser de ton familier
 
 # FORMAT
 Document Markdown professionnel. Utiliser des tableaux pour les données chiffrées. Commencer directement par le contenu.`;
 
         console.log(`📝 [Secretary] Generating ${documentType} document`);
+        console.log(`📝 [Secretary] System prompt length: ${systemPrompt.length} chars`);
+        console.log(`📝 [Secretary] fullDatabaseContext present: ${fullDatabaseContext.length > 100 ? 'YES (' + fullDatabaseContext.length + ' chars)' : 'NO or empty'}`);
+        
+        // Log un extrait des données pour debug
+        if (fullDatabaseContext.includes('SECTION 1')) {
+            const section1Match = fullDatabaseContext.match(/SECTION 1:[\s\S]*?(?=SECTION 2|$)/);
+            console.log(`📝 [Secretary] SECTION 1 preview: ${section1Match ? section1Match[0].substring(0, 500) : 'NOT FOUND'}`);
+        }
 
         // ===== CALL AI =====
         let aiResponse = '';
