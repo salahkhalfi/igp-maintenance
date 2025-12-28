@@ -2554,8 +2554,10 @@ INTERDIT:
                 const responseMessage = data.choices[0]?.message;
                 
                 if (!responseMessage) {
-                    console.error('❌ [Secretary] No response message');
-                    break;
+                    console.error('❌ [Secretary] No response message. Full response:', JSON.stringify(data));
+                    return c.json({ 
+                        error: `Réponse OpenAI invalide: ${JSON.stringify(data).substring(0, 200)}` 
+                    }, 500);
                 }
                 
                 messages.push(responseMessage);
@@ -2610,8 +2612,9 @@ INTERDIT:
         }
         
         if (!aiResponse) {
+            console.error(`❌ [Secretary] No response after ${turns} turns. Last messages:`, JSON.stringify(messages.slice(-2)));
             return c.json({ 
-                error: 'Impossible de générer le document. L\'IA n\'a pas pu produire de réponse.' 
+                error: `Impossible de générer le document après ${turns} tentatives. L'IA n'a pas produit de contenu final.` 
             }, 500);
         }
         
