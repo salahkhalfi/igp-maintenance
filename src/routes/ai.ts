@@ -2546,14 +2546,13 @@ INTERDIT:
         while (turns < MAX_TURNS) {
             turns++;
             const isLastTurn = turns === MAX_TURNS;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using OpenAI${isLastTurn ? ' (FINAL - no tools)' : ''}`);
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} using GPT-4o${isLastTurn ? ' (FINAL - no tools)' : ''}`);
             
             try {
                 // Au dernier tour, forcer l'IA à répondre sans outils
-                // NOTE: On utilise OpenAI pour le Secrétaire car DeepSeek a des problèmes
-                // avec le function calling (génère du format DSML au lieu de JSON)
+                // GPT-4o pour meilleure qualité de rédaction et function calling
                 const requestBody: any = {
-                    model: "gpt-4o-mini",
+                    model: "gpt-4o",
                     messages,
                     temperature: 0.3,
                     max_tokens: 4000
