@@ -2391,20 +2391,97 @@ Structure:
 Données toujours en tableaux. Indiquer les variations (+/-%).`,
 
             'rapports': `
-RAPPORT DE MAINTENANCE
+RAPPORT DE MAINTENANCE - QUALITÉ DIRECTION
 
-OBLIGATION: Utiliser les outils (check_database_stats, search_tickets, get_technician_info) pour les vraies données.
+OBLIGATION ABSOLUE: Appeler les outils (check_database_stats, search_tickets, get_technician_info, get_overdue_tickets, generate_team_report) AVANT de rédiger. Ne jamais inventer de données.
 
-Structure:
-1. Synthèse exécutive (message clé, indicateur phare, action prioritaire)
-2. Indicateurs: tickets traités, taux résolution, TMR, tickets en retard
-3. Répartition par priorité
-4. Performance équipe (par technicien)
-5. État parc machines
-6. Points d'attention (critiques, importants, à surveiller)
-7. Recommandations avec responsable et échéance
+STRUCTURE COMPLÈTE OBLIGATOIRE:
 
-Données en tableaux. Pas d'invention.`,
+## 1. SYNTHÈSE EXÉCUTIVE
+Paragraphe de 4-5 phrases destiné à un dirigeant pressé:
+- Situation globale en une phrase
+- Chiffre clé de la période (tickets, résolution, TMR)
+- Tendance par rapport à la période précédente si disponible
+- Point critique nécessitant attention immédiate
+- Recommandation principale
+
+## 2. INDICATEURS DE PERFORMANCE
+
+### 2.1 Volume d'activité
+Tableau avec: Tickets créés, Tickets résolus, Tickets en cours, Tickets en retard
+Calculer le taux de résolution (résolus/créés × 100)
+
+### 2.2 Temps de réponse
+- TMR (Temps Moyen de Réparation) en heures
+- Comparer à l'objectif si connu
+- Identifier les tickets ayant dépassé le délai normal
+
+### 2.3 Répartition par priorité
+Tableau: Priorité | Nombre | Pourcentage | Résolus | En cours
+
+## 3. ANALYSE PAR TECHNICIEN
+
+Pour CHAQUE technicien actif:
+- Nombre de tickets assignés
+- Nombre de tickets résolus
+- Taux de résolution individuel
+- TMR individuel
+- Charge actuelle (tickets en cours)
+
+Tableau comparatif de l'équipe. Identifier le technicien le plus performant et celui nécessitant support.
+
+## 4. ÉTAT DU PARC MACHINES
+
+### 4.1 Vue d'ensemble
+- Machines opérationnelles vs en panne/maintenance
+- Taux de disponibilité du parc
+
+### 4.2 Machines problématiques
+Lister les machines avec le plus d'interventions:
+- Nom de la machine
+- Nombre d'interventions sur la période
+- Types de pannes récurrentes
+- Recommandation (maintenance préventive, remplacement, formation)
+
+### 4.3 Machines critiques arrêtées
+Si machines hors service: depuis quand, impact estimé, plan de remise en service
+
+## 5. ANALYSE DES TENDANCES
+
+- Évolution vs période précédente (si données disponibles)
+- Types de pannes les plus fréquents
+- Pics d'activité identifiés
+- Corrélations observées (ex: machine X génère 40% des tickets)
+
+## 6. POINTS D'ATTENTION
+
+### Critiques (action immédiate requise)
+Problèmes bloquants, risques sécurité, machines arrêtées impactant la production
+
+### Importants (action sous 7 jours)
+Retards accumulés, surcharge technicien, maintenance préventive en retard
+
+### À surveiller (suivi mensuel)
+Tendances négatives, équipements vieillissants, besoins formation
+
+## 7. RECOMMANDATIONS
+
+Tableau structuré:
+| Priorité | Action | Responsable suggéré | Échéance | Impact attendu |
+
+Minimum 3 recommandations concrètes et actionnables basées sur les données analysées.
+
+## 8. ANNEXES (si pertinent)
+
+Liste détaillée des tickets de la période (référence, titre, statut, technicien)
+
+RÈGLES DE RÉDACTION:
+- Chaque affirmation doit être traçable aux données des outils
+- Utiliser des pourcentages et comparaisons, pas juste des chiffres bruts
+- Analyser, ne pas juste lister
+- Proposer des actions concrètes, pas des généralités
+- Longueur minimale: 800 mots
+- Ton: professionnel, analytique, orienté décision`,
 
             'creatif': `
 DOCUMENT CRÉATIF
@@ -2576,11 +2653,14 @@ Produire un document Markdown professionnel, sobre et lisible.
             console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}${isLastTurn ? ' (FINAL)' : ''}`);
             
             try {
+                // Plus de tokens pour les rapports élaborés
+                const maxTokens = documentType === 'rapports' ? 8000 : 4000;
+                
                 const requestBody: any = {
                     model: 'gpt-4o',
                     messages,
                     temperature: 0.3,
-                    max_tokens: 4000
+                    max_tokens: maxTokens
                 };
                 
                 if (!isLastTurn) {
