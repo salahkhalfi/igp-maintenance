@@ -479,6 +479,12 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 if (res.data.company_logo_url) logoUrl = res.data.company_logo_url;
             }
         } catch (e) {}
+        
+        // Documents confidentiels: rapports, subventions, rh
+        // Documents non-confidentiels: correspondance, creatif, technique
+        const confidentialTypes = ['rapports', 'subventions', 'rh'];
+        const isConfidential = confidentialTypes.includes(selectedCategory);
+        
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         const html = markdownToHtml(generatedDoc.document);
         const docTitle = generatedDoc.title || 'Document';
@@ -555,7 +561,7 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
 }
 @media print {
   .print-footer { position: fixed; bottom: 0; }
-  body { margin-bottom: 60pt; } /* Espace pour le footer */
+  ${isConfidential ? 'body { margin-bottom: 60pt; }' : ''} /* Espace pour le footer si confidentiel */
 }
 </style></head>
 <body>
@@ -570,12 +576,12 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
   <div class="print-header-right">${today}</div>
 </div>
 <div class="doc-content">${html}</div>
-<div class="print-footer">
+${isConfidential ? `<div class="print-footer">
   <div class="print-footer-content">
     <strong>CONFIDENTIEL</strong> — Ce document est la propriété exclusive de ${companyName}. 
     Toute reproduction, distribution ou divulgation sans autorisation écrite est strictement interdite.
   </div>
-</div>
+</div>` : ''}
 </body></html>`;
         const w = window.open('', '_blank');
         if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
