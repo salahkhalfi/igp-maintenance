@@ -484,7 +484,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         // Réutiliser les mêmes styles que l'affichage + header corporate
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
 <style>
-@page { size: A4; margin: 15mm 18mm 18mm 18mm; }
+@page { size: A4; margin: 25mm 25mm 25mm 25mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
 /* Header corporate */
