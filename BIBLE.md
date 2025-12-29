@@ -1,5 +1,5 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.5 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 6.6 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
 
 ---
 
@@ -330,4 +330,65 @@ LEÇON:
 
 ---
 
-## 🏁 END OF KERNEL (v6.5 - ~280 lines)
+## 🟣 MODULE 12: MULTI-INDUSTRY ADAPTABILITY (TECH DEBT PREVENTION)
+
+```
+⚠️ OBJECTIF: Garder le système adaptable à d'autres industries (SaaS, retail, etc.)
+   IGP Maintenance = premier client, PAS le produit final
+
+ÉTAT ACTUEL (Audit Dec 2024):
+├── ✅ 60% configurable (system_settings)
+└── ❌ 40% hard-coded (à ne PAS aggraver)
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  🔴 ZONES HARD-CODÉES - NE PAS EN AJOUTER                           │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. RÔLES SPÉCIFIQUES                                               │
+│     - 'furnace_operator', 'technician' = vocabulaire maintenance    │
+│     - Fichiers: shared.ts, tools.ts, loaders.ts, schema.ts          │
+│     → Si nouveau rôle: utiliser nom GÉNÉRIQUE (ex: 'specialist')    │
+│                                                                     │
+│  2. TERMINOLOGIE IA                                                 │
+│     - "technicien assigné" → préférer "assigné à"                   │
+│     - "panne", "intervention" → préférer "incident", "action"       │
+│     → Vocabulaire neutre quand possible                             │
+│                                                                     │
+│  3. CADRE LÉGAL                                                     │
+│     - CNESST, LSST, RS&DE = 100% Québec/Canada                      │
+│     - Fichier: src/ai/secretary/shared.ts                           │
+│     → NE PAS ajouter plus de références légales hard-codées         │
+│     → Future: déplacer dans system_settings ou industry_config      │
+│                                                                     │
+│  4. LOGIQUE MÉTIER                                                  │
+│     - .filter(role => ['technician', 'senior_technician']...)       │
+│     → NE PAS dupliquer ces filtres dans de nouveaux fichiers        │
+│     → Future: créer role_categories dans DB                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  ✅ BONNES PRATIQUES - À SUIVRE                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. NOUVEAU TEXTE UI → system_settings ou ai_custom_context         │
+│  2. NOUVEAU RÔLE → nom générique + label configurable               │
+│  3. NOUVEAU STATUT → ticket_statuses_config (déjà dynamique)        │
+│  4. NOUVELLE RÉFÉRENCE LÉGALE → commentaire "// TODO: move to DB"   │
+│  5. NOUVEAU VOCABULAIRE MÉTIER → vérifier si existe équivalent      │
+│     générique avant d'ajouter terme spécifique                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+CHECKLIST AVANT COMMIT (si touche vocabulaire/rôles):
+□ Le terme ajouté est-il spécifique à une industrie?
+□ Existe-t-il un équivalent générique?
+□ Peut-il être mis dans system_settings plutôt que hard-coded?
+□ Si hard-coded obligatoire: ajouter TODO pour future migration
+
+DETTE TECHNIQUE ACTUELLE (référence):
+- src/ai/secretary/shared.ts → ROLE_LABELS, LEGAL_FRAMEWORK_QC
+- src/ai/tools.ts → descriptions avec "technicien" (~15 occurrences)
+- src/ai/secretary/data/loaders.ts → filtres par rôle hard-codés
+- src/db/schema.ts → commentaire avec rôles spécifiques
+```
+
+---
+
+## 🏁 END OF KERNEL (v6.6 - ~330 lines)
