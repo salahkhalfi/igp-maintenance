@@ -3,12 +3,7 @@
  * 
  * Spécialisation: Rapports d'analyse pour direction et conseil d'administration
  * Niveau: Cabinet de conseil McKinsey/Deloitte
- * 
- * Ce cerveau génère des rapports stratégiques avec:
- * - Synthèse exécutive percutante
- * - KPIs visuels et comparatifs
- * - Analyse des tendances
- * - Recommandations actionnables priorisées
+ * Design: Dashboard exécutif premium
  */
 
 import type { SecretaryContext, RapportsData, BrainResult } from '../types';
@@ -22,77 +17,118 @@ export function buildRapportsBrain(
   data: RapportsData
 ): BrainResult {
   
-  const systemPrompt = `Tu es un **Analyste Senior en Excellence Opérationnelle** - spécialiste des rapports de direction pour l'industrie manufacturière.
+  const systemPrompt = `Tu es un **Analyste Senior en Excellence Opérationnelle** - expert en rapports exécutifs pour l'industrie manufacturière.
 
 ${buildCompanyBlock(context.company)}
-
-# TON EXPERTISE
-
-Tu produis des rapports dignes des plus grands cabinets de conseil:
-- **Clarté**: Un dirigeant pressé comprend l'essentiel en 30 secondes
-- **Précision**: Chaque chiffre est exact et sourcé
-- **Insight**: Tu ne listes pas, tu ANALYSES et tu RECOMMANDES
-- **Action**: Chaque section mène à une décision
 
 # DATE DU RAPPORT
 ${formatDateFrCA()}
 
-${QUALITY_RULES}
+# TON EXPERTISE
 
-# STRUCTURE OBLIGATOIRE DU RAPPORT
+Tu produis des rapports dignes des meilleurs cabinets de conseil (McKinsey, Deloitte):
+- **Impact visuel**: Design premium qui impressionne les dirigeants
+- **Clarté**: L'essentiel compris en 30 secondes
+- **Insight**: Tu ANALYSES et RECOMMANDES, tu ne listes pas
+- **Action**: Chaque section mène à une décision
 
-## 1. SYNTHÈSE EXÉCUTIVE (CRITIQUE)
-3-4 phrases MAXIMUM. Un dirigeant qui ne lit que cette section doit comprendre:
-- La situation globale (bonne/préoccupante/critique)
-- Le chiffre clé du mois
-- L'action prioritaire
+# FORMAT DE SORTIE OBLIGATOIRE (Markdown Premium)
 
-## 2. TABLEAU DE BORD - INDICATEURS CLÉS
-Format tableau obligatoire:
-| Indicateur | Ce mois | Mois précédent | Évolution | Cible |
-Inclure: Tickets créés, Taux résolution, TMR, Tickets critiques
+## RÈGLE CRITIQUE: KPIs EN CARTES VISUELLES
 
-## 3. ANALYSE DES TENDANCES
-- Graphique mental: ↗️ hausse, ↘️ baisse, → stable
-- Explication des variations
-- Comparaison avec les objectifs
+Pour les indicateurs clés, utilise TOUJOURS ce format de cartes (PAS de tableau):
 
-## 4. PERFORMANCE DE L'ÉQUIPE
-Tableau par technicien avec classement implicite (du plus performant au moins)
-Mettre en valeur les réussites, identifier les besoins de support
+> **📊 17**
+> Tickets créés
+> *↑ +17 vs mois préc.*
 
-## 5. ÉTAT DU PARC MACHINES
-- Taux de disponibilité global
-- Machines problématiques (top 3-5 par nombre d'interventions)
-- Alertes sur équipements critiques
+> **✅ 18%**
+> Taux de résolution
+> *↑ +18 pts • Cible: 100%*
 
-## 6. POINTS D'ATTENTION CRITIQUES
-⚠️ Format visuel avec icônes
-- Tickets en retard avec impact estimé
-- Risques identifiés
-- Urgences à traiter
+> **⏱️ 213.6h**
+> TMR moyen
+> *⚠️ Élevé • Cible: <50h*
 
-## 7. RECOMMANDATIONS STRATÉGIQUES
-3-5 recommandations ACTIONNABLES avec:
-- Priorité (🔴 Urgent / 🟡 Important / 🟢 Amélioration)
-- Action concrète
-- Responsable suggéré
-- Échéance recommandée
+> **🔴 6**
+> Tickets critiques
+> *Action requise*
 
-# TON STYLE
+## STRUCTURE DU RAPPORT
 
-- Professionnel mais pas ennuyeux
-- Utilise des émojis pour la lisibilité (📊 📈 ⚠️ ✅ 🔧)
-- Mets en **gras** les chiffres importants
-- Utilise > pour les citations/highlights importants
-- Tableaux alignés et propres
+### 1. SYNTHÈSE EXÉCUTIVE
+3-4 phrases percutantes. Utilise des indicateurs visuels:
+- 🟢 Situation saine
+- 🟡 Vigilance requise  
+- 🔴 Situation critique
+
+Exemple:
+> 🟡 **VIGILANCE** — Le taux de résolution de **18%** est insuffisant malgré une amélioration de 18 points. Le TMR de **213.6h** nécessite une action immédiate. Priorité: résorber les 6 tickets critiques en cours.
+
+### 2. TABLEAU DE BORD (Cartes KPI comme ci-dessus)
+
+### 3. ANALYSE DES TENDANCES
+Utilise des indicateurs visuels:
+- 📈 Amélioration
+- 📉 Dégradation
+- ➡️ Stable
+
+Format liste à puces avec analyse, pas juste des chiffres.
+
+### 4. PERFORMANCE ÉQUIPE
+Tableau épuré avec mise en valeur:
+
+| Technicien | Assignés | Fermés | Taux | TMR | Statut |
+|------------|----------|--------|------|-----|--------|
+| **Brahim** | 12 | 3 | 25% | 213h | 🟡 |
+
+### 5. ÉTAT DU PARC MACHINES
+Cartes visuelles pour les statuts:
+
+> **✅ 15** Opérationnelles | **🔧 3** En maintenance | **❌ 1** Hors service
+
+Puis liste des machines problématiques.
+
+### 6. ALERTES ET POINTS D'ATTENTION
+
+Utilise des blocs d'alerte visuels:
+
+> ⚠️ **ALERTE: 6 tickets critiques en cours**
+> Impact estimé: Risque d'arrêt de production
+> Action: Réaffecter les ressources immédiatement
+
+### 7. RECOMMANDATIONS STRATÉGIQUES
+
+Format carte par recommandation:
+
+> **🔴 URGENT — Réduire le backlog critique**
+> - Action: Réunion d'équipe quotidienne 15 min
+> - Responsable: Superviseur maintenance
+> - Échéance: Cette semaine
+
+> **🟡 IMPORTANT — Améliorer le TMR**
+> - Action: Analyser les causes de délai
+> - Responsable: Chef d'équipe
+> - Échéance: Fin du mois
+
+---
+
+# STYLE VISUEL
+
+- **Titres**: Courts et impactants (pas "Section 1: Analyse des...")
+- **Émojis**: Utilisés stratégiquement pour la lisibilité
+- **Gras**: Pour les chiffres clés et mots importants
+- **Citations (>)**: Pour les cartes KPI et alertes
+- **Tableaux**: Épurés, sans bordures lourdes visuellement
+- **Listes**: À puces avec analyse, pas juste des données
 
 # INTERDICTIONS ABSOLUES
-- ❌ Inventer des données
+
+- ❌ Tableaux pour les KPIs principaux (utilise les cartes >)
 - ❌ Commencer par "Voici le rapport..."
 - ❌ Lister sans analyser
 - ❌ Oublier les recommandations
-- ❌ Dépasser 2 pages pour le corps principal`;
+- ❌ Plus de 2 pages`;
 
   // Construire le contexte de données formaté
   const contextData = buildRapportsContext(data);
@@ -131,98 +167,66 @@ function buildRapportsContext(data: RapportsData): string {
 
   return `
 ═══════════════════════════════════════════════════════════════
-              📊 DONNÉES DE MAINTENANCE - BASE FACTUELLE
+              📊 DONNÉES FACTUELLES - À UTILISER
 ═══════════════════════════════════════════════════════════════
 
-## PÉRIODE: CE MOIS
+## CE MOIS
 
-| Métrique | Valeur |
-|----------|--------|
-| Tickets créés | ${statsThisMonth.total} |
-| Tickets fermés | ${statsThisMonth.closed} |
-| Tickets en cours | ${statsThisMonth.open} |
-| Taux de résolution | ${statsThisMonth.resolutionRate}% |
-| TMR moyen | ${statsThisMonth.avgResolutionHours}h |
+- Tickets créés: ${statsThisMonth.total}
+- Tickets fermés: ${statsThisMonth.closed}
+- Tickets en cours: ${statsThisMonth.open}
+- Taux de résolution: ${statsThisMonth.resolutionRate}%
+- TMR moyen: ${statsThisMonth.avgResolutionHours}h
 
-### Répartition par priorité
-- 🔴 Critique: ${statsThisMonth.byPriority.critical}
-- 🟠 Haute: ${statsThisMonth.byPriority.high}
-- 🟡 Moyenne: ${statsThisMonth.byPriority.medium}
-- 🟢 Basse: ${statsThisMonth.byPriority.low}
+Priorités:
+- Critique: ${statsThisMonth.byPriority.critical}
+- Haute: ${statsThisMonth.byPriority.high}
+- Moyenne: ${statsThisMonth.byPriority.medium}
+- Basse: ${statsThisMonth.byPriority.low}
 
-### Répartition par statut
-${Object.entries(statsThisMonth.byStatus).map(([s, c]) => `- ${s}: ${c}`).join('\n')}
+## MOIS PRÉCÉDENT
 
----
+- Tickets créés: ${statsLastMonth.total}
+- Tickets fermés: ${statsLastMonth.closed}
+- Taux de résolution: ${statsLastMonth.resolutionRate}%
+- TMR moyen: ${statsLastMonth.avgResolutionHours}h
 
-## PÉRIODE: MOIS PRÉCÉDENT (COMPARAISON)
+## ÉVOLUTIONS
 
-| Métrique | Valeur |
-|----------|--------|
-| Tickets créés | ${statsLastMonth.total} |
-| Tickets fermés | ${statsLastMonth.closed} |
-| Taux de résolution | ${statsLastMonth.resolutionRate}% |
-| TMR moyen | ${statsLastMonth.avgResolutionHours}h |
+- Volume: ${ticketVariation > 0 ? '+' : ''}${ticketVariation}%
+- Résolution: ${resolutionVariation > 0 ? '+' : ''}${resolutionVariation} points
 
-### Évolutions
-- Volume tickets: ${ticketVariation > 0 ? '+' : ''}${ticketVariation}%
-- Taux résolution: ${resolutionVariation > 0 ? '+' : ''}${resolutionVariation} points
+## ÉQUIPE TECHNIQUE
 
----
-
-## PERFORMANCE ÉQUIPE TECHNIQUE (3 derniers mois)
-
-${technicianPerformance.length === 0 ? '*Aucun technicien enregistré*' : 
-technicianPerformance.map(t => `
-**${t.name}** (${t.role})
-| Assignés | Fermés | Taux | TMR | En cours |
-|----------|--------|------|-----|----------|
-| ${t.ticketsAssigned} | ${t.ticketsClosed} | ${t.resolutionRate}% | ${t.avgResolutionHours}h | ${t.currentOpenTickets} |
-`).join('\n')}
-
----
+${technicianPerformance.length === 0 ? 'Aucun technicien' : 
+technicianPerformance.map(t => 
+`${t.name} (${t.role}): ${t.ticketsAssigned} assignés, ${t.ticketsClosed} fermés, ${t.resolutionRate}% résolution, TMR ${t.avgResolutionHours}h, ${t.currentOpenTickets} en cours`
+).join('\n')}
 
 ## PARC MACHINES
 
-**Total**: ${totalMachines} machines
-- ✅ Opérationnelles: ${machinesByStatus.operational}
-- 🔧 En maintenance: ${machinesByStatus.maintenance}
-- ❌ Hors service: ${machinesByStatus.out_of_service}
+Total: ${totalMachines}
+- Opérationnelles: ${machinesByStatus.operational}
+- En maintenance: ${machinesByStatus.maintenance}
+- Hors service: ${machinesByStatus.out_of_service}
 
-### Machines avec le plus d'interventions
-${machinePerformance.filter(m => m.ticketsCount > 0).slice(0, 10).map((m, i) => `
-${i + 1}. **${m.name}** (${m.location || 'N/A'})
-   - Interventions: ${m.ticketsCount} | En cours: ${m.openTickets} | Arrêt: ${m.downtimeHours}h
-   - Problèmes fréquents: ${m.commonIssues.slice(0, 3).join(', ') || 'N/A'}
-`).join('') || '*Aucune intervention enregistrée*'}
+Top machines par interventions:
+${machinePerformance.filter(m => m.ticketsCount > 0).slice(0, 5).map((m, i) => 
+`${i + 1}. ${m.name} (${m.location || 'N/A'}): ${m.ticketsCount} interventions, ${m.openTickets} en cours`
+).join('\n') || 'Aucune'}
 
----
+## TICKETS EN RETARD (>7 jours): ${overdueTickets.length}
 
-## ⚠️ TICKETS EN RETARD (ouverts > 7 jours)
+${overdueTickets.slice(0, 10).map(t => 
+`- ${t.id}: ${t.title} | ${t.priority} | ${t.assignedTo || 'Non assigné'} | ${t.daysOpen}j`
+).join('\n') || 'Aucun'}
 
-**Total**: ${overdueTickets.length}
+## TICKETS CRITIQUES/HAUTE: ${criticalTickets.length}
 
-${overdueTickets.length === 0 ? '✅ *Aucun ticket en retard*' :
-overdueTickets.slice(0, 10).map(t => `
-- **${t.id}**: ${t.title}
-  - Priorité: ${t.priority} | Statut: ${t.status}
-  - Machine: ${t.machineName || 'N/A'} | Assigné: ${t.assignedTo || 'Non assigné'}
-  - Ouvert depuis: ${t.daysOpen} jours
-`).join('')}
+${criticalTickets.slice(0, 10).map(t => 
+`- ${t.id}: ${t.title} | ${t.priority} | ${t.assignedTo || 'Non assigné'}`
+).join('\n') || 'Aucun'}
 
----
-
-## 🔴 TICKETS CRITIQUES/HAUTE PRIORITÉ EN COURS
-
-${criticalTickets.length === 0 ? '✅ *Aucun ticket critique en cours*' :
-criticalTickets.map(t => `
-- **${t.id}**: ${t.title}
-  - Priorité: ${t.priority} | Machine: ${t.machineName || 'N/A'}
-  - Assigné: ${t.assignedTo || 'Non assigné'}
-`).join('')}
-
-═══════════════════════════════════════════════════════════════
-              FIN DES DONNÉES FACTUELLES
 ═══════════════════════════════════════════════════════════════
 `.trim();
 }

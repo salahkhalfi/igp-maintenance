@@ -285,7 +285,15 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
         };
         
-        // 1. INLINE FORMATTING FIRST (avant tableaux pour que **bold** fonctionne dans les cellules)
+        // 1. BLOCKQUOTES (Cartes KPI) - Traiter EN PREMIER
+        // Détecte les blocs > et les convertit en cartes stylées
+        md = md.replace(/^(?:>\s*.+\n?)+/gm, (match) => {
+            const lines = match.split('\n').filter(l => l.trim());
+            const content = lines.map(l => l.replace(/^>\s*/, '').trim()).join('<br>');
+            return `<blockquote class="kpi-card">${content}</blockquote>\n`;
+        });
+        
+        // 2. INLINE FORMATTING (avant tableaux pour que **bold** fonctionne dans les cellules)
         let html = md
             // Bold et italic EN PREMIER (avec styles inline pour impression)
             .replace(/\*\*([^*]+)\*\*/g, '<strong style="font-weight:700;color:#0f172a">$1</strong>')
@@ -295,16 +303,16 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             // Séparateurs horizontaux (---, ***, ___)
             .replace(/^[-*_]{3,}\s*$/gm, '<hr class="doc-separator">')
             // Images ![alt](url) - AVANT les liens pour éviter conflit
-            .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:4pt;">')
+            .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:8pt;box-shadow:0 2pt 8pt rgba(0,0,0,0.1);">')
             // Liens [text](url)
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6;text-decoration:underline;">$1</a>')
-            // Headers avec styles inline pour impression
-            .replace(/^#### (.+)$/gm, '<h4 style="font-size:11pt;font-weight:600;color:#475569;margin:12px 0 6px">$1</h4>')
-            .replace(/^### (.+)$/gm, '<h3 style="font-size:12pt;font-weight:600;color:#334155;margin:16px 0 8px">$1</h3>')
-            .replace(/^## (.+)$/gm, '<h2 style="font-size:14pt;font-weight:600;color:#1e293b;margin:20px 0 10px;padding-left:10px;border-left:3px solid #3b82f6">$1</h2>')
-            .replace(/^# (.+)$/gm, '<h1 style="font-size:18pt;font-weight:700;color:#0f172a;margin:24px 0 12px;padding-bottom:8px;border-bottom:2px solid #3b82f6">$1</h1>')
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6;text-decoration:none;font-weight:500;">$1</a>')
+            // Headers avec styles inline pour impression - Design premium
+            .replace(/^#### (.+)$/gm, '<h4 style="font-size:10pt;font-weight:600;color:#475569;margin:10px 0 4px;text-transform:uppercase;letter-spacing:0.5px">$1</h4>')
+            .replace(/^### (.+)$/gm, '<h3 style="font-size:11pt;font-weight:600;color:#334155;margin:14px 0 6px">$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2 style="font-size:13pt;font-weight:700;color:#1e293b;margin:20px 0 10px;padding:8px 12px;background:linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%);border-radius:6px;border-left:4px solid #3b82f6">$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1 style="font-size:18pt;font-weight:800;color:#0f172a;margin:24px 0 12px;padding-bottom:8px;border-bottom:3px solid #3b82f6;letter-spacing:-0.5px">$1</h1>')
             // Code inline `code`
-            .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2pt 4pt;border-radius:3pt;font-family:monospace;font-size:10pt;">$1</code>')
+            .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2pt 6pt;border-radius:4pt;font-family:monospace;font-size:9pt;color:#0f172a;">$1</code>')
             // Listes
             .replace(/^(\s*)[\*\-] (.+)$/gm, (m, indent, content) => `<li data-level="${Math.floor((indent||'').length/2)}">${content}</li>`)
             .replace(/^\d+\. (.+)$/gm, '<li class="numbered">$1</li>');
@@ -320,23 +328,51 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     };
 
     const documentStyles = `
-        .doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
-        .doc-content h1 { font-size: 15pt; font-weight: 700; color: #0f172a; margin: 18pt 0 8pt; padding-bottom: 4pt; border-bottom: 2pt solid #3b82f6; }
-        .doc-content h2 { font-size: 12pt; font-weight: 600; color: #1e293b; margin: 14pt 0 6pt; padding-left: 8pt; border-left: 3pt solid #3b82f6; }
-        .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 10pt 0 4pt; }
-        .doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 8pt 0 4pt; }
-        .doc-content p { margin: 0 0 8pt; text-align: justify; }
-        .doc-content ul, .doc-content ol { margin: 6pt 0 8pt; padding-left: 18pt; }
-        .doc-content li { margin: 3pt 0; }
-        .doc-content table { width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 9pt; border: 1pt solid #334155 !important; }
-        .doc-content th { background-color: #e2e8f0 !important; border: 1pt solid #334155 !important; padding: 6pt 8pt; text-align: left; font-weight: 600; color: #0f172a !important; }
-        .doc-content td { border: 1pt solid #334155 !important; padding: 6pt 8pt; }
-        .doc-content tr:nth-child(even) td { background-color: #f8fafc !important; }
-        .doc-content hr, .doc-content .doc-separator { border: none; border-top: 1pt solid #cbd5e1; margin: 12pt 0; }
-        .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 10pt 0; border-radius: 4pt; display: block; }
-        .doc-content a { color: #3b82f6; text-decoration: underline; }
-        .doc-content code { background: #f1f5f9; padding: 2pt 4pt; border-radius: 3pt; font-family: monospace; font-size: 10pt; }
+        .doc-content { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10.5pt; line-height: 1.6; color: #1e293b; }
+        .doc-content h1 { font-size: 18pt; font-weight: 800; color: #0f172a; margin: 24pt 0 12pt; padding-bottom: 8pt; border-bottom: 3pt solid #3b82f6; letter-spacing: -0.5px; }
+        .doc-content h2 { font-size: 13pt; font-weight: 700; color: #1e293b; margin: 20pt 0 10pt; padding: 8pt 12pt; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 6pt; border-left: 4pt solid #3b82f6; }
+        .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 14pt 0 6pt; }
+        .doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 4pt; text-transform: uppercase; letter-spacing: 0.5px; }
+        .doc-content p { margin: 0 0 10pt; }
+        .doc-content ul, .doc-content ol { margin: 8pt 0 12pt; padding-left: 20pt; }
+        .doc-content li { margin: 4pt 0; }
+        
+        /* Cartes KPI (blockquotes) - Design Premium */
+        .doc-content blockquote { 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
+            border: 1pt solid #e2e8f0; 
+            border-left: 4pt solid #3b82f6; 
+            border-radius: 8pt; 
+            padding: 12pt 16pt; 
+            margin: 8pt 0; 
+            box-shadow: 0 2pt 4pt rgba(0,0,0,0.04);
+        }
+        .doc-content blockquote strong { font-size: 18pt; color: #0f172a; display: block; margin-bottom: 2pt; }
+        .doc-content blockquote em { font-size: 9pt; color: #64748b; font-style: normal; }
+        
+        /* Alertes spéciales dans blockquotes */
+        .doc-content blockquote:has(strong:first-child) { }
+        
+        /* Tableaux épurés */
+        .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9.5pt; border-radius: 8pt; overflow: hidden; box-shadow: 0 1pt 3pt rgba(0,0,0,0.08); }
+        .doc-content th { background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important; color: #ffffff !important; border: none !important; padding: 10pt 12pt; text-align: left; font-weight: 600; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; }
+        .doc-content td { border: none !important; border-bottom: 1pt solid #e2e8f0 !important; padding: 10pt 12pt; background: #ffffff; }
+        .doc-content tr:nth-child(even) td { background: #f8fafc !important; }
+        .doc-content tr:last-child td { border-bottom: none !important; }
+        .doc-content tr:hover td { background: #f1f5f9 !important; }
+        
+        /* Séparateurs */
+        .doc-content hr, .doc-content .doc-separator { border: none; height: 2pt; background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 50%, #e2e8f0 100%); margin: 20pt 0; border-radius: 1pt; }
+        
+        /* Autres éléments */
+        .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 12pt 0; border-radius: 8pt; display: block; box-shadow: 0 2pt 8pt rgba(0,0,0,0.1); }
+        .doc-content a { color: #3b82f6; text-decoration: none; font-weight: 500; }
+        .doc-content a:hover { text-decoration: underline; }
+        .doc-content code { background: #f1f5f9; padding: 2pt 6pt; border-radius: 4pt; font-family: 'SF Mono', Monaco, monospace; font-size: 9pt; color: #0f172a; }
         .doc-content strong { font-weight: 700; color: #0f172a; }
+        
+        /* Indicateurs de statut */
+        .doc-content p:has(> strong:first-child) { }
     `;
 
     const printDocument = async () => {
@@ -367,19 +403,23 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: 
 .print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 13pt; font-weight: 700; color: #0f172a; }
 .print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #64748b; }
 .print-header-right { font-family: Arial, sans-serif; font-size: 9pt; color: #64748b; }
-/* Même styles que doc-content - espacements cohérents */
-.doc-content { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
-.doc-content h1 { font-size: 15pt; font-weight: 700; color: #0f172a; margin: 18pt 0 8pt; padding-bottom: 4pt; border-bottom: 2pt solid #3b82f6; }
-.doc-content h2 { font-size: 12pt; font-weight: 600; color: #1e293b; margin: 14pt 0 6pt; padding-left: 8pt; border-left: 3pt solid #3b82f6; }
-.doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 10pt 0 4pt; }
-.doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 8pt 0 4pt; }
-.doc-content p { margin: 0 0 8pt; text-align: justify; }
-.doc-content ul, .doc-content ol { margin: 6pt 0 8pt; padding-left: 18pt; }
-.doc-content li { margin: 3pt 0; }
-.doc-content table { width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 9pt; border: 1pt solid #334155; }
-.doc-content th { background-color: #e2e8f0; border: 1pt solid #334155; padding: 6pt 8pt; text-align: left; font-weight: 600; }
-.doc-content td { border: 1pt solid #334155; padding: 6pt 8pt; }
-.doc-content hr { border: none; border-top: 1pt solid #cbd5e1; margin: 12pt 0; }
+/* Design Premium - Dashboard Exécutif */
+.doc-content { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10.5pt; line-height: 1.6; color: #1e293b; }
+.doc-content h1 { font-size: 18pt; font-weight: 800; color: #0f172a; margin: 24pt 0 12pt; padding-bottom: 8pt; border-bottom: 3pt solid #3b82f6; letter-spacing: -0.5px; }
+.doc-content h2 { font-size: 13pt; font-weight: 700; color: #1e293b; margin: 20pt 0 10pt; padding: 8pt 12pt; background: #f1f5f9; border-radius: 6pt; border-left: 4pt solid #3b82f6; }
+.doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 14pt 0 6pt; }
+.doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 4pt; text-transform: uppercase; letter-spacing: 0.5px; }
+.doc-content p { margin: 0 0 10pt; }
+.doc-content ul, .doc-content ol { margin: 8pt 0 12pt; padding-left: 20pt; }
+.doc-content li { margin: 4pt 0; }
+.doc-content blockquote { background: #f8fafc; border: 1pt solid #e2e8f0; border-left: 4pt solid #3b82f6; border-radius: 8pt; padding: 12pt 16pt; margin: 8pt 0; }
+.doc-content blockquote strong { font-size: 18pt; color: #0f172a; display: block; margin-bottom: 2pt; }
+.doc-content blockquote em { font-size: 9pt; color: #64748b; font-style: normal; }
+.doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9.5pt; }
+.doc-content th { background: #1e293b !important; color: #fff !important; padding: 10pt 12pt; text-align: left; font-weight: 600; font-size: 9pt; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.doc-content td { border-bottom: 1pt solid #e2e8f0; padding: 10pt 12pt; }
+.doc-content tr:nth-child(even) td { background: #f8fafc; }
+.doc-content hr { border: none; height: 2pt; background: #e2e8f0; margin: 20pt 0; border-radius: 1pt; }
 .doc-content strong { font-weight: 700; color: #0f172a; }
 @media print {
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
