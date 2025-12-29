@@ -17,6 +17,15 @@ export function buildCorrespondanceBrain(
   // name = nom de l'APPLICATION (ex: "Système de Gestion Interne") - NE PAS UTILISER
   const companyName = context.company.subtitle || context.company.name || 'Entreprise';
   
+  // Extraire le nom du directeur depuis hierarchy (ex: "Directeur des Opérations : Marc Bélanger")
+  let directorName = 'La Direction';
+  let directorTitle = 'Directeur des Opérations';
+  const hierarchy = context.company.hierarchy || '';
+  const directorMatch = hierarchy.match(/Directeur[^:]*:\s*([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)/i);
+  if (directorMatch) {
+    directorName = directorMatch[1].trim();
+  }
+  
   const systemPrompt = `Tu rédiges des lettres officielles québécoises pour ${companyName}.
 
 ${buildCompanyBlock(context.company)}
@@ -27,7 +36,7 @@ CONSIGNES:
 - Rédige UNIQUEMENT la lettre, sans commentaire ni explication
 - Utilise le vouvoiement
 - Remplace tout placeholder par du contenu réel
-- Si pas de signataire précisé, utilise "La Direction"
+- Signataire par défaut: ${directorName}, ${directorTitle} (sauf si l'utilisateur précise un autre nom)
 - Maximum 4 phrases par paragraphe
 - Pas de liste à puces dans le corps de la lettre
 
@@ -58,8 +67,8 @@ Montréal, le ${formatDateFrCA()}
 [Formule de politesse]
 
 
-[Prénom Nom]
-[Titre/Fonction]
+${directorName}
+${directorTitle}
 ${companyName}
 
 FORMULES DE POLITESSE:
