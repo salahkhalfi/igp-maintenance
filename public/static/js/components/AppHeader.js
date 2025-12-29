@@ -536,7 +536,31 @@ const AppHeader = ({
                             onClick: onOpenPlanning,
                             className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors',
                             title: 'Consulter le planning de production'
-                        }, React.createElement('i', { className: 'fas fa-calendar-alt text-indigo-500' }), 'Planning')
+                        }, React.createElement('i', { className: 'fas fa-calendar-alt text-indigo-500' }), 'Planning'),
+
+                        // Separator for admin tools
+                        (isAdmin) && React.createElement('span', { className: 'w-px h-5 bg-slate-300 mx-1' }),
+
+                        // System Settings (Admin only - Desktop)
+                        (isAdmin) && safeHasPermission('settings.manage') && React.createElement('button', {
+                            onClick: onOpenSystemSettings,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-gray-100 hover:text-gray-800 transition-colors',
+                            title: 'Paramètres système'
+                        }, React.createElement('i', { className: 'fas fa-cog text-gray-500' }), 'Paramètres'),
+
+                        // Users (Admin only - Desktop)
+                        (isAdmin) && safeHasPermission('users.read') && React.createElement('button', {
+                            onClick: onOpenUserManagement,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors',
+                            title: 'Gestion des utilisateurs'
+                        }, React.createElement('i', { className: 'fas fa-users text-indigo-500' }), 'Utilisateurs'),
+
+                        // Machines (Admin only - Desktop)
+                        (isAdmin) && safeHasPermission('machines.read') && activeModules.machines && React.createElement('button', {
+                            onClick: onOpenMachineManagement,
+                            className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-teal-50 hover:text-teal-700 transition-colors',
+                            title: 'Gestion du parc machines'
+                        }, React.createElement('i', { className: 'fas fa-cogs text-teal-500' }), 'Machines')
                     ),
 
                     // PRIMARY ACTIONS (Right aligned)
