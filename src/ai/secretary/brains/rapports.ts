@@ -80,17 +80,24 @@ Suivi d'un paragraphe d'analyse.
 Liste des machines nécessitant attention (si applicable).
 
 ### 6. POINTS D'ATTENTION
-Liste numérotée des problèmes critiques:
-1. **Problème**: Description et impact
-2. **Problème**: Description et impact
+Liste des problèmes critiques sous forme de paragraphes:
+
+**Problème 1: [Titre]**
+Description détaillée et impact sur les opérations.
+
+**Problème 2: [Titre]**
+Description détaillée et impact sur les opérations.
 
 ### 7. RECOMMANDATIONS
-Liste numérotée avec pour chaque recommandation:
-1. **Titre de la recommandation**
-   - Priorité: Haute/Moyenne/Basse
-   - Action requise: Description
-   - Responsable suggéré: Fonction
-   - Échéance recommandée: Date
+**Format tableau obligatoire pour les recommandations:**
+
+| # | Recommandation | Priorité | Action requise | Responsable | Échéance |
+|---|----------------|----------|----------------|-------------|----------|
+| 1 | Titre court | Haute | Description de l'action | Fonction | Date |
+| 2 | Titre court | Moyenne | Description de l'action | Fonction | Date |
+| 3 | Titre court | Basse | Description de l'action | Fonction | Date |
+
+Suivi d'un paragraphe justifiant les priorités si nécessaire.
 
 ---
 
