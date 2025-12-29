@@ -464,10 +464,15 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         /* Style pour les lettres - blocs bien espacés */
         .letter-block {
             margin-bottom: 16pt;
-            line-height: 1.6;
+            line-height: 1.5;
         }
         .letter-block:first-child {
-            margin-bottom: 20pt;
+            margin-bottom: 28pt;
+            font-weight: 700;
+            font-size: 13pt;
+        }
+        .letter-block:first-child strong {
+            font-size: 14pt;
         }
         
         /* Contrôle des sauts de page pour impression */
@@ -519,8 +524,8 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 html, body { width: 100%; }
 body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; font-size: ${isLetter ? '12pt' : '11pt'}; line-height: ${isLetter ? '1.8' : '1.5'}; color: #000; padding: 0; }
 
-/* Header corporate */
-.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 16pt; border-bottom: 1pt solid #000; }
+/* Header corporate - masqué pour les lettres (en-tête dans le contenu) */
+.print-header { display: ${isLetter ? 'none' : 'flex'}; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 16pt; border-bottom: 1pt solid #000; }
 .print-header-left { display: flex; align-items: center; gap: 10px; }
 .print-header-left img { height: 32px; }
 .print-header-left .brand { border-left: 1pt solid #000; padding-left: 8px; }
@@ -545,8 +550,9 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 .doc-content strong { font-weight: 700; }
 
 /* Style spécifique pour les lettres */
-.letter-block { margin-bottom: 18pt; }
-.letter-block:first-child { margin-bottom: 24pt; } /* En-tête entreprise */
+.letter-block { margin-bottom: 16pt; line-height: 1.5; }
+.letter-block:first-child { margin-bottom: 28pt; font-weight: 700; font-size: 13pt; } /* En-tête entreprise */
+.letter-block:first-child strong { font-size: 14pt; }
 .letter-block strong { font-weight: 700; }
 
 /* Section wrapper pour éviter les coupures */

@@ -23,15 +23,18 @@ Date du jour: ${formatDateFrCA()}
 
 CONSIGNES:
 - Rédige UNIQUEMENT la lettre, sans commentaire ni explication
-- L'en-tête de l'entreprise est DÉJÀ affiché par le système, ne le répète PAS
-- Commence directement par la date et le lieu
 - Utilise le vouvoiement
 - Remplace tout placeholder par du contenu réel
 - Si pas de signataire précisé, utilise "La Direction"
 - Maximum 4 phrases par paragraphe
 - Pas de liste à puces dans le corps de la lettre
 
-FORMAT ATTENDU:
+FORMAT DE LETTRE OFFICIELLE:
+
+**${companyName}**
+9150 Bd Maurice-Duplessis
+Montréal, QC H1E 7C2
+Tél: 514-555-1234
 
 Montréal, le ${formatDateFrCA()}
 
