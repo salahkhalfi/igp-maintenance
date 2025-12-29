@@ -38,73 +38,51 @@ ${formatDateFrCA()}
 
 ${QUALITY_RULES}
 
+# FORMAT DE SORTIE
+
+Tu dois générer une lettre formatée en texte simple SANS utiliser de blocs de code.
+Utilise des sauts de ligne pour séparer les sections.
+
 # STRUCTURE D'UNE LETTRE OFFICIELLE
 
-## EN-TÊTE
-\`\`\`
-[NOM DE L'ENTREPRISE]
-[Adresse]
-[Ville (Québec) Code postal]
-Tél.: [Numéro] | Courriel: [courriel]
-\`\`\`
+**EN-TÊTE** (en haut à gauche)
+- Nom de l'entreprise
+- Adresse complète
+- Téléphone et courriel
 
-## DATE ET LIEU
-[Ville], le [date en lettres]
+**DATE ET LIEU** (avec une ligne vide avant)
+Montréal, le [date en lettres]
 
-## DESTINATAIRE
-[Titre] [Prénom] [Nom]
-[Fonction]
-[Organisation]
-[Adresse]
-[Ville (Province) Code postal]
+**DESTINATAIRE** (avec une ligne vide avant)
+- Titre, Prénom, Nom
+- Fonction
+- Organisation
+- Adresse
 
-## OBJET
-**Objet:** [Résumé clair en une ligne]
+**OBJET** (en gras, avec une ligne vide avant)
+Objet: [Résumé clair en une ligne]
 
-## APPEL
-Selon le destinataire:
-- Ministre: "Monsieur le Ministre," / "Madame la Ministre,"
-- Directeur: "Monsieur le Directeur," / "Madame la Directrice,"
-- Général: "Monsieur," / "Madame,"
-- Connu: "Cher Monsieur [Nom]," / "Chère Madame [Nom],"
+**APPEL** (avec une ligne vide avant)
+Adapté selon le destinataire (Monsieur, Madame, Cher Monsieur X, etc.)
 
-## CORPS (3 paragraphes maximum)
+**CORPS** (3 paragraphes maximum, chacun séparé par une ligne vide)
+- Paragraphe 1: Contexte
+- Paragraphe 2: Message principal  
+- Paragraphe 3: Conclusion/Action attendue
 
-### Paragraphe 1 - Contexte
-Pourquoi vous écrivez. Référence à une rencontre, un échange, une situation.
+**FORMULE DE POLITESSE** (avec une ligne vide avant)
+Adaptée au destinataire
 
-### Paragraphe 2 - Message principal
-Le cœur de votre communication. Clair, factuel, direct.
+**SIGNATURE** (avec deux lignes vides avant)
+- Prénom Nom
+- Fonction
+- Entreprise
 
-### Paragraphe 3 - Conclusion/Action
-Ce que vous attendez, proposez, ou espérez.
+**PIÈCES JOINTES** (si applicable)
+p.j. Liste des documents
 
-## FORMULE DE POLITESSE
-
-### Vers le gouvernement/ministre
-"Je vous prie d'agréer, [Titre], l'expression de ma très haute considération."
-
-### Vers un directeur/cadre supérieur
-"Veuillez agréer, [Titre], l'expression de mes sentiments distingués."
-
-### Vers un partenaire/client
-"Veuillez recevoir mes salutations distinguées."
-
-### Vers un collègue/contact régulier
-"Cordialement,"
-
-## SIGNATURE
-\`\`\`
-[Prénom] [Nom]
-[Fonction]
-[Entreprise]
-\`\`\`
-
-## PIÈCES JOINTES (si applicable)
-p.j. [Liste des documents joints]
-
-## COPIE CONFORME (si applicable)
-c.c. [Liste des personnes en copie]
+**COPIE CONFORME** (si applicable)
+c.c. Liste des personnes
 
 ---
 
@@ -174,7 +152,16 @@ Exemple: Montréal, le 15 janvier 2025
 - ❌ Faire des fautes d'orthographe ou de grammaire
 - ❌ Écrire des paragraphes trop longs
 - ❌ Oublier l'objet de la lettre
-- ❌ Utiliser "Cher(e)" sans connaître la personne`;
+- ❌ Utiliser "Cher(e)" sans connaître la personne
+- ❌ Utiliser des blocs de code (\`\`\`) - écrire en texte normal
+- ❌ Utiliser des puces ou listes numérotées dans le corps de la lettre
+
+# RÈGLES DE FORMATAGE
+- Texte simple et élégant, pas de Markdown complexe
+- Utiliser **gras** uniquement pour "Objet:" 
+- Séparer les sections par des lignes vides
+- Ne jamais utiliser de blocs de code ou de tableaux
+- La lettre doit ressembler à une vraie lettre d'affaires imprimée`;
 
   return {
     systemPrompt,

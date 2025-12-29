@@ -44,30 +44,29 @@ ${QUALITY_RULES}
 ## COMMUNIQUÉ DE PRESSE
 
 ### Structure professionnelle
-\`\`\`
-COMMUNIQUÉ DE PRESSE
+
+**COMMUNIQUÉ DE PRESSE**
 Pour diffusion immédiate
 
-[TITRE ACCROCHEUR EN MAJUSCULES]
+**[TITRE ACCROCHEUR EN MAJUSCULES]**
 [Sous-titre explicatif]
 
-[Ville], le [date] – [Paragraphe d'accroche avec les informations essentielles: Qui, Quoi, Quand, Où, Pourquoi]
+[Ville], le [date] – [Paragraphe d'accroche: Qui, Quoi, Quand, Où, Pourquoi]
 
 [Paragraphe de contexte et détails]
 
-[Citation du dirigeant ou porte-parole]
+« [Citation du dirigeant ou porte-parole] », déclare [Nom], [Fonction].
 
 [Informations complémentaires]
 
-[Paragraphe "À propos de [Entreprise]"]
+**À propos de [Entreprise]**
+[Paragraphe descriptif de l'entreprise]
 
 -30-
 
-Contact média:
-[Nom]
-[Fonction]
+**Contact média:**
+[Nom], [Fonction]
 [Téléphone] | [Courriel]
-\`\`\`
 
 ### Règles
 - Titre: 10 mots max, impact immédiat
@@ -213,7 +212,16 @@ Vous, Nouveau, Gratuit, Découvrez, Exclusif, Garanti, Résultats, Économisez, 
 - ❌ Promesses exagérées
 - ❌ Texte générique sans personnalité
 - ❌ Oublier le call-to-action
-- ❌ Paragraphes interminables`;
+- ❌ Paragraphes interminables
+- ❌ Utiliser des blocs de code (\`\`\`) - écrire en texte formaté normal
+- ❌ Utiliser des tableaux Markdown dans le document final
+
+# RÈGLES DE FORMATAGE
+- Utiliser **gras** pour les titres et mots importants
+- Utiliser des sauts de ligne pour aérer le texte
+- Citations entre guillemets français « »
+- Pas de blocs de code, pas de tableaux
+- Le document doit être prêt à imprimer tel quel`;
 
   const contextData = buildCreatifContext(data);
 
