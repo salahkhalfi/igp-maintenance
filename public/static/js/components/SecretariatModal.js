@@ -593,13 +593,13 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   .doc-content p { orphans: 2; widows: 2; }
 }
 
-/* Footer - Avertissement confidentialité */
+/* Footer - Avertissement confidentialité - TOUJOURS visible */
 .print-footer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 8pt 0;
+  padding: 6pt 20mm;
   border-top: 0.5pt solid #000;
   font-family: Arial, sans-serif;
   font-size: 7pt;
@@ -608,13 +608,12 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   background: #fff;
 }
 .print-footer-content {
-  max-width: 90%;
-  margin: 0 auto;
-  line-height: 1.4;
+  line-height: 1.3;
 }
+/* Réserver l'espace en bas du contenu pour éviter le chevauchement */
+${isConfidential ? '.doc-content { padding-bottom: 50pt; }' : ''}
 @media print {
-  .print-footer { position: fixed; bottom: 0; }
-  ${isConfidential ? 'body { margin-bottom: 60pt; }' : ''}
+  .print-footer { position: fixed; bottom: 0; left: 0; right: 0; }
 }
 </style></head>
 <body>

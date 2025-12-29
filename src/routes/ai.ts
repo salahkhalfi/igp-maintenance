@@ -2149,30 +2149,50 @@ app.post('/secretary', async (c) => {
         
         // ===== EXTRACT TITLE =====
         let title = 'Document';
-        // Pour correspondance: extraire l'objet de la lettre
+        
+        // Titres par défaut par type de document
+        const defaultTitles: Record<string, string> = {
+            'correspondance': 'Correspondance officielle',
+            'subventions': 'Demande de subvention',
+            'rh': 'Document RH',
+            'technique': 'Document technique',
+            'rapports': 'Rapport de maintenance',
+            'creatif': 'Document créatif'
+        };
+        
         if (documentType === 'correspondance') {
+            // Pour correspondance: extraire l'objet de la lettre
             const objetMatch = aiResponse.match(/\*\*Objet\s*:\*\*\s*(.+?)(?:\n|$)/i) 
                            || aiResponse.match(/Objet\s*:\s*(.+?)(?:\n|$)/i);
             if (objetMatch) {
                 title = objetMatch[1].trim();
             } else {
-                title = 'Correspondance officielle';
+                title = defaultTitles['correspondance'];
+            }
+        } else if (documentType === 'rh') {
+            // Pour RH: chercher "Offre d'emploi :" ou titre en # sinon défaut
+            const rhTitleMatch = aiResponse.match(/^(?:Offre d'emploi|Lettre d'embauche|Évaluation|Fin d'emploi)\s*:\s*(.+?)$/mi)
+                              || aiResponse.match(/^#+ (.+)$/m);
+            if (rhTitleMatch) {
+                title = rhTitleMatch[0].replace(/^#+\s*/, '').trim();
+            } else {
+                title = defaultTitles['rh'];
+            }
+        } else if (documentType === 'rapports') {
+            // Pour rapports: chercher le titre # en premier
+            const rapportMatch = aiResponse.match(/^# (.+)$/m);
+            if (rapportMatch) {
+                title = rapportMatch[1].trim();
+            } else {
+                title = defaultTitles['rapports'];
             }
         } else {
-            // Pour autres documents: chercher un titre # ou le premier **texte**
-            const titleMatch = aiResponse.match(/^#+ (.+)$/m) || aiResponse.match(/^\*\*([^*:]+)\*\*/m);
+            // Pour autres documents: chercher un titre # 
+            const titleMatch = aiResponse.match(/^#+ (.+)$/m);
             if (titleMatch) {
                 title = titleMatch[1].replace(/\*\*/g, '').trim();
             } else {
-                const titleMap: Record<string, string> = {
-                    'correspondance': 'Correspondance officielle',
-                    'subventions': 'Demande de subvention',
-                    'rh': 'Document RH',
-                    'technique': 'Document technique',
-                    'rapports': 'Rapport de maintenance',
-                    'creatif': 'Document créatif'
-                };
-                title = titleMap[documentType] || 'Document de direction';
+                title = defaultTitles[documentType] || 'Document de direction';
             }
         }
         
