@@ -119,6 +119,10 @@ function calcStats(ticketList: any[], closedStatuses: string[]): PeriodStats {
 // ============================================================
 
 export async function loadRapportsData(env: any): Promise<RapportsData> {
+  if (!env?.DB) {
+    throw new Error('Database not available (env.DB is undefined)');
+  }
+  
   const { statusMap, priorityMap, closedStatuses } = await getTicketMaps(env);
   
   const now = new Date();

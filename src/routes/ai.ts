@@ -2011,14 +2011,21 @@ app.post('/secretary', async (c) => {
         // ===== PREPARE SPECIALIZED BRAIN =====
         console.log(`🧠 [Secretary] Preparing ${documentType} brain with specialized data...`);
         
-        const brainResult = await prepareSecretary(
-            documentType as DocumentType,
-            env,  // Pass env for D1 direct access in data loaders
-            companyIdentity,
-            baseUrl
-        );
-        
-        console.log(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
+        let brainResult;
+        try {
+            brainResult = await prepareSecretary(
+                documentType as DocumentType,
+                env,  // Pass env for D1 direct access in data loaders
+                companyIdentity,
+                baseUrl
+            );
+            console.log(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
+        } catch (brainError: any) {
+            console.error(`❌ [Secretary] Brain preparation failed:`, brainError.message, brainError.stack);
+            return c.json({ 
+                error: `Erreur lors de la préparation du cerveau: ${brainError.message}` 
+            }, 500);
+        }
 
         // ===== CHECK API KEY =====
         if (!env.OPENAI_API_KEY) {
