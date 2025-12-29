@@ -482,14 +482,20 @@ const AppHeader = ({
                                 className: 'w-full h-11 pl-11 pr-12 bg-white border border-slate-200 rounded-xl shadow-sm text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none',
                                 value: searchQuery,
                                 onChange: handleSearchChange,
-                                onFocus: () => { setShowSearchResults(searchQuery.length >= 2); setViewingList(true); },
-                                onBlur: () => setTimeout(() => { if(!viewingList) setShowSearchResults(false); }, 200),
+                                // Ne pas ouvrir le dropdown au focus - laisser taper tranquillement
+                                onFocus: () => { /* Ne rien faire - le dropdown s'ouvre avec les résultats ou le chevron */ },
+                                onBlur: () => setTimeout(() => { setShowSearchResults(false); setViewingList(false); }, 300),
                                 onKeyDown: (e) => {
                                     if (e.key === 'Enter' && searchQuery.length >= 2) {
                                         addToHistory(searchQuery);
                                         setShowSearchResults(false);
                                         setViewingList(false);
                                         searchInputRef.current?.blur();
+                                    }
+                                    // Escape ferme le dropdown
+                                    if (e.key === 'Escape') {
+                                        setShowSearchResults(false);
+                                        setViewingList(false);
                                     }
                                 }
                             }),
@@ -503,9 +509,15 @@ const AppHeader = ({
                             // Spinner
                             searchLoading && React.createElement('i', { className: 'fas fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-500' }),
                             
-                            // Chevron
+                            // Chevron - Toggle filtres rapides et historique
                             (!searchQuery && !searchLoading) && React.createElement('button', {
-                                onClick: () => { setViewingList(!viewingList); setShowSearchResults(!showSearchResults); },
+                                onClick: (e) => { 
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const newState = !viewingList;
+                                    setViewingList(newState); 
+                                    setShowSearchResults(newState); 
+                                },
                                 className: 'absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 p-1',
                                 title: 'Afficher les filtres rapides et l\'historique'
                             }, React.createElement('i', { className: 'fas fa-chevron-down text-xs' }))

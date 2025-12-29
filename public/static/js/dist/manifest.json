@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-29T18:29:13.542Z",
+  "generated": "2025-12-29T18:36:44.198Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -19,7 +19,7 @@
     {
       "original": "AppHeader.js",
       "minified": "AppHeader.min.js",
-      "savings": "52.6%"
+      "savings": "53.0%"
     },
     {
       "original": "ConfirmModal.js",
@@ -187,5 +187,5 @@
       "savings": "67.2%"
     }
   ],
-  "totalSavings": "47.9%"
+  "totalSavings": "48.0%"
 }
