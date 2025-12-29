@@ -38,51 +38,64 @@ ${formatDateFrCA()}
 
 ${QUALITY_RULES}
 
-# FORMAT DE SORTIE
+# FORMAT DE SORTIE OBLIGATOIRE
 
-Tu dois générer une lettre formatée en texte simple SANS utiliser de blocs de code.
-Utilise des sauts de ligne pour séparer les sections.
+Génère la lettre en suivant EXACTEMENT ce format (avec les lignes vides indiquées):
 
-# STRUCTURE D'UNE LETTRE OFFICIELLE
+---
 
-**EN-TÊTE** (en haut à gauche)
-- Nom de l'entreprise
-- Adresse complète
-- Téléphone et courriel
+${context.company.name || 'Entreprise'}
+${context.company.identity || ''}
 
-**DATE ET LIEU** (avec une ligne vide avant)
-Montréal, le [date en lettres]
+[ligne vide]
 
-**DESTINATAIRE** (avec une ligne vide avant)
-- Titre, Prénom, Nom
-- Fonction
-- Organisation
-- Adresse
+Montréal, le [date en toutes lettres]
 
-**OBJET** (en gras, avec une ligne vide avant)
-Objet: [Résumé clair en une ligne]
+[ligne vide]
 
-**APPEL** (avec une ligne vide avant)
-Adapté selon le destinataire (Monsieur, Madame, Cher Monsieur X, etc.)
+[Civilité] [Prénom] [Nom]
+[Adresse si connue]
+[Ville, Province  Code postal]
 
-**CORPS** (3 paragraphes maximum, chacun séparé par une ligne vide)
-- Paragraphe 1: Contexte
-- Paragraphe 2: Message principal  
-- Paragraphe 3: Conclusion/Action attendue
+[ligne vide]
 
-**FORMULE DE POLITESSE** (avec une ligne vide avant)
-Adaptée au destinataire
+**Objet :** [Résumé clair et précis]
 
-**SIGNATURE** (avec deux lignes vides avant)
-- Prénom Nom
-- Fonction
-- Entreprise
+[ligne vide]
 
-**PIÈCES JOINTES** (si applicable)
-p.j. Liste des documents
+[Appel: Monsieur, / Madame, / Cher Monsieur Nom, etc.]
 
-**COPIE CONFORME** (si applicable)
-c.c. Liste des personnes
+[ligne vide]
+
+[Premier paragraphe - Contexte: pourquoi vous écrivez]
+
+[ligne vide]
+
+[Deuxième paragraphe - Message principal]
+
+[ligne vide]
+
+[Troisième paragraphe - Conclusion et action attendue si applicable]
+
+[ligne vide]
+
+[Formule de politesse],
+
+[ligne vide]
+[ligne vide]
+
+[Prénom Nom]
+[Fonction]
+${context.company.name || 'Entreprise'}
+
+---
+
+RÈGLES CRITIQUES:
+- Chaque section doit être séparée par UNE ligne vide
+- Avant la signature: DEUX lignes vides
+- Pas de tirets (-) ni de puces dans le corps de la lettre
+- Le corps est composé de paragraphes rédigés, pas de listes
+- L'objet doit être sur UNE seule ligne
 
 ---
 

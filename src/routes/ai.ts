@@ -2149,19 +2149,31 @@ app.post('/secretary', async (c) => {
         
         // ===== EXTRACT TITLE =====
         let title = 'Document';
-        const titleMatch = aiResponse.match(/^#+ (.+)$/m) || aiResponse.match(/^\*\*(.+?)\*\*/m);
-        if (titleMatch) {
-            title = titleMatch[1].replace(/\*\*/g, '').trim();
+        // Pour correspondance: extraire l'objet de la lettre
+        if (documentType === 'correspondance') {
+            const objetMatch = aiResponse.match(/\*\*Objet\s*:\*\*\s*(.+?)(?:\n|$)/i) 
+                           || aiResponse.match(/Objet\s*:\s*(.+?)(?:\n|$)/i);
+            if (objetMatch) {
+                title = objetMatch[1].trim();
+            } else {
+                title = 'Correspondance officielle';
+            }
         } else {
-            const titleMap: Record<string, string> = {
-                'correspondance': 'Correspondance officielle',
-                'subventions': 'Demande de subvention',
-                'rh': 'Document RH',
-                'technique': 'Document technique',
-                'rapports': 'Rapport de maintenance',
-                'creatif': 'Document créatif'
-            };
-            title = titleMap[documentType] || 'Document de direction';
+            // Pour autres documents: chercher un titre # ou le premier **texte**
+            const titleMatch = aiResponse.match(/^#+ (.+)$/m) || aiResponse.match(/^\*\*([^*:]+)\*\*/m);
+            if (titleMatch) {
+                title = titleMatch[1].replace(/\*\*/g, '').trim();
+            } else {
+                const titleMap: Record<string, string> = {
+                    'correspondance': 'Correspondance officielle',
+                    'subventions': 'Demande de subvention',
+                    'rh': 'Document RH',
+                    'technique': 'Document technique',
+                    'rapports': 'Rapport de maintenance',
+                    'creatif': 'Document créatif'
+                };
+                title = titleMap[documentType] || 'Document de direction';
+            }
         }
         
         return c.json({
