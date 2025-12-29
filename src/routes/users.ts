@@ -62,6 +62,7 @@ usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
         last_name: users.last_name,
         role: users.role,
         is_super_admin: users.is_super_admin,
+        ai_context: users.ai_context,
         created_at: users.created_at,
         updated_at: users.updated_at,
         last_login: users.last_login
