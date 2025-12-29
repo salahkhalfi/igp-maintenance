@@ -390,13 +390,14 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             text-align: justify; 
         }
         
-        /* Listes */
+        /* Listes - espacement compact */
         .doc-content ul, .doc-content ol { 
-            margin: 8pt 0 12pt; 
-            padding-left: 24pt; 
+            margin: 4pt 0 8pt; 
+            padding-left: 18pt; 
         }
         .doc-content li { 
-            margin: 4pt 0; 
+            margin: 1pt 0;
+            line-height: 1.4;
         }
         
         /* Citations - Style sobre pour documents */
@@ -433,11 +434,11 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             background-color: transparent !important; 
         }
         
-        /* Séparateurs */
+        /* Séparateurs - discrets */
         .doc-content hr, .doc-content .doc-separator { 
             border: none; 
-            border-top: 1pt solid #999999; 
-            margin: 16pt 0; 
+            border-top: 0.5pt solid #ccc; 
+            margin: 12pt 0; 
         }
         
         /* Autres éléments */
@@ -459,6 +460,19 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
         .doc-content strong { 
             font-weight: 700; 
+        }
+        
+        /* Titres de section inline - ligne discrète au-dessus */
+        .doc-content p > strong:first-child {
+            display: inline-block;
+            margin-top: 8pt;
+            padding-top: 6pt;
+            border-top: 0.5pt solid #ddd;
+        }
+        .doc-content p:first-child > strong:first-child {
+            border-top: none;
+            margin-top: 0;
+            padding-top: 0;
         }
         
         /* Style pour les lettres - blocs bien espacés */
@@ -540,14 +554,17 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 .doc-content h3 { font-family: Arial, sans-serif; font-size: 11pt; font-weight: 700; color: #000; margin: 12pt 0 6pt; }
 .doc-content h4 { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; color: #000; margin: 10pt 0 4pt; }
 .doc-content p { margin: 0 0 ${isLetter ? '12pt' : '8pt'}; text-align: ${isLetter ? 'left' : 'justify'}; }
-.doc-content ul, .doc-content ol { margin: 6pt 0 10pt; padding-left: 20pt; }
-.doc-content li { margin: 3pt 0; }
+.doc-content ul, .doc-content ol { margin: 4pt 0 8pt; padding-left: 18pt; }
+.doc-content li { margin: 1pt 0; line-height: 1.4; }
 .doc-content blockquote { border-left: 2pt solid #000; padding: 6pt 12pt; margin: 10pt 0 10pt 16pt; font-style: italic; }
 .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; }
 .doc-content th { background: #f5f5f5; border: 0.5pt solid #000; padding: 6pt 8pt; text-align: left; font-weight: 700; font-family: Arial, sans-serif; }
 .doc-content td { border: 0.5pt solid #000; padding: 5pt 8pt; }
-.doc-content hr { border: none; border-top: 0.5pt solid #000; margin: 14pt 0; }
+.doc-content hr { border: none; border-top: 0.5pt solid #ccc; margin: 12pt 0; }
 .doc-content strong { font-weight: 700; }
+/* Titres de section inline (gras en début de paragraphe) - ligne discrète au-dessus */
+.doc-content p > strong:first-child { display: inline-block; margin-top: 8pt; padding-top: 6pt; border-top: 0.5pt solid #ddd; }
+.doc-content p:first-child > strong:first-child { border-top: none; margin-top: 0; padding-top: 0; }
 
 /* Style spécifique pour les lettres */
 .letter-block { margin-bottom: 16pt; line-height: 1.5; }
