@@ -285,12 +285,11 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
         };
         
-        // 1. BLOCKQUOTES (Cartes KPI) - Traiter EN PREMIER
-        // Détecte les blocs > et les convertit en cartes stylées
+        // 1. BLOCKQUOTES - Style citation classique pour documents officiels
         md = md.replace(/^(?:>\s*.+\n?)+/gm, (match) => {
             const lines = match.split('\n').filter(l => l.trim());
             const content = lines.map(l => l.replace(/^>\s*/, '').trim()).join('<br>');
-            return `<blockquote class="kpi-card">${content}</blockquote>\n`;
+            return `<blockquote>${content}</blockquote>\n`;
         });
         
         // 2. INLINE FORMATTING (avant tableaux pour que **bold** fonctionne dans les cellules)
@@ -306,11 +305,11 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:8pt;box-shadow:0 2pt 8pt rgba(0,0,0,0.1);">')
             // Liens [text](url)
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#3b82f6;text-decoration:none;font-weight:500;">$1</a>')
-            // Headers avec styles inline pour impression - Design premium
-            .replace(/^#### (.+)$/gm, '<h4 style="font-size:10pt;font-weight:600;color:#475569;margin:10px 0 4px;text-transform:uppercase;letter-spacing:0.5px">$1</h4>')
-            .replace(/^### (.+)$/gm, '<h3 style="font-size:11pt;font-weight:600;color:#334155;margin:14px 0 6px">$1</h3>')
-            .replace(/^## (.+)$/gm, '<h2 style="font-size:13pt;font-weight:700;color:#1e293b;margin:20px 0 10px;padding:8px 12px;background:linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%);border-radius:6px;border-left:4px solid #3b82f6">$1</h2>')
-            .replace(/^# (.+)$/gm, '<h1 style="font-size:18pt;font-weight:800;color:#0f172a;margin:24px 0 12px;padding-bottom:8px;border-bottom:3px solid #3b82f6;letter-spacing:-0.5px">$1</h1>')
+            // Headers avec styles inline pour impression - Style document officiel
+            .replace(/^#### (.+)$/gm, '<h4 style="font-family:Arial,Helvetica,sans-serif;font-size:10pt;font-weight:600;color:#444;margin:10px 0 6px">$1</h4>')
+            .replace(/^### (.+)$/gm, '<h3 style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;font-weight:700;color:#333;margin:14px 0 8px">$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2 style="font-family:Arial,Helvetica,sans-serif;font-size:13pt;font-weight:700;color:#1a1a1a;margin:20px 0 10px;padding-bottom:4px;border-bottom:1px solid #ccc">$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1 style="font-family:Arial,Helvetica,sans-serif;font-size:16pt;font-weight:700;color:#000;margin:24px 0 16px;padding-bottom:6px;border-bottom:2px solid #1a1a1a;text-transform:uppercase;letter-spacing:1px">$1</h1>')
             // Code inline `code`
             .replace(/`([^`]+)`/g, '<code style="background:#f1f5f9;padding:2pt 6pt;border-radius:4pt;font-family:monospace;font-size:9pt;color:#0f172a;">$1</code>')
             // Listes
@@ -328,51 +327,126 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     };
 
     const documentStyles = `
-        .doc-content { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10.5pt; line-height: 1.6; color: #1e293b; }
-        .doc-content h1 { font-size: 18pt; font-weight: 800; color: #0f172a; margin: 24pt 0 12pt; padding-bottom: 8pt; border-bottom: 3pt solid #3b82f6; letter-spacing: -0.5px; }
-        .doc-content h2 { font-size: 13pt; font-weight: 700; color: #1e293b; margin: 20pt 0 10pt; padding: 8pt 12pt; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 6pt; border-left: 4pt solid #3b82f6; }
-        .doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 14pt 0 6pt; }
-        .doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 4pt; text-transform: uppercase; letter-spacing: 0.5px; }
-        .doc-content p { margin: 0 0 10pt; }
-        .doc-content ul, .doc-content ol { margin: 8pt 0 12pt; padding-left: 20pt; }
-        .doc-content li { margin: 4pt 0; }
-        
-        /* Cartes KPI (blockquotes) - Design Premium */
-        .doc-content blockquote { 
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
-            border: 1pt solid #e2e8f0; 
-            border-left: 4pt solid #3b82f6; 
-            border-radius: 8pt; 
-            padding: 12pt 16pt; 
-            margin: 8pt 0; 
-            box-shadow: 0 2pt 4pt rgba(0,0,0,0.04);
+        /* STYLE DOCUMENT OFFICIEL - Rapport professionnel */
+        .doc-content { 
+            font-family: 'Georgia', 'Times New Roman', Times, serif; 
+            font-size: 11pt; 
+            line-height: 1.7; 
+            color: #1a1a1a; 
         }
-        .doc-content blockquote strong { font-size: 18pt; color: #0f172a; display: block; margin-bottom: 2pt; }
-        .doc-content blockquote em { font-size: 9pt; color: #64748b; font-style: normal; }
         
-        /* Alertes spéciales dans blockquotes */
-        .doc-content blockquote:has(strong:first-child) { }
+        /* Titres - Style rapport officiel */
+        .doc-content h1 { 
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 16pt; 
+            font-weight: 700; 
+            color: #000000; 
+            margin: 24pt 0 16pt; 
+            padding-bottom: 6pt; 
+            border-bottom: 2pt solid #1a1a1a; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .doc-content h2 { 
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 13pt; 
+            font-weight: 700; 
+            color: #1a1a1a; 
+            margin: 20pt 0 10pt; 
+            padding-bottom: 4pt;
+            border-bottom: 1pt solid #cccccc;
+        }
+        .doc-content h3 { 
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 11pt; 
+            font-weight: 700; 
+            color: #333333; 
+            margin: 14pt 0 8pt; 
+        }
+        .doc-content h4 { 
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 10pt; 
+            font-weight: 600; 
+            color: #444444; 
+            margin: 10pt 0 6pt; 
+        }
         
-        /* Tableaux épurés */
-        .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9.5pt; border-radius: 8pt; overflow: hidden; box-shadow: 0 1pt 3pt rgba(0,0,0,0.08); }
-        .doc-content th { background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important; color: #ffffff !important; border: none !important; padding: 10pt 12pt; text-align: left; font-weight: 600; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; }
-        .doc-content td { border: none !important; border-bottom: 1pt solid #e2e8f0 !important; padding: 10pt 12pt; background: #ffffff; }
-        .doc-content tr:nth-child(even) td { background: #f8fafc !important; }
-        .doc-content tr:last-child td { border-bottom: none !important; }
-        .doc-content tr:hover td { background: #f1f5f9 !important; }
+        /* Paragraphes */
+        .doc-content p { 
+            margin: 0 0 10pt; 
+            text-align: justify; 
+        }
+        
+        /* Listes */
+        .doc-content ul, .doc-content ol { 
+            margin: 8pt 0 12pt; 
+            padding-left: 24pt; 
+        }
+        .doc-content li { 
+            margin: 4pt 0; 
+        }
+        
+        /* Citations - Style sobre pour documents */
+        .doc-content blockquote { 
+            border-left: 3pt solid #666666; 
+            padding: 8pt 16pt; 
+            margin: 12pt 0 12pt 20pt; 
+            font-style: italic;
+            color: #444444;
+            background: #fafafa;
+        }
+        
+        /* Tableaux - Style rapport officiel */
+        .doc-content table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 14pt 0; 
+            font-size: 10pt; 
+        }
+        .doc-content th { 
+            background-color: #f0f0f0 !important; 
+            border: 1pt solid #333333 !important; 
+            padding: 8pt 10pt; 
+            text-align: left; 
+            font-weight: 700; 
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            color: #1a1a1a !important; 
+        }
+        .doc-content td { 
+            border: 1pt solid #666666 !important; 
+            padding: 6pt 10pt; 
+        }
+        .doc-content tr:nth-child(even) td { 
+            background-color: #f9f9f9 !important; 
+        }
         
         /* Séparateurs */
-        .doc-content hr, .doc-content .doc-separator { border: none; height: 2pt; background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 50%, #e2e8f0 100%); margin: 20pt 0; border-radius: 1pt; }
+        .doc-content hr, .doc-content .doc-separator { 
+            border: none; 
+            border-top: 1pt solid #999999; 
+            margin: 16pt 0; 
+        }
         
         /* Autres éléments */
-        .doc-content img, .doc-content .doc-image { max-width: 100%; height: auto; margin: 12pt 0; border-radius: 8pt; display: block; box-shadow: 0 2pt 8pt rgba(0,0,0,0.1); }
-        .doc-content a { color: #3b82f6; text-decoration: none; font-weight: 500; }
-        .doc-content a:hover { text-decoration: underline; }
-        .doc-content code { background: #f1f5f9; padding: 2pt 6pt; border-radius: 4pt; font-family: 'SF Mono', Monaco, monospace; font-size: 9pt; color: #0f172a; }
-        .doc-content strong { font-weight: 700; color: #0f172a; }
-        
-        /* Indicateurs de statut */
-        .doc-content p:has(> strong:first-child) { }
+        .doc-content img { 
+            max-width: 100%; 
+            height: auto; 
+            margin: 12pt 0; 
+            display: block; 
+        }
+        .doc-content a { 
+            color: #0066cc; 
+            text-decoration: underline; 
+        }
+        .doc-content code { 
+            background: #f5f5f5; 
+            padding: 1pt 4pt; 
+            font-family: 'Courier New', monospace; 
+            font-size: 10pt; 
+        }
+        .doc-content strong { 
+            font-weight: 700; 
+        }
     `;
 
     const printDocument = async () => {
@@ -403,24 +477,22 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: 
 .print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 13pt; font-weight: 700; color: #0f172a; }
 .print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #64748b; }
 .print-header-right { font-family: Arial, sans-serif; font-size: 9pt; color: #64748b; }
-/* Design Premium - Dashboard Exécutif */
-.doc-content { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10.5pt; line-height: 1.6; color: #1e293b; }
-.doc-content h1 { font-size: 18pt; font-weight: 800; color: #0f172a; margin: 24pt 0 12pt; padding-bottom: 8pt; border-bottom: 3pt solid #3b82f6; letter-spacing: -0.5px; }
-.doc-content h2 { font-size: 13pt; font-weight: 700; color: #1e293b; margin: 20pt 0 10pt; padding: 8pt 12pt; background: #f1f5f9; border-radius: 6pt; border-left: 4pt solid #3b82f6; }
-.doc-content h3 { font-size: 11pt; font-weight: 600; color: #334155; margin: 14pt 0 6pt; }
-.doc-content h4 { font-size: 10pt; font-weight: 600; color: #475569; margin: 10pt 0 4pt; text-transform: uppercase; letter-spacing: 0.5px; }
-.doc-content p { margin: 0 0 10pt; }
-.doc-content ul, .doc-content ol { margin: 8pt 0 12pt; padding-left: 20pt; }
+/* STYLE DOCUMENT OFFICIEL - Rapport professionnel pour impression */
+.doc-content { font-family: 'Georgia', 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.7; color: #1a1a1a; }
+.doc-content h1 { font-family: Arial, Helvetica, sans-serif; font-size: 16pt; font-weight: 700; color: #000; margin: 24pt 0 16pt; padding-bottom: 6pt; border-bottom: 2pt solid #1a1a1a; text-transform: uppercase; letter-spacing: 1px; }
+.doc-content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 13pt; font-weight: 700; color: #1a1a1a; margin: 20pt 0 10pt; padding-bottom: 4pt; border-bottom: 1pt solid #ccc; }
+.doc-content h3 { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; font-weight: 700; color: #333; margin: 14pt 0 8pt; }
+.doc-content h4 { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: 600; color: #444; margin: 10pt 0 6pt; }
+.doc-content p { margin: 0 0 10pt; text-align: justify; }
+.doc-content ul, .doc-content ol { margin: 8pt 0 12pt; padding-left: 24pt; }
 .doc-content li { margin: 4pt 0; }
-.doc-content blockquote { background: #f8fafc; border: 1pt solid #e2e8f0; border-left: 4pt solid #3b82f6; border-radius: 8pt; padding: 12pt 16pt; margin: 8pt 0; }
-.doc-content blockquote strong { font-size: 18pt; color: #0f172a; display: block; margin-bottom: 2pt; }
-.doc-content blockquote em { font-size: 9pt; color: #64748b; font-style: normal; }
-.doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9.5pt; }
-.doc-content th { background: #1e293b !important; color: #fff !important; padding: 10pt 12pt; text-align: left; font-weight: 600; font-size: 9pt; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.doc-content td { border-bottom: 1pt solid #e2e8f0; padding: 10pt 12pt; }
-.doc-content tr:nth-child(even) td { background: #f8fafc; }
-.doc-content hr { border: none; height: 2pt; background: #e2e8f0; margin: 20pt 0; border-radius: 1pt; }
-.doc-content strong { font-weight: 700; color: #0f172a; }
+.doc-content blockquote { border-left: 3pt solid #666; padding: 8pt 16pt; margin: 12pt 0 12pt 20pt; font-style: italic; color: #444; background: #fafafa; }
+.doc-content table { width: 100%; border-collapse: collapse; margin: 14pt 0; font-size: 10pt; }
+.doc-content th { background: #f0f0f0 !important; border: 1pt solid #333 !important; padding: 8pt 10pt; text-align: left; font-weight: 700; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.doc-content td { border: 1pt solid #666 !important; padding: 6pt 10pt; }
+.doc-content tr:nth-child(even) td { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.doc-content hr { border: none; border-top: 1pt solid #999; margin: 16pt 0; }
+.doc-content strong { font-weight: 700; }
 @media print {
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-header { page-break-inside: avoid; }
