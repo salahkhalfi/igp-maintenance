@@ -260,8 +260,21 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
     };
 
-    const markdownToHtml = (md) => {
+    const markdownToHtml = (md, isLetter = false) => {
         if (!md) return '';
+        
+        // Pour les lettres: convertir les lignes vides en blocs espacés
+        if (isLetter) {
+            // Séparer par double saut de ligne (paragraphes/sections)
+            const blocks = md.split(/\n\n+/);
+            return blocks.map(block => {
+                // Traiter le gras
+                block = block.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                // Remplacer les sauts de ligne simples par <br>
+                block = block.replace(/\n/g, '<br>');
+                return `<div class="letter-block">${block}</div>`;
+            }).join('');
+        }
         
         // Fonction pour parser les tableaux Markdown avec styles inline pour impression
         const parseTable = (tableText) => {
@@ -448,6 +461,15 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             font-weight: 700; 
         }
         
+        /* Style pour les lettres - blocs bien espacés */
+        .letter-block {
+            margin-bottom: 16pt;
+            line-height: 1.6;
+        }
+        .letter-block:first-child {
+            margin-bottom: 20pt;
+        }
+        
         /* Contrôle des sauts de page pour impression */
         @media print {
             .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
@@ -486,7 +508,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         const isLetter = selectedCategory === 'correspondance';
         
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-        const html = markdownToHtml(generatedDoc.document);
+        const html = markdownToHtml(generatedDoc.document, isLetter);
         const docTitle = generatedDoc.title || 'Document';
         
         // CSS adapté au type de document
@@ -521,6 +543,11 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 .doc-content td { border: 0.5pt solid #000; padding: 5pt 8pt; }
 .doc-content hr { border: none; border-top: 0.5pt solid #000; margin: 14pt 0; }
 .doc-content strong { font-weight: 700; }
+
+/* Style spécifique pour les lettres */
+.letter-block { margin-bottom: 18pt; }
+.letter-block:first-child { margin-bottom: 24pt; } /* En-tête entreprise */
+.letter-block strong { font-weight: 700; }
 
 /* Section wrapper pour éviter les coupures */
 .section { page-break-inside: avoid; }
@@ -644,7 +671,7 @@ ${isConfidential ? `<div class="print-footer">
                     React.createElement('div', { className: 'bg-white rounded-lg sm:rounded-xl shadow-lg max-w-3xl mx-auto' },
                         React.createElement('div', { className: 'p-4 sm:p-8 md:p-12' },
                             React.createElement('style', {}, documentStyles),
-                            React.createElement('div', { className: 'doc-content', dangerouslySetInnerHTML: { __html: markdownToHtml(generatedDoc.document) } })
+                            React.createElement('div', { className: 'doc-content', dangerouslySetInnerHTML: { __html: markdownToHtml(generatedDoc.document, selectedCategory === 'correspondance') } })
                         )
                     )
                 ),
