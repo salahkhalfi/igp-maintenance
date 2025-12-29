@@ -8,6 +8,7 @@ import { extractToken, verifyToken } from '../utils/jwt';
 import type { Bindings } from '../types';
 import { z } from 'zod';
 import { TOOLS, ToolFunctions } from '../ai/tools';
+import { prepareSecretary, detectDocumentType, type DocumentType, type CompanyIdentity } from '../ai/secretary';
 
 // --- HELPER: DYNAMIC STATUS/PRIORITY MAPS ---
 async function getTicketMaps(db: any) {
@@ -1926,9 +1927,9 @@ Ne jamais afficher les codes anglais bruts ou abréviations anglaises dans le do
 });
 
 // ============================================================
-// POST /api/ai/secretary - Secrétaire de Direction IA
-// Génère des documents administratifs, correspondance, subventions
-// Connaissances: Lois canadiennes/québécoises, programmes de subventions
+// POST /api/ai/secretary - Secrétaire de Direction IA (v2)
+// Architecture multi-cerveaux spécialisés pour documents premium
+// Chaque type de document = cerveau expert + données ciblées
 // ============================================================
 app.post('/secretary', async (c) => {
     try {
@@ -1948,10 +1949,16 @@ app.post('/secretary', async (c) => {
         const db = getDb(env);
         
         const body = await c.req.json();
-        const { documentType, instructions } = body;
+        let { documentType, instructions } = body;
         
         if (!instructions || instructions.trim().length < 10) {
             return c.json({ error: 'Veuillez fournir des instructions détaillées (min. 10 caractères)' }, 400);
+        }
+        
+        // ===== AUTO-DETECT DOCUMENT TYPE IF NOT PROVIDED =====
+        if (!documentType || documentType === 'auto') {
+            documentType = detectDocumentType(instructions);
+            console.log(`🧠 [Secretary] Auto-detected document type: ${documentType}`);
         }
         
         // ===== LOAD BASE URL FOR TOOLS =====
@@ -1967,10 +1974,9 @@ app.post('/secretary', async (c) => {
         }
         
         // ===== LOAD COMPANY IDENTITY FROM AI CONFIG (Cerveau de l'IA) =====
-        // Utilise les mêmes blocs que l'Expert IA pour une cohérence parfaite
         const aiConfig = await getAiConfig(db);
         
-        // ===== LOAD ADDITIONAL COMPANY SETTINGS =====
+        // ===== LOAD COMPANY SETTINGS =====
         let companyName = '';
         let companySubtitle = '';
         let companyShortName = '';
@@ -1990,730 +1996,77 @@ app.post('/secretary', async (c) => {
         } catch (e) {
             console.warn('[Secretary] Failed to load company settings');
         }
-        
-        // ===== LOAD OPERATIONAL DATA FOR CONTEXT =====
-        // Ces données peuvent être utiles pour les documents (subventions, rapports, etc.)
-        let operationalContext = '';
-        let machinesMap: Record<number, { type: string, model: string, manufacturer: string }> = {};
-        try {
-            // Charger les machines (équipement industriel)
-            const machinesData = await db.select({
-                id: machines.id,
-                machine_type: machines.machine_type,
-                model: machines.model,
-                manufacturer: machines.manufacturer,
-                year: machines.year,
-                location: machines.location,
-                status: machines.status,
-                technical_specs: machines.technical_specs
-            }).from(machines)
-              .where(isNull(machines.deleted_at))
-              .all();
-            
-            // Charger les employés (effectif)
-            const usersData = await db.select({
-                id: users.id,
-                full_name: users.full_name,
-                role: users.role
-            }).from(users)
-              .where(isNull(users.deleted_at))
-              .all();
-            
-            // Construire le contexte opérationnel + map pour lookup par ID
-            const machinesByType: Record<string, any[]> = {};
-            machinesData.forEach((m: any) => {
-                const type = m.machine_type || 'Autre';
-                if (!machinesByType[type]) machinesByType[type] = [];
-                machinesByType[type].push(m);
-                // Stocker pour lookup dans les rapports
-                machinesMap[m.id] = { type: m.machine_type || 'Inconnu', model: m.model || '', manufacturer: m.manufacturer || '' };
-            });
-            
-            const roleLabels: Record<string, string> = {
-                'admin': 'Administrateur',
-                'supervisor': 'Superviseur',
-                'technician': 'Technicien de maintenance',
-                'operator': 'Opérateur',
-                'furnace_operator': 'Opérateur de fournaise'
-            };
-            
-            const usersByRole: Record<string, number> = {};
-            usersData.forEach((u: any) => {
-                const roleLabel = roleLabels[u.role] || u.role;
-                usersByRole[roleLabel] = (usersByRole[roleLabel] || 0) + 1;
-            });
-            
-            operationalContext = `
-## DONNÉES OPÉRATIONNELLES ACTUELLES
 
-### Équipement industriel (${machinesData.length} machines)
-${Object.entries(machinesByType).map(([type, items]) => 
-    `- **${type}**: ${items.length} unité(s) ${items.map((m: any) => m.manufacturer ? `(${m.manufacturer} ${m.model || ''})` : '').filter(Boolean).slice(0, 3).join(', ')}`
-).join('\n')}
-
-### Effectif (${usersData.length} employés)
-${Object.entries(usersByRole).map(([role, count]) => 
-    `- ${role}: ${count}`
-).join('\n')}
-`;
-        } catch (e) {
-            console.warn('[Secretary] Could not load operational data');
-        }
-        
-        // ===== LOAD COMPLETE DATABASE FOR SECRETARY =====
-        // Fournir TOUTES les données brutes pour que l'IA puisse analyser librement
-        let fullDatabaseContext = '';
-        try {
-            const { statusMap: statusLabels, priorityMap: priorityLabels, closedStatuses } = await getTicketMaps(db);
-            
-            // Périodes de référence
-            const now = new Date();
-            const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-            
-            // === TOUS LES TICKETS ===
-            const allTickets = await db.select({
-                id: tickets.id,
-                ticket_id: tickets.ticket_id,
-                title: tickets.title,
-                description: tickets.description,
-                status: tickets.status,
-                priority: tickets.priority,
-                machine_id: tickets.machine_id,
-                assigned_to: tickets.assigned_to,
-                reported_by: tickets.reported_by,
-                created_at: tickets.created_at,
-                updated_at: tickets.updated_at,
-                completed_at: tickets.completed_at,
-                downtime_hours: tickets.downtime_hours,
-                resolution_notes: tickets.resolution_notes
-            }).from(tickets)
-              .where(isNull(tickets.deleted_at))
-              .orderBy(desc(tickets.created_at))
-              .all();
-            
-            // === TOUS LES UTILISATEURS ===
-            const allUsers = await db.select({
-                id: users.id,
-                full_name: users.full_name,
-                email: users.email,
-                role: users.role,
-                created_at: users.created_at,
-                last_login: users.last_login
-            }).from(users)
-              .where(isNull(users.deleted_at))
-              .all();
-            
-            // === TOUTES LES MACHINES ===
-            const allMachines = await db.select({
-                id: machines.id,
-                machine_type: machines.machine_type,
-                model: machines.model,
-                manufacturer: machines.manufacturer,
-                serial_number: machines.serial_number,
-                year: machines.year,
-                location: machines.location,
-                status: machines.status,
-                technical_specs: machines.technical_specs,
-                operator_id: machines.operator_id
-            }).from(machines)
-              .where(isNull(machines.deleted_at))
-              .all();
-            
-            // === ÉVÉNEMENTS PLANNING (3 derniers mois) ===
-            const planningData = await db.select({
-                id: planningEvents.id,
-                title: planningEvents.title,
-                date: planningEvents.date,
-                time: planningEvents.time,
-                type: planningEvents.type,
-                description: planningEvents.description
-            }).from(planningEvents)
-              .where(and(
-                  isNull(planningEvents.deleted_at),
-                  gte(planningEvents.date, threeMonthsAgo.toISOString().split('T')[0])
-              ))
-              .orderBy(desc(planningEvents.date))
-              .all();
-            
-            // === COMMENTAIRES RÉCENTS (pour contexte) ===
-            const recentComments = await db.select({
-                id: ticketComments.id,
-                ticket_id: ticketComments.ticket_id,
-                user_id: ticketComments.user_id,
-                content: ticketComments.content,
-                created_at: ticketComments.created_at
-            }).from(ticketComments)
-              .orderBy(desc(ticketComments.created_at))
-              .limit(100)
-              .all();
-            
-            // Créer des maps pour les lookups
-            const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
-            const machineMap = Object.fromEntries(allMachines.map(m => [m.id, m]));
-            
-            // Enrichir les tickets avec noms
-            const enrichedTickets = allTickets.map((t: any) => ({
-                ...t,
-                status_label: statusLabels[t.status] || t.status,
-                priority_label: priorityLabels[t.priority] || t.priority,
-                machine_name: t.machine_id && machineMap[t.machine_id] 
-                    ? `${machineMap[t.machine_id].machine_type} ${machineMap[t.machine_id].manufacturer || ''} ${machineMap[t.machine_id].model || ''}`.trim()
-                    : null,
-                assigned_to_name: t.assigned_to && userMap[t.assigned_to] ? userMap[t.assigned_to].full_name : null,
-                reported_by_name: t.reported_by && userMap[t.reported_by] ? userMap[t.reported_by].full_name : null,
-                is_closed: closedStatuses.includes(t.status),
-                resolution_time_hours: t.completed_at && t.created_at 
-                    ? Math.round((new Date(t.completed_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60) * 10) / 10
-                    : null
-            }));
-            
-            // Séparer par période
-            const ticketsThisMonth = enrichedTickets.filter((t: any) => new Date(t.created_at) >= thisMonth);
-            const ticketsLastMonth = enrichedTickets.filter((t: any) => {
-                const d = new Date(t.created_at);
-                return d >= lastMonth && d < thisMonth;
-            });
-            const ticketsLast3Months = enrichedTickets.filter((t: any) => new Date(t.created_at) >= threeMonthsAgo);
-            
-            // Statistiques calculées
-            const calcStats = (ticketList: any[]) => {
-                const closed = ticketList.filter((t: any) => t.is_closed);
-                const avgResTime = closed.filter((t: any) => t.resolution_time_hours).length > 0
-                    ? closed.reduce((sum: number, t: any) => sum + (t.resolution_time_hours || 0), 0) / closed.filter((t: any) => t.resolution_time_hours).length
-                    : 0;
-                return {
-                    total: ticketList.length,
-                    closed: closed.length,
-                    open: ticketList.length - closed.length,
-                    resolution_rate: ticketList.length > 0 ? Math.round(closed.length / ticketList.length * 100) : 0,
-                    avg_resolution_hours: Math.round(avgResTime * 10) / 10,
-                    by_priority: {
-                        critical: ticketList.filter((t: any) => t.priority === 'critical').length,
-                        high: ticketList.filter((t: any) => t.priority === 'high').length,
-                        medium: ticketList.filter((t: any) => t.priority === 'medium').length,
-                        low: ticketList.filter((t: any) => t.priority === 'low').length
-                    },
-                    by_status: ticketList.reduce((acc: any, t: any) => {
-                        acc[t.status_label] = (acc[t.status_label] || 0) + 1;
-                        return acc;
-                    }, {})
-                };
-            };
-            
-            // Stats par technicien
-            const technicianPerformance = allUsers
-                .filter(u => ['technician', 'senior_technician'].includes(u.role))
-                .map(tech => {
-                    const techTickets = ticketsLast3Months.filter((t: any) => t.assigned_to === tech.id);
-                    const closed = techTickets.filter((t: any) => t.is_closed);
-                    const avgTime = closed.filter((t: any) => t.resolution_time_hours).length > 0
-                        ? closed.reduce((sum: number, t: any) => sum + (t.resolution_time_hours || 0), 0) / closed.filter((t: any) => t.resolution_time_hours).length
-                        : 0;
-                    return {
-                        id: tech.id,
-                        name: tech.full_name,
-                        role: tech.role,
-                        last_login: tech.last_login,
-                        tickets_assigned_3months: techTickets.length,
-                        tickets_closed_3months: closed.length,
-                        resolution_rate: techTickets.length > 0 ? Math.round(closed.length / techTickets.length * 100) : 0,
-                        avg_resolution_hours: Math.round(avgTime * 10) / 10,
-                        current_open_tickets: enrichedTickets.filter((t: any) => t.assigned_to === tech.id && !t.is_closed).length,
-                        tickets_by_priority: {
-                            critical: techTickets.filter((t: any) => t.priority === 'critical').length,
-                            high: techTickets.filter((t: any) => t.priority === 'high').length,
-                            medium: techTickets.filter((t: any) => t.priority === 'medium').length,
-                            low: techTickets.filter((t: any) => t.priority === 'low').length
-                        }
-                    };
-                });
-            
-            // Stats par machine
-            const machinePerformance = allMachines.map(machine => {
-                const machineTickets = ticketsLast3Months.filter((t: any) => t.machine_id === machine.id);
-                return {
-                    id: machine.id,
-                    name: `${machine.machine_type} ${machine.manufacturer || ''} ${machine.model || ''}`.trim(),
-                    location: machine.location,
-                    status: machine.status,
-                    year: machine.year,
-                    tickets_3months: machineTickets.length,
-                    open_tickets: machineTickets.filter((t: any) => !t.is_closed).length,
-                    downtime_hours: machineTickets.reduce((sum: number, t: any) => sum + (parseFloat(t.downtime_hours) || 0), 0),
-                    common_issues: machineTickets.slice(0, 5).map((t: any) => t.title)
-                };
-            }).sort((a, b) => b.tickets_3months - a.tickets_3months);
-            
-            // Tickets en retard (ouverts depuis plus de 7 jours)
-            const overdueThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            const overdueTickets = enrichedTickets.filter((t: any) => 
-                !t.is_closed && new Date(t.created_at) < overdueThreshold
-            );
-            
-            // Construire le contexte en texte lisible (PAS de JSON)
-            const statsThisMonth = calcStats(ticketsThisMonth);
-            const statsLastMonth = calcStats(ticketsLastMonth);
-            
-            // Variation mois sur mois
-            const ticketVariation = statsLastMonth.total > 0 
-                ? Math.round((statsThisMonth.total - statsLastMonth.total) / statsLastMonth.total * 100)
-                : 0;
-            const resolutionVariation = statsLastMonth.resolution_rate > 0
-                ? statsThisMonth.resolution_rate - statsLastMonth.resolution_rate
-                : 0;
-            
-            // LOG: Vérifier les données chargées
-            console.log(`[Secretary] Data loaded: ${allTickets.length} tickets, ${allUsers.length} users, ${allMachines.length} machines`);
-            console.log(`[Secretary] This month: ${ticketsThisMonth.length} tickets, Last month: ${ticketsLastMonth.length} tickets`);
-            
-            fullDatabaseContext = `
-═══════════════════════════════════════════════════════════════
-                    DONNÉES DE MAINTENANCE
-                    Date du rapport: ${now.toLocaleDateString('fr-CA')}
-═══════════════════════════════════════════════════════════════
-
-SECTION 1: INDICATEURS CE MOIS (${thisMonth.toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })})
-─────────────────────────────────────────────────────────────────
-Tickets créés:        ${statsThisMonth.total}
-Tickets fermés:       ${statsThisMonth.closed}
-Tickets en cours:     ${statsThisMonth.open}
-Taux de résolution:   ${statsThisMonth.resolution_rate}%
-TMR moyen:            ${statsThisMonth.avg_resolution_hours} heures
-
-Par priorité:
-  - Critique: ${statsThisMonth.by_priority.critical}
-  - Haute:    ${statsThisMonth.by_priority.high}
-  - Moyenne:  ${statsThisMonth.by_priority.medium}
-  - Basse:    ${statsThisMonth.by_priority.low}
-
-Par statut:
-${Object.entries(statsThisMonth.by_status).map(([s, c]) => `  - ${s}: ${c}`).join('\n')}
-
-SECTION 2: COMPARAISON MOIS PRÉCÉDENT
-─────────────────────────────────────────────────────────────────
-Mois précédent - Tickets créés:      ${statsLastMonth.total}
-Mois précédent - Tickets fermés:     ${statsLastMonth.closed}
-Mois précédent - Taux résolution:    ${statsLastMonth.resolution_rate}%
-Mois précédent - TMR moyen:          ${statsLastMonth.avg_resolution_hours} heures
-
-Évolution:
-  - Volume tickets: ${ticketVariation > 0 ? '+' : ''}${ticketVariation}%
-  - Taux résolution: ${resolutionVariation > 0 ? '+' : ''}${resolutionVariation} points
-
-SECTION 3: PERFORMANCE TECHNICIENS
-─────────────────────────────────────────────────────────────────
-${technicianPerformance.length === 0 ? 'Aucun technicien enregistré.' : technicianPerformance.map(t => `
-${t.name} (${t.role})
-  Tickets assignés (3 mois):  ${t.tickets_assigned_3months}
-  Tickets fermés (3 mois):    ${t.tickets_closed_3months}
-  Taux de résolution:         ${t.resolution_rate}%
-  TMR moyen:                  ${t.avg_resolution_hours} heures
-  Tickets en cours:           ${t.current_open_tickets}
-  Dernière connexion:         ${t.last_login || 'Jamais'}
-`).join('')}
-
-SECTION 4: ÉTAT DU PARC MACHINES
-─────────────────────────────────────────────────────────────────
-Total machines: ${allMachines.length}
-Opérationnelles: ${allMachines.filter(m => m.status === 'operational').length}
-En maintenance: ${allMachines.filter(m => m.status === 'maintenance').length}
-Hors service: ${allMachines.filter(m => m.status === 'out_of_service').length}
-
-Machines avec le plus d'interventions (3 derniers mois):
-${machinePerformance.filter(m => m.tickets_3months > 0).slice(0, 10).map((m, i) => `
-${i + 1}. ${m.name}
-   Localisation: ${m.location || 'Non spécifiée'}
-   Statut: ${m.status}
-   Interventions: ${m.tickets_3months}
-   Tickets ouverts: ${m.open_tickets}
-   Temps d'arrêt: ${m.downtime_hours} heures
-`).join('') || 'Aucune intervention enregistrée.'}
-
-SECTION 5: TICKETS EN RETARD (ouverts > 7 jours)
-─────────────────────────────────────────────────────────────────
-Nombre total: ${overdueTickets.length}
-${overdueTickets.length === 0 ? 'Aucun ticket en retard.' : overdueTickets.slice(0, 15).map(t => `
-- ${t.ticket_id}: ${t.title}
-  Priorité: ${t.priority_label} | Statut: ${t.status_label}
-  Machine: ${t.machine_name || 'Non spécifiée'}
-  Assigné à: ${t.assigned_to_name || 'Non assigné'}
-  Créé le: ${new Date(t.created_at).toLocaleDateString('fr-CA')}
-  Jours ouverts: ${Math.floor((now.getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60 * 24))}
-`).join('')}
-
-SECTION 6: TICKETS CRITIQUES/HAUTE PRIORITÉ EN COURS
-─────────────────────────────────────────────────────────────────
-${(() => {
-    const critical = enrichedTickets.filter((t: any) => !t.is_closed && ['critical', 'high'].includes(t.priority));
-    if (critical.length === 0) return 'Aucun ticket critique ou haute priorité en cours.';
-    return critical.map(t => `
-- ${t.ticket_id}: ${t.title}
-  Priorité: ${t.priority_label} | Statut: ${t.status_label}
-  Machine: ${t.machine_name || 'Non spécifiée'}
-  Assigné à: ${t.assigned_to_name || 'Non assigné'}
-  Créé le: ${new Date(t.created_at).toLocaleDateString('fr-CA')}
-`).join('');
-})()}
-
-SECTION 7: LISTE ÉQUIPE
-─────────────────────────────────────────────────────────────────
-${allUsers.map(u => `- ${u.full_name} (${u.role}) - ${u.email}`).join('\n')}
-
-SECTION 8: LISTE MACHINES
-─────────────────────────────────────────────────────────────────
-${allMachines.map(m => `- ${m.machine_type} ${m.manufacturer || ''} ${m.model || ''} | ${m.location || 'N/A'} | ${m.status}`).join('\n')}
-
-═══════════════════════════════════════════════════════════════
-                    FIN DES DONNÉES
-    Ces données sont EXHAUSTIVES. Tout chiffre du rapport DOIT provenir de ces sections.
-═══════════════════════════════════════════════════════════════
-`;
-            console.log('[Secretary] Loaded complete database context');
-            console.log(`[Secretary] Context length: ${fullDatabaseContext.length} chars`);
-        } catch (e: any) {
-            console.error('[Secretary] FAILED to load database:', e.message, e.stack);
-            fullDatabaseContext = `
-═══════════════════════════════════════════════════════════════
-                    ERREUR DE CHARGEMENT DES DONNÉES
-═══════════════════════════════════════════════════════════════
-Les données de maintenance n'ont pas pu être chargées.
-Erreur: ${e.message}
-
-Veuillez réessayer ou contacter l'administrateur.
-═══════════════════════════════════════════════════════════════
-`;
-        }
-        
-        // ===== BUILD EXPERT PROMPT WITH LEGAL KNOWLEDGE =====
-        const legalKnowledgeBlock = `
-# CADRE LÉGAL ET RÉGLEMENTAIRE (CANADA / QUÉBEC)
-
-## LOIS FÉDÉRALES APPLICABLES À L'INDUSTRIE MANUFACTURIÈRE
-- **Loi canadienne sur la santé et la sécurité au travail** (Code canadien du travail, Partie II)
-- **Loi sur les produits dangereux** et SIMDUT 2015 (Système d'information sur les matières dangereuses)
-- **Loi de l'impôt sur le revenu** - Crédits RS&DE (Recherche scientifique et développement expérimental)
-- **Loi sur l'équité en matière d'emploi** (pour entreprises fédérales)
-- **Règlement sur les substances appauvrissant la couche d'ozone** (RSACO)
-- **Loi canadienne sur la protection de l'environnement** (LCPE)
-
-## LOIS QUÉBÉCOISES APPLICABLES
-- **Loi sur la santé et la sécurité du travail** (LSST) - CNESST
-- **Loi sur les accidents du travail et les maladies professionnelles** (LATMP)
-- **Loi sur les normes du travail** (LNT) - salaire minimum, congés, vacances
-- **Code civil du Québec** - contrats, responsabilité civile
-- **Loi sur la qualité de l'environnement** (LQE) - permis, attestations
-- **Loi sur l'équité salariale** - obligatoire pour entreprises 10+ employés
-- **Charte de la langue française** (Loi 101) - affichage, contrats, sécurité en français
-
-## PROGRAMMES DE SUBVENTIONS - FÉDÉRAL
-
-### PARI-CNRC (Programme d'aide à la recherche industrielle)
-- **Organisme**: Conseil national de recherches Canada
-- **Cible**: PME innovantes
-- **Financement**: Jusqu'à 80% des coûts de projet (max variable)
-- **Critères**: Projet R&D, potentiel commercial, capacité de l'entreprise
-- **Contact**: Conseiller en technologie industrielle (CTI) régional
-
-### RS&DE (Recherche scientifique et développement expérimental)
-- **Type**: Crédit d'impôt remboursable
-- **Taux**: Jusqu'à 35% pour SPCC (société privée sous contrôle canadien)
-- **Dépenses admissibles**: Salaires, matériaux, contrats de R&D, frais généraux
-- **Important**: Documentation contemporaine obligatoire
-
-### Fonds stratégique pour l'innovation (FSI)
-- **Organisme**: Innovation, Sciences et Développement économique Canada
-- **Montant**: Contribution remboursable, généralement > 10 M$
-- **Projets**: R&D à grande échelle, expansion d'installations
-
-### Programme Travail partagé
-- **Organisme**: Service Canada / EDSC
-- **But**: Éviter les mises à pied temporaires
-- **Durée**: 6 à 76 semaines
-
-## PROGRAMMES DE SUBVENTIONS - QUÉBEC
-
-### Investissement Québec
-- **ESSOR**: Prêt ou garantie de prêt (jusqu'à 50% du projet)
-- **PIVOT**: Transformation numérique, IA, automatisation
-- **Crédit d'impôt R&D Québec**: 14% à 30% selon la taille
-
-### Emploi-Québec
-- **MFOR (Mesure de formation)**: Jusqu'à 50% des coûts de formation
-- **PRIIME**: Intégration immigrants en emploi
-- **Subvention salariale**: Employés en difficulté d'emploi
-
-### Fonds Écoleader
-- **But**: Projets de développement durable, économie circulaire
-- **Aide**: Jusqu'à 50% des dépenses admissibles (max 100 000$)
-
-### RECYC-QUÉBEC
-- **Appels à projets**: Économie circulaire, gestion des matières résiduelles
-
-## NORMES SECTORIELLES MANUFACTURIÈRES
-- **ISO 9001**: Système de management de la qualité
-- **ISO 14001**: Management environnemental
-- **ISO 45001**: Santé et sécurité au travail
-- **CSA (Association canadienne de normalisation)**: Normes de sécurité produits
-- **BNQ (Bureau de normalisation du Québec)**: Normes québécoises`;
-
-        const documentTypeInstructions: Record<string, string> = {
-            'correspondance': `
-CORRESPONDANCE OFFICIELLE
-
-Structure:
-- En-tête avec coordonnées entreprise
-- Date et référence
-- Destinataire complet
-- Objet en gras
-- Corps: 3 paragraphes max (contexte, message, conclusion)
-- Formule de politesse adaptée au destinataire
-- Signature
-
-Niveaux de formalité:
-- Gouvernement/Ministre: "Veuillez agréer l'expression de ma haute considération"
-- Direction/Cadre: "Veuillez recevoir mes salutations distinguées"
-- Partenaire: "Cordialement"`,
-
-            'subventions': `
-DEMANDE DE SUBVENTION
-
-Structure obligatoire:
-1. Présentation de l'entreprise (raison sociale, NEQ, effectif, CA, secteur)
-2. Description du projet (problématique, solution, innovation)
-3. Budget détaillé (postes, montants, sources de financement)
-4. Retombées attendues (emplois, CA, investissements)
-5. Calendrier de réalisation (phases, jalons, livrables)
-
-Utiliser des tableaux pour les données chiffrées.
-Valoriser les forces de l'entreprise sans exagération.`,
-
-            'administratif': `
-DOCUMENT ADMINISTRATIF
-
-Structure:
-1. Titre et références (numéro, date, classification)
-2. Objet
-3. Contexte et fondements juridiques
-4. Dispositions détaillées
-5. Modalités d'application
-6. Signatures
-
-Citer les références légales exactes (lois, articles, règlements).`,
-
-            'rh': `
-DOCUMENT RESSOURCES HUMAINES
-
-Si le document concerne un employé spécifique, utilise:
-- get_user_details() pour les informations de l'employé
-- get_technician_info() pour les techniciens
-
-STRUCTURE:
-1. Identification (employé, poste, département)
-2. Objet et contexte
-3. Cadre légal (LNT, Code civil, CNESST si SST)
-4. Dispositions/Décision
-5. Engagements des parties
-6. Signatures
-
-CONFORMITÉ:
-- Loi 25 (protection des renseignements personnels)
-- Normes du travail québécoises
-- CNESST si lié à la santé-sécurité`,
-
-            'technique': `
-DOCUMENT TECHNIQUE
-
-Si le document concerne une machine ou un équipement, utilise:
-- search_machines() puis get_machine_details() pour les spécifications
-- search_tickets() pour l'historique des interventions
-
-STRUCTURE:
-1. Métadonnées (référence, version, rédacteur)
-2. Objet et portée
-3. Documents de référence (normes ISO, CSA)
-4. Équipements concernés (avec specs réelles si disponibles)
-5. Mesures de sécurité (EPI, cadenassage si applicable)
-6. Procédure détaillée
-7. Contrôle qualité
-
-SÉCURITÉ: Mentionner DANGER ou ATTENTION selon le niveau de risque.
-NORMES: Référencer les normes canadiennes (CSA, CNESST) quand applicable.`,
-
-            'financier': `
-DOCUMENT FINANCIER
-
-Structure:
-1. Période et métadonnées
-2. Sommaire exécutif (3-4 lignes)
-3. Indicateurs clés avec comparaison période précédente
-4. États financiers (revenus, dépenses, résultat)
-5. Projections et hypothèses
-6. Recommandations priorisées
-
-Données toujours en tableaux. Indiquer les variations (+/-%).`,
-
-            'rapports': `
-RAPPORT DE MAINTENANCE - QUALITÉ DIRECTION
-
-Tu rédiges un rapport destiné au conseil d'administration ou à la direction générale.
-
-OUTILS À UTILISER:
-- check_database_stats() → statistiques globales et KPIs
-- search_tickets() → tickets de la période
-- get_overdue_tickets() → retards et urgences
-- generate_team_report() → performance des techniciens
-- search_machines() → état du parc machines
-
-CONTENU ATTENDU:
-1. Synthèse exécutive (3-4 phrases pour un dirigeant pressé)
-2. Indicateurs clés avec comparaison période précédente
-3. Performance de l'équipe (par technicien si pertinent)
-4. État du parc machines
-5. Points d'attention critiques (retards, urgences)
-6. Recommandations actionnables
-
-QUALITÉ:
-- Niveau cabinet de conseil (McKinsey, Deloitte)
-- Données factuelles issues des outils (jamais inventées)
-- Tableaux pour les chiffres
-- Analyse et insights, pas juste des listes
-- Prêt à être présenté tel quel`,
-
-            'creatif': `
-DOCUMENT CRÉATIF
-
-Liberté de format selon le type demandé:
-- Communiqué de presse
-- Texte site web
-- Communication interne
-- Discours
-- Brochure
-- Pitch commercial
-
-Adapter le ton au public cible.
-Structure marketing: Accroche > Problème > Solution > Preuves > Appel à l'action`
+        // ===== BUILD COMPANY IDENTITY FOR BRAIN =====
+        const companyIdentity: CompanyIdentity = {
+            name: companyName || 'Entreprise',
+            shortName: companyShortName || '',
+            subtitle: companySubtitle || '',
+            identity: aiConfig.identity || '',
+            hierarchy: aiConfig.hierarchy || '',
+            knowledge: aiConfig.knowledge || '',
+            custom: aiConfig.custom || ''
         };
 
-        const typeInstructions = documentTypeInstructions[documentType] || documentTypeInstructions['creatif'];
+        // ===== PREPARE SPECIALIZED BRAIN =====
+        console.log(`🧠 [Secretary] Preparing ${documentType} brain with specialized data...`);
         
-        const today = new Date().toLocaleDateString('fr-CA', { 
-            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-        });
-
-        // Construire le bloc d'identité complet à partir du "Cerveau de l'IA"
-        const companyIdentityBlock = `
-# CARTE D'IDENTITÉ DE L'ENTREPRISE (Source: Cerveau de l'IA)
-
-## Informations officielles
-- **Nom complet**: ${companyName || '[Non configuré]'}
-- **Nom court**: ${companyShortName || '[Non configuré]'}
-- **Description**: ${companySubtitle || '[Non configuré]'}
-
-## Identité et structure organisationnelle
-${aiConfig.identity}
-
-## Hiérarchie et organigramme
-${aiConfig.hierarchy}
-
-## Expertise et savoir-faire
-${aiConfig.knowledge}
-
-## Contexte spécifique de l'entreprise
-${aiConfig.custom || 'Aucun contexte additionnel configuré.'}
-${operationalContext}
-${fullDatabaseContext}
-`;
-
-        const systemPrompt = `Tu es une **Secrétaire de Direction d'élite** - experte en rédaction de documents professionnels.
-
-# ENTREPRISE
-**${companyName || 'Entreprise'}**
-${companySubtitle || ''}
-
-${aiConfig.identity || ''}
-${aiConfig.hierarchy || ''}
-${aiConfig.knowledge || ''}
-
-# DATE: ${today}
-
-# OUTILS DISPONIBLES
-Tu as accès à la base de données via des outils. **UTILISE-LES** pour obtenir des données réelles:
-- check_database_stats() - KPIs et statistiques
-- search_tickets() - Recherche de tickets
-- get_ticket_details() - Détails d'un ticket
-- search_machines() - Liste des machines
-- get_machine_details() - Détails d'une machine
-- get_technician_info() - Info technicien
-- generate_team_report() - Rapport d'équipe
-- get_overdue_tickets() - Tickets en retard
-
-# RÈGLES
-1. **DONNÉES RÉELLES**: Utilise les outils pour obtenir des données. Ne jamais inventer.
-2. **QUALITÉ PROFESSIONNELLE**: Documents prêts à l'emploi, niveau direction.
-3. **FRANÇAIS IMPECCABLE**: Qualité Académie française, terminologie OQLF.
-4. **FORMAT**: Markdown avec tableaux pour les données chiffrées.
-
-${documentType !== 'rapports' ? legalKnowledgeBlock : ''}
-
-# DOCUMENT DEMANDÉ
-${typeInstructions}
-
-Commence directement par le contenu du document (pas de "Voici...").`;
-
-        console.log(`📝 [Secretary] Generating ${documentType} document`);
-        console.log(`📝 [Secretary] System prompt length: ${systemPrompt.length} chars`);
-        console.log(`📝 [Secretary] fullDatabaseContext present: ${fullDatabaseContext.length > 100 ? 'YES (' + fullDatabaseContext.length + ' chars)' : 'NO or empty'}`);
+        const brainResult = await prepareSecretary(
+            documentType as DocumentType,
+            db,
+            companyIdentity,
+            baseUrl
+        );
         
-        // Log un extrait des données pour debug
-        if (fullDatabaseContext.includes('SECTION 1')) {
-            const section1Match = fullDatabaseContext.match(/SECTION 1:[\s\S]*?(?=SECTION 2|$)/);
-            console.log(`📝 [Secretary] SECTION 1 preview: ${section1Match ? section1Match[0].substring(0, 500) : 'NOT FOUND'}`);
-        }
+        console.log(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
 
-        // ===== CALL AI =====
-        let aiResponse = '';
-        
+        // ===== CHECK API KEY =====
         if (!env.OPENAI_API_KEY) {
             return c.json({ error: 'Clé API OpenAI manquante' }, 500);
         }
-        
-        // TOUS les outils - accès complet à la base de données
-        const SECRETARY_TOOLS = TOOLS;
-        
+
+        // ===== PREPARE MESSAGES =====
+        const fullPrompt = brainResult.contextData 
+            ? `${brainResult.systemPrompt}\n\n${brainResult.contextData}`
+            : brainResult.systemPrompt;
+            
         const messages: any[] = [
-            { role: "system", content: systemPrompt },
+            { role: "system", content: fullPrompt },
             { role: "user", content: instructions }
         ];
         
+        // ===== CALL AI WITH TOOLS =====
+        let aiResponse = '';
         let turns = 0;
-        const MAX_TURNS = 5; // Permettre plusieurs tours pour les appels d'outils
+        const MAX_TURNS = 5;
+        
+        // Get tools for this document type
+        const SECRETARY_TOOLS = brainResult.tools.length > 0 ? TOOLS : [];
         
         while (turns < MAX_TURNS) {
             turns++;
-            const isLastTurn = turns === MAX_TURNS;
-            
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}${isLastTurn ? ' (FINAL)' : ''}`);
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}`);
             
             try {
                 const requestBody: any = {
                     model: 'gpt-4o',
                     messages,
-                    temperature: 0.3,
-                    max_tokens: 8000,
-                    tools: SECRETARY_TOOLS,
-                    tool_choice: "auto"
+                    temperature: brainResult.temperature,
+                    max_tokens: brainResult.maxTokens
                 };
                 
-                const headers: Record<string, string> = { 
-                    'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
-                    'Content-Type': 'application/json' 
-                };
+                // Only add tools if brain recommends them
+                if (SECRETARY_TOOLS.length > 0) {
+                    requestBody.tools = SECRETARY_TOOLS;
+                    requestBody.tool_choice = "auto";
+                }
                 
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
-                    headers,
+                    headers: { 
+                        'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
+                        'Content-Type': 'application/json' 
+                    },
                     body: JSON.stringify(requestBody)
                 });
                 
@@ -2729,15 +2082,13 @@ Commence directement par le contenu du document (pas de "Voici...").`;
                 const responseMessage = data.choices[0]?.message;
                 
                 if (!responseMessage) {
-                    console.error('❌ [Secretary] No response message. Full response:', JSON.stringify(data));
-                    return c.json({ 
-                        error: `Réponse OpenAI invalide: ${JSON.stringify(data).substring(0, 200)}` 
-                    }, 500);
+                    console.error('❌ [Secretary] No response message');
+                    return c.json({ error: 'Réponse OpenAI invalide' }, 500);
                 }
                 
                 messages.push(responseMessage);
                 
-                // Si l'IA veut utiliser des outils
+                // Handle tool calls
                 if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
                     console.log(`🔧 [Secretary] Using ${responseMessage.tool_calls.length} tool(s)`);
                     
@@ -2746,23 +2097,15 @@ Commence directement par le contenu du document (pas de "Voici...").`;
                         const fnArgs = JSON.parse(toolCall.function.arguments || '{}');
                         let toolResult = "Erreur: Outil inconnu";
                         
-                        console.log(`🔧 [Secretary] Calling tool: ${fnName}`);
-                        
                         if (ToolFunctions[fnName as keyof typeof ToolFunctions]) {
                             try {
-                                // Route les arguments correctement selon l'outil
-                                // Outils qui ont besoin de baseUrl pour les URLs
                                 if (['search_tickets', 'get_overdue_tickets', 'get_unassigned_tickets'].includes(fnName)) {
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs, baseUrl || "https://app.igpglass.ca");
-                                } 
-                                // Outils qui ont besoin de userId pour les permissions
-                                else if (['get_planning'].includes(fnName)) {
+                                } else if (['get_planning'].includes(fnName)) {
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs, payload.userId);
-                                }
-                                // Autres outils - juste db et args
-                                else {
+                                } else {
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs);
                                 }
@@ -2778,64 +2121,40 @@ Commence directement par le contenu du document (pas de "Voici...").`;
                             content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult)
                         });
                     }
-                    // Continue la boucle pour que l'IA traite les résultats
                     continue;
                 }
                 
-                // L'IA a fini (pas de tool_calls) - on a la réponse finale
+                // Final response
                 aiResponse = responseMessage.content || '';
                 break;
                 
             } catch (e: any) {
                 console.error('❌ [Secretary] API call failed:', e);
-                return c.json({ 
-                    error: `Erreur lors de l'appel IA: ${e.message}` 
-                }, 500);
+                return c.json({ error: `Erreur lors de l'appel IA: ${e.message}` }, 500);
             }
         }
         
         if (!aiResponse) {
-            console.error(`❌ [Secretary] No response after ${turns} turns. Last messages:`, JSON.stringify(messages.slice(-2)));
             return c.json({ 
-                error: `Impossible de générer le document après ${turns} tentatives. L'IA n'a pas produit de contenu final.` 
+                error: `Impossible de générer le document après ${turns} tentatives.` 
             }, 500);
         }
         
-        // Extract title from document if possible
+        // ===== EXTRACT TITLE =====
         let title = 'Document';
         const titleMatch = aiResponse.match(/^#+ (.+)$/m) || aiResponse.match(/^\*\*(.+?)\*\*/m);
         if (titleMatch) {
             title = titleMatch[1].replace(/\*\*/g, '').trim();
         } else {
-            // Generate title from document type
             const titleMap: Record<string, string> = {
                 'correspondance': 'Correspondance officielle',
                 'subventions': 'Demande de subvention',
-                'administratif': 'Document administratif',
                 'rh': 'Document RH',
                 'technique': 'Document technique',
-                'financier': 'Document financier',
                 'rapports': 'Rapport de maintenance',
-                'securite': 'Fiche de sécurité'
+                'creatif': 'Document créatif'
             };
-            // Use extracted title, or try to infer from instructions
-            if (!titleMatch) {
-                // Try to extract meaningful title from instructions
-                const instructionKeywords = instructions.toLowerCase();
-                if (instructionKeywords.includes('fds') || instructionKeywords.includes('fiche de sécurité') || instructionKeywords.includes('simdut')) {
-                    title = 'Fiche de Données de Sécurité';
-                } else if (instructionKeywords.includes('bilan') && instructionKeywords.includes('performance')) {
-                    title = 'Bilan de Performance';
-                } else if (instructionKeywords.includes('rapport mensuel')) {
-                    title = 'Rapport Mensuel de Maintenance';
-                } else if (instructionKeywords.includes('incident')) {
-                    title = 'Rapport d\'Incidents';
-                } else if (instructionKeywords.includes('état') && instructionKeywords.includes('machine')) {
-                    title = 'État du Parc Machines';
-                } else {
-                    title = titleMap[documentType] || 'Document de direction';
-                }
-            }
+            title = titleMap[documentType] || 'Document de direction';
         }
         
         return c.json({
@@ -2852,5 +2171,27 @@ Commence directement par le contenu du document (pas de "Voici...").`;
         return c.json({ error: e.message }, 500);
     }
 });
+
+// ============================================================
+// LEGACY CODE REMOVED - Replaced by modular secretary architecture
+// Old monolithic approach with 900+ lines replaced by:
+// - src/ai/secretary/brains/*.ts (6 specialized brains)
+// - src/ai/secretary/data/loaders.ts (targeted data loading)
+// - src/ai/secretary/index.ts (router)
+// ============================================================
+
+/*
+ * REMOVED: Old monolithic secretary implementation
+ * - 900+ lines of inline code
+ * - Single prompt trying to handle all document types
+ * - Full database dump regardless of document type
+ * - Duplicated logic from data loading
+ * 
+ * REPLACED WITH: Multi-brain architecture
+ * - Each document type = specialized expert brain
+ * - Targeted data loading per brain
+ * - Cleaner, maintainable, testable code
+ * - Better quality documents
+ */
 
 export default app;
