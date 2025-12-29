@@ -469,20 +469,20 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 
     const printDocument = async () => {
         if (!generatedDoc) return;
-        let companyShortName = 'IGP', companySubtitle = '', logoUrl = '/api/settings/logo';
+        let companyName = 'Entreprise', logoUrl = '/api/settings/logo';
         try {
             const res = await axios.get('/api/settings/config/public');
             if (res.data) {
-                companyShortName = res.data.company_short_name || 'IGP';
-                companySubtitle = res.data.company_subtitle || '';
+                // Priorité: company_title (nom complet) > company_subtitle > company_short_name
+                companyName = res.data.company_title || res.data.company_subtitle || res.data.company_short_name || 'Entreprise';
                 if (res.data.company_logo_url) logoUrl = res.data.company_logo_url;
             }
         } catch (e) {}
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         const html = markdownToHtml(generatedDoc.document);
-        const title = generatedDoc.title || 'Document';
+        const docTitle = generatedDoc.title || 'Document';
         // Réutiliser les mêmes styles que l'affichage + header corporate
-        const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
+        const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${docTitle}</title>
 <style>
 @page { size: A4; margin: 20mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -539,8 +539,8 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
   <div class="print-header-left">
     <img src="${logoUrl}" onerror="this.style.display='none'">
     <div class="brand">
-      <div class="brand-name">${companyShortName}</div>
-      <div class="brand-sub">${companySubtitle}</div>
+      <div class="brand-name">${companyName}</div>
+      <div class="brand-sub">${docTitle}</div>
     </div>
   </div>
   <div class="print-header-right">${today}</div>
