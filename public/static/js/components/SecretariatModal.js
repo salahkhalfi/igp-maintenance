@@ -473,43 +473,46 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         try {
             const res = await axios.get('/api/settings/config/public');
             if (res.data) {
-                // company_subtitle = nom de l'entreprise (ex: "Les Produits Verriers International (IGP) Inc.")
-                // company_title = nom de l'application (ex: "Système de Gestion Interne")
                 companyName = res.data.company_subtitle || res.data.company_short_name || 'Entreprise';
                 if (res.data.company_logo_url) logoUrl = res.data.company_logo_url;
             }
         } catch (e) {}
         
         // Documents confidentiels: rapports, subventions, rh
-        // Documents non-confidentiels: correspondance, creatif, technique
         const confidentialTypes = ['rapports', 'subventions', 'rh'];
         const isConfidential = confidentialTypes.includes(selectedCategory);
+        
+        // Lettres: pas de header système (la lettre a son propre en-tête)
+        const isLetter = selectedCategory === 'correspondance';
         
         const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         const html = markdownToHtml(generatedDoc.document);
         const docTitle = generatedDoc.title || 'Document';
-        // Réutiliser les mêmes styles que l'affichage + header corporate
+        
+        // CSS adapté au type de document
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${docTitle}</title>
 <style>
-@page { size: A4; margin: 20mm; }
+@page { size: A4; margin: ${isLetter ? '25mm 25mm 25mm 25mm' : '20mm'}; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; }
-body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: #000; padding: 0; }
-/* Header corporate - NOIR ET BLANC */
-.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 12pt; border-bottom: 1pt solid #000; }
+body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; font-size: ${isLetter ? '12pt' : '11pt'}; line-height: ${isLetter ? '1.8' : '1.5'}; color: #000; padding: 0; }
+
+/* Header corporate - Pour rapports et autres documents */
+.print-header { display: ${isLetter ? 'none' : 'flex'}; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 12pt; border-bottom: 1pt solid #000; }
 .print-header-left { display: flex; align-items: center; gap: 10px; }
 .print-header-left img { height: 32px; }
 .print-header-left .brand { border-left: 1pt solid #000; padding-left: 8px; }
 .print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 12pt; font-weight: 700; color: #000; }
 .print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #333; }
 .print-header-right { font-family: Arial, sans-serif; font-size: 9pt; color: #333; }
-/* DOCUMENT OFFICIEL - NOIR ET BLANC - Compatible imprimante standard */
-.doc-content { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #000; }
+
+/* DOCUMENT OFFICIEL - NOIR ET BLANC */
+.doc-content { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', 'Times New Roman', serif"}; font-size: ${isLetter ? '12pt' : '11pt'}; line-height: ${isLetter ? '1.8' : '1.6'}; color: #000; }
 .doc-content h1 { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; color: #000; margin: 18pt 0 12pt; padding-bottom: 4pt; border-bottom: 1.5pt solid #000; text-transform: uppercase; letter-spacing: 0.5px; }
 .doc-content h2 { font-family: Arial, sans-serif; font-size: 12pt; font-weight: 700; color: #000; margin: 16pt 0 8pt; padding-bottom: 3pt; border-bottom: 0.5pt solid #000; }
 .doc-content h3 { font-family: Arial, sans-serif; font-size: 11pt; font-weight: 700; color: #000; margin: 12pt 0 6pt; }
 .doc-content h4 { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; color: #000; margin: 10pt 0 4pt; }
-.doc-content p { margin: 0 0 8pt; text-align: justify; }
+.doc-content p { margin: 0 0 ${isLetter ? '12pt' : '8pt'}; text-align: ${isLetter ? 'left' : 'justify'}; }
 .doc-content ul, .doc-content ol { margin: 6pt 0 10pt; padding-left: 20pt; }
 .doc-content li { margin: 3pt 0; }
 .doc-content blockquote { border-left: 2pt solid #000; padding: 6pt 12pt; margin: 10pt 0 10pt 16pt; font-style: italic; }
@@ -518,28 +521,24 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
 .doc-content td { border: 0.5pt solid #000; padding: 5pt 8pt; }
 .doc-content hr { border: none; border-top: 0.5pt solid #000; margin: 14pt 0; }
 .doc-content strong { font-weight: 700; }
+
 /* Section wrapper pour éviter les coupures */
 .section { page-break-inside: avoid; }
+
 @media print {
-  @page { margin: 20mm; }
+  @page { margin: ${isLetter ? '25mm' : '20mm'}; }
   body { padding: 0; }
   .print-header { page-break-inside: avoid; margin-bottom: 10pt; }
-  /* Sections: titre + contenu ensemble */
   .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
     page-break-after: avoid;
     page-break-inside: avoid;
   }
-  .doc-content table { 
-    page-break-inside: auto; /* Permettre coupure si tableau trop long */
-  }
-  .doc-content tr { 
-    page-break-inside: avoid; /* Mais garder les lignes ensemble */
-  }
-  .doc-content thead { 
-    display: table-header-group; /* Répéter en-tête sur chaque page */
-  }
+  .doc-content table { page-break-inside: auto; }
+  .doc-content tr { page-break-inside: avoid; }
+  .doc-content thead { display: table-header-group; }
   .doc-content p { orphans: 2; widows: 2; }
 }
+
 /* Footer - Avertissement confidentialité */
 .print-footer {
   position: fixed;
@@ -561,7 +560,7 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
 }
 @media print {
   .print-footer { position: fixed; bottom: 0; }
-  ${isConfidential ? 'body { margin-bottom: 60pt; }' : ''} /* Espace pour le footer si confidentiel */
+  ${isConfidential ? 'body { margin-bottom: 60pt; }' : ''}
 }
 </style></head>
 <body>
