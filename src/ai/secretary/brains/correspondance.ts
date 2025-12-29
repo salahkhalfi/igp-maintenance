@@ -13,7 +13,9 @@ export function buildCorrespondanceBrain(
   data: CorrespondanceData
 ): BrainResult {
   
-  const companyName = context.company.name || 'Entreprise';
+  // subtitle = nom de la COMPAGNIE (ex: "Les Produits Verriers International (IGP) Inc.")
+  // name = nom de l'APPLICATION (ex: "Système de Gestion Interne") - NE PAS UTILISER
+  const companyName = context.company.subtitle || context.company.name || 'Entreprise';
   
   const systemPrompt = `Tu rédiges des lettres officielles québécoises pour ${companyName}.
 
@@ -34,7 +36,7 @@ FORMAT DE LETTRE OFFICIELLE:
 **${companyName}**
 9150 Bd Maurice-Duplessis
 Montréal, QC H1E 7C2
-Tél: 514-555-1234
+Tél: 514-494-1940
 
 Montréal, le ${formatDateFrCA()}
 
