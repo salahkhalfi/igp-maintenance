@@ -328,8 +328,12 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             // Listes
             .replace(/^(\s*)[\*\-] (.+)$/gm, (m, indent, content) => `<li data-level="${Math.floor((indent||'').length/2)}">${content}</li>`)
             .replace(/^\d+\. (.+)$/gm, '<li class="numbered">$1</li>');
-        // Grouper les listes
-        html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, m => m.includes('class="numbered"') ? `<ol>${m}</ol>` : `<ul>${m}</ul>`);
+        // Grouper les listes et nettoyer les sauts de ligne à l'intérieur
+        html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, m => {
+            // Supprimer les \n entre les </li> et <li>
+            const cleanList = m.replace(/\n/g, '');
+            return cleanList.includes('class="numbered"') ? `<ol>${cleanList}</ol>` : `<ul>${cleanList}</ul>`;
+        });
         // Paragraphes
         html = html.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>')
             .replace(/<p><\/p>/g, '').replace(/<p>(<h[1234]>)/g, '$1').replace(/(<\/h[1234]>)<\/p>/g, '$1')
