@@ -9,6 +9,13 @@
 AVANT DE PROPOSER QUOI QUE CE SOIT:
 
 ┌─────────────────────────────────────────────────────────┐
+│  0. RÉFLÉCHIR AVANT D'AGIR                              │
+│     - STOP. Ne pas se précipiter à modifier le code     │
+│     - Analyser les CONSÉQUENCES de chaque changement    │
+│     - Demander confirmation à l'utilisateur si doute    │
+│     - UN changement = UN effet. Penser aux effets       │
+│       secondaires et aux régressions potentielles       │
+│                                                         │
 │  1. VÉRIFIER D'ABORD, PARLER APRÈS                      │
 │     - Grep les dépendances                              │
 │     - Vérifier si l'infra existe (KV? DB? Config?)      │
