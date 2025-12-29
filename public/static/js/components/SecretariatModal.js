@@ -473,8 +473,9 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         try {
             const res = await axios.get('/api/settings/config/public');
             if (res.data) {
-                // Priorité: company_title (nom complet) > company_subtitle > company_short_name
-                companyName = res.data.company_title || res.data.company_subtitle || res.data.company_short_name || 'Entreprise';
+                // company_subtitle = nom de l'entreprise (ex: "Les Produits Verriers International (IGP) Inc.")
+                // company_title = nom de l'application (ex: "Système de Gestion Interne")
+                companyName = res.data.company_subtitle || res.data.company_short_name || 'Entreprise';
                 if (res.data.company_logo_url) logoUrl = res.data.company_logo_url;
             }
         } catch (e) {}
@@ -533,6 +534,29 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
   }
   .doc-content p { orphans: 2; widows: 2; }
 }
+/* Footer - Avertissement confidentialité */
+.print-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8pt 0;
+  border-top: 0.5pt solid #000;
+  font-family: Arial, sans-serif;
+  font-size: 7pt;
+  color: #333;
+  text-align: center;
+  background: #fff;
+}
+.print-footer-content {
+  max-width: 90%;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+@media print {
+  .print-footer { position: fixed; bottom: 0; }
+  body { margin-bottom: 60pt; } /* Espace pour le footer */
+}
 </style></head>
 <body>
 <div class="print-header">
@@ -546,6 +570,12 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: 
   <div class="print-header-right">${today}</div>
 </div>
 <div class="doc-content">${html}</div>
+<div class="print-footer">
+  <div class="print-footer-content">
+    <strong>CONFIDENTIEL</strong> — Ce document est la propriété exclusive de ${companyName}. 
+    Toute reproduction, distribution ou divulgation sans autorisation écrite est strictement interdite.
+  </div>
+</div>
 </body></html>`;
         const w = window.open('', '_blank');
         if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
