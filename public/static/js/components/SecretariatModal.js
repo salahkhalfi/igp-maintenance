@@ -519,8 +519,8 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 html, body { width: 100%; }
 body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; font-size: ${isLetter ? '12pt' : '11pt'}; line-height: ${isLetter ? '1.8' : '1.5'}; color: #000; padding: 0; }
 
-/* Header corporate - Pour rapports et autres documents */
-.print-header { display: ${isLetter ? 'none' : 'flex'}; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 12pt; border-bottom: 1pt solid #000; }
+/* Header corporate */
+.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 16pt; border-bottom: 1pt solid #000; }
 .print-header-left { display: flex; align-items: center; gap: 10px; }
 .print-header-left img { height: 32px; }
 .print-header-left .brand { border-left: 1pt solid #000; padding-left: 8px; }

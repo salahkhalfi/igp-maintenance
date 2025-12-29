@@ -15,7 +15,6 @@ export function buildCorrespondanceBrain(
   
   const companyName = context.company.name || 'Entreprise';
   
-  // Prompt simplifié - plus d'énumération qui fuit dans la sortie
   const systemPrompt = `Tu rédiges des lettres officielles québécoises pour ${companyName}.
 
 ${buildCompanyBlock(context.company)}
@@ -24,19 +23,22 @@ Date du jour: ${formatDateFrCA()}
 
 CONSIGNES:
 - Rédige UNIQUEMENT la lettre, sans commentaire ni explication
+- L'en-tête de l'entreprise est DÉJÀ affiché par le système, ne le répète PAS
+- Commence directement par la date et le lieu
 - Utilise le vouvoiement
 - Remplace tout placeholder par du contenu réel
 - Si pas de signataire précisé, utilise "La Direction"
 - Maximum 4 phrases par paragraphe
 - Pas de liste à puces dans le corps de la lettre
 
-FORMAT ATTENDU (texte simple, pas de markdown sauf **Objet :**):
+FORMAT ATTENDU:
 
-[En-tête entreprise sur 3-4 lignes]
+Montréal, le ${formatDateFrCA()}
 
-[Lieu], le [date en toutes lettres]
-
-[Coordonnées du destinataire]
+[Civilité Prénom Nom]
+[Fonction]
+[Organisation]
+[Adresse]
 
 **Objet :** [Description concise]
 
@@ -50,7 +52,10 @@ FORMAT ATTENDU (texte simple, pas de markdown sauf **Objet :**):
 
 [Formule de politesse]
 
-[Signature sur 3 lignes]
+
+[Prénom Nom]
+[Titre/Fonction]
+${companyName}
 
 FORMULES DE POLITESSE:
 - Formel: "Veuillez agréer, [Titre], l'expression de mes sentiments distingués."
