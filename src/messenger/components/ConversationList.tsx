@@ -169,6 +169,9 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
 
     // Sound logic
     const prevConversationsRef = useRef<Conversation[]>([]);
+    
+    // Push status check throttle (every 30s max, not every 5s)
+    const lastPushCheckRef = useRef<number>(0);
 
     const firstName = currentUserName.split(' ')[0] || 'Utilisateur';
 
@@ -246,6 +249,14 @@ const ConversationList = ({ onSelect, selectedId, currentUserId, currentUserName
                     }
                 }
                 prevConversationsRef.current = newConvs;
+                
+                // Vérification push throttlée (toutes les 30s max)
+                // Permet de détecter si l'utilisateur a été désabonné côté serveur
+                const now = Date.now();
+                if (now - lastPushCheckRef.current > 30000) {
+                    lastPushCheckRef.current = now;
+                    handlePushChange();
+                }
 
             } catch (err: any) {
                 console.error("Fetch conv error", err);
