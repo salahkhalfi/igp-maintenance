@@ -353,8 +353,8 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             font-weight: 700; 
             color: #1a1a1a; 
             margin: 20pt 0 10pt; 
-            padding-bottom: 4pt;
-            border-bottom: 1pt solid #cccccc;
+            padding-bottom: 6pt;
+            border-bottom: 2pt solid #22c55e;
         }
         .doc-content h3 { 
             font-family: 'Arial', 'Helvetica', sans-serif;
@@ -404,17 +404,17 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             font-size: 10pt; 
         }
         .doc-content th { 
-            background-color: #f0f0f0 !important; 
-            border: 1pt solid #333333 !important; 
-            padding: 8pt 10pt; 
+            background-color: #f0fdf4 !important; 
+            border: 1.5pt solid #22c55e !important; 
+            padding: 10pt 12pt; 
             text-align: left; 
             font-weight: 700; 
             font-family: 'Arial', 'Helvetica', sans-serif;
-            color: #1a1a1a !important; 
+            color: #166534 !important; 
         }
         .doc-content td { 
-            border: 1pt solid #666666 !important; 
-            padding: 6pt 10pt; 
+            border: 1pt solid #d1d5db !important; 
+            padding: 8pt 12pt; 
         }
         .doc-content tr:nth-child(even) td { 
             background-color: #f9f9f9 !important; 
@@ -498,7 +498,7 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: 
 /* STYLE DOCUMENT OFFICIEL - Rapport professionnel pour impression */
 .doc-content { font-family: 'Georgia', 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.7; color: #1a1a1a; }
 .doc-content h1 { font-family: Arial, Helvetica, sans-serif; font-size: 16pt; font-weight: 700; color: #000; margin: 24pt 0 16pt; padding-bottom: 6pt; border-bottom: 2pt solid #1a1a1a; text-transform: uppercase; letter-spacing: 1px; }
-.doc-content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 13pt; font-weight: 700; color: #1a1a1a; margin: 20pt 0 10pt; padding-bottom: 4pt; border-bottom: 1pt solid #ccc; }
+.doc-content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 13pt; font-weight: 700; color: #1a1a1a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #22c55e; }
 .doc-content h3 { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; font-weight: 700; color: #333; margin: 14pt 0 8pt; }
 .doc-content h4 { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: 600; color: #444; margin: 10pt 0 6pt; }
 .doc-content p { margin: 0 0 10pt; text-align: justify; }
@@ -506,15 +506,15 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: 
 .doc-content li { margin: 4pt 0; }
 .doc-content blockquote { border-left: 3pt solid #666; padding: 8pt 16pt; margin: 12pt 0 12pt 20pt; font-style: italic; color: #444; background: #fafafa; }
 .doc-content table { width: 100%; border-collapse: collapse; margin: 14pt 0; font-size: 10pt; }
-.doc-content th { background: #f0f0f0 !important; border: 1pt solid #333 !important; padding: 8pt 10pt; text-align: left; font-weight: 700; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.doc-content td { border: 1pt solid #666 !important; padding: 6pt 10pt; }
+.doc-content th { background: #f0fdf4 !important; border: 1.5pt solid #22c55e !important; padding: 10pt 12pt; text-align: left; font-weight: 700; font-family: Arial, Helvetica, sans-serif; color: #166534; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.doc-content td { border: 1pt solid #d1d5db !important; padding: 8pt 12pt; }
 .doc-content tr:nth-child(even) td { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .doc-content hr { border: none; border-top: 1pt solid #999; margin: 16pt 0; }
 .doc-content strong { font-weight: 700; }
 @media print {
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-header { page-break-inside: avoid; }
-  .doc-content th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; }
+  .doc-content th { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #166534 !important; -webkit-print-color-adjust: exact !important; }
   /* CONTRÔLE DES SAUTS DE PAGE */
   .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
     page-break-after: avoid; /* Ne pas couper juste après un titre */
