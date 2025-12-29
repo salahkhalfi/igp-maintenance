@@ -3,9 +3,10 @@
  * 
  * Chaque loader charge UNIQUEMENT les données pertinentes pour son cerveau.
  * Objectif: Minimiser les tokens, maximiser la pertinence.
+ * 
+ * NOTE: Utilise des requêtes SQL brutes via D1 pour la compatibilité Cloudflare
  */
 
-import { eq, desc, gte, and, isNull, sql, or, inArray } from 'drizzle-orm';
 import type { 
   RapportsData, 
   SubventionsData, 
@@ -24,7 +25,7 @@ import { ROLE_LABELS } from '../shared';
 /**
  * Récupérer les maps de statuts depuis la config DB
  */
-async function getTicketMaps(db: any) {
+async function getTicketMaps(env: any) {
   const defaultStatusMap: Record<string, string> = {
     'received': 'Nouveau',
     'diagnostic': 'En diagnostic',
@@ -48,18 +49,18 @@ async function getTicketMaps(db: any) {
   let closedStatuses = ['resolved', 'closed', 'completed', 'cancelled', 'archived'];
 
   try {
-    const settings = await db.select()
-      .from(sql`system_settings`)
-      .where(inArray(sql`setting_key`, ['ticket_statuses_config', 'ticket_closed_statuses']))
-      .all();
+    const { results } = await env.DB.prepare(`
+      SELECT setting_key, setting_value FROM system_settings 
+      WHERE setting_key IN ('ticket_statuses_config', 'ticket_closed_statuses')
+    `).all();
 
-    for (const s of settings) {
+    for (const s of results || []) {
       if (s.setting_key === 'ticket_closed_statuses') {
-        const parsed = JSON.parse(s.setting_value);
+        const parsed = JSON.parse(s.setting_value as string);
         if (Array.isArray(parsed)) closedStatuses = parsed;
       }
       if (s.setting_key === 'ticket_statuses_config') {
-        const parsed = JSON.parse(s.setting_value);
+        const parsed = JSON.parse(s.setting_value as string);
         if (Array.isArray(parsed)) {
           parsed.forEach((item: any) => {
             if (item.id && item.label) {
@@ -117,8 +118,8 @@ function calcStats(ticketList: any[], closedStatuses: string[]): PeriodStats {
 //                    LOADER: RAPPORTS
 // ============================================================
 
-export async function loadRapportsData(db: any): Promise<RapportsData> {
-  const { statusMap, priorityMap, closedStatuses } = await getTicketMaps(db);
+export async function loadRapportsData(env: any): Promise<RapportsData> {
+  const { statusMap, priorityMap, closedStatuses } = await getTicketMaps(env);
   
   const now = new Date();
   const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -127,52 +128,31 @@ export async function loadRapportsData(db: any): Promise<RapportsData> {
   const overdueThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // Charger tous les tickets des 3 derniers mois
-  const allTickets = await db.select({
-    id: sql`id`,
-    ticket_id: sql`ticket_id`,
-    title: sql`title`,
-    status: sql`status`,
-    priority: sql`priority`,
-    machine_id: sql`machine_id`,
-    assigned_to: sql`assigned_to`,
-    created_at: sql`created_at`,
-    completed_at: sql`completed_at`,
-    downtime_hours: sql`downtime_hours`
-  }).from(sql`tickets`)
-    .where(and(
-      isNull(sql`deleted_at`),
-      gte(sql`created_at`, threeMonthsAgo.toISOString())
-    ))
-    .orderBy(desc(sql`created_at`))
-    .all();
+  const { results: allTickets } = await env.DB.prepare(`
+    SELECT id, ticket_id, title, status, priority, machine_id, assigned_to, 
+           created_at, completed_at, downtime_hours
+    FROM tickets 
+    WHERE deleted_at IS NULL AND created_at >= ?
+    ORDER BY created_at DESC
+  `).bind(threeMonthsAgo.toISOString()).all();
 
-  // Charger utilisateurs et machines pour les lookups
-  const allUsers = await db.select({
-    id: sql`id`,
-    full_name: sql`full_name`,
-    role: sql`role`,
-    email: sql`email`,
-    last_login: sql`last_login`
-  }).from(sql`users`)
-    .where(isNull(sql`deleted_at`))
-    .all();
+  // Charger utilisateurs
+  const { results: allUsers } = await env.DB.prepare(`
+    SELECT id, full_name, role, email, last_login
+    FROM users WHERE deleted_at IS NULL
+  `).all();
 
-  const allMachines = await db.select({
-    id: sql`id`,
-    machine_type: sql`machine_type`,
-    manufacturer: sql`manufacturer`,
-    model: sql`model`,
-    location: sql`location`,
-    status: sql`status`
-  }).from(sql`machines`)
-    .where(isNull(sql`deleted_at`))
-    .all();
+  // Charger machines
+  const { results: allMachines } = await env.DB.prepare(`
+    SELECT id, machine_type, manufacturer, model, location, status
+    FROM machines WHERE deleted_at IS NULL
+  `).all();
 
-  const userMap = Object.fromEntries(allUsers.map((u: any) => [u.id, u]));
-  const machineMap = Object.fromEntries(allMachines.map((m: any) => [m.id, m]));
+  const userMap = Object.fromEntries((allUsers || []).map((u: any) => [u.id, u]));
+  const machineMap = Object.fromEntries((allMachines || []).map((m: any) => [m.id, m]));
 
   // Enrichir les tickets
-  const enrichedTickets = allTickets.map((t: any) => {
+  const enrichedTickets = (allTickets || []).map((t: any) => {
     const resTime = t.completed_at && t.created_at
       ? Math.round((new Date(t.completed_at).getTime() - new Date(t.created_at).getTime()) / (1000 * 60 * 60) * 10) / 10
       : null;
@@ -207,7 +187,7 @@ export async function loadRapportsData(db: any): Promise<RapportsData> {
   const resolutionVariation = statsThisMonth.resolutionRate - statsLastMonth.resolutionRate;
 
   // Performance techniciens
-  const technicianPerformance: TechnicianPerf[] = allUsers
+  const technicianPerformance: TechnicianPerf[] = (allUsers || [])
     .filter((u: any) => ['technician', 'senior_technician', 'team_leader'].includes(u.role))
     .map((tech: any) => {
       const techTickets = enrichedTickets.filter((t: any) => t.assigned_to === tech.id);
@@ -232,7 +212,7 @@ export async function loadRapportsData(db: any): Promise<RapportsData> {
     .sort((a, b) => b.ticketsClosed - a.ticketsClosed);
 
   // Performance machines
-  const machinePerformance: MachinePerf[] = allMachines.map((machine: any) => {
+  const machinePerformance: MachinePerf[] = (allMachines || []).map((machine: any) => {
     const machineTickets = enrichedTickets.filter((t: any) => t.machine_id === machine.id);
     return {
       id: machine.id,
@@ -282,11 +262,11 @@ export async function loadRapportsData(db: any): Promise<RapportsData> {
     machinePerformance,
     overdueTickets,
     criticalTickets,
-    totalMachines: allMachines.length,
+    totalMachines: (allMachines || []).length,
     machinesByStatus: {
-      operational: allMachines.filter((m: any) => m.status === 'operational').length,
-      maintenance: allMachines.filter((m: any) => m.status === 'maintenance').length,
-      out_of_service: allMachines.filter((m: any) => m.status === 'out_of_service').length
+      operational: (allMachines || []).filter((m: any) => m.status === 'operational').length,
+      maintenance: (allMachines || []).filter((m: any) => m.status === 'maintenance').length,
+      out_of_service: (allMachines || []).filter((m: any) => m.status === 'out_of_service').length
     }
   };
 }
@@ -295,31 +275,25 @@ export async function loadRapportsData(db: any): Promise<RapportsData> {
 //                    LOADER: SUBVENTIONS
 // ============================================================
 
-export async function loadSubventionsData(db: any): Promise<SubventionsData> {
+export async function loadSubventionsData(env: any): Promise<SubventionsData> {
   // Effectif
-  const allUsers = await db.select({
-    id: sql`id`,
-    role: sql`role`
-  }).from(sql`users`)
-    .where(isNull(sql`deleted_at`))
-    .all();
+  const { results: allUsers } = await env.DB.prepare(`
+    SELECT id, role FROM users WHERE deleted_at IS NULL
+  `).all();
 
   const effectifByRole: Record<string, number> = {};
-  allUsers.forEach((u: any) => {
+  (allUsers || []).forEach((u: any) => {
     const roleLabel = ROLE_LABELS[u.role] || u.role;
     effectifByRole[roleLabel] = (effectifByRole[roleLabel] || 0) + 1;
   });
 
   // Machines par type
-  const allMachines = await db.select({
-    id: sql`id`,
-    machine_type: sql`machine_type`
-  }).from(sql`machines`)
-    .where(isNull(sql`deleted_at`))
-    .all();
+  const { results: allMachines } = await env.DB.prepare(`
+    SELECT id, machine_type FROM machines WHERE deleted_at IS NULL
+  `).all();
 
   const machinesByType: Record<string, number> = {};
-  allMachines.forEach((m: any) => {
+  (allMachines || []).forEach((m: any) => {
     const type = m.machine_type || 'Autre';
     machinesByType[type] = (machinesByType[type] || 0) + 1;
   });
@@ -328,19 +302,15 @@ export async function loadSubventionsData(db: any): Promise<SubventionsData> {
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
   
-  const ticketCount = await db.select({
-    count: sql`COUNT(*)`
-  }).from(sql`tickets`)
-    .where(and(
-      isNull(sql`deleted_at`),
-      gte(sql`created_at`, oneYearAgo.toISOString())
-    ))
-    .get();
+  const ticketCount = await env.DB.prepare(`
+    SELECT COUNT(*) as count FROM tickets 
+    WHERE deleted_at IS NULL AND created_at >= ?
+  `).bind(oneYearAgo.toISOString()).first();
 
   return {
-    effectifTotal: allUsers.length,
+    effectifTotal: (allUsers || []).length,
     effectifByRole,
-    machinesTotal: allMachines.length,
+    machinesTotal: (allMachines || []).length,
     machinesByType,
     ticketsLast12Months: ticketCount?.count || 0
   };
@@ -350,19 +320,13 @@ export async function loadSubventionsData(db: any): Promise<SubventionsData> {
 //                    LOADER: RH
 // ============================================================
 
-export async function loadRHData(db: any, employeeId?: number): Promise<RHData> {
-  const allUsers = await db.select({
-    id: sql`id`,
-    full_name: sql`full_name`,
-    role: sql`role`,
-    email: sql`email`,
-    last_login: sql`last_login`,
-    created_at: sql`created_at`
-  }).from(sql`users`)
-    .where(isNull(sql`deleted_at`))
-    .all();
+export async function loadRHData(env: any, employeeId?: number): Promise<RHData> {
+  const { results: allUsers } = await env.DB.prepare(`
+    SELECT id, full_name, role, email, last_login, created_at
+    FROM users WHERE deleted_at IS NULL
+  `).all();
 
-  const employees: EmployeeSummary[] = allUsers.map((u: any) => ({
+  const employees: EmployeeSummary[] = (allUsers || []).map((u: any) => ({
     id: u.id,
     name: u.full_name,
     role: u.role,
@@ -371,21 +335,21 @@ export async function loadRHData(db: any, employeeId?: number): Promise<RHData> 
   }));
 
   const rolesCount: Record<string, number> = {};
-  allUsers.forEach((u: any) => {
+  (allUsers || []).forEach((u: any) => {
     rolesCount[u.role] = (rolesCount[u.role] || 0) + 1;
   });
 
   let employeeDetails = undefined;
   if (employeeId) {
-    const emp = allUsers.find((u: any) => u.id === employeeId);
+    const emp = (allUsers || []).find((u: any) => u.id === employeeId);
     if (emp) {
       // Compter les tickets de cet employé
-      const ticketStats = await db.select({
-        assigned: sql`SUM(CASE WHEN assigned_to = ${employeeId} THEN 1 ELSE 0 END)`,
-        closed: sql`SUM(CASE WHEN assigned_to = ${employeeId} AND status IN ('completed', 'resolved', 'closed') THEN 1 ELSE 0 END)`
-      }).from(sql`tickets`)
-        .where(isNull(sql`deleted_at`))
-        .get();
+      const ticketStats = await env.DB.prepare(`
+        SELECT 
+          SUM(CASE WHEN assigned_to = ? THEN 1 ELSE 0 END) as assigned,
+          SUM(CASE WHEN assigned_to = ? AND status IN ('completed', 'resolved', 'closed') THEN 1 ELSE 0 END) as closed
+        FROM tickets WHERE deleted_at IS NULL
+      `).bind(employeeId, employeeId).first();
 
       employeeDetails = {
         id: emp.id,
@@ -411,38 +375,26 @@ export async function loadRHData(db: any, employeeId?: number): Promise<RHData> 
 //                    LOADER: TECHNIQUE
 // ============================================================
 
-export async function loadTechniqueData(db: any, machineId?: number): Promise<TechniqueData> {
-  const allMachines = await db.select({
-    id: sql`id`,
-    machine_type: sql`machine_type`,
-    manufacturer: sql`manufacturer`,
-    model: sql`model`,
-    serial_number: sql`serial_number`,
-    year: sql`year`,
-    location: sql`location`,
-    status: sql`status`,
-    technical_specs: sql`technical_specs`,
-    operator_id: sql`operator_id`
-  }).from(sql`machines`)
-    .where(isNull(sql`deleted_at`))
-    .all();
+export async function loadTechniqueData(env: any, machineId?: number): Promise<TechniqueData> {
+  const { results: allMachines } = await env.DB.prepare(`
+    SELECT id, machine_type, manufacturer, model, serial_number, year, 
+           location, status, technical_specs, operator_id
+    FROM machines WHERE deleted_at IS NULL
+  `).all();
 
   // Lookup opérateurs
-  const operatorIds = [...new Set(allMachines.filter((m: any) => m.operator_id).map((m: any) => m.operator_id))];
+  const operatorIds = [...new Set((allMachines || []).filter((m: any) => m.operator_id).map((m: any) => m.operator_id))];
   let operatorMap: Record<number, string> = {};
   
   if (operatorIds.length > 0) {
-    const operators = await db.select({
-      id: sql`id`,
-      full_name: sql`full_name`
-    }).from(sql`users`)
-      .where(inArray(sql`id`, operatorIds))
-      .all();
+    const { results: operators } = await env.DB.prepare(`
+      SELECT id, full_name FROM users WHERE id IN (${operatorIds.map(() => '?').join(',')})
+    `).bind(...operatorIds).all();
     
-    operatorMap = Object.fromEntries(operators.map((o: any) => [o.id, o.full_name]));
+    operatorMap = Object.fromEntries((operators || []).map((o: any) => [o.id, o.full_name]));
   }
 
-  const machines: MachineTechnical[] = allMachines.map((m: any) => ({
+  const machines: MachineTechnical[] = (allMachines || []).map((m: any) => ({
     id: m.id,
     type: m.machine_type || 'Non spécifié',
     manufacturer: m.manufacturer || '',
@@ -462,23 +414,14 @@ export async function loadTechniqueData(db: any, machineId?: number): Promise<Te
     machineDetails = machines.find(m => m.id === machineId);
 
     // Charger les tickets récents de cette machine
-    const tickets = await db.select({
-      id: sql`id`,
-      ticket_id: sql`ticket_id`,
-      title: sql`title`,
-      status: sql`status`,
-      priority: sql`priority`,
-      created_at: sql`created_at`
-    }).from(sql`tickets`)
-      .where(and(
-        isNull(sql`deleted_at`),
-        eq(sql`machine_id`, machineId)
-      ))
-      .orderBy(desc(sql`created_at`))
-      .limit(15)
-      .all();
+    const { results: tickets } = await env.DB.prepare(`
+      SELECT id, ticket_id, title, status, priority, created_at
+      FROM tickets 
+      WHERE deleted_at IS NULL AND machine_id = ?
+      ORDER BY created_at DESC LIMIT 15
+    `).bind(machineId).all();
 
-    recentTickets = tickets.map((t: any) => ({
+    recentTickets = (tickets || []).map((t: any) => ({
       id: t.ticket_id,
       title: t.title,
       priority: t.priority,
@@ -500,26 +443,19 @@ export async function loadTechniqueData(db: any, machineId?: number): Promise<Te
 //                    LOADER: CRÉATIF
 // ============================================================
 
-export async function loadCreatifData(db: any): Promise<CreatifData> {
+export async function loadCreatifData(env: any): Promise<CreatifData> {
   // Compte employés
-  const userCount = await db.select({
-    count: sql`COUNT(*)`
-  }).from(sql`users`)
-    .where(isNull(sql`deleted_at`))
-    .get();
+  const userCount = await env.DB.prepare(`
+    SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL
+  `).first();
 
   // Compte machines
-  const machineCount = await db.select({
-    count: sql`COUNT(*)`
-  }).from(sql`machines`)
-    .where(isNull(sql`deleted_at`))
-    .get();
+  const machineCount = await env.DB.prepare(`
+    SELECT COUNT(*) as count FROM machines WHERE deleted_at IS NULL
+  `).first();
 
-  // Pour les forces et réalisations, on les extrait du contexte IA
-  // Ces données seraient idéalement configurées dans le "Cerveau de l'IA"
-  
   return {
-    companyStrengths: [],  // À enrichir depuis aiConfig si disponible
+    companyStrengths: [],
     recentAchievements: [],
     teamSize: userCount?.count || 0,
     machineCount: machineCount?.count || 0

@@ -42,7 +42,7 @@ export type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult };
  */
 export async function prepareSecretary(
   documentType: DocumentType,
-  db: any,
+  env: any,  // Cloudflare Workers env with env.DB for D1 access
   companyIdentity: CompanyIdentity,
   baseUrl: string = '',
   options: {
@@ -63,28 +63,28 @@ export async function prepareSecretary(
   switch (documentType) {
     case 'rapports': {
       console.log(`📊 [Secretary] Loading maintenance report data...`);
-      const data = await loadRapportsData(db);
+      const data = await loadRapportsData(env);
       console.log(`📊 [Secretary] Data loaded: ${data.statsThisMonth.total} tickets this month, ${data.technicianPerformance.length} technicians`);
       return buildRapportsBrain(context, data);
     }
 
     case 'subventions': {
       console.log(`💰 [Secretary] Loading grants/subsidy data...`);
-      const data = await loadSubventionsData(db);
+      const data = await loadSubventionsData(env);
       console.log(`💰 [Secretary] Data loaded: ${data.effectifTotal} employees, ${data.machinesTotal} machines`);
       return buildSubventionsBrain(context, data);
     }
 
     case 'rh': {
       console.log(`👥 [Secretary] Loading HR data...`);
-      const data = await loadRHData(db, options.employeeId);
+      const data = await loadRHData(env, options.employeeId);
       console.log(`👥 [Secretary] Data loaded: ${data.employees.length} employees`);
       return buildRHBrain(context, data);
     }
 
     case 'technique': {
       console.log(`🔧 [Secretary] Loading technical data...`);
-      const data = await loadTechniqueData(db, options.machineId);
+      const data = await loadTechniqueData(env, options.machineId);
       console.log(`🔧 [Secretary] Data loaded: ${data.machines.length} machines`);
       return buildTechniqueBrain(context, data);
     }
@@ -98,7 +98,7 @@ export async function prepareSecretary(
     case 'creatif':
     default: {
       console.log(`✨ [Secretary] Loading creative data...`);
-      const data = await loadCreatifData(db);
+      const data = await loadCreatifData(env);
       console.log(`✨ [Secretary] Data loaded: ${data.teamSize} team members`);
       return buildCreatifBrain(context, data);
     }

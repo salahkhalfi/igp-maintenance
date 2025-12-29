@@ -2013,7 +2013,7 @@ app.post('/secretary', async (c) => {
         
         const brainResult = await prepareSecretary(
             documentType as DocumentType,
-            db,
+            env,  // Pass env for D1 direct access in data loaders
             companyIdentity,
             baseUrl
         );
