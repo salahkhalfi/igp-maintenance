@@ -25,6 +25,8 @@ export interface SecretaryContext {
   company: CompanyIdentity;
   today: string;
   baseUrl: string;
+  directorName: string;
+  directorTitle: string;
 }
 
 // === DONNÉES SPÉCIFIQUES PAR TYPE ===

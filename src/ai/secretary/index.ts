@@ -53,10 +53,27 @@ export async function prepareSecretary(
   
   console.log(`🧠 [Secretary] Activating brain for: ${documentType}`);
   
+  // Extraire le nom du directeur depuis hierarchy (ex: "Directeur des Opérations : Marc Bélanger")
+  let directorName = 'La Direction';
+  let directorTitle = 'Directeur des Opérations';
+  const hierarchy = companyIdentity.hierarchy || '';
+  const directorMatch = hierarchy.match(/Directeur[^:]*:\s*([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)/i);
+  if (directorMatch) {
+    directorName = directorMatch[1].trim();
+    // Extraire aussi le titre si présent
+    const titleMatch = hierarchy.match(/(Directeur[^:]*?):\s*/i);
+    if (titleMatch) {
+      directorTitle = titleMatch[1].trim();
+    }
+  }
+  console.log(`🧠 [Secretary] Director: ${directorName}, ${directorTitle}`);
+  
   const context: SecretaryContext = {
     company: companyIdentity,
     today: formatDateFrCA(),
-    baseUrl
+    baseUrl,
+    directorName,
+    directorTitle
   };
 
   // Router vers le cerveau approprié avec ses données

@@ -17,14 +17,8 @@ export function buildCorrespondanceBrain(
   // name = nom de l'APPLICATION (ex: "Système de Gestion Interne") - NE PAS UTILISER
   const companyName = context.company.subtitle || context.company.name || 'Entreprise';
   
-  // Extraire le nom du directeur depuis hierarchy (ex: "Directeur des Opérations : Marc Bélanger")
-  let directorName = 'La Direction';
-  let directorTitle = 'Directeur des Opérations';
-  const hierarchy = context.company.hierarchy || '';
-  const directorMatch = hierarchy.match(/Directeur[^:]*:\s*([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)/i);
-  if (directorMatch) {
-    directorName = directorMatch[1].trim();
-  }
+  // Utiliser le nom du directeur extrait dans index.ts
+  const { directorName, directorTitle } = context;
   
   const systemPrompt = `Tu rédiges des lettres officielles québécoises pour ${companyName}.
 
