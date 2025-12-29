@@ -134,7 +134,7 @@ export async function loadRapportsData(env: any): Promise<RapportsData> {
   // Charger tous les tickets des 3 derniers mois
   const { results: allTickets } = await env.DB.prepare(`
     SELECT id, ticket_id, title, status, priority, machine_id, assigned_to, 
-           created_at, completed_at, downtime_hours
+           created_at, completed_at, is_machine_down
     FROM tickets 
     WHERE deleted_at IS NULL AND created_at >= ?
     ORDER BY created_at DESC
@@ -225,7 +225,7 @@ export async function loadRapportsData(env: any): Promise<RapportsData> {
       status: machine.status,
       ticketsCount: machineTickets.length,
       openTickets: machineTickets.filter((t: any) => !t.is_closed).length,
-      downtimeHours: machineTickets.reduce((sum: number, t: any) => sum + (parseFloat(t.downtime_hours) || 0), 0),
+      downtimeHours: machineTickets.filter((t: any) => t.is_machine_down).length * 8, // Estimation: 8h par arrêt machine
       commonIssues: machineTickets.slice(0, 5).map((t: any) => t.title)
     };
   }).sort((a, b) => b.ticketsCount - a.ticketsCount);
