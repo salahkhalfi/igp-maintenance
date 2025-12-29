@@ -447,6 +447,24 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         .doc-content strong { 
             font-weight: 700; 
         }
+        
+        /* Contrôle des sauts de page pour impression */
+        @media print {
+            .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
+                page-break-after: avoid;
+                page-break-inside: avoid; 
+            }
+            .doc-content p { 
+                orphans: 3;
+                widows: 3;
+            }
+            .doc-content table, .doc-content blockquote { 
+                page-break-inside: avoid; 
+            }
+            .doc-content li { 
+                page-break-inside: avoid; 
+            }
+        }
     `;
 
     const printDocument = async () => {
@@ -497,6 +515,31 @@ body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: 
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-header { page-break-inside: avoid; }
   .doc-content th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; }
+  /* CONTRÔLE DES SAUTS DE PAGE */
+  .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
+    page-break-after: avoid; /* Ne pas couper juste après un titre */
+    page-break-inside: avoid; 
+  }
+  .doc-content p { 
+    orphans: 3; /* Min 3 lignes en bas de page */
+    widows: 3; /* Min 3 lignes en haut de page */
+  }
+  .doc-content table { 
+    page-break-inside: avoid; /* Garder les tableaux ensemble */
+  }
+  .doc-content blockquote { 
+    page-break-inside: avoid; 
+  }
+  .doc-content li { 
+    page-break-inside: avoid; 
+  }
+  .doc-content ul, .doc-content ol { 
+    page-break-before: avoid; /* Ne pas commencer une liste seule en bas */
+  }
+  /* Forcer nouvelle page avant sections principales si besoin */
+  .doc-content h2 { 
+    page-break-before: auto; 
+  }
 }
 </style></head>
 <body>
