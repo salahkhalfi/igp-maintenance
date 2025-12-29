@@ -349,12 +349,12 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
         .doc-content h2 { 
             font-family: 'Arial', 'Helvetica', sans-serif;
-            font-size: 13pt; 
+            font-size: 12pt; 
             font-weight: 700; 
-            color: #1a1a1a; 
-            margin: 20pt 0 10pt; 
-            padding-bottom: 6pt;
-            border-bottom: 2pt solid #22c55e;
+            color: #000; 
+            margin: 16pt 0 8pt; 
+            padding-bottom: 3pt;
+            border-bottom: 0.5pt solid #000;
         }
         .doc-content h3 { 
             font-family: 'Arial', 'Helvetica', sans-serif;
@@ -404,20 +404,20 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             font-size: 10pt; 
         }
         .doc-content th { 
-            background-color: #f0fdf4 !important; 
-            border: 1.5pt solid #22c55e !important; 
-            padding: 10pt 12pt; 
+            background-color: #f5f5f5 !important; 
+            border: 0.5pt solid #000 !important; 
+            padding: 6pt 8pt; 
             text-align: left; 
             font-weight: 700; 
             font-family: 'Arial', 'Helvetica', sans-serif;
-            color: #166534 !important; 
+            color: #000 !important; 
         }
         .doc-content td { 
-            border: 1pt solid #d1d5db !important; 
-            padding: 8pt 12pt; 
+            border: 0.5pt solid #000 !important; 
+            padding: 5pt 8pt; 
         }
         .doc-content tr:nth-child(even) td { 
-            background-color: #f9f9f9 !important; 
+            background-color: transparent !important; 
         }
         
         /* Séparateurs */
@@ -484,62 +484,54 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         // Réutiliser les mêmes styles que l'affichage + header corporate
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${title}</title>
 <style>
-@page { size: A4; margin: 25mm 25mm 25mm 25mm; }
+@page { size: A4; margin: 20mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; }
-/* Header corporate */
-.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; }
+html, body { width: 100%; }
+body { font-family: 'Georgia', serif; font-size: 11pt; line-height: 1.5; color: #000; padding: 0; }
+/* Header corporate - NOIR ET BLANC */
+.print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 12pt; border-bottom: 1pt solid #000; }
 .print-header-left { display: flex; align-items: center; gap: 10px; }
-.print-header-left img { height: 36px; }
-.print-header-left .brand { border-left: 2px solid #3b82f6; padding-left: 8px; }
-.print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 13pt; font-weight: 700; color: #0f172a; }
-.print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #64748b; }
-.print-header-right { font-family: Arial, sans-serif; font-size: 9pt; color: #64748b; }
-/* STYLE DOCUMENT OFFICIEL - Rapport professionnel pour impression */
-.doc-content { font-family: 'Georgia', 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.7; color: #1a1a1a; }
-.doc-content h1 { font-family: Arial, Helvetica, sans-serif; font-size: 16pt; font-weight: 700; color: #000; margin: 24pt 0 16pt; padding-bottom: 6pt; border-bottom: 2pt solid #1a1a1a; text-transform: uppercase; letter-spacing: 1px; }
-.doc-content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 13pt; font-weight: 700; color: #1a1a1a; margin: 20pt 0 10pt; padding-bottom: 6pt; border-bottom: 2pt solid #22c55e; }
-.doc-content h3 { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; font-weight: 700; color: #333; margin: 14pt 0 8pt; }
-.doc-content h4 { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: 600; color: #444; margin: 10pt 0 6pt; }
-.doc-content p { margin: 0 0 10pt; text-align: justify; }
-.doc-content ul, .doc-content ol { margin: 8pt 0 12pt; padding-left: 24pt; }
-.doc-content li { margin: 4pt 0; }
-.doc-content blockquote { border-left: 3pt solid #666; padding: 8pt 16pt; margin: 12pt 0 12pt 20pt; font-style: italic; color: #444; background: #fafafa; }
-.doc-content table { width: 100%; border-collapse: collapse; margin: 14pt 0; font-size: 10pt; }
-.doc-content th { background: #f0fdf4 !important; border: 1.5pt solid #22c55e !important; padding: 10pt 12pt; text-align: left; font-weight: 700; font-family: Arial, Helvetica, sans-serif; color: #166534; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.doc-content td { border: 1pt solid #d1d5db !important; padding: 8pt 12pt; }
-.doc-content tr:nth-child(even) td { background: #f9f9f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.doc-content hr { border: none; border-top: 1pt solid #999; margin: 16pt 0; }
+.print-header-left img { height: 32px; }
+.print-header-left .brand { border-left: 1pt solid #000; padding-left: 8px; }
+.print-header-left .brand-name { font-family: Arial, sans-serif; font-size: 12pt; font-weight: 700; color: #000; }
+.print-header-left .brand-sub { font-family: Arial, sans-serif; font-size: 8pt; color: #333; }
+.print-header-right { font-family: Arial, sans-serif; font-size: 9pt; color: #333; }
+/* DOCUMENT OFFICIEL - NOIR ET BLANC - Compatible imprimante standard */
+.doc-content { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #000; }
+.doc-content h1 { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; color: #000; margin: 18pt 0 12pt; padding-bottom: 4pt; border-bottom: 1.5pt solid #000; text-transform: uppercase; letter-spacing: 0.5px; }
+.doc-content h2 { font-family: Arial, sans-serif; font-size: 12pt; font-weight: 700; color: #000; margin: 16pt 0 8pt; padding-bottom: 3pt; border-bottom: 0.5pt solid #000; }
+.doc-content h3 { font-family: Arial, sans-serif; font-size: 11pt; font-weight: 700; color: #000; margin: 12pt 0 6pt; }
+.doc-content h4 { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; color: #000; margin: 10pt 0 4pt; }
+.doc-content p { margin: 0 0 8pt; text-align: justify; }
+.doc-content ul, .doc-content ol { margin: 6pt 0 10pt; padding-left: 20pt; }
+.doc-content li { margin: 3pt 0; }
+.doc-content blockquote { border-left: 2pt solid #000; padding: 6pt 12pt; margin: 10pt 0 10pt 16pt; font-style: italic; }
+.doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 9pt; }
+.doc-content th { background: #f5f5f5; border: 0.5pt solid #000; padding: 6pt 8pt; text-align: left; font-weight: 700; font-family: Arial, sans-serif; }
+.doc-content td { border: 0.5pt solid #000; padding: 5pt 8pt; }
+.doc-content hr { border: none; border-top: 0.5pt solid #000; margin: 14pt 0; }
 .doc-content strong { font-weight: 700; }
+/* Section wrapper pour éviter les coupures */
+.section { page-break-inside: avoid; }
 @media print {
-  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  .print-header { page-break-inside: avoid; }
-  .doc-content th { background-color: #f0fdf4 !important; border-color: #22c55e !important; color: #166534 !important; -webkit-print-color-adjust: exact !important; }
-  /* CONTRÔLE DES SAUTS DE PAGE */
+  @page { margin: 20mm; }
+  body { padding: 0; }
+  .print-header { page-break-inside: avoid; margin-bottom: 10pt; }
+  /* Sections: titre + contenu ensemble */
   .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
-    page-break-after: avoid; /* Ne pas couper juste après un titre */
-    page-break-inside: avoid; 
-  }
-  .doc-content p { 
-    orphans: 3; /* Min 3 lignes en bas de page */
-    widows: 3; /* Min 3 lignes en haut de page */
+    page-break-after: avoid;
+    page-break-inside: avoid;
   }
   .doc-content table { 
-    page-break-inside: avoid; /* Garder les tableaux ensemble */
+    page-break-inside: auto; /* Permettre coupure si tableau trop long */
   }
-  .doc-content blockquote { 
-    page-break-inside: avoid; 
+  .doc-content tr { 
+    page-break-inside: avoid; /* Mais garder les lignes ensemble */
   }
-  .doc-content li { 
-    page-break-inside: avoid; 
+  .doc-content thead { 
+    display: table-header-group; /* Répéter en-tête sur chaque page */
   }
-  .doc-content ul, .doc-content ol { 
-    page-break-before: avoid; /* Ne pas commencer une liste seule en bas */
-  }
-  /* Forcer nouvelle page avant sections principales si besoin */
-  .doc-content h2 { 
-    page-break-before: auto; 
-  }
+  .doc-content p { orphans: 2; widows: 2; }
 }
 </style></head>
 <body>
