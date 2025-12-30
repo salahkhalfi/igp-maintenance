@@ -210,7 +210,8 @@ const KanbanBoard = ({
     const renderTicketCard = (ticket) => {
         const hasAssigned = ticket.assigned_to !== null && ticket.assigned_to !== undefined;
         const isScheduled = hasScheduledDate(ticket.scheduled_date);
-        const isCompletedOrArchived = ticket.status === 'completed' || ticket.status === 'archived';
+        const isArchived = ticket.status === 'archived'; // Bannière masquée uniquement pour archivés
+        const isCompletedOrArchived = ticket.status === 'completed' || ticket.status === 'archived'; // Pour le countdown
 
         return React.createElement('div', {
             key: ticket.id,
@@ -230,8 +231,8 @@ const KanbanBoard = ({
             'aria-label': 'Ticket ' + ticket.ticket_id + ': ' + ticket.title + ', Priorité ' + ticket.priority,
             tabIndex: 0
         },
-            // BANNIÈRE ASSIGNATION/PLANIFICATION
-            (hasAssigned && !isCompletedOrArchived) ? React.createElement('div', {
+            // BANNIÈRE ASSIGNATION/PLANIFICATION (visible même si terminé, masquée si archivé)
+            (hasAssigned && !isArchived) ? React.createElement('div', {
                 className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (isScheduled
                     ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-sm border-b-2 border-green-400'
                     : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 shadow-sm border-b-2 border-cyan-400'),
