@@ -1385,19 +1385,13 @@ ${aiConfig.knowledge}
 
 --- 3. RÈGLES TECHNIQUES & FORMATAGE (OBLIGATOIRES) ---
 
-A. **LIENS TICKETS (RÈGLE ABSOLUE - NE JAMAIS INVENTER)** :
-   ⚠️ Les outils retournent un champ "ticket_link" avec le lien PRÉ-CALCULÉ.
+A. **LIENS TICKETS (RÈGLE ABSOLUE)** :
+   Les outils retournent "ticket_link" pour CHAQUE ticket. COPIE-LE TEL QUEL.
    
-   👉 **UTILISE TOUJOURS le champ ticket_link tel quel** - NE CONSTRUIS JAMAIS le lien toi-même !
+   ⚠️ CHAQUE ticket a son PROPRE lien avec son PROPRE id - ne réutilise JAMAIS le même lien !
    
-   Exemple de réponse d'outil:
-   {"display_id": "POL-1225-0001", "id": 47, "ticket_link": "[POL-1225-0001](${baseUrl}/?ticket=47)"}
-   
-   ✅ CORRECT: Copier ticket_link → [POL-1225-0001](${baseUrl}/?ticket=47)
-   ❌ FAUX: Inventer → [POL-1225-0001](${baseUrl}/?ticket=1)
-   
-   Si ticket_link n'est pas disponible, utilise: [RÉFÉRENCE](${baseUrl}/?ticket=ID)
-   où ID = le champ "id" (nombre), PAS un numéro séquentiel !
+   Si ticket_link n'est pas fourni, construis: [display_id](${baseUrl}/?ticket={id})
+   où {id} = la valeur du champ "id" de CE ticket spécifique.
 
 B. **IMAGES & MÉDIAS** :
    Si le contexte contient une image (format ![Alt](URL)), tu DOIS l'afficher dans ta réponse.
