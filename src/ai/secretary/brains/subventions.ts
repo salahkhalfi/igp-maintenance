@@ -205,7 +205,8 @@ ${Object.entries(machinesByType).map(([type, count]) => `- ${type}: ${count}`).j
 
 Ces données sont factuelles et proviennent du système de gestion.
 Pour les informations manquantes (CA, NEQ, projets spécifiques), 
-utiliser des placeholders [À COMPLÉTER] que le client remplira.
+laisser le champ VIDE (l'utilisateur complétera lui-même).
+NE JAMAIS écrire [À COMPLÉTER] ou tout autre placeholder.
 
 ═══════════════════════════════════════════════════════════════
               FIN DES DONNÉES

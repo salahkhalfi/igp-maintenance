@@ -583,37 +583,37 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   @page { margin: ${isLetter ? '25mm' : '20mm'}; }
   body { padding: 0; }
   .print-header { page-break-inside: avoid; margin-bottom: 10pt; }
+  /* Éviter de couper les titres et leur contenu immédiat */
   .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
     page-break-after: avoid;
     page-break-inside: avoid;
   }
+  /* Garder les listes avec leur titre */
+  .doc-content h2 + ul, .doc-content h2 + ol,
+  .doc-content h3 + ul, .doc-content h3 + ol { page-break-before: avoid; }
+  /* Éviter de couper les éléments de liste */
+  .doc-content li { page-break-inside: avoid; }
   .doc-content table { page-break-inside: auto; }
   .doc-content tr { page-break-inside: avoid; }
   .doc-content thead { display: table-header-group; }
-  .doc-content p { orphans: 2; widows: 2; }
+  .doc-content p { orphans: 3; widows: 3; }
 }
 
-/* Footer - Avertissement confidentialité - TOUJOURS visible */
+/* Footer - Avertissement confidentialité - EN FIN DE DOCUMENT (pas fixe) */
 .print-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 6pt 20mm;
-  border-top: 0.5pt solid #000;
+  margin-top: 40pt;
+  padding: 12pt 0;
+  border-top: 0.5pt solid #999;
   font-family: Arial, sans-serif;
-  font-size: 7pt;
-  color: #333;
+  font-size: 8pt;
+  color: #666;
   text-align: center;
-  background: #fff;
 }
 .print-footer-content {
-  line-height: 1.3;
+  line-height: 1.4;
 }
-/* Réserver l'espace en bas du contenu pour éviter le chevauchement */
-${isConfidential ? '.doc-content { padding-bottom: 50pt; }' : ''}
 @media print {
-  .print-footer { position: fixed; bottom: 0; left: 0; right: 0; }
+  .print-footer { page-break-inside: avoid; margin-top: 30pt; }
 }
 </style></head>
 <body>
