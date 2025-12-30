@@ -326,7 +326,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 instructions: instructions.trim()
             }, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-                timeout: 60000 // 60 secondes timeout
+                timeout: 120000 // 120 secondes timeout
             });
             if (response.data.success !== false) {
                 setGeneratedDoc(response.data);
@@ -1228,17 +1228,19 @@ ${html}
                                     `Génération en cours... ${generationTime}s`
                                 ),
                                 React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    generationTime < 15 ? 'L\'IA analyse et rédige votre document...' :
-                                    generationTime < 30 ? 'Rédaction en cours, merci de patienter...' :
-                                    generationTime < 45 ? 'Document complexe, encore quelques instants...' :
-                                    'Finalisation du document...'
+                                    generationTime < 10 ? 'L\'IA analyse votre demande...' :
+                                    generationTime < 25 ? 'Rédaction du document en cours...' :
+                                    generationTime < 45 ? 'Génération détaillée, merci de patienter...' :
+                                    generationTime < 70 ? 'Document complexe, encore quelques instants...' :
+                                    generationTime < 90 ? 'Finalisation et mise en forme...' :
+                                    'Presque terminé, veuillez patienter...'
                                 )
                             ),
-                            // Barre de progression visuelle (sur 60 secondes)
-                            React.createElement('div', { className: 'w-20 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                            // Barre de progression visuelle (sur 120 secondes)
+                            React.createElement('div', { className: 'w-24 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
                                 React.createElement('div', { 
                                     className: 'h-full bg-blue-500 transition-all duration-1000',
-                                    style: { width: `${Math.min(generationTime / 60 * 100, 95)}%` }
+                                    style: { width: `${Math.min(generationTime / 120 * 100, 95)}%` }
                                 })
                             )
                         ),
@@ -1437,17 +1439,19 @@ ${html}
                                     `Génération en cours... ${generationTime}s`
                                 ),
                                 React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    generationTime < 15 ? 'L\'IA analyse et rédige votre document...' :
-                                    generationTime < 30 ? 'Rédaction en cours, merci de patienter...' :
-                                    generationTime < 45 ? 'Document complexe, encore quelques instants...' :
-                                    'Finalisation du document...'
+                                    generationTime < 10 ? 'L\'IA analyse votre demande...' :
+                                    generationTime < 25 ? 'Rédaction du document en cours...' :
+                                    generationTime < 45 ? 'Génération détaillée, merci de patienter...' :
+                                    generationTime < 70 ? 'Document complexe, encore quelques instants...' :
+                                    generationTime < 90 ? 'Finalisation et mise en forme...' :
+                                    'Presque terminé, veuillez patienter...'
                                 )
                             ),
-                            // Barre de progression visuelle (sur 60 secondes)
-                            React.createElement('div', { className: 'w-20 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                            // Barre de progression visuelle (sur 120 secondes)
+                            React.createElement('div', { className: 'w-24 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
                                 React.createElement('div', { 
                                     className: 'h-full bg-blue-500 transition-all duration-1000',
-                                    style: { width: `${Math.min(generationTime / 60 * 100, 95)}%` }
+                                    style: { width: `${Math.min(generationTime / 120 * 100, 95)}%` }
                                 })
                             )
                         ),
