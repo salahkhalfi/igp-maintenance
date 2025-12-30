@@ -21,7 +21,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <link rel="preload" href="/static/js/dist/utils.min.js?v=d352264" as="script">
     <link rel="preload" href="/static/js/dist/App.min.js?v=d352264" as="script">
     <link rel="preload" href="/static/js/dist/LoginForm.min.js?v=d352264" as="script">
-    <link rel="preload" href="/static/js/dist/KanbanBoard.min.js?v=d352264" as="script">
+    <link rel="preload" href="/static/js/dist/KanbanBoard.min.js?v=f8eef98" as="script">
     <link rel="preload" href="/static/js/dist/AppHeader.min.js?v=32f5121" as="script">
     <meta name="theme-color" content="#003B73">
     
