@@ -1,7 +1,7 @@
 /**
  * SecretariatModal - Secrétariat de Direction
  * Design Premium - Génération de documents professionnels
- * v2.2 - Responsive amélioré (mobile-first)
+ * v2.3 - Mode Universel + Responsive fix
  */
 const SecretariatModal = ({ isOpen, onClose }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('correspondance');
@@ -11,6 +11,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     const [isGenerating, setIsGenerating] = React.useState(false);
     const [viewMode, setViewMode] = React.useState('form');
     const [mobileView, setMobileView] = React.useState('categories'); // 'categories' | 'form'
+    const [universalMode, setUniversalMode] = React.useState(false); // Mode assistant universel
 
     // Textes d'aide dynamiques pour chaque type de document
     const helpTexts = {
@@ -311,7 +312,8 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         try {
             const token = localStorage.getItem('auth_token');
             const response = await axios.post('/api/ai/secretary', {
-                documentType: selectedCategory,
+                // En mode universel, envoyer 'auto' pour déclencher l'auto-détection côté serveur
+                documentType: universalMode ? 'auto' : selectedCategory,
                 instructions: instructions.trim()
             }, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
@@ -327,6 +329,16 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             window.showToast && window.showToast(error.response?.data?.error || 'Erreur lors de la génération', 'error');
         } finally {
             setIsGenerating(false);
+        }
+    };
+    
+    // Activer/désactiver le mode universel
+    const toggleUniversalMode = () => {
+        setUniversalMode(!universalMode);
+        if (!universalMode) {
+            // En entrant en mode universel, effacer la sélection
+            setSelectedDocType(null);
+            setInstructions('');
         }
     };
 
@@ -1067,26 +1079,118 @@ ${html}
             // Header
             React.createElement('div', { className: 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0' },
                 React.createElement('div', { className: 'flex items-center gap-3' },
-                    // Bouton retour mobile
-                    mobileView === 'form' && React.createElement('button', {
+                    // Bouton retour mobile (seulement si pas en mode universel)
+                    !universalMode && mobileView === 'form' && React.createElement('button', {
                         onClick: () => setMobileView('categories'),
                         className: 'sm:hidden w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-white mr-1'
                     }, React.createElement('i', { className: 'fas fa-arrow-left' })),
-                    React.createElement('div', { className: 'w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0' },
-                        React.createElement('i', { className: 'fas fa-file-signature text-lg sm:text-2xl text-white' })
+                    React.createElement('div', { className: `w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl ${universalMode ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500' : 'bg-white/10'} flex items-center justify-center flex-shrink-0` },
+                        React.createElement('i', { className: `fas ${universalMode ? 'fa-magic' : 'fa-file-signature'} text-lg sm:text-2xl text-white` })
                     ),
                     React.createElement('div', { className: 'min-w-0' },
-                        React.createElement('h2', { className: 'text-base sm:text-xl font-bold text-white truncate' }, 'Secrétariat'),
-                        React.createElement('p', { className: 'text-xs text-slate-400 hidden sm:block' }, 'Documents professionnels')
+                        React.createElement('h2', { className: 'text-base sm:text-xl font-bold text-white truncate' }, 
+                            universalMode ? 'Assistant Universel' : 'Secrétariat'
+                        ),
+                        React.createElement('p', { className: 'text-xs text-slate-400 hidden sm:block' }, 
+                            universalMode ? 'Détection automatique du type' : 'Documents professionnels'
+                        )
                     )
                 ),
-                React.createElement('button', { onClick: onClose, className: 'w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white' },
-                    React.createElement('i', { className: 'fas fa-times' })
+                React.createElement('div', { className: 'flex items-center gap-2' },
+                    // Toggle Mode Universel
+                    React.createElement('button', { 
+                        onClick: toggleUniversalMode, 
+                        className: `px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            universalMode 
+                                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg' 
+                                : 'bg-white/10 hover:bg-white/20 text-white'
+                        }`,
+                        title: universalMode ? 'Retour au mode catégories' : 'Mode assistant universel'
+                    },
+                        React.createElement('i', { className: `fas ${universalMode ? 'fa-th-large' : 'fa-magic'} mr-1.5` }),
+                        React.createElement('span', { className: 'hidden sm:inline' }, universalMode ? 'Catégories' : 'Universel')
+                    ),
+                    React.createElement('button', { onClick: onClose, className: 'w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white' },
+                        React.createElement('i', { className: 'fas fa-times' })
+                    )
                 )
             ),
 
             // Corps
             React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
+                
+                // MODE UNIVERSEL: Interface simplifiée
+                universalMode ? React.createElement('div', { className: 'flex-1 flex flex-col overflow-hidden' },
+                    // Zone scrollable en mode universel
+                    React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-violet-50' },
+                        // Intro
+                        React.createElement('div', { className: 'max-w-2xl mx-auto' },
+                            React.createElement('div', { className: 'text-center mb-6' },
+                                React.createElement('div', { className: 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-100 to-fuchsia-100 rounded-full mb-3' },
+                                    React.createElement('i', { className: 'fas fa-magic text-violet-600' }),
+                                    React.createElement('span', { className: 'text-sm font-medium text-violet-700' }, 'Détection automatique')
+                                ),
+                                React.createElement('h3', { className: 'text-lg font-bold text-slate-800 mb-2' }, 'Décrivez simplement ce dont vous avez besoin'),
+                                React.createElement('p', { className: 'text-sm text-slate-600' }, 'L\'assistant détectera automatiquement le type de document et utilisera les données appropriées.')
+                            ),
+                            
+                            // Textarea principal
+                            React.createElement('div', { className: 'bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-slate-200' },
+                                React.createElement('label', { className: 'flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3' },
+                                    React.createElement('i', { className: 'fas fa-pen-fancy text-violet-500' }),
+                                    'Votre demande'
+                                ),
+                                React.createElement('textarea', {
+                                    value: instructions,
+                                    onChange: e => setInstructions(e.target.value),
+                                    placeholder: 'Exemples :\n• "Génère un rapport mensuel de maintenance avec les KPIs"\n• "Rédige une lettre à Hydro-Québec pour proposer nos services"\n• "Crée une offre d\'emploi pour un technicien de maintenance"\n• "Communiqué de presse pour annoncer notre nouvelle ligne de production"',
+                                    rows: 8,
+                                    className: 'w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none resize-none text-sm text-slate-700 placeholder-slate-400 bg-slate-50'
+                                }),
+                                
+                                // Suggestions rapides
+                                React.createElement('div', { className: 'mt-4 pt-4 border-t border-slate-100' },
+                                    React.createElement('p', { className: 'text-xs font-medium text-slate-500 mb-2' }, 'Suggestions rapides :'),
+                                    React.createElement('div', { className: 'flex flex-wrap gap-2' },
+                                        ['Rapport mensuel maintenance', 'Lettre officielle', 'Offre d\'emploi', 'Communiqué de presse', 'Demande de subvention'].map((suggestion, i) =>
+                                            React.createElement('button', {
+                                                key: i,
+                                                onClick: () => setInstructions(suggestion),
+                                                className: 'px-3 py-1.5 text-xs bg-slate-100 hover:bg-violet-100 text-slate-600 hover:text-violet-700 rounded-full transition-all'
+                                            }, suggestion)
+                                        )
+                                    )
+                                )
+                            ),
+                            
+                            // Info
+                            React.createElement('p', { className: 'mt-4 text-center text-xs text-slate-500' },
+                                React.createElement('i', { className: 'fas fa-info-circle mr-1' }),
+                                'L\'IA analysera votre demande et choisira le cerveau spécialisé approprié (Rapports, RH, Correspondance, etc.)'
+                            )
+                        )
+                    ),
+                    
+                    // Footer mode universel
+                    React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex items-center justify-end gap-3 flex-shrink-0' },
+                        React.createElement('button', { onClick: onClose, className: 'px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg' }, 'Annuler'),
+                        React.createElement('button', {
+                            onClick: generateDocument,
+                            disabled: isGenerating || !instructions.trim(),
+                            className: `px-5 py-2.5 text-sm font-semibold text-white rounded-lg flex items-center gap-2 ${
+                                isGenerating || !instructions.trim() 
+                                    ? 'bg-slate-300 cursor-not-allowed' 
+                                    : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg shadow-violet-200'
+                            }`
+                        },
+                            isGenerating ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' }) : React.createElement('i', { className: 'fas fa-magic' }),
+                            React.createElement('span', {}, isGenerating ? 'Génération...' : 'Générer')
+                        )
+                    )
+                ) :
+                
+                // MODE CATÉGORIES (existant)
+                React.createElement(React.Fragment, null,
                 
                 // MOBILE: Vue catégories OU formulaire
                 // DESKTOP: Les deux côte à côte
@@ -1265,6 +1369,7 @@ ${html}
                         )
                     )
                 )
+                ) // Fin React.Fragment mode catégories
             )
         )
     );
