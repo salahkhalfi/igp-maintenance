@@ -238,29 +238,73 @@ Vous, Nouveau, Gratuit, Découvrez, Exclusif, Garanti, Résultats, Économisez, 
  * Construire le contexte de données pour créatif
  */
 function buildCreatifContext(data: CreatifData): string {
-  const { companyStrengths, recentAchievements, teamSize, machineCount } = data;
+  const { 
+    companyStrengths, 
+    recentAchievements, 
+    teamSize, 
+    machineCount,
+    machinesByType,
+    employeesByRole,
+    maintenanceStats,
+    recentCriticalResolved
+  } = data;
+
+  // Formater les machines par type
+  const machinesDetail = machinesByType && machinesByType.length > 0
+    ? machinesByType.map((m: any) => `- ${m.type}: ${m.count}`).join('\n')
+    : 'Données non disponibles';
+
+  // Formater les employés par rôle
+  const employeesDetail = employeesByRole && employeesByRole.length > 0
+    ? employeesByRole.map((e: any) => `- ${e.role}: ${e.count}`).join('\n')
+    : 'Données non disponibles';
+
+  // Formater les stats de maintenance
+  const statsDetail = maintenanceStats
+    ? `- Tickets ce mois: ${maintenanceStats.ticketsThisMonth}
+- Tickets résolus: ${maintenanceStats.ticketsResolved}
+- Taux de résolution: ${maintenanceStats.resolutionRate}%
+- Temps moyen de résolution: ${maintenanceStats.avgResolutionHours}h`
+    : 'Données non disponibles';
 
   return `
 ═══════════════════════════════════════════════════════════════
-              ✨ ÉLÉMENTS POUR LA COMMUNICATION
+              ✨ DONNÉES RÉELLES DE L'ENTREPRISE
 ═══════════════════════════════════════════════════════════════
 
+⚠️ UTILISE UNIQUEMENT CES DONNÉES - NE PAS INVENTER DE CHIFFRES
+
 ## FORCES DE L'ENTREPRISE
-${companyStrengths.length > 0 ? companyStrengths.map(s => `- ${s}`).join('\n') : '*À définir selon le contexte*'}
+${companyStrengths.length > 0 ? companyStrengths.map(s => `- ${s}`).join('\n') : 'Aucune donnée disponible'}
 
 ## RÉALISATIONS RÉCENTES
-${recentAchievements.length > 0 ? recentAchievements.map(a => `- ${a}`).join('\n') : '*À mettre en valeur selon le message*'}
+${recentAchievements.length > 0 ? recentAchievements.map(a => `- ${a}`).join('\n') : 'Aucune donnée disponible'}
 
-## CHIFFRES CLÉ UTILISABLES
-- Équipe: ${teamSize} employés
+## CHIFFRES CLÉ (VÉRIDIQUES)
+- Équipe totale: ${teamSize} employés
 - Parc machines: ${machineCount} équipements
+
+## RÉPARTITION DES ÉQUIPEMENTS
+${machinesDetail}
+
+## RÉPARTITION DE L'ÉQUIPE
+${employeesDetail}
+
+## STATISTIQUES DE MAINTENANCE (CE MOIS)
+${statsDetail}
+
+## INTERVENTIONS CRITIQUES RÉCENTES RÉSOLUES
+${recentCriticalResolved && recentCriticalResolved.length > 0 
+  ? recentCriticalResolved.map((t: any) => `- ${t.title}`).join('\n')
+  : 'Aucune intervention critique récente'}
 
 ---
 
-*Note: Ces données peuvent être enrichies selon le type de communication.*
+⚠️ RÈGLE ABSOLUE: Si une donnée n'est pas ci-dessus, NE PAS L'INVENTER.
+   Utiliser des formulations génériques ou omettre l'information.
 
 ═══════════════════════════════════════════════════════════════
-              FIN DES ÉLÉMENTS
+              FIN DES DONNÉES
 ═══════════════════════════════════════════════════════════════
 `.trim();
 }

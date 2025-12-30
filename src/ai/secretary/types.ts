@@ -77,6 +77,16 @@ export interface CreatifData {
   recentAchievements: string[];
   teamSize: number;
   machineCount: number;
+  // Données enrichies
+  machinesByType?: { type: string; count: number }[];
+  employeesByRole?: { role: string; count: number }[];
+  maintenanceStats?: {
+    ticketsThisMonth: number;
+    ticketsResolved: number;
+    resolutionRate: number;
+    avgResolutionHours: number;
+  };
+  recentCriticalResolved?: { title: string; resolvedAt: string }[];
 }
 
 // === SOUS-TYPES ===

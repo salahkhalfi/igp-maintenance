@@ -458,10 +458,97 @@ export async function loadCreatifData(env: any): Promise<CreatifData> {
     SELECT COUNT(*) as count FROM machines WHERE deleted_at IS NULL
   `).first();
 
+  // Machines par type
+  const machinesByType = await env.DB.prepare(`
+    SELECT type, COUNT(*) as count 
+    FROM machines 
+    WHERE deleted_at IS NULL AND type IS NOT NULL
+    GROUP BY type 
+    ORDER BY count DESC
+  `).all();
+
+  // Employés par rôle
+  const employeesByRole = await env.DB.prepare(`
+    SELECT role, COUNT(*) as count 
+    FROM users 
+    WHERE deleted_at IS NULL AND role IS NOT NULL
+    GROUP BY role 
+    ORDER BY count DESC
+  `).all();
+
+  // Stats de maintenance du mois en cours
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  
+  const ticketsThisMonth = await env.DB.prepare(`
+    SELECT 
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed
+    FROM tickets 
+    WHERE created_at >= ? AND deleted_at IS NULL
+  `).bind(startOfMonth).first();
+
+  // Temps moyen de résolution (tickets fermés ce mois)
+  const avgResolution = await env.DB.prepare(`
+    SELECT AVG((julianday(closed_at) - julianday(created_at)) * 24) as avg_hours
+    FROM tickets 
+    WHERE closed_at IS NOT NULL 
+      AND created_at >= ? 
+      AND deleted_at IS NULL
+  `).bind(startOfMonth).first();
+
+  // Tickets critiques résolus récemment (accomplissements)
+  const recentCritical = await env.DB.prepare(`
+    SELECT title, closed_at as resolvedAt
+    FROM tickets 
+    WHERE priority = 'critical' 
+      AND status = 'closed' 
+      AND closed_at IS NOT NULL
+      AND deleted_at IS NULL
+    ORDER BY closed_at DESC
+    LIMIT 5
+  `).all();
+
+  // Construire les forces de l'entreprise à partir des données
+  const strengths: string[] = [];
+  if ((userCount?.count || 0) > 10) {
+    strengths.push(`Équipe de ${userCount?.count} professionnels qualifiés`);
+  }
+  if ((machineCount?.count || 0) > 5) {
+    strengths.push(`Parc de ${machineCount?.count} équipements de production`);
+  }
+  const resolutionRate = ticketsThisMonth?.total > 0 
+    ? Math.round((ticketsThisMonth?.closed || 0) / ticketsThisMonth.total * 100) 
+    : 0;
+  if (resolutionRate > 80) {
+    strengths.push(`Taux de résolution des interventions: ${resolutionRate}%`);
+  }
+
+  // Construire les accomplissements récents
+  const achievements: string[] = [];
+  if (recentCritical?.results?.length > 0) {
+    achievements.push(`${recentCritical.results.length} interventions critiques résolues récemment`);
+    recentCritical.results.slice(0, 3).forEach((t: any) => {
+      achievements.push(`Résolu: ${t.title}`);
+    });
+  }
+  if (ticketsThisMonth?.closed > 0) {
+    achievements.push(`${ticketsThisMonth.closed} interventions complétées ce mois`);
+  }
+
   return {
-    companyStrengths: [],
-    recentAchievements: [],
+    companyStrengths: strengths,
+    recentAchievements: achievements,
     teamSize: userCount?.count || 0,
-    machineCount: machineCount?.count || 0
+    machineCount: machineCount?.count || 0,
+    machinesByType: machinesByType?.results || [],
+    employeesByRole: employeesByRole?.results || [],
+    maintenanceStats: {
+      ticketsThisMonth: ticketsThisMonth?.total || 0,
+      ticketsResolved: ticketsThisMonth?.closed || 0,
+      resolutionRate,
+      avgResolutionHours: Math.round(avgResolution?.avg_hours || 0)
+    },
+    recentCriticalResolved: recentCritical?.results || []
   };
 }
