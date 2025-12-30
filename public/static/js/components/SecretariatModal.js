@@ -12,6 +12,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
     const [viewMode, setViewMode] = React.useState('form');
     const [mobileView, setMobileView] = React.useState('categories'); // 'categories' | 'form'
     const [universalMode, setUniversalMode] = React.useState(false); // Mode assistant universel
+    const [generationTime, setGenerationTime] = React.useState(0); // Temps de génération en secondes
 
     // Textes d'aide dynamiques pour chaque type de document
     const helpTexts = {
@@ -309,6 +310,14 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
         setIsGenerating(true);
         setGeneratedDoc(null);
+        setGenerationTime(0);
+        
+        // Timer pour afficher le temps écoulé
+        const startTime = Date.now();
+        const timerInterval = setInterval(() => {
+            setGenerationTime(Math.floor((Date.now() - startTime) / 1000));
+        }, 1000);
+        
         try {
             const token = localStorage.getItem('auth_token');
             const response = await axios.post('/api/ai/secretary', {
@@ -316,18 +325,21 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 documentType: universalMode ? 'auto' : selectedCategory,
                 instructions: instructions.trim()
             }, {
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                timeout: 60000 // 60 secondes timeout
             });
             if (response.data.success !== false) {
                 setGeneratedDoc(response.data);
                 setViewMode('preview');
-                window.showToast && window.showToast('Document généré', 'success');
+                const totalTime = Math.floor((Date.now() - startTime) / 1000);
+                window.showToast && window.showToast(`Document généré en ${totalTime}s`, 'success');
             } else {
                 throw new Error(response.data.error || 'Erreur');
             }
         } catch (error) {
             window.showToast && window.showToast(error.response?.data?.error || 'Erreur lors de la génération', 'error');
         } finally {
+            clearInterval(timerInterval);
             setIsGenerating(false);
         }
     };
@@ -1205,19 +1217,42 @@ ${html}
                     ),
                     
                     // Footer mode universel
-                    React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex items-center justify-end gap-3 flex-shrink-0' },
-                        React.createElement('button', { onClick: onClose, className: 'px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg' }, 'Annuler'),
-                        React.createElement('button', {
-                            onClick: generateDocument,
-                            disabled: isGenerating || !instructions.trim(),
-                            className: `px-5 py-2.5 text-sm font-semibold text-white rounded-lg flex items-center gap-2 ${
-                                isGenerating || !instructions.trim() 
-                                    ? 'bg-slate-300 cursor-not-allowed' 
-                                    : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg shadow-violet-200'
-                            }`
-                        },
-                            isGenerating ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' }) : React.createElement('i', { className: 'fas fa-magic' }),
-                            React.createElement('span', {}, isGenerating ? 'Génération...' : 'Générer')
+                    React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex-shrink-0' },
+                        // Message de durée pendant la génération avec barre de progression
+                        isGenerating && React.createElement('div', { className: 'mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2' },
+                            React.createElement('div', { className: 'flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center' },
+                                React.createElement('i', { className: 'fas fa-robot text-blue-600 fa-beat' })
+                            ),
+                            React.createElement('div', { className: 'flex-1 min-w-0' },
+                                React.createElement('p', { className: 'text-sm font-medium text-blue-800' }, 
+                                    `Génération en cours... ${generationTime}s`
+                                ),
+                                React.createElement('p', { className: 'text-xs text-blue-600' }, 
+                                    'L\'IA analyse et rédige votre document (10-15 sec)'
+                                )
+                            ),
+                            // Barre de progression visuelle
+                            React.createElement('div', { className: 'w-16 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                                React.createElement('div', { 
+                                    className: 'h-full bg-blue-500 transition-all duration-1000',
+                                    style: { width: `${Math.min(generationTime / 15 * 100, 95)}%` }
+                                })
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-end gap-3' },
+                            React.createElement('button', { onClick: onClose, disabled: isGenerating, className: `px-4 py-2 text-sm font-medium rounded-lg ${isGenerating ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}` }, 'Annuler'),
+                            React.createElement('button', {
+                                onClick: generateDocument,
+                                disabled: isGenerating || !instructions.trim(),
+                                className: `px-5 py-2.5 text-sm font-semibold text-white rounded-lg flex items-center gap-2 ${
+                                    isGenerating || !instructions.trim() 
+                                        ? 'bg-slate-300 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 shadow-lg shadow-violet-200'
+                                }`
+                            },
+                                isGenerating ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' }) : React.createElement('i', { className: 'fas fa-magic' }),
+                                React.createElement('span', {}, isGenerating ? `${generationTime}s...` : 'Générer')
+                            )
                         )
                     )
                 ) :
@@ -1387,18 +1422,45 @@ ${html}
                         )
                     ),
 
-                    // Footer
-                    React.createElement('div', { className: 'px-3 sm:px-4 py-3 bg-white border-t flex items-center justify-end gap-2 flex-shrink-0' },
-                        React.createElement('button', { onClick: onClose, className: 'px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg' }, 'Annuler'),
-                        React.createElement('button', {
-                            onClick: generateDocument,
-                            disabled: isGenerating || !instructions.trim(),
-                            className: `px-4 sm:px-5 py-2 text-sm font-semibold text-white rounded-lg flex items-center gap-2 ${
-                                isGenerating || !instructions.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-200'
-                            }`
-                        },
-                            isGenerating ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' }) : React.createElement('i', { className: 'fas fa-wand-magic-sparkles' }),
-                            React.createElement('span', {}, isGenerating ? 'Génération...' : 'Générer')
+                    // Footer avec indicateur de progression
+                    React.createElement('div', { className: 'px-3 sm:px-4 py-3 bg-white border-t flex-shrink-0' },
+                        // Indicateur de progression pendant la génération
+                        isGenerating && React.createElement('div', { className: 'mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2' },
+                            React.createElement('div', { className: 'flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center' },
+                                React.createElement('i', { className: 'fas fa-robot text-blue-600 fa-beat' })
+                            ),
+                            React.createElement('div', { className: 'flex-1 min-w-0' },
+                                React.createElement('p', { className: 'text-sm font-medium text-blue-800' }, 
+                                    `Génération en cours... ${generationTime}s`
+                                ),
+                                React.createElement('p', { className: 'text-xs text-blue-600' }, 
+                                    'L\'IA analyse et rédige votre document (10-15 sec)'
+                                )
+                            ),
+                            // Barre de progression visuelle
+                            React.createElement('div', { className: 'w-16 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                                React.createElement('div', { 
+                                    className: 'h-full bg-blue-500 transition-all duration-1000',
+                                    style: { width: `${Math.min(generationTime / 15 * 100, 95)}%` }
+                                })
+                            )
+                        ),
+                        React.createElement('div', { className: 'flex items-center justify-end gap-2' },
+                            React.createElement('button', { 
+                                onClick: onClose, 
+                                disabled: isGenerating,
+                                className: `px-4 py-2 text-sm font-medium rounded-lg ${isGenerating ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}` 
+                            }, 'Annuler'),
+                            React.createElement('button', {
+                                onClick: generateDocument,
+                                disabled: isGenerating || !instructions.trim(),
+                                className: `px-4 sm:px-5 py-2 text-sm font-semibold text-white rounded-lg flex items-center gap-2 ${
+                                    isGenerating || !instructions.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-lg shadow-indigo-200'
+                                }`
+                            },
+                                isGenerating ? React.createElement('i', { className: 'fas fa-circle-notch fa-spin' }) : React.createElement('i', { className: 'fas fa-wand-magic-sparkles' }),
+                                React.createElement('span', {}, isGenerating ? `${generationTime}s...` : 'Générer')
+                            )
                         )
                     )
                 )
