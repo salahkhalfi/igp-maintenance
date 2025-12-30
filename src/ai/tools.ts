@@ -63,16 +63,17 @@ export const TOOLS: ToolDefinition[] = [
         type: "function",
         function: {
             name: "search_tickets",
-            description: "Rechercher des tickets. Peut filtrer par mots-clés, statut, nom du technicien (assigné), nom du créateur (qui a signalé), ou nom de la machine. Peut aussi chercher par nom de fichier joint (photo).",
+            description: "Rechercher des tickets. IMPORTANT: Pour 'les tickets de [Nom]', utilise le paramètre 'user' qui cherche TOUS les tickets liés à cette personne (créés OU assignés).",
             parameters: {
                 type: "object",
                 properties: {
                     query: { type: "string", description: "Mots-clés (titre, description, ou nom de fichier joint)" },
-                    status: { type: "string", description: "Filtrer par statut exact (ex: 'completed' pour terminé, 'in_progress' pour en cours). Les statuts disponibles varient selon la configuration." },
-                    technician: { type: "string", description: "Nom du technicien assigné (ex: 'Brahim')" },
-                    creator: { type: "string", description: "Nom de la personne qui a créé/signalé le ticket (ex: 'Marc')" },
+                    status: { type: "string", description: "Filtrer par statut exact (ex: 'completed', 'in_progress')" },
+                    user: { type: "string", description: "RECOMMANDÉ: Nom d'une personne pour trouver TOUS ses tickets (créés OU assignés). Ex: 'Brahim' retourne tous les tickets où Brahim est créateur ou assigné." },
+                    technician: { type: "string", description: "Filtrer uniquement les tickets ASSIGNÉS à ce technicien" },
+                    creator: { type: "string", description: "Filtrer uniquement les tickets CRÉÉS par cette personne" },
                     machine: { type: "string", description: "Nom ou type de la machine (ex: 'Four')" },
-                    limit: { type: "number", description: "Nombre max de résultats (défaut 5)" }
+                    limit: { type: "number", description: "Nombre max de résultats (défaut 10)" }
                 },
                 required: []
             }
@@ -774,8 +775,8 @@ export const ToolFunctions = {
         });
     },
 
-    async search_tickets(db: any, args: { query?: string, status?: string, technician?: string, creator?: string, machine?: string, limit?: number }, baseUrl: string) {
-        const limit = args.limit || 5;
+    async search_tickets(db: any, args: { query?: string, status?: string, user?: string, technician?: string, creator?: string, machine?: string, limit?: number }, baseUrl: string) {
+        const limit = args.limit || 10; // Augmenté à 10 par défaut
         const conditions = [];
 
         // 1. Keyword Search (Improved with Media Search)
@@ -850,8 +851,25 @@ export const ToolFunctions = {
             }
         }
 
+        // 6. User Filter (NOUVEAU) - cherche les tickets créés OU assignés à cette personne
+        if (args.user) {
+            const userPattern = `%${args.user}%`;
+            const matchingUsers = await db.select({ id: users.id }).from(users).where(like(users.full_name, userPattern)).all();
+            
+            if (matchingUsers.length > 0) {
+                const userIds = matchingUsers.map((u: any) => u.id);
+                // Tickets créés OU assignés à cet utilisateur
+                conditions.push(or(
+                    inArray(tickets.reported_by, userIds),
+                    inArray(tickets.assigned_to, userIds)
+                ));
+            } else {
+                return JSON.stringify({ message: `Aucun utilisateur trouvé pour '${args.user}'` });
+            }
+        }
+
         if (conditions.length === 0) {
-            return JSON.stringify({ message: "Veuillez spécifier au moins un critère (query, technician, machine, creator)." });
+            return JSON.stringify({ message: "Veuillez spécifier au moins un critère (query, user, technician, machine, creator)." });
         }
 
         // TOUJOURS exclure les tickets supprimés
