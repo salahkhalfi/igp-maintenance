@@ -80,7 +80,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/ErrorBoundary.min.js?v=d352264"></script>
     <script src="/static/js/components/OfflineBanner.js?v=d352264.0.6"></script>
     <script src="/static/js/dist/MachineManagementModal.min.js?v=17e8f8e"></script>
-    <script src="/static/js/dist/RoleDropdown.min.js?v=d352264"></script>
+    <script src="/static/js/dist/RoleDropdown.min.js?v=8d22bf7"></script>
     <script src="/static/js/dist/SystemSettingsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PerformanceModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/AIChatModal_v4.min.js?v=1b0237d"></script>
@@ -637,7 +637,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
         // TicketDetailsModal - DÉPLACÉ VERS /static/js/components/TicketDetailsModal.js
         // Composant de gestion des machines (VERSION SIMPLIFIÉE ET ÉLÉGANTE)
         // MachineManagementModal - DÉPLACÉ VERS /static/js/dist/MachineManagementModal.min.js?v=17e8f8e
-        // RoleDropdown - DÉPLACÉ VERS /static/js/dist/RoleDropdown.min.js?v=d352264
+        // RoleDropdown - DÉPLACÉ VERS /static/js/dist/RoleDropdown.min.js?v=8d22bf7
         // SystemSettingsModal - DÉPLACÉ VERS /static/js/dist/SystemSettingsModal.min.js?v=d352264
         // Composant de performance des techniciens (ÉTAPE 2: VERSION BASIQUE)
         // PerformanceModal - DÉPLACÉ VERS /static/js/dist/PerformanceModal.min.js?v=d352264

@@ -170,15 +170,21 @@ const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'b
 
     // Fermer le dropdown si on clique à l'extérieur - optimisé avec useCallback
     const handleClickOutside = React.useCallback((event) => {
-        // Vérifier si le clic est sur le bouton, le dropdown conteneur ou le portal
-        if (
-            buttonRef.current && buttonRef.current.contains(event.target) ||
-            dropdownRef.current && dropdownRef.current.contains(event.target) ||
-            portalRef.current && portalRef.current.contains(event.target)
-        ) {
-            return;
-        }
-        setIsOpen(false);
+        // Petit délai pour éviter les conflits avec le toggle du bouton
+        setTimeout(() => {
+            // Vérifier si le clic est sur le bouton, le dropdown conteneur ou le portal
+            const isOnButton = buttonRef.current && buttonRef.current.contains(event.target);
+            const isOnDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
+            const isOnPortal = portalRef.current && portalRef.current.contains(event.target);
+            
+            // Vérifier aussi les éléments avec data-role-dropdown
+            const isOnRoleDropdownElement = event.target.closest && event.target.closest('[data-role-dropdown]');
+            
+            if (isOnButton || isOnDropdown || isOnPortal || isOnRoleDropdownElement) {
+                return;
+            }
+            setIsOpen(false);
+        }, 10);
     }, []);
 
     React.useEffect(() => {
@@ -203,13 +209,17 @@ const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'b
     // Créer le dropdown content avec ref pour le portal
     const dropdownContent = isOpen && React.createElement('div', {
         ref: portalRef,
+        'data-role-dropdown': 'true',
         className: 'fixed z-[10000] bg-white border-2 ' + currentStyle.border + ' rounded-xl shadow-2xl max-h-[60vh] overflow-y-auto',
         style: {
             top: dropdownPosition.top + 'px',
             left: dropdownPosition.left + 'px',
             width: dropdownPosition.width + 'px',
             pointerEvents: 'auto'
-        }
+        },
+        onClick: (e) => e.stopPropagation(),
+        onMouseDown: (e) => e.stopPropagation(),
+        onTouchStart: (e) => e.stopPropagation()
     },
         roleGroups.map((group, groupIndex) =>
             group.roles.length > 0 && React.createElement('div', { key: groupIndex },
@@ -243,7 +253,16 @@ const RoleDropdown = ({ value, onChange, disabled, currentUserRole, variant = 'b
         React.createElement('button', {
             ref: buttonRef,
             type: 'button',
-            onClick: () => !disabled && setIsOpen(!isOpen),
+            'data-role-dropdown': 'true',
+            onClick: (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!disabled) {
+                    setIsOpen(prev => !prev);
+                }
+            },
+            onMouseDown: (e) => e.stopPropagation(),
+            onTouchStart: (e) => e.stopPropagation(),
             disabled: disabled,
             className: 'w-full px-2 py-2 sm:px-4 sm:py-3 text-sm sm:text-base text-left bg-gradient-to-br ' + currentStyle.button + ' border-2 rounded-xl shadow-lg focus:outline-none focus:ring-2 transition-all hover:shadow-xl cursor-pointer font-medium sm:font-semibold ' + (disabled ? 'opacity-50 cursor-not-allowed' : '') + ' flex justify-between items-center',
             style: { boxShadow: currentStyle.shadow }
