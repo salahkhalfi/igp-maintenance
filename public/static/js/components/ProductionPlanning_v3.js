@@ -971,9 +971,9 @@ const ProductionPlanning = ({ onClose }) => {
 
                     React.createElement('button', { 
                         onClick: () => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar'),
-                        title: viewMode === 'calendar' ? 'Passer en vue TV / Liste' : 'Passer en vue Calendrier',
+                        title: viewMode === 'calendar' ? 'Passer en vue Liste' : 'Passer en vue Calendrier',
                         className: `w-10 h-10 flex items-center justify-center rounded-lg border transition shadow-sm ${viewMode === 'list' ? 'bg-slate-800 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`
-                    }, React.createElement('i', { className: viewMode === 'calendar' ? 'fas fa-tv' : 'fas fa-calendar-alt' })),
+                    }, React.createElement('i', { className: viewMode === 'calendar' ? 'fas fa-th-list' : 'fas fa-calendar-alt' })),
 
                     // Bouton Admin TV - Ouvre le modal TVDashboardModal
                     React.createElement('button', { 
