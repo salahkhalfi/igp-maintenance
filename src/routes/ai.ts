@@ -1117,7 +1117,9 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
                     const commStr = cCount > 0 ? ` [💬 ${cCount} messages]` : "";
                     const statusFr = statusMap[t.status] || t.status;
                     const priorityFr = priorityMap[t.priority] || t.priority;
-                    currentStatus.push(`[TICKET #${t.id} | REF: ${t.display_id}] (${statusFr}, ${priorityFr}): ${t.title}${mediaStr}${commStr}`);
+                    // Lien cliquable vers le ticket
+                    const ticketLink = baseUrl ? `[${t.display_id}](${baseUrl}/?ticket=${t.id})` : `[${t.display_id}]`;
+                    currentStatus.push(`[TICKET ${ticketLink}] (${statusFr}, ${priorityFr}): ${t.title}${mediaStr}${commStr}`);
                     machineStatusMap.set(t.machine_id, currentStatus);
                 }
             });
@@ -1194,7 +1196,8 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
                     const { statusMap } = await getTicketMaps(db);
                     userHistory = history.map(h => {
                         const m = machinesList.find(m => m.id === h.machine_id);
-                        return `- [${h.date}] [TICKET #${h.id}] (${statusMap[h.status] || h.status}): ${h.title} sur ${m ? m.type : '?'}`;
+                        const ticketLink = baseUrl ? `[${h.display_id}](${baseUrl}/?ticket=${h.id})` : `#${h.id}`;
+                        return `- [${h.date}] Ticket ${ticketLink} (${statusMap[h.status] || h.status}): ${h.title} sur ${m ? m.type : '?'}`;
                     }).join('\n');
                 }
             } catch (e) { console.warn('[AI] Failed to load user history:', e); }
