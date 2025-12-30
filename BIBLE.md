@@ -1,5 +1,5 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.9 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 7.0 | **LIMIT:** < 600 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
 
 ---
 
@@ -504,5 +504,5 @@ WORKFLOW CORRECT:
 
 ---
 
-## 🏁 END OF KERNEL (v6.9 - ~500 lines)
+## 🏁 END OF KERNEL (v7.0 - ~600 lines)
 *Multi-industry: garder système adaptable. Éviter hard-coding de termes métier.*
