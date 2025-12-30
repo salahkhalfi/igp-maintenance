@@ -124,72 +124,195 @@ export async function prepareSecretary(
 
 /**
  * Détecter le type de document à partir des instructions de l'utilisateur
+ * Plus de mots-clés = meilleure détection
  */
 export function detectDocumentType(instructions: string): DocumentType {
   const lower = instructions.toLowerCase();
   
-  // Rapports de maintenance
+  // ===== RAPPORTS DE MAINTENANCE =====
+  // Priorité haute car mots-clés spécifiques
   if (
-    lower.includes('rapport') && (
+    (lower.includes('rapport') && (
       lower.includes('maintenance') ||
       lower.includes('mensuel') ||
       lower.includes('hebdomadaire') ||
+      lower.includes('annuel') ||
+      lower.includes('trimestriel') ||
       lower.includes('kpi') ||
-      lower.includes('performance')
-    )
+      lower.includes('performance') ||
+      lower.includes('activité') ||
+      lower.includes('opération')
+    )) ||
+    lower.includes('bilan maintenance') ||
+    lower.includes('bilan technique') ||
+    lower.includes('état des machines') ||
+    lower.includes('état du parc') ||
+    lower.includes('statistiques maintenance') ||
+    lower.includes('indicateurs maintenance') ||
+    lower.includes('tableau de bord') ||
+    lower.includes('dashboard maintenance') ||
+    lower.includes('suivi des tickets') ||
+    lower.includes('analyse des pannes') ||
+    lower.includes('temps de résolution') ||
+    lower.includes('taux de résolution') ||
+    lower.includes('performance technicien') ||
+    lower.includes('productivité équipe')
   ) {
     return 'rapports';
   }
 
-  // Subventions
+  // ===== SUBVENTIONS & FINANCEMENT GOUVERNEMENTAL =====
   if (
     lower.includes('subvention') ||
+    lower.includes('pari-cnrc') ||
+    lower.includes('pari cnrc') ||
     lower.includes('pari') ||
     lower.includes('rs&de') ||
     lower.includes('rsde') ||
+    lower.includes('r&d') ||
     lower.includes('crédit d\'impôt') ||
-    lower.includes('financement') ||
-    lower.includes('demande de') && lower.includes('aide')
+    lower.includes('credit d\'impot') ||
+    lower.includes('crédit impôt') ||
+    lower.includes('investissement québec') ||
+    lower.includes('investissement quebec') ||
+    lower.includes('emploi-québec') ||
+    lower.includes('emploi quebec') ||
+    lower.includes('écoleader') ||
+    lower.includes('fonds vert') ||
+    lower.includes('innovation') && lower.includes('financement') ||
+    lower.includes('aide gouvernementale') ||
+    lower.includes('programme gouvernemental') ||
+    lower.includes('demande de') && (lower.includes('aide') || lower.includes('fonds')) ||
+    lower.includes('dossier de financement')
   ) {
     return 'subventions';
   }
 
-  // RH
+  // ===== RESSOURCES HUMAINES =====
   if (
-    lower.includes('contrat') ||
+    lower.includes('offre d\'emploi') ||
+    lower.includes('offre emploi') ||
+    lower.includes('poste à combler') ||
+    lower.includes('recrutement') ||
     lower.includes('embauche') ||
+    lower.includes('embaucher') ||
+    lower.includes('contrat de travail') ||
+    lower.includes('contrat travail') ||
+    lower.includes('lettre d\'embauche') ||
     lower.includes('employé') ||
+    lower.includes('salarié') ||
     lower.includes('disciplinaire') ||
+    lower.includes('avertissement') && lower.includes('employé') ||
     lower.includes('congédiement') ||
-    lower.includes('évaluation') && lower.includes('performance') ||
+    lower.includes('licenciement') ||
+    lower.includes('fin d\'emploi') ||
+    lower.includes('démission') ||
+    lower.includes('départ') && lower.includes('employé') ||
+    lower.includes('évaluation') && (lower.includes('performance') || lower.includes('employé') || lower.includes('annuelle')) ||
     lower.includes('ressources humaines') ||
-    lower.includes('rh')
+    lower.includes('rh') ||
+    lower.includes('formation employé') ||
+    lower.includes('intégration') && lower.includes('employé') ||
+    lower.includes('description de poste') ||
+    lower.includes('fiche de poste') ||
+    lower.includes('profil recherché') ||
+    lower.includes('entrevue') ||
+    lower.includes('candidat')
   ) {
     return 'rh';
   }
 
-  // Technique
+  // ===== DOCUMENTS TECHNIQUES =====
   if (
     lower.includes('procédure') ||
-    lower.includes('technique') ||
+    lower.includes('mode opératoire') ||
+    lower.includes('instruction de travail') ||
     lower.includes('sop') ||
+    lower.includes('fiche technique') ||
     lower.includes('fiche') && lower.includes('machine') ||
     lower.includes('cadenassage') ||
-    lower.includes('intervention') ||
-    lower.includes('maintenance préventive')
+    lower.includes('lockout') ||
+    lower.includes('consignation') ||
+    lower.includes('sécurité machine') ||
+    lower.includes('maintenance préventive') ||
+    lower.includes('maintenance corrective') ||
+    lower.includes('checklist') ||
+    lower.includes('check-list') ||
+    lower.includes('liste de vérification') ||
+    lower.includes('inspection') ||
+    lower.includes('guide d\'utilisation') ||
+    lower.includes('manuel') && (lower.includes('machine') || lower.includes('équipement') || lower.includes('utilisation')) ||
+    lower.includes('spécification technique') ||
+    lower.includes('fiche de données') ||
+    lower.includes('fds') ||
+    lower.includes('msds') ||
+    lower.includes('protocole') && (lower.includes('maintenance') || lower.includes('sécurité') || lower.includes('intervention'))
   ) {
     return 'technique';
   }
 
-  // Correspondance
+  // ===== CORRESPONDANCE OFFICIELLE =====
   if (
     lower.includes('lettre') ||
     lower.includes('correspondance') ||
-    lower.includes('courriel') && (lower.includes('officiel') || lower.includes('formel')) ||
+    lower.includes('courriel officiel') ||
+    lower.includes('courriel formel') ||
+    lower.includes('email officiel') ||
+    lower.includes('courrier') ||
     lower.includes('demande officielle') ||
-    lower.includes('réclamation')
+    lower.includes('réclamation') ||
+    lower.includes('plainte') ||
+    lower.includes('mise en demeure') ||
+    lower.includes('réponse à') && (lower.includes('fournisseur') || lower.includes('client') || lower.includes('partenaire')) ||
+    lower.includes('proposition commerciale') ||
+    lower.includes('offre de service') ||
+    lower.includes('partenariat') ||
+    lower.includes('remerciement') && (lower.includes('client') || lower.includes('partenaire') || lower.includes('fournisseur')) ||
+    lower.includes('invitation officielle') ||
+    lower.includes('convocation') ||
+    lower.includes('avis officiel') ||
+    lower.includes('notification')
   ) {
     return 'correspondance';
+  }
+
+  // ===== CRÉATIF (marketing, communication) =====
+  // Détection explicite avant le fallback
+  if (
+    lower.includes('communiqué') ||
+    lower.includes('communique') ||
+    lower.includes('presse') ||
+    lower.includes('site web') ||
+    lower.includes('page web') ||
+    lower.includes('texte promotionnel') ||
+    lower.includes('marketing') ||
+    lower.includes('publicité') ||
+    lower.includes('pub') ||
+    lower.includes('slogan') ||
+    lower.includes('accroche') ||
+    lower.includes('pitch') ||
+    lower.includes('présentation commerciale') ||
+    lower.includes('discours') ||
+    lower.includes('allocution') ||
+    lower.includes('mot du directeur') ||
+    lower.includes('mot de bienvenue') ||
+    lower.includes('message de la direction') ||
+    lower.includes('infolettre') ||
+    lower.includes('newsletter') ||
+    lower.includes('brochure') ||
+    lower.includes('dépliant') ||
+    lower.includes('flyer') ||
+    lower.includes('affiche') ||
+    lower.includes('annonce') && !lower.includes('emploi') ||
+    lower.includes('réseaux sociaux') ||
+    lower.includes('facebook') ||
+    lower.includes('linkedin') ||
+    lower.includes('post') && (lower.includes('social') || lower.includes('linkedin') || lower.includes('facebook')) ||
+    lower.includes('storytelling') ||
+    lower.includes('copywriting') ||
+    lower.includes('contenu') && (lower.includes('web') || lower.includes('marketing'))
+  ) {
+    return 'creatif';
   }
 
   // Par défaut: créatif (le plus flexible)
