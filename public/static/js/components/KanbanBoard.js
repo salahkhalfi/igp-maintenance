@@ -207,11 +207,26 @@ const KanbanBoard = ({
     };
 
     // --- RENDER HELPERS ---
+    // Calcule le statut de complétion par rapport à la date planifiée
+    const getCompletionStatus = (ticket) => {
+        if (ticket.status !== 'completed' || !ticket.scheduled_date || !ticket.completed_at) return null;
+        const scheduled = parseUTCDate(ticket.scheduled_date);
+        const completed = parseUTCDate(ticket.completed_at);
+        const diffMs = completed - scheduled;
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays < 0) return { status: 'early', days: Math.abs(diffDays), icon: 'fa-bolt', color: 'from-emerald-500 to-emerald-600', border: 'border-emerald-300', label: Math.abs(diffDays) + 'j avance' };
+        if (diffDays > 0) return { status: 'late', days: diffDays, icon: 'fa-exclamation-triangle', color: 'from-red-500 to-red-600', border: 'border-red-300', label: diffDays + 'j retard' };
+        return { status: 'ontime', days: 0, icon: 'fa-check-circle', color: 'from-green-500 to-green-600', border: 'border-green-300', label: 'À temps' };
+    };
+
     const renderTicketCard = (ticket) => {
         const hasAssigned = ticket.assigned_to !== null && ticket.assigned_to !== undefined;
         const isScheduled = hasScheduledDate(ticket.scheduled_date);
         const isArchived = ticket.status === 'archived'; // Bannière masquée uniquement pour archivés
         const isCompletedOrArchived = ticket.status === 'completed' || ticket.status === 'archived'; // Pour le countdown
+        const isCompleted = ticket.status === 'completed';
+        const completionStatus = getCompletionStatus(ticket);
 
         return React.createElement('div', {
             key: ticket.id,
@@ -233,22 +248,45 @@ const KanbanBoard = ({
         },
             // BANNIÈRE ASSIGNATION/PLANIFICATION (visible même si terminé, masquée si archivé)
             (hasAssigned && !isArchived) ? React.createElement('div', {
-                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + (isScheduled
-                    ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-sm border-b-2 border-green-400'
-                    : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 shadow-sm border-b-2 border-cyan-400'),
+                className: 'mb-2 -mx-3 -mt-3 px-2 py-1.5 flex items-center gap-1.5 rounded-t-lg overflow-hidden ' + 
+                    (isCompleted && completionStatus
+                        ? (completionStatus.status === 'late' 
+                            ? 'bg-gradient-to-r from-red-700 via-red-600 to-red-700 shadow-sm border-b-2 border-red-400'
+                            : 'bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-700 shadow-sm border-b-2 border-emerald-400')
+                        : (isScheduled
+                            ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-sm border-b-2 border-green-400'
+                            : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 shadow-sm border-b-2 border-cyan-400')),
                 style: { fontSize: '11px' }
             },
-                React.createElement('div', { className: 'flex items-center gap-1 px-1.5 py-0.5 rounded flex-shrink-0 ' + (isScheduled
-                    ? 'bg-gradient-to-br from-green-500 to-green-600 border border-green-300'
-                    : 'bg-gradient-to-br from-cyan-500 to-cyan-600 border border-cyan-300')
+                // Badge de statut (TERMINÉ avec timing / PLANIFIÉ / ASSIGNÉ)
+                React.createElement('div', { className: 'flex items-center gap-1 px-1.5 py-0.5 rounded flex-shrink-0 ' + 
+                    (isCompleted && completionStatus
+                        ? 'bg-gradient-to-br ' + completionStatus.color + ' border ' + completionStatus.border
+                        : (isScheduled
+                            ? 'bg-gradient-to-br from-green-500 to-green-600 border border-green-300'
+                            : 'bg-gradient-to-br from-cyan-500 to-cyan-600 border border-cyan-300'))
                 },
-                    React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] ' + (isScheduled ? 'fas fa-calendar-check' : 'fas fa-user-check') }),
-                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, isScheduled ? "PLANIFIÉ" : "ASSIGNÉ")
+                    React.createElement('i', { className: 'text-white drop-shadow-lg text-[9px] fas ' + 
+                        (isCompleted && completionStatus ? completionStatus.icon : (isScheduled ? 'fa-calendar-check' : 'fa-user-check')) 
+                    }),
+                    React.createElement('span', { className: 'text-white font-extrabold tracking-wide drop-shadow-md' }, 
+                        isCompleted && completionStatus ? completionStatus.label : (isScheduled ? "PLANIFIÉ" : "ASSIGNÉ")
+                    )
                 ),
-                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded border truncate ' + (isScheduled ? 'bg-blue-800/60 border-blue-500/40' : 'bg-slate-800/70 border-cyan-500/50') },
+                // Nom du technicien
+                React.createElement('span', { className: 'text-white font-bold text-center flex-1 min-w-0 px-1.5 py-0.5 rounded border truncate ' + 
+                    (isCompleted ? 'bg-slate-800/70 border-slate-500/50' : (isScheduled ? 'bg-blue-800/60 border-blue-500/40' : 'bg-slate-800/70 border-cyan-500/50')) 
+                },
                     ticket.assigned_to === 0 ? "👥 Équipe" : "👤 " + (ticket.assignee_name || 'Tech #' + ticket.assigned_to)
                 ),
-                (ticket.scheduled_date && ticket.scheduled_date !== 'null') ? React.createElement('span', { className: 'text-white font-bold bg-gradient-to-br from-blue-800 to-blue-900 px-1.5 py-0.5 rounded border border-blue-600 whitespace-nowrap flex-shrink-0' },
+                // Date planifiée (pour non-terminés) ou date de complétion (pour terminés)
+                (ticket.scheduled_date && ticket.scheduled_date !== 'null') ? React.createElement('span', { 
+                    className: 'text-white font-bold px-1.5 py-0.5 rounded border whitespace-nowrap flex-shrink-0 ' +
+                        (isCompleted 
+                            ? 'bg-gradient-to-br from-slate-700 to-slate-800 border-slate-500' 
+                            : 'bg-gradient-to-br from-blue-800 to-blue-900 border-blue-600'),
+                    title: isCompleted && ticket.completed_at ? 'Terminé le ' + parseUTCDate(ticket.completed_at).toLocaleDateString('fr-FR') : 'Planifié le ' + parseUTCDate(ticket.scheduled_date).toLocaleDateString('fr-FR')
+                },
                     parseUTCDate(ticket.scheduled_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
                 ) : null
             ) : null,
