@@ -320,28 +320,34 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
 
     const moveTicketToStatus = async (ticket, newStatus) => {
         if (ticket.status === newStatus) return;
+        
+        // FEEDBACK IMMÉDIAT: Son joué AVANT l'appel API pour réactivité
+        if (newStatus === 'completed') {
+            // Confettis + son de célébration pour "Terminé"
+            requestAnimationFrame(() => {
+                if (typeof confetti !== 'undefined') {
+                    confetti({
+                        particleCount: 100, spread: 70, origin: { y: 0.6 },
+                        colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B'],
+                        ticks: 120, gravity: 1.5, scalar: 0.9
+                    });
+                }
+                playCelebrationSound();
+            });
+        } else {
+            // Son subtil "swoosh" pour les autres déplacements
+            playMoveSound();
+        }
+        
+        // Appel API en background (après le son)
         try {
             await moveTicket(ticket.id, newStatus, 'Changement de statut: ' + ticket.status + ' → ' + newStatus);
-            onTicketCreated(); 
-            
-            if (newStatus === 'completed') {
-                // Confettis + son de célébration pour "Terminé"
-                requestAnimationFrame(() => {
-                    if (typeof confetti !== 'undefined') {
-                        confetti({
-                            particleCount: 100, spread: 70, origin: { y: 0.6 },
-                            colors: ['#003B73', '#FFD700', '#C0C0C0', '#4CAF50', '#FF6B6B'],
-                            ticks: 120, gravity: 1.5, scalar: 0.9
-                        });
-                    }
-                    setTimeout(() => playCelebrationSound(), 0);
-                });
-            } else {
-                // Son subtil "swoosh" pour les autres déplacements
-                playMoveSound();
-            }
+            onTicketCreated();
         } catch (error) {
+            // En cas d'erreur, notifier l'utilisateur (le son a déjà été joué)
             alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
+            // Rafraîchir pour remettre le ticket à sa place originale
+            onTicketCreated();
         }
     };
 
