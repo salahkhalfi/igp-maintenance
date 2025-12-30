@@ -1228,14 +1228,17 @@ ${html}
                                     `Génération en cours... ${generationTime}s`
                                 ),
                                 React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    'L\'IA analyse et rédige votre document (10-15 sec)'
+                                    generationTime < 15 ? 'L\'IA analyse et rédige votre document...' :
+                                    generationTime < 30 ? 'Rédaction en cours, merci de patienter...' :
+                                    generationTime < 45 ? 'Document complexe, encore quelques instants...' :
+                                    'Finalisation du document...'
                                 )
                             ),
-                            // Barre de progression visuelle
-                            React.createElement('div', { className: 'w-16 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                            // Barre de progression visuelle (sur 60 secondes)
+                            React.createElement('div', { className: 'w-20 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
                                 React.createElement('div', { 
                                     className: 'h-full bg-blue-500 transition-all duration-1000',
-                                    style: { width: `${Math.min(generationTime / 15 * 100, 95)}%` }
+                                    style: { width: `${Math.min(generationTime / 60 * 100, 95)}%` }
                                 })
                             )
                         ),
@@ -1434,14 +1437,17 @@ ${html}
                                     `Génération en cours... ${generationTime}s`
                                 ),
                                 React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    'L\'IA analyse et rédige votre document (10-15 sec)'
+                                    generationTime < 15 ? 'L\'IA analyse et rédige votre document...' :
+                                    generationTime < 30 ? 'Rédaction en cours, merci de patienter...' :
+                                    generationTime < 45 ? 'Document complexe, encore quelques instants...' :
+                                    'Finalisation du document...'
                                 )
                             ),
-                            // Barre de progression visuelle
-                            React.createElement('div', { className: 'w-16 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                            // Barre de progression visuelle (sur 60 secondes)
+                            React.createElement('div', { className: 'w-20 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
                                 React.createElement('div', { 
                                     className: 'h-full bg-blue-500 transition-all duration-1000',
-                                    style: { width: `${Math.min(generationTime / 15 * 100, 95)}%` }
+                                    style: { width: `${Math.min(generationTime / 60 * 100, 95)}%` }
                                 })
                             )
                         ),
