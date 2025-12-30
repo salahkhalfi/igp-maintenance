@@ -10,6 +10,23 @@ import { z } from 'zod';
 import { TOOLS, ToolFunctions } from '../ai/tools';
 import { prepareSecretary, detectDocumentType, type DocumentType, type CompanyIdentity } from '../ai/secretary';
 
+// ===== SECRETARY AI MODEL CONFIG =====
+// ROLLBACK: Change to 'openai' to use GPT-4o
+const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'deepseek';
+
+const AI_CONFIGS = {
+    deepseek: {
+        url: 'https://api.deepseek.com/v1/chat/completions',
+        model: 'deepseek-chat',
+        keyEnv: 'DEEPSEEK_API_KEY' as const
+    },
+    openai: {
+        url: 'https://api.openai.com/v1/chat/completions',
+        model: 'gpt-4o',
+        keyEnv: 'OPENAI_API_KEY' as const
+    }
+};
+
 // --- HELPER: DYNAMIC STATUS/PRIORITY MAPS ---
 async function getTicketMaps(db: any) {
     // Default Maps (Fallback matching current codebase)
@@ -2081,10 +2098,24 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             }, 500);
         }
 
-        // ===== CHECK API KEY =====
-        if (!env.OPENAI_API_KEY) {
-            return c.json({ error: 'Clé API OpenAI manquante' }, 500);
+        // ===== SELECT AI PROVIDER =====
+        let secretaryAiConfig = AI_CONFIGS[SECRETARY_AI_PROVIDER];
+        let apiKey = env[secretaryAiConfig.keyEnv];
+        let usedProvider = SECRETARY_AI_PROVIDER;
+        
+        // Fallback to OpenAI if DeepSeek key missing
+        if (!apiKey && SECRETARY_AI_PROVIDER === 'deepseek') {
+            console.log(`⚠️ [Secretary] DeepSeek key missing, falling back to OpenAI`);
+            secretaryAiConfig = AI_CONFIGS.openai;
+            apiKey = env.OPENAI_API_KEY;
+            usedProvider = 'openai';
         }
+        
+        if (!apiKey) {
+            return c.json({ error: 'Clé API manquante (DeepSeek ou OpenAI)' }, 500);
+        }
+        
+        console.log(`🤖 [Secretary] Using ${usedProvider} (${secretaryAiConfig.model})`);
 
         // ===== PREPARE MESSAGES =====
         const fullPrompt = brainResult.contextData 
@@ -2101,16 +2132,16 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         let turns = 0;
         const MAX_TURNS = 5;
         
-        // Get tools for this document type
+        // Get tools for this document type (DeepSeek supporte les tools)
         const SECRETARY_TOOLS = brainResult.tools.length > 0 ? TOOLS : [];
         
         while (turns < MAX_TURNS) {
             turns++;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS}`);
+            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} (${usedProvider})`);
             
             try {
                 const requestBody: any = {
-                    model: 'gpt-4o',
+                    model: secretaryAiConfig.model,
                     messages,
                     temperature: brainResult.temperature,
                     max_tokens: brainResult.maxTokens
@@ -2122,10 +2153,10 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                     requestBody.tool_choice = "auto";
                 }
                 
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                const response = await fetch(secretaryAiConfig.url, {
                     method: 'POST',
                     headers: { 
-                        'Authorization': `Bearer ${env.OPENAI_API_KEY}`, 
+                        'Authorization': `Bearer ${apiKey}`, 
                         'Content-Type': 'application/json' 
                     },
                     body: JSON.stringify(requestBody)
@@ -2133,9 +2164,9 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error(`❌ [Secretary] OpenAI API error:`, response.status, errorText);
+                    console.error(`❌ [Secretary] ${usedProvider} API error:`, response.status, errorText);
                     return c.json({ 
-                        error: `Erreur API OpenAI (${response.status}): ${errorText.substring(0, 200)}` 
+                        error: `Erreur API ${usedProvider} (${response.status}): ${errorText.substring(0, 200)}` 
                     }, 500);
                 }
                 
@@ -2143,8 +2174,8 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 const responseMessage = data.choices[0]?.message;
                 
                 if (!responseMessage) {
-                    console.error('❌ [Secretary] No response message');
-                    return c.json({ error: 'Réponse OpenAI invalide' }, 500);
+                    console.error(`❌ [Secretary] No response message from ${usedProvider}`);
+                    return c.json({ error: `Réponse ${usedProvider} invalide` }, 500);
                 }
                 
                 messages.push(responseMessage);
