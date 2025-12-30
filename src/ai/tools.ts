@@ -935,7 +935,10 @@ export const ToolFunctions = {
                     description: descriptionWithMedia, // Use the enriched description
                     machine: `${r.machine_name} ${r.machine_model || ''}`.trim(), // Explicit machine context string
                     media_count: myMedia.length,
-                    media: myMedia // Include actual Markdown links directly!
+                    media: myMedia, // Include actual Markdown links directly!
+                    // LIEN PRÉ-CALCULÉ VERS LE TICKET (pour que l'IA n'invente pas)
+                    ticket_url: `${baseUrl}/?ticket=${r.id}`,
+                    ticket_link: `[${r.display_id}](${baseUrl}/?ticket=${r.id})`
                 };
             });
             
