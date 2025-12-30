@@ -11,8 +11,8 @@ import { TOOLS, ToolFunctions } from '../ai/tools';
 import { prepareSecretary, detectDocumentType, type DocumentType, type CompanyIdentity } from '../ai/secretary';
 
 // ===== SECRETARY AI MODEL CONFIG =====
-// DeepSeek désactivé - problème avec la clé API
-const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'openai';
+// ROLLBACK: Change to 'openai' if issues
+const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'deepseek';
 
 const AI_CONFIGS = {
     deepseek: {
@@ -2103,6 +2103,12 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         let apiKey = env[secretaryAiConfig.keyEnv];
         let usedProvider = SECRETARY_AI_PROVIDER;
         
+        // DEBUG: Log key availability
+        console.log(`🔑 [Secretary] DEEPSEEK_API_KEY exists: ${!!env.DEEPSEEK_API_KEY}, length: ${env.DEEPSEEK_API_KEY?.length || 0}`);
+        console.log(`🔑 [Secretary] OPENAI_API_KEY exists: ${!!env.OPENAI_API_KEY}`);
+        console.log(`🔑 [Secretary] Selected provider: ${SECRETARY_AI_PROVIDER}, keyEnv: ${secretaryAiConfig.keyEnv}`);
+        console.log(`🔑 [Secretary] apiKey from env: ${apiKey ? 'found (' + apiKey.substring(0, 8) + '...)' : 'NOT FOUND'}`);
+        
         // Fallback to OpenAI if DeepSeek key missing
         if (!apiKey && SECRETARY_AI_PROVIDER === 'deepseek') {
             console.log(`⚠️ [Secretary] DeepSeek key missing, falling back to OpenAI`);
@@ -2112,10 +2118,12 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         }
         
         if (!apiKey) {
+            console.error(`❌ [Secretary] No API key available for any provider`);
             return c.json({ error: 'Clé API manquante (DeepSeek ou OpenAI)' }, 500);
         }
         
         console.log(`🤖 [Secretary] Using ${usedProvider} (${secretaryAiConfig.model})`);
+        console.log(`🌐 [Secretary] API URL: ${secretaryAiConfig.url}`);
 
         // ===== PREPARE MESSAGES =====
         const fullPrompt = brainResult.contextData 
