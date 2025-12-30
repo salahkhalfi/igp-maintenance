@@ -721,6 +721,196 @@ ${html}
         window.showToast && window.showToast('Document exporté (ouvrir avec Word/Pages)', 'success');
     };
 
+    // Export DOCX natif pour Word/Pages (avec librairie docx)
+    const exportDocx = async () => {
+        if (!generatedDoc?.document) return;
+        
+        // Afficher loading
+        window.showToast && window.showToast('Génération du document Word...', 'info');
+        
+        try {
+            // Charger la librairie docx depuis CDN (à la demande)
+            if (!window.docx) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+            
+            const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, HeadingLevel, AlignmentType } = window.docx;
+            
+            // Récupérer les infos de l'entreprise
+            let companyName = 'Entreprise';
+            try {
+                const resp = await fetch('/api/settings/config/public');
+                if (resp.ok) {
+                    const cfg = await resp.json();
+                    companyName = cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+                }
+            } catch (e) {}
+            
+            const docTitle = generatedDoc.title || 'Document';
+            const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            const markdown = generatedDoc.document;
+            
+            // Parser le Markdown en éléments DOCX
+            const children = [];
+            
+            // Header
+            children.push(new Paragraph({
+                children: [new TextRun({ text: companyName, bold: true, size: 32 })],
+                spacing: { after: 100 }
+            }));
+            children.push(new Paragraph({
+                children: [new TextRun({ text: docTitle, italics: true, size: 24, color: '666666' })],
+                spacing: { after: 100 }
+            }));
+            children.push(new Paragraph({
+                children: [new TextRun({ text: today, size: 20, color: '666666' })],
+                alignment: AlignmentType.RIGHT,
+                spacing: { after: 400 }
+            }));
+            
+            // Parser le contenu ligne par ligne
+            const lines = markdown.split('\n');
+            let i = 0;
+            
+            while (i < lines.length) {
+                const line = lines[i];
+                
+                // Tableau Markdown
+                if (line.trim().startsWith('|') && lines[i + 1]?.includes('---')) {
+                    const tableLines = [];
+                    while (i < lines.length && lines[i].trim().startsWith('|')) {
+                        tableLines.push(lines[i]);
+                        i++;
+                    }
+                    
+                    // Parser le tableau
+                    const rows = tableLines.filter(l => !l.includes('---'));
+                    if (rows.length > 0) {
+                        const tableRows = rows.map((row, rowIdx) => {
+                            const cells = row.split('|').slice(1, -1).map(c => c.trim());
+                            return new TableRow({
+                                children: cells.map(cellText => new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ 
+                                            text: cellText || ' ', 
+                                            bold: rowIdx === 0,
+                                            size: 22
+                                        })]
+                                    })],
+                                    shading: rowIdx === 0 ? { fill: 'E0E0E0' } : undefined
+                                }))
+                            });
+                        });
+                        
+                        children.push(new Table({
+                            rows: tableRows,
+                            width: { size: 100, type: WidthType.PERCENTAGE }
+                        }));
+                        children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
+                    }
+                    continue;
+                }
+                
+                // Titres
+                if (line.startsWith('# ')) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: line.replace(/^# /, '').replace(/\*\*/g, ''), bold: true, size: 32 })],
+                        heading: HeadingLevel.HEADING_1,
+                        spacing: { before: 400, after: 200 }
+                    }));
+                    i++;
+                    continue;
+                }
+                if (line.startsWith('## ')) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: line.replace(/^## /, '').replace(/\*\*/g, ''), bold: true, size: 28 })],
+                        heading: HeadingLevel.HEADING_2,
+                        spacing: { before: 300, after: 150 }
+                    }));
+                    i++;
+                    continue;
+                }
+                if (line.startsWith('### ')) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: line.replace(/^### /, '').replace(/\*\*/g, ''), bold: true, size: 24 })],
+                        heading: HeadingLevel.HEADING_3,
+                        spacing: { before: 200, after: 100 }
+                    }));
+                    i++;
+                    continue;
+                }
+                
+                // Listes
+                if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                    const text = line.trim().replace(/^[-*]\s+/, '');
+                    // Parser bold dans le texte
+                    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                    const runs = parts.filter(p => p).map(part => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return new TextRun({ text: part.slice(2, -2), bold: true, size: 22 });
+                        }
+                        return new TextRun({ text: part, size: 22 });
+                    });
+                    children.push(new Paragraph({
+                        children: runs,
+                        bullet: { level: 0 },
+                        spacing: { after: 80 }
+                    }));
+                    i++;
+                    continue;
+                }
+                
+                // Paragraphe normal
+                if (line.trim()) {
+                    const text = line.trim();
+                    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                    const runs = parts.filter(p => p).map(part => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return new TextRun({ text: part.slice(2, -2), bold: true, size: 22 });
+                        }
+                        return new TextRun({ text: part, size: 22 });
+                    });
+                    children.push(new Paragraph({
+                        children: runs,
+                        spacing: { after: 150 }
+                    }));
+                }
+                
+                i++;
+            }
+            
+            // Créer le document
+            const doc = new Document({
+                sections: [{ children }]
+            });
+            
+            // Générer le blob et télécharger
+            const blob = await Packer.toBlob(doc);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${docTitle.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüç\s-]/gi, '').substring(0, 50)}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            window.showToast && window.showToast('Document Word exporté avec succès', 'success');
+            
+        } catch (error) {
+            console.error('Erreur export DOCX:', error);
+            window.showToast && window.showToast('Erreur export Word, tentative HTML...', 'warning');
+            // Fallback vers HTML
+            exportDocument();
+        }
+    };
+
     if (!isOpen) return null;
 
     const currentCat = categories.find(c => c.id === selectedCategory);
@@ -751,9 +941,9 @@ ${html}
                             React.createElement('i', { className: 'fas fa-copy' }),
                             React.createElement('span', { className: 'hidden sm:inline' }, 'Copier')
                         ),
-                        React.createElement('button', { onClick: exportDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-all flex items-center gap-1 sm:gap-2', title: 'Exporter pour Word/Pages' },
-                            React.createElement('i', { className: 'fas fa-file-export' }),
-                            React.createElement('span', { className: 'hidden sm:inline' }, 'Exporter')
+                        React.createElement('button', { onClick: exportDocx, className: 'p-2 sm:px-3 sm:py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-all flex items-center gap-1 sm:gap-2', title: 'Exporter pour Word/Pages (.docx)' },
+                            React.createElement('i', { className: 'fas fa-file-word' }),
+                            React.createElement('span', { className: 'hidden sm:inline' }, 'Word')
                         ),
                         React.createElement('button', { onClick: printDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white text-emerald-600 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 sm:gap-2', title: 'Imprimer / PDF' },
                             React.createElement('i', { className: 'fas fa-print' }),
