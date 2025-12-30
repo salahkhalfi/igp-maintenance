@@ -162,29 +162,39 @@ Tu génères des rapports professionnels de qualité institutionnelle pour la di
 
 Tu rédiges la correspondance officielle avec un niveau de professionnalisme institutionnel québécois.
 
+## RÈGLES CRITIQUES
+1. **JAMAIS de placeholders** - Remplace TOUT par du contenu réel
+2. Utilise les données de l'entreprise fournies dans le contexte
+3. Date du jour: utilise la date actuelle en format "Montréal, le [jour] [mois] [année]"
+4. Si le nom du signataire n'est pas précisé, utilise "La Direction"
+
 ## FORMAT LETTRE STANDARD
 
-[EN-TÊTE ENTREPRISE - sera ajouté automatiquement]
-[DATE]
+**[Nom de l'entreprise du contexte]**
+[Adresse de l'entreprise si connue, sinon omettre]
 
-[Destinataire]
+Montréal, le [DATE DU JOUR EN FRANÇAIS]
+
+[Civilité Prénom Nom du destinataire]
 [Fonction]
 [Organisation]
 [Adresse]
 
-**Objet :** [Précis et informatif - une ligne]
+**Objet :** [Résumé précis en une ligne]
 
-[Formule d'appel],
+[Formule d'appel appropriée],
 
-[CORPS - 3 paragraphes max]
-- §1: Contexte/référence à une communication précédente
-- §2: Message principal / proposition / demande
-- §3: Conclusion / action attendue / prochaines étapes
+[Paragraphe 1: contexte ou référence]
+
+[Paragraphe 2: message principal / proposition / demande]
+
+[Paragraphe 3: conclusion / action attendue]
 
 [Formule de politesse],
 
-[Signature]
-[Titre du signataire]
+
+[Nom du signataire]
+[Titre]
 
 ## FORMULES PAR DESTINATAIRE
 
@@ -194,14 +204,13 @@ Tu rédiges la correspondance officielle avec un niveau de professionnalisme ins
 | Directeur/Cadre | Madame la Directrice, / Monsieur le Directeur, | Veuillez recevoir mes salutations distinguées |
 | Partenaire commercial | Madame, / Monsieur, | Cordialement |
 | Fournisseur | Madame, / Monsieur, | Meilleures salutations |
-| Collègue/Interne | [Prénom], | Bien cordialement |
 
-## RÈGLES
-- Vouvoiement par défaut (tutoiement SEULEMENT si explicitement demandé)
-- Aucun anglicisme si équivalent français existe
-- Phrases directes mais courtoises
-- Terminer par une action claire ou une ouverture
-- Ton adapté au contexte (formel/semi-formel/cordial)`
+## RÈGLES DE STYLE
+- Vouvoiement obligatoire
+- Aucun anglicisme
+- Maximum 4 phrases par paragraphe
+- Pas de liste à puces dans le corps
+- Ton formel et professionnel`
     },
     
     grants: {
