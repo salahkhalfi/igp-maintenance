@@ -1,5 +1,51 @@
 # ⚡ SYSTEM KERNEL : THE RULES OF ENGAGEMENT
-> **VERSION:** 6.6 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+> **VERSION:** 6.9 | **LIMIT:** < 500 lines | **STATUS:** IMMUTABLE SOURCE OF TRUTH
+
+---
+
+## 💀 MODULE -2: SANDBOX KILLER (LIRE EN PREMIER)
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  ⛔ COMMANDE INTERDITE - DÉTRUIT LE SANDBOX DÉFINITIVEMENT ⛔      ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║    ███╗   ██╗██████╗ ███╗   ███╗    ██████╗ ██╗   ██╗██╗██╗      ║
+║    ████╗  ██║██╔══██╗████╗ ████║    ██╔══██╗██║   ██║██║██║      ║
+║    ██╔██╗ ██║██████╔╝██╔████╔██║    ██████╔╝██║   ██║██║██║      ║
+║    ██║╚██╗██║██╔═══╝ ██║╚██╔╝██║    ██╔══██╗██║   ██║██║██║      ║
+║    ██║ ╚████║██║     ██║ ╚═╝ ██║    ██████╔╝╚██████╔╝██║███████╗ ║
+║    ╚═╝  ╚═══╝╚═╝     ╚═╝     ╚═╝    ╚═════╝  ╚═════╝ ╚═╝╚══════╝ ║
+║                                                                   ║
+║    ❌ npm run build                                               ║
+║    ❌ npm run dev (avec watch)                                    ║
+║    ❌ vite build                                                  ║
+║    ❌ Toute commande de build lourde                              ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  CE QUI SE PASSE:                                                 ║
+║  1. Node.js consomme toute la RAM/CPU                             ║
+║  2. Process crash → fichier "core" de 500MB+                      ║
+║  3. Disque plein → sandbox freeze TOTAL                           ║
+║  4. ResetSandbox NE FONCTIONNE PAS                                ║
+║  5. SEULE SOLUTION: Créer un nouveau projet (perte de temps)      ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  ✅ COMMENT DÉPLOYER:                                             ║
+║                                                                   ║
+║    git add -A && git commit -m "..." && git push origin main      ║
+║                                                                   ║
+║  → GitHub Actions fait le build (~2 min) EN SÉCURITÉ              ║
+║                                                                   ║
+╠═══════════════════════════════════════════════════════════════════╣
+║  INCIDENT DU 28 DÉC 2025:                                         ║
+║  - Agent précédent a lancé "npm run build"                        ║
+║  - Sandbox détruit définitivement                                 ║
+║  - User a dû créer nouveau projet = temps perdu                   ║
+║                                                                   ║
+║  NE JAMAIS RÉPÉTER CETTE ERREUR.                                  ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
 
 ---
 
@@ -156,6 +202,38 @@ PROCÉDURE OBLIGATOIRE (6 étapes, AUCUNE OPTIONNELLE) :
 
 ❌ ERREUR COMMUNE: Faire des commits "bump cache" sans vérifier
    que le hash a RÉELLEMENT changé = modification invisible
+```
+
+### [🚀 DÉPLOIEMENT DIRECT DEPUIS SANDBOX - CACHE CLOUDFLARE]
+```
+DÉCOUVERTE (2024-12-28):
+Wrangler utilise un cache intelligent basé sur les hash SHA des fichiers.
+
+FONCTIONNEMENT:
+- Chaque fichier a un hash unique calculé par Wrangler
+- Si le hash existe déjà chez Cloudflare → pas de re-upload
+- Seuls les fichiers MODIFIÉS sont envoyés
+
+EXEMPLE RÉEL:
+  Uploading... (350/350)
+  ✨ Success! Uploaded 0 files (350 already uploaded) (0.51 sec)
+  → 350 fichiers, 0 uploadés, 14 sec total
+
+QUAND C'EST RAPIDE (< 30 sec):
+- Déploiements fréquents (petits incréments)
+- Modifications légères (1-5 fichiers JS)
+- Build récent déjà sur Cloudflare
+
+QUAND C'EST LENT (> 3 min):
+- Premier déploiement (tous les fichiers)
+- Gros changements (Vite regenere tous les chunks)
+- Nouvelle dépendance NPM
+
+STRATÉGIE OPTIMALE:
+✅ Déployer souvent en petits incréments
+✅ npm run build:minify (seul le .min.js change)
+✅ Utiliser wrangler pages deploy (pas GitHub Actions si urgent)
+❌ Attendre d'avoir 50 fichiers modifiés
 ```
 
 ### [DATABASE: maintenance-db]
@@ -368,65 +446,63 @@ PROCÉDURE OBLIGATOIRE POUR SUPPRESSION:
 
 ---
 
-## 🟣 MODULE 12: MULTI-INDUSTRY ADAPTABILITY (TECH DEBT PREVENTION)
+## 🔴 MODULE 12: AUDIT CODE MORT - PRUDENCE EXTRÊME
 
 ```
-⚠️ OBJECTIF: Garder le système adaptable à d'autres industries (SaaS, retail, etc.)
-   IGP Maintenance = premier client, PAS le produit final
+⚠️ RÈGLE D'OR: NE JAMAIS SUPPRIMER DU CODE SANS CERTITUDE 100%
 
-ÉTAT ACTUEL (Audit Dec 2024):
-├── ✅ 60% configurable (system_settings)
-└── ❌ 40% hard-coded (à ne PAS aggraver)
+SCRIPT D'AUDIT DISPONIBLE:
+npm run audit   # ou ./scripts/audit-dead-code.sh
 
-┌─────────────────────────────────────────────────────────────────────┐
-│  🔴 ZONES HARD-CODÉES - NE PAS EN AJOUTER                           │
-├─────────────────────────────────────────────────────────────────────┤
-│  1. RÔLES SPÉCIFIQUES                                               │
-│     - 'furnace_operator', 'technician' = vocabulaire maintenance    │
-│     - Fichiers: shared.ts, tools.ts, loaders.ts, schema.ts          │
-│     → Si nouveau rôle: utiliser nom GÉNÉRIQUE (ex: 'specialist')    │
-│                                                                     │
-│  2. TERMINOLOGIE IA                                                 │
-│     - "technicien assigné" → préférer "assigné à"                   │
-│     - "panne", "intervention" → préférer "incident", "action"       │
-│     → Vocabulaire neutre quand possible                             │
-│                                                                     │
-│  3. CADRE LÉGAL                                                     │
-│     - CNESST, LSST, RS&DE = 100% Québec/Canada                      │
-│     - Fichier: src/ai/secretary/shared.ts                           │
-│     → NE PAS ajouter plus de références légales hard-codées         │
-│     → Future: déplacer dans system_settings ou industry_config      │
-│                                                                     │
-│  4. LOGIQUE MÉTIER                                                  │
-│     - .filter(role => ['technician', 'senior_technician']...)       │
-│     → NE PAS dupliquer ces filtres dans de nouveaux fichiers        │
-│     → Future: créer role_categories dans DB                         │
-└─────────────────────────────────────────────────────────────────────┘
+CE QUE L'AUDIT DÉTECTE:
+- Erreurs syntaxe JS
+- Références window.* potentiellement non définies
+- États React utilisés peu de fois
+- Fichiers JS non référencés dans home.ts
+- Routes API potentiellement obsolètes
 
-┌─────────────────────────────────────────────────────────────────────┐
-│  ✅ BONNES PRATIQUES - À SUIVRE                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  1. NOUVEAU TEXTE UI → system_settings ou ai_custom_context         │
-│  2. NOUVEAU RÔLE → nom générique + label configurable               │
-│  3. NOUVEAU STATUT → ticket_statuses_config (déjà dynamique)        │
-│  4. NOUVELLE RÉFÉRENCE LÉGALE → commentaire "// TODO: move to DB"   │
-│  5. NOUVEAU VOCABULAIRE MÉTIER → vérifier si existe équivalent      │
-│     générique avant d'ajouter terme spécifique                      │
-└─────────────────────────────────────────────────────────────────────┘
+⚠️ FAUX POSITIFS FRÉQUENTS:
+L'audit signale "utilisé 1-2 fois" mais ce N'EST PAS du code mort si:
+- Le state est passé comme PROP à un composant enfant
+- Le state est utilisé dans un useEffect/useCallback
+- Le state est affiché conditionnellement (ternaire)
+- Le state est stocké pour usage futur (cache local)
+- La fonction est un CALLBACK passé à un enfant
+- La variable est dans un template string ou interpolation
 
-CHECKLIST AVANT COMMIT (si touche vocabulaire/rôles):
-□ Le terme ajouté est-il spécifique à une industrie?
-□ Existe-t-il un équivalent générique?
-□ Peut-il être mis dans system_settings plutôt que hard-coded?
-□ Si hard-coded obligatoire: ajouter TODO pour future migration
+AVANT DE SUPPRIMER, VÉRIFIER:
+1. grep -rn "nomVariable" public/static/js/  # Chercher PARTOUT
+2. Chercher aussi: setNomVariable (pour les states)
+3. Chercher dans les props des composants enfants
+4. Vérifier les fichiers .min.js (code peut être renommé)
+5. Tester la fonctionnalité en local AVANT de supprimer
 
-DETTE TECHNIQUE ACTUELLE (référence):
-- src/ai/secretary/shared.ts → ROLE_LABELS, LEGAL_FRAMEWORK_QC
-- src/ai/tools.ts → descriptions avec "technicien" (~15 occurrences)
-- src/ai/secretary/data/loaders.ts → filtres par rôle hard-codés
-- src/db/schema.ts → commentaire avec rôles spécifiques
+WORKFLOW CORRECT:
+1. npm run audit                    # Identifier candidats
+2. Pour CHAQUE candidat:
+   a. grep -rn "candidat" .         # Vérifier tous usages
+   b. Comprendre POURQUOI il existe # Chesterton's Fence
+   c. Si doute → NE PAS TOUCHER
+3. Supprimer UNIQUEMENT si certitude 100%
+4. Tester la fonctionnalité impactée
+5. Commit avec message explicatif
+
+❌ INTERDIT:
+- Supprimer car "utilisé 1 fois" sans vérifier contexte
+- Supprimer du code qu'on ne comprend pas
+- Supprimer plusieurs éléments d'un coup sans tester
+- Faire confiance aveuglément à l'audit
+
+✅ OBLIGATOIRE:
+- Comprendre le code avant suppression
+- Vérifier toutes les dépendances (grep global)
+- Tester après chaque suppression
+- Documenter pourquoi c'était du code mort
 ```
 
 ---
 
-## 🏁 END OF KERNEL (v6.6 - ~330 lines)
+---
+
+## 🏁 END OF KERNEL (v6.9 - ~500 lines)
+*Multi-industry: garder système adaptable. Éviter hard-coding de termes métier.*
