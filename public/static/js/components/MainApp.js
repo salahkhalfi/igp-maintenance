@@ -290,6 +290,34 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
         } catch (error) { console.log('Audio not available:', error); }
     };
 
+    // Son subtil "swoosh" pour déplacement de ticket (pas pour 'completed')
+    const playMoveSound = () => {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioContext.currentTime;
+            
+            // Son "swoosh" court et agréable - une seule note descendante
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Fréquence qui descend (effet swoosh)
+            oscillator.frequency.setValueAtTime(600, now);
+            oscillator.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+            oscillator.type = 'sine';
+            
+            // Volume: monte vite, descend doucement
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.08, now + 0.02); // Volume bas pour être subtil
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.15);
+        } catch (error) { /* Audio not available */ }
+    };
+
     const moveTicketToStatus = async (ticket, newStatus) => {
         if (ticket.status === newStatus) return;
         try {
@@ -297,6 +325,7 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
             onTicketCreated(); 
             
             if (newStatus === 'completed') {
+                // Confettis + son de célébration pour "Terminé"
                 requestAnimationFrame(() => {
                     if (typeof confetti !== 'undefined') {
                         confetti({
@@ -307,6 +336,9 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
                     }
                     setTimeout(() => playCelebrationSound(), 0);
                 });
+            } else {
+                // Son subtil "swoosh" pour les autres déplacements
+                playMoveSound();
             }
         } catch (error) {
             alert('Erreur lors du déplacement: ' + (error.response?.data?.error || 'Erreur inconnue'));
