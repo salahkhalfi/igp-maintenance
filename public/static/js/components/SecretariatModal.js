@@ -1211,7 +1211,7 @@ ${html}
                             // Info
                             React.createElement('p', { className: 'mt-4 text-center text-xs text-slate-500' },
                                 React.createElement('i', { className: 'fas fa-info-circle mr-1' }),
-                                'L\'IA analysera votre demande et choisira le cerveau spécialisé approprié (Rapports, RH, Correspondance, etc.)'
+                                'L\'Agent IGP analysera votre demande et choisira le cerveau spécialisé approprié (Rapports, RH, Correspondance, etc.)'
                             )
                         )
                     ),
@@ -1228,7 +1228,7 @@ ${html}
                                     `Génération en cours... ${generationTime}s`
                                 ),
                                 React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    generationTime < 10 ? 'L\'IA analyse votre demande...' :
+                                    generationTime < 10 ? 'L\'Agent IGP analyse votre demande...' :
                                     generationTime < 25 ? 'Rédaction du document en cours...' :
                                     generationTime < 45 ? 'Génération détaillée, merci de patienter...' :
                                     generationTime < 70 ? 'Document complexe, encore quelques instants...' :
@@ -1423,7 +1423,7 @@ ${html}
                         
                         React.createElement('p', { className: 'mt-2 text-xs text-slate-500' },
                             React.createElement('i', { className: 'fas fa-info-circle mr-1' }),
-                            'L\'IA utilise les lois CA/QC et vos données.'
+                            'L\'Agent IGP utilise les lois CA/QC et vos données.'
                         )
                     ),
 
@@ -1439,7 +1439,7 @@ ${html}
                                     `Génération en cours... ${generationTime}s`
                                 ),
                                 React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    generationTime < 10 ? 'L\'IA analyse votre demande...' :
+                                    generationTime < 10 ? 'L\'Agent IGP analyse votre demande...' :
                                     generationTime < 25 ? 'Rédaction du document en cours...' :
                                     generationTime < 45 ? 'Génération détaillée, merci de patienter...' :
                                     generationTime < 70 ? 'Document complexe, encore quelques instants...' :
