@@ -25,6 +25,10 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
     const [dataImportTab, setDataImportTab] = React.useState('users');
     const [showSecretariat, setShowSecretariat] = React.useState(false);
     
+    // État Onboarding - Tour de bienvenue pour nouveaux utilisateurs
+    const [showOnboarding, setShowOnboarding] = React.useState(false);
+    const [onboardingChecked, setOnboardingChecked] = React.useState(false);
+    
     // Nom dynamique de l'application (chargé depuis l'API)
     const [appName, setAppName] = React.useState('');
     
@@ -69,6 +73,55 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
             */
         }
     }, [currentUser]);
+
+    // Vérifier l'état d'onboarding au chargement
+    React.useEffect(() => {
+        if (currentUser && !onboardingChecked) {
+            // D'abord vérifier localStorage (cache rapide)
+            const localCompleted = localStorage.getItem('onboarding_completed');
+            if (localCompleted === 'true') {
+                setOnboardingChecked(true);
+                return;
+            }
+            
+            // Sinon, vérifier en DB via API
+            const token = localStorage.getItem('authToken') || authToken;
+            if (token) {
+                axios.get('/api/preferences/onboarding', {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                .then(res => {
+                    setOnboardingChecked(true);
+                    if (!res.data.completed) {
+                        // Délai pour laisser l'UI se charger
+                        setTimeout(() => setShowOnboarding(true), 1500);
+                    }
+                })
+                .catch(() => {
+                    setOnboardingChecked(true);
+                    // En cas d'erreur, afficher l'onboarding par sécurité
+                    setTimeout(() => setShowOnboarding(true), 1500);
+                });
+            }
+        }
+    }, [currentUser, onboardingChecked]);
+
+    // Handler pour terminer l'onboarding
+    const handleOnboardingComplete = () => {
+        setShowOnboarding(false);
+        localStorage.setItem('onboarding_completed', 'true');
+    };
+
+    // Fonction pour relancer l'onboarding manuellement (bouton ?)
+    const restartOnboarding = () => {
+        localStorage.removeItem('onboarding_completed');
+        setShowOnboarding(true);
+    };
+    
+    // Exposer la fonction globalement pour le bouton d'aide
+    React.useEffect(() => {
+        window.restartOnboarding = restartOnboarding;
+    }, []);
 
     // Gestion des colonnes dynamiques (Levé depuis KanbanBoard)
     const [columns, setColumns] = React.useState(() => {
@@ -491,6 +544,13 @@ const MainApp = ({ tickets = [], machines = [], currentUser, onLogout, onRefresh
             show: showDataImport, 
             onClose: () => setShowDataImport(false), 
             initialTab: dataImportTab 
+        }),
+
+        // --- ONBOARDING TOUR (New User Welcome) ---
+        window.OnboardingTour && React.createElement(window.OnboardingTour, {
+            currentUser: currentUser,
+            isVisible: showOnboarding,
+            onComplete: handleOnboardingComplete
         }),
 
         // --- FOOTER ---
