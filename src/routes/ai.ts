@@ -1957,8 +1957,62 @@ app.post('/secretary', async (c) => {
         
         // ===== AUTO-DETECT DOCUMENT TYPE IF NOT PROVIDED =====
         if (!documentType || documentType === 'auto') {
-            documentType = detectDocumentType(instructions);
-            console.log(`🧠 [Secretary] Auto-detected document type: ${documentType}`);
+            console.log(`🧠 [Secretary] Auto-detecting document type with AI...`);
+            
+            try {
+                // Utiliser l'IA pour détecter le type de document
+                const detectPrompt = `Tu es un assistant qui classifie les demandes de documents.
+
+Analyse cette demande et détermine le type de document le plus approprié parmi:
+- rapports : Rapports de maintenance, KPIs, statistiques, performances, bilans, tableaux de bord
+- subventions : Demandes de financement gouvernemental, PARI, RS&DE, crédits d'impôt, Investissement Québec
+- rh : Ressources humaines, offres d'emploi, embauches, contrats, évaluations, congédiements
+- technique : Procédures, manuels, fiches techniques, cadenassage, SOP, checklists, sécurité
+- correspondance : Lettres officielles, courriels formels, réclamations, partenariats, réponses clients/fournisseurs
+- creatif : Communications marketing, communiqués de presse, site web, discours, pitchs, réseaux sociaux
+
+Demande de l'utilisateur: "${instructions}"
+
+Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique, correspondance, creatif`;
+
+                const detectResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini', // Modèle rapide et économique pour la classification
+                        messages: [{ role: 'user', content: detectPrompt }],
+                        temperature: 0,
+                        max_tokens: 20
+                    })
+                });
+
+                if (detectResponse.ok) {
+                    const detectData = await detectResponse.json() as any;
+                    const detectedType = detectData.choices?.[0]?.message?.content?.trim().toLowerCase();
+                    
+                    // Valider que le type est valide
+                    const validTypes = ['rapports', 'subventions', 'rh', 'technique', 'correspondance', 'creatif'];
+                    if (validTypes.includes(detectedType)) {
+                        documentType = detectedType;
+                        console.log(`🧠 [Secretary] AI detected document type: ${documentType}`);
+                    } else {
+                        // Fallback sur détection par mots-clés si réponse invalide
+                        documentType = detectDocumentType(instructions);
+                        console.log(`🧠 [Secretary] AI response invalid, fallback to keywords: ${documentType}`);
+                    }
+                } else {
+                    // Fallback sur détection par mots-clés si API échoue
+                    documentType = detectDocumentType(instructions);
+                    console.log(`🧠 [Secretary] AI detection failed, fallback to keywords: ${documentType}`);
+                }
+            } catch (detectError) {
+                // Fallback sur détection par mots-clés si erreur
+                documentType = detectDocumentType(instructions);
+                console.log(`🧠 [Secretary] AI detection error, fallback to keywords: ${documentType}`);
+            }
         }
         
         // ===== LOAD BASE URL FOR TOOLS =====
