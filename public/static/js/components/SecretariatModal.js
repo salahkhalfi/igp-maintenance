@@ -378,8 +378,9 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 return `<tr>${cells.map(c => `<td ${tdStyle}>${c || '&nbsp;'}</td>`).join('')}</tr>`;
             }).join('');
             
-            const tableStyle = 'style="width:100%;border-collapse:collapse;margin:15px 0;font-size:10pt;border:2px solid #000 !important"';
-            return `<table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+            const tableStyle = 'style="width:100%;min-width:500px;border-collapse:collapse;font-size:10pt;border:2px solid #000 !important"';
+            // Wrapper pour scroll horizontal sur mobile
+            return `<div class="table-wrapper"><table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
         };
         
         // 1. BLOCKQUOTES - Style citation classique pour documents officiels
@@ -499,10 +500,16 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
         
         /* Tableaux - Style rapport officiel */
+        .doc-content .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 14pt 0;
+        }
         .doc-content table { 
             width: 100%; 
+            min-width: 500px; /* Force scroll on small screens */
             border-collapse: collapse; 
-            margin: 14pt 0; 
             font-size: 10pt; 
         }
         .doc-content th { 
@@ -512,14 +519,40 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             text-align: left; 
             font-weight: 700; 
             font-family: 'Arial', 'Helvetica', sans-serif;
-            color: #000 !important; 
+            color: #000 !important;
+            white-space: nowrap;
         }
         .doc-content td { 
             border: 0.5pt solid #000 !important; 
-            padding: 5pt 8pt; 
+            padding: 5pt 8pt;
+            min-width: 80px;
         }
         .doc-content tr:nth-child(even) td { 
             background-color: transparent !important; 
+        }
+        
+        /* Mobile: hint de scroll */
+        @media (max-width: 640px) {
+            .doc-content .table-wrapper {
+                position: relative;
+            }
+            .doc-content .table-wrapper::after {
+                content: '→ glisser';
+                position: absolute;
+                top: 0;
+                right: 0;
+                background: linear-gradient(to left, rgba(255,255,255,0.95), transparent);
+                padding: 4px 8px 4px 24px;
+                font-size: 9px;
+                color: #666;
+                pointer-events: none;
+            }
+            .doc-content table {
+                font-size: 9pt;
+            }
+            .doc-content th, .doc-content td {
+                padding: 4pt 6pt;
+            }
         }
         
         /* Séparateurs - discrets */
