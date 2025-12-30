@@ -19,51 +19,33 @@ const OnboardingTour = ({ currentUser, onComplete, isVisible }) => {
         const baseSteps = [
             {
                 target: '[data-tour="kanban"]',
-                fallbackTarget: '.kanban-container, .grid, main',
                 title: 'Votre tableau de bord',
                 content: 'Bienvenue ! Vos tickets de maintenance sont organisés par statut. Glissez-déposez pour changer leur état.',
                 position: 'center'
             },
             {
-                target: '[data-tour="new-ticket"], button[title*="Nouveau"], .btn-new-ticket',
-                fallbackTarget: 'button.bg-blue-600, button.bg-blue-500',
+                target: '[data-tour="new-ticket"]',
                 title: 'Signaler un problème',
                 content: 'Cliquez ici pour créer un nouveau ticket de maintenance. Vous pouvez même ajouter des photos !',
-                position: 'bottom'
+                position: 'bottom-left'
             },
             {
-                target: '[data-tour="search"], input[placeholder*="Rechercher"], .search-input',
-                fallbackTarget: 'input[type="search"], input[type="text"]',
+                target: '[data-tour="search"]',
                 title: 'Recherche rapide',
                 content: 'Trouvez un ticket par machine, mot-clé ou numéro. Tapez au moins 2 caractères pour lancer la recherche.',
                 position: 'bottom'
             },
             {
-                target: '[data-tour="menu"], .hamburger-menu, button[aria-label*="menu"]',
-                fallbackTarget: 'button svg.fa-bars, .fa-bars',
+                target: '[data-tour="menu"]',
                 title: 'Menu principal',
                 content: 'Accédez à toutes les fonctionnalités depuis ce menu : statistiques, paramètres, gestion des utilisateurs...',
-                position: 'bottom-right'
+                position: 'bottom-left'
             }
         ];
 
-        // Étapes supplémentaires pour admin/supervisor
-        if (isDirecteur) {
-            baseSteps.push({
-                target: '[data-tour="secretariat"], button[title*="Secrétariat"]',
-                fallbackTarget: '.secretariat-btn, button:has(.fa-file-alt)',
-                title: 'Secrétariat IA',
-                content: 'Générez automatiquement des lettres officielles, rapports, demandes de subvention et documents RH avec l\'intelligence artificielle.',
-                position: 'bottom'
-            });
-            baseSteps.push({
-                target: '[data-tour="stats"], button[title*="Statistiques"]',
-                fallbackTarget: '.stats-btn, button:has(.fa-chart-bar)',
-                title: 'Tableau de bord',
-                content: 'Visualisez les performances de votre équipe, le temps de résolution moyen et les tendances.',
-                position: 'bottom'
-            });
-        }
+        // Étapes supplémentaires pour admin/supervisor (dans le menu hamburger)
+        // NOTE: Ces éléments sont dans le menu, donc on les retire pour l'instant
+        // L'utilisateur les découvrira naturellement via le menu
 
         // Étape finale
         baseSteps.push({
@@ -83,26 +65,34 @@ const OnboardingTour = ({ currentUser, onComplete, isVisible }) => {
 
     // Calculer la position du tooltip
     const calculatePosition = React.useCallback((targetElement, position) => {
+        const tooltipWidth = 320;
+        const tooltipHeight = 200;
+        const padding = 12;
+
         if (!targetElement) {
             // Position centrée pour les étapes sans cible
             return {
-                top: window.innerHeight / 2 - 100,
-                left: window.innerWidth / 2 - 175,
+                top: window.innerHeight / 2 - tooltipHeight / 2,
+                left: window.innerWidth / 2 - tooltipWidth / 2,
                 highlightRect: null
             };
         }
 
         const rect = targetElement.getBoundingClientRect();
-        const tooltipWidth = 350;
-        const tooltipHeight = 180;
-        const padding = 15;
-
         let top, left;
 
         switch (position) {
             case 'bottom':
                 top = rect.bottom + padding;
                 left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+                break;
+            case 'bottom-left':
+                top = rect.bottom + padding;
+                left = rect.left;
+                // Si trop à droite, ajuster
+                if (left + tooltipWidth > window.innerWidth - 20) {
+                    left = window.innerWidth - tooltipWidth - 20;
+                }
                 break;
             case 'bottom-right':
                 top = rect.bottom + padding;
@@ -148,9 +138,11 @@ const OnboardingTour = ({ currentUser, onComplete, isVisible }) => {
         // Essayer le sélecteur principal
         let element = document.querySelector(step.target);
         
-        // Fallback si non trouvé
-        if (!element && step.fallbackTarget) {
-            element = document.querySelector(step.fallbackTarget);
+        // Debug: log si élément non trouvé
+        if (!element) {
+            console.warn('[Onboarding] Element not found:', step.target);
+        } else {
+            console.log('[Onboarding] Found element:', step.target, element);
         }
 
         return element;
@@ -256,11 +248,14 @@ const OnboardingTour = ({ currentUser, onComplete, isVisible }) => {
 
         // Tooltip
         React.createElement('div', {
-            className: `absolute bg-white rounded-xl shadow-2xl p-5 w-[350px] transition-all duration-300 ${isAnimating ? 'opacity-90 scale-95' : 'opacity-100 scale-100'}`,
+            className: `absolute bg-white rounded-xl shadow-2xl p-4 transition-all duration-300 ${isAnimating ? 'opacity-90 scale-95' : 'opacity-100 scale-100'}`,
             style: {
                 top: tooltipPosition.top,
                 left: tooltipPosition.left,
-                pointerEvents: 'auto'
+                width: '320px',
+                maxWidth: 'calc(100vw - 40px)',
+                pointerEvents: 'auto',
+                zIndex: 10000
             }
         },
             // Indicateur d'étape
