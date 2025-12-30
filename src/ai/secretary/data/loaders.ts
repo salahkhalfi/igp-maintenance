@@ -490,22 +490,22 @@ export async function loadCreatifData(env: any): Promise<CreatifData> {
 
   // Temps moyen de résolution (tickets fermés ce mois)
   const avgResolution = await env.DB.prepare(`
-    SELECT AVG((julianday(closed_at) - julianday(created_at)) * 24) as avg_hours
+    SELECT AVG((julianday(completed_at) - julianday(created_at)) * 24) as avg_hours
     FROM tickets 
-    WHERE closed_at IS NOT NULL 
+    WHERE completed_at IS NOT NULL 
       AND created_at >= ? 
       AND deleted_at IS NULL
   `).bind(startOfMonth).first();
 
   // Tickets critiques résolus récemment (accomplissements)
   const recentCritical = await env.DB.prepare(`
-    SELECT title, closed_at as resolvedAt
+    SELECT title, completed_at as resolvedAt
     FROM tickets 
     WHERE priority = 'critical' 
       AND status = 'closed' 
-      AND closed_at IS NOT NULL
+      AND completed_at IS NOT NULL
       AND deleted_at IS NULL
-    ORDER BY closed_at DESC
+    ORDER BY completed_at DESC
     LIMIT 5
   `).all();
 
