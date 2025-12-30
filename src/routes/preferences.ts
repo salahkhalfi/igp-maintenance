@@ -21,34 +21,6 @@ const DEFAULT_PREFERENCES: Record<string, any> = {
 };
 
 /**
- * GET /api/preferences/onboarding - Récupérer l'état d'onboarding (PROTÉGÉ)
- * Retourne si l'utilisateur a complété l'onboarding
- */
-preferences.get('/onboarding', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user') as any;
-    
-    const result = await c.env.DB.prepare(`
-      SELECT pref_value FROM user_preferences 
-      WHERE user_id = ? AND pref_key = 'onboarding_completed'
-    `).bind(user.userId).first() as { pref_value: string } | null;
-
-    if (result?.pref_value) {
-      try {
-        return c.json({ completed: JSON.parse(result.pref_value) });
-      } catch {
-        return c.json({ completed: false });
-      }
-    }
-
-    return c.json({ completed: false });
-  } catch (error) {
-    console.error('Get onboarding status error:', error);
-    return c.json({ completed: false });
-  }
-});
-
-/**
  * GET /api/preferences/:key - Récupérer une préférence utilisateur
  * Public (pour les defaults) ou Authentifié (pour le perso)
  */
