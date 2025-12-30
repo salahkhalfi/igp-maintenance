@@ -284,14 +284,16 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             const separatorLine = lines[1];
             if (!/^[\s|:-]+$/.test(separatorLine)) return tableText;
             
-            const headerCells = lines[0].split('|').map(c => c.trim()).filter(c => c);
+            // slice(1, -1) pour enlever les pipes vides aux extrémités, pas les cellules vides
+            const headerCells = lines[0].split('|').slice(1, -1).map(c => c.trim());
             const thStyle = 'style="border:2px solid #000 !important;padding:10px 12px;text-align:left;font-weight:bold;background:#d1d5db !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important"';
             const headerHtml = headerCells.map(c => `<th ${thStyle}>${c}</th>`).join('');
             
             const tdStyle = 'style="border:1px solid #000 !important;padding:8px 12px"';
             const bodyRows = lines.slice(2).map((row, idx) => {
-                const cells = row.split('|').map(c => c.trim()).filter(c => c);
-                return `<tr>${cells.map(c => `<td ${tdStyle}>${c}</td>`).join('')}</tr>`;
+                // Ne pas filtrer les cellules vides - garder la structure du tableau
+                const cells = row.split('|').slice(1, -1).map(c => c.trim());
+                return `<tr>${cells.map(c => `<td ${tdStyle}>${c || '&nbsp;'}</td>`).join('')}</tr>`;
             }).join('');
             
             const tableStyle = 'style="width:100%;border-collapse:collapse;margin:15px 0;font-size:10pt;border:2px solid #000 !important"';
