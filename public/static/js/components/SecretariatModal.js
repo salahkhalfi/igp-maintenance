@@ -655,6 +655,72 @@ ${isConfidential ? `<div class="print-footer">
         setMobileView('categories');
     };
 
+    // Export HTML pour Word/Pages
+    const exportDocument = async () => {
+        if (!generatedDoc?.document) return;
+        const isLetter = selectedCategory === 'correspondance';
+        const html = markdownToHtml(generatedDoc.document, isLetter);
+        const docTitle = generatedDoc.title || 'Document';
+        
+        // Récupérer les infos de l'entreprise
+        let companyName = 'Entreprise';
+        try {
+            const resp = await fetch('/api/settings/config/public');
+            if (resp.ok) {
+                const cfg = await resp.json();
+                companyName = cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+            }
+        } catch (e) {}
+        
+        const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        // HTML compatible Word/Pages avec styles inline
+        const exportHtml = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>${docTitle}</title>
+<style>
+body { font-family: 'Times New Roman', Georgia, serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 800px; margin: 40px auto; padding: 20px; }
+h1 { font-size: 18pt; font-weight: bold; margin: 24pt 0 12pt; border-bottom: 1px solid #000; padding-bottom: 6pt; }
+h2 { font-size: 14pt; font-weight: bold; margin: 18pt 0 10pt; }
+h3 { font-size: 12pt; font-weight: bold; margin: 14pt 0 8pt; }
+p { margin: 0 0 10pt; text-align: justify; }
+ul, ol { margin: 8pt 0 12pt 24pt; }
+li { margin: 4pt 0; }
+table { width: 100%; border-collapse: collapse; margin: 12pt 0; }
+th { background: #f0f0f0; border: 1px solid #000; padding: 8pt; text-align: left; font-weight: bold; }
+td { border: 1px solid #000; padding: 8pt; }
+blockquote { border-left: 3pt solid #ccc; padding-left: 12pt; margin: 12pt 0; font-style: italic; color: #333; }
+.header { border-bottom: 2px solid #000; padding-bottom: 12pt; margin-bottom: 24pt; }
+.header-title { font-size: 16pt; font-weight: bold; }
+.header-subtitle { font-size: 10pt; color: #666; }
+.header-date { font-size: 10pt; text-align: right; }
+</style>
+</head>
+<body>
+<div class="header">
+<div class="header-title">${companyName}</div>
+<div class="header-subtitle">${docTitle}</div>
+<div class="header-date">${today}</div>
+</div>
+${html}
+</body>
+</html>`;
+        
+        // Télécharger le fichier
+        const blob = new Blob([exportHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${docTitle.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüç\s-]/gi, '').substring(0, 50)}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        window.showToast && window.showToast('Document exporté (ouvrir avec Word/Pages)', 'success');
+    };
+
     if (!isOpen) return null;
 
     const currentCat = categories.find(c => c.id === selectedCategory);
@@ -681,11 +747,15 @@ ${isConfidential ? `<div class="print-footer">
                         )
                     ),
                     React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2 flex-shrink-0' },
-                        React.createElement('button', { onClick: copyDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-all flex items-center gap-1 sm:gap-2' },
+                        React.createElement('button', { onClick: copyDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-all flex items-center gap-1 sm:gap-2', title: 'Copier le texte' },
                             React.createElement('i', { className: 'fas fa-copy' }),
                             React.createElement('span', { className: 'hidden sm:inline' }, 'Copier')
                         ),
-                        React.createElement('button', { onClick: printDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white text-emerald-600 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 sm:gap-2' },
+                        React.createElement('button', { onClick: exportDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm transition-all flex items-center gap-1 sm:gap-2', title: 'Exporter pour Word/Pages' },
+                            React.createElement('i', { className: 'fas fa-file-export' }),
+                            React.createElement('span', { className: 'hidden sm:inline' }, 'Exporter')
+                        ),
+                        React.createElement('button', { onClick: printDocument, className: 'p-2 sm:px-3 sm:py-2 bg-white text-emerald-600 rounded-lg text-sm font-semibold transition-all flex items-center gap-1 sm:gap-2', title: 'Imprimer / PDF' },
                             React.createElement('i', { className: 'fas fa-print' }),
                             React.createElement('span', { className: 'hidden sm:inline' }, 'Imprimer')
                         ),
