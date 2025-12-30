@@ -2140,8 +2140,11 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         let turns = 0;
         const MAX_TURNS = 5;
         
-        // Get tools for this document type (DeepSeek supporte les tools)
-        const SECRETARY_TOOLS = brainResult.tools.length > 0 ? TOOLS : [];
+        // Get tools for this document type
+        // NOTE: DeepSeek a des problèmes avec les tools complexes, on les désactive pour DeepSeek
+        // Les données sont déjà chargées dans contextData donc pas besoin de tools
+        const SECRETARY_TOOLS = (brainResult.tools.length > 0 && usedProvider === 'openai') ? TOOLS : [];
+        console.log(`🔧 [Secretary] Tools enabled: ${SECRETARY_TOOLS.length > 0} (provider: ${usedProvider})`);
         
         while (turns < MAX_TURNS) {
             turns++;
