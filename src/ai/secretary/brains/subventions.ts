@@ -43,20 +43,24 @@ ${GRANTS_PROGRAMS}
 
 # STRUCTURE D'UNE DEMANDE GAGNANTE
 
-## 1. PAGE TITRE
-- Nom du programme visé
-- Titre du projet (accrocheur mais professionnel)
-- Raison sociale complète
-- Date de soumission
+IMPORTANT: Le document doit commencer par un VRAI TITRE au format:
+# Demande de subvention - [Nom du programme]
+## [Titre du projet]
 
-## 2. SOMMAIRE EXÉCUTIF (1 page max)
+Ensuite les métadonnées:
+- **Programme visé:** [nom du programme]
+- **Titre du projet:** [titre accrocheur mais professionnel]
+- **Raison sociale complète:** [nom légal]
+- **Date de soumission:** [date]
+
+## 1. SOMMAIRE EXÉCUTIF (1 page max)
 L'évaluateur décide souvent ici. Inclure:
 - L'entreprise en 3 lignes
 - Le projet en 3 lignes
 - Le financement demandé
 - Les retombées clés (emplois, investissement, innovation)
 
-## 3. PRÉSENTATION DE L'ENTREPRISE
+## 2. PRÉSENTATION DE L'ENTREPRISE
 | Information | Détail |
 |-------------|--------|
 | Raison sociale | ... |
@@ -70,7 +74,7 @@ L'évaluateur décide souvent ici. Inclure:
 - Équipements distinctifs
 - Expertise technique unique
 
-## 4. DESCRIPTION DU PROJET
+## 3. DESCRIPTION DU PROJET
 
 ### 4.1 Problématique
 Quel problème résolvez-vous? Pourquoi maintenant?
@@ -86,7 +90,7 @@ Description technique claire et précise
 ### 4.4 Méthodologie
 Étapes, jalons, livrables
 
-## 5. BUDGET DÉTAILLÉ
+## 4. BUDGET DÉTAILLÉ
 
 | Poste | Montant | % |
 |-------|---------|---|
@@ -101,7 +105,7 @@ Description technique claire et précise
 - Financement demandé: $
 - Autres sources: $
 
-## 6. RETOMBÉES ATTENDUES
+## 5. RETOMBÉES ATTENDUES
 
 | Retombée | An 1 | An 3 | An 5 |
 |----------|------|------|------|
@@ -110,12 +114,12 @@ Description technique claire et précise
 | Investissements | | | |
 | Exportations | | | |
 
-## 7. CALENDRIER DE RÉALISATION
+## 6. CALENDRIER DE RÉALISATION
 
 | Phase | Description | Début | Fin | Livrable |
 |-------|-------------|-------|-----|----------|
 
-## 8. ÉQUIPE DE PROJET
+## 7. ÉQUIPE DE PROJET
 
 Pour chaque membre clé:
 - Nom, titre
@@ -201,12 +205,18 @@ ${Object.entries(machinesByType).map(([type, count]) => `- ${type}: ${count}`).j
 
 ---
 
-## NOTES POUR LA RÉDACTION
+## RÈGLES STRICTES DE RÉDACTION
 
 Ces données sont factuelles et proviennent du système de gestion.
-Pour les informations manquantes (CA, NEQ, projets spécifiques), 
-laisser le champ VIDE (l'utilisateur complétera lui-même).
-NE JAMAIS écrire [À COMPLÉTER] ou tout autre placeholder.
+
+⚠️ RÈGLE ABSOLUE POUR LES DONNÉES MANQUANTES:
+- NEQ inconnu → laisser la cellule VIDE (pas de texte)
+- Chiffre d'affaires inconnu → laisser la cellule VIDE
+- Secteur SCIAN inconnu → laisser la cellule VIDE
+- Toute info manquante → cellule VIDE, AUCUN texte
+
+❌ INTERDIT: [À compléter], [À COMPLÉTER], (à préciser), ???, N/A, etc.
+✅ CORRECT: Cellule vide sans aucun caractère
 
 ═══════════════════════════════════════════════════════════════
               FIN DES DONNÉES
