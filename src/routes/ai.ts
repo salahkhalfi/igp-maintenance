@@ -2186,6 +2186,21 @@ app.post('/secretary', async (c) => {
             } else {
                 title = defaultTitles['rapports'];
             }
+        } else if (documentType === 'subventions') {
+            // Pour subventions: chercher "Titre du projet:" ou "Programme visé:"
+            const subventionMatch = aiResponse.match(/Titre du projet\s*:\s*(.+?)(?:\n|$)/i)
+                                 || aiResponse.match(/Programme visé\s*:\s*(.+?)(?:\n|$)/i);
+            if (subventionMatch) {
+                const programme = aiResponse.match(/Programme visé\s*:\s*(.+?)(?:\n|$)/i);
+                const projet = aiResponse.match(/Titre du projet\s*:\s*(.+?)(?:\n|$)/i);
+                if (programme && projet) {
+                    title = `${programme[1].trim()} - ${projet[1].trim()}`;
+                } else {
+                    title = subventionMatch[1].trim();
+                }
+            } else {
+                title = defaultTitles['subventions'];
+            }
         } else {
             // Pour autres documents: chercher un titre # 
             const titleMatch = aiResponse.match(/^#+ (.+)$/m);
