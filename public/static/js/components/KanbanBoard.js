@@ -359,7 +359,7 @@ const KanbanBoard = ({
     };
 
     // --- RENDU PRINCIPAL ---
-    return React.createElement('div', { 'data-tour': 'kanban' },
+    return React.createElement('div', {},
         React.createElement(MoveTicketBottomSheet, {
             show: showMoveModal,
             onClose: () => { setShowMoveModal(false); setTicketToMove(null); },

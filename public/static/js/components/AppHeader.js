@@ -454,7 +454,6 @@ const AppHeader = ({
 
                         // MAIN MENU TOGGLE (Premium design)
                         React.createElement('button', {
-                            'data-tour': 'menu',
                             className: 'w-10 h-10 md:w-10 md:h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 text-white hover:from-slate-600 hover:to-slate-700 shadow-lg shadow-slate-400/30 active:scale-95 transition-all ml-1 md:ml-2',
                             onClick: () => setShowMobileMenu(!showMobileMenu),
                             title: 'Ouvrir le menu complet'
@@ -471,7 +470,7 @@ const AppHeader = ({
                 React.createElement('div', { className: 'flex items-center gap-4' },
                     
                     // SEARCH BAR (Expanded)
-                    React.createElement('div', { 'data-tour': 'search', className: 'relative flex-1 max-w-3xl z-40' },
+                    React.createElement('div', { className: 'relative flex-1 max-w-3xl z-40' },
                         React.createElement('div', { className: 'relative group' },
                             React.createElement('i', { className: 'fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors' }),
                             React.createElement('input', {
@@ -649,7 +648,6 @@ const AppHeader = ({
 
             // 4. NEW TICKET (+)
             safeHasPermission('tickets.create') && React.createElement('button', {
-                'data-tour': 'new-ticket',
                 onClick: onOpenCreateModal,
                 className: 'w-10 h-10 flex items-center justify-center rounded-lg bg-blue-600 text-white shadow-md active:scale-95',
                 title: 'Nouveau Ticket'
@@ -811,7 +809,6 @@ const AppHeader = ({
                                     ),
                                     // Performance (admin/supervisor only)
                                     (canViewStats) && React.createElement('button', {
-                                        'data-tour': 'stats',
                                         onClick: () => { onOpenPerformance(); setShowMobileMenu(false); },
                                         className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-blue-50/50 transition-colors'
                                     },
@@ -842,7 +839,6 @@ const AppHeader = ({
                                     ),
                                     // Secrétariat (Admin/Supervisor only)
                                     (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && React.createElement('button', {
-                                        'data-tour': 'secretariat',
                                         onClick: () => { onOpenSecretariat(); setShowMobileMenu(false); },
                                         className: 'w-full flex items-center gap-3 px-4 py-3.5 hover:bg-indigo-50/50 transition-colors border-b border-slate-100'
                                     },
@@ -981,7 +977,7 @@ const AppHeader = ({
                         React.createElement('div', { 
                             className: 'px-4 py-4 bg-slate-50 border-t border-slate-200'
                         },
-                            React.createElement('div', { className: 'flex gap-2 mb-2' },
+                            React.createElement('div', { className: 'flex gap-2' },
                                 React.createElement('button', {
                                     onClick: async () => { 
                                         await handleRefresh(); 
@@ -1001,19 +997,6 @@ const AppHeader = ({
                                     React.createElement('i', { className: 'fas fa-sign-out-alt' }),
                                     'Déconnexion'
                                 )
-                            ),
-                            // Bouton Aide / Relancer le guide
-                            React.createElement('button', {
-                                onClick: () => { 
-                                    if (window.restartOnboarding) {
-                                        window.restartOnboarding();
-                                    }
-                                    setShowMobileMenu(false); 
-                                },
-                                className: 'w-full flex items-center justify-center gap-2 px-4 py-2.5 text-slate-500 text-xs hover:text-slate-700 transition-colors'
-                            }, 
-                                React.createElement('i', { className: 'fas fa-question-circle' }),
-                                'Relancer le guide de bienvenue'
                             )
                         )
                     )

@@ -85,17 +85,16 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/PerformanceModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/AIChatModal_v4.min.js?v=1b0237d"></script>
     <script src="/static/js/dist/SecretariatModal.min.js?v=7e16e27"></script>
-    <script src="/static/js/dist/OnboardingTour.min.js?v=e1da3b0"></script>
     <script src="/static/js/dist/OverdueTicketsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PushDevicesModal.min.js?v=d352264"></script>
     <!-- MISSING SCRIPTS RESTORED -->
     <script src="/static/js/hooks/useTickets.js"></script>
     <script src="/static/js/hooks/useMachines.js"></script>
-    <script src="/static/js/dist/AppHeader.min.js?v=59197f7"></script>
+    <script src="/static/js/dist/AppHeader.min.js?v=32f5121"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=d352264.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=1f84a8b"></script>
     <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=8299d82"></script>
-    <script src="/static/js/dist/KanbanBoard.min.js?v=57f3a50"></script>
+    <script src="/static/js/dist/KanbanBoard.min.js?v=f8eef98"></script>
     <script src="/static/js/dist/AdminRoles.min.js?v=d352264"></script>
     <script src="/static/js/dist/ManageColumnsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/TicketComments.min.js?v=d352264"></script>
@@ -106,7 +105,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/DataImportModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/VoiceTicketFab.min.js?v=d352264"></script>
     <script src="/static/js/dist/TVDashboardModal.min.js?v=f444989"></script>
-    <script src="/static/js/dist/MainApp.min.js?v=990ba24"></script>
+    <script src="/static/js/dist/MainApp.min.js?v=f0389ce"></script>
     <script src="/static/js/dist/App.min.js?v=d352264"></script>
     <!-- DISABLED: main.js conflicts with CDN React - uses bundled React which breaks Legacy MainApp hooks -->
     <!-- <script type="module" src="/static/client/main.js"></script> -->
