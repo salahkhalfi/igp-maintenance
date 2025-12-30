@@ -11,8 +11,8 @@ import { TOOLS, ToolFunctions } from '../ai/tools';
 import { prepareSecretary, detectDocumentType, type DocumentType, type CompanyIdentity } from '../ai/secretary';
 
 // ===== SECRETARY AI MODEL CONFIG =====
-// ROLLBACK: Change to 'openai' to use GPT-4o
-const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'deepseek';
+// Change to 'deepseek' when DEEPSEEK_API_KEY is configured in Cloudflare
+const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'openai';
 
 const AI_CONFIGS = {
     deepseek: {
