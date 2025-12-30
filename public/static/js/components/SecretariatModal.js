@@ -792,8 +792,15 @@ ${html}
                     // Parser le tableau
                     const rows = tableLines.filter(l => !l.includes('---'));
                     if (rows.length > 0) {
+                        // Déterminer le nombre de colonnes
+                        const numCols = rows[0].split('|').slice(1, -1).length;
+                        const colWidth = Math.floor(9000 / numCols); // 9000 twips ≈ largeur page
+                        
                         const tableRows = rows.map((row, rowIdx) => {
                             const cells = row.split('|').slice(1, -1).map(c => c.trim());
+                            // S'assurer qu'on a le bon nombre de cellules
+                            while (cells.length < numCols) cells.push('');
+                            
                             return new TableRow({
                                 children: cells.map(cellText => new TableCell({
                                     children: [new Paragraph({
@@ -803,14 +810,17 @@ ${html}
                                             size: 22
                                         })]
                                     })],
-                                    shading: rowIdx === 0 ? { fill: 'E0E0E0' } : undefined
+                                    width: { size: colWidth, type: WidthType.DXA },
+                                    shading: rowIdx === 0 ? { fill: 'E0E0E0' } : undefined,
+                                    margins: { top: 50, bottom: 50, left: 100, right: 100 }
                                 }))
                             });
                         });
                         
                         children.push(new Table({
                             rows: tableRows,
-                            width: { size: 100, type: WidthType.PERCENTAGE }
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            columnWidths: Array(numCols).fill(colWidth)
                         }));
                         children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
                     }
