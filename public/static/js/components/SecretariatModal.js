@@ -1150,12 +1150,12 @@ ${html}
             ),
 
             // Corps
-            React.createElement('div', { className: 'flex flex-1 overflow-hidden' },
+            React.createElement('div', { className: 'flex flex-1 min-h-0' },
                 
                 // MODE UNIVERSEL: Interface simplifiée
-                universalMode ? React.createElement('div', { className: 'flex-1 flex flex-col overflow-hidden' },
+                universalMode ? React.createElement('div', { className: 'flex-1 flex flex-col min-h-0' },
                     // Zone scrollable en mode universel
-                    React.createElement('div', { className: 'flex-1 overflow-y-auto p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-violet-50' },
+                    React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-violet-50' },
                         // Intro
                         React.createElement('div', { className: 'max-w-2xl mx-auto' },
                             React.createElement('div', { className: 'text-center mb-6' },
@@ -1230,14 +1230,14 @@ ${html}
                 
                 // Sidebar / Liste catégories (visible sur desktop, ou mobile si mobileView='categories')
                 React.createElement('div', { 
-                    className: `${mobileView === 'categories' ? 'flex' : 'hidden'} sm:flex flex-col w-full sm:w-48 lg:w-52 bg-slate-50 border-r border-slate-200 overflow-hidden flex-shrink-0`
+                    className: `${mobileView === 'categories' ? 'flex' : 'hidden'} sm:flex flex-col w-full sm:w-48 lg:w-52 bg-slate-50 border-r border-slate-200 flex-shrink-0 overflow-y-auto`
                 },
                     // Titre catégories
-                    React.createElement('div', { className: 'p-3 border-b border-slate-200 bg-white sm:bg-transparent' },
+                    React.createElement('div', { className: 'p-3 border-b border-slate-200 bg-white sm:bg-transparent sticky top-0 z-10' },
                         React.createElement('div', { className: 'text-xs font-semibold text-slate-500 uppercase tracking-wider' }, 'Catégories')
                     ),
-                    // Liste catégories scrollable
-                    React.createElement('div', { className: 'flex-1 overflow-y-auto p-2' },
+                    // Liste catégories
+                    React.createElement('div', { className: 'p-2' },
                         categories.map(cat => {
                             const catColors = colorMap[cat.color];
                             const isActive = selectedCategory === cat.id;
@@ -1257,14 +1257,14 @@ ${html}
                         })
                     ),
                     // Documents de la catégorie (mobile only, dans le panneau catégories)
-                    React.createElement('div', { className: 'sm:hidden border-t border-slate-200 bg-white' },
+                    React.createElement('div', { className: 'sm:hidden border-t border-slate-200 bg-white sticky bottom-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]' },
                         React.createElement('div', { className: 'p-3 pb-2' },
                             React.createElement('div', { className: 'flex items-center gap-2 mb-2' },
                                 React.createElement('i', { className: `fas ${currentCat?.icon} ${colors.text}` }),
                                 React.createElement('span', { className: 'text-sm font-semibold text-slate-800' }, currentCat?.label)
                             )
                         ),
-                        React.createElement('div', { className: 'px-3 pb-3 grid grid-cols-2 gap-2' },
+                        React.createElement('div', { className: 'px-3 pb-3 grid grid-cols-2 gap-2 max-h-[40vh] overflow-y-auto' },
                             (currentCat?.documents || []).map((doc, i) => 
                                 React.createElement('button', {
                                     key: i,
@@ -1281,7 +1281,7 @@ ${html}
 
                 // Zone principale (visible sur desktop, ou mobile si mobileView='form')
                 React.createElement('div', { 
-                    className: `${mobileView === 'form' ? 'flex' : 'hidden'} sm:flex flex-1 flex-col overflow-hidden`
+                    className: `${mobileView === 'form' ? 'flex' : 'hidden'} sm:flex flex-1 flex-col min-h-0`
                 },
                     // Documents (desktop only)
                     React.createElement('div', { className: 'hidden sm:block p-4 border-b border-slate-200 bg-white flex-shrink-0' },
@@ -1307,7 +1307,7 @@ ${html}
                     ),
 
                     // Zone scrollable
-                    React.createElement('div', { className: 'flex-1 overflow-y-auto bg-slate-50 p-3 sm:p-4' },
+                    React.createElement('div', { className: 'flex-1 min-h-0 overflow-y-auto bg-slate-50 p-3 sm:p-4' },
                         // Type sélectionné (mobile)
                         selectedDocType && React.createElement('div', { className: 'sm:hidden mb-3 flex items-center gap-2' },
                             React.createElement('div', { className: `px-3 py-1.5 rounded-full ${colors.light} ${colors.text} text-sm font-medium flex items-center gap-2` },
