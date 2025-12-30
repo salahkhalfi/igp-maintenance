@@ -156,6 +156,76 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         }
     };
 
+    // Descriptions des catégories pour guider l'utilisateur
+    const categoryHelp = {
+        'correspondance': {
+            description: 'Lettres officielles, courriels formels, communications externes',
+            keywords: ['lettre', 'courrier', 'correspondance', 'réponse', 'demande'],
+            notFor: ['rapport', 'kpi', 'performance', 'statistiques']
+        },
+        'subventions': {
+            description: 'Demandes de financement gouvernemental, crédits d\'impôt R&D',
+            keywords: ['subvention', 'financement', 'pari', 'rsde', 'crédit'],
+            notFor: ['rapport', 'lettre', 'communiqué']
+        },
+        'administratif': {
+            description: 'Documents internes : procès-verbaux, politiques, contrats',
+            keywords: ['procès-verbal', 'politique', 'contrat', 'mise en demeure'],
+            notFor: ['rapport maintenance', 'kpi', 'site web']
+        },
+        'rh': {
+            description: 'Gestion du personnel : offres d\'emploi, embauches, évaluations',
+            keywords: ['employé', 'embauche', 'emploi', 'évaluation', 'congédiement'],
+            notFor: ['rapport', 'maintenance', 'machine']
+        },
+        'technique': {
+            description: 'Documentation technique : manuels, procédures, fiches sécurité',
+            keywords: ['procédure', 'manuel', 'technique', 'sécurité', 'checklist'],
+            notFor: ['rapport mensuel', 'kpi', 'communiqué']
+        },
+        'financier': {
+            description: 'Documents financiers : demandes de crédit, plans d\'affaires',
+            keywords: ['financement', 'budget', 'dépenses', 'financier'],
+            notFor: ['maintenance', 'technique', 'communiqué']
+        },
+        'rapports': {
+            description: '📊 RAPPORTS DE MAINTENANCE : KPIs, performance équipe, état machines',
+            keywords: ['rapport', 'kpi', 'performance', 'mensuel', 'bilan', 'statistiques'],
+            notFor: ['lettre', 'communiqué', 'site web']
+        },
+        'creatif': {
+            description: '🎨 CRÉATIF : Communiqués de presse, textes web, discours, pitchs',
+            keywords: ['communiqué', 'site web', 'discours', 'pitch', 'marketing'],
+            notFor: ['rapport', 'kpi', 'maintenance', 'statistiques', 'mensuel']
+        }
+    };
+
+    // Fonction pour détecter si l'instruction correspond à une autre catégorie
+    const detectMismatch = (instructions, currentCategory) => {
+        if (!instructions || instructions.length < 10) return null;
+        const lower = instructions.toLowerCase();
+        
+        // Vérifier si l'instruction contient des mots-clés d'une autre catégorie
+        for (const [catId, help] of Object.entries(categoryHelp)) {
+            if (catId === currentCategory) continue;
+            
+            // Si l'instruction contient des mots-clés forts d'une autre catégorie
+            const matchCount = help.keywords.filter(kw => lower.includes(kw)).length;
+            if (matchCount >= 2) {
+                // Et si ces mots sont dans "notFor" de la catégorie actuelle
+                const currentHelp = categoryHelp[currentCategory];
+                if (currentHelp?.notFor?.some(nf => lower.includes(nf))) {
+                    return {
+                        suggestedCategory: catId,
+                        suggestedLabel: categories.find(c => c.id === catId)?.label || catId,
+                        reason: help.description
+                    };
+                }
+            }
+        }
+        return null;
+    };
+
     const categories = [
         { id: 'correspondance', label: 'Correspondance', icon: 'fa-envelope', color: 'blue', documents: [
             { icon: 'fa-file-alt', label: 'Lettre officielle', value: 'Rédiger une lettre officielle à [destinataire] concernant : ' },
@@ -1135,6 +1205,45 @@ ${html}
                             rows: 6,
                             className: 'w-full px-3 py-2.5 rounded-lg border border-slate-200 focus:border-slate-400 focus:ring-2 focus:ring-slate-100 outline-none resize-none text-sm text-slate-700 placeholder-slate-400 bg-white'
                         }),
+                        
+                        // Avertissement si mauvaise catégorie détectée
+                        (() => {
+                            const mismatch = detectMismatch(instructions, selectedCategory);
+                            if (mismatch) {
+                                return React.createElement('div', { 
+                                    className: 'mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg'
+                                },
+                                    React.createElement('div', { className: 'flex items-start gap-2' },
+                                        React.createElement('i', { className: 'fas fa-exclamation-triangle text-amber-500 mt-0.5' }),
+                                        React.createElement('div', { className: 'flex-1' },
+                                            React.createElement('p', { className: 'text-sm font-medium text-amber-800' },
+                                                `Cette demande semble mieux convenir à la catégorie "${mismatch.suggestedLabel}"`
+                                            ),
+                                            React.createElement('p', { className: 'text-xs text-amber-600 mt-1' },
+                                                mismatch.reason
+                                            ),
+                                            React.createElement('button', {
+                                                onClick: () => selectCategory(mismatch.suggestedCategory),
+                                                className: 'mt-2 text-xs font-medium text-amber-700 hover:text-amber-900 underline'
+                                            }, `→ Basculer vers ${mismatch.suggestedLabel}`)
+                                        )
+                                    )
+                                );
+                            }
+                            return null;
+                        })(),
+                        
+                        // Description de la catégorie actuelle
+                        selectedCategory && categoryHelp[selectedCategory] && React.createElement('div', { 
+                            className: 'mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100'
+                        },
+                            React.createElement('p', { className: 'text-xs text-slate-600' },
+                                React.createElement('i', { className: 'fas fa-lightbulb text-slate-400 mr-1' }),
+                                React.createElement('strong', {}, `${categories.find(c => c.id === selectedCategory)?.label}: `),
+                                categoryHelp[selectedCategory].description
+                            )
+                        ),
+                        
                         React.createElement('p', { className: 'mt-2 text-xs text-slate-500' },
                             React.createElement('i', { className: 'fas fa-info-circle mr-1' }),
                             'L\'IA utilise les lois CA/QC et vos données.'
