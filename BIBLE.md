@@ -333,6 +333,37 @@ CE QUE ÇA A COÛTÉ:
 
 LEÇON:
 "Une suggestion non vérifiée est un mensonge poli"
+
+─────────────────────────────────────────────────────────────────────
+
+ERREUR DU 30 DÉC 2025 - "Suppression bâclée de l'onboarding"
+
+CE QUI S'EST PASSÉ:
+- User demande de supprimer une fonctionnalité (onboarding)
+- AI supprime les fichiers évidents
+- AI commit sans vérifier que tout est propre
+- User demande "tu es sûr qu'il n'y a pas de poubelle?"
+- AI cherche APRÈS et trouve des restes (endpoint API, attributs data-tour)
+
+POURQUOI C'EST ARRIVÉ:
+- AI a voulu aller vite
+- AI n'a pas fait de grep AVANT le commit
+- AI a supposé que supprimer le fichier principal suffisait
+
+CE QUE ÇA A COÛTÉ:
+- 2 commits au lieu de 1
+- User doit vérifier le travail de l'AI
+- Confiance perdue
+
+LEÇON:
+"Supprimer une fonctionnalité = grep TOUTES les références AVANT de commit"
+
+PROCÉDURE OBLIGATOIRE POUR SUPPRESSION:
+1. grep -rn "nom_feature" --include="*.js" --include="*.ts" .
+2. Lister TOUS les fichiers impactés
+3. Tout supprimer
+4. grep à nouveau pour confirmer = 0 résultats
+5. PUIS commit (un seul)
 ```
 
 ---
