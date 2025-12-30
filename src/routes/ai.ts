@@ -11,8 +11,8 @@ import { TOOLS, ToolFunctions } from '../ai/tools';
 import { prepareSecretary, detectDocumentType, type DocumentType, type CompanyIdentity } from '../ai/secretary';
 
 // ===== SECRETARY AI MODEL CONFIG =====
-// ROLLBACK: Change to 'openai' if DeepSeek fails
-const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'deepseek';
+// DeepSeek désactivé - problème avec la clé API
+const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'openai';
 
 const AI_CONFIGS = {
     deepseek: {
