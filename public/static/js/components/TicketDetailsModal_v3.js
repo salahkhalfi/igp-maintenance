@@ -145,6 +145,11 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
             `).join('')
             : '<p class="no-data">Aucun commentaire</p>';
         
+        // Trouver l'entrée "Machine mise à l'arrêt" dans la timeline si machine hors service
+        const machineDownEntry = ticket.is_machine_down && ticket.timeline 
+            ? ticket.timeline.find(t => t.action === "Machine mise à l'arrêt")
+            : null;
+        
         // Générer HTML de la timeline avec statuts traduits
         const timelineHtml = ticket.timeline && ticket.timeline.length > 0
             ? ticket.timeline.map(t => {
@@ -164,7 +169,6 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     <span class="timeline-date">${formatDateEST(t.created_at)}</span>
                     <span class="timeline-action">${actionText}</span>
                     ${t.user_name ? `<span class="timeline-user">par ${t.user_name}</span>` : ''}
-                    ${t.comment ? `<div class="timeline-comment">${t.comment}</div>` : ''}
                 </div>
             `}).join('')
             : '<p class="no-data">Aucun historique</p>';
@@ -226,7 +230,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                     <span class="ticket-id">Ticket #${ticket.ticket_id}</span>
                 </div>
                 
-                ${ticket.is_machine_down ? '<div class="machine-alert">⚠️ MACHINE HORS SERVICE</div>' : ''}
+                ${ticket.is_machine_down ? `<div class="machine-alert">⚠️ MACHINE HORS SERVICE${machineDownEntry ? ` - Mise hors service par ${machineDownEntry.user_name || 'Inconnu'} le ${formatDateEST(machineDownEntry.created_at)}` : ''}</div>` : ''}
                 
                 <div class="two-columns">
                     <div class="section">
