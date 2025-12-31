@@ -2,7 +2,7 @@
  * IGP Maintenance - Main Application View
  * 
  * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
- * @author Salah-Eddine KHALFI
+ * @author Salah-Eddine KHALFI <salah@khalfi.com>
  * @license PROPRIETARY
  * 
  * Generate home HTML with dynamic baseUrl and appName for SEO meta tags

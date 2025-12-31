@@ -6,7 +6,7 @@
  * This software is proprietary and confidential. Unauthorized copying,
  * modification, distribution, or use of this software is strictly prohibited.
  *
- * @author Salah-Eddine KHALFI
+ * @author Salah-Eddine KHALFI <salah@khalfi.com>
  * @copyright 2025 Salah-Eddine KHALFI
  * @license PROPRIETARY
  * @version 3.0.0

@@ -2,7 +2,7 @@
  * L'Expert IGP - AI Tools Module
  * 
  * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
- * @author Salah-Eddine KHALFI
+ * @author Salah-Eddine KHALFI <salah@khalfi.com>
  * @license PROPRIETARY
  */
 

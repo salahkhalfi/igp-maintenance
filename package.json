@@ -2,7 +2,7 @@
   "name": "maintenance-app",
   "version": "3.0.0-beta.4",
   "description": "Système de gestion de maintenance industrielle",
-  "author": "Salah-Eddine KHALFI",
+  "author": "Salah-Eddine KHALFI <salah@khalfi.com>",
   "license": "PROPRIETARY",
   "copyright": "Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.",
   "type": "module",
