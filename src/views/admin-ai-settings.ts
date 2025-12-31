@@ -12,52 +12,16 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
     <style>
         .setting-card { transition: all 0.2s; }
         .setting-card:focus-within { transform: scale(1.01); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
-        textarea { 
-            resize: vertical; 
-            min-height: 120px; 
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace; 
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-        /* Mobile responsive */
-        @media (max-width: 640px) {
-            textarea { 
-                font-size: 0.8rem; 
-                padding: 12px !important;
-                word-break: break-word;
-            }
-            .container { padding-left: 12px; padding-right: 12px; }
-            .setting-card:focus-within { transform: none; }
-            
-            /* Header mobile - 2 lignes */
-            .header-mobile { 
-                flex-direction: column !important; 
-                gap: 12px !important;
-                padding: 12px !important;
-            }
-            .header-left { gap: 8px !important; }
-            .header-left .icon-box { padding: 6px !important; }
-            .header-left .icon-box i { font-size: 1.25rem !important; }
-            .header-left h1 { font-size: 0.95rem !important; }
-            .header-left p { font-size: 0.6rem !important; letter-spacing: 0.05em !important; }
-            .header-right { 
-                width: 100%; 
-                justify-content: space-between !important;
-            }
-            .header-right a, .header-right button { 
-                padding: 8px 12px !important; 
-                font-size: 0.75rem !important;
-            }
-        }
+        textarea { resize: vertical; min-height: 120px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.85rem; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
 
     <!-- Header -->
     <header class="bg-gradient-to-r from-purple-700 to-indigo-800 text-white shadow-xl sticky top-0 z-50">
-        <div class="header-mobile container mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="header-left flex items-center gap-4">
-                <div class="icon-box bg-white/10 p-2 rounded-lg">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="bg-white/10 p-2 rounded-lg">
                     <i class="fas fa-brain text-2xl animate-pulse"></i>
                 </div>
                 <div>
@@ -65,7 +29,7 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
                     <p class="text-xs text-purple-200 uppercase tracking-widest font-semibold">Identité & Connaissances</p>
                 </div>
             </div>
-            <div class="header-right flex items-center gap-3">
+            <div class="flex items-center gap-3">
                 <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-medium transition-all inline-flex items-center">
                     <i class="fas fa-arrow-left mr-2"></i>Retour
                 </a>

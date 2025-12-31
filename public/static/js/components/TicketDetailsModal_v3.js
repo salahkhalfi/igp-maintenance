@@ -138,7 +138,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 <div class="comment">
                     <div class="comment-header">
                         <strong>${c.user_name || 'Utilisateur'}</strong>
-                        <span class="comment-date">${formatDateEST(c.created_at)}</span>
+                        <span class="comment-date">${new Date(c.created_at).toLocaleString('fr-CA')}</span>
                     </div>
                     <div class="comment-content">${c.comment}</div>
                 </div>
@@ -161,7 +161,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 }
                 return `
                 <div class="timeline-item">
-                    <span class="timeline-date">${formatDateEST(t.created_at)}</span>
+                    <span class="timeline-date">${new Date(t.created_at).toLocaleString('fr-CA')}</span>
                     <span class="timeline-action">${actionText}</span>
                     ${t.user_name ? `<span class="timeline-user">par ${t.user_name}</span>` : ''}
                     ${t.comment ? `<div class="timeline-comment">${t.comment}</div>` : ''}
@@ -247,7 +247,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         </div>
                         <div class="info-row">
                             <span class="info-label">Créé le:</span>
-                            <span class="info-value">${formatDateEST(ticket.created_at)}</span>
+                            <span class="info-value">${new Date(ticket.created_at).toLocaleString('fr-CA')}</span>
                         </div>
                         ${elapsed ? `
                         <div class="info-row">
@@ -270,7 +270,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                         ${ticket.scheduled_date ? `
                         <div class="info-row">
                             <span class="info-label">Planifié pour:</span>
-                            <span class="info-value"><strong>${formatDateEST(ticket.scheduled_date)}</strong></span>
+                            <span class="info-value"><strong>${new Date(ticket.scheduled_date).toLocaleString('fr-CA')}</strong></span>
                         </div>` : ''}
                     </div>
                     
@@ -324,7 +324,7 @@ const TicketDetailsModal = ({ show, onClose, ticketId, currentUser, onTicketDele
                 </div>
                 
                 <div class="footer">
-                    Imprimé le ${formatDateEST(new Date().toISOString())} | Système de maintenance
+                    Imprimé le ${new Date().toLocaleString('fr-CA')} | Système de maintenance
                 </div>
             </body>
             </html>
