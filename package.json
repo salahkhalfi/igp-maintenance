@@ -2,7 +2,9 @@
   "name": "maintenance-app",
   "version": "3.0.0-beta.4",
   "description": "Système de gestion de maintenance industrielle",
-  "author": "MaintenanceOS Team <admin@example.com>",
+  "author": "Salah-Eddine KHALFI",
+  "license": "PROPRIETARY",
+  "copyright": "Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.",
   "type": "module",
   "scripts": {
     "dev": "vite",

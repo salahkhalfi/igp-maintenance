@@ -1,3 +1,11 @@
+/**
+ * L'Expert IGP - AI Tools Module
+ * 
+ * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
+ * @author Salah-Eddine KHALFI
+ * @license PROPRIETARY
+ */
+
 import { eq, like, or, and, desc, sql, not, inArray, gte, lte, aliasedTable, isNull } from 'drizzle-orm';
 import { tickets, machines, users, ticketComments, systemSettings, planningEvents, plannerNotes, media, pushSubscriptions } from '../db/schema';
 

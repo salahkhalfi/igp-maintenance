@@ -1,4 +1,10 @@
 /**
+ * IGP Maintenance - Main Application View
+ * 
+ * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
+ * @author Salah-Eddine KHALFI
+ * @license PROPRIETARY
+ * 
  * Generate home HTML with dynamic baseUrl and appName for SEO meta tags
  * @param baseUrl - The base URL of the app (e.g., https://app.example.com)
  * @param appName - The dynamic application name (e.g., "IGP Gestion")

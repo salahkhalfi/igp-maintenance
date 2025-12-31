@@ -1,3 +1,10 @@
+/**
+ * L'Expert IGP - AI Routes & Intelligence Module
+ * 
+ * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
+ * @author Salah-Eddine KHALFI
+ * @license PROPRIETARY
+ */
 
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';

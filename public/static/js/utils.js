@@ -1,4 +1,10 @@
 /**
+ * IGP Maintenance - Utility Functions
+ * 
+ * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
+ * @author Salah-Eddine KHALFI
+ * @license PROPRIETARY
+ * 
  * Utilitaires de gestion des dates et du temps (Timezone EST/EDT)
  */
 

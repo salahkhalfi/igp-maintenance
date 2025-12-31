@@ -1,3 +1,11 @@
+/**
+ * IGP Messenger - Chat & Messaging Module
+ * 
+ * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
+ * @author Salah-Eddine KHALFI
+ * @license PROPRIETARY
+ */
+
 import { Hono } from 'hono';
 import { authMiddleware } from '../middlewares/auth';
 import { getCookie } from 'hono/cookie';

@@ -1,11 +1,15 @@
 /**
- * Système de Gestion de Maintenance
+ * IGP Maintenance - Système de Gestion de Maintenance Industrielle
+ * 
+ * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
+ * 
+ * This software is proprietary and confidential. Unauthorized copying,
+ * modification, distribution, or use of this software is strictly prohibited.
  *
- * @author Salah Khalfi
- * @organization Gestion Maintenance (White-Label)
- * @department Département des Technologies de l'Information
- * @description Application de gestion de maintenance pour équipements industriels
- * @version 2.0.0 - Refactored Architecture
+ * @author Salah-Eddine KHALFI
+ * @copyright 2025 Salah-Eddine KHALFI
+ * @license PROPRIETARY
+ * @version 3.0.0
  *
  * ARCHITECTURE MODULAIRE:
  * =======================
