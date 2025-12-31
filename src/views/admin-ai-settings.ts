@@ -12,7 +12,26 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
     <style>
         .setting-card { transition: all 0.2s; }
         .setting-card:focus-within { transform: scale(1.01); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
-        textarea { resize: vertical; min-height: 120px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.85rem; }
+        textarea { 
+            resize: vertical; 
+            min-height: 120px; 
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace; 
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        /* Mobile responsive */
+        @media (max-width: 640px) {
+            textarea { 
+                font-size: 0.8rem; 
+                padding: 12px !important;
+                word-break: break-word;
+            }
+            .container { padding-left: 12px; padding-right: 12px; }
+            header .container { padding-left: 8px; padding-right: 8px; }
+            header h1 { font-size: 1rem; }
+            header p { font-size: 0.65rem; }
+            .setting-card:focus-within { transform: none; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
