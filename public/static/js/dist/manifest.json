@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-31T10:35:44.603Z",
+  "generated": "2025-12-31T10:42:23.729Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -144,7 +144,7 @@
     {
       "original": "TicketDetailsModal_v3.js",
       "minified": "TicketDetailsModal_v3.min.js",
-      "savings": "44.0%"
+      "savings": "44.1%"
     },
     {
       "original": "TicketTimer.js",
