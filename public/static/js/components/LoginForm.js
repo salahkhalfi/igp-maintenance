@@ -9,9 +9,10 @@ const LoginForm = ({ onLogin }) => {
     const [isAnimating, setIsAnimating] = React.useState(true);
 
     const bannerMessages = [
-        { text: "BIENVENUE MARC", icon: "👋", color: "from-blue-500 to-indigo-600" },
-        { text: "VERSION STABILISÉE", icon: "💎", color: "from-emerald-500 to-teal-600" },
-        { text: "PRÊTE POUR VALIDATION", icon: "🚀", color: "from-violet-500 to-purple-600" }
+        { text: "INSTALLEZ L'APPLICATION", icon: "📲", color: "from-blue-500 to-indigo-600" },
+        { text: "SUR VOTRE ÉCRAN D'ACCUEIL", icon: "📱", color: "from-emerald-500 to-teal-600" },
+        { text: "RECEVEZ VOS NOTIFICATIONS", icon: "🔔", color: "from-violet-500 to-purple-600" },
+        { text: "EN TEMPS RÉEL", icon: "⚡", color: "from-amber-500 to-orange-600" }
     ];
 
     React.useEffect(() => {
