@@ -10,7 +10,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [uploadingLogo, setUploadingLogo] = React.useState(false);
     const [currentLogoUrl, setCurrentLogoUrl] = React.useState('/api/settings/logo');
     const [logoRefreshKey, setLogoRefreshKey] = React.useState(Date.now());
-    // isSuperAdmin = vendeur SaaS (salah@khalfi.com) - accès TOTAL
+    // isSuperAdmin = vendeur SaaS (salah [at] khalfi [dot] com) - accès TOTAL
     const [isSuperAdmin, setIsSuperAdmin] = React.useState(false);
     // isClientAdmin = admin entreprise cliente - accès aux paramètres de son entreprise (logo, titre, etc.)
     const [isClientAdmin, setIsClientAdmin] = React.useState(false);
@@ -163,7 +163,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         try {
             // Vérifier si l'utilisateur actuel est SUPERADMIN (vendeur SaaS)
             // IMPORTANT: isSuperAdmin vient de la DB (is_super_admin = 1)
-            // Seul le vendeur (salah@khalfi.com) a accès aux paramètres système critiques
+            // Seul le vendeur (salah [at] khalfi [dot] com) a accès aux paramètres système critiques
             // Les admins client (support@maintenance-app.com) n'ont PAS accès à ces sections
             if (currentUser && currentUser.isSuperAdmin === true) {
                 setIsSuperAdmin(true);

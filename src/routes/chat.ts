@@ -2,7 +2,7 @@
  * IGP Messenger - Chat & Messaging Module
  * 
  * Copyright © 2025 Salah-Eddine KHALFI. All rights reserved.
- * @author Salah-Eddine KHALFI <salah@khalfi.com>
+ * @author Salah-Eddine KHALFI (salah [at] khalfi [dot] com)
  * @license PROPRIETARY
  */
 
