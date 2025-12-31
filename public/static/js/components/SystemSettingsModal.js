@@ -836,11 +836,11 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                 React.createElement('i', { className: 'fas fa-industry text-teal-600 text-xl mt-1' }),
                                 React.createElement('div', { className: 'flex-1' },
                                     React.createElement('h3', { className: 'font-bold text-teal-900 mb-2 flex items-center gap-2' },
-                                        "Personnalisation Industrie",
+                                        "Exemples des formulaires",
                                         React.createElement('span', { className: 'text-xs bg-teal-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-teal-800 mb-3' },
-                                        "Personnalisez les exemples affichés dans les formulaires selon votre secteur d'activité (boulangerie, garage, hôtel...)."
+                                        "Personnalisez les textes d'aide affichés dans les formulaires de création de machines et de tickets."
                                     ),
                                     
                                     !editingPlaceholders ? React.createElement('div', { className: 'space-y-2' },
@@ -873,7 +873,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                                 type: 'text',
                                                 value: tempPlaceholders.placeholder_machine_type || '',
                                                 onChange: (e) => setTempPlaceholders({...tempPlaceholders, placeholder_machine_type: e.target.value}),
-                                                placeholder: 'Ex: Four, Pétrin, Véhicule...',
+                                                placeholder: 'Ex: Équipement, Machine CNC, Véhicule...',
                                                 className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm',
                                                 disabled: savingPlaceholders
                                             })
@@ -884,7 +884,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                                 type: 'text',
                                                 value: tempPlaceholders.placeholder_location || '',
                                                 onChange: (e) => setTempPlaceholders({...tempPlaceholders, placeholder_location: e.target.value}),
-                                                placeholder: 'Ex: Cuisine, Garage, Chambre 101...',
+                                                placeholder: 'Ex: Zone A, Atelier, Entrepôt...',
                                                 className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm',
                                                 disabled: savingPlaceholders
                                             })
@@ -895,7 +895,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                                 type: 'text',
                                                 value: tempPlaceholders.placeholder_manufacturer || '',
                                                 onChange: (e) => setTempPlaceholders({...tempPlaceholders, placeholder_manufacturer: e.target.value}),
-                                                placeholder: 'Ex: Bosch, Caterpillar, Samsung...',
+                                                placeholder: 'Ex: Marque, Fabricant...',
                                                 className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500 text-sm',
                                                 disabled: savingPlaceholders
                                             })
