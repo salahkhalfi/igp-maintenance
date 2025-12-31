@@ -71,16 +71,9 @@ const ScheduledCountdown = ({ scheduledDate }) => {
     const [countdown, setCountdown] = React.useState(() => getCountdownInfo(scheduledDate));
 
     React.useEffect(() => {
-        // Optimisation: mise à jour moins fréquente pour réduire les re-renders
-        // - Urgent (< 2h) : chaque 10 secondes
-        // - Normal : chaque 60 secondes
-        const info = getCountdownInfo(scheduledDate);
-        const isUrgent = info.isOverdue || info.className.includes('red');
-        const updateInterval = isUrgent ? 10000 : 60000;
-        
         const interval = setInterval(() => {
             setCountdown(getCountdownInfo(scheduledDate));
-        }, updateInterval);
+        }, 1000); // Mise a jour chaque seconde
 
         return () => clearInterval(interval);
     }, [scheduledDate]);
