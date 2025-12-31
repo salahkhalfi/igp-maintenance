@@ -22,7 +22,7 @@ const LoginForm = ({ onLogin }) => {
                 setBannerIndex((prev) => (prev + 1) % bannerMessages.length);
                 setIsAnimating(true);
             }, 500); // Temps de la sortie
-        }, 4000); // Temps d'affichage
+        }, 2500); // Temps d'affichage
         return () => clearInterval(interval);
     }, []);
 
