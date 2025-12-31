@@ -27,7 +27,7 @@
  *   - Messagerie (/api/messages/*) - Système de messagerie audio/texte
  *   - Alertes (/api/alerts/*) - Alertes tickets en retard
  *   - CRON (/api/cron/*) - Tâches planifiées
- *   - Frontend (/, /guide, /changelog, /test) - Pages HTML
+ *   - Frontend (/, /guide, /test) - Pages HTML
  *   - Admin HTML (/admin/roles) - Interface admin
  *
  * Middleware (src/middlewares/):
@@ -52,9 +52,7 @@ import { adminRolesHTML } from './views/admin-roles';
 import { adminAiSettingsHTML } from './views/admin-ai-settings';
 import { generateGuideHTML } from './views/guide';
 import { createConfigService } from './services/config';
-import { changelogHTML } from './views/changelog';
 import { generateHomeHTML } from './views/home';
-import { historiqueHTML } from './views/historique';
 import { tvHTML } from './views/tv';
 import { tvAdminHTML } from './views/tv-admin';
 // Dashboard V2 removed - keeping legacy dashboard
@@ -379,16 +377,6 @@ app.get('/guide', async (c) => {
   const config = createConfigService(c.env.DB);
   const baseUrl = await config.getBaseUrl();
   return c.html(generateGuideHTML(baseUrl));
-});
-
-// Route historique (redirection vers changelog)
-app.get('/historique', (c) => {
-  return c.redirect('/changelog');
-});
-
-// Route Changelog
-app.get("/changelog", (c) => {
-  return c.html(changelogHTML);
 });
 
 // Route de test simple
