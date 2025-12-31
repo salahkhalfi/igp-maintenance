@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-31T09:52:38.264Z",
+  "generated": "2025-12-31T10:23:36.825Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -114,7 +114,7 @@
     {
       "original": "ScheduledCountdown.js",
       "minified": "ScheduledCountdown.min.js",
-      "savings": "66.6%"
+      "savings": "67.9%"
     },
     {
       "original": "SecretariatModal.js",
@@ -144,7 +144,7 @@
     {
       "original": "TicketDetailsModal_v3.js",
       "minified": "TicketDetailsModal_v3.min.js",
-      "savings": "44.0%"
+      "savings": "44.1%"
     },
     {
       "original": "TicketTimer.js",
