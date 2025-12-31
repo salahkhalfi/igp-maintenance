@@ -9,7 +9,7 @@ export const tvHTML = `
     <meta name="renderer" content="software">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>Vision - Planning Live</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/locale/fr.js"></script>

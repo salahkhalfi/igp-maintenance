@@ -4,7 +4,7 @@ export const adminRolesHTML = `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Rôles - Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         .permission-card{transition:all .2s}.permission-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}.permission-checkbox:checked+label{background-color:#3b82f6;color:#fff}.role-card{transition:all .3s}.role-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.15)}.modal{display:none;position:fixed;z-index:50;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.5);animation:fadeIn .3s}.modal.active{display:flex;align-items:center;justify-content:center}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.modal-content{animation:slideUp .3s}@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
