@@ -960,7 +960,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         React.createElement('span', { className: 'text-xs bg-red-600 text-white px-2 py-1 rounded' }, 'VENDEUR')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-indigo-800 mb-2' },
-                                        "Définit l'URL de base utilisée par l'IA et les notifications pour générer des liens."
+                                        "Définit l'URL de base utilisée par l'Expert et les notifications pour générer des liens."
                                     )
                                 )
                             )
@@ -1375,14 +1375,14 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
                         React.createElement('div', { className: 'bg-green-50 border border-green-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
-                                React.createElement('i', { className: 'fas fa-brain text-green-600 text-xl mt-1' }),
+                                React.createElement('i', { className: 'fas fa-user-tie text-green-600 text-xl mt-1' }),
                                 React.createElement('div', {},
                                     React.createElement('h3', { className: 'font-bold text-green-900 mb-2 flex items-center gap-2' },
-                                        "Cerveau de l'IA & Connaissances",
+                                        "Configuration de l'Expert",
                                         React.createElement('span', { className: 'text-xs bg-purple-600 text-white px-2 py-1 rounded' }, 'NOUVEAU')
                                     ),
                                     React.createElement('p', { className: 'text-sm text-green-800 mb-2' },
-                                        "Configurez l'identité, le caractère et les connaissances techniques de l'IA."
+                                        "Configurez l'identité, le caractère et les connaissances techniques de votre Expert."
                                     ),
                                     React.createElement('div', { className: 'mt-3' },
                                         React.createElement('a', {

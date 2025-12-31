@@ -351,7 +351,7 @@ const AIChatModal = ({ isOpen, onClose, ticket }) => {
         ${processedContent}
     </div>
     <div class="footer">
-        Document généré par l'Assistant IA
+        Document généré par l'Expert
     </div>
 </body>
 </html>`;

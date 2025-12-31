@@ -745,7 +745,7 @@ export const generateGuideHTML = (baseUrl: string = 'https://example.com'): stri
         <!-- Footer -->
         <div class="glass p-6 text-center">
             <p class="text-gray-600 mb-2">Besoin d'aide supplémentaire?</p>
-            <p class="text-gray-500 text-sm">Contactez votre administrateur ou utilisez l'Expert IA <span class="btn-icon bg-purple-100 text-purple-600 inline-flex mx-1"><i class="fas fa-robot"></i></span></p>
+            <p class="text-gray-500 text-sm">Contactez votre administrateur ou utilisez l'Expert technique <span class="btn-icon bg-purple-100 text-purple-600 inline-flex mx-1"><i class="fas fa-robot"></i></span></p>
             <div class="mt-4 pt-4 border-t border-gray-200">
                 <p class="text-gray-400 text-xs">Système de Gestion © 2025 - Guide v2.0</p>
             </div>

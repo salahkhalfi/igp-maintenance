@@ -6,7 +6,7 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cerveau de l'IA - Configuration</title>
+    <title>Configuration de l'Expert - Paramètres</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -25,8 +25,8 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
                     <i class="fas fa-brain text-2xl animate-pulse"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Cerveau de l'IA</h1>
-                    <p class="text-xs text-purple-200 uppercase tracking-widest font-semibold">Configuration cognitive & Identité</p>
+                    <h1 class="text-xl font-bold tracking-tight">Configuration de l'Expert</h1>
+                    <p class="text-xs text-purple-200 uppercase tracking-widest font-semibold">Identité & Connaissances</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -47,10 +47,10 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
             <div class="flex items-start">
                 <i class="fas fa-info-circle text-blue-500 mt-1 mr-3 text-xl"></i>
                 <div>
-                    <h3 class="font-bold text-blue-800">Configuration SaaS Universelle</h3>
+                    <h3 class="font-bold text-blue-800">Personnalisation de l'Expert</h3>
                     <p class="text-sm text-blue-700 mt-1">
-                        C'est ici que vous définissez la personnalité et les connaissances de votre IA. 
-                        Modifiez ces textes pour adapter l'IA à n'importe quelle industrie (Boulangerie, Garage, Usine, etc.) sans toucher au code.
+                        C'est ici que vous définissez la personnalité et les connaissances de votre Expert technique. 
+                        Ces paramètres définissent son identité, son expertise et sa manière de communiquer.
                     </p>
                 </div>
             </div>
@@ -213,15 +213,15 @@ export const adminAiSettingsHTML = `<!DOCTYPE html>
             <section>
                 <div class="flex items-center gap-2 mb-4 pt-4 border-t border-gray-100">
                     <span class="bg-violet-100 text-violet-700 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">7</span>
-                    <h2 class="text-xl font-bold text-gray-800">Identité de l'Assistant</h2>
+                    <h2 class="text-xl font-bold text-gray-800">Identité de l'Expert</h2>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
                         <label class="block text-sm font-bold text-gray-700 mb-2 flex justify-between">
-                            <span><i class="fas fa-robot mr-2 text-violet-500"></i>Nom de l'Assistant</span>
+                            <span><i class="fas fa-user-tie mr-2 text-violet-500"></i>Nom de l'Expert</span>
                         </label>
-                        <input type="text" id="ai_expert_name" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Ex: L'Assistant IGP">
+                        <input type="text" id="ai_expert_name" class="w-full bg-slate-50 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Ex: L'Expert IGP Verre">
                     </div>
 
                     <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm setting-card">
