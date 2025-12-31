@@ -24,7 +24,7 @@ const DEFAULTS: Record<string, string> = {
   company_short_name: 'IGP',
   
   // AI defaults
-  ai_expert_name: 'L\\'Expert IGP',
+  ai_expert_name: 'Expert IGP',
   ai_whisper_context: 'Industrial maintenance context',
   
   // Timezone
