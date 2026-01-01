@@ -332,9 +332,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 setGeneratedDoc(response.data);
                 setViewMode('preview');
                 const totalTime = Math.floor((Date.now() - startTime) / 1000);
-                // Toast élégant avec info du modèle
-                const modelName = response.data.aiModel?.provider === 'deepseek' ? 'DeepSeek' : 'GPT-4o';
-                window.showToast && window.showToast(`✨ Document généré en ${totalTime}s via ${modelName}`, 'success');
+                window.showToast && window.showToast(`✨ Document prêt en ${totalTime}s`, 'success');
             } else {
                 throw new Error(response.data.error || 'Erreur');
             }
@@ -1077,7 +1075,18 @@ ${html}
                         React.createElement('i', { className: 'fas fa-file-alt text-lg sm:text-xl flex-shrink-0' }),
                         React.createElement('div', { className: 'min-w-0' },
                             React.createElement('h2', { className: 'text-base sm:text-lg font-bold truncate' }, generatedDoc.title || 'Document'),
-                            React.createElement('p', { className: 'text-xs text-emerald-100 hidden sm:block' }, 'Document généré')
+                            React.createElement('div', { className: 'flex items-center gap-2 mt-0.5' },
+                                generatedDoc.aiModel && React.createElement('span', { 
+                                    className: 'inline-flex items-center gap-1 text-[10px] font-medium bg-white/20 text-white px-1.5 py-0.5 rounded',
+                                    title: `Modèle: ${generatedDoc.aiModel.model}`
+                                },
+                                    React.createElement('i', { className: 'fas fa-microchip text-[8px]' }),
+                                    generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'GPT-4o'
+                                ),
+                                React.createElement('span', { className: 'text-[10px] text-emerald-200 hidden sm:inline' }, 
+                                    `• ${new Date(generatedDoc.generatedAt).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}`
+                                )
+                            )
                         )
                     ),
                     React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2 flex-shrink-0' },
