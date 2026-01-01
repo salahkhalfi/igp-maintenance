@@ -765,8 +765,13 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   <div class="print-footer-content">
     <strong>CONFIDENTIEL</strong> — Ce document est la propriété exclusive de ${companyName}. 
     Toute reproduction, distribution ou divulgation sans autorisation écrite est strictement interdite.
+    ${generatedDoc.aiModel ? `<br><span style="font-size: 7pt; color: #999;">Généré par IA (${generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} ${generatedDoc.aiModel.model}) le ${new Date(generatedDoc.generatedAt).toLocaleDateString('fr-CA')}</span>` : ''}
     </div>
-  </div>` : ''}
+  </div>` : `<div class="print-footer">
+  <div class="print-footer-content" style="color: #999;">
+    ${generatedDoc.aiModel ? `Document généré par IA (${generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} ${generatedDoc.aiModel.model}) le ${new Date(generatedDoc.generatedAt).toLocaleDateString('fr-CA')}` : ''}
+    </div>
+  </div>`}
 </div>
 </body></html>`;
         const w = window.open('', '_blank');
@@ -1075,7 +1080,11 @@ ${html}
                         React.createElement('i', { className: 'fas fa-file-alt text-lg sm:text-xl flex-shrink-0' }),
                         React.createElement('div', { className: 'min-w-0' },
                             React.createElement('h2', { className: 'text-base sm:text-lg font-bold truncate' }, generatedDoc.title || 'Document'),
-                            React.createElement('p', { className: 'text-xs text-emerald-100 hidden sm:block' }, 'Document généré')
+                            React.createElement('p', { className: 'text-xs text-emerald-100 hidden sm:block' }, 
+                                generatedDoc.aiModel 
+                                    ? `Généré par ${generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} (${generatedDoc.aiModel.model})`
+                                    : 'Document généré'
+                            )
                         )
                     ),
                     React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2 flex-shrink-0' },
@@ -1105,11 +1114,21 @@ ${html}
                         )
                     )
                 ),
-                // Footer
+                // Footer with AI model info
                 React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex items-center justify-between flex-shrink-0' },
-                    React.createElement('button', { onClick: newDocument, className: 'px-3 sm:px-5 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg sm:rounded-xl flex items-center gap-2' },
-                        React.createElement('i', { className: 'fas fa-plus' }),
-                        React.createElement('span', { className: 'hidden sm:inline' }, 'Nouveau')
+                    React.createElement('div', { className: 'flex items-center gap-3' },
+                        React.createElement('button', { onClick: newDocument, className: 'px-3 sm:px-5 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg sm:rounded-xl flex items-center gap-2' },
+                            React.createElement('i', { className: 'fas fa-plus' }),
+                            React.createElement('span', { className: 'hidden sm:inline' }, 'Nouveau')
+                        ),
+                        // Model badge - discrete info
+                        generatedDoc.aiModel && React.createElement('span', { 
+                            className: 'hidden md:flex items-center gap-1 text-xs text-slate-400',
+                            title: `Modèle: ${generatedDoc.aiModel.model}`
+                        },
+                            React.createElement('i', { className: 'fas fa-robot' }),
+                            generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'
+                        )
                     ),
                     React.createElement('button', { onClick: onClose, className: 'px-4 sm:px-5 py-2 text-sm font-medium text-white bg-slate-800 rounded-lg sm:rounded-xl' }, 'Fermer')
                 )

@@ -2323,7 +2323,13 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             title,
             document: aiResponse,
             generatedAt: new Date().toISOString(),
-            generatedBy: payload.full_name || payload.email
+            generatedBy: payload.full_name || payload.email,
+            // Metadata sur le modèle utilisé
+            aiModel: {
+                provider: usedProvider,
+                model: secretaryAiConfig.model,
+                toolsUsed: SECRETARY_TOOLS.length > 0
+            }
         });
         
     } catch (e: any) {
