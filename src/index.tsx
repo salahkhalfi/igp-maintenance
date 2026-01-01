@@ -59,6 +59,7 @@ import { createConfigService } from './services/config';
 import { generateHomeHTML } from './views/home';
 import { tvHTML } from './views/tv';
 import { tvAdminHTML } from './views/tv-admin';
+import { generateQRCodesHTML } from './views/qr-codes';
 // Dashboard V2 removed - keeping legacy dashboard
 import auth from './routes/auth';
 import tickets from './routes/tickets';
@@ -329,6 +330,90 @@ app.get('/messenger', async (c) => {
 app.get('/tv.html', (c) => c.html(tvHTML));
 app.get('/tv', (c) => c.html(tvHTML)); // Alias pour flexibilité
 
+// ============================================
+// QR CODE ROUTES - Machine Quick Access
+// ============================================
+
+/**
+ * GET /m/:id - Quick access to machine via QR code scan
+ * Redirects to main app with machine modal open
+ * If machine doesn't exist, shows friendly error
+ */
+app.get('/m/:id', async (c) => {
+  const id = c.req.param('id');
+  const machineId = parseInt(id, 10);
+  
+  // Validate ID is a number
+  if (isNaN(machineId)) {
+    return c.html(`
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>QR Code Invalide</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f3f4f6; }
+          .card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+          .icon { font-size: 3rem; margin-bottom: 1rem; }
+          h1 { color: #dc2626; margin: 0 0 0.5rem; font-size: 1.5rem; }
+          p { color: #6b7280; margin: 0 0 1.5rem; }
+          a { display: inline-block; background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500; }
+          a:hover { background: #2563eb; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="icon">❌</div>
+          <h1>QR Code Invalide</h1>
+          <p>Ce QR code ne correspond pas à une machine valide.</p>
+          <a href="/">Retour à l'accueil</a>
+        </div>
+      </body>
+      </html>
+    `, 400);
+  }
+  
+  // Check if machine exists
+  const machine = await c.env.DB.prepare(
+    'SELECT id, machine_type, model FROM machines WHERE id = ? AND deleted_at IS NULL'
+  ).bind(machineId).first();
+  
+  if (!machine) {
+    return c.html(`
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Machine Non Trouvée</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f3f4f6; }
+          .card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
+          .icon { font-size: 3rem; margin-bottom: 1rem; }
+          h1 { color: #f59e0b; margin: 0 0 0.5rem; font-size: 1.5rem; }
+          p { color: #6b7280; margin: 0 0 1.5rem; }
+          a { display: inline-block; background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500; }
+          a:hover { background: #2563eb; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="icon">🔍</div>
+          <h1>Machine Non Trouvée</h1>
+          <p>Cette machine n'existe plus ou a été supprimée du système.</p>
+          <a href="/">Retour à l'accueil</a>
+        </div>
+      </body>
+      </html>
+    `, 404);
+  }
+  
+  // Redirect to main app with createTicket and machineId pre-selected
+  // This opens the ticket creation form with the machine already selected
+  return c.redirect(`/?createTicket=true&machineId=${machineId}`);
+});
+
 // Page d'administration TV (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/tv', (c) => c.html(tvAdminHTML));
 
@@ -342,6 +427,30 @@ app.get('/admin/roles', async (c) => {
 // Page d'administration du Cerveau IA (accessible sans auth serveur, auth gérée par JS)
 app.get('/admin/ai-settings', async (c) => {
   return c.html(adminAiSettingsHTML);
+});
+
+/**
+ * GET /qr-codes - Generate printable QR codes for all machines
+ * Auth handled by JS client (redirect to / if no token)
+ */
+app.get('/qr-codes', async (c) => {
+  try {
+    const config = createConfigService(c.env.DB);
+    const baseUrl = await config.getBaseUrl();
+    
+    // Get all active machines
+    const { results: machines } = await c.env.DB.prepare(`
+      SELECT id, machine_type, model, location, serial_number
+      FROM machines
+      WHERE deleted_at IS NULL
+      ORDER BY machine_type, model
+    `).all();
+    
+    return c.html(generateQRCodesHTML(machines as any[] || [], baseUrl));
+  } catch (error) {
+    console.error('QR codes generation error:', error);
+    return c.text('Erreur lors de la génération des QR codes', 500);
+  }
 });
 
 // Dashboard V2 - Nouveau dashboard moderne (Phase 2A)
