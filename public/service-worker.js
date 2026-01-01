@@ -299,17 +299,36 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification.data || {};
   const action = event.action || notificationData.action; 
   
+  // DEBUG: Log notification data for troubleshooting
+  console.log('[SW] Action:', action);
+  console.log('[SW] Notification data:', JSON.stringify(notificationData));
+  console.log('[SW] ticketId:', notificationData.ticketId, 'type:', typeof notificationData.ticketId);
+  console.log('[SW] ticket_id:', notificationData.ticket_id, 'type:', typeof notificationData.ticket_id);
+  
   let urlToOpen = notificationData.url || '/';
   
   if (notificationData.conversationId) {
     urlToOpen = `/messenger?conversationId=${notificationData.conversationId}`;
   }
-  else if ((action === 'view_ticket' || action === 'view') && (notificationData.ticketId || notificationData.ticket_id)) {
-    const tid = notificationData.ticketId || notificationData.ticket_id;
-    urlToOpen = `/?ticket=${tid}`;
+  else if ((action === 'view_ticket' || action === 'view') && (notificationData.ticketId || notificationData.url)) {
+    // FIX: Prioritize ticketId (numeric), then use pre-built url from server
+    if (notificationData.ticketId) {
+      urlToOpen = `/?ticket=${notificationData.ticketId}`;
+    } else if (notificationData.url) {
+      urlToOpen = notificationData.url;
+    }
+    console.log('[SW] View ticket URL:', urlToOpen);
   }
-  else if (action === 'acknowledge' && notificationData.ticketId) {
-    urlToOpen = `/?ticket=${notificationData.ticketId}&auto_action=acknowledge`;
+  else if (action === 'acknowledge' && (notificationData.ticketId || notificationData.url)) {
+    // FIX: Use ticketId if available, otherwise extract from url, or fallback to url directly
+    const ackTicketId = notificationData.ticketId;
+    if (ackTicketId) {
+      urlToOpen = `/?ticket=${ackTicketId}&auto_action=acknowledge`;
+    } else if (notificationData.url) {
+      // url is already /?ticket=123, just add auto_action
+      urlToOpen = notificationData.url + (notificationData.url.includes('?') ? '&' : '?') + 'auto_action=acknowledge';
+    }
+    console.log('[SW] Acknowledge URL:', urlToOpen);
   }
   else if (action === 'new_audio_message' && notificationData.messageId) {
     urlToOpen = `/?openAudioMessage=${notificationData.messageId}&sender=${notificationData.senderId}`;
