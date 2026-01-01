@@ -1251,13 +1251,10 @@ ${html}
                                         '🚀 Presque terminé...'
                                     )
                                 ),
-                                // Indicateur moteur IA
-                                React.createElement('div', { className: 'hidden sm:flex flex-col items-end gap-1' },
-                                    React.createElement('span', { className: 'text-[10px] uppercase tracking-wider text-slate-400 font-medium' }, 'Moteur IA'),
-                                    React.createElement('span', { className: 'text-xs font-semibold text-indigo-600 flex items-center gap-1' },
-                                        React.createElement('i', { className: 'fas fa-microchip' }),
-                                        'DeepSeek / GPT-4o'
-                                    )
+                                // Indicateur IA actif (sans spécifier le modèle - on ne le sait pas encore)
+                                React.createElement('div', { className: 'hidden sm:flex items-center gap-2 px-2 py-1 bg-white/80 rounded-lg border border-blue-100' },
+                                    React.createElement('div', { className: 'w-2 h-2 rounded-full bg-green-500 animate-pulse' }),
+                                    React.createElement('span', { className: 'text-xs font-medium text-slate-600' }, 'IA active')
                                 )
                             ),
                             // Barre de progression stylisée
@@ -1479,13 +1476,10 @@ ${html}
                                         '🚀 Presque terminé...'
                                     )
                                 ),
-                                // Indicateur moteur IA (desktop only)
-                                React.createElement('div', { className: 'hidden sm:flex flex-col items-end gap-1' },
-                                    React.createElement('span', { className: 'text-[10px] uppercase tracking-wider text-slate-400 font-medium' }, 'Moteur IA'),
-                                    React.createElement('span', { className: 'text-xs font-semibold text-indigo-600 flex items-center gap-1' },
-                                        React.createElement('i', { className: 'fas fa-microchip' }),
-                                        'DeepSeek / GPT-4o'
-                                    )
+                                // Indicateur IA actif (sans spécifier le modèle - on ne le sait pas encore)
+                                React.createElement('div', { className: 'hidden sm:flex items-center gap-2 px-2 py-1 bg-white/80 rounded-lg border border-blue-100' },
+                                    React.createElement('div', { className: 'w-2 h-2 rounded-full bg-green-500 animate-pulse' }),
+                                    React.createElement('span', { className: 'text-xs font-medium text-slate-600' }, 'IA active')
                                 )
                             ),
                             // Barre de progression stylisée
