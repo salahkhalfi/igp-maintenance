@@ -323,6 +323,14 @@ const MachineManagementModal = ({ show, onClose, currentUser, machines, onRefres
                         }, 
                             React.createElement("i", { className: "fas fa-exchange-alt" }),
                             "Import / Export"
+                        ),
+                        React.createElement("button", {
+                            onClick: () => window.open('/qr-codes', '_blank'),
+                            className: "px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2",
+                            title: "Générer et imprimer les QR codes pour toutes les machines"
+                        }, 
+                            React.createElement("i", { className: "fas fa-qrcode" }),
+                            "QR Codes"
                         )
                     ) : null,
                     React.createElement("div", { className: "relative flex-1" },
