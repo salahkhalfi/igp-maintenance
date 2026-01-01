@@ -225,7 +225,7 @@ machinesRoute.delete('/:id', adminOnly, zValidator('param', machineIdParamSchema
     const ticketCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(tickets)
-      .where(sql`${tickets.machine_id} = ${id} AND ${tickets.deleted_at} IS NULL`)
+      .where(and(eq(tickets.machine_id, id), sql`${tickets.deleted_at} IS NULL`))
       .get();
 
     if (ticketCount && ticketCount.count > 0) {
