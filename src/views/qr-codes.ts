@@ -242,27 +242,78 @@ export function generateQRCodesHTML(machines: Machine[], baseUrl: string): strin
   `}
   
   <script>
-    // Generate QR codes for each machine
+    // Generate QR codes for each machine with company logo overlay
     const baseUrl = '${baseUrl}';
     const machineIds = ${JSON.stringify(machineIds)};
     
-    machineIds.forEach(id => {
-      const container = document.getElementById('qr-' + id);
-      if (container) {
-        QRCode.toCanvas(baseUrl + '/m/' + id, {
-          width: 150,
-          margin: 1,
-          color: {
-            dark: '#1f2937',
-            light: '#ffffff'
-          }
-        }, function(error, canvas) {
-          if (!error) {
-            container.appendChild(canvas);
-          }
-        });
+    // Load company logo first
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    let logoLoaded = false;
+    
+    logo.onload = function() {
+      logoLoaded = true;
+      generateAllQRCodes();
+    };
+    
+    logo.onerror = function() {
+      // Logo failed to load, generate QR codes without logo
+      console.log('Logo not available, generating QR codes without logo');
+      generateAllQRCodes();
+    };
+    
+    // Try to load company logo
+    logo.src = '/api/settings/logo';
+    
+    // Fallback: if logo doesn't load in 2 seconds, proceed without it
+    setTimeout(() => {
+      if (!logoLoaded) {
+        generateAllQRCodes();
       }
-    });
+    }, 2000);
+    
+    let qrGenerated = false;
+    
+    function generateAllQRCodes() {
+      if (qrGenerated) return; // Prevent double generation
+      qrGenerated = true;
+      
+      machineIds.forEach(id => {
+        const container = document.getElementById('qr-' + id);
+        if (container) {
+          // Use error correction level H (30%) to allow logo overlay
+          QRCode.toCanvas(baseUrl + '/m/' + id, {
+            width: 150,
+            margin: 1,
+            errorCorrectionLevel: 'H',
+            color: {
+              dark: '#1f2937',
+              light: '#ffffff'
+            }
+          }, function(error, canvas) {
+            if (!error) {
+              // If logo loaded, overlay it on the QR code
+              if (logoLoaded && logo.complete && logo.naturalWidth > 0) {
+                const ctx = canvas.getContext('2d');
+                const logoSize = canvas.width * 0.25; // Logo = 25% of QR code size
+                const logoX = (canvas.width - logoSize) / 2;
+                const logoY = (canvas.height - logoSize) / 2;
+                
+                // Draw white background circle for logo
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, logoSize / 2 + 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                
+                // Draw logo
+                ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+              }
+              container.appendChild(canvas);
+            }
+          });
+        }
+      });
+    }
   </script>
 </body>
 </html>`;
