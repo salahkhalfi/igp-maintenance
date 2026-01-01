@@ -17,17 +17,24 @@ export interface Machine {
 }
 
 export function generateQRCodesHTML(machines: Machine[], baseUrl: string): string {
-  const machineCards = machines.map(machine => {
+  const totalMachines = machines.length;
+  
+  const machineCards = machines.map((machine, index) => {
     const label = machine.machine_type + (machine.model ? ` ${machine.model}` : '');
     const location = machine.location || 'Emplacement non défini';
     const qrUrl = `${baseUrl}/m/${machine.id}`;
+    
+    // Afficher le numéro de série si disponible, sinon le numéro séquentiel
+    const displayId = machine.serial_number 
+      ? `SN: ${machine.serial_number}` 
+      : `#${index + 1}`;
     
     return `
       <div class="qr-card">
         <div class="qr-code" id="qr-${machine.id}"></div>
         <div class="qr-label">${escapeHtml(label)}</div>
         <div class="qr-location">${escapeHtml(location)}</div>
-        <div class="qr-id">#${machine.id}</div>
+        <div class="qr-id">${escapeHtml(displayId)}</div>
       </div>
     `;
   }).join('');
