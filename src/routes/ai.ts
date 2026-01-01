@@ -1033,29 +1033,20 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
         let machinesSummary = "Indisponible.";
         let usersSummary = "Indisponible.";
         let planningSummary = "Indisponible.";
+        
+        // Kanban columns - defined OUTSIDE try block to ensure availability for prompt building
+        // Default fallback matches preferences.ts defaults
+        let kanbanColumns: Array<{id: string, title: string}> = [
+            { id: 'received', title: 'Nouveau' },
+            { id: 'diagnostic', title: 'En Diagnostic' },
+            { id: 'waiting_parts', title: 'En Attente Pièces' },
+            { id: 'in_progress', title: 'En Cours' },
+            { id: 'completed', title: 'Terminé' },
+            { id: 'archived', title: 'Archivé' }
+        ];
 
         try {
-            // Load Kanban Columns Customization
-            // Try to find user preferences first (if applicable) or system default
-            // Since this is AI context, we should probably look for a system-wide setting or a common convention.
-            // However, Kanban columns are often stored in 'user_preferences' with key 'kanban_columns'.
-            // The AI acts as a general agent, so it should probably know the "standard" flow.
-            // Let's check system_settings for a global override or default.
-            
-            // NOTE: Currently, kanban_columns are stored in `user_preferences`.
-            // There is no `system_settings` key for this yet in the provided code (preferences.ts uses a hardcoded default if not found).
-            // Strategy: We will fetch the hardcoded default map here to match `preferences.ts` logic 
-            // OR if we want to be dynamic, we need to know WHICH user's columns to use. 
-            // Since AI serves the current user, we could look up THEIR preferences.
-            
-            let kanbanColumns = [
-                { id: 'received', title: 'Nouveau' },
-                { id: 'diagnostic', title: 'En Diagnostic' },
-                { id: 'waiting_parts', title: 'En Attente Pièces' },
-                { id: 'in_progress', title: 'En Cours' },
-                { id: 'completed', title: 'Terminé' },
-                { id: 'archived', title: 'Archivé' }
-            ];
+            // Load Kanban Columns Customization from user preferences
 
             // Attempt to fetch user-specific column names
             if (userId) {
