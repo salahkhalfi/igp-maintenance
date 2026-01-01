@@ -71,12 +71,12 @@ export const TOOLS: ToolDefinition[] = [
         type: "function",
         function: {
             name: "search_tickets",
-            description: "Rechercher des tickets. IMPORTANT: Pour 'les tickets de [Nom]', utilise le paramètre 'user' qui cherche TOUS les tickets liés à cette personne (créés OU assignés). PEUT être utilisé avec status SEUL pour lister tous les tickets d'une colonne.",
+            description: "Rechercher des tickets. IMPORTANT: Pour 'les tickets de [Nom]', utilise le paramètre 'user' qui cherche TOUS les tickets liés à cette personne (créés OU assignés). PEUT être utilisé avec status SEUL pour lister tous les tickets d'une colonne Kanban.",
             parameters: {
                 type: "object",
                 properties: {
                     query: { type: "string", description: "Mots-clés (titre, description, ou nom de fichier joint)" },
-                    status: { type: "string", description: "Filtrer par statut/colonne. MAPPING: 'Requête reçue'='received', 'Diagnostic'='diagnostic', 'En cours'='in_progress', 'Attente pièces'='waiting_parts', 'Terminé'='completed', 'Archivé'='archived'. Utilise TOUJOURS l'ID anglais (received, diagnostic, etc.)" },
+                    status: { type: "string", description: "Filtrer par statut/colonne Kanban. Utilise l'ID du statut (voir COLONNES KANBAN dans le contexte système)." },
                     user: { type: "string", description: "RECOMMANDÉ: Nom d'une personne pour trouver TOUS ses tickets (créés OU assignés). Ex: 'Brahim' retourne tous les tickets où Brahim est créateur ou assigné." },
                     technician: { type: "string", description: "Filtrer uniquement les tickets ASSIGNÉS à ce technicien" },
                     creator: { type: "string", description: "Filtrer uniquement les tickets CRÉÉS par cette personne" },

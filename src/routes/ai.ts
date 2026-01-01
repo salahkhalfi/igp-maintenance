@@ -1363,6 +1363,9 @@ CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analy
 `;
         }
 
+        // Build dynamic Kanban columns summary for AI context
+        const kanbanColumnsSummary = kanbanColumns.map(col => `${col.id} = "${col.title}"`).join(', ');
+
         let systemPrompt = `
 ${aiConfig.identity}
 
@@ -1372,6 +1375,7 @@ ${documentPromptBlock}
 --- 1. CONTEXTE OPÉRATIONNEL ---
 - UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})${currentUserAiContext ? `\n- PROFIL UTILISATEUR : ${currentUserAiContext}` : ''}
 - SERVEUR (BASE URL) : ${baseUrl}
+- COLONNES KANBAN (pour search_tickets status) : ${kanbanColumnsSummary}
 - PLANNING AUJOURD'HUI : ${planningSummary}
 - HISTORIQUE RÉCENT :
 ${userHistory}
