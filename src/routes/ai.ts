@@ -1080,7 +1080,12 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
             usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login, ai_context: users.ai_context }).from(users).where(sql`deleted_at IS NULL`).all() || [];
             activeTickets = await db.select({
                 id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
-            }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), sql`deleted_at IS NULL`)).all() || [];
+            }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), isNull(tickets.deleted_at))).all() || [];
+            
+            console.log(`🎫 [AI Chat] Active tickets found: ${activeTickets.length} (excluded closed statuses: ${closedStatuses.join(', ')})`);
+            if (activeTickets.length > 0) {
+                console.log(`🎫 [AI Chat] Tickets: ${activeTickets.map((t: any) => `${t.display_id}(${t.status})`).join(', ')}`);
+            }
 
             const mediaMap = new Map<number, string[]>();
             const commentMap = new Map<number, number>();
@@ -1358,16 +1363,31 @@ CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analy
         // Build dynamic Kanban columns summary for AI context
         const kanbanColumnsSummary = kanbanColumns.map(col => `${col.id} = "${col.title}"`).join(', ');
 
+        // Build active tickets summary for context
+        const ticketsByStatus: Record<string, any[]> = {};
+        activeTickets.forEach((t: any) => {
+            const statusLabel = kanbanColumns.find(c => c.id === t.status)?.title || t.status;
+            if (!ticketsByStatus[statusLabel]) ticketsByStatus[statusLabel] = [];
+            ticketsByStatus[statusLabel].push(t);
+        });
+        const activeTicketsSummary = activeTickets.length > 0 
+            ? `${activeTickets.length} ticket(s) actif(s):\n${Object.entries(ticketsByStatus).map(([status, tix]) => `  - ${status}: ${tix.length} (${tix.map((t: any) => t.display_id).join(', ')})`).join('\n')}`
+            : "Aucun ticket actif.";
+
         let systemPrompt = `
 ${aiConfig.identity}
 
 ${ticketContextBlock}
 ${documentPromptBlock}
 
---- 1. CONTEXTE OPÉRATIONNEL ---
+--- 1. CONTEXTE OPÉRATIONNEL (DONNÉES EN TEMPS RÉEL) ---
 - UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})${currentUserAiContext ? `\n- PROFIL UTILISATEUR : ${currentUserAiContext}` : ''}
 - SERVEUR (BASE URL) : ${baseUrl}
 - COLONNES KANBAN (pour search_tickets status) : ${kanbanColumnsSummary}
+
+⚠️ **TICKETS ACTIFS (SOURCE DE VÉRITÉ)** :
+${activeTicketsSummary}
+
 - PLANNING AUJOURD'HUI : ${planningSummary}
 - HISTORIQUE RÉCENT :
 ${userHistory}
@@ -1383,11 +1403,11 @@ ${aiConfig.hierarchy}
 ${aiConfig.character}
 ${aiConfig.knowledge}
 
---- 2. DIRECTIVES STRATÉGIQUES ---
-1. **EXPERTISE TECHNIQUE PRIORITAIRE** : Pour toute question liée à la maintenance, aux machines, aux tickets ou aux opérations → utilise ton expertise technique complète. Sois précis, proactif, et utilise les outils disponibles.
-2. **SOURCE DE VÉRITÉ** : Utilise les outils (search_tickets, check_machine) pour vérifier les faits non présents dans le contexte.
-3. **INTÉGRITÉ** : N'invente jamais de données opérationnelles. Si un outil retourne "null", dis "inconnu".
-4. **FLEXIBILITÉ CRÉATIVE** : Pour les demandes NON liées à la maintenance (rédaction, conseils généraux, documents, questions diverses) → tu peux répondre librement en utilisant tes connaissances générales et l'identité de l'entreprise. Tu n'es pas limité aux données de maintenance.
+--- 2. DIRECTIVES STRATÉGIQUES (OBLIGATOIRES) ---
+1. **DONNÉES OPÉRATIONNELLES = UTILISE LES OUTILS** : Pour toute question sur les tickets, machines, techniciens → UTILISE OBLIGATOIREMENT les outils (search_tickets, check_database_stats, etc.). NE RÉPONDS JAMAIS avec des données inventées.
+2. **SOURCE DE VÉRITÉ UNIQUE** : Les données ci-dessus sont le contexte actuel. Pour les détails, UTILISE les outils.
+3. **⚠️ INTÉGRITÉ ABSOLUE** : N'invente JAMAIS de chiffres, de noms, ou de données opérationnelles. Si tu ne peux pas vérifier, dis "Je n'ai pas cette information, voulez-vous que je recherche ?".
+4. **FLEXIBILITÉ CRÉATIVE** : Pour les demandes NON liées à la maintenance (rédaction, conseils généraux) → tu peux répondre librement.
 
 --- 3. RÈGLES TECHNIQUES & FORMATAGE (OBLIGATOIRES) ---
 
