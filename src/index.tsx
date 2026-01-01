@@ -246,6 +246,9 @@ app.use('/api/push/unsubscribe', authMiddleware);
 app.use('/api/push/test', authMiddleware);
 app.use('/api/push/verify-subscription', authMiddleware);
 app.use('/api/push/vapid-public-key', authMiddleware);
+// Endpoints de debug - protégés (admin vérifié dans le handler)
+app.use('/api/push/test-user/*', authMiddleware);
+app.use('/api/push/diagnose/*', authMiddleware);
 
 // Enregistrer les routes push (send-test-to-salah sera accessible sans auth)
 app.route('/api/push', push);

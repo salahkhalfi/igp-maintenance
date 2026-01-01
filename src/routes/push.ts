@@ -680,11 +680,20 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
  */
 push.get('/diagnose/:query', async (c) => {
   try {
+    // Vérification admin/supervisor (endpoint de debug sensible)
+    const currentUser = c.get('user') as any;
+    if (!currentUser || !currentUser.userId) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+    if (currentUser.role !== 'admin' && currentUser.role !== 'supervisor') {
+      return c.json({ error: 'Accès refusé - Admin ou Superviseur requis' }, 403);
+    }
+
     const query = c.req.param('query');
     const sendTest = c.req.query('send') === 'true';
     const db = c.env.DB;
     
-    console.log(`[PUSH-DIAGNOSE] Searching for: ${query}`);
+    console.log(`[PUSH-DIAGNOSE] Admin ${currentUser.email} diagnosing: ${query}`);
 
     // 1. Trouver l'utilisateur
     let user;
