@@ -1334,8 +1334,9 @@ settings.post('/import/preview', authMiddleware, adminOnly, async (c) => {
           if (existing) matchType = 'série';
         }
         
-        // Recherche par clé composite si pas de série
-        if (!existing && !serial) {
+        // Recherche par clé composite si pas trouvé par série (ou pas de série)
+        // Permet d'ajouter un numéro de série à une machine existante
+        if (!existing) {
           existing = await db
             .select({ id: machines.id, machine_type: machines.machine_type, model: machines.model })
             .from(machines)
@@ -1668,13 +1669,12 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
           if (existing) matchedBy = 'serial';
         }
         
-        // STRATÉGIE 2 : Si pas de SERIE → chercher par clé composite TYPE+MODELE+LIEU
-        if (!existing && !serialNumber) {
-          const compositeKey = generateCompositeKey(machineType, model, location);
-          
+        // STRATÉGIE 2 : Si pas trouvé par SERIE (ou pas de série) → chercher par clé composite TYPE+MODELE+LIEU
+        // Cela permet d'ajouter un numéro de série à une machine existante qui n'en avait pas
+        if (!existing) {
           // Recherche par clé composite (case-insensitive)
           existing = await db
-            .select({ id: machines.id })
+            .select({ id: machines.id, serial_number: machines.serial_number })
             .from(machines)
             .where(sql`
               LOWER(TRIM(${machines.machine_type})) = ${machineType.toLowerCase().trim()}
