@@ -1,5 +1,5 @@
 {
-  "generated": "2026-01-01T15:40:35.029Z",
+  "generated": "2026-01-01T15:49:26.864Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -119,7 +119,7 @@
     {
       "original": "SecretariatModal.js",
       "minified": "SecretariatModal.min.js",
-      "savings": "37.6%"
+      "savings": "38.1%"
     },
     {
       "original": "SystemSettingsModal.js",

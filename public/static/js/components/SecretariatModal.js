@@ -332,7 +332,9 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 setGeneratedDoc(response.data);
                 setViewMode('preview');
                 const totalTime = Math.floor((Date.now() - startTime) / 1000);
-                window.showToast && window.showToast(`Document généré en ${totalTime}s`, 'success');
+                // Toast élégant avec info du modèle
+                const modelName = response.data.aiModel?.provider === 'deepseek' ? 'DeepSeek' : 'GPT-4o';
+                window.showToast && window.showToast(`✨ Document généré en ${totalTime}s via ${modelName}`, 'success');
             } else {
                 throw new Error(response.data.error || 'Erreur');
             }
@@ -765,13 +767,8 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   <div class="print-footer-content">
     <strong>CONFIDENTIEL</strong> — Ce document est la propriété exclusive de ${companyName}. 
     Toute reproduction, distribution ou divulgation sans autorisation écrite est strictement interdite.
-    ${generatedDoc.aiModel ? `<br><span style="font-size: 7pt; color: #999;">Généré par IA (${generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} ${generatedDoc.aiModel.model}) le ${new Date(generatedDoc.generatedAt).toLocaleDateString('fr-CA')}</span>` : ''}
     </div>
-  </div>` : `<div class="print-footer">
-  <div class="print-footer-content" style="color: #999;">
-    ${generatedDoc.aiModel ? `Document généré par IA (${generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} ${generatedDoc.aiModel.model}) le ${new Date(generatedDoc.generatedAt).toLocaleDateString('fr-CA')}` : ''}
-    </div>
-  </div>`}
+  </div>` : ''}
 </div>
 </body></html>`;
         const w = window.open('', '_blank');
@@ -1080,11 +1077,7 @@ ${html}
                         React.createElement('i', { className: 'fas fa-file-alt text-lg sm:text-xl flex-shrink-0' }),
                         React.createElement('div', { className: 'min-w-0' },
                             React.createElement('h2', { className: 'text-base sm:text-lg font-bold truncate' }, generatedDoc.title || 'Document'),
-                            React.createElement('p', { className: 'text-xs text-emerald-100 hidden sm:block' }, 
-                                generatedDoc.aiModel 
-                                    ? `Généré par ${generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'} (${generatedDoc.aiModel.model})`
-                                    : 'Document généré'
-                            )
+                            React.createElement('p', { className: 'text-xs text-emerald-100 hidden sm:block' }, 'Document généré')
                         )
                     ),
                     React.createElement('div', { className: 'flex items-center gap-1 sm:gap-2 flex-shrink-0' },
@@ -1114,21 +1107,11 @@ ${html}
                         )
                     )
                 ),
-                // Footer with AI model info
+                // Footer
                 React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex items-center justify-between flex-shrink-0' },
-                    React.createElement('div', { className: 'flex items-center gap-3' },
-                        React.createElement('button', { onClick: newDocument, className: 'px-3 sm:px-5 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg sm:rounded-xl flex items-center gap-2' },
-                            React.createElement('i', { className: 'fas fa-plus' }),
-                            React.createElement('span', { className: 'hidden sm:inline' }, 'Nouveau')
-                        ),
-                        // Model badge - discrete info
-                        generatedDoc.aiModel && React.createElement('span', { 
-                            className: 'hidden md:flex items-center gap-1 text-xs text-slate-400',
-                            title: `Modèle: ${generatedDoc.aiModel.model}`
-                        },
-                            React.createElement('i', { className: 'fas fa-robot' }),
-                            generatedDoc.aiModel.provider === 'deepseek' ? 'DeepSeek' : 'OpenAI'
-                        )
+                    React.createElement('button', { onClick: newDocument, className: 'px-3 sm:px-5 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg sm:rounded-xl flex items-center gap-2' },
+                        React.createElement('i', { className: 'fas fa-plus' }),
+                        React.createElement('span', { className: 'hidden sm:inline' }, 'Nouveau')
                     ),
                     React.createElement('button', { onClick: onClose, className: 'px-4 sm:px-5 py-2 text-sm font-medium text-white bg-slate-800 rounded-lg sm:rounded-xl' }, 'Fermer')
                 )
@@ -1242,29 +1225,46 @@ ${html}
                     
                     // Footer mode universel
                     React.createElement('div', { className: 'px-4 sm:px-6 py-3 sm:py-4 bg-white border-t flex-shrink-0' },
-                        // Message de durée pendant la génération avec barre de progression
-                        isGenerating && React.createElement('div', { className: 'mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2' },
-                            React.createElement('div', { className: 'flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center' },
-                                React.createElement('i', { className: 'fas fa-robot text-blue-600 fa-beat' })
-                            ),
-                            React.createElement('div', { className: 'flex-1 min-w-0' },
-                                React.createElement('p', { className: 'text-sm font-medium text-blue-800' }, 
-                                    `Génération en cours... ${generationTime}s`
+                        // Message de durée pendant la génération avec barre de progression et info modèle
+                        isGenerating && React.createElement('div', { className: 'mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl' },
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                // Icône animée
+                                React.createElement('div', { className: 'flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200' },
+                                    React.createElement('i', { className: 'fas fa-brain text-white fa-beat-fade' })
                                 ),
-                                React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    generationTime < 10 ? 'L\'Agent IGP analyse votre demande...' :
-                                    generationTime < 25 ? 'Rédaction du document en cours...' :
-                                    generationTime < 45 ? 'Génération détaillée, merci de patienter...' :
-                                    generationTime < 70 ? 'Document complexe, encore quelques instants...' :
-                                    generationTime < 90 ? 'Finalisation et mise en forme...' :
-                                    'Presque terminé, veuillez patienter...'
+                                React.createElement('div', { className: 'flex-1 min-w-0' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('p', { className: 'text-sm font-semibold text-blue-900' }, 
+                                            `Génération en cours`
+                                        ),
+                                        React.createElement('span', { className: 'text-xs font-mono bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded' }, 
+                                            `${generationTime}s`
+                                        )
+                                    ),
+                                    React.createElement('p', { className: 'text-xs text-blue-600 mt-0.5' }, 
+                                        generationTime < 5 ? '🔍 Analyse de votre demande...' :
+                                        generationTime < 12 ? '🧠 Sélection du modèle IA optimal...' :
+                                        generationTime < 25 ? '✍️ Rédaction par l\'assistant IA...' :
+                                        generationTime < 45 ? '📝 Structuration du document...' :
+                                        generationTime < 70 ? '🎨 Mise en forme professionnelle...' :
+                                        generationTime < 90 ? '✨ Révision et finition...' :
+                                        '🚀 Presque terminé...'
+                                    )
+                                ),
+                                // Indicateur moteur IA
+                                React.createElement('div', { className: 'hidden sm:flex flex-col items-end gap-1' },
+                                    React.createElement('span', { className: 'text-[10px] uppercase tracking-wider text-slate-400 font-medium' }, 'Moteur IA'),
+                                    React.createElement('span', { className: 'text-xs font-semibold text-indigo-600 flex items-center gap-1' },
+                                        React.createElement('i', { className: 'fas fa-microchip' }),
+                                        'DeepSeek / GPT-4o'
+                                    )
                                 )
                             ),
-                            // Barre de progression visuelle (sur 120 secondes)
-                            React.createElement('div', { className: 'w-24 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                            // Barre de progression stylisée
+                            React.createElement('div', { className: 'mt-2 h-1 bg-blue-100 rounded-full overflow-hidden' },
                                 React.createElement('div', { 
-                                    className: 'h-full bg-blue-500 transition-all duration-1000',
-                                    style: { width: `${Math.min(generationTime / 120 * 100, 95)}%` }
+                                    className: 'h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 rounded-full',
+                                    style: { width: `${Math.min(generationTime / 90 * 100, 95)}%` }
                                 })
                             )
                         ),
@@ -1453,29 +1453,46 @@ ${html}
 
                     // Footer avec indicateur de progression
                     React.createElement('div', { className: 'px-3 sm:px-4 py-3 bg-white border-t flex-shrink-0' },
-                        // Indicateur de progression pendant la génération
-                        isGenerating && React.createElement('div', { className: 'mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2' },
-                            React.createElement('div', { className: 'flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center' },
-                                React.createElement('i', { className: 'fas fa-robot text-blue-600 fa-beat' })
-                            ),
-                            React.createElement('div', { className: 'flex-1 min-w-0' },
-                                React.createElement('p', { className: 'text-sm font-medium text-blue-800' }, 
-                                    `Génération en cours... ${generationTime}s`
+                        // Indicateur de progression pendant la génération avec info modèle
+                        isGenerating && React.createElement('div', { className: 'mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl' },
+                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                // Icône animée
+                                React.createElement('div', { className: 'flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200' },
+                                    React.createElement('i', { className: 'fas fa-brain text-white fa-beat-fade' })
                                 ),
-                                React.createElement('p', { className: 'text-xs text-blue-600' }, 
-                                    generationTime < 10 ? 'L\'Agent IGP analyse votre demande...' :
-                                    generationTime < 25 ? 'Rédaction du document en cours...' :
-                                    generationTime < 45 ? 'Génération détaillée, merci de patienter...' :
-                                    generationTime < 70 ? 'Document complexe, encore quelques instants...' :
-                                    generationTime < 90 ? 'Finalisation et mise en forme...' :
-                                    'Presque terminé, veuillez patienter...'
+                                React.createElement('div', { className: 'flex-1 min-w-0' },
+                                    React.createElement('div', { className: 'flex items-center gap-2' },
+                                        React.createElement('p', { className: 'text-sm font-semibold text-blue-900' }, 
+                                            `Génération en cours`
+                                        ),
+                                        React.createElement('span', { className: 'text-xs font-mono bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded' }, 
+                                            `${generationTime}s`
+                                        )
+                                    ),
+                                    React.createElement('p', { className: 'text-xs text-blue-600 mt-0.5' }, 
+                                        generationTime < 5 ? '🔍 Analyse de votre demande...' :
+                                        generationTime < 12 ? '🧠 Sélection du modèle IA optimal...' :
+                                        generationTime < 25 ? '✍️ Rédaction par l\'assistant IA...' :
+                                        generationTime < 45 ? '📝 Structuration du document...' :
+                                        generationTime < 70 ? '🎨 Mise en forme professionnelle...' :
+                                        generationTime < 90 ? '✨ Révision et finition...' :
+                                        '🚀 Presque terminé...'
+                                    )
+                                ),
+                                // Indicateur moteur IA (desktop only)
+                                React.createElement('div', { className: 'hidden sm:flex flex-col items-end gap-1' },
+                                    React.createElement('span', { className: 'text-[10px] uppercase tracking-wider text-slate-400 font-medium' }, 'Moteur IA'),
+                                    React.createElement('span', { className: 'text-xs font-semibold text-indigo-600 flex items-center gap-1' },
+                                        React.createElement('i', { className: 'fas fa-microchip' }),
+                                        'DeepSeek / GPT-4o'
+                                    )
                                 )
                             ),
-                            // Barre de progression visuelle (sur 120 secondes)
-                            React.createElement('div', { className: 'w-24 h-1.5 bg-blue-100 rounded-full overflow-hidden' },
+                            // Barre de progression stylisée
+                            React.createElement('div', { className: 'mt-2 h-1 bg-blue-100 rounded-full overflow-hidden' },
                                 React.createElement('div', { 
-                                    className: 'h-full bg-blue-500 transition-all duration-1000',
-                                    style: { width: `${Math.min(generationTime / 120 * 100, 95)}%` }
+                                    className: 'h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 rounded-full',
+                                    style: { width: `${Math.min(generationTime / 90 * 100, 95)}%` }
                                 })
                             )
                         ),
