@@ -32,7 +32,7 @@ technicians.get('/team', authMiddleware, technicianSupervisorOrAdmin, async (c) 
       SELECT id, email, first_name, last_name, full_name, role, created_at, updated_at, last_login
       FROM users
       WHERE id != 0 
-        AND deleted_at IS NULL
+        AND users.deleted_at IS NULL
         AND (is_super_admin = 0 OR is_super_admin IS NULL)
       ORDER BY role DESC, first_name ASC
     `).all();

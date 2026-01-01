@@ -82,7 +82,7 @@ app.get('/', requirePermission('planning', 'read'), async (c) => {
 
     // 2. Récupérer les événements (excluant les supprimés)
     const events = await c.env.DB.prepare(
-      'SELECT * FROM planning_events WHERE deleted_at IS NULL ORDER BY date ASC'
+      'SELECT * FROM planning_events WHERE planning_events.deleted_at IS NULL ORDER BY date ASC'
     ).all();
 
     // 3. Récupérer les notes

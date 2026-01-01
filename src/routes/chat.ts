@@ -448,7 +448,7 @@ app.get('/users', async (c) => {
                CASE WHEN is_super_admin = 1 THEN 'support' ELSE role END as role, 
                email, avatar_key
         FROM users 
-        WHERE id != ? AND id != 0 AND deleted_at IS NULL
+        WHERE id != ? AND id != 0 AND users.deleted_at IS NULL
         ORDER BY first_name ASC
     `).bind(user.userId).all();
 

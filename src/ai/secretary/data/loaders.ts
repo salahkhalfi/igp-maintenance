@@ -136,20 +136,20 @@ export async function loadRapportsData(env: any): Promise<RapportsData> {
     SELECT id, ticket_id, title, status, priority, machine_id, assigned_to, 
            created_at, completed_at, is_machine_down
     FROM tickets 
-    WHERE deleted_at IS NULL AND created_at >= ?
+    WHERE tickets.deleted_at IS NULL AND created_at >= ?
     ORDER BY created_at DESC
   `).bind(threeMonthsAgo.toISOString()).all();
 
   // Charger utilisateurs
   const { results: allUsers } = await env.DB.prepare(`
     SELECT id, full_name, role, email, last_login
-    FROM users WHERE deleted_at IS NULL
+    FROM users WHERE users.deleted_at IS NULL
   `).all();
 
   // Charger machines
   const { results: allMachines } = await env.DB.prepare(`
     SELECT id, machine_type, manufacturer, model, location, status
-    FROM machines WHERE deleted_at IS NULL
+    FROM machines WHERE machines.deleted_at IS NULL
   `).all();
 
   const userMap = Object.fromEntries((allUsers || []).map((u: any) => [u.id, u]));
@@ -282,7 +282,7 @@ export async function loadRapportsData(env: any): Promise<RapportsData> {
 export async function loadSubventionsData(env: any): Promise<SubventionsData> {
   // Effectif
   const { results: allUsers } = await env.DB.prepare(`
-    SELECT id, role FROM users WHERE deleted_at IS NULL
+    SELECT id, role FROM users WHERE users.deleted_at IS NULL
   `).all();
 
   const effectifByRole: Record<string, number> = {};
@@ -293,7 +293,7 @@ export async function loadSubventionsData(env: any): Promise<SubventionsData> {
 
   // Machines par type
   const { results: allMachines } = await env.DB.prepare(`
-    SELECT id, machine_type FROM machines WHERE deleted_at IS NULL
+    SELECT id, machine_type FROM machines WHERE machines.deleted_at IS NULL
   `).all();
 
   const machinesByType: Record<string, number> = {};
@@ -308,7 +308,7 @@ export async function loadSubventionsData(env: any): Promise<SubventionsData> {
   
   const ticketCount = await env.DB.prepare(`
     SELECT COUNT(*) as count FROM tickets 
-    WHERE deleted_at IS NULL AND created_at >= ?
+    WHERE tickets.deleted_at IS NULL AND created_at >= ?
   `).bind(oneYearAgo.toISOString()).first();
 
   return {
@@ -327,7 +327,7 @@ export async function loadSubventionsData(env: any): Promise<SubventionsData> {
 export async function loadRHData(env: any, employeeId?: number): Promise<RHData> {
   const { results: allUsers } = await env.DB.prepare(`
     SELECT id, full_name, role, email, last_login, created_at
-    FROM users WHERE deleted_at IS NULL
+    FROM users WHERE users.deleted_at IS NULL
   `).all();
 
   const employees: EmployeeSummary[] = (allUsers || []).map((u: any) => ({
@@ -352,7 +352,7 @@ export async function loadRHData(env: any, employeeId?: number): Promise<RHData>
         SELECT 
           SUM(CASE WHEN assigned_to = ? THEN 1 ELSE 0 END) as assigned,
           SUM(CASE WHEN assigned_to = ? AND status IN ('completed', 'resolved', 'closed') THEN 1 ELSE 0 END) as closed
-        FROM tickets WHERE deleted_at IS NULL
+        FROM tickets WHERE tickets.deleted_at IS NULL
       `).bind(employeeId, employeeId).first();
 
       employeeDetails = {
@@ -383,7 +383,7 @@ export async function loadTechniqueData(env: any, machineId?: number): Promise<T
   const { results: allMachines } = await env.DB.prepare(`
     SELECT id, machine_type, manufacturer, model, serial_number, year, 
            location, status, technical_specs, operator_id
-    FROM machines WHERE deleted_at IS NULL
+    FROM machines WHERE machines.deleted_at IS NULL
   `).all();
 
   // Lookup opérateurs
@@ -421,7 +421,7 @@ export async function loadTechniqueData(env: any, machineId?: number): Promise<T
     const { results: tickets } = await env.DB.prepare(`
       SELECT id, ticket_id, title, status, priority, created_at
       FROM tickets 
-      WHERE deleted_at IS NULL AND machine_id = ?
+      WHERE tickets.deleted_at IS NULL AND machine_id = ?
       ORDER BY created_at DESC LIMIT 15
     `).bind(machineId).all();
 
@@ -450,19 +450,19 @@ export async function loadTechniqueData(env: any, machineId?: number): Promise<T
 export async function loadCreatifData(env: any): Promise<CreatifData> {
   // Compte employés
   const userCount = await env.DB.prepare(`
-    SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL
+    SELECT COUNT(*) as count FROM users WHERE users.deleted_at IS NULL
   `).first();
 
   // Compte machines
   const machineCount = await env.DB.prepare(`
-    SELECT COUNT(*) as count FROM machines WHERE deleted_at IS NULL
+    SELECT COUNT(*) as count FROM machines WHERE machines.deleted_at IS NULL
   `).first();
 
   // Machines par type
   const machinesByType = await env.DB.prepare(`
     SELECT type, COUNT(*) as count 
     FROM machines 
-    WHERE deleted_at IS NULL AND type IS NOT NULL
+    WHERE machines.deleted_at IS NULL AND type IS NOT NULL
     GROUP BY type 
     ORDER BY count DESC
   `).all();
@@ -471,7 +471,7 @@ export async function loadCreatifData(env: any): Promise<CreatifData> {
   const employeesByRole = await env.DB.prepare(`
     SELECT role, COUNT(*) as count 
     FROM users 
-    WHERE deleted_at IS NULL AND role IS NOT NULL
+    WHERE users.deleted_at IS NULL AND role IS NOT NULL
     GROUP BY role 
     ORDER BY count DESC
   `).all();
@@ -485,7 +485,7 @@ export async function loadCreatifData(env: any): Promise<CreatifData> {
       COUNT(*) as total,
       SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as closed
     FROM tickets 
-    WHERE created_at >= ? AND deleted_at IS NULL
+    WHERE created_at >= ? AND tickets.deleted_at IS NULL
   `).bind(startOfMonth).first();
 
   // Temps moyen de résolution (tickets fermés ce mois)
@@ -494,7 +494,7 @@ export async function loadCreatifData(env: any): Promise<CreatifData> {
     FROM tickets 
     WHERE completed_at IS NOT NULL 
       AND created_at >= ? 
-      AND deleted_at IS NULL
+      AND tickets.deleted_at IS NULL
   `).bind(startOfMonth).first();
 
   // Tickets critiques résolus récemment (accomplissements)
@@ -504,7 +504,7 @@ export async function loadCreatifData(env: any): Promise<CreatifData> {
     WHERE priority = 'critical' 
       AND status = 'closed' 
       AND completed_at IS NOT NULL
-      AND deleted_at IS NULL
+      AND tickets.deleted_at IS NULL
     ORDER BY completed_at DESC
     LIMIT 5
   `).all();

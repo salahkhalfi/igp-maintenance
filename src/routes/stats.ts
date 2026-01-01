@@ -29,7 +29,7 @@ stats.get('/active-tickets', async (c) => {
       SELECT COUNT(*) as count
       FROM tickets
       WHERE status NOT IN ('completed', 'cancelled', 'archived')
-        AND deleted_at IS NULL
+        AND tickets.deleted_at IS NULL
     `).first();
 
     // Count overdue tickets (scheduled_date in the past)
@@ -38,7 +38,7 @@ stats.get('/active-tickets', async (c) => {
       SELECT COUNT(*) as count
       FROM tickets
       WHERE status NOT IN ('completed', 'cancelled', 'archived')
-        AND deleted_at IS NULL
+        AND tickets.deleted_at IS NULL
         AND scheduled_date IS NOT NULL
         AND datetime(scheduled_date) < datetime('now')
     `).first();
@@ -50,7 +50,7 @@ stats.get('/active-tickets', async (c) => {
       FROM users
       WHERE role = 'technician'
         AND id != 0
-        AND deleted_at IS NULL
+        AND users.deleted_at IS NULL
     `).first();
 
     // Count registered push notification devices

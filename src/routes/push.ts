@@ -629,7 +629,7 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
         // ⚠️ ORPHAN CHECK: Skip notifications for deleted tickets
         if (parsedData.ticketId) {
           const ticketExists = await env.DB.prepare(`
-            SELECT id FROM tickets WHERE id = ? AND deleted_at IS NULL
+            SELECT id FROM tickets WHERE id = ? AND tickets.deleted_at IS NULL
           `).bind(parsedData.ticketId).first();
           
           if (!ticketExists) {
@@ -886,7 +886,7 @@ push.delete('/cleanup-orphan-notifications', authMiddleware, async (c) => {
         if (ticketId) {
           // Check if ticket exists
           const ticket = await c.env.DB.prepare(`
-            SELECT id FROM tickets WHERE id = ? AND deleted_at IS NULL
+            SELECT id FROM tickets WHERE id = ? AND tickets.deleted_at IS NULL
           `).bind(ticketId).first();
           
           if (!ticket) {
