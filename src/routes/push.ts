@@ -624,14 +624,30 @@ async function processPendingNotifications(env: Bindings, userId: number): Promi
     // Envoyer chaque notification
     for (const notif of pending) {
       try {
+        const parsedData = notif.data ? JSON.parse(notif.data as string) : {};
+        
+        // ⚠️ ORPHAN CHECK: Skip notifications for deleted tickets
+        if (parsedData.ticketId) {
+          const ticketExists = await env.DB.prepare(`
+            SELECT id FROM tickets WHERE id = ? AND deleted_at IS NULL
+          `).bind(parsedData.ticketId).first();
+          
+          if (!ticketExists) {
+            console.log(`🗑️ [PENDING-QUEUE] Skipping notification ${notif.id} - ticket ${parsedData.ticketId} deleted/not found`);
+            // Delete orphan notification
+            await env.DB.prepare(`DELETE FROM pending_notifications WHERE id = ?`).bind(notif.id).run();
+            continue;
+          }
+        }
+        
         const payload = {
           title: notif.title as string,
           body: notif.body as string,
           icon: (notif.icon as string) || '/icon-192.png',
           badge: (notif.badge as string) || '/icon-192.png',
-          data: notif.data ? JSON.parse(notif.data as string) : {},
+          data: parsedData,
           // Restaurer les actions si présentes dans data
-          actions: notif.data && JSON.parse(notif.data as string).actions ? JSON.parse(notif.data as string).actions : undefined
+          actions: parsedData.actions || undefined
         };
         
         // Parser les endpoints déjà envoyés
@@ -830,6 +846,147 @@ push.get('/subscriptions-list', authMiddleware, async (c) => {
     });
   } catch (error) {
     console.error('[Push Subscriptions List API] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/push/cleanup-orphan-notifications
+ * Nettoyer les notifications en attente qui référencent des tickets supprimés
+ * Admin only
+ */
+push.delete('/cleanup-orphan-notifications', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    // Only admin can cleanup
+    if (!user || user.role !== 'admin') {
+      return c.json({ error: 'Accès refusé - Admin requis' }, 403);
+    }
+
+    console.log(`[PUSH-CLEANUP] Admin ${user.email} cleaning up orphan notifications`);
+
+    // Get all pending notifications with ticket data
+    const { results: pending } = await c.env.DB.prepare(`
+      SELECT id, data FROM pending_notifications WHERE data IS NOT NULL
+    `).all();
+
+    if (!pending || pending.length === 0) {
+      return c.json({ message: 'Aucune notification en attente', cleaned: 0 });
+    }
+
+    let cleanedCount = 0;
+    const orphanIds: number[] = [];
+
+    for (const notif of pending) {
+      try {
+        const data = JSON.parse(notif.data as string);
+        const ticketId = data.ticketId;
+        
+        if (ticketId) {
+          // Check if ticket exists
+          const ticket = await c.env.DB.prepare(`
+            SELECT id FROM tickets WHERE id = ? AND deleted_at IS NULL
+          `).bind(ticketId).first();
+          
+          if (!ticket) {
+            orphanIds.push(notif.id as number);
+            console.log(`[PUSH-CLEANUP] Orphan notification ${notif.id} references deleted ticket ${ticketId}`);
+          }
+        }
+      } catch (parseError) {
+        // Skip if data is not valid JSON
+        console.warn(`[PUSH-CLEANUP] Could not parse data for notification ${notif.id}`);
+      }
+    }
+
+    // Delete orphan notifications
+    if (orphanIds.length > 0) {
+      for (const id of orphanIds) {
+        await c.env.DB.prepare(`DELETE FROM pending_notifications WHERE id = ?`).bind(id).run();
+        cleanedCount++;
+      }
+      console.log(`✅ [PUSH-CLEANUP] Cleaned ${cleanedCount} orphan notification(s)`);
+    }
+
+    return c.json({
+      message: `Nettoyage terminé`,
+      total_pending: pending.length,
+      orphans_found: orphanIds.length,
+      cleaned: cleanedCount
+    });
+
+  } catch (error) {
+    console.error('[PUSH-CLEANUP] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/push/pending-notifications
+ * Voir toutes les notifications en attente (Admin only)
+ */
+push.get('/pending-notifications', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    if (!user || user.role !== 'admin') {
+      return c.json({ error: 'Accès refusé - Admin requis' }, 403);
+    }
+
+    const { results: pending } = await c.env.DB.prepare(`
+      SELECT pn.*, u.email as user_email, u.first_name
+      FROM pending_notifications pn
+      LEFT JOIN users u ON pn.user_id = u.id
+      ORDER BY pn.created_at DESC
+      LIMIT 100
+    `).all();
+
+    // Enrich with ticket status
+    const enriched = [];
+    for (const notif of (pending || [])) {
+      let ticketStatus = 'unknown';
+      let ticketId = null;
+      
+      try {
+        if (notif.data) {
+          const data = JSON.parse(notif.data as string);
+          ticketId = data.ticketId;
+          
+          if (ticketId) {
+            const ticket = await c.env.DB.prepare(`
+              SELECT id, status, deleted_at FROM tickets WHERE id = ?
+            `).bind(ticketId).first();
+            
+            if (!ticket) {
+              ticketStatus = 'NOT_FOUND';
+            } else if (ticket.deleted_at) {
+              ticketStatus = 'DELETED';
+            } else {
+              ticketStatus = ticket.status as string;
+            }
+          }
+        }
+      } catch (e) {
+        ticketStatus = 'PARSE_ERROR';
+      }
+      
+      enriched.push({
+        ...notif,
+        ticket_id_extracted: ticketId,
+        ticket_status: ticketStatus,
+        is_orphan: ticketStatus === 'NOT_FOUND' || ticketStatus === 'DELETED'
+      });
+    }
+
+    return c.json({
+      total: enriched.length,
+      orphan_count: enriched.filter(n => n.is_orphan).length,
+      notifications: enriched
+    });
+
+  } catch (error) {
+    console.error('[PUSH-PENDING] Error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
   }
 });
