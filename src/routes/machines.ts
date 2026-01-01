@@ -221,12 +221,11 @@ machinesRoute.delete('/:id', adminOnly, zValidator('param', machineIdParamSchema
     
     const db = getDb(c.env);
 
-    // Vérifier qu'il n'y a pas de tickets associés
-    // Using Drizzle to count
+    // Vérifier qu'il n'y a pas de tickets ACTIFS associés (ignorer les soft-deleted)
     const ticketCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(tickets)
-      .where(eq(tickets.machine_id, id))
+      .where(sql`${tickets.machine_id} = ${id} AND ${tickets.deleted_at} IS NULL`)
       .get();
 
     if (ticketCount && ticketCount.count > 0) {
