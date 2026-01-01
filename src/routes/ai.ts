@@ -501,7 +501,7 @@ async function collectDocumentData(db: any, env: any, needsData: string[], perio
             }).from(tickets)
             .where(and(
                 not(inArray(tickets.status, closedStatuses)),
-                sql`deleted_at IS NULL`
+                isNull(tickets.deleted_at)
             )).all();
             
             // Calcul TMR (Temps Moyen de Réparation)
@@ -542,7 +542,7 @@ async function collectDocumentData(db: any, env: any, needsData: string[], perio
     // Machines
     if (needsData.includes('machines') || needsData.includes('operational')) {
         try {
-            const machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all();
+            const machinesList = await db.select().from(machines).where(isNull(machines.deleted_at)).all();
             const machinesDown = machinesList.filter((m: any) => m.status === 'out_of_service' || m.status === 'maintenance');
             
             // Grouper par type
@@ -578,7 +578,7 @@ async function collectDocumentData(db: any, env: any, needsData: string[], perio
                 id: users.id,
                 full_name: users.full_name,
                 role: users.role
-            }).from(users).where(sql`deleted_at IS NULL`).all();
+            }).from(users).where(isNull(users.deleted_at)).all();
             
             // Compter par rôle
             const byRole: Record<string, number> = {};
@@ -884,12 +884,12 @@ app.post('/analyze-ticket', async (c) => {
             id: machines.id, type: machines.machine_type, model: machines.model, manufacturer: machines.manufacturer, 
             location: machines.location, status: machines.status, year: machines.year, serial_number: machines.serial_number,
             technical_specs: machines.technical_specs, operator_id: machines.operator_id, ai_context: machines.ai_context
-        }).from(machines).where(sql`deleted_at IS NULL`).all();
+        }).from(machines).where(isNull(machines.deleted_at)).all();
         
         // Dynamic Tech List: Don't hardcode roles. Fetch all internal users.
         const techsList = await db.select({
             id: users.id, name: users.full_name, role: users.role
-        }).from(users).where(and(ne(users.role, 'guest'), sql`deleted_at IS NULL`)).all();
+        }).from(users).where(and(ne(users.role, 'guest'), isNull(users.deleted_at))).all();
 
         const machinesContext = machinesList.map(m => {
             const details = [
@@ -1075,9 +1075,9 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
             });
 
             // 1. SELECT * : On récupère TOUTES les colonnes (serial, location, specs, etc.) sans filtrage manuel
-            machinesList = await db.select().from(machines).where(sql`deleted_at IS NULL`).all() || [];
+            machinesList = await db.select().from(machines).where(isNull(machines.deleted_at)).all() || [];
             
-            usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login, ai_context: users.ai_context }).from(users).where(sql`deleted_at IS NULL`).all() || [];
+            usersList = await db.select({ id: users.id, name: users.full_name, role: users.role, email: users.email, last_login: users.last_login, ai_context: users.ai_context }).from(users).where(isNull(tickets.deleted_at)).all() || [];
             activeTickets = await db.select({
                 id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
             }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), isNull(tickets.deleted_at))).all() || [];
@@ -1660,7 +1660,7 @@ app.post('/report', async (c) => {
         }).from(tickets)
         .where(and(
             not(inArray(tickets.status, ['completed', 'archived', 'closed', 'resolved'])),
-            sql`deleted_at IS NULL`
+            isNull(tickets.deleted_at)
         )).all();
         
         // 4. Planning events in period
@@ -1668,7 +1668,7 @@ app.post('/report', async (c) => {
         .where(and(
             sql`date(${planningEvents.date}) >= ${startISO}`,
             sql`date(${planningEvents.date}) < ${endISO}`,
-            sql`deleted_at IS NULL`
+            isNull(tickets.deleted_at)
         )).all();
         
         // 5. Machine statistics
@@ -1686,7 +1686,7 @@ app.post('/report', async (c) => {
         }).from(tickets)
         .where(and(
             not(inArray(tickets.status, ['completed', 'archived', 'closed', 'resolved'])),
-            sql`deleted_at IS NULL`,
+            isNull(tickets.deleted_at),
             sql`assigned_to IS NOT NULL`
         ))
         .groupBy(tickets.assigned_to)

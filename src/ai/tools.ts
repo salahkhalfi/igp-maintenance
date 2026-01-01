@@ -1076,7 +1076,7 @@ export const ToolFunctions = {
 
     async search_machines(db: any, args: { query?: string; status?: string }) {
         // Construire les conditions
-        const conditions: any[] = [sql`deleted_at IS NULL`];
+        const conditions: any[] = [isNull(machines.deleted_at)];
         
         // Filtre par recherche texte (optionnel)
         if (args.query && args.query.trim()) {
