@@ -136,7 +136,10 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
     };
 
     const handleClearChat = async () => {
-        if (!confirm("ATTENTION : Voulez-vous supprimer TOUS les messages de cette discussion ? Cette action est irréversible.")) return;
+        const confirmMsg = conversationId === 'expert_ai' 
+            ? "Voulez-vous réinitialiser votre conversation avec l'IA ?\n\nCela supprimera l'historique local et permettra de repartir à zéro avec des données actualisées."
+            : "ATTENTION : Voulez-vous supprimer TOUS les messages de cette discussion ? Cette action est irréversible.";
+        if (!confirm(confirmMsg)) return;
         
         // Optimistic UI for AI Chat
         if (conversationId === 'expert_ai') {
@@ -320,12 +323,13 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                         </button>
                     )}
 
-                    {(isGroupAdmin || isGlobalAdmin) && (
+                    {/* Allow ALL users to clear AI chat (local storage), but only admins for regular chats */}
+                    {(isExpertAI || isGroupAdmin || isGlobalAdmin) && (
                         <button 
                             onClick={handleClearChat}
                             className="w-full flex items-center justify-center gap-3 p-4 text-orange-500 hover:text-white hover:bg-orange-600 rounded-xl transition-all text-sm font-bold uppercase tracking-wide border border-orange-900/30 bg-orange-500/5"
                         >
-                            <i className="fas fa-eraser"></i> Vider la discussion
+                            <i className="fas fa-eraser"></i> {isExpertAI ? 'Réinitialiser la conversation IA' : 'Vider la discussion'}
                         </button>
                     )}
 
