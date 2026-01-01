@@ -1194,6 +1194,216 @@ settings.put('/config/bulk', authMiddleware, adminOnly, async (c) => {
 // ============================================================================
 
 /**
+ * POST /api/settings/import/preview - Simulation d'import (DRY-RUN)
+ * Analyse les données sans rien modifier en base
+ * Retourne le détail ligne par ligne : création, mise à jour, ignoré, erreur
+ * Accès: Admin uniquement
+ */
+settings.post('/import/preview', authMiddleware, adminOnly, async (c) => {
+  try {
+    const db = getDb(c.env);
+    const body = await c.req.json();
+    const { type, data, updateExisting } = body;
+    
+    if (!type || !['users', 'machines'].includes(type)) {
+      return c.json({ error: 'Type invalide (users ou machines)' }, 400);
+    }
+    
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return c.json({ error: 'Données invalides ou vides' }, 400);
+    }
+    
+    if (data.length > 1000) {
+      return c.json({ error: 'Maximum 1000 lignes par import' }, 400);
+    }
+    
+    const preview: Array<{
+      line: number;
+      status: 'create' | 'update' | 'ignore' | 'error';
+      message: string;
+      data: any;
+    }> = [];
+    
+    const stats = { create: 0, update: 0, ignore: 0, error: 0 };
+    
+    // ========== PREVIEW USERS ==========
+    if (type === 'users') {
+      const validRoles = ['admin', 'supervisor', 'technician', 'operator', 'team_leader', 'planner', 'coordinator', 'director', 'senior_technician', 'furnace_operator', 'safety_officer', 'quality_inspector', 'storekeeper', 'viewer'];
+      
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const lineNum = i + 1;
+        
+        // Validation email
+        const email = row.email?.trim().toLowerCase();
+        if (!email) {
+          preview.push({ line: lineNum, status: 'error', message: 'EMAIL obligatoire', data: row });
+          stats.error++;
+          continue;
+        }
+        
+        // Validation format email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          preview.push({ line: lineNum, status: 'error', message: `EMAIL invalide: "${email}"`, data: row });
+          stats.error++;
+          continue;
+        }
+        
+        // Validation rôle
+        const role = row.role?.trim().toLowerCase() || 'technician';
+        if (!validRoles.includes(role)) {
+          preview.push({ line: lineNum, status: 'error', message: `ROLE invalide: "${row.role}" (valides: ${validRoles.slice(0, 5).join(', ')}...)`, data: row });
+          stats.error++;
+          continue;
+        }
+        
+        // Vérifier si existe
+        const existing = await db
+          .select({ id: users.id, full_name: users.full_name })
+          .from(users)
+          .where(sql`${users.email} = ${email} AND ${users.deleted_at} IS NULL`)
+          .get();
+        
+        const displayName = row.first_name && row.last_name 
+          ? `${row.first_name} ${row.last_name}` 
+          : row.first_name || email;
+        
+        if (existing) {
+          if (updateExisting) {
+            preview.push({ 
+              line: lineNum, 
+              status: 'update', 
+              message: `Mise à jour: ${existing.full_name || email}`,
+              data: { email, name: displayName, role }
+            });
+            stats.update++;
+          } else {
+            preview.push({ 
+              line: lineNum, 
+              status: 'ignore', 
+              message: `Existe déjà: ${existing.full_name || email}`,
+              data: { email, name: displayName, role }
+            });
+            stats.ignore++;
+          }
+        } else {
+          preview.push({ 
+            line: lineNum, 
+            status: 'create', 
+            message: `Création: ${displayName}`,
+            data: { email, name: displayName, role }
+          });
+          stats.create++;
+        }
+      }
+    }
+    
+    // ========== PREVIEW MACHINES ==========
+    if (type === 'machines') {
+      const validStatuses = ['operational', 'maintenance', 'broken', 'retired'];
+      
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const lineNum = i + 1;
+        
+        // Validation type obligatoire
+        const machineType = row.type?.trim();
+        if (!machineType) {
+          preview.push({ line: lineNum, status: 'error', message: 'TYPE obligatoire', data: row });
+          stats.error++;
+          continue;
+        }
+        
+        const model = row.model?.trim() || null;
+        const serial = row.serial?.trim() || null;
+        const location = row.location?.trim() || null;
+        const status = row.status?.toLowerCase().trim();
+        const machineStatus = validStatuses.includes(status) ? status : 'operational';
+        
+        let existing = null;
+        let matchType = '';
+        
+        // Recherche par numéro de série
+        if (serial) {
+          existing = await db
+            .select({ id: machines.id, machine_type: machines.machine_type, model: machines.model })
+            .from(machines)
+            .where(sql`${machines.serial_number} = ${serial} AND ${machines.deleted_at} IS NULL`)
+            .get();
+          if (existing) matchType = 'série';
+        }
+        
+        // Recherche par clé composite si pas de série
+        if (!existing && !serial) {
+          existing = await db
+            .select({ id: machines.id, machine_type: machines.machine_type, model: machines.model })
+            .from(machines)
+            .where(sql`
+              LOWER(TRIM(${machines.machine_type})) = ${machineType.toLowerCase()}
+              AND (
+                (${model} IS NULL AND (${machines.model} IS NULL OR ${machines.model} = ''))
+                OR LOWER(TRIM(${machines.model})) = ${(model || '').toLowerCase()}
+              )
+              AND (
+                (${location} IS NULL AND (${machines.location} IS NULL OR ${machines.location} = ''))
+                OR LOWER(TRIM(${machines.location})) = ${(location || '').toLowerCase()}
+              )
+              AND ${machines.deleted_at} IS NULL
+            `)
+            .get();
+          if (existing) matchType = 'type+modèle+lieu';
+        }
+        
+        const displayName = model ? `${machineType} ${model}` : machineType;
+        const locationInfo = location ? ` @ ${location}` : '';
+        
+        if (existing) {
+          if (updateExisting) {
+            preview.push({ 
+              line: lineNum, 
+              status: 'update', 
+              message: `Mise à jour (${matchType}): ${displayName}${locationInfo}`,
+              data: { type: machineType, model, serial, location, status: machineStatus }
+            });
+            stats.update++;
+          } else {
+            preview.push({ 
+              line: lineNum, 
+              status: 'ignore', 
+              message: `Existe déjà (${matchType}): ${displayName}${locationInfo}`,
+              data: { type: machineType, model, serial, location, status: machineStatus }
+            });
+            stats.ignore++;
+          }
+        } else {
+          preview.push({ 
+            line: lineNum, 
+            status: 'create', 
+            message: `Création: ${displayName}${locationInfo}`,
+            data: { type: machineType, model, serial, location, status: machineStatus }
+          });
+          stats.create++;
+        }
+      }
+    }
+    
+    return c.json({ 
+      success: true,
+      type,
+      total: data.length,
+      stats,
+      preview,
+      canProceed: stats.error === 0 || stats.create + stats.update > 0
+    });
+    
+  } catch (error) {
+    console.error('Import preview error:', error);
+    return c.json({ error: 'Erreur lors de la prévisualisation' }, 500);
+  }
+});
+
+/**
  * GET /api/settings/export/users - Exporter la liste des utilisateurs en CSV
  * Accès: Admin uniquement
  */

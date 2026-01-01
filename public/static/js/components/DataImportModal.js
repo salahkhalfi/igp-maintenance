@@ -1,5 +1,5 @@
 // ===== MODAL D'IMPORT/EXPORT CSV (Utilisateurs & Machines) =====
-// Version 2.0 - Avec templates améliorés et prévisualisation
+// Version 3.0 - Avec simulation DRY-RUN avant import
 
 const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
     const [activeTab, setActiveTab] = React.useState(initialTab);
@@ -7,8 +7,13 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
     const [previewData, setPreviewData] = React.useState([]);
     const [isUploading, setIsUploading] = React.useState(false);
     const [isExporting, setIsExporting] = React.useState(false);
+    const [isAnalyzing, setIsAnalyzing] = React.useState(false);
     const [updateExisting, setUpdateExisting] = React.useState(false);
     const [report, setReport] = React.useState(null);
+    
+    // NEW: Simulation results (dry-run)
+    const [simulation, setSimulation] = React.useState(null);
+    const [simulationStep, setSimulationStep] = React.useState('upload'); // 'upload' | 'analyzed' | 'done'
 
     // Sync tab when modal opens
     React.useEffect(() => {
@@ -18,6 +23,8 @@ const DataImportModal = ({ show, onClose, initialTab = 'users' }) => {
             setPreviewData([]);
             setReport(null);
             setUpdateExisting(false);
+            setSimulation(null);
+            setSimulationStep('upload');
         }
     }, [show, initialTab]);
 
@@ -344,9 +351,62 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
         }
     };
 
-    // Handle import
+    // NEW: Handle simulation (dry-run analysis)
+    const handleAnalyze = async () => {
+        if (!previewData.length) return;
+        
+        setIsAnalyzing(true);
+        setSimulation(null);
+        
+        try {
+            // Préparer les données pour la simulation
+            const dataForPreview = activeTab === 'users' 
+                ? previewData.map(row => ({
+                    email: row.EMAIL,
+                    first_name: row.PRENOM,
+                    last_name: row.NOM,
+                    role: row.ROLE,
+                    ai_context: row.CONTEXTE || null
+                }))
+                : previewData.map(row => ({
+                    type: row.TYPE,
+                    model: row.MODELE,
+                    manufacturer: row.MARQUE,
+                    serial: row.SERIE,
+                    location: row.LIEU,
+                    year: row.ANNEE,
+                    status: row.STATUT,
+                    specs: row.SPECS
+                }));
+            
+            const res = await axios.post(API_URL + '/settings/import/preview', {
+                type: activeTab,
+                data: dataForPreview,
+                updateExisting
+            });
+            
+            if (res.data.success) {
+                setSimulation(res.data);
+                setSimulationStep('analyzed');
+            } else {
+                throw new Error(res.data.error || 'Erreur de simulation');
+            }
+        } catch (error) {
+            console.error('Analysis error:', error);
+            alert("Erreur d'analyse: " + (error.response?.data?.error || error.message));
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    // Handle import (after simulation confirmation)
     const handleImport = async () => {
         if (!previewData.length) return;
+        
+        // Si pas encore analysé, faire l'analyse d'abord
+        if (simulationStep !== 'analyzed') {
+            return handleAnalyze();
+        }
 
         setIsUploading(true);
         try {
@@ -379,6 +439,8 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
             setReport(res.data.stats);
             setFile(null);
             setPreviewData([]);
+            setSimulation(null);
+            setSimulationStep('done');
 
             // Notification du mot de passe par défaut
             if (res.data.note) {
@@ -530,7 +592,7 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
                             )
                         ),
                         React.createElement('button', {
-                            onClick: () => { setFile(null); setPreviewData([]); },
+                            onClick: () => { setFile(null); setPreviewData([]); setSimulation(null); setSimulationStep('upload'); },
                             className: 'text-blue-400 hover:text-blue-600'
                         },
                             React.createElement('i', { className: 'fas fa-times text-xl' })
@@ -603,13 +665,13 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
                     );
                 })(),
 
-                // Options
-                previewData.length > 0 && React.createElement('div', { className: 'mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg' },
+                // Options (hidden after analysis to prevent changes)
+                previewData.length > 0 && simulationStep === 'upload' && React.createElement('div', { className: 'mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg' },
                     React.createElement('label', { className: 'flex items-start gap-3 cursor-pointer' },
                         React.createElement('input', {
                             type: 'checkbox',
                             checked: updateExisting,
-                            onChange: (e) => setUpdateExisting(e.target.checked),
+                            onChange: (e) => { setUpdateExisting(e.target.checked); setSimulation(null); setSimulationStep('upload'); },
                             className: 'mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500'
                         }),
                         React.createElement('div', null,
@@ -623,7 +685,79 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
                     )
                 ),
 
-                // Report
+                // NEW: Simulation Results (DRY-RUN)
+                simulation && simulationStep === 'analyzed' && React.createElement('div', { className: 'mb-6' },
+                    React.createElement('div', { className: 'flex items-center justify-between mb-3' },
+                        React.createElement('p', { className: 'font-bold text-sm text-slate-700' }, '🔍 Résultat de l\'analyse'),
+                        React.createElement('button', {
+                            onClick: () => { setSimulation(null); setSimulationStep('upload'); },
+                            className: 'text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1'
+                        },
+                            React.createElement('i', { className: 'fas fa-redo' }),
+                            'Réanalyser'
+                        )
+                    ),
+                    // Stats summary
+                    React.createElement('div', { className: 'grid grid-cols-4 gap-2 mb-4' },
+                        React.createElement('div', { className: 'bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center' },
+                            React.createElement('div', { className: 'text-xl font-bold text-emerald-600' }, simulation.stats.create),
+                            React.createElement('div', { className: 'text-[10px] font-bold text-emerald-500' }, 'À créer')
+                        ),
+                        React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-2 text-center' },
+                            React.createElement('div', { className: 'text-xl font-bold text-blue-600' }, simulation.stats.update),
+                            React.createElement('div', { className: 'text-[10px] font-bold text-blue-500' }, 'À mettre à jour')
+                        ),
+                        React.createElement('div', { className: 'bg-slate-50 border border-slate-200 rounded-lg p-2 text-center' },
+                            React.createElement('div', { className: 'text-xl font-bold text-slate-500' }, simulation.stats.ignore),
+                            React.createElement('div', { className: 'text-[10px] font-bold text-slate-400' }, 'Ignorés')
+                        ),
+                        React.createElement('div', { className: 'bg-red-50 border border-red-200 rounded-lg p-2 text-center' },
+                            React.createElement('div', { className: 'text-xl font-bold text-red-500' }, simulation.stats.error),
+                            React.createElement('div', { className: 'text-[10px] font-bold text-red-400' }, 'Erreurs')
+                        )
+                    ),
+                    // Detailed preview list
+                    React.createElement('div', { className: 'border border-slate-200 rounded-lg overflow-hidden max-h-[200px] overflow-y-auto' },
+                        simulation.preview.map((item, idx) => 
+                            React.createElement('div', { 
+                                key: idx, 
+                                className: `flex items-center gap-2 px-3 py-2 text-xs border-b border-slate-100 last:border-b-0 ${
+                                    item.status === 'create' ? 'bg-emerald-50' :
+                                    item.status === 'update' ? 'bg-blue-50' :
+                                    item.status === 'error' ? 'bg-red-50' : 'bg-slate-50'
+                                }`
+                            },
+                                React.createElement('span', { className: 'w-8 text-slate-400 font-mono' }, `#${item.line}`),
+                                React.createElement('span', { className: `w-5 text-center ${
+                                    item.status === 'create' ? 'text-emerald-500' :
+                                    item.status === 'update' ? 'text-blue-500' :
+                                    item.status === 'error' ? 'text-red-500' : 'text-slate-400'
+                                }` },
+                                    item.status === 'create' ? '✓' :
+                                    item.status === 'update' ? '↻' :
+                                    item.status === 'error' ? '✗' : '−'
+                                ),
+                                React.createElement('span', { className: `flex-1 ${item.status === 'error' ? 'text-red-700 font-medium' : 'text-slate-700'}` }, 
+                                    item.message
+                                )
+                            )
+                        )
+                    ),
+                    // Warning if errors
+                    simulation.stats.error > 0 && React.createElement('div', { className: 'mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg' },
+                        React.createElement('div', { className: 'flex items-start gap-2' },
+                            React.createElement('i', { className: 'fas fa-exclamation-triangle text-amber-500 mt-0.5' }),
+                            React.createElement('div', { className: 'text-xs text-amber-800' },
+                                React.createElement('span', { className: 'font-bold' }, `${simulation.stats.error} erreur(s) détectée(s). `),
+                                simulation.canProceed 
+                                    ? 'Les lignes valides peuvent être importées, les erreurs seront ignorées.'
+                                    : 'Corrigez les erreurs avant de continuer.'
+                            )
+                        )
+                    )
+                ),
+
+                // Report (after successful import)
                 report && React.createElement('div', { className: 'mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200' },
                     React.createElement('div', { className: 'flex items-center gap-2 mb-3' },
                         React.createElement('i', { className: 'fas fa-check-circle text-emerald-600 text-xl' }),
@@ -665,24 +799,39 @@ Chariot élévateur,Toyota 8FG,Toyota,,Entrepôt,2020,operational,Capacité: 2.5
                 )
             ),
 
-            // Footer
+            // Footer with smart buttons
             React.createElement('div', { className: 'p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center' },
                 React.createElement('div', { className: 'text-xs text-slate-500' },
-                    previewData.length > 0 ? `${previewData.length} ligne(s) prête(s) à importer` : ''
+                    simulation && simulationStep === 'analyzed'
+                        ? `${simulation.stats.create + simulation.stats.update} opération(s) à effectuer`
+                        : previewData.length > 0 
+                            ? `${previewData.length} ligne(s) à analyser` 
+                            : ''
                 ),
                 React.createElement('div', { className: 'flex gap-3' },
                     React.createElement('button', {
                         onClick: onClose,
                         className: 'px-5 py-2 text-gray-600 font-semibold hover:bg-gray-200 rounded-lg transition-colors',
-                        disabled: isUploading
+                        disabled: isUploading || isAnalyzing
                     }, 'Fermer'),
-                    React.createElement('button', {
-                        onClick: handleImport,
-                        disabled: isUploading || !file || previewData.length === 0,
-                        className: 'px-6 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none'
+                    
+                    // Button logic: Analyze first, then Confirm
+                    simulationStep === 'upload' && previewData.length > 0 && React.createElement('button', {
+                        onClick: handleAnalyze,
+                        disabled: isAnalyzing || !file || previewData.length === 0,
+                        className: 'px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none'
                     },
-                        isUploading ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-upload' }),
-                        isUploading ? 'Import en cours...' : 'Lancer l\'Import'
+                        isAnalyzing ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-search' }),
+                        isAnalyzing ? 'Analyse...' : 'Analyser'
+                    ),
+                    
+                    simulationStep === 'analyzed' && simulation?.canProceed && React.createElement('button', {
+                        onClick: handleImport,
+                        disabled: isUploading,
+                        className: 'px-6 py-2 bg-emerald-600 text-white font-bold rounded-lg shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:shadow-none'
+                    },
+                        isUploading ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-check' }),
+                        isUploading ? 'Import...' : 'Confirmer l\'Import'
                     )
                 )
             )
