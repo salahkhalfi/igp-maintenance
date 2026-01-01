@@ -1053,7 +1053,8 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
                 { id: 'diagnostic', title: 'En Diagnostic' },
                 { id: 'waiting_parts', title: 'En Attente Pièces' },
                 { id: 'in_progress', title: 'En Cours' },
-                { id: 'completed', title: 'Terminé' }
+                { id: 'completed', title: 'Terminé' },
+                { id: 'archived', title: 'Archivé' }
             ];
 
             // Attempt to fetch user-specific column names
