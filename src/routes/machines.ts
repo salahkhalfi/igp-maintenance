@@ -2,7 +2,7 @@
 // Refactored to use Drizzle ORM for type safety
 
 import { Hono } from 'hono';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, isNull } from 'drizzle-orm';
 import { zValidator } from '@hono/zod-validator';
 import { getDb } from '../db';
 import { machines, tickets, users } from '../db/schema';
@@ -222,18 +222,20 @@ machinesRoute.delete('/:id', adminOnly, zValidator('param', machineIdParamSchema
     const db = getDb(c.env);
 
     // Vérifier qu'il n'y a pas de tickets ACTIFS associés (ignorer les soft-deleted)
-    const ticketCount = await db
-      .select({ count: sql<number>`count(*)` })
+    const activeTickets = await db
+      .select({ id: tickets.id })
       .from(tickets)
-      .where(and(eq(tickets.machine_id, id), sql`${tickets.deleted_at} IS NULL`))
-      .get();
+      .where(and(eq(tickets.machine_id, id), isNull(tickets.deleted_at)))
+      .limit(1)
+      .all();
 
-    if (ticketCount && ticketCount.count > 0) {
+    if (activeTickets && activeTickets.length > 0) {
       return c.json({
         error: 'Impossible de supprimer une machine avec des tickets associés'
       }, 400);
     }
 
+    // Supprimer la machine
     await db.delete(machines).where(eq(machines.id, id));
 
     return c.json({ message: 'Machine supprimée avec succès' });
