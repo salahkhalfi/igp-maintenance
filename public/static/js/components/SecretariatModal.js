@@ -666,10 +666,13 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         // CSS adapté au type de document
         const printHtml = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${docTitle}</title>
 <style>
-@page { size: A4; margin: ${isLetter ? '25mm 25mm 25mm 25mm' : '20mm'}; }
+@page { size: A4; margin: ${isLetter ? '20mm 20mm 20mm 20mm' : '15mm 18mm 15mm 18mm'}; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; }
-body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; font-size: ${isLetter ? '12pt' : '11pt'}; line-height: ${isLetter ? '1.8' : '1.5'}; color: #000; padding: 0; }
+body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; font-size: ${isLetter ? '12pt' : '11pt'}; line-height: ${isLetter ? '1.8' : '1.5'}; color: #000; padding: ${isLetter ? '0' : '10mm 12mm'}; max-width: 100%; }
+
+/* Container principal avec marges de sécurité */
+.print-container { max-width: 100%; overflow-wrap: break-word; word-wrap: break-word; }
 
 /* Header corporate */
 .print-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8pt; margin-bottom: 16pt; border-bottom: 1pt solid #000; }
@@ -709,8 +712,8 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 .section { page-break-inside: avoid; }
 
 @media print {
-  @page { margin: ${isLetter ? '25mm' : '20mm'}; }
-  body { padding: 0; }
+  @page { margin: ${isLetter ? '20mm' : '15mm 18mm'}; }
+  body { padding: 0; margin: 0; }
   .print-header { page-break-inside: avoid; margin-bottom: 10pt; }
   /* Éviter de couper les titres et leur contenu immédiat */
   .doc-content h1, .doc-content h2, .doc-content h3, .doc-content h4 { 
@@ -746,23 +749,25 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 }
 </style></head>
 <body>
-<div class="print-header">
-  <div class="print-header-left">
-    <img src="${logoUrl}" onerror="this.style.display='none'">
-    <div class="brand">
-      <div class="brand-name">${companyName}</div>
-      <div class="brand-sub">${docTitle}</div>
+<div class="print-container">
+  <div class="print-header">
+    <div class="print-header-left">
+      <img src="${logoUrl}" onerror="this.style.display='none'">
+      <div class="brand">
+        <div class="brand-name">${companyName}</div>
+        <div class="brand-sub">${docTitle}</div>
+      </div>
     </div>
+    <div class="print-header-right">${today}</div>
   </div>
-  <div class="print-header-right">${today}</div>
-</div>
-<div class="doc-content">${html}</div>
-${isConfidential ? `<div class="print-footer">
+  <div class="doc-content">${html}</div>
+  ${isConfidential ? `<div class="print-footer">
   <div class="print-footer-content">
     <strong>CONFIDENTIEL</strong> — Ce document est la propriété exclusive de ${companyName}. 
     Toute reproduction, distribution ou divulgation sans autorisation écrite est strictement interdite.
-  </div>
-</div>` : ''}
+    </div>
+  </div>` : ''}
+</div>
 </body></html>`;
         const w = window.open('', '_blank');
         if (w) { w.document.write(printHtml); w.document.close(); w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 250); }
