@@ -223,20 +223,33 @@ machinesRoute.delete('/:id', adminOnly, zValidator('param', machineIdParamSchema
 
     // Vérifier qu'il n'y a pas de tickets ACTIFS associés (ignorer les soft-deleted)
     const activeTickets = await db
-      .select({ id: tickets.id })
+      .select({ id: tickets.id, ticket_id: tickets.ticket_id, title: tickets.title })
       .from(tickets)
       .where(and(eq(tickets.machine_id, id), isNull(tickets.deleted_at)))
-      .limit(1)
+      .limit(5)
       .all();
 
     if (activeTickets && activeTickets.length > 0) {
+      const ticketList = activeTickets.map(t => t.ticket_id || `#${t.id}`).join(', ');
       return c.json({
-        error: 'Impossible de supprimer une machine avec des tickets associés'
+        error: `Impossible de supprimer: ${activeTickets.length} ticket(s) actif(s) associé(s) (${ticketList})`
       }, 400);
     }
 
-    // Supprimer la machine
-    await db.delete(machines).where(eq(machines.id, id));
+    // SOFT DELETE: marquer deleted_at au lieu de supprimer physiquement
+    // Cela évite les erreurs FK si des tickets soft-deleted référencent la machine
+    await db.update(machines)
+      .set({ deleted_at: new Date().toISOString() })
+      .where(eq(machines.id, id));
+
+    // Nettoyer les alertes TV auto-générées pour cette machine
+    try {
+      await c.env.DB.prepare(`
+        DELETE FROM broadcast_messages WHERE is_auto_generated = 1 AND source_machine_id = ?
+      `).bind(id).run();
+    } catch (e) {
+      // Ignorer si la table n'existe pas
+    }
 
     return c.json({ message: 'Machine supprimée avec succès' });
   } catch (error) {
