@@ -1363,7 +1363,7 @@ CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analy
         // Build dynamic Kanban columns summary for AI context
         const kanbanColumnsSummary = kanbanColumns.map(col => `${col.id} = "${col.title}"`).join(', ');
 
-        // Build active tickets summary for context
+        // Build active tickets summary for context WITH CLICKABLE LINKS
         const ticketsByStatus: Record<string, any[]> = {};
         activeTickets.forEach((t: any) => {
             const statusLabel = kanbanColumns.find(c => c.id === t.status)?.title || t.status;
@@ -1371,7 +1371,11 @@ CONTEXTE : L'utilisateur demande conseil spécifiquement sur ce problème. Analy
             ticketsByStatus[statusLabel].push(t);
         });
         const activeTicketsSummary = activeTickets.length > 0 
-            ? `${activeTickets.length} ticket(s) actif(s):\n${Object.entries(ticketsByStatus).map(([status, tix]) => `  - ${status}: ${tix.length} (${tix.map((t: any) => t.display_id).join(', ')})`).join('\n')}`
+            ? `${activeTickets.length} ticket(s) actif(s):\n${Object.entries(ticketsByStatus).map(([status, tix]) => 
+                `  - ${status}: ${tix.length} → ${tix.map((t: any) => 
+                    baseUrl ? `[${t.display_id}](${baseUrl}/?ticket=${t.id})` : t.display_id
+                ).join(', ')}`
+            ).join('\n')}`
             : "Aucun ticket actif.";
 
         let systemPrompt = `
