@@ -17,6 +17,10 @@ import { z } from 'zod';
 import { TOOLS, ToolFunctions } from '../ai/tools';
 import { prepareSecretary, detectDocumentType, type DocumentType, type CompanyIdentity } from '../ai/secretary';
 
+// ===== CONDITIONAL LOGGING (disabled in production) =====
+const isDev = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
+const devLog = (...args: unknown[]) => { if (isDev) devLog(...args); };
+
 // ===== SECRETARY AI MODEL CONFIG =====
 // ROLLBACK: Change to 'openai' if issues
 const SECRETARY_AI_PROVIDER: 'deepseek' | 'openai' = 'deepseek';
@@ -723,7 +727,7 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
     
     if (env.GROQ_API_KEY) {
         try {
-            console.log("🎤 [AI] Trying Groq Whisper...");
+            devLog("🎤 [AI] Trying Groq Whisper...");
             const formData = new FormData();
             formData.append('file', audioFile);
             formData.append('model', 'whisper-large-v3');
@@ -748,7 +752,7 @@ async function transcribeAudio(audioFile: File, env: Bindings, vocabulary: strin
 
     if (env.OPENAI_API_KEY) {
         try {
-            console.log("🎤 [AI] Fallback to OpenAI Whisper...");
+            devLog("🎤 [AI] Fallback to OpenAI Whisper...");
             const formData = new FormData();
             formData.append('file', audioFile, 'voice_ticket.webm');
             formData.append('model', 'whisper-1');
@@ -972,7 +976,7 @@ app.post('/chat', async (c) => {
         let documentPromptBlock = "";
         
         if (isDocumentRequest && documentIntent.type !== 'conversation') {
-            console.log(`📄 [AI] Document request detected: ${documentIntent.type} (confidence: ${documentIntent.confidence}) - User: ${userName} (${userRole})`);
+            devLog(`📄 [AI] Document request detected: ${documentIntent.type} (confidence: ${documentIntent.confidence}) - User: ${userName} (${userRole})`);
             
             // Collecter les données enrichies pour le document
             documentData = await collectDocumentData(db, c.env, documentIntent.needsData);
@@ -1083,9 +1087,9 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
                 id: tickets.id, display_id: tickets.ticket_id, title: tickets.title, status: tickets.status, assigned_to: tickets.assigned_to, machine_id: tickets.machine_id, priority: tickets.priority
             }).from(tickets).where(and(not(inArray(tickets.status, closedStatuses)), isNull(tickets.deleted_at))).all() || [];
             
-            console.log(`🎫 [AI Chat] Active tickets found: ${activeTickets.length} (excluded closed statuses: ${closedStatuses.join(', ')})`);
+            devLog(`🎫 [AI Chat] Active tickets found: ${activeTickets.length} (excluded closed statuses: ${closedStatuses.join(', ')})`);
             if (activeTickets.length > 0) {
-                console.log(`🎫 [AI Chat] Tickets: ${activeTickets.map((t: any) => `${t.display_id}(${t.status})`).join(', ')}`);
+                devLog(`🎫 [AI Chat] Tickets: ${activeTickets.map((t: any) => `${t.display_id}(${t.status})`).join(', ')}`);
             }
 
             const mediaMap = new Map<number, string[]>();
@@ -1297,7 +1301,7 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
                                     { type: "image_url", image_url: { url: `data:${latestImage.file_type};base64,${base64Image}` } }
                                 ]
                             };
-                            console.log("[AI] Vision injected for ticket attachment");
+                            devLog("[AI] Vision injected for ticket attachment");
                         }
                     }
                 }
@@ -1500,7 +1504,7 @@ ${aiConfig.rules}
                             // INTELLIGENT ARGUMENT ROUTING
                             // Some tools need baseUrl (for links), others need userId (for permission/context)
                             // search_web needs env for API keys
-                            console.log(`[AI] Invoking tool: ${fnName}`);
+                            devLog(`[AI] Invoking tool: ${fnName}`);
                             if (['search_tickets', 'get_overdue_tickets'].includes(fnName)) {
                                  // These tools signatures were updated to accept baseUrl
                                  // Pass configured URL or explicit placeholder if missing
@@ -1905,14 +1909,14 @@ Traduis systématiquement les termes techniques anglais:
 
 Ne jamais afficher les codes anglais bruts ou abréviations anglaises dans le document final.`;
         
-        console.log(`📊 [Report] Generating ${documentType} for period ${startISO} to ${endISO}`);
+        devLog(`📊 [Report] Generating ${documentType} for period ${startISO} to ${endISO}`);
 
         // ===== CALL AI (DeepSeek PRIMARY, OpenAI FALLBACK) =====
         let aiResponse = '';
         
         if (env.DEEPSEEK_API_KEY) {
             try {
-                console.log('📊 [Report] Using DeepSeek-Chat');
+                devLog('📊 [Report] Using DeepSeek-Chat');
                 const response = await fetch('https://api.deepseek.com/chat/completions', {
                     method: 'POST',
                     headers: { 
@@ -1942,7 +1946,7 @@ Ne jamais afficher les codes anglais bruts ou abréviations anglaises dans le do
         // Fallback to OpenAI
         if (!aiResponse && env.OPENAI_API_KEY) {
             try {
-                console.log('📊 [Report] Using GPT-4o-mini fallback');
+                devLog('📊 [Report] Using GPT-4o-mini fallback');
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
@@ -2031,7 +2035,7 @@ app.post('/secretary', async (c) => {
         
         // ===== AUTO-DETECT DOCUMENT TYPE IF NOT PROVIDED =====
         if (!documentType || documentType === 'auto') {
-            console.log(`🧠 [Secretary] Auto-detecting document type with AI...`);
+            devLog(`🧠 [Secretary] Auto-detecting document type with AI...`);
             
             try {
                 // Utiliser l'IA pour détecter le type de document
@@ -2071,21 +2075,21 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                     const validTypes = ['rapports', 'subventions', 'rh', 'technique', 'correspondance', 'creatif'];
                     if (validTypes.includes(detectedType)) {
                         documentType = detectedType;
-                        console.log(`🧠 [Secretary] AI detected document type: ${documentType}`);
+                        devLog(`🧠 [Secretary] AI detected document type: ${documentType}`);
                     } else {
                         // Fallback sur détection par mots-clés si réponse invalide
                         documentType = detectDocumentType(instructions);
-                        console.log(`🧠 [Secretary] AI response invalid, fallback to keywords: ${documentType}`);
+                        devLog(`🧠 [Secretary] AI response invalid, fallback to keywords: ${documentType}`);
                     }
                 } else {
                     // Fallback sur détection par mots-clés si API échoue
                     documentType = detectDocumentType(instructions);
-                    console.log(`🧠 [Secretary] AI detection failed, fallback to keywords: ${documentType}`);
+                    devLog(`🧠 [Secretary] AI detection failed, fallback to keywords: ${documentType}`);
                 }
             } catch (detectError) {
                 // Fallback sur détection par mots-clés si erreur
                 documentType = detectDocumentType(instructions);
-                console.log(`🧠 [Secretary] AI detection error, fallback to keywords: ${documentType}`);
+                devLog(`🧠 [Secretary] AI detection error, fallback to keywords: ${documentType}`);
             }
         }
         
@@ -2148,7 +2152,7 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         };
 
         // ===== PREPARE SPECIALIZED BRAIN =====
-        console.log(`🧠 [Secretary] Preparing ${documentType} brain with specialized data...`);
+        devLog(`🧠 [Secretary] Preparing ${documentType} brain with specialized data...`);
         
         let brainResult;
         try {
@@ -2158,7 +2162,7 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 companyIdentity,
                 baseUrl
             );
-            console.log(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
+            devLog(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
         } catch (brainError: any) {
             console.error(`❌ [Secretary] Brain preparation failed:`, brainError.message, brainError.stack);
             return c.json({ 
@@ -2172,14 +2176,14 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         let usedProvider = SECRETARY_AI_PROVIDER;
         
         // DEBUG: Log key availability
-        console.log(`🔑 [Secretary] DEEPSEEK_API_KEY exists: ${!!env.DEEPSEEK_API_KEY}, length: ${env.DEEPSEEK_API_KEY?.length || 0}`);
-        console.log(`🔑 [Secretary] OPENAI_API_KEY exists: ${!!env.OPENAI_API_KEY}`);
-        console.log(`🔑 [Secretary] Selected provider: ${SECRETARY_AI_PROVIDER}, keyEnv: ${secretaryAiConfig.keyEnv}`);
-        console.log(`🔑 [Secretary] apiKey from env: ${apiKey ? 'found (' + apiKey.substring(0, 8) + '...)' : 'NOT FOUND'}`);
+        devLog(`🔑 [Secretary] DEEPSEEK_API_KEY exists: ${!!env.DEEPSEEK_API_KEY}, length: ${env.DEEPSEEK_API_KEY?.length || 0}`);
+        devLog(`🔑 [Secretary] OPENAI_API_KEY exists: ${!!env.OPENAI_API_KEY}`);
+        devLog(`🔑 [Secretary] Selected provider: ${SECRETARY_AI_PROVIDER}, keyEnv: ${secretaryAiConfig.keyEnv}`);
+        devLog(`🔑 [Secretary] apiKey from env: ${apiKey ? 'found (' + apiKey.substring(0, 8) + '...)' : 'NOT FOUND'}`);
         
         // Fallback to OpenAI if DeepSeek key missing
         if (!apiKey && SECRETARY_AI_PROVIDER === 'deepseek') {
-            console.log(`⚠️ [Secretary] DeepSeek key missing, falling back to OpenAI`);
+            devLog(`⚠️ [Secretary] DeepSeek key missing, falling back to OpenAI`);
             secretaryAiConfig = AI_CONFIGS.openai;
             apiKey = env.OPENAI_API_KEY;
             usedProvider = 'openai';
@@ -2190,8 +2194,8 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             return c.json({ error: 'Clé API manquante (DeepSeek ou OpenAI)' }, 500);
         }
         
-        console.log(`🤖 [Secretary] Using ${usedProvider} (${secretaryAiConfig.model})`);
-        console.log(`🌐 [Secretary] API URL: ${secretaryAiConfig.url}`);
+        devLog(`🤖 [Secretary] Using ${usedProvider} (${secretaryAiConfig.model})`);
+        devLog(`🌐 [Secretary] API URL: ${secretaryAiConfig.url}`);
 
         // ===== PREPARE MESSAGES =====
         const fullPrompt = brainResult.contextData 
@@ -2212,11 +2216,11 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         // NOTE: DeepSeek a des problèmes avec les tools complexes, on les désactive pour DeepSeek
         // Les données sont déjà chargées dans contextData donc pas besoin de tools
         const SECRETARY_TOOLS = (brainResult.tools.length > 0 && usedProvider === 'openai') ? TOOLS : [];
-        console.log(`🔧 [Secretary] Tools enabled: ${SECRETARY_TOOLS.length > 0} (provider: ${usedProvider})`);
+        devLog(`🔧 [Secretary] Tools enabled: ${SECRETARY_TOOLS.length > 0} (provider: ${usedProvider})`);
         
         while (turns < MAX_TURNS) {
             turns++;
-            console.log(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} (${usedProvider})`);
+            devLog(`📝 [Secretary] Turn ${turns}/${MAX_TURNS} (${usedProvider})`);
             
             try {
                 const requestBody: any = {
@@ -2261,7 +2265,7 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 
                 // Handle tool calls
                 if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
-                    console.log(`🔧 [Secretary] Using ${responseMessage.tool_calls.length} tool(s)`);
+                    devLog(`🔧 [Secretary] Using ${responseMessage.tool_calls.length} tool(s)`);
                     
                     for (const toolCall of responseMessage.tool_calls) {
                         const fnName = toolCall.function.name;
