@@ -129,6 +129,35 @@ const fetchCompanyConfig = async (): Promise<{ companyName: string; companyAddre
     return { companyName, companyAddress, companyPhone, companyEmail, logoUrl };
 };
 
+// --- FETCH LOGO AS ARRAY BUFFER FOR DOCX ---
+const fetchLogoAsArrayBuffer = async (logoUrl: string): Promise<{ data: ArrayBuffer; width: number; height: number } | null> => {
+    try {
+        const resp = await fetch(logoUrl);
+        if (!resp.ok) return null;
+        const blob = await resp.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        
+        // Get image dimensions using Image element
+        const img = new Image();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        return new Promise((resolve) => {
+            img.onload = () => {
+                URL.revokeObjectURL(blobUrl);
+                resolve({ data: arrayBuffer, width: img.naturalWidth, height: img.naturalHeight });
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(blobUrl);
+                resolve(null);
+            };
+            img.src = blobUrl;
+        });
+    } catch (e) {
+        console.warn('Failed to fetch logo for DOCX:', e);
+        return null;
+    }
+};
+
 // --- CLEAN LETTER CONTENT: Replace first company block with logo ---
 const cleanLetterForPrint = (content: string, companyName: string): string => {
     // Pattern to match the company header block at the start of a letter
@@ -289,11 +318,14 @@ body {
 
 // --- EXPORT DOCX FOR AI RESPONSES ---
 const exportDocx = async (content: string) => {
-    const { companyName, companyAddress, companyPhone, companyEmail } = await fetchCompanyConfig();
+    const { companyName, companyAddress, companyPhone, companyEmail, logoUrl } = await fetchCompanyConfig();
     const isLetter = isLetterContent(content);
     
     // For letters: clean the content to remove company header
     const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
+    
+    // Fetch logo for DOCX embedding
+    const logoData = await fetchLogoAsArrayBuffer(logoUrl);
     
     try {
         // Load docx library from CDN on demand
@@ -307,45 +339,146 @@ const exportDocx = async (content: string) => {
             });
         }
         
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, BorderStyle } = (window as any).docx;
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, BorderStyle, ImageRun } = (window as any).docx;
         
         const children: any[] = [];
         
-        // Header for letters: Company name (bold) + address + contact (smaller)
+        // Calculate logo dimensions (max height ~50px in DOCX EMUs: 50 * 914400 / 96 ≈ 476250)
+        const logoHeight = 55; // pixels
+        let logoWidthEMU = 0;
+        let logoHeightEMU = 0;
+        if (logoData) {
+            const aspectRatio = logoData.width / logoData.height;
+            logoHeightEMU = Math.round(logoHeight * 914400 / 96); // Convert px to EMU
+            logoWidthEMU = Math.round(logoHeightEMU * aspectRatio);
+        }
+        
+        // Header for letters: Logo + Company name (bold) + address + contact
         if (isLetter) {
-            // Company name in bold
-            children.push(new Paragraph({
-                children: [new TextRun({ text: companyName, bold: true, size: 28 })],
-                spacing: { after: 50 }
-            }));
-            // Address in smaller gray text
-            if (companyAddress) {
+            // If we have a logo, create a table with logo and company info side by side
+            if (logoData) {
+                const headerTable = new Table({
+                    rows: [
+                        new TableRow({
+                            children: [
+                                // Logo cell
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new ImageRun({
+                                                    data: logoData.data,
+                                                    transformation: { width: Math.round(logoWidthEMU / 914400 * 96), height: logoHeight },
+                                                    type: 'png'
+                                                })
+                                            ]
+                                        })
+                                    ],
+                                    width: { size: 1500, type: WidthType.DXA },
+                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.SINGLE, size: 8, color: '1a1a1a' } },
+                                    verticalAlign: 'center'
+                                }),
+                                // Company info cell
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: companyName, bold: true, size: 28, font: 'Arial' })],
+                                            spacing: { after: 40 }
+                                        }),
+                                        ...(companyAddress ? [new Paragraph({
+                                            children: [new TextRun({ text: companyAddress, size: 18, color: '555555', font: 'Arial' })],
+                                            spacing: { after: 20 }
+                                        })] : []),
+                                        ...([companyPhone, companyEmail].filter(Boolean).length > 0 ? [new Paragraph({
+                                            children: [new TextRun({ text: [companyPhone, companyEmail].filter(Boolean).join(' | '), size: 16, color: '666666', font: 'Arial' })]
+                                        })] : [])
+                                    ],
+                                    width: { size: 7500, type: WidthType.DXA },
+                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } },
+                                    margins: { left: 200 }
+                                })
+                            ]
+                        })
+                    ],
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL }, insideHorizontal: { style: BorderStyle.NIL }, insideVertical: { style: BorderStyle.NIL } }
+                });
+                children.push(headerTable);
+            } else {
+                // No logo: just company name
                 children.push(new Paragraph({
-                    children: [new TextRun({ text: companyAddress, size: 18, color: '666666' })],
+                    children: [new TextRun({ text: companyName, bold: true, size: 28, font: 'Arial' })],
                     spacing: { after: 50 }
                 }));
-            }
-            // Phone and email
-            const contactInfo = [companyPhone, companyEmail].filter(Boolean).join(' | ');
-            if (contactInfo) {
-                children.push(new Paragraph({
-                    children: [new TextRun({ text: contactInfo, size: 16, color: '888888' })],
-                    spacing: { after: 100 }
-                }));
+                if (companyAddress) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: companyAddress, size: 18, color: '666666', font: 'Arial' })],
+                        spacing: { after: 50 }
+                    }));
+                }
+                const contactInfo = [companyPhone, companyEmail].filter(Boolean).join(' | ');
+                if (contactInfo) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: contactInfo, size: 16, color: '888888', font: 'Arial' })],
+                        spacing: { after: 100 }
+                    }));
+                }
             }
             // Separator line
             children.push(new Paragraph({
-                border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: '000000' } },
-                spacing: { after: 400 }
+                border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: '1a1a1a' } },
+                spacing: { before: 200, after: 400 }
             }));
         }
         
-        // Header only for non-letters
+        // Header for non-letters: Logo + company name
         if (!isLetter) {
-            children.push(new Paragraph({
-                children: [new TextRun({ text: companyName, bold: true, size: 28 })],
-                spacing: { after: 300 }
-            }));
+            if (logoData) {
+                const headerTable = new Table({
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new ImageRun({
+                                                    data: logoData.data,
+                                                    transformation: { width: Math.round(logoWidthEMU / 914400 * 96 * 0.8), height: Math.round(logoHeight * 0.8) },
+                                                    type: 'png'
+                                                })
+                                            ]
+                                        })
+                                    ],
+                                    width: { size: 1200, type: WidthType.DXA },
+                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.SINGLE, size: 6, color: '000000' } },
+                                    verticalAlign: 'center'
+                                }),
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: companyName, bold: true, size: 28, font: 'Arial' })]
+                                        })
+                                    ],
+                                    width: { size: 7800, type: WidthType.DXA },
+                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } },
+                                    margins: { left: 150 },
+                                    verticalAlign: 'center'
+                                })
+                            ]
+                        })
+                    ],
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL }, insideHorizontal: { style: BorderStyle.NIL }, insideVertical: { style: BorderStyle.NIL } }
+                });
+                children.push(headerTable);
+                children.push(new Paragraph({ spacing: { after: 300 } }));
+            } else {
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: companyName, bold: true, size: 28, font: 'Arial' })],
+                    spacing: { after: 300 }
+                }));
+            }
         }
         
         // Parse markdown content line by line
