@@ -749,6 +749,8 @@ const ChatWindow = ({ conversationId, currentUserId, currentUserRole, onBack, on
                 handleAudioCall={handleAudioCall}
                 messengerName={messengerName}
                 participants={participants}
+                conversationName={conversation?.name || (conversation?.type === 'direct' ? participants.find(p => p.user_id !== currentUserId)?.full_name : null) || null}
+                conversationType={conversation?.type || 'direct'}
             />
 
             <MessageList 

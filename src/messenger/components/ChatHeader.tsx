@@ -19,6 +19,8 @@ interface ChatHeaderProps {
     handleAudioCall: (e: React.MouseEvent) => void;
     messengerName: string;
     participants: Participant[];
+    conversationName: string | null;
+    conversationType: 'direct' | 'group';
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -36,7 +38,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     setShowInfo,
     handleAudioCall,
     messengerName,
-    participants
+    participants,
+    conversationName,
+    conversationType
 }) => {
     
     const ensureAllUsersLoaded = () => {
@@ -125,8 +129,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                 </div>
                 
                 <div className="flex flex-col">
-                    <h1 className="text-lg font-display font-bold text-gray-900 tracking-tight leading-none text-white">
-                        {participants.length > 2 ? 'Groupe' : 'Discussion'}
+                    <h1 className="text-lg font-display font-bold text-gray-900 tracking-tight leading-none text-white truncate max-w-[150px] md:max-w-[250px]" title={conversationName || (conversationType === 'group' ? 'Groupe' : 'Discussion')}>
+                        {conversationName || (conversationType === 'group' ? 'Groupe' : 'Discussion')}
                     </h1>
                     <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
