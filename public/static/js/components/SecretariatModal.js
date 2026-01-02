@@ -643,11 +643,15 @@ const SecretariatModal = ({ isOpen, onClose }) => {
 
     const printDocument = async () => {
         if (!generatedDoc) return;
-        let companyName = 'Entreprise', logoUrl = '/api/settings/logo';
+        let companyName = 'Entreprise', companyAddress = '', companyPhone = '', companyEmail = '', logoUrl = '/api/settings/logo';
         try {
             const res = await axios.get('/api/settings/config/public');
             if (res.data) {
-                companyName = res.data.company_subtitle || res.data.company_short_name || 'Entreprise';
+                // Priorité: company_name (nouveau) > company_subtitle (legacy)
+                companyName = res.data.company_name || res.data.company_subtitle || res.data.company_short_name || 'Entreprise';
+                companyAddress = res.data.company_address || '';
+                companyPhone = res.data.company_phone || '';
+                companyEmail = res.data.company_email || '';
                 if (res.data.company_logo_url) logoUrl = res.data.company_logo_url;
             }
         } catch (e) {}
@@ -795,12 +799,16 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
         const docTitle = generatedDoc.title || 'Document';
         
         // Récupérer les infos de l'entreprise
-        let companyName = 'Entreprise';
+        let companyName = 'Entreprise', companyAddress = '', companyPhone = '', companyEmail = '';
         try {
             const resp = await fetch('/api/settings/config/public');
             if (resp.ok) {
                 const cfg = await resp.json();
-                companyName = cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+                // Priorité: company_name (nouveau) > company_subtitle (legacy)
+                companyName = cfg.company_name || cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+                companyAddress = cfg.company_address || '';
+                companyPhone = cfg.company_phone || '';
+                companyEmail = cfg.company_email || '';
             }
         } catch (e) {}
         
@@ -875,12 +883,16 @@ ${html}
             const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, HeadingLevel, AlignmentType } = window.docx;
             
             // Récupérer les infos de l'entreprise
-            let companyName = 'Entreprise';
+            let companyName = 'Entreprise', companyAddress = '', companyPhone = '', companyEmail = '';
             try {
                 const resp = await fetch('/api/settings/config/public');
                 if (resp.ok) {
                     const cfg = await resp.json();
-                    companyName = cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+                    // Priorité: company_name (nouveau) > company_subtitle (legacy)
+                    companyName = cfg.company_name || cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+                    companyAddress = cfg.company_address || '';
+                    companyPhone = cfg.company_phone || '';
+                    companyEmail = cfg.company_email || '';
                 }
             } catch (e) {}
             

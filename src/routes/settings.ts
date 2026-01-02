@@ -822,6 +822,186 @@ settings.get('/company_address', async (c) => {
 });
 
 /**
+ * PUT /api/settings/company_name - Mettre à jour le nom officiel de l'entreprise
+ * Accès: Administrateurs (admin role)
+ * Validation: Max 150 caractères
+ */
+settings.put('/company_name', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (!value || typeof value !== 'string') {
+      return c.json({ error: 'Nom d\'entreprise invalide' }, 400);
+    }
+
+    const trimmedValue = value.trim();
+    if (trimmedValue.length === 0) {
+      return c.json({ error: 'Le nom ne peut pas être vide' }, 400);
+    }
+    if (trimmedValue.length > 150) {
+      return c.json({ error: 'Le nom ne peut pas dépasser 150 caractères' }, 400);
+    }
+
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'company_name'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'company_name'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('company_name', ?)
+      `).bind(trimmedValue).run();
+    }
+
+    console.log(`✅ Nom entreprise modifié par user ${user.userId}: "${trimmedValue}"`);
+    return c.json({ message: 'Nom entreprise mis à jour', setting_value: trimmedValue });
+  } catch (error) {
+    console.error('Update company_name error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/company_name - Obtenir le nom officiel de l'entreprise
+ */
+settings.get('/company_name', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'company_name'
+    `).first() as { setting_value: string } | null;
+    return c.json({ setting_key: 'company_name', setting_value: result?.setting_value || '' });
+  } catch (error) {
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/company_email - Mettre à jour le courriel officiel
+ * Accès: Administrateurs
+ */
+settings.put('/company_email', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (typeof value !== 'string') {
+      return c.json({ error: 'Courriel invalide' }, 400);
+    }
+
+    const trimmedValue = value.trim();
+    if (trimmedValue.length > 100) {
+      return c.json({ error: 'Le courriel ne peut pas dépasser 100 caractères' }, 400);
+    }
+
+    // Validation email basique si non vide
+    if (trimmedValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+      return c.json({ error: 'Format de courriel invalide' }, 400);
+    }
+
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'company_email'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'company_email'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('company_email', ?)
+      `).bind(trimmedValue).run();
+    }
+
+    console.log(`✅ Courriel entreprise modifié par user ${user.userId}: "${trimmedValue}"`);
+    return c.json({ message: 'Courriel mis à jour', setting_value: trimmedValue });
+  } catch (error) {
+    console.error('Update company_email error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/company_email - Obtenir le courriel officiel
+ */
+settings.get('/company_email', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'company_email'
+    `).first() as { setting_value: string } | null;
+    return c.json({ setting_key: 'company_email', setting_value: result?.setting_value || '' });
+  } catch (error) {
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * PUT /api/settings/company_phone - Mettre à jour le téléphone officiel
+ * Accès: Administrateurs
+ */
+settings.put('/company_phone', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (typeof value !== 'string') {
+      return c.json({ error: 'Téléphone invalide' }, 400);
+    }
+
+    const trimmedValue = value.trim();
+    if (trimmedValue.length > 30) {
+      return c.json({ error: 'Le téléphone ne peut pas dépasser 30 caractères' }, 400);
+    }
+
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'company_phone'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'company_phone'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('company_phone', ?)
+      `).bind(trimmedValue).run();
+    }
+
+    console.log(`✅ Téléphone entreprise modifié par user ${user.userId}: "${trimmedValue}"`);
+    return c.json({ message: 'Téléphone mis à jour', setting_value: trimmedValue });
+  } catch (error) {
+    console.error('Update company_phone error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/company_phone - Obtenir le téléphone officiel
+ */
+settings.get('/company_phone', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'company_phone'
+    `).first() as { setting_value: string } | null;
+    return c.json({ setting_key: 'company_phone', setting_value: result?.setting_value || '' });
+  } catch (error) {
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
  * GET /api/settings/placeholders - Obtenir les placeholders personnalisables (SaaS)
  * Accès: Public (pour affichage dans les formulaires)
  * Utilisé pour les formulaires de création (machines, tickets, etc.)
@@ -1210,10 +1390,13 @@ settings.get('/config/public', async (c) => {
       'app_name',
       'app_tagline', 
       'app_base_url',
-      'company_title',
-      'company_subtitle',
+      'company_title',      // Legacy: nom de l'app
+      'company_subtitle',   // Legacy: nom entreprise
       'company_short_name',
-      'company_address',
+      'company_name',       // NEW: Nom officiel de l'entreprise
+      'company_address',    // Adresse complète
+      'company_email',      // NEW: Courriel officiel
+      'company_phone',      // NEW: Téléphone
       'company_logo_url',
       'primary_color',
       'secondary_color',

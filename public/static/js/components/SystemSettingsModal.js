@@ -15,19 +15,43 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     // isClientAdmin = admin entreprise cliente - accès aux paramètres de son entreprise (logo, titre, etc.)
     const [isClientAdmin, setIsClientAdmin] = React.useState(false);
 
-    // États pour titre/sous-titre/adresse (admin uniquement)
-    const [companyTitle, setCompanyTitle] = React.useState('Gestion de la maintenance et des réparations');
-    const [companySubtitle, setCompanySubtitle] = React.useState('Système de Maintenance Universel');
-    const [companyAddress, setCompanyAddress] = React.useState('');
+    // États pour l'application (admin uniquement)
+    const [companyTitle, setCompanyTitle] = React.useState('Système de Gestion Interne'); // Nom de l'application
+    
+    // États pour l'entreprise (NOUVEAUX - Phase 1)
+    const [companyName, setCompanyName] = React.useState(''); // Nom officiel entreprise
+    const [companyAddress, setCompanyAddress] = React.useState(''); // Adresse complète
+    const [companyEmail, setCompanyEmail] = React.useState(''); // Courriel officiel
+    const [companyPhone, setCompanyPhone] = React.useState(''); // Téléphone
+    
+    // Legacy: company_subtitle (sera migré vers company_name)
+    const [companySubtitle, setCompanySubtitle] = React.useState('');
+    
+    // États d'édition
     const [editingTitle, setEditingTitle] = React.useState(false);
-    const [editingSubtitle, setEditingSubtitle] = React.useState(false);
+    const [editingCompanyName, setEditingCompanyName] = React.useState(false);
     const [editingAddress, setEditingAddress] = React.useState(false);
+    const [editingEmail, setEditingEmail] = React.useState(false);
+    const [editingPhone, setEditingPhone] = React.useState(false);
+    
+    // Valeurs temporaires
     const [tempTitle, setTempTitle] = React.useState('');
-    const [tempSubtitle, setTempSubtitle] = React.useState('');
+    const [tempCompanyName, setTempCompanyName] = React.useState('');
     const [tempAddress, setTempAddress] = React.useState('');
+    const [tempEmail, setTempEmail] = React.useState('');
+    const [tempPhone, setTempPhone] = React.useState('');
+    
+    // États de sauvegarde
     const [savingTitle, setSavingTitle] = React.useState(false);
-    const [savingSubtitle, setSavingSubtitle] = React.useState(false);
+    const [savingCompanyName, setSavingCompanyName] = React.useState(false);
     const [savingAddress, setSavingAddress] = React.useState(false);
+    const [savingEmail, setSavingEmail] = React.useState(false);
+    const [savingPhone, setSavingPhone] = React.useState(false);
+    
+    // Legacy (pour compatibilité)
+    const [editingSubtitle, setEditingSubtitle] = React.useState(false);
+    const [tempSubtitle, setTempSubtitle] = React.useState('');
+    const [savingSubtitle, setSavingSubtitle] = React.useState(false);
 
     // État pour le contexte AI personnalisé
     const [aiCustomContext, setAiCustomContext] = React.useState('');
@@ -185,8 +209,9 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
             const response = await axios.get(API_URL + '/settings/timezone_offset_hours');
             setTimezoneOffset(response.data.setting_value);
 
-            // Charger titre et sous-titre (admin uniquement)
+            // Charger paramètres application et entreprise (admin uniquement)
             if (isAdmin) {
+                // 1. Nom de l'application (company_title)
                 try {
                     const titleResponse = await axios.get(API_URL + '/settings/company_title');
                     if (titleResponse.data.setting_value) {
@@ -196,15 +221,31 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     // Titre par défaut
                 }
 
+                // 2. Nom officiel de l'entreprise (NOUVEAU)
+                try {
+                    const nameResponse = await axios.get(API_URL + '/settings/company_name');
+                    if (nameResponse.data.setting_value) {
+                        setCompanyName(nameResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Fallback: utiliser company_subtitle si company_name n'existe pas encore
+                }
+
+                // 3. Legacy: company_subtitle (pour migration)
                 try {
                     const subtitleResponse = await axios.get(API_URL + '/settings/company_subtitle');
                     if (subtitleResponse.data.setting_value) {
                         setCompanySubtitle(subtitleResponse.data.setting_value);
+                        // Si company_name est vide, utiliser subtitle comme fallback
+                        if (!companyName) {
+                            setCompanyName(subtitleResponse.data.setting_value);
+                        }
                     }
                 } catch (error) {
                     // Sous-titre par défaut
                 }
 
+                // 4. Adresse de l'entreprise
                 try {
                     const addressResponse = await axios.get(API_URL + '/settings/company_address');
                     if (addressResponse.data.setting_value) {
@@ -212,6 +253,26 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     }
                 } catch (error) {
                     // Adresse par défaut vide
+                }
+
+                // 5. Courriel officiel (NOUVEAU)
+                try {
+                    const emailResponse = await axios.get(API_URL + '/settings/company_email');
+                    if (emailResponse.data.setting_value) {
+                        setCompanyEmail(emailResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Courriel par défaut vide
+                }
+
+                // 6. Téléphone (NOUVEAU)
+                try {
+                    const phoneResponse = await axios.get(API_URL + '/settings/company_phone');
+                    if (phoneResponse.data.setting_value) {
+                        setCompanyPhone(phoneResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Téléphone par défaut vide
                 }
 
                 try {
@@ -499,6 +560,45 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
+    // Fonctions pour gérer le nom de l'entreprise (NOUVEAU)
+    const handleStartEditCompanyName = () => {
+        setTempCompanyName(companyName);
+        setEditingCompanyName(true);
+    };
+
+    const handleCancelEditCompanyName = () => {
+        setTempCompanyName('');
+        setEditingCompanyName(false);
+    };
+
+    const handleSaveCompanyName = async () => {
+        if (!tempCompanyName.trim()) {
+            alert('Le nom de l\'entreprise ne peut pas être vide');
+            return;
+        }
+        if (tempCompanyName.trim().length > 150) {
+            alert('Le nom ne peut pas dépasser 150 caractères');
+            return;
+        }
+
+        setSavingCompanyName(true);
+        try {
+            await axios.put(API_URL + '/settings/company_name', {
+                value: tempCompanyName.trim()
+            });
+
+            setCompanyName(tempCompanyName.trim());
+            setEditingCompanyName(false);
+            setTempCompanyName('');
+
+            alert('Nom de l\'entreprise mis à jour avec succès!');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingCompanyName(false);
+        }
+    };
+
     // Fonctions pour gérer l'adresse
     const handleStartEditAddress = () => {
         setTempAddress(companyAddress);
@@ -531,6 +631,78 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
             alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
         } finally {
             setSavingAddress(false);
+        }
+    };
+
+    // Fonctions pour gérer le courriel (NOUVEAU)
+    const handleStartEditEmail = () => {
+        setTempEmail(companyEmail);
+        setEditingEmail(true);
+    };
+
+    const handleCancelEditEmail = () => {
+        setTempEmail('');
+        setEditingEmail(false);
+    };
+
+    const handleSaveEmail = async () => {
+        const email = tempEmail.trim();
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Format de courriel invalide');
+            return;
+        }
+        if (email.length > 100) {
+            alert('Le courriel ne peut pas dépasser 100 caractères');
+            return;
+        }
+
+        setSavingEmail(true);
+        try {
+            await axios.put(API_URL + '/settings/company_email', { value: email });
+
+            setCompanyEmail(email);
+            setEditingEmail(false);
+            setTempEmail('');
+
+            alert('Courriel mis à jour avec succès!');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingEmail(false);
+        }
+    };
+
+    // Fonctions pour gérer le téléphone (NOUVEAU)
+    const handleStartEditPhone = () => {
+        setTempPhone(companyPhone);
+        setEditingPhone(true);
+    };
+
+    const handleCancelEditPhone = () => {
+        setTempPhone('');
+        setEditingPhone(false);
+    };
+
+    const handleSavePhone = async () => {
+        const phone = tempPhone.trim();
+        if (phone.length > 30) {
+            alert('Le téléphone ne peut pas dépasser 30 caractères');
+            return;
+        }
+
+        setSavingPhone(true);
+        try {
+            await axios.put(API_URL + '/settings/company_phone', { value: phone });
+
+            setCompanyPhone(phone);
+            setEditingPhone(false);
+            setTempPhone('');
+
+            alert('Téléphone mis à jour avec succès!');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingPhone(false);
         }
     };
 
@@ -1242,28 +1414,28 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                         )
                     ),
 
-                    // Section Titre et Sous-titre (CLIENT ADMIN - accessible aux admins clients)
+                    // Section Application (CLIENT ADMIN)
                     isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
-                        React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
+                        React.createElement('div', { className: 'bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4' },
                             React.createElement('div', { className: 'flex items-start gap-3' },
-                                React.createElement('i', { className: 'fas fa-heading text-blue-600 text-xl mt-1' }),
+                                React.createElement('i', { className: 'fas fa-desktop text-indigo-600 text-xl mt-1' }),
                                 React.createElement('div', {},
-                                    React.createElement('h3', { className: 'font-bold text-blue-900 mb-2 flex items-center gap-2' },
-                                        "Personnalisation de l'Interface",
-                                        React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
+                                    React.createElement('h3', { className: 'font-bold text-indigo-900 mb-2 flex items-center gap-2' },
+                                        "Paramètres de l'Application",
+                                        React.createElement('span', { className: 'text-xs bg-indigo-600 text-white px-2 py-1 rounded' }, 'ADMIN')
                                     ),
-                                    React.createElement('p', { className: 'text-sm text-blue-800 mb-2' },
-                                        "Personnalisez les titres et noms affichés dans l'application."
+                                    React.createElement('p', { className: 'text-sm text-indigo-800' },
+                                        "Nom et identité de l'application."
                                     )
                                 )
                             )
                         ),
 
-                        // Édition du titre
+                        // 1. Nom de l'application
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
                                 React.createElement('i', { className: 'fas fa-heading mr-2' }),
-                                'Titre principal'
+                                "Nom de l'application"
                             ),
                             !editingTitle ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
                                 React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
@@ -1282,7 +1454,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     type: 'text',
                                     value: tempTitle,
                                     onChange: (e) => setTempTitle(e.target.value),
-                                    placeholder: 'Entrez le nouveau titre',
+                                    placeholder: 'Ex: Système de Gestion Interne',
                                     maxLength: 100,
                                     className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
                                     disabled: savingTitle
@@ -1310,20 +1482,38 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                     )
                                 )
                             )
+                        )
+                    ),
+
+                    // Section Entreprise (CLIENT ADMIN)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-building text-emerald-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-emerald-900 mb-2 flex items-center gap-2' },
+                                        "Informations de l'Entreprise",
+                                        React.createElement('span', { className: 'text-xs bg-emerald-600 text-white px-2 py-1 rounded' }, 'ADMIN')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-emerald-800' },
+                                        "Ces informations apparaissent sur les documents imprimés et les correspondances."
+                                    )
+                                )
+                            )
                         ),
 
-                        // Édition du sous-titre
+                        // 2. Nom de l'entreprise (NOUVEAU - company_name)
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
-                                React.createElement('i', { className: 'fas fa-align-left mr-2' }),
-                                'Sous-titre'
+                                React.createElement('i', { className: 'fas fa-building mr-2' }),
+                                "Nom officiel de l'entreprise"
                             ),
-                            !editingSubtitle ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                            !editingCompanyName ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
                                 React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
-                                    companySubtitle
+                                    companyName || React.createElement('span', { className: 'text-gray-400 italic' }, 'Non configuré')
                                 ),
                                 React.createElement('button', {
-                                    onClick: handleStartEditSubtitle,
+                                    onClick: handleStartEditCompanyName,
                                     className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
                                     type: 'button'
                                 },
@@ -1333,43 +1523,43 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                             ) : React.createElement('div', { className: 'space-y-3' },
                                 React.createElement('input', {
                                     type: 'text',
-                                    value: tempSubtitle,
-                                    onChange: (e) => setTempSubtitle(e.target.value),
-                                    placeholder: 'Entrez le nouveau sous-titre',
+                                    value: tempCompanyName,
+                                    onChange: (e) => setTempCompanyName(e.target.value),
+                                    placeholder: 'Ex: Les Produits Verriers International Inc.',
                                     maxLength: 150,
                                     className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
-                                    disabled: savingSubtitle
+                                    disabled: savingCompanyName
                                 }),
                                 React.createElement('div', { className: 'flex items-center justify-between' },
                                     React.createElement('span', { className: 'text-xs text-gray-600' },
-                                        tempSubtitle.length + '/150 caractères'
+                                        tempCompanyName.length + '/150 caractères'
                                     ),
                                     React.createElement('div', { className: 'flex gap-2' },
                                         React.createElement('button', {
-                                            onClick: handleCancelEditSubtitle,
-                                            disabled: savingSubtitle,
+                                            onClick: handleCancelEditCompanyName,
+                                            disabled: savingCompanyName,
                                             className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
                                             type: 'button'
                                         }, 'Annuler'),
                                         React.createElement('button', {
-                                            onClick: handleSaveSubtitle,
-                                            disabled: !tempSubtitle.trim() || savingSubtitle,
+                                            onClick: handleSaveCompanyName,
+                                            disabled: !tempCompanyName.trim() || savingCompanyName,
                                             className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
                                             type: 'button'
                                         },
-                                            savingSubtitle && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
-                                            savingSubtitle ? 'Enregistrement...' : 'Enregistrer'
+                                            savingCompanyName && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            savingCompanyName ? 'Enregistrement...' : 'Enregistrer'
                                         )
                                     )
                                 )
                             )
                         ),
 
-                        // Édition de l'adresse de l'entreprise
+                        // 3. Adresse de l'entreprise
                         React.createElement('div', { className: 'mb-4' },
                             React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
                                 React.createElement('i', { className: 'fas fa-map-marker-alt mr-2' }),
-                                'Adresse de l\'entreprise (pour impression)'
+                                "Adresse de l'entreprise"
                             ),
                             !editingAddress ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
                                 React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
@@ -1413,6 +1603,130 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                             savingAddress && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                             savingAddress ? 'Enregistrement...' : 'Enregistrer'
                                         )
+                                    )
+                                )
+                            )
+                        ),
+
+                        // 4. Courriel officiel (NOUVEAU)
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-envelope mr-2' }),
+                                "Courriel officiel"
+                            ),
+                            !editingEmail ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
+                                    companyEmail || React.createElement('span', { className: 'text-gray-400 italic' }, 'Non configuré')
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleStartEditEmail,
+                                    className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                    type: 'button'
+                                },
+                                    React.createElement('i', { className: 'fas fa-edit' }),
+                                    'Modifier'
+                                )
+                            ) : React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('input', {
+                                    type: 'email',
+                                    value: tempEmail,
+                                    onChange: (e) => setTempEmail(e.target.value),
+                                    placeholder: 'Ex: info@entreprise.com',
+                                    maxLength: 100,
+                                    className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                    disabled: savingEmail
+                                }),
+                                React.createElement('div', { className: 'flex items-center justify-between' },
+                                    React.createElement('span', { className: 'text-xs text-gray-600' },
+                                        tempEmail.length + '/100 caractères'
+                                    ),
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', {
+                                            onClick: handleCancelEditEmail,
+                                            disabled: savingEmail,
+                                            className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                            type: 'button'
+                                        }, 'Annuler'),
+                                        React.createElement('button', {
+                                            onClick: handleSaveEmail,
+                                            disabled: savingEmail,
+                                            className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                            type: 'button'
+                                        },
+                                            savingEmail && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            savingEmail ? 'Enregistrement...' : 'Enregistrer'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+
+                        // 5. Téléphone (NOUVEAU)
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-phone mr-2' }),
+                                "Téléphone"
+                            ),
+                            !editingPhone ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
+                                    companyPhone || React.createElement('span', { className: 'text-gray-400 italic' }, 'Non configuré')
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleStartEditPhone,
+                                    className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                    type: 'button'
+                                },
+                                    React.createElement('i', { className: 'fas fa-edit' }),
+                                    'Modifier'
+                                )
+                            ) : React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('input', {
+                                    type: 'tel',
+                                    value: tempPhone,
+                                    onChange: (e) => setTempPhone(e.target.value),
+                                    placeholder: 'Ex: 514-494-1940',
+                                    maxLength: 30,
+                                    className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                    disabled: savingPhone
+                                }),
+                                React.createElement('div', { className: 'flex items-center justify-between' },
+                                    React.createElement('span', { className: 'text-xs text-gray-600' },
+                                        tempPhone.length + '/30 caractères'
+                                    ),
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', {
+                                            onClick: handleCancelEditPhone,
+                                            disabled: savingPhone,
+                                            className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                            type: 'button'
+                                        }, 'Annuler'),
+                                        React.createElement('button', {
+                                            onClick: handleSavePhone,
+                                            disabled: savingPhone,
+                                            className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                            type: 'button'
+                                        },
+                                            savingPhone && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            savingPhone ? 'Enregistrement...' : 'Enregistrer'
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+
+                    // Section Messagerie (CLIENT ADMIN)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-comments text-blue-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-blue-900 mb-2 flex items-center gap-2' },
+                                        "Paramètres de Messagerie",
+                                        React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-blue-800' },
+                                        "Configuration du module de messagerie."
                                     )
                                 )
                             )
