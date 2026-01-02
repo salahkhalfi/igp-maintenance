@@ -359,7 +359,10 @@ export const ToolFunctions = {
             title: tickets.title
         })
         .from(tickets)
-        .where(not(inArray(tickets.status, closedStatuses)))
+        .where(and(
+            isNull(tickets.deleted_at),
+            not(inArray(tickets.status, closedStatuses))
+        ))
         .all();
 
         // 4. Fetch Machines (Context)
@@ -540,12 +543,15 @@ export const ToolFunctions = {
             return "Veuillez spécifier un nom d'utilisateur ou un ID.";
         }
 
-        // 2. Identify Relevant Tickets (Assigned or Reported by User)
+        // 2. Identify Relevant Tickets (Assigned or Reported by User) - Exclude deleted
         const userRelatedTickets = await db.select({ id: tickets.id })
             .from(tickets)
-            .where(or(
-                eq(tickets.assigned_to, targetUserId),
-                eq(tickets.reported_by, targetUserId)
+            .where(and(
+                isNull(tickets.deleted_at),
+                or(
+                    eq(tickets.assigned_to, targetUserId),
+                    eq(tickets.reported_by, targetUserId)
+                )
             ))
             .all();
         
@@ -671,6 +677,8 @@ export const ToolFunctions = {
         .from(tickets)
         .leftJoin(assignee, eq(tickets.assigned_to, assignee.id))
         .where(and(
+            // Exclude deleted tickets
+            isNull(tickets.deleted_at),
             // Exclude closed statuses (loaded from DB)
             not(inArray(tickets.status, closedStatuses)),
             // Only fetch scheduled tickets
@@ -1015,10 +1023,10 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
-        .where(eq(tickets.id, args.ticket_id))
+        .where(and(eq(tickets.id, args.ticket_id), isNull(tickets.deleted_at)))
         .get();
         
-        if (!ticket) return "Ticket introuvable.";
+        if (!ticket) return "Ticket introuvable ou supprimé.";
 
         // Resolve Assigned User Name (handles ID 0 = "Équipe")
         let assignedToName = "Non assigné";
@@ -1167,6 +1175,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .where(and(
+            isNull(tickets.deleted_at),
             eq(tickets.machine_id, args.machine_id),
             not(inArray(tickets.status, closedStatuses))
         ))
@@ -1183,6 +1192,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .where(and(
+            isNull(tickets.deleted_at),
             eq(tickets.machine_id, args.machine_id),
             inArray(tickets.status, closedStatuses)
         ))
@@ -1265,6 +1275,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .where(and(
+            isNull(tickets.deleted_at),
             eq(tickets.machine_id, args.machine_id),
             not(inArray(tickets.status, closedStatuses)),
             inArray(tickets.priority, ['critical', 'high'])
@@ -1358,6 +1369,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .where(and(
+            isNull(tickets.deleted_at),
             eq(tickets.assigned_to, user.id),
             not(inArray(tickets.status, closedStatuses))
         ))
@@ -1370,6 +1382,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .where(and(
+            isNull(tickets.deleted_at),
             eq(tickets.assigned_to, user.id),
             inArray(tickets.status, closedStatuses)
         ))
@@ -1410,18 +1423,18 @@ export const ToolFunctions = {
         }
         // 'all_time' = no filter
 
-        // 1. Basic counts
+        // 1. Basic counts - ALWAYS exclude deleted tickets
         const totalTickets = await db.select({ count: sql<number>`count(*)` })
-            .from(tickets).where(dateFilter).get();
+            .from(tickets).where(and(dateFilter, isNull(tickets.deleted_at))).get();
         
         const resolvedTickets = await db.select({ count: sql<number>`count(*)` })
             .from(tickets)
-            .where(and(dateFilter, inArray(tickets.status, closedStatuses)))
+            .where(and(dateFilter, isNull(tickets.deleted_at), inArray(tickets.status, closedStatuses)))
             .get();
         
         const activeTickets = await db.select({ count: sql<number>`count(*)` })
             .from(tickets)
-            .where(and(dateFilter, not(inArray(tickets.status, closedStatuses))))
+            .where(and(dateFilter, isNull(tickets.deleted_at), not(inArray(tickets.status, closedStatuses))))
             .get();
 
         // 2. Priority breakdown
@@ -1430,7 +1443,7 @@ export const ToolFunctions = {
             count: sql<number>`count(*)` 
         })
         .from(tickets)
-        .where(dateFilter)
+        .where(and(dateFilter, isNull(tickets.deleted_at)))
         .groupBy(tickets.priority)
         .all();
 
@@ -1440,7 +1453,7 @@ export const ToolFunctions = {
             count: sql<number>`count(*)` 
         })
         .from(tickets)
-        .where(dateFilter)
+        .where(and(dateFilter, isNull(tickets.deleted_at)))
         .groupBy(tickets.status)
         .all();
 
@@ -1453,7 +1466,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .leftJoin(users, eq(tickets.assigned_to, users.id))
-        .where(and(dateFilter, sql`${tickets.assigned_to} IS NOT NULL`))
+        .where(and(dateFilter, isNull(tickets.deleted_at), sql`${tickets.assigned_to} IS NOT NULL`))
         .groupBy(tickets.assigned_to, users.full_name)
         .all();
         
@@ -1463,7 +1476,7 @@ export const ToolFunctions = {
             resolved: sql<number>`count(*)`
         })
         .from(tickets)
-        .where(and(dateFilter, sql`${tickets.assigned_to} IS NOT NULL`, inArray(tickets.status, closedStatuses)))
+        .where(and(dateFilter, isNull(tickets.deleted_at), sql`${tickets.assigned_to} IS NOT NULL`, inArray(tickets.status, closedStatuses)))
         .groupBy(tickets.assigned_to)
         .all();
         
@@ -1482,7 +1495,7 @@ export const ToolFunctions = {
         })
         .from(tickets)
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
-        .where(and(dateFilter, sql`${tickets.machine_id} IS NOT NULL`))
+        .where(and(dateFilter, isNull(tickets.deleted_at), sql`${tickets.machine_id} IS NOT NULL`))
         .groupBy(tickets.machine_id, machines.machine_type, machines.model)
         .orderBy(sql`count(*) DESC`)
         .limit(10)
@@ -1504,7 +1517,7 @@ export const ToolFunctions = {
         .from(tickets)
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .leftJoin(users, eq(tickets.assigned_to, users.id))
-        .where(dateFilter)
+        .where(and(dateFilter, isNull(tickets.deleted_at)))
         .orderBy(desc(tickets.created_at))
         .limit(10)
         .all();
@@ -1517,6 +1530,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             dateFilter,
+            isNull(tickets.deleted_at),
             inArray(tickets.status, closedStatuses),
             sql`${tickets.completed_at} IS NOT NULL`
         ))
@@ -1599,6 +1613,7 @@ export const ToolFunctions = {
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .where(and(
             eq(tickets.assigned_to, user.id),
+            isNull(tickets.deleted_at),
             not(inArray(tickets.status, closedStatuses))
         ))
         .all();
@@ -1618,6 +1633,7 @@ export const ToolFunctions = {
         .leftJoin(machines, eq(tickets.machine_id, machines.id))
         .where(and(
             eq(tickets.assigned_to, user.id),
+            isNull(tickets.deleted_at),
             inArray(tickets.status, closedStatuses)
         ))
         .orderBy(desc(tickets.completed_at))
@@ -1687,6 +1703,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.assigned_to, user.id),
+            isNull(tickets.deleted_at),
             // Use NEGATIVE logic to capture ALL active statuses (pending_parts, diagnosis, etc.)
             not(inArray(tickets.status, closedStatuses))
         ))
@@ -1702,6 +1719,7 @@ export const ToolFunctions = {
         .from(tickets)
         .where(and(
             eq(tickets.assigned_to, user.id),
+            isNull(tickets.deleted_at),
             inArray(tickets.status, closedStatuses)
         ))
         .orderBy(desc(tickets.updated_at))
