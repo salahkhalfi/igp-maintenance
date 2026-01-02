@@ -108,20 +108,23 @@ const isLetterContent = (content: string): boolean => {
 };
 
 // --- FETCH COMPANY CONFIG ---
-const fetchCompanyConfig = async (): Promise<{ companyName: string; companySubtitle: string; logoUrl: string }> => {
+const fetchCompanyConfig = async (): Promise<{ companyName: string; companyAddress: string; logoUrl: string }> => {
     let companyName = 'Entreprise';
-    let companySubtitle = '';
+    let companyAddress = '';
     let logoUrl = '/api/settings/logo';
     try {
         const resp = await fetch('/api/settings/config/public');
         if (resp.ok) {
             const cfg = await resp.json();
-            companyName = cfg.company_title || cfg.company_short_name || 'Entreprise';
-            companySubtitle = cfg.company_subtitle || '';
+            // company_subtitle = Nom réel de l'entreprise (ex: Les Produits Verriers International Inc.)
+            // company_address = Adresse (si configuré)
+            // Fallback: company_title ou company_short_name
+            companyName = cfg.company_subtitle || cfg.company_title || cfg.company_short_name || 'Entreprise';
+            companyAddress = cfg.company_address || '';
             if (cfg.company_logo_url) logoUrl = cfg.company_logo_url;
         }
     } catch (e) { /* Use defaults */ }
-    return { companyName, companySubtitle, logoUrl };
+    return { companyName, companyAddress, logoUrl };
 };
 
 // --- CLEAN LETTER CONTENT: Replace first company block with logo ---
@@ -151,7 +154,7 @@ const cleanLetterForPrint = (content: string, companyName: string): string => {
 // --- PRINT FUNCTION FOR AI RESPONSES ---
 const printAIResponse = async (content: string) => {
     const isLetter = isLetterContent(content);
-    const { companyName, companySubtitle, logoUrl } = await fetchCompanyConfig();
+    const { companyName, companyAddress, logoUrl } = await fetchCompanyConfig();
     
     // For letters: clean the content to remove company header (logo replaces it)
     const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
@@ -249,12 +252,12 @@ body {
 </style>
 </head>
 <body>
-<!-- Letter header: Logo + Company name + Subtitle/Address -->
+<!-- Letter header: Logo + Company name + Address -->
 <div class="letter-header">
     <img src="${logoUrl}" onerror="this.style.display='none'" alt="Logo">
     <div class="company-block">
         <div class="company-name">${companyName}</div>
-        ${companySubtitle ? `<div class="company-address">${companySubtitle}</div>` : ''}
+        ${companyAddress ? `<div class="company-address">${companyAddress}</div>` : ''}
     </div>
 </div>
 
@@ -277,7 +280,7 @@ body {
 
 // --- EXPORT DOCX FOR AI RESPONSES ---
 const exportDocx = async (content: string) => {
-    const { companyName, companySubtitle, logoUrl } = await fetchCompanyConfig();
+    const { companyName, companyAddress, logoUrl } = await fetchCompanyConfig();
     const isLetter = isLetterContent(content);
     
     // For letters: clean the content to remove company header
@@ -299,17 +302,17 @@ const exportDocx = async (content: string) => {
         
         const children: any[] = [];
         
-        // Header for letters: Company name (bold) + subtitle (smaller)
+        // Header for letters: Company name (bold) + address (smaller)
         if (isLetter) {
             // Company name in bold
             children.push(new Paragraph({
                 children: [new TextRun({ text: companyName, bold: true, size: 28 })],
                 spacing: { after: 50 }
             }));
-            // Subtitle/address in smaller gray text
-            if (companySubtitle) {
+            // Address in smaller gray text
+            if (companyAddress) {
                 children.push(new Paragraph({
-                    children: [new TextRun({ text: companySubtitle, size: 18, color: '666666' })],
+                    children: [new TextRun({ text: companyAddress, size: 18, color: '666666' })],
                     spacing: { after: 100 }
                 }));
             }

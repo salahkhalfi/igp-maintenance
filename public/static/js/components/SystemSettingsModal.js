@@ -15,15 +15,19 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     // isClientAdmin = admin entreprise cliente - accès aux paramètres de son entreprise (logo, titre, etc.)
     const [isClientAdmin, setIsClientAdmin] = React.useState(false);
 
-    // États pour titre/sous-titre (admin uniquement)
+    // États pour titre/sous-titre/adresse (admin uniquement)
     const [companyTitle, setCompanyTitle] = React.useState('Gestion de la maintenance et des réparations');
     const [companySubtitle, setCompanySubtitle] = React.useState('Système de Maintenance Universel');
+    const [companyAddress, setCompanyAddress] = React.useState('');
     const [editingTitle, setEditingTitle] = React.useState(false);
     const [editingSubtitle, setEditingSubtitle] = React.useState(false);
+    const [editingAddress, setEditingAddress] = React.useState(false);
     const [tempTitle, setTempTitle] = React.useState('');
     const [tempSubtitle, setTempSubtitle] = React.useState('');
+    const [tempAddress, setTempAddress] = React.useState('');
     const [savingTitle, setSavingTitle] = React.useState(false);
     const [savingSubtitle, setSavingSubtitle] = React.useState(false);
+    const [savingAddress, setSavingAddress] = React.useState(false);
 
     // État pour le contexte AI personnalisé
     const [aiCustomContext, setAiCustomContext] = React.useState('');
@@ -199,6 +203,15 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     }
                 } catch (error) {
                     // Sous-titre par défaut
+                }
+
+                try {
+                    const addressResponse = await axios.get(API_URL + '/settings/company_address');
+                    if (addressResponse.data.setting_value) {
+                        setCompanyAddress(addressResponse.data.setting_value);
+                    }
+                } catch (error) {
+                    // Adresse par défaut vide
                 }
 
                 try {
@@ -483,6 +496,41 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
             alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
         } finally {
             setSavingSubtitle(false);
+        }
+    };
+
+    // Fonctions pour gérer l'adresse
+    const handleStartEditAddress = () => {
+        setTempAddress(companyAddress);
+        setEditingAddress(true);
+    };
+
+    const handleCancelEditAddress = () => {
+        setTempAddress('');
+        setEditingAddress(false);
+    };
+
+    const handleSaveAddress = async () => {
+        if (tempAddress.trim().length > 200) {
+            alert('L\'adresse ne peut pas dépasser 200 caractères');
+            return;
+        }
+
+        setSavingAddress(true);
+        try {
+            await axios.put(API_URL + '/settings/company_address', {
+                value: tempAddress.trim()
+            });
+
+            setCompanyAddress(tempAddress.trim());
+            setEditingAddress(false);
+            setTempAddress('');
+
+            alert('Adresse mise à jour avec succès!');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setSavingAddress(false);
         }
     };
 
@@ -1311,6 +1359,59 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         },
                                             savingSubtitle && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                             savingSubtitle ? 'Enregistrement...' : 'Enregistrer'
+                                        )
+                                    )
+                                )
+                            )
+                        ),
+
+                        // Édition de l'adresse de l'entreprise
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-map-marker-alt mr-2' }),
+                                'Adresse de l\'entreprise (pour impression)'
+                            ),
+                            !editingAddress ? React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('div', { className: 'flex-1 bg-gray-100 border-2 border-gray-300 rounded-lg p-3 text-gray-800' },
+                                    companyAddress || React.createElement('span', { className: 'text-gray-400 italic' }, 'Non configurée')
+                                ),
+                                React.createElement('button', {
+                                    onClick: handleStartEditAddress,
+                                    className: 'px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm',
+                                    type: 'button'
+                                },
+                                    React.createElement('i', { className: 'fas fa-edit' }),
+                                    'Modifier'
+                                )
+                            ) : React.createElement('div', { className: 'space-y-3' },
+                                React.createElement('input', {
+                                    type: 'text',
+                                    value: tempAddress,
+                                    onChange: (e) => setTempAddress(e.target.value),
+                                    placeholder: 'Ex: 9150 Bd Maurice-Duplessis, Montréal, QC H1E 7C2',
+                                    maxLength: 200,
+                                    className: 'w-full px-4 py-2.5 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500',
+                                    disabled: savingAddress
+                                }),
+                                React.createElement('div', { className: 'flex items-center justify-between' },
+                                    React.createElement('span', { className: 'text-xs text-gray-600' },
+                                        tempAddress.length + '/200 caractères'
+                                    ),
+                                    React.createElement('div', { className: 'flex gap-2' },
+                                        React.createElement('button', {
+                                            onClick: handleCancelEditAddress,
+                                            disabled: savingAddress,
+                                            className: 'px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition-all text-sm disabled:opacity-50',
+                                            type: 'button'
+                                        }, 'Annuler'),
+                                        React.createElement('button', {
+                                            onClick: handleSaveAddress,
+                                            disabled: savingAddress,
+                                            className: 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed',
+                                            type: 'button'
+                                        },
+                                            savingAddress && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                            savingAddress ? 'Enregistrement...' : 'Enregistrer'
                                         )
                                     )
                                 )

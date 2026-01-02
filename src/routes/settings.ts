@@ -748,6 +748,80 @@ settings.put('/subtitle', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * PUT /api/settings/company_address - Mettre à jour l'adresse de l'entreprise
+ * Accès: Administrateurs (admin role)
+ * Validation: Max 200 caractères
+ * Utilisé pour l'en-tête des impressions de documents
+ */
+settings.put('/company_address', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+
+    const body = await c.req.json();
+    const { value } = body;
+
+    if (typeof value !== 'string') {
+      return c.json({ error: 'Adresse invalide' }, 400);
+    }
+
+    // Validation
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length > 200) {
+      return c.json({ error: 'L\'adresse ne peut pas dépasser 200 caractères' }, 400);
+    }
+
+    // UPSERT: Insert ou Update selon si la clé existe
+    const existing = await c.env.DB.prepare(`
+      SELECT id FROM system_settings WHERE setting_key = 'company_address'
+    `).first();
+
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings
+        SET setting_value = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE setting_key = 'company_address'
+      `).bind(trimmedValue).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value)
+        VALUES ('company_address', ?)
+      `).bind(trimmedValue).run();
+    }
+
+    console.log(`✅ Adresse modifiée par user ${user.userId}: "${trimmedValue}"`);
+
+    return c.json({
+      message: 'Adresse mise à jour avec succès',
+      setting_value: trimmedValue
+    });
+  } catch (error) {
+    console.error('Update address error:', error);
+    return c.json({ error: 'Erreur lors de la mise à jour de l\'adresse' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/company_address - Obtenir l'adresse de l'entreprise
+ * Accès: Public (pour impression)
+ */
+settings.get('/company_address', async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = 'company_address'
+    `).first() as { setting_value: string } | null;
+
+    return c.json({
+      setting_key: 'company_address',
+      setting_value: result?.setting_value || ''
+    });
+  } catch (error) {
+    console.error('Get company_address error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+/**
  * GET /api/settings/placeholders - Obtenir les placeholders personnalisables (SaaS)
  * Accès: Public (pour affichage dans les formulaires)
  * Utilisé pour les formulaires de création (machines, tickets, etc.)
@@ -1139,6 +1213,7 @@ settings.get('/config/public', async (c) => {
       'company_title',
       'company_subtitle',
       'company_short_name',
+      'company_address',
       'company_logo_url',
       'primary_color',
       'secondary_color',
