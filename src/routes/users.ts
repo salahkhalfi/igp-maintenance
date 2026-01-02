@@ -197,12 +197,17 @@ usersRoute.get('/:id', zValidator('param', userIdParamSchema), async (c) => {
  * POST /api/users - Créer un nouvel utilisateur
  * Accès: Admin uniquement
  */
-usersRoute.post('/', zValidator('json', createUserSchema, (result, c) => {
+usersRoute.post('/', zValidator('json', createUserSchema, async (result, c) => {
+  // Log du body brut pour debug
+  const rawBody = await c.req.raw.clone().text();
+  console.log('[POST /api/users] Raw body received:', rawBody);
+  
   if (!result.success) {
     const firstError = result.error.issues[0];
     const fieldName = firstError.path.join('.');
     const message = firstError.message;
     console.error('[POST /api/users] Validation error:', fieldName, '-', message);
+    console.error('[POST /api/users] All issues:', JSON.stringify(result.error.issues));
     return c.json({ 
       error: message,
       field: fieldName,
