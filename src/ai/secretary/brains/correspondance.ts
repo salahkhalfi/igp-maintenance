@@ -37,9 +37,8 @@ CONSIGNES:
 FORMAT DE LETTRE OFFICIELLE:
 
 **${companyName}**
-9150 Bd Maurice-Duplessis
-Montréal, QC H1E 7C2
-Tél: 514-494-1940
+${context.company.address || '[Adresse de l\'entreprise]'}
+${context.company.phone ? `Tél: ${context.company.phone}` : ''}${context.company.email ? `${context.company.phone ? ' | ' : ''}Courriel: ${context.company.email}` : ''}
 
 Montréal, le ${formatDateFrCA()}
 

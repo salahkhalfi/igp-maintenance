@@ -12,13 +12,16 @@ export type DocumentType =
   | 'creatif';
 
 export interface CompanyIdentity {
-  name: string;
-  shortName: string;
-  subtitle: string;
-  identity: string;
-  hierarchy: string;
-  knowledge: string;
-  custom: string;
+  name: string;           // Nom officiel (company_name ou fallback company_subtitle)
+  shortName: string;      // Nom court (company_short_name)
+  subtitle: string;       // Legacy: company_subtitle
+  address: string;        // Adresse complète (company_address)
+  email: string;          // Courriel officiel (company_email)
+  phone: string;          // Téléphone (company_phone)
+  identity: string;       // Identité IA (aiConfig.identity)
+  hierarchy: string;      // Hiérarchie (aiConfig.hierarchy)
+  knowledge: string;      // Connaissances (aiConfig.knowledge)
+  custom: string;         // Contexte personnalisé (aiConfig.custom)
 }
 
 export interface SecretaryContext {

@@ -21,13 +21,21 @@ export function formatDateFrCA(date: Date = new Date()): string {
  * Utilisé par TOUS les cerveaux
  */
 export function buildCompanyBlock(company: CompanyIdentity): string {
+  // Construire les coordonnées dynamiquement
+  const contactLines: string[] = [];
+  if (company.address) contactLines.push(company.address);
+  if (company.phone) contactLines.push(`Tél: ${company.phone}`);
+  if (company.email) contactLines.push(`Courriel: ${company.email}`);
+  const contactBlock = contactLines.length > 0 ? contactLines.join('\n') : '';
+
   return `
 ═══════════════════════════════════════════════════════════════
                     ENTREPRISE
 ═══════════════════════════════════════════════════════════════
 
 **${company.name || 'Entreprise'}**
-${company.subtitle || ''}
+${company.subtitle && company.subtitle !== company.name ? company.subtitle : ''}
+${contactBlock}
 
 ${company.identity ? `### Identité\n${company.identity}` : ''}
 ${company.hierarchy ? `### Organisation\n${company.hierarchy}` : ''}

@@ -2105,31 +2105,42 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         const aiConfig = await getAiConfig(db);
         
         // ===== LOAD COMPANY SETTINGS =====
-        let companyName = '';
-        let companySubtitle = '';
+        let companyNameSetting = '';  // company_name (nouveau)
+        let companySubtitle = '';     // company_subtitle (legacy)
         let companyShortName = '';
+        let companyAddress = '';
+        let companyEmail = '';
+        let companyPhone = '';
         
         try {
             const settings = await db.select().from(systemSettings)
                 .where(inArray(systemSettings.setting_key, [
-                    'company_title', 'company_subtitle', 'company_short_name'
+                    'company_name', 'company_title', 'company_subtitle', 'company_short_name',
+                    'company_address', 'company_email', 'company_phone'
                 ]))
                 .all();
             
             settings.forEach((s: any) => {
-                if (s.setting_key === 'company_title') companyName = s.setting_value;
+                if (s.setting_key === 'company_name') companyNameSetting = s.setting_value;
                 if (s.setting_key === 'company_subtitle') companySubtitle = s.setting_value;
                 if (s.setting_key === 'company_short_name') companyShortName = s.setting_value;
+                if (s.setting_key === 'company_address') companyAddress = s.setting_value;
+                if (s.setting_key === 'company_email') companyEmail = s.setting_value;
+                if (s.setting_key === 'company_phone') companyPhone = s.setting_value;
             });
         } catch (e) {
             console.warn('[Secretary] Failed to load company settings');
         }
 
         // ===== BUILD COMPANY IDENTITY FOR BRAIN =====
+        // Priorité: company_name > company_subtitle > 'Entreprise'
         const companyIdentity: CompanyIdentity = {
-            name: companyName || 'Entreprise',
+            name: companyNameSetting || companySubtitle || 'Entreprise',
             shortName: companyShortName || '',
             subtitle: companySubtitle || '',
+            address: companyAddress || '',
+            email: companyEmail || '',
+            phone: companyPhone || '',
             identity: aiConfig.identity || '',
             hierarchy: aiConfig.hierarchy || '',
             knowledge: aiConfig.knowledge || '',
