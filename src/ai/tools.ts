@@ -300,6 +300,21 @@ export const TOOLS: ToolDefinition[] = [
                 required: []
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "search_web",
+            description: "Rechercher sur le web pour trouver documentation technique, manuels machines, procedures de depannage, codes erreur. UTILISER quand: (1) operateur demande comment faire quelque chose, (2) code erreur inconnu, (3) procedure de maintenance, (4) specifications techniques non trouvees en base. TOUJOURS inclure le fabricant/modele si connu.",
+            parameters: {
+                type: "object",
+                properties: {
+                    query: { type: "string", description: "Requete de recherche technique. Inclure fabricant, modele, code erreur si connus. Ex: 'Mazak CNC error E-45 troubleshooting'" },
+                    machine_context: { type: "string", description: "Contexte machine pour affiner (type, fabricant, modele). Ex: 'Four Trempe Ipsen H4'" }
+                },
+                required: ["query"]
+            }
+        }
     }
 ];
 
@@ -1838,5 +1853,90 @@ export const ToolFunctions = {
                 last_login: u.last_login
             }))
         });
+    },
+
+    /**
+     * search_web - Recherche web via Tavily API
+     * Permet a l'IA de chercher documentation technique, manuels, procedures
+     * @param db - Non utilise (pour coherence avec autres tools)
+     * @param args - { query: string, machine_context?: string }
+     * @param env - Bindings avec TAVILY_API_KEY
+     */
+    async search_web(db: any, args: { query: string, machine_context?: string }, env?: any) {
+        // Verifier que la cle API est presente
+        if (!env?.TAVILY_API_KEY) {
+            return JSON.stringify({
+                error: true,
+                message: "Recherche web non configuree (TAVILY_API_KEY manquante). Contactez l'administrateur."
+            });
+        }
+
+        // Construire la requete enrichie
+        let searchQuery = args.query;
+        if (args.machine_context) {
+            searchQuery = `${args.machine_context} ${args.query}`;
+        }
+        // Ajouter contexte technique pour meilleurs resultats
+        searchQuery += " manual troubleshooting maintenance procedure";
+
+        try {
+            console.log(`[AI Tools] search_web: "${searchQuery}"`);
+            
+            const response = await fetch('https://api.tavily.com/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    api_key: env.TAVILY_API_KEY,
+                    query: searchQuery,
+                    search_depth: "basic",
+                    max_results: 5,
+                    include_answer: true,
+                    include_raw_content: false
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`[AI Tools] Tavily error: ${response.status} - ${errorText}`);
+                return JSON.stringify({
+                    error: true,
+                    message: `Erreur recherche web (${response.status}). Reessayez plus tard.`
+                });
+            }
+
+            const data = await response.json() as any;
+            
+            // Formater les resultats pour l'IA
+            const results = {
+                query: args.query,
+                answer: data.answer || null,
+                sources: (data.results || []).slice(0, 5).map((r: any) => ({
+                    title: r.title,
+                    url: r.url,
+                    snippet: r.content?.substring(0, 300) || r.snippet?.substring(0, 300) || ""
+                })),
+                total_found: data.results?.length || 0
+            };
+
+            // Message pour l'IA
+            if (results.sources.length === 0) {
+                return JSON.stringify({
+                    ...results,
+                    message: "Aucun resultat trouve. Essayez avec des termes differents ou verifiez l'orthographe du fabricant/modele."
+                });
+            }
+
+            return JSON.stringify({
+                ...results,
+                message: `${results.sources.length} source(s) trouvee(s). Utilisez ces informations pour guider l'operateur. Citez les sources avec leurs URLs.`
+            });
+
+        } catch (error) {
+            console.error('[AI Tools] search_web exception:', error);
+            return JSON.stringify({
+                error: true,
+                message: "Erreur lors de la recherche web. Le service est peut-etre temporairement indisponible."
+            });
+        }
     }
 };

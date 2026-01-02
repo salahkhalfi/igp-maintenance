@@ -133,5 +133,6 @@ export interface Bindings {
   GROQ_API_KEY?: string; // Clé API Groq (Audio)
   DEEPSEEK_API_KEY?: string; // Clé API DeepSeek (Intelligence)
   OPENROUTER_API_KEY?: string; // Clé API OpenRouter (Multi-modèles: Claude, GPT, etc.)
+  TAVILY_API_KEY?: string; // Clé API Tavily (Recherche web pour documentation)
   ASSETS: Fetcher;
 }

@@ -1481,12 +1481,17 @@ ${aiConfig.rules}
                         try {
                             // INTELLIGENT ARGUMENT ROUTING
                             // Some tools need baseUrl (for links), others need userId (for permission/context)
+                            // search_web needs env for API keys
                             console.log(`[AI] Invoking tool: ${fnName}`);
                             if (['search_tickets', 'get_overdue_tickets'].includes(fnName)) {
                                  // These tools signatures were updated to accept baseUrl
                                  // Pass configured URL or explicit placeholder if missing
                                  // @ts-ignore
                                  toolResult = await ToolFunctions[fnName](db, fnArgs, baseUrl || "https://app.example.com");
+                            } else if (fnName === 'search_web') {
+                                 // search_web needs env for TAVILY_API_KEY
+                                 // @ts-ignore
+                                 toolResult = await ToolFunctions[fnName](db, fnArgs, c.env);
                             } else {
                                  // Standard tools accepting (db, args, userId)
                                  // @ts-ignore
@@ -2242,6 +2247,10 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                                 } else if (['get_planning'].includes(fnName)) {
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs, payload.userId);
+                                } else if (fnName === 'search_web') {
+                                    // search_web needs env for TAVILY_API_KEY
+                                    // @ts-ignore
+                                    toolResult = await ToolFunctions[fnName](db, fnArgs, c.env);
                                 } else {
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs);
