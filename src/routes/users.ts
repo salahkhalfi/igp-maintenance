@@ -197,7 +197,19 @@ usersRoute.get('/:id', zValidator('param', userIdParamSchema), async (c) => {
  * POST /api/users - Créer un nouvel utilisateur
  * Accès: Admin uniquement
  */
-usersRoute.post('/', zValidator('json', createUserSchema), async (c) => {
+usersRoute.post('/', zValidator('json', createUserSchema, (result, c) => {
+  if (!result.success) {
+    const firstError = result.error.issues[0];
+    const fieldName = firstError.path.join('.');
+    const message = firstError.message;
+    console.error('[POST /api/users] Validation error:', fieldName, '-', message);
+    return c.json({ 
+      error: message,
+      field: fieldName,
+      details: result.error.issues
+    }, 400);
+  }
+}), async (c) => {
   try {
     const currentUser = c.get('user') as any;
     const body = c.req.valid('json');

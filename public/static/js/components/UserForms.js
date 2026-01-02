@@ -22,7 +22,9 @@ const CreateUserForm = ({ onCancel, onSuccess, currentUserRole }) => {
             // Reset form is not strictly needed as component will likely be unmounted
             onSuccess();
         } catch (error) {
-            alert('Erreur: ' + (error.response?.data?.error || 'Erreur'));
+            const errMsg = error.response?.data?.error || 'Erreur lors de la création';
+            const errField = error.response?.data?.field || '';
+            alert('Erreur: ' + errMsg + (errField ? ` (champ: ${errField})` : ''));
         } finally {
             setLoading(false);
         }
@@ -101,7 +103,8 @@ const CreateUserForm = ({ onCancel, onSuccess, currentUserRole }) => {
                         onInvalid: handleInvalidField,
                         className: 'w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all',
                         required: true,
-                        minLength: 6
+                        minLength: 8,
+                        placeholder: 'Min. 8 caractères'
                     })
                 ),
                 React.createElement('div', {},
