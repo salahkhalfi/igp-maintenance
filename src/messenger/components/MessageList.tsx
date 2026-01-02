@@ -122,34 +122,80 @@ const fetchCompanyConfig = async (): Promise<{ companyName: string; logoUrl: str
     return { companyName, logoUrl };
 };
 
+// --- CLEAN LETTER CONTENT: Replace first company block with logo ---
+const cleanLetterForPrint = (content: string, companyName: string): string => {
+    // Pattern to match the company header block at the start of a letter
+    // Example: "**Les Produits Verriers International Inc.**\n9150 Bd Maurice-Duplessis,\nMontréal, QC H1E 7C2"
+    const companyBlockPattern = /^\*\*[^*]+\*\*\s*\n[^\n]*\n[^\n]*(?:QC|Québec|Quebec)[^\n]*\n?/i;
+    
+    // Also match without bold: "Les Produits Verriers International Inc.\n9150..."
+    const companyBlockNoBold = /^[A-Z][^\n]{5,50}(?:Inc\.|Ltée|Ltd|Corp)\.?\s*\n[^\n]*\n[^\n]*(?:QC|Québec|Quebec)[^\n]*\n?/i;
+    
+    let cleaned = content;
+    
+    // Try to remove company header block (will be replaced by logo)
+    if (companyBlockPattern.test(cleaned)) {
+        cleaned = cleaned.replace(companyBlockPattern, '');
+    } else if (companyBlockNoBold.test(cleaned)) {
+        cleaned = cleaned.replace(companyBlockNoBold, '');
+    }
+    
+    // Clean up extra line breaks at start
+    cleaned = cleaned.replace(/^\s*(<br\s*\/?>|\n)+/gi, '');
+    
+    return cleaned;
+};
+
 // --- PRINT FUNCTION FOR AI RESPONSES ---
 const printAIResponse = async (content: string) => {
-    const html = processMarkdown(content);
     const isLetter = isLetterContent(content);
     const { companyName, logoUrl } = await fetchCompanyConfig();
+    
+    // For letters: clean the content to remove company header (logo replaces it)
+    const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
+    const html = processMarkdown(cleanedContent);
     
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     if (!printWindow) return;
     
-    // For letters: clean output without header (letter has its own header)
-    // For other documents: header with logo + company name
     const printHtml = `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <title>Document</title>
 <style>
-@page { size: A4; margin: ${isLetter ? '20mm' : '15mm 18mm'}; }
+@page { size: A4; margin: ${isLetter ? '18mm 20mm' : '15mm 18mm'}; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
     font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; 
     font-size: ${isLetter ? '12pt' : '11pt'}; 
-    line-height: ${isLetter ? '1.8' : '1.5'}; 
+    line-height: ${isLetter ? '1.6' : '1.5'}; 
     color: #000; 
     max-width: 800px; 
     margin: 0 auto; 
-    padding: ${isLetter ? '0' : '20px'}; 
+    padding: 0; 
 }
+
+/* Letter header with logo */
+.letter-header {
+    display: ${isLetter ? 'block' : 'none'};
+    margin-bottom: 24pt;
+    padding-bottom: 16pt;
+    border-bottom: 1pt solid #ccc;
+}
+.letter-header img { 
+    height: 50px; 
+    max-width: 200px;
+    object-fit: contain;
+}
+.letter-header .company-info {
+    margin-top: 8pt;
+    font-size: 9pt;
+    color: #444;
+    line-height: 1.4;
+}
+
+/* Non-letter header */
 .print-header { 
     display: ${isLetter ? 'none' : 'flex'}; 
     align-items: center; 
@@ -161,10 +207,12 @@ body {
 .print-header img { height: 40px; }
 .print-header .brand { border-left: 1pt solid #000; padding-left: 10px; }
 .print-header .brand-name { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; }
+
+/* Document content */
 .doc-content h2 { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; margin: 18pt 0 10pt; padding-bottom: 4pt; border-bottom: 1pt solid #000; }
 .doc-content h3 { font-family: Arial, sans-serif; font-size: 12pt; font-weight: 700; margin: 14pt 0 8pt; }
 .doc-content h4 { font-family: Arial, sans-serif; font-size: 11pt; font-weight: 700; margin: 10pt 0 6pt; }
-.doc-content p { margin: 0 0 ${isLetter ? '12pt' : '8pt'}; text-align: ${isLetter ? 'left' : 'justify'}; }
+.doc-content p { margin: 0 0 10pt; text-align: ${isLetter ? 'left' : 'justify'}; }
 .doc-content ul, .doc-content ol { margin: 6pt 0 10pt; padding-left: 20pt; }
 .doc-content li { margin: 3pt 0; }
 .doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 10pt; }
@@ -174,8 +222,9 @@ body {
 .doc-content strong { font-weight: 700; }
 .doc-content a { color: #000; text-decoration: underline; }
 .doc-content img { max-width: 100%; height: auto; margin: 12pt 0; }
+
 @media print {
-    .print-header { page-break-inside: avoid; }
+    .letter-header, .print-header { page-break-inside: avoid; }
     .doc-content h2, .doc-content h3, .doc-content h4 { page-break-after: avoid; }
     .doc-content table { page-break-inside: auto; }
     .doc-content tr { page-break-inside: avoid; }
@@ -183,12 +232,19 @@ body {
 </style>
 </head>
 <body>
+<!-- Letter header with logo only -->
+<div class="letter-header">
+    <img src="${logoUrl}" onerror="this.parentElement.style.display='none'" alt="Logo">
+</div>
+
+<!-- Non-letter header with logo + company name -->
 <div class="print-header">
     <img src="${logoUrl}" onerror="this.style.display='none'" alt="Logo">
     <div class="brand">
         <div class="brand-name">${companyName}</div>
     </div>
 </div>
+
 <div class="doc-content">${html}</div>
 </body>
 </html>`;
@@ -200,8 +256,11 @@ body {
 
 // --- EXPORT DOCX FOR AI RESPONSES ---
 const exportDocx = async (content: string) => {
-    const { companyName } = await fetchCompanyConfig();
+    const { companyName, logoUrl } = await fetchCompanyConfig();
     const isLetter = isLetterContent(content);
+    
+    // For letters: clean the content to remove company header
+    const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
     
     try {
         // Load docx library from CDN on demand
@@ -215,9 +274,28 @@ const exportDocx = async (content: string) => {
             });
         }
         
-        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType } = (window as any).docx;
+        const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType } = (window as any).docx;
         
         const children: any[] = [];
+        
+        // Try to add logo for letters
+        if (isLetter) {
+            try {
+                const logoResponse = await fetch(logoUrl);
+                if (logoResponse.ok) {
+                    const logoBlob = await logoResponse.blob();
+                    const logoArrayBuffer = await logoBlob.arrayBuffer();
+                    children.push(new Paragraph({
+                        children: [new ImageRun({
+                            data: logoArrayBuffer,
+                            transformation: { width: 150, height: 50 },
+                            type: 'png'
+                        })],
+                        spacing: { after: 400 }
+                    }));
+                }
+            } catch (e) { /* Logo optional */ }
+        }
         
         // Header only for non-letters
         if (!isLetter) {
@@ -228,7 +306,7 @@ const exportDocx = async (content: string) => {
         }
         
         // Parse markdown content line by line
-        const lines = content.split('\n');
+        const lines = cleanedContent.split('\n');
         let i = 0;
         
         while (i < lines.length) {
