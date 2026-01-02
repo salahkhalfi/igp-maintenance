@@ -24,9 +24,6 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [companyEmail, setCompanyEmail] = React.useState(''); // Courriel officiel
     const [companyPhone, setCompanyPhone] = React.useState(''); // Téléphone
     
-    // Legacy: company_subtitle (sera migré vers company_name)
-    const [companySubtitle, setCompanySubtitle] = React.useState('');
-    
     // États d'édition
     const [editingTitle, setEditingTitle] = React.useState(false);
     const [editingCompanyName, setEditingCompanyName] = React.useState(false);
@@ -47,11 +44,6 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [savingAddress, setSavingAddress] = React.useState(false);
     const [savingEmail, setSavingEmail] = React.useState(false);
     const [savingPhone, setSavingPhone] = React.useState(false);
-    
-    // Legacy (pour compatibilité)
-    const [editingSubtitle, setEditingSubtitle] = React.useState(false);
-    const [tempSubtitle, setTempSubtitle] = React.useState('');
-    const [savingSubtitle, setSavingSubtitle] = React.useState(false);
 
     // État pour le contexte AI personnalisé
     const [aiCustomContext, setAiCustomContext] = React.useState('');
@@ -231,18 +223,16 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                     // Fallback: utiliser company_subtitle si company_name n'existe pas encore
                 }
 
-                // 3. Legacy: company_subtitle (pour migration)
-                try {
-                    const subtitleResponse = await axios.get(API_URL + '/settings/company_subtitle');
-                    if (subtitleResponse.data.setting_value) {
-                        setCompanySubtitle(subtitleResponse.data.setting_value);
-                        // Si company_name est vide, utiliser subtitle comme fallback
-                        if (!companyName) {
+                // 3. Fallback: si company_name est vide, utiliser company_subtitle (legacy)
+                if (!companyName) {
+                    try {
+                        const subtitleResponse = await axios.get(API_URL + '/settings/company_subtitle');
+                        if (subtitleResponse.data.setting_value) {
                             setCompanyName(subtitleResponse.data.setting_value);
                         }
+                    } catch (error) {
+                        // Pas de fallback disponible
                     }
-                } catch (error) {
-                    // Sous-titre par défaut
                 }
 
                 // 4. Adresse de l'entreprise
@@ -517,50 +507,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
-    // Fonctions pour gérer le sous-titre
-    const handleStartEditSubtitle = () => {
-        setTempSubtitle(companySubtitle);
-        setEditingSubtitle(true);
-    };
-
-    const handleCancelEditSubtitle = () => {
-        setTempSubtitle('');
-        setEditingSubtitle(false);
-    };
-
-    const handleSaveSubtitle = async () => {
-        if (!tempSubtitle.trim()) {
-            alert('Le sous-titre ne peut pas être vide');
-            return;
-        }
-
-        if (tempSubtitle.trim().length > 150) {
-            alert('Le sous-titre ne peut pas dépasser 150 caractères');
-            return;
-        }
-
-        setSavingSubtitle(true);
-        try {
-            await axios.put(API_URL + '/settings/subtitle', {
-                value: tempSubtitle.trim()
-            });
-
-            setCompanySubtitle(tempSubtitle.trim());
-            setEditingSubtitle(false);
-            setTempSubtitle('');
-
-            alert('Sous-titre mis à jour avec succès! La page va se recharger...');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } catch (error) {
-            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
-        } finally {
-            setSavingSubtitle(false);
-        }
-    };
-
-    // Fonctions pour gérer le nom de l'entreprise (NOUVEAU)
+    // Fonctions pour gérer le nom de l'entreprise
     const handleStartEditCompanyName = () => {
         setTempCompanyName(companyName);
         setEditingCompanyName(true);

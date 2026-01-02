@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Message, Participant } from '../types';
 import { getInitials, getAvatarGradient, formatTime } from '../utils';
 import AudioPlayer from './AudioPlayer';
@@ -289,7 +289,7 @@ body {
 
 // --- EXPORT DOCX FOR AI RESPONSES ---
 const exportDocx = async (content: string) => {
-    const { companyName, companyAddress, companyPhone, companyEmail, logoUrl } = await fetchCompanyConfig();
+    const { companyName, companyAddress, companyPhone, companyEmail } = await fetchCompanyConfig();
     const isLetter = isLetterContent(content);
     
     // For letters: clean the content to remove company header
@@ -307,7 +307,7 @@ const exportDocx = async (content: string) => {
             });
         }
         
-        const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, BorderStyle } = (window as any).docx;
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, BorderStyle } = (window as any).docx;
         
         const children: any[] = [];
         
