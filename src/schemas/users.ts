@@ -21,7 +21,7 @@ export const createUserSchema = z.object({
   first_name: z.string().min(LIMITS.NAME_MIN, "Prénom trop court").max(LIMITS.NAME_MAX, "Prénom trop long"),
   last_name: z.string().max(LIMITS.NAME_MAX, "Nom trop long").optional().or(z.literal('')),
   role: z.enum(validRoles, { errorMap: () => ({ message: "Rôle invalide" }) }),
-  ai_context: z.string().max(LIMITS.AI_CONTEXT_MAX, "Informations trop longues").optional().or(z.literal(''))
+  ai_context: z.string().max(LIMITS.AI_CONTEXT_MAX, "Informations trop longues").optional().nullable().or(z.literal(''))
 });
 
 export const updateUserSchema = z.object({
@@ -30,7 +30,7 @@ export const updateUserSchema = z.object({
   first_name: z.string().min(LIMITS.NAME_MIN).max(LIMITS.NAME_MAX).optional(),
   last_name: z.string().max(LIMITS.NAME_MAX).optional().or(z.literal('')),
   role: z.enum(validRoles).optional(),
-  ai_context: z.string().max(LIMITS.AI_CONTEXT_MAX).optional().or(z.literal(''))
+  ai_context: z.string().max(LIMITS.AI_CONTEXT_MAX).optional().nullable().or(z.literal(''))
 });
 
 export const resetPasswordSchema = z.object({
