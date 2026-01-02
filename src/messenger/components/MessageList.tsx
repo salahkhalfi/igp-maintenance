@@ -108,18 +108,20 @@ const isLetterContent = (content: string): boolean => {
 };
 
 // --- FETCH COMPANY CONFIG ---
-const fetchCompanyConfig = async (): Promise<{ companyName: string; logoUrl: string }> => {
+const fetchCompanyConfig = async (): Promise<{ companyName: string; companySubtitle: string; logoUrl: string }> => {
     let companyName = 'Entreprise';
+    let companySubtitle = '';
     let logoUrl = '/api/settings/logo';
     try {
         const resp = await fetch('/api/settings/config/public');
         if (resp.ok) {
             const cfg = await resp.json();
-            companyName = cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+            companyName = cfg.company_title || cfg.company_short_name || 'Entreprise';
+            companySubtitle = cfg.company_subtitle || '';
             if (cfg.company_logo_url) logoUrl = cfg.company_logo_url;
         }
     } catch (e) { /* Use defaults */ }
-    return { companyName, logoUrl };
+    return { companyName, companySubtitle, logoUrl };
 };
 
 // --- CLEAN LETTER CONTENT: Replace first company block with logo ---
@@ -149,7 +151,7 @@ const cleanLetterForPrint = (content: string, companyName: string): string => {
 // --- PRINT FUNCTION FOR AI RESPONSES ---
 const printAIResponse = async (content: string) => {
     const isLetter = isLetterContent(content);
-    const { companyName, logoUrl } = await fetchCompanyConfig();
+    const { companyName, companySubtitle, logoUrl } = await fetchCompanyConfig();
     
     // For letters: clean the content to remove company header (logo replaces it)
     const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
@@ -176,23 +178,38 @@ body {
     padding: 0; 
 }
 
-/* Letter header with logo */
+/* Letter header: Logo + Company name + Address */
 .letter-header {
-    display: ${isLetter ? 'block' : 'none'};
-    margin-bottom: 24pt;
-    padding-bottom: 16pt;
-    border-bottom: 1pt solid #ccc;
+    display: ${isLetter ? 'flex' : 'none'};
+    align-items: center;
+    gap: 16pt;
+    margin-bottom: 28pt;
+    padding-bottom: 14pt;
+    border-bottom: 2pt solid #1a1a1a;
 }
 .letter-header img { 
-    height: 50px; 
-    max-width: 200px;
+    height: 55px; 
+    width: auto;
     object-fit: contain;
+    flex-shrink: 0;
 }
-.letter-header .company-info {
-    margin-top: 8pt;
+.letter-header .company-block {
+    border-left: 1.5pt solid #1a1a1a;
+    padding-left: 12pt;
+}
+.letter-header .company-name {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 2pt 0;
+}
+.letter-header .company-address {
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 9pt;
-    color: #444;
+    color: #555;
     line-height: 1.4;
+    margin: 0;
 }
 
 /* Non-letter header */
@@ -232,9 +249,13 @@ body {
 </style>
 </head>
 <body>
-<!-- Letter header with logo only -->
+<!-- Letter header: Logo + Company name + Subtitle/Address -->
 <div class="letter-header">
-    <img src="${logoUrl}" onerror="this.parentElement.style.display='none'" alt="Logo">
+    <img src="${logoUrl}" onerror="this.style.display='none'" alt="Logo">
+    <div class="company-block">
+        <div class="company-name">${companyName}</div>
+        ${companySubtitle ? `<div class="company-address">${companySubtitle}</div>` : ''}
+    </div>
 </div>
 
 <!-- Non-letter header with logo + company name -->
@@ -256,7 +277,7 @@ body {
 
 // --- EXPORT DOCX FOR AI RESPONSES ---
 const exportDocx = async (content: string) => {
-    const { companyName, logoUrl } = await fetchCompanyConfig();
+    const { companyName, companySubtitle, logoUrl } = await fetchCompanyConfig();
     const isLetter = isLetterContent(content);
     
     // For letters: clean the content to remove company header
@@ -274,27 +295,29 @@ const exportDocx = async (content: string) => {
             });
         }
         
-        const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType } = (window as any).docx;
+        const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType, BorderStyle } = (window as any).docx;
         
         const children: any[] = [];
         
-        // Try to add logo for letters
+        // Header for letters: Company name (bold) + subtitle (smaller)
         if (isLetter) {
-            try {
-                const logoResponse = await fetch(logoUrl);
-                if (logoResponse.ok) {
-                    const logoBlob = await logoResponse.blob();
-                    const logoArrayBuffer = await logoBlob.arrayBuffer();
-                    children.push(new Paragraph({
-                        children: [new ImageRun({
-                            data: logoArrayBuffer,
-                            transformation: { width: 150, height: 50 },
-                            type: 'png'
-                        })],
-                        spacing: { after: 400 }
-                    }));
-                }
-            } catch (e) { /* Logo optional */ }
+            // Company name in bold
+            children.push(new Paragraph({
+                children: [new TextRun({ text: companyName, bold: true, size: 28 })],
+                spacing: { after: 50 }
+            }));
+            // Subtitle/address in smaller gray text
+            if (companySubtitle) {
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: companySubtitle, size: 18, color: '666666' })],
+                    spacing: { after: 100 }
+                }));
+            }
+            // Separator line
+            children.push(new Paragraph({
+                border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: '000000' } },
+                spacing: { after: 400 }
+            }));
         }
         
         // Header only for non-letters
