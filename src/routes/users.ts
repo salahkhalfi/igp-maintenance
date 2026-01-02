@@ -94,15 +94,7 @@ usersRoute.get('/', async (c) => {
     const currentUser = c.get('user') as any;
     const db = getDb(c.env);
     
-    // DEBUG: Log pour identifier le problème
-    console.log('[GET /api/users] currentUser from JWT:', JSON.stringify({
-      userId: currentUser.userId,
-      email: currentUser.email,
-      role: currentUser.role,
-      isSuperAdmin: currentUser.isSuperAdmin
-    }));
-    
-    // IMPORTANT: Vérifier le statut superadmin DIRECTEMENT en base de données
+    // Vérifier le statut superadmin directement en base de données
     // (au cas où le JWT n'est pas à jour après une modification)
     const currentUserFromDb = await db
       .select({ is_super_admin: users.is_super_admin })
@@ -110,24 +102,18 @@ usersRoute.get('/', async (c) => {
       .where(eq(users.id, currentUser.userId))
       .get();
     
-    console.log('[GET /api/users] currentUserFromDb:', JSON.stringify(currentUserFromDb));
-    
     const isSuperAdmin = currentUserFromDb?.is_super_admin === 1;
-    
-    console.log('[GET /api/users] isSuperAdmin determined:', isSuperAdmin);
     
     // Construire la condition de filtrage selon le rôle de l'utilisateur actuel
     let whereCondition;
     
     if (isSuperAdmin) {
-      console.log('[GET /api/users] Using SuperAdmin query (showing ALL users)');
       // SuperAdmin voit TOUS les utilisateurs (sauf id=0 et soft-deleted)
       whereCondition = and(
         ne(users.id, 0),
         sql`${users.deleted_at} IS NULL`
       );
     } else {
-      console.log('[GET /api/users] Using Client Admin query (hiding superadmins)');
       // Admin client ne voit PAS les superadmins
       whereCondition = and(
         or(eq(users.is_super_admin, 0), sql`${users.is_super_admin} IS NULL`),
@@ -145,18 +131,7 @@ usersRoute.get('/', async (c) => {
       .where(whereCondition)
       .orderBy(users.full_name);
 
-    console.log('[GET /api/users] Found', results.length, 'users');
-    
-    // DEBUG: Return extra info in response
-    return c.json({ 
-      users: results,
-      _debug: {
-        currentUserId: currentUser.userId,
-        currentUserEmail: currentUser.email,
-        isSuperAdminFromDb: isSuperAdmin,
-        totalUsersReturned: results.length
-      }
-    });
+    return c.json({ users: results });
   } catch (error) {
     console.error('Get users error:', error);
     return c.json({ error: 'Erreur lors de la récupération des utilisateurs' }, 500);
