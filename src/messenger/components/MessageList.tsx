@@ -93,15 +93,108 @@ const processMarkdown = (content: string) => {
     return text;
 };
 
+// --- PRINT FUNCTION FOR AI RESPONSES ---
+const printAIResponse = (content: string, senderName: string) => {
+    const html = processMarkdown(content);
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) return;
+    
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('fr-CA', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Réponse IA - ${dateStr}</title>
+            <style>
+                @media print {
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                }
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 40px;
+                    color: #1a1a1a;
+                    line-height: 1.6;
+                }
+                .header {
+                    border-bottom: 2px solid #10b981;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #10b981;
+                    font-size: 24px;
+                    margin: 0 0 8px 0;
+                }
+                .header .meta {
+                    color: #666;
+                    font-size: 12px;
+                }
+                .content {
+                    font-size: 14px;
+                }
+                .content h2 { font-size: 20px; color: #1a1a1a; border-bottom: 1px solid #e5e5e5; padding-bottom: 8px; margin-top: 24px; }
+                .content h3 { font-size: 16px; color: #333; margin-top: 20px; }
+                .content h4 { font-size: 14px; color: #444; margin-top: 16px; }
+                .content strong { color: #1a1a1a; }
+                .content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+                .content th, .content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                .content th { background: #f5f5f5; font-weight: 600; }
+                .content tr:nth-child(even) { background: #fafafa; }
+                .content a { color: #10b981; }
+                .content img { max-width: 100%; height: auto; margin: 16px 0; border-radius: 8px; }
+                .content li { margin: 4px 0; }
+                .content blockquote { border-left: 4px solid #10b981; padding-left: 16px; color: #555; margin: 16px 0; }
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #e5e5e5;
+                    font-size: 11px;
+                    color: #999;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🤖 ${senderName}</h1>
+                <div class="meta">Imprimé le ${dateStr}</div>
+            </div>
+            <div class="content">${html}</div>
+            <div class="footer">
+                Document généré depuis IGP Connect • ${window.location.hostname}
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 250);
+};
+
 // --- MEMOIZED SUB-COMPONENT: AI Message Content ---
 // This prevents regex reprocessing on every keystroke when parent re-renders
-const AIMessageContent = React.memo(({ content }: { content: string }) => {
+const AIMessageContent = React.memo(({ content, senderName, showPrint = true }: { content: string; senderName?: string; showPrint?: boolean }) => {
     const html = processMarkdown(content);
     return (
-        <div 
-            className="text-[15px] leading-snug break-words pr-10 pb-1 font-medium tracking-wide prose-sm"
-            dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className="relative">
+            <div 
+                className="text-[15px] leading-snug break-words pr-10 pb-1 font-medium tracking-wide prose-sm"
+                dangerouslySetInnerHTML={{ __html: html }}
+            />
+            {showPrint && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); printAIResponse(content, senderName || 'Assistant IA'); }}
+                    className="absolute top-0 right-0 w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
+                    title="Imprimer cette réponse"
+                >
+                    <i className="fas fa-print text-sm"></i>
+                </button>
+            )}
+        </div>
     );
 });
 
@@ -447,7 +540,7 @@ const MessageList: React.FC<MessageListProps> = ({
                                 </div>
                             ) : (
                                 isAI ? (
-                                    <AIMessageContent content={msg.content} />
+                                    <AIMessageContent content={msg.content} senderName={msg.sender_name} />
                                 ) : (
                                     <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
                                         {msg.content}
