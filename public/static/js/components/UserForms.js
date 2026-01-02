@@ -10,20 +10,27 @@ const CreateUserForm = ({ onCancel, onSuccess, currentUserRole }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        
+        // Debug: log payload before sending
+        const payload = {
+            email,
+            password,
+            first_name: firstName,
+            last_name: lastName,
+            role,
+            ai_context: aiContext || null
+        };
+        console.log('[UserForms] Creating user with payload:', JSON.stringify(payload, null, 2));
+        
         try {
-            await axios.post(API_URL + '/users', {
-                email,
-                password,
-                first_name: firstName,
-                last_name: lastName,
-                role,
-                ai_context: aiContext || null
-            });
+            await axios.post(API_URL + '/users', payload);
             // Reset form is not strictly needed as component will likely be unmounted
             onSuccess();
         } catch (error) {
             const errMsg = error.response?.data?.error || 'Erreur lors de la création';
             const errField = error.response?.data?.field || '';
+            const errDetails = error.response?.data?.details;
+            console.error('[UserForms] Error creating user:', { errMsg, errField, errDetails, fullResponse: error.response?.data });
             alert('Erreur: ' + errMsg + (errField ? ` (champ: ${errField})` : ''));
         } finally {
             setLoading(false);
