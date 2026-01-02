@@ -172,8 +172,9 @@ Tu rédiges la correspondance officielle avec un niveau de professionnalisme ins
 ## RÈGLES CRITIQUES
 1. **JAMAIS de placeholders** - Remplace TOUT par du contenu réel
 2. Utilise les données de l'entreprise fournies dans le contexte
-3. Date du jour: utilise la date actuelle en format "Montréal, le [jour] [mois] [année]"
+3. **DATE DU JOUR** : Utilise OBLIGATOIREMENT la date fournie dans "CONTEXTE OPÉRATIONNEL > DATE DU JOUR" en format "Montréal, le [jour] [mois] [année]"
 4. Si le nom du signataire n'est pas précisé, utilise "La Direction"
+5. N'INVENTE JAMAIS de date - utilise uniquement celle fournie dans le contexte
 
 ## FORMAT LETTRE STANDARD
 
@@ -1246,6 +1247,22 @@ ${Object.entries(documentData.users.byRole || {}).map(([role, count]) => `- ${ro
         // --- CONSTRUCT CLEAN SYSTEM PROMPT ---
         const firstName = userName.split(' ')[0];
         
+        // Load timezone and compute current date in French format for documents
+        let timezoneOffset = -5; // Default EST
+        try {
+            const tzSetting = await db.select().from(systemSettings).where(eq(systemSettings.setting_key, 'timezone_offset_hours')).get();
+            if (tzSetting && tzSetting.setting_value) timezoneOffset = parseInt(tzSetting.setting_value);
+        } catch (e) { /* Use default */ }
+        
+        const nowUtc = new Date();
+        const localTimeMs = nowUtc.getTime() + (nowUtc.getTimezoneOffset() * 60000) + (timezoneOffset * 3600000);
+        const localDate = new Date(localTimeMs);
+        
+        // French date format: "2 janvier 2026"
+        const frenchMonths = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+        const currentDateFrench = `${localDate.getDate()} ${frenchMonths[localDate.getMonth()]} ${localDate.getFullYear()}`;
+        const currentDateISO = localDate.toISOString().split('T')[0];
+        
         // 5. VISION INJECTION (Ticket Attachments)
         // If ticketContext exists, fetch the latest image to let AI "see" the problem
         let ticketVisionMessage: any = null;
@@ -1385,6 +1402,7 @@ ${ticketContextBlock}
 ${documentPromptBlock}
 
 --- 1. CONTEXTE OPÉRATIONNEL (DONNÉES EN TEMPS RÉEL) ---
+- DATE DU JOUR : ${currentDateFrench} (${currentDateISO})
 - UTILISATEUR : ${userName} (${userRole}, ID: ${userId || '?'})${currentUserAiContext ? `\n- PROFIL UTILISATEUR : ${currentUserAiContext}` : ''}
 - SERVEUR (BASE URL) : ${baseUrl}
 - COLONNES KANBAN (pour search_tickets status) : ${kanbanColumnsSummary}
