@@ -93,106 +93,268 @@ const processMarkdown = (content: string) => {
     return text;
 };
 
+// --- DETECT IF CONTENT IS A FORMAL LETTER ---
+const isLetterContent = (content: string): boolean => {
+    // Detect formal letter patterns: company header, "Montréal, le", "Objet :", formal salutations
+    const letterPatterns = [
+        /Montréal,\s*le\s*\d/i,
+        /^(Monsieur|Madame|Cher|Chère)\s/m,
+        /Objet\s*:/i,
+        /Veuillez\s+(agréer|recevoir)/i,
+        /salutations\s+(distinguées|cordiales)/i,
+        /La\s+Direction\s*$/m
+    ];
+    return letterPatterns.filter(p => p.test(content)).length >= 2;
+};
+
+// --- FETCH COMPANY CONFIG ---
+const fetchCompanyConfig = async (): Promise<{ companyName: string; logoUrl: string }> => {
+    let companyName = 'Entreprise';
+    let logoUrl = '/api/settings/logo';
+    try {
+        const resp = await fetch('/api/settings/config/public');
+        if (resp.ok) {
+            const cfg = await resp.json();
+            companyName = cfg.company_subtitle || cfg.company_short_name || 'Entreprise';
+            if (cfg.company_logo_url) logoUrl = cfg.company_logo_url;
+        }
+    } catch (e) { /* Use defaults */ }
+    return { companyName, logoUrl };
+};
+
 // --- PRINT FUNCTION FOR AI RESPONSES ---
-const printAIResponse = (content: string, senderName: string) => {
+const printAIResponse = async (content: string) => {
     const html = processMarkdown(content);
+    const isLetter = isLetterContent(content);
+    const { companyName, logoUrl } = await fetchCompanyConfig();
+    
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     if (!printWindow) return;
     
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('fr-CA', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    // For letters: clean output without header (letter has its own header)
+    // For other documents: header with logo + company name
+    const printHtml = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Document</title>
+<style>
+@page { size: A4; margin: ${isLetter ? '20mm' : '15mm 18mm'}; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+    font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia', serif"}; 
+    font-size: ${isLetter ? '12pt' : '11pt'}; 
+    line-height: ${isLetter ? '1.8' : '1.5'}; 
+    color: #000; 
+    max-width: 800px; 
+    margin: 0 auto; 
+    padding: ${isLetter ? '0' : '20px'}; 
+}
+.print-header { 
+    display: ${isLetter ? 'none' : 'flex'}; 
+    align-items: center; 
+    gap: 12px; 
+    padding-bottom: 12pt; 
+    margin-bottom: 20pt; 
+    border-bottom: 1pt solid #000; 
+}
+.print-header img { height: 40px; }
+.print-header .brand { border-left: 1pt solid #000; padding-left: 10px; }
+.print-header .brand-name { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; }
+.doc-content h2 { font-family: Arial, sans-serif; font-size: 14pt; font-weight: 700; margin: 18pt 0 10pt; padding-bottom: 4pt; border-bottom: 1pt solid #000; }
+.doc-content h3 { font-family: Arial, sans-serif; font-size: 12pt; font-weight: 700; margin: 14pt 0 8pt; }
+.doc-content h4 { font-family: Arial, sans-serif; font-size: 11pt; font-weight: 700; margin: 10pt 0 6pt; }
+.doc-content p { margin: 0 0 ${isLetter ? '12pt' : '8pt'}; text-align: ${isLetter ? 'left' : 'justify'}; }
+.doc-content ul, .doc-content ol { margin: 6pt 0 10pt; padding-left: 20pt; }
+.doc-content li { margin: 3pt 0; }
+.doc-content table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-size: 10pt; }
+.doc-content th { background: #f0f0f0; border: 1px solid #000; padding: 8pt; text-align: left; font-weight: 700; }
+.doc-content td { border: 1px solid #000; padding: 6pt 8pt; }
+.doc-content blockquote { border-left: 3pt solid #ccc; padding-left: 12pt; margin: 10pt 0; font-style: italic; }
+.doc-content strong { font-weight: 700; }
+.doc-content a { color: #000; text-decoration: underline; }
+.doc-content img { max-width: 100%; height: auto; margin: 12pt 0; }
+@media print {
+    .print-header { page-break-inside: avoid; }
+    .doc-content h2, .doc-content h3, .doc-content h4 { page-break-after: avoid; }
+    .doc-content table { page-break-inside: auto; }
+    .doc-content tr { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="print-header">
+    <img src="${logoUrl}" onerror="this.style.display='none'" alt="Logo">
+    <div class="brand">
+        <div class="brand-name">${companyName}</div>
+    </div>
+</div>
+<div class="doc-content">${html}</div>
+</body>
+</html>`;
     
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Réponse IA - ${dateStr}</title>
-            <style>
-                @media print {
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                }
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 40px;
-                    color: #1a1a1a;
-                    line-height: 1.6;
-                }
-                .header {
-                    border-bottom: 2px solid #10b981;
-                    padding-bottom: 20px;
-                    margin-bottom: 30px;
-                }
-                .header h1 {
-                    color: #10b981;
-                    font-size: 24px;
-                    margin: 0 0 8px 0;
-                }
-                .header .meta {
-                    color: #666;
-                    font-size: 12px;
-                }
-                .content {
-                    font-size: 14px;
-                }
-                .content h2 { font-size: 20px; color: #1a1a1a; border-bottom: 1px solid #e5e5e5; padding-bottom: 8px; margin-top: 24px; }
-                .content h3 { font-size: 16px; color: #333; margin-top: 20px; }
-                .content h4 { font-size: 14px; color: #444; margin-top: 16px; }
-                .content strong { color: #1a1a1a; }
-                .content table { border-collapse: collapse; width: 100%; margin: 16px 0; }
-                .content th, .content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                .content th { background: #f5f5f5; font-weight: 600; }
-                .content tr:nth-child(even) { background: #fafafa; }
-                .content a { color: #10b981; }
-                .content img { max-width: 100%; height: auto; margin: 16px 0; border-radius: 8px; }
-                .content li { margin: 4px 0; }
-                .content blockquote { border-left: 4px solid #10b981; padding-left: 16px; color: #555; margin: 16px 0; }
-                .footer {
-                    margin-top: 40px;
-                    padding-top: 20px;
-                    border-top: 1px solid #e5e5e5;
-                    font-size: 11px;
-                    color: #999;
-                    text-align: center;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>🤖 ${senderName}</h1>
-                <div class="meta">Imprimé le ${dateStr}</div>
-            </div>
-            <div class="content">${html}</div>
-            <div class="footer">
-                Document généré depuis IGP Connect • ${window.location.hostname}
-            </div>
-        </body>
-        </html>
-    `);
+    printWindow.document.write(printHtml);
     printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => printWindow.print(), 250);
+    printWindow.onload = () => setTimeout(() => { printWindow.focus(); printWindow.print(); }, 250);
+};
+
+// --- EXPORT DOCX FOR AI RESPONSES ---
+const exportDocx = async (content: string) => {
+    const { companyName } = await fetchCompanyConfig();
+    const isLetter = isLetterContent(content);
+    
+    try {
+        // Load docx library from CDN on demand
+        if (!(window as any).docx) {
+            await new Promise<void>((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js';
+                script.onload = () => resolve();
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, AlignmentType } = (window as any).docx;
+        
+        const children: any[] = [];
+        
+        // Header only for non-letters
+        if (!isLetter) {
+            children.push(new Paragraph({
+                children: [new TextRun({ text: companyName, bold: true, size: 28 })],
+                spacing: { after: 300 }
+            }));
+        }
+        
+        // Parse markdown content line by line
+        const lines = content.split('\n');
+        let i = 0;
+        
+        while (i < lines.length) {
+            const line = lines[i];
+            
+            // Table detection
+            if (line.trim().startsWith('|') && lines[i + 1]?.includes('---')) {
+                const tableLines: string[] = [];
+                while (i < lines.length && lines[i].trim().startsWith('|')) {
+                    tableLines.push(lines[i]);
+                    i++;
+                }
+                const rows = tableLines.filter(l => !l.includes('---'));
+                if (rows.length > 0) {
+                    const numCols = rows[0].split('|').slice(1, -1).length;
+                    const colWidth = Math.floor(9000 / numCols);
+                    const tableRows = rows.map((row, rowIdx) => {
+                        const cells = row.split('|').slice(1, -1).map(c => c.trim());
+                        while (cells.length < numCols) cells.push('');
+                        return new TableRow({
+                            children: cells.map(cellText => new TableCell({
+                                children: [new Paragraph({
+                                    children: [new TextRun({ text: cellText || ' ', bold: rowIdx === 0, size: 22 })]
+                                })],
+                                width: { size: colWidth, type: WidthType.DXA },
+                                shading: rowIdx === 0 ? { fill: 'E0E0E0' } : undefined
+                            }))
+                        });
+                    });
+                    children.push(new Table({ rows: tableRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+                    children.push(new Paragraph({ text: '', spacing: { after: 200 } }));
+                }
+                continue;
+            }
+            
+            // Headings
+            if (line.startsWith('## ')) {
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: line.replace(/^## /, '').replace(/\*\*/g, ''), bold: true, size: 28 })],
+                    heading: HeadingLevel.HEADING_2,
+                    spacing: { before: 300, after: 150 }
+                }));
+                i++; continue;
+            }
+            if (line.startsWith('### ')) {
+                children.push(new Paragraph({
+                    children: [new TextRun({ text: line.replace(/^### /, '').replace(/\*\*/g, ''), bold: true, size: 24 })],
+                    heading: HeadingLevel.HEADING_3,
+                    spacing: { before: 200, after: 100 }
+                }));
+                i++; continue;
+            }
+            
+            // Lists
+            if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                const text = line.trim().replace(/^[-*]\s+/, '');
+                const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                const runs = parts.filter(p => p).map(part => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        return new TextRun({ text: part.slice(2, -2), bold: true, size: 22 });
+                    }
+                    return new TextRun({ text: part, size: 22 });
+                });
+                children.push(new Paragraph({ children: runs, bullet: { level: 0 }, spacing: { after: 80 } }));
+                i++; continue;
+            }
+            
+            // Normal paragraph
+            if (line.trim()) {
+                const text = line.trim();
+                const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                const runs = parts.filter(p => p).map(part => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        return new TextRun({ text: part.slice(2, -2), bold: true, size: 22 });
+                    }
+                    return new TextRun({ text: part, size: 22 });
+                });
+                children.push(new Paragraph({ children: runs, spacing: { after: 150 } }));
+            }
+            i++;
+        }
+        
+        const doc = new Document({ sections: [{ children }] });
+        const blob = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Document_${new Date().toISOString().slice(0, 10)}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('Erreur export DOCX:', error);
+        alert('Erreur lors de l\'export Word. Veuillez réessayer.');
+    }
 };
 
 // --- MEMOIZED SUB-COMPONENT: AI Message Content ---
 // This prevents regex reprocessing on every keystroke when parent re-renders
-const AIMessageContent = React.memo(({ content, senderName, showPrint = true }: { content: string; senderName?: string; showPrint?: boolean }) => {
+const AIMessageContent = React.memo(({ content, showActions = true }: { content: string; showActions?: boolean }) => {
     const html = processMarkdown(content);
     return (
         <div className="relative">
             <div 
-                className="text-[15px] leading-snug break-words pr-10 pb-1 font-medium tracking-wide prose-sm"
+                className="text-[15px] leading-snug break-words pr-16 pb-1 font-medium tracking-wide prose-sm"
                 dangerouslySetInnerHTML={{ __html: html }}
             />
-            {showPrint && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); printAIResponse(content, senderName || 'Assistant IA'); }}
-                    className="absolute top-0 right-0 w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all opacity-0 group-hover:opacity-100"
-                    title="Imprimer cette réponse"
-                >
-                    <i className="fas fa-print text-sm"></i>
-                </button>
+            {showActions && (
+                <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); printAIResponse(content); }}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                        title="Imprimer"
+                    >
+                        <i className="fas fa-print text-xs"></i>
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); exportDocx(content); }}
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                        title="Exporter Word (.docx)"
+                    >
+                        <i className="fas fa-file-word text-xs"></i>
+                    </button>
+                </div>
             )}
         </div>
     );
@@ -540,7 +702,7 @@ const MessageList: React.FC<MessageListProps> = ({
                                 </div>
                             ) : (
                                 isAI ? (
-                                    <AIMessageContent content={msg.content} senderName={msg.sender_name} />
+                                    <AIMessageContent content={msg.content} />
                                 ) : (
                                     <div className="text-[15px] leading-relaxed whitespace-pre-wrap break-words pr-10 pb-1 font-medium tracking-wide">
                                         {msg.content}
