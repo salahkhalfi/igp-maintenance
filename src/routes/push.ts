@@ -443,11 +443,18 @@ push.post('/verify-subscription', async (c) => {
       return c.json({ error: 'Non authentifié' }, 401);
     }
 
-    const body = await c.req.json();
+    let body;
+    try {
+      body = await c.req.json();
+    } catch (parseError) {
+      console.error('[VERIFY-SUB] JSON parse error:', parseError);
+      return c.json({ error: 'JSON invalide' }, 400);
+    }
+    
     const { endpoint } = body;
 
-    if (!endpoint) {
-      return c.json({ error: 'Endpoint requis' }, 400);
+    if (!endpoint || typeof endpoint !== 'string') {
+      return c.json({ error: 'Endpoint requis (string)' }, 400);
     }
 
     console.log(`[VERIFY-SUB] Verifying subscription for user ${user.userId} (${user.email})`);
@@ -471,9 +478,13 @@ push.post('/verify-subscription', async (c) => {
         : 'Subscription inexistante ou appartient à un autre utilisateur'
     });
 
-  } catch (error) {
-    console.error('[VERIFY-SUB] Error:', error);
-    return c.json({ error: 'Erreur serveur' }, 500);
+  } catch (error: any) {
+    console.error('[VERIFY-SUB] Error:', error?.message || error);
+    console.error('[VERIFY-SUB] Stack:', error?.stack);
+    return c.json({ 
+      error: 'Erreur serveur', 
+      details: error?.message || 'Unknown error'
+    }, 500);
   }
 });
 
