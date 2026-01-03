@@ -546,4 +546,28 @@ auth.post('/logout', async (c) => {
   }
 });
 
+// POST /api/auth/heartbeat - Met à jour last_seen (auth optionnelle via cookie)
+auth.post('/heartbeat', async (c) => {
+  try {
+    // Essayer d'extraire l'utilisateur du cookie
+    const cookieToken = getCookie(c, 'auth_token');
+    if (!cookieToken) {
+      return c.json({ ok: true }); // Pas de cookie = ignorer silencieusement
+    }
+    
+    const payload = await verifyToken(cookieToken);
+    if (!payload?.userId) {
+      return c.json({ ok: true }); // Token invalide = ignorer silencieusement
+    }
+    
+    await c.env.DB.prepare(`
+      UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?
+    `).bind(payload.userId).run();
+    
+    return c.json({ ok: true });
+  } catch (error) {
+    return c.json({ ok: true }); // Erreur = ignorer silencieusement
+  }
+});
+
 export default auth;

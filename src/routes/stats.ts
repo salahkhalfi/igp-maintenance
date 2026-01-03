@@ -158,24 +158,4 @@ stats.get('/online-users', async (c) => {
   }
 });
 
-// ========================================
-// HEARTBEAT - Met à jour last_seen pour l'utilisateur connecté
-// ========================================
-stats.post('/heartbeat', async (c) => {
-  try {
-    const user = c.get('user');
-    if (!user?.id) {
-      return c.json({ ok: false }, 401);
-    }
-    
-    await c.env.DB.prepare(`
-      UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?
-    `).bind(user.id).run();
-    
-    return c.json({ ok: true });
-  } catch (error) {
-    return c.json({ ok: false }, 500);
-  }
-});
-
 export default stats;

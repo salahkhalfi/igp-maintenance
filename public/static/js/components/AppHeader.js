@@ -122,13 +122,8 @@ const AppHeader = ({
     React.useEffect(() => {
         const heartbeatAndFetch = async () => {
             try {
-                // Envoyer heartbeat pour signaler qu'on est actif
-                const token = localStorage.getItem('auth_token');
-                if (token) {
-                    await axios.post(API_URL + '/stats/heartbeat', {}, {
-                        headers: { 'Authorization': 'Bearer ' + token }
-                    });
-                }
+                // Envoyer heartbeat pour signaler qu'on est actif (utilise le cookie)
+                await axios.post(API_URL + '/auth/heartbeat');
                 // Récupérer le nombre d'utilisateurs en ligne
                 const response = await axios.get(API_URL + '/stats/online-users');
                 if (response.data) {
