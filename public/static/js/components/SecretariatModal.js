@@ -665,7 +665,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         .doc-content .signature-line {
             width: 180px;
             border-bottom: 1px solid #333;
-            margin-top: -2pt; /* Collé à l'image pour effet signature sur ligne */
+            margin-top: 2pt;
         }
         
         /* Bloc signature manuelle */
@@ -859,7 +859,7 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 .signature-line {
   width: 180px;
   border-bottom: 1px solid #333;
-  margin-top: -2pt; /* Collé à l'image */
+  margin-top: 2pt;
 }
 
 /* Footer - Avertissement confidentialité - EN FIN DE DOCUMENT (pas fixe) */
