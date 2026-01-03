@@ -1,5 +1,5 @@
 {
-  "generated": "2026-01-03T12:49:13.532Z",
+  "generated": "2026-01-03T13:38:49.284Z",
   "files": [
     {
       "original": "AIChatModal_v4.js",
@@ -124,7 +124,7 @@
     {
       "original": "SystemSettingsModal.js",
       "minified": "SystemSettingsModal.min.js",
-      "savings": "56.1%"
+      "savings": "55.8%"
     },
     {
       "original": "TVDashboardModal.js",
@@ -187,5 +187,5 @@
       "savings": "67.6%"
     }
   ],
-  "totalSavings": "48.5%"
+  "totalSavings": "48.6%"
 }
