@@ -427,10 +427,11 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<div class="table-wrapper"><table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
         };
         
-        // 0. NORMALISER les images markdown avec base64 sur plusieurs lignes
-        // Le base64 peut être coupé sur plusieurs lignes, il faut tout remettre sur une ligne
-        md = md.replace(/!\[([^\]]*)\]\s*\n?\s*\((data:image\/[^;]+;base64,[\s\S]*?)\)\s*(?=\n|$)/g, (match, alt, dataUrl) => {
-            // Supprimer tous les retours à la ligne et espaces dans le base64
+        // 0. NORMALISER les images markdown - supprimer les retours à la ligne
+        // Pattern: ![alt] peut être suivi de \n avant (url)
+        md = md.replace(/!\[([^\]]*)\]\s*\n\s*\(([^)]+)\)/g, '![$1]($2)');
+        // Base64 sur plusieurs lignes: nettoyer les espaces/retours dans l'URL
+        md = md.replace(/!\[([^\]]*)\]\((data:image\/[^;]+;base64,[\s\S]*?)\)/g, (match, alt, dataUrl) => {
             const cleanUrl = dataUrl.replace(/\s+/g, '');
             return '![' + alt + '](' + cleanUrl + ')';
         });
