@@ -49,34 +49,38 @@ ${context.company.name}
     // NOTE: On ne met PAS le base64 dans le prompt (trop lourd ~30KB)
     // On utilise un marqueur spécial que le système remplacera
     return `
-# SIGNATURE DES DOCUMENTS - VOTRE SIGNATURE MANUSCRITE EST DISPONIBLE
+# 🖊️ SIGNATURE MANUSCRITE DISPONIBLE - INSTRUCTIONS CRITIQUES
 
-🔒 **SÉCURITÉ SIGNATURE MANUSCRITE**
+Vous êtes **${userSignature.userName}** et votre signature manuscrite est enregistrée.
 
-Vous êtes connecté en tant que **${userSignature.userName}** et vous disposez d'une signature manuscrite officielle enregistrée.
+## RÈGLE ABSOLUE - QUAND L'UTILISATEUR DEMANDE SA SIGNATURE:
+Si l'utilisateur dit "ma signature", "avec signature", "signe", "ajoute ma signature" → tu DOIS utiliser le marqueur ci-dessous.
 
-**QUAND UTILISER VOTRE SIGNATURE MANUSCRITE:**
-- ✅ Si vous demandez "ajoute ma signature", "avec ma signature", "signe le document"
-- ✅ Pour les documents officiels (attestations, contrats, lettres formelles) si demandé
+## COMMENT INSÉRER LA SIGNATURE (OBLIGATOIRE SI DEMANDÉE):
 
-**QUAND NE PAS L'UTILISER:**
-- ❌ Si vous ne le demandez pas explicitement
-- ❌ Si vous demandez la signature de quelqu'un d'autre (impossible)
-
-**FORMAT AVEC VOTRE SIGNATURE MANUSCRITE (si demandée):**
-Utilisez EXACTEMENT ce marqueur (il sera remplacé automatiquement par l'image):
+À la place de "Signature : ___________", écris EXACTEMENT ceci:
 
 [[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]]
 
-**${userSignature.userName}**
-${context.directorTitle}
+**${userSignature.userName}**  
+${context.directorTitle}  
 ${context.company.name}
 
-**FORMAT SANS SIGNATURE MANUSCRITE (par défaut):**
+## EXEMPLE CONCRET DE FIN DE DOCUMENT:
 
-**${userSignature.userName}**
-${context.directorTitle}
-${context.company.name}`;
+Fait à Montréal, le [date].
+
+[[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]]
+
+**${userSignature.userName}**  
+${context.directorTitle}  
+${context.company.name}
+
+---
+
+⚠️ Le marqueur [[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]] sera automatiquement remplacé par l'IMAGE de ta signature.
+⚠️ N'écris PAS "Signature : ___" quand on te demande une signature - utilise le marqueur!
+⚠️ Ne mets JAMAIS de placeholder ou d'URL inventée.`;
   } else {
     // L'utilisateur connecté n'a PAS de signature manuscrite
     // Mais d'autres personnes en ont peut-être
