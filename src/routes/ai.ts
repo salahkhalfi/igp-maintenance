@@ -2332,38 +2332,49 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             }, 500);
         }
         
-        // ===== POST-PROCESS: INSERT SIGNATURE IF REQUESTED =====
+        // ===== POST-PROCESS: SIGNATURE HANDLING =====
         // Détecte si l'utilisateur a demandé sa signature dans les instructions
-        const signatureRequested = /\b(ma signature|avec signature|signe|ajoute.*signature|signature manuscrite)\b/i.test(instructions);
+        const signatureRequested = /\b(ma signature|avec signature|signe le|ajoute.*signature|signature manuscrite)\b/i.test(instructions);
+        const hasSignatureFile = brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0;
         
-        if (signatureRequested && brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0) {
-            console.log(`✍️ [Secretary] Signature requested, attempting to insert...`);
-            
-            // Récupérer la signature de l'utilisateur connecté
-            const userSignature = brainResult.signatureReplacements.entries().next().value;
-            if (userSignature) {
-                const [marker, signatureImg] = userSignature;
+        // Patterns améliorés pour supprimer les underscores
+        // 1. Pattern pour "Signature: ___" avec variantes (bold, manuscrite, du directeur)
+        const signatureTextPattern = /\n*[-–—]*\n*\*{0,2}[Ss]ignature\*{0,2}\s*(manuscrite|du directeur)?\s*:?\**\s*\n*[_\-–—]*\n*/gi;
+        // 2. Pattern pour lignes avec juste des underscores (5+ caractères)
+        const standaloneUnderscorePattern = /\n\n[_\-–—]{5,}\n*/g;
+        
+        // Fonction pour nettoyer les underscores de signature
+        const cleanSignatureUnderscores = (text: string): string => {
+            let cleaned = text.replace(signatureTextPattern, '\n\n');
+            cleaned = cleaned.replace(standaloneUnderscorePattern, '\n\n');
+            // Nettoyer les sauts de ligne multiples
+            cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+            return cleaned;
+        };
+        
+        if (signatureRequested) {
+            if (hasSignatureFile) {
+                // L'utilisateur a une signature uploadée - l'insérer
+                console.log(`✍️ [Secretary] Signature requested and file available, inserting...`);
                 
-                // Stratégie 1: Remplacer le marqueur si présent
-                if (aiResponse.includes(marker)) {
-                    aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), signatureImg);
-                    console.log(`✍️ [Secretary] Replaced marker: ${marker}`);
-                } else {
-                    // Stratégie 2: Insérer la signature automatiquement
-                    // Chercher des patterns communs de fin de document
+                const userSignature = brainResult.signatureReplacements!.entries().next().value;
+                if (userSignature) {
+                    const [marker, signatureImg] = userSignature;
                     let signatureInserted = false;
                     
-                    // Pattern 1: "Signature : ___" ou "Signature:" (avec ou sans underscores)
-                    const signatureLinePattern = /Signature\s*:\s*[_\-]+|Signature\s*:\s*$/gim;
-                    if (aiResponse.match(signatureLinePattern)) {
-                        aiResponse = aiResponse.replace(signatureLinePattern, signatureImg);
+                    // D'abord, nettoyer tous les underscores de signature
+                    aiResponse = cleanSignatureUnderscores(aiResponse);
+                    
+                    // Stratégie 1: Remplacer le marqueur si présent
+                    if (aiResponse.includes(marker)) {
+                        aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), signatureImg);
                         signatureInserted = true;
-                        console.log(`✍️ [Secretary] Inserted signature replacing "Signature: ___"`);
+                        console.log(`✍️ [Secretary] Replaced marker: ${marker}`);
                     }
                     
-                    // Pattern 2: Insérer avant **Nom**\nTitre (ex: **Marc Bélanger**\nDirecteur)
+                    // Stratégie 2: Insérer avant **Nom**\nTitre
                     if (!signatureInserted) {
-                        const namePattern = /(\*\*(?:Marc Bélanger|[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+                        const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
                         if (aiResponse.match(namePattern)) {
                             aiResponse = aiResponse.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
                             signatureInserted = true;
@@ -2371,31 +2382,55 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                         }
                     }
                     
-                    // Pattern 3: Insérer avant Nom\nTitre (sans bold, ex: Marc Bélanger\nDirecteur)
+                    // Stratégie 3: Insérer avant Nom\nTitre (sans bold)
                     if (!signatureInserted) {
-                        const nameNoBoldPattern = /\n\n(Marc Bélanger|[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+                        const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
                         if (aiResponse.match(nameNoBoldPattern)) {
                             aiResponse = aiResponse.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
                             signatureInserted = true;
-                            console.log(`✍️ [Secretary] Inserted signature before Name (no bold)`);
+                            console.log(`✍️ [Secretary] Inserted signature before Name`);
+                        }
+                    }
+                    
+                    // Stratégie 4: Insérer avant "Cordialement" ou "Sincèrement"
+                    if (!signatureInserted) {
+                        const closingPattern = /(Cordialement|Sincèrement|Respectueusement|Bien à vous),?\s*\n+([A-ZÀ-Ü])/gi;
+                        if (aiResponse.match(closingPattern)) {
+                            aiResponse = aiResponse.replace(closingPattern, `$1,\n\n${signatureImg}\n\n$2`);
+                            signatureInserted = true;
+                            console.log(`✍️ [Secretary] Inserted signature after closing`);
                         }
                     }
                     
                     if (!signatureInserted) {
-                        console.log(`⚠️ [Secretary] Could not find suitable location for signature in response`);
-                        // Debug: afficher un extrait de la réponse pour comprendre le format
-                        console.log(`⚠️ [Secretary] Response excerpt (last 500 chars):`, aiResponse.slice(-500));
+                        // Dernière tentative: ajouter à la fin avant le nom du directeur
+                        console.log(`⚠️ [Secretary] Could not find ideal location for signature`);
                     }
                 }
+            } else {
+                // L'utilisateur demande une signature mais n'en a PAS uploadé
+                console.log(`⚠️ [Secretary] Signature requested but NO file uploaded`);
+                
+                // Supprimer tous les underscores de signature 
+                aiResponse = cleanSignatureUnderscores(aiResponse);
+                
+                // Ajouter un avertissement à la fin du document
+                aiResponse += `\n\n---\n\n⚠️ **Note**: Vous avez demandé une signature manuscrite mais aucune n'est enregistrée dans le système. Pour ajouter votre signature, allez dans **Paramètres Système** → **Signature Manuscrite** et uploadez votre signature (PNG/GIF).`;
             }
-        } else if (brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0) {
-            // Remplacer les marqueurs si présents même sans demande explicite
-            brainResult.signatureReplacements.forEach((replacement, marker) => {
-                if (aiResponse.includes(marker)) {
-                    aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), replacement);
-                    console.log(`✍️ [Secretary] Replaced signature marker: ${marker}`);
-                }
-            });
+        } else {
+            // Pas de demande de signature explicite
+            // Supprimer quand même les underscores inutiles pour un document propre
+            aiResponse = cleanSignatureUnderscores(aiResponse);
+            
+            // Remplacer les marqueurs si présents (cas où l'IA les a mis quand même)
+            if (hasSignatureFile) {
+                brainResult.signatureReplacements!.forEach((replacement, marker) => {
+                    if (aiResponse.includes(marker)) {
+                        aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), replacement);
+                        console.log(`✍️ [Secretary] Replaced signature marker: ${marker}`);
+                    }
+                });
+            }
         }
         
         // ===== EXTRACT TITLE =====
