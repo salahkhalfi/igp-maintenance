@@ -344,6 +344,26 @@ export const TOOLS: ToolDefinition[] = [
                 required: ["recipient_name", "message_content"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "send_message_to_role",
+            description: "Envoyer un message à TOUS les utilisateurs d'un rôle spécifique (techniciens, opérateurs, superviseurs, etc.). UNIQUEMENT pour les demandes type 'demande aux techniciens de...', 'dis aux opérateurs que...', 'informe les superviseurs de...'. Chaque personne recevra un message privé identifié comme venant de l'admin via l'Assistant IA.",
+            parameters: {
+                type: "object",
+                properties: {
+                    target_role: { 
+                        type: "string", 
+                        enum: ["technician", "operator", "supervisor", "furnace_operator", "senior_technician", "team_leader", "all_technicians"],
+                        description: "Le rôle ciblé. 'all_technicians' = techniciens + senior_technicians + team_leaders"
+                    },
+                    message_content: { type: "string", description: "Le contenu du message à envoyer, reformulé poliment" },
+                    context: { type: "string", description: "Contexte optionnel (ex: 'urgent', 'reunion', 'information')" }
+                },
+                required: ["target_role", "message_content"]
+            }
+        }
     }
 ];
 
@@ -2261,6 +2281,171 @@ export const ToolFunctions = {
             return JSON.stringify({
                 success: false,
                 error: "Erreur lors de l'envoi du message. Veuillez réessayer."
+            });
+        }
+    },
+
+    /**
+     * send_message_to_role - Envoyer un message à tous les utilisateurs d'un rôle
+     * SÉCURITÉ: Réservé aux admins/superviseurs, limite de 20 destinataires max
+     */
+    async send_message_to_role(
+        db: any,
+        args: { target_role: string, message_content: string, context?: string },
+        env?: any,
+        callerUserId?: number
+    ) {
+        // SÉCURITÉ 1: Vérifier authentification
+        if (!callerUserId || !env?.DB) {
+            return JSON.stringify({
+                success: false,
+                error: "Erreur d'authentification. Impossible d'envoyer le message."
+            });
+        }
+
+        try {
+            // SÉCURITÉ 2: Vérifier permissions (admin/supervisor/director uniquement)
+            const caller = await env.DB.prepare(`
+                SELECT id, full_name, role FROM users WHERE id = ? AND deleted_at IS NULL
+            `).bind(callerUserId).first();
+
+            if (!caller) {
+                return JSON.stringify({ success: false, error: "Utilisateur appelant introuvable." });
+            }
+
+            const allowedRoles = ['admin', 'supervisor', 'director'];
+            if (!allowedRoles.includes(caller.role)) {
+                return JSON.stringify({
+                    success: false,
+                    error: "Permission refusée. Seuls les administrateurs et superviseurs peuvent envoyer des messages de groupe."
+                });
+            }
+
+            // ÉTAPE 1: Déterminer les rôles à cibler
+            let targetRoles: string[] = [];
+            const roleLabels: Record<string, string> = {
+                'technician': 'techniciens',
+                'senior_technician': 'techniciens seniors',
+                'team_leader': 'chefs d\'équipe',
+                'operator': 'opérateurs',
+                'furnace_operator': 'opérateurs de four',
+                'supervisor': 'superviseurs',
+                'all_technicians': 'techniciens (tous niveaux)'
+            };
+
+            if (args.target_role === 'all_technicians') {
+                targetRoles = ['technician', 'senior_technician', 'team_leader'];
+            } else {
+                targetRoles = [args.target_role];
+            }
+
+            // ÉTAPE 2: Récupérer les utilisateurs du/des rôle(s)
+            const placeholders = targetRoles.map(() => '?').join(',');
+            const recipients = await env.DB.prepare(`
+                SELECT id, full_name, role FROM users 
+                WHERE role IN (${placeholders}) 
+                AND deleted_at IS NULL 
+                AND id != ?
+            `).bind(...targetRoles, callerUserId).all();
+
+            if (!recipients.results || recipients.results.length === 0) {
+                return JSON.stringify({
+                    success: false,
+                    error: `Aucun ${roleLabels[args.target_role] || args.target_role} trouvé.`
+                });
+            }
+
+            // SÉCURITÉ 3: Limite de 20 destinataires max pour éviter le spam
+            const MAX_RECIPIENTS = 20;
+            if (recipients.results.length > MAX_RECIPIENTS) {
+                return JSON.stringify({
+                    success: false,
+                    error: `Trop de destinataires (${recipients.results.length}). Maximum autorisé: ${MAX_RECIPIENTS}. Veuillez cibler un groupe plus spécifique.`
+                });
+            }
+
+            // ÉTAPE 3: Envoyer un message à chaque destinataire
+            const contextTag = args.context === 'urgent' ? '🔴 URGENT\n\n' : 
+                              args.context === 'reunion' ? '📅 RÉUNION\n\n' : 
+                              args.context === 'information' ? 'ℹ️ INFORMATION\n\n' : '';
+            
+            const roleLabel = roleLabels[args.target_role] || args.target_role;
+            const formattedMessage = `${contextTag}📋 Message de ${caller.full_name} aux ${roleLabel} (via Assistant IA) :\n\n${args.message_content}`;
+
+            const sentTo: string[] = [];
+            const errors: string[] = [];
+
+            for (const recipient of recipients.results as any[]) {
+                try {
+                    // Trouver ou créer la conversation directe
+                    let conversationId: string;
+
+                    const existingConv = await env.DB.prepare(`
+                        SELECT c.id 
+                        FROM chat_conversations c
+                        JOIN chat_participants cp1 ON c.id = cp1.conversation_id
+                        JOIN chat_participants cp2 ON c.id = cp2.conversation_id
+                        WHERE c.type = 'direct' 
+                        AND cp1.user_id = ? 
+                        AND cp2.user_id = ?
+                    `).bind(callerUserId, recipient.id).first();
+
+                    if (existingConv) {
+                        conversationId = existingConv.id;
+                    } else {
+                        conversationId = crypto.randomUUID();
+                        await env.DB.batch([
+                            env.DB.prepare(`INSERT INTO chat_conversations (id, type, name, created_by) VALUES (?, 'direct', null, ?)`).bind(conversationId, callerUserId),
+                            env.DB.prepare(`INSERT INTO chat_participants (conversation_id, user_id, role) VALUES (?, ?, 'admin')`).bind(conversationId, callerUserId),
+                            env.DB.prepare(`INSERT INTO chat_participants (conversation_id, user_id, role) VALUES (?, ?, 'member')`).bind(conversationId, recipient.id)
+                        ]);
+                    }
+
+                    // Insérer le message
+                    const messageId = crypto.randomUUID();
+                    await env.DB.prepare(`
+                        INSERT INTO chat_messages (id, conversation_id, sender_id, type, content)
+                        VALUES (?, ?, ?, 'text', ?)
+                    `).bind(messageId, conversationId, callerUserId, formattedMessage).run();
+
+                    // Mettre à jour le timestamp
+                    await env.DB.prepare(`
+                        UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
+                    `).bind(conversationId).run();
+
+                    sentTo.push(recipient.full_name);
+                } catch (err) {
+                    errors.push(recipient.full_name);
+                    console.error(`[AI-MESSAGE-ROLE] Failed to send to ${recipient.full_name}:`, err);
+                }
+            }
+
+            // Log groupé
+            console.log(`[AI-MESSAGE-ROLE] ${caller.full_name} -> ${roleLabel} (${sentTo.length}/${recipients.results.length}) via Assistant IA`);
+
+            if (sentTo.length === 0) {
+                return JSON.stringify({
+                    success: false,
+                    error: "Échec de l'envoi à tous les destinataires."
+                });
+            }
+
+            return JSON.stringify({
+                success: true,
+                message: `Message envoyé à ${sentTo.length} ${roleLabel}.`,
+                details: {
+                    sent_to: sentTo,
+                    failed: errors.length > 0 ? errors : undefined,
+                    total: sentTo.length,
+                    sender: caller.full_name
+                }
+            });
+
+        } catch (error) {
+            console.error('[AI Tools] send_message_to_role error:', error);
+            return JSON.stringify({
+                success: false,
+                error: "Erreur lors de l'envoi des messages. Veuillez réessayer."
             });
         }
     }

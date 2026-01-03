@@ -1514,8 +1514,8 @@ ${aiConfig.rules}
                                  // search_web needs env for TAVILY_API_KEY
                                  // @ts-ignore
                                  toolResult = await ToolFunctions[fnName](db, fnArgs, c.env);
-                            } else if (fnName === 'send_message_to_user') {
-                                 // send_message_to_user needs env AND userId for auth
+                            } else if (fnName === 'send_message_to_user' || fnName === 'send_message_to_role') {
+                                 // send_message_to_user/role needs env AND userId for auth
                                  // @ts-ignore
                                  toolResult = await ToolFunctions[fnName](db, fnArgs, c.env, userId);
                             } else {
@@ -2288,8 +2288,8 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                                     // search_web needs env for TAVILY_API_KEY
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs, c.env);
-                                } else if (fnName === 'send_message_to_user') {
-                                    // send_message_to_user needs env AND userId for auth
+                                } else if (fnName === 'send_message_to_user' || fnName === 'send_message_to_role') {
+                                    // send_message_to_user/role needs env AND userId for auth
                                     // @ts-ignore
                                     toolResult = await ToolFunctions[fnName](db, fnArgs, c.env, payload.userId);
                                 } else {
