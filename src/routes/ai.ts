@@ -1587,7 +1587,7 @@ ${aiConfig.rules}
         // --- SIGNATURE: Insérer si demandée ---
         // "avec ma signature" → image PNG uploadée
         // "à signer" → espace vide + ligne pour signature au crayon
-        const wantsImageSignature = /(avec ma signature|ma signature|déjà signée?)/i.test(message);
+        const wantsImageSignature = /(avec ma signature|ma signature|déjà signée?|document signé|signé)/i.test(message);
         const wantsManualSignature = /à signer/i.test(message);
         
         // Patterns pour trouver où insérer la signature
@@ -2412,7 +2412,7 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         // ===== POST-PROCESS: INSERT SIGNATURE IF REQUESTED =====
         // "avec ma signature" → image PNG uploadée
         // "à signer" → espace vide + ligne pour signature au crayon
-        const wantsImageSignature = /(avec ma signature|ma signature|déjà signée?)/i.test(instructions);
+        const wantsImageSignature = /(avec ma signature|ma signature|déjà signée?|document signé|signé)/i.test(instructions);
         const wantsManualSignature = /à signer/i.test(instructions);
         
         // Patterns pour trouver où insérer la signature
