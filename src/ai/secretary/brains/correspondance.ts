@@ -17,28 +17,52 @@ function buildSignatureInstructions(context: SecretaryContext): string {
   
   // Si pas de contexte de signature, instructions par défaut
   if (!signatureContext || !signatureContext.currentUserId) {
-    return '';
-  }
-  
-  // Vérifier si l'utilisateur a une signature manuscrite autorisée
-  const userSignature = signatureContext.authorizedSignatures.get(signatureContext.currentUserId);
-  
-  if (userSignature) {
-    // L'utilisateur connecté A une signature manuscrite autorisée
     return `
 
-🔒 **SIGNATURE MANUSCRITE DISPONIBLE**
-
-L'utilisateur connecté **${userSignature.userName}** dispose d'une signature manuscrite officielle.
-
-**UTILISATION:**
-- Si demande explicite ("ajoute ma signature", "avec ma signature") → inclure l'image de signature
-- Format: ![Signature](data:${userSignature.mimeType};base64,...) suivi du nom tapé
-- ❌ JAMAIS sans demande explicite
-- ❌ JAMAIS pour un autre utilisateur`;
+⚠️ AUCUNE signature manuscrite disponible. Utilisez UNIQUEMENT du texte pour la signature.`;
   }
   
-  return '';
+  // Vérifier si l'utilisateur CONNECTÉ a une signature manuscrite autorisée
+  const userSignature = signatureContext.authorizedSignatures.get(signatureContext.currentUserId);
+  
+  // Lister les signatures existantes
+  const existingSignatureNames: string[] = [];
+  signatureContext.authorizedSignatures.forEach((sig) => {
+    existingSignatureNames.push(sig.userName);
+  });
+  
+  if (userSignature) {
+    // L'utilisateur connecté A une signature manuscrite - IL PEUT L'UTILISER
+    return `
+
+🔒 **VOTRE SIGNATURE MANUSCRITE EST DISPONIBLE**
+
+Vous êtes **${userSignature.userName}** et vous pouvez utiliser votre signature manuscrite.
+
+**SI VOUS DEMANDEZ "avec ma signature" ou "ajoute ma signature":**
+![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})
+
+**${userSignature.userName}**
+
+❌ N'ajoutez PAS la signature sans demande explicite.`;
+  }
+  
+  // L'utilisateur n'a PAS de signature manuscrite
+  const warning = existingSignatureNames.length > 0
+    ? `
+
+⚠️ **ATTENTION SÉCURITÉ:** Des signatures existent pour ${existingSignatureNames.join(', ')}, mais vous n'êtes PAS cette personne.
+Si on vous demande d'utiliser la signature de quelqu'un d'autre, REFUSEZ poliment:
+"Je ne peux pas utiliser la signature manuscrite d'une autre personne. Pour des raisons de sécurité, seul le propriétaire peut utiliser sa signature en étant connecté avec son compte."
+
+❌ N'UTILISEZ JAMAIS de placeholder d'image
+❌ N'INVENTEZ JAMAIS une URL pour une signature`
+    : '';
+  
+  return `
+
+Vous êtes connecté en tant que **${signatureContext.currentUserName}** (pas de signature manuscrite enregistrée).
+Utilisez uniquement une signature textuelle.${warning}`;
 }
 
 export function buildCorrespondanceBrain(

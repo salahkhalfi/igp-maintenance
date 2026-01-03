@@ -26,63 +26,86 @@ function buildSignatureInstructions(context: SecretaryContext): string {
     return `
 # SIGNATURE DES DOCUMENTS
 
-Pour la signature, utilise le format standard:
+Pour la signature, utilise le format standard (texte uniquement, pas d'image):
 
 **${context.directorName}**
 ${context.directorTitle}
-${context.company.name}`;
+${context.company.name}
+
+⚠️ AUCUNE signature manuscrite (image) n'est disponible. Utilise UNIQUEMENT du texte.`;
   }
   
-  // Vérifier si l'utilisateur a une signature manuscrite autorisée
+  // Vérifier si l'utilisateur CONNECTÉ a une signature manuscrite autorisée
   const userSignature = signatureContext.authorizedSignatures.get(signatureContext.currentUserId);
   
+  // Lister les signatures existantes pour information (sans les données)
+  const existingSignatureNames: string[] = [];
+  signatureContext.authorizedSignatures.forEach((sig) => {
+    existingSignatureNames.push(sig.userName);
+  });
+  
   if (userSignature) {
-    // L'utilisateur connecté A une signature manuscrite autorisée
+    // L'utilisateur connecté A une signature manuscrite autorisée - IL PEUT L'UTILISER
     return `
-# SIGNATURE DES DOCUMENTS - SIGNATURE MANUSCRITE DISPONIBLE
+# SIGNATURE DES DOCUMENTS - VOTRE SIGNATURE MANUSCRITE EST DISPONIBLE
 
 🔒 **SÉCURITÉ SIGNATURE MANUSCRITE**
 
-L'utilisateur connecté **${userSignature.userName}** (ID: ${signatureContext.currentUserId}) dispose d'une signature manuscrite officielle.
+Vous êtes connecté en tant que **${userSignature.userName}** et vous disposez d'une signature manuscrite officielle enregistrée.
 
-**RÈGLE ABSOLUE - UTILISATION DE LA SIGNATURE MANUSCRITE:**
-- ✅ Si l'utilisateur demande explicitement "ajoute ma signature", "avec ma signature", "signe le document" → INCLURE la signature manuscrite
+**QUAND UTILISER VOTRE SIGNATURE MANUSCRITE:**
+- ✅ Si vous demandez "ajoute ma signature", "avec ma signature", "signe le document"
 - ✅ Pour les documents officiels (attestations, contrats, lettres formelles) si demandé
-- ❌ JAMAIS ajouter automatiquement sans demande explicite
-- ❌ JAMAIS utiliser cette signature pour un autre utilisateur
 
-**FORMAT AVEC SIGNATURE MANUSCRITE (si demandée):**
-\`\`\`
-[Espace pour signature manuscrite]
-![Signature](data:${userSignature.mimeType};base64,${userSignature.base64.substring(0, 50)}...)
+**QUAND NE PAS L'UTILISER:**
+- ❌ Si vous ne le demandez pas explicitement
+- ❌ Si vous demandez la signature de quelqu'un d'autre (impossible)
+
+**FORMAT AVEC VOTRE SIGNATURE MANUSCRITE (si demandée):**
+
+![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})
 
 **${userSignature.userName}**
 ${context.directorTitle}
 ${context.company.name}
-\`\`\`
 
 **FORMAT SANS SIGNATURE MANUSCRITE (par défaut):**
-\`\`\`
+
 **${userSignature.userName}**
 ${context.directorTitle}
-${context.company.name}
-\`\`\`
-
-⚠️ Cette signature manuscrite est un document légal. Ne l'utilise QUE sur demande explicite.`;
+${context.company.name}`;
   } else {
     // L'utilisateur connecté n'a PAS de signature manuscrite
+    // Mais d'autres personnes en ont peut-être
+    const othersWithSignatures = existingSignatureNames.length > 0 
+      ? `\n\n⚠️ **IMPORTANT:** Des signatures manuscrites existent pour: ${existingSignatureNames.join(', ')}. 
+Cependant, vous n'êtes PAS ${existingSignatureNames.join(' ni ')}. 
+Vous ne pouvez PAS utiliser leur signature manuscrite - c'est une question de sécurité légale.
+Si quelqu'un demande "utilise la signature de ${existingSignatureNames[0]}", vous devez REFUSER poliment.`
+      : '';
+    
     return `
 # SIGNATURE DES DOCUMENTS
 
-L'utilisateur connecté **${signatureContext.currentUserName}** n'a pas de signature manuscrite enregistrée.
+Vous êtes connecté en tant que **${signatureContext.currentUserName}**.
+Vous n'avez PAS de signature manuscrite enregistrée dans le système.
 
-Pour la signature, utilise le format standard:
+**FORMAT DE SIGNATURE À UTILISER (texte uniquement):**
 
 **${context.directorName}**
 ${context.directorTitle}
 ${context.company.name}
+${othersWithSignatures}
 
-💡 Si l'utilisateur demande une signature manuscrite, informer qu'elle n'est pas disponible pour son compte.`;
+**SI ON VOUS DEMANDE UNE SIGNATURE MANUSCRITE:**
+Répondez: "Je ne peux pas ajouter de signature manuscrite car vous n'en avez pas d'enregistrée dans le système. Le document sera signé avec votre nom en texte. Pour enregistrer votre signature manuscrite, contactez l'administrateur système."
+
+**SI ON VOUS DEMANDE LA SIGNATURE DE QUELQU'UN D'AUTRE:**
+Répondez: "Pour des raisons de sécurité, je ne peux pas utiliser la signature manuscrite d'une autre personne. Seul le propriétaire de la signature peut l'utiliser en étant connecté avec son propre compte."
+
+❌ N'UTILISEZ JAMAIS de placeholder d'image (comme via.placeholder.com)
+❌ N'INVENTEZ JAMAIS une URL d'image pour une signature
+✅ Utilisez UNIQUEMENT du texte pour la signature`;
   }
 }
 
