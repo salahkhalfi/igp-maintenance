@@ -443,6 +443,10 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             .replace(/((?:^\|.+\|$\n?)+)/gm, (match) => parseTable(match))
             // Séparateurs horizontaux (---, ***, ___)
             .replace(/^[-*_]{3,}\s*$/gm, '<hr class="doc-separator">')
+            // Bloc signature manuelle: "Signature :" suivi de tirets - espace pour signer au stylo
+            .replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>')
+            // Images de signature - sans cadre ni ombre
+            .replace(/!\[([^\]]*[Ss]ignature[^\]]*)\]\(([^)]+)\)/g, '<div class="signature-block"><img src="$2" alt="$1" style="max-height:70px;width:auto;border:none;box-shadow:none;margin:0;"><div class="signature-line"></div></div>')
             // Images ![alt](url) - AVANT les liens pour éviter conflit
             .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:8pt;box-shadow:0 2pt 8pt rgba(0,0,0,0.1);">')
             // Liens [text](url)
@@ -764,6 +768,37 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   .doc-content p { orphans: 3; widows: 3; }
 }
 
+/* Bloc signature manuelle (à signer au stylo) */
+.manual-signature-block {
+  margin: 20pt 0 12pt 0;
+}
+.signature-space {
+  height: 60pt; /* ~2cm d'espace pour signer */
+}
+.signature-line-manual {
+  width: 200px;
+  border-bottom: 1px solid #333;
+}
+
+/* Bloc signature image (signature numérique) */
+.signature-block {
+  display: inline-block;
+  margin: 16pt 0 8pt 0;
+}
+.signature-block img {
+  display: block;
+  max-height: 70px;
+  width: auto;
+  margin: 0;
+  border: none !important;
+  box-shadow: none !important;
+}
+.signature-line {
+  width: 180px;
+  border-bottom: 1px solid #333;
+  margin-top: 2pt;
+}
+
 /* Footer - Avertissement confidentialité - EN FIN DE DOCUMENT (pas fixe) */
 .print-footer {
   margin-top: 40pt;
@@ -779,6 +814,10 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 }
 @media print {
   .print-footer { page-break-inside: avoid; margin-top: 30pt; }
+  .manual-signature-block { page-break-inside: avoid; }
+  .signature-space { height: 60pt !important; }
+  .signature-line-manual, .signature-line { border-bottom: 1px solid #333 !important; }
+  .signature-block img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 </style></head>
 <body>
