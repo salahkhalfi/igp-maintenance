@@ -427,9 +427,13 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<div class="table-wrapper"><table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
         };
         
-        // 0. NORMALISER les images markdown qui sont sur plusieurs lignes
-        // Ex: ![alt]\n(url) -> ![alt](url)
-        md = md.replace(/!\[([^\]]*)\]\s*\n\s*\(([^)]+)\)/g, '![$1]($2)');
+        // 0. NORMALISER les images markdown avec base64 sur plusieurs lignes
+        // Le base64 peut être coupé sur plusieurs lignes, il faut tout remettre sur une ligne
+        md = md.replace(/!\[([^\]]*)\]\s*\n?\s*\((data:image\/[^;]+;base64,[\s\S]*?)\)\s*(?=\n|$)/g, (match, alt, dataUrl) => {
+            // Supprimer tous les retours à la ligne et espaces dans le base64
+            const cleanUrl = dataUrl.replace(/\s+/g, '');
+            return '![' + alt + '](' + cleanUrl + ')';
+        });
         
         // 0b. BLOC SIGNATURE MANUELLE - AVANT tout autre traitement
         // Pattern: "Signature :" (avec ou sans bold) suivi d'une ligne de underscores
