@@ -427,6 +427,15 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<div class="table-wrapper"><table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
         };
         
+        // 0. BLOC SIGNATURE MANUELLE - AVANT tout autre traitement
+        // Pattern: "Signature :" (avec ou sans bold) suivi d'une ligne de underscores
+        md = md.replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, 
+            '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>');
+        
+        // 0b. Images de signature - sans cadre ni ombre (AVANT traitement images standard)
+        md = md.replace(/!\[([^\]]*[Ss]ignature[^\]]*)\]\(([^)]+)\)/g, 
+            '<div class="signature-block"><img src="$2" alt="$1" style="max-height:70px;width:auto;border:none;box-shadow:none;margin:0;"><div class="signature-line"></div></div>');
+        
         // 1. BLOCKQUOTES - Style citation classique pour documents officiels
         md = md.replace(/^(?:>\s*.+\n?)+/gm, (match) => {
             const lines = match.split('\n').filter(l => l.trim());
@@ -441,12 +450,8 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             .replace(/\*([^*]+)\*/g, '<em style="font-style:italic">$1</em>')
             // Détecter et convertir les tableaux (blocs commençant par |)
             .replace(/((?:^\|.+\|$\n?)+)/gm, (match) => parseTable(match))
-            // Séparateurs horizontaux (---, ***, ___)
+            // Séparateurs horizontaux (---, ***, ___) - mais pas les lignes de signature déjà traitées
             .replace(/^[-*_]{3,}\s*$/gm, '<hr class="doc-separator">')
-            // Bloc signature manuelle: "Signature :" suivi de tirets - espace pour signer au stylo
-            .replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>')
-            // Images de signature - sans cadre ni ombre
-            .replace(/!\[([^\]]*[Ss]ignature[^\]]*)\]\(([^)]+)\)/g, '<div class="signature-block"><img src="$2" alt="$1" style="max-height:70px;width:auto;border:none;box-shadow:none;margin:0;"><div class="signature-line"></div></div>')
             // Images ![alt](url) - AVANT les liens pour éviter conflit
             .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="doc-image" style="max-width:100%;height:auto;margin:10pt 0;border-radius:8pt;box-shadow:0 2pt 8pt rgba(0,0,0,0.1);">')
             // Liens [text](url)
