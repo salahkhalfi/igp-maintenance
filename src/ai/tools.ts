@@ -190,7 +190,7 @@ export const TOOLS: ToolDefinition[] = [
         type: "function",
         function: {
             name: "get_user_details",
-            description: "Obtenir les détails d'un utilisateur par son ID (rôle, charge de travail).",
+            description: "Obtenir les détails d'un utilisateur par son ID (rôle, charge de travail, statut de connexion).",
             parameters: {
                 type: "object",
                 properties: {
@@ -1683,13 +1683,35 @@ export const ToolFunctions = {
             id: users.id,
             name: users.full_name,
             role: users.role,
-            email: users.email
+            email: users.email,
+            last_seen: users.last_seen,
+            last_login: users.last_login
         })
         .from(users)
         .where(eq(users.id, args.user_id))
         .get();
 
         if (!user) return "Utilisateur introuvable.";
+        
+        // Calculer le statut de connexion
+        let loginStatus = "inconnu";
+        const checkTime = user.last_seen || user.last_login;
+        if (checkTime) {
+            const lastActivity = new Date(checkTime);
+            const now = new Date();
+            const diffMinutes = Math.floor((now.getTime() - lastActivity.getTime()) / 60000);
+            
+            if (diffMinutes < 5) {
+                loginStatus = "en ligne";
+            } else if (diffMinutes < 60) {
+                loginStatus = `actif il y a ${diffMinutes} min`;
+            } else if (diffMinutes < 1440) {
+                loginStatus = `actif il y a ${Math.floor(diffMinutes / 60)}h`;
+            } else {
+                const days = Math.floor(diffMinutes / 1440);
+                loginStatus = `hors ligne depuis ${days} jour(s)`;
+            }
+        }
 
         // Load closed statuses from DB (BIBLE: no hardcoding)
         const closedStatuses = await getClosedStatuses(db);
@@ -1727,7 +1749,10 @@ export const ToolFunctions = {
         .all();
 
         return JSON.stringify({
-            user: user,
+            user: {
+                ...user,
+                login_status: loginStatus
+            },
             active_load: activeTickets,
             recent_history: recentHistory
         });
@@ -1821,7 +1846,8 @@ export const ToolFunctions = {
             email: users.email,
             role: users.role,
             created_at: users.created_at,
-            last_login: users.last_login
+            last_login: users.last_login,
+            last_seen: users.last_seen
         }).from(users).where(isNull(users.deleted_at));
         
         if (roleFilter !== 'all') {
@@ -1832,7 +1858,8 @@ export const ToolFunctions = {
                     email: users.email,
                     role: users.role,
                     created_at: users.created_at,
-                    last_login: users.last_login
+                    last_login: users.last_login,
+                    last_seen: users.last_seen
                 }).from(users).where(and(
                     isNull(users.deleted_at),
                     inArray(users.role, ['technician', 'senior_technician', 'team_leader'])
@@ -1844,7 +1871,8 @@ export const ToolFunctions = {
                     email: users.email,
                     role: users.role,
                     created_at: users.created_at,
-                    last_login: users.last_login
+                    last_login: users.last_login,
+                    last_seen: users.last_seen
                 }).from(users).where(and(
                     isNull(users.deleted_at),
                     eq(users.role, roleFilter)
@@ -1854,21 +1882,45 @@ export const ToolFunctions = {
         
         const usersList = await query.all();
         
+        // Fonction pour calculer le statut de connexion
+        const getLoginStatus = (lastSeen: string | null, lastLogin: string | null): string => {
+            const checkTime = lastSeen || lastLogin;
+            if (!checkTime) return "jamais connecté";
+            
+            const lastActivity = new Date(checkTime);
+            const now = new Date();
+            const diffMinutes = Math.floor((now.getTime() - lastActivity.getTime()) / 60000);
+            
+            if (diffMinutes < 5) return "en ligne";
+            if (diffMinutes < 60) return `actif il y a ${diffMinutes} min`;
+            if (diffMinutes < 1440) return `actif il y a ${Math.floor(diffMinutes / 60)}h`;
+            return `hors ligne depuis ${Math.floor(diffMinutes / 1440)} jour(s)`;
+        };
+        
         // Résumé par rôle
         const byRole: Record<string, number> = {};
         usersList.forEach((u: any) => {
             byRole[u.role] = (byRole[u.role] || 0) + 1;
         });
         
+        // Compter les utilisateurs en ligne
+        const onlineCount = usersList.filter((u: any) => {
+            const checkTime = u.last_seen || u.last_login;
+            if (!checkTime) return false;
+            const diffMinutes = Math.floor((Date.now() - new Date(checkTime).getTime()) / 60000);
+            return diffMinutes < 5;
+        }).length;
+        
         return JSON.stringify({
             total: usersList.length,
+            online_count: onlineCount,
             by_role: byRole,
             users: usersList.map((u: any) => ({
                 id: u.id,
                 name: u.full_name,
                 email: u.email,
                 role: u.role,
-                last_login: u.last_login
+                login_status: getLoginStatus(u.last_seen, u.last_login)
             }))
         });
     },
