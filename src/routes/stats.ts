@@ -129,12 +129,12 @@ stats.get('/online-users', async (c) => {
         AND id != 0
     `).first();
 
-    // Compter les utilisateurs actifs dans la dernière minute (synchro avec le poll de 60s)
+    // Compter les utilisateurs actifs dans les 2 dernières minutes (basé sur last_seen heartbeat)
     const activeResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM users
-      WHERE last_login IS NOT NULL
-        AND datetime(last_login) > datetime('now', '-1 minutes')
+      WHERE last_seen IS NOT NULL
+        AND datetime(last_seen) > datetime('now', '-2 minutes')
         AND deleted_at IS NULL
         AND id != 0
     `).first();
@@ -155,6 +155,26 @@ stats.get('/online-users', async (c) => {
   } catch (error) {
     console.error('[Online Users API] Error:', error);
     return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
+// ========================================
+// HEARTBEAT - Met à jour last_seen pour l'utilisateur connecté
+// ========================================
+stats.post('/heartbeat', async (c) => {
+  try {
+    const user = c.get('user');
+    if (!user?.id) {
+      return c.json({ ok: false }, 401);
+    }
+    
+    await c.env.DB.prepare(`
+      UPDATE users SET last_seen = CURRENT_TIMESTAMP WHERE id = ?
+    `).bind(user.id).run();
+    
+    return c.json({ ok: true });
+  } catch (error) {
+    return c.json({ ok: false }, 500);
   }
 });
 

@@ -118,10 +118,13 @@ const AppHeader = ({
     // État pour les utilisateurs actifs (badge discret)
     const [onlineUsers, setOnlineUsers] = React.useState({ today: 0, active: 0 });
 
-    // Charger le nombre d'utilisateurs actifs au démarrage et toutes les 60 secondes
+    // Heartbeat + charger le nombre d'utilisateurs actifs toutes les 60 secondes
     React.useEffect(() => {
-        const fetchOnlineUsers = async () => {
+        const heartbeatAndFetch = async () => {
             try {
+                // Envoyer heartbeat pour signaler qu'on est actif
+                await axios.post(API_URL + '/stats/heartbeat');
+                // Récupérer le nombre d'utilisateurs en ligne
                 const response = await axios.get(API_URL + '/stats/online-users');
                 if (response.data) {
                     setOnlineUsers(response.data);
@@ -130,8 +133,8 @@ const AppHeader = ({
                 // Ignorer silencieusement les erreurs
             }
         };
-        fetchOnlineUsers();
-        const interval = setInterval(fetchOnlineUsers, 60000); // Rafraîchir toutes les 60 secondes
+        heartbeatAndFetch();
+        const interval = setInterval(heartbeatAndFetch, 60000); // Toutes les 60 secondes
         return () => clearInterval(interval);
     }, []);
 
