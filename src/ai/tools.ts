@@ -328,6 +328,22 @@ export const TOOLS: ToolDefinition[] = [
                 required: ["query"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "send_message_to_user",
+            description: "Envoyer un message privé à un utilisateur AU NOM de l'administrateur. UNIQUEMENT pour les demandes explicites type 'demande à X de...', 'dis à Y que...', 'envoie un message à Z pour...'. Le message sera reformulé poliment et identifié comme venant de l'admin via l'Assistant IA.",
+            parameters: {
+                type: "object",
+                properties: {
+                    recipient_name: { type: "string", description: "Nom du destinataire (ex: 'Brahim', 'Martin')" },
+                    message_content: { type: "string", description: "Le contenu du message à envoyer, reformulé poliment" },
+                    context: { type: "string", description: "Contexte optionnel (ex: 'urgent', 'routine')" }
+                },
+                required: ["recipient_name", "message_content"]
+            }
+        }
     }
 ];
 
@@ -2107,6 +2123,144 @@ export const ToolFunctions = {
             return JSON.stringify({
                 error: true,
                 message: "Erreur lors de la recherche web. Le service est peut-etre temporairement indisponible."
+            });
+        }
+    },
+
+    /**
+     * send_message_to_user - Envoyer un message privé au nom de l'admin
+     * SÉCURITÉ: Réservé aux admins/superviseurs, message clairement identifié
+     * @param db - Database connection
+     * @param args - { recipient_name, message_content, context? }
+     * @param env - Bindings (pour DB)
+     * @param callerUserId - ID de l'appelant (pour vérification permissions)
+     */
+    async send_message_to_user(
+        db: any, 
+        args: { recipient_name: string, message_content: string, context?: string },
+        env?: any,
+        callerUserId?: number
+    ) {
+        // SÉCURITÉ 1: Vérifier que l'appelant est identifié
+        if (!callerUserId || !env?.DB) {
+            return JSON.stringify({
+                success: false,
+                error: "Erreur d'authentification. Impossible d'envoyer le message."
+            });
+        }
+
+        try {
+            // SÉCURITÉ 2: Vérifier que l'appelant est admin ou supervisor
+            const caller = await env.DB.prepare(`
+                SELECT id, full_name, role FROM users WHERE id = ? AND deleted_at IS NULL
+            `).bind(callerUserId).first();
+
+            if (!caller) {
+                return JSON.stringify({
+                    success: false,
+                    error: "Utilisateur appelant introuvable."
+                });
+            }
+
+            const allowedRoles = ['admin', 'supervisor', 'director'];
+            if (!allowedRoles.includes(caller.role)) {
+                return JSON.stringify({
+                    success: false,
+                    error: "Permission refusée. Seuls les administrateurs et superviseurs peuvent envoyer des messages via l'Assistant IA."
+                });
+            }
+
+            // ÉTAPE 1: Trouver le destinataire par nom
+            const searchName = args.recipient_name.toLowerCase();
+            const allUsers = await env.DB.prepare(`
+                SELECT id, full_name, email FROM users WHERE deleted_at IS NULL
+            `).all();
+
+            const recipient = allUsers.results?.find((u: any) => 
+                u.full_name?.toLowerCase().includes(searchName) ||
+                u.email?.toLowerCase().includes(searchName)
+            );
+
+            if (!recipient) {
+                return JSON.stringify({
+                    success: false,
+                    error: `Aucun utilisateur trouvé avec le nom "${args.recipient_name}".`
+                });
+            }
+
+            // SÉCURITÉ 3: Ne pas s'envoyer un message à soi-même
+            if (recipient.id === callerUserId) {
+                return JSON.stringify({
+                    success: false,
+                    error: "Vous ne pouvez pas vous envoyer un message à vous-même."
+                });
+            }
+
+            // ÉTAPE 2: Trouver ou créer la conversation directe
+            let conversationId: string;
+
+            const existingConv = await env.DB.prepare(`
+                SELECT c.id 
+                FROM chat_conversations c
+                JOIN chat_participants cp1 ON c.id = cp1.conversation_id
+                JOIN chat_participants cp2 ON c.id = cp2.conversation_id
+                WHERE c.type = 'direct' 
+                AND cp1.user_id = ? 
+                AND cp2.user_id = ?
+            `).bind(callerUserId, recipient.id).first();
+
+            if (existingConv) {
+                conversationId = existingConv.id;
+            } else {
+                // Créer une nouvelle conversation
+                conversationId = crypto.randomUUID();
+                
+                await env.DB.batch([
+                    env.DB.prepare(`INSERT INTO chat_conversations (id, type, name, created_by) VALUES (?, 'direct', null, ?)`).bind(conversationId, callerUserId),
+                    env.DB.prepare(`INSERT INTO chat_participants (conversation_id, user_id, role) VALUES (?, ?, 'admin')`).bind(conversationId, callerUserId),
+                    env.DB.prepare(`INSERT INTO chat_participants (conversation_id, user_id, role) VALUES (?, ?, 'member')`).bind(conversationId, recipient.id)
+                ]);
+            }
+
+            // ÉTAPE 3: Formater le message (clairement identifié)
+            const contextTag = args.context === 'urgent' ? '🔴 URGENT\n\n' : '';
+            const formattedMessage = `${contextTag}📋 Message de ${caller.full_name} (via Assistant IA) :\n\n${args.message_content}`;
+
+            // ÉTAPE 4: Insérer le message
+            const messageId = crypto.randomUUID();
+            
+            await env.DB.prepare(`
+                INSERT INTO chat_messages (id, conversation_id, sender_id, type, content)
+                VALUES (?, ?, ?, 'text', ?)
+            `).bind(messageId, conversationId, callerUserId, formattedMessage).run();
+
+            // Mettre à jour le timestamp de la conversation
+            await env.DB.prepare(`
+                UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?
+            `).bind(conversationId).run();
+
+            // NOTE: Les push notifications seront envoyées par le système existant
+            // quand le destinataire ouvrira le messenger (pas de push ici pour éviter les doublons)
+
+            // Log de l'action pour traçabilité
+            console.log(`[AI-MESSAGE] ${caller.full_name} (ID:${callerUserId}) -> ${recipient.full_name} (ID:${recipient.id}) via Assistant IA`);
+
+            return JSON.stringify({
+                success: true,
+                message: `Message envoyé à ${recipient.full_name}.`,
+                details: {
+                    recipient: recipient.full_name,
+                    sender: caller.full_name,
+                    conversation_id: conversationId,
+                    message_id: messageId
+                }
+            });
+
+        } catch (error) {
+            console.error('[AI Tools] send_message_to_user error:', error);
+            return JSON.stringify({
+                success: false,
+                error: "Erreur lors de l'envoi du message. Veuillez réessayer."
             });
         }
     }
