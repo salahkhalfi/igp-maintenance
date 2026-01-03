@@ -91,8 +91,8 @@ const processMarkdown = (content: string) => {
         })
         // Blockquotes (> text)
         .replace(/^>\s+(.*)$/gm, '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
-        // Manual signature block: "Signature :" followed by underscores line - add space for handwriting
-        .replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>')
+        // Manual signature block: "Signature :" seul sur une ligne (avec ou sans underscores)
+        .replace(/^(\*\*Signature\s*:\*\*|Signature\s*:)\s*(\n_+)?$/gim, '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>')
         // Fix: Remove newlines immediately after headers and list items to prevent double spacing (gap reduction)
         .replace(/(<\/h[2-4]>|<\/li>)\n/g, '$1')
         // Newlines to BR

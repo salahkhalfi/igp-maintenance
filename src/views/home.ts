@@ -90,7 +90,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <script src="/static/js/dist/SystemSettingsModal.min.js?v=b1605ba"></script>
     <script src="/static/js/dist/PerformanceModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/AIChatModal_v4.min.js?v=1b0237d"></script>
-    <script src="/static/js/dist/SecretariatModal.min.js?v=5cc485f"></script>
+    <script src="/static/js/dist/SecretariatModal.min.js?v=6f877a9"></script>
     <script src="/static/js/dist/OverdueTicketsModal.min.js?v=d352264"></script>
     <script src="/static/js/dist/PushDevicesModal.min.js?v=d352264"></script>
     <!-- MISSING SCRIPTS RESTORED -->

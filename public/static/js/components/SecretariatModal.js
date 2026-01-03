@@ -397,6 +397,10 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 return '![' + alt + '](' + url.replace(/[\s\n]+/g, '') + ')';
             });
             
+            // Traiter "Signature :" seul → bloc signature manuelle
+            md = md.replace(/^(\*\*Signature\s*:\*\*|Signature\s*:)\s*(\n_+)?$/gim, 
+                '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>');
+            
             // Traiter les images de signature AVANT de séparer en blocs
             md = md.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
                 const isSignature = alt.toLowerCase().includes('signature');
@@ -451,8 +455,8 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         });
         
         // 0b. BLOC SIGNATURE MANUELLE - AVANT tout autre traitement
-        // Pattern: "Signature :" (avec ou sans bold) suivi d'une ligne de underscores
-        md = md.replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, 
+        // Pattern: "Signature :" seul sur une ligne (avec ou sans bold, avec ou sans underscores)
+        md = md.replace(/^(\*\*Signature\s*:\*\*|Signature\s*:)\s*(\n_+)?$/gim, 
             '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>');
         
         // 1. BLOCKQUOTES - Style citation classique pour documents officiels
