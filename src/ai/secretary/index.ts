@@ -116,16 +116,25 @@ export async function prepareSecretary(
   
   // Préparer les remplacements de signature pour le post-traitement
   const signatureReplacements = new Map<string, string>();
-  if (options.currentUserId && authorizedSignaturesFull.has(options.currentUserId)) {
-    const sig = authorizedSignaturesFull.get(options.currentUserId)!;
-    const marker = `[[SIGNATURE_MANUSCRITE_${options.currentUserId}]]`;
+  
+  // IMPORTANT: Convertir en number pour assurer la correspondance avec les clés de la Map
+  const currentUserIdNum = options.currentUserId ? Number(options.currentUserId) : null;
+  
+  console.log(`✍️ [Secretary] Checking signature for userId: ${currentUserIdNum} (type: ${typeof currentUserIdNum})`);
+  console.log(`✍️ [Secretary] Available signatures: ${Array.from(authorizedSignaturesFull.keys()).join(', ')}`);
+  
+  if (currentUserIdNum && authorizedSignaturesFull.has(currentUserIdNum)) {
+    const sig = authorizedSignaturesFull.get(currentUserIdNum)!;
+    const marker = `[[SIGNATURE_MANUSCRITE_${currentUserIdNum}]]`;
     const replacement = `![Signature de ${sig.userName}](data:${sig.mimeType};base64,${sig.base64})`;
     signatureReplacements.set(marker, replacement);
-    console.log(`✍️ [Secretary] Prepared signature replacement for marker: ${marker}`);
+    console.log(`✍️ [Secretary] ✅ Prepared signature replacement for ${sig.userName} (marker: ${marker})`);
+  } else {
+    console.log(`✍️ [Secretary] ❌ No signature found for userId ${currentUserIdNum}`);
   }
   
   // Log sécurisé (sans exposer les données de signature)
-  if (signatureContext.currentUserId && authorizedSignaturesFull.has(signatureContext.currentUserId)) {
+  if (signatureContext.currentUserId && authorizedSignaturesFull.has(Number(signatureContext.currentUserId))) {
     console.log(`✍️ [Secretary] User ${signatureContext.currentUserName} (ID: ${signatureContext.currentUserId}) has an authorized handwritten signature`);
   }
   
