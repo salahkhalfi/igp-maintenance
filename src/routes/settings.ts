@@ -2160,6 +2160,42 @@ settings.delete('/signature/:userId', authMiddleware, adminOnly, async (c) => {
 });
 
 /**
+ * GET /api/settings/signature/:userId - Récupérer la signature d'un utilisateur
+ * Accès: Admin uniquement, ou l'utilisateur lui-même
+ */
+settings.get('/signature/:userId', authMiddleware, async (c) => {
+  try {
+    const requestedUserId = parseInt(c.req.param('userId'), 10);
+    const payload = c.get('jwtPayload') as any;
+    
+    // Vérifier que l'utilisateur demande sa propre signature ou est admin
+    if (payload.userId !== requestedUserId && payload.role !== 'admin') {
+      return c.json({ error: 'Accès non autorisé' }, 403);
+    }
+    
+    const settingKey = `director_signature_${requestedUserId}`;
+    const result = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = ?
+    `).bind(settingKey).first() as any;
+    
+    if (!result) {
+      return c.json({ error: 'Aucune signature enregistrée' }, 404);
+    }
+    
+    const data = JSON.parse(result.setting_value);
+    return c.json({
+      base64: data.base64,
+      mimeType: data.mimeType || 'image/png',
+      userName: data.userName
+    });
+    
+  } catch (error) {
+    console.error('Get signature error:', error);
+    return c.json({ error: 'Erreur lors de la récupération de la signature' }, 500);
+  }
+});
+
+/**
  * GET /api/settings/signatures - Lister les signatures manuscrites enregistrées
  * Accès: Admin uniquement (ne retourne que les métadonnées, pas les images)
  */

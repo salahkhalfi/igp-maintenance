@@ -87,6 +87,14 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [tempPlaceholders, setTempPlaceholders] = React.useState({});
     const [savingPlaceholders, setSavingPlaceholders] = React.useState(false);
 
+    // États pour la signature manuscrite (ADMIN)
+    const [signatureFile, setSignatureFile] = React.useState(null);
+    const [signaturePreview, setSignaturePreview] = React.useState(null);
+    const [uploadingSignature, setUploadingSignature] = React.useState(false);
+    const [currentSignatureUrl, setCurrentSignatureUrl] = React.useState(null);
+    const [signatureRefreshKey, setSignatureRefreshKey] = React.useState(Date.now());
+    const [hasSignature, setHasSignature] = React.useState(false);
+
     // États Modules
     const [licenses, setLicenses] = React.useState({
         planning: true,
@@ -132,6 +140,11 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                 // Load settings - superadmin voit tout, client admin voit les sections entreprise
                 await loadSettingsWithAdmin(isClientAdminUser);
                 loadModules();
+                
+                // Charger la signature si admin
+                if (isClientAdminUser) {
+                    loadSignature();
+                }
             };
             init();
         }
@@ -487,6 +500,110 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         } catch (error) {
             alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
             setUploadingLogo(false);
+        }
+    };
+
+    // ===== FONCTIONS SIGNATURE MANUSCRITE =====
+    
+    // Charger la signature existante
+    const loadSignature = async () => {
+        if (!currentUser?.id) return;
+        try {
+            const response = await axios.get(API_URL + '/settings/signature/' + currentUser.id);
+            if (response.data && response.data.base64) {
+                setCurrentSignatureUrl('data:' + (response.data.mimeType || 'image/png') + ';base64,' + response.data.base64);
+                setHasSignature(true);
+            } else {
+                setHasSignature(false);
+                setCurrentSignatureUrl(null);
+            }
+        } catch (error) {
+            // Pas de signature enregistrée
+            setHasSignature(false);
+            setCurrentSignatureUrl(null);
+        }
+    };
+
+    // Gérer le changement de fichier signature
+    const handleSignatureFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Vérifier le type (PNG, GIF, JPG)
+        const validTypes = ['image/png', 'image/gif', 'image/jpeg', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            alert('Format non supporté. Utilisez PNG, GIF ou JPG.');
+            return;
+        }
+
+        // Vérifier la taille (max 100KB pour une signature)
+        if (file.size > 100 * 1024) {
+            alert('Fichier trop volumineux. Maximum 100 KB pour une signature.');
+            return;
+        }
+
+        setSignatureFile(file);
+
+        // Créer une preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setSignaturePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Uploader la signature
+    const handleUploadSignature = async () => {
+        if (!signatureFile) {
+            alert('Veuillez sélectionner un fichier');
+            return;
+        }
+
+        setUploadingSignature(true);
+        try {
+            const formData = new FormData();
+            formData.append('signature', signatureFile);
+            formData.append('userId', currentUser.id);
+            formData.append('userName', currentUser.fullName || currentUser.email);
+
+            await axios.post(API_URL + '/settings/signature', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            // Rafraîchir
+            setSignatureRefreshKey(Date.now());
+            setSignatureFile(null);
+            setSignaturePreview(null);
+            await loadSignature();
+
+            alert('Signature enregistrée avec succès! Vous pouvez maintenant demander "avec ma signature" dans le secrétariat IA.');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setUploadingSignature(false);
+        }
+    };
+
+    // Supprimer la signature
+    const handleDeleteSignature = async () => {
+        if (!confirm('Voulez-vous vraiment supprimer votre signature manuscrite?')) {
+            return;
+        }
+
+        setUploadingSignature(true);
+        try {
+            await axios.delete(API_URL + '/settings/signature/' + currentUser.id);
+
+            setSignatureFile(null);
+            setSignaturePreview(null);
+            setCurrentSignatureUrl(null);
+            setHasSignature(false);
+
+            alert('Signature supprimée.');
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setUploadingSignature(false);
         }
     };
 
@@ -1426,6 +1543,112 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                 React.createElement('i', { className: 'fas fa-undo' }),
                                 React.createElement('span', { className: 'hidden sm:inline' }, 'Réinitialiser'),
                                 React.createElement('span', { className: 'sm:hidden' }, 'Reset')
+                            )
+                        )
+                    ),
+
+                    // Section Signature Manuscrite (CLIENT ADMIN)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-signature text-amber-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-amber-900 mb-2 flex items-center gap-2' },
+                                        "Signature Manuscrite",
+                                        React.createElement('span', { className: 'text-xs bg-amber-600 text-white px-2 py-1 rounded' }, 'ADMIN')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-amber-800 mb-2' },
+                                        "Uploadez votre signature pour les documents officiels générés par le secrétariat IA."
+                                    ),
+                                    React.createElement('ul', { className: 'text-sm text-amber-800 space-y-1 list-disc list-inside' },
+                                        React.createElement('li', {}, 'Format: PNG transparent recommandé (GIF, JPG acceptés)'),
+                                        React.createElement('li', {}, 'Dimensions: ~300×100 pixels (sera redimensionnée automatiquement)'),
+                                        React.createElement('li', {}, 'Taille max: 100 KB'),
+                                        React.createElement('li', {}, 'Usage: Demandez "avec ma signature" dans le secrétariat IA')
+                                    )
+                                )
+                            )
+                        ),
+
+                        // Signature actuelle
+                        hasSignature && currentSignatureUrl && React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-check-circle text-green-600 mr-2' }),
+                                'Votre signature actuelle'
+                            ),
+                            React.createElement('div', { className: 'bg-white border-2 border-green-300 rounded-lg p-4 flex items-center justify-center' },
+                                React.createElement('img', {
+                                    src: currentSignatureUrl,
+                                    alt: 'Signature actuelle',
+                                    className: 'max-h-16 max-w-xs object-contain',
+                                    style: { imageRendering: 'auto' }
+                                })
+                            )
+                        ),
+
+                        // Pas de signature
+                        !hasSignature && React.createElement('div', { className: 'mb-4 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500' },
+                            React.createElement('i', { className: 'fas fa-signature text-4xl mb-2 text-gray-400' }),
+                            React.createElement('p', {}, 'Aucune signature enregistrée')
+                        ),
+
+                        // Upload nouvelle signature
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-upload mr-2' }),
+                                hasSignature ? 'Remplacer la signature' : 'Uploader votre signature'
+                            ),
+                            React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 items-start sm:items-center' },
+                                React.createElement('label', {
+                                    className: 'cursor-pointer px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold rounded-lg border-2 border-amber-300 transition-all flex items-center gap-2 ' + (uploadingSignature ? 'opacity-50 cursor-not-allowed' : ''),
+                                    style: { pointerEvents: uploadingSignature ? 'none' : 'auto' }
+                                },
+                                    React.createElement('i', { className: 'fas fa-folder-open' }),
+                                    React.createElement('span', {}, 'Choisir un fichier'),
+                                    React.createElement('input', {
+                                        type: 'file',
+                                        accept: 'image/png,image/gif,image/jpeg,image/jpg',
+                                        onChange: handleSignatureFileChange,
+                                        disabled: uploadingSignature,
+                                        className: 'hidden'
+                                    })
+                                ),
+                                React.createElement('span', { className: 'text-sm text-gray-600' },
+                                    signatureFile ? signatureFile.name : 'Aucun fichier sélectionné'
+                                )
+                            ),
+                            signaturePreview && React.createElement('div', { className: 'mt-3 bg-white border-2 border-amber-300 rounded-lg p-3 sm:p-4' },
+                                React.createElement('p', { className: 'text-sm font-semibold text-gray-700 mb-2' }, 'Aperçu:'),
+                                React.createElement('div', { className: 'flex items-center justify-center' },
+                                    React.createElement('img', {
+                                        src: signaturePreview,
+                                        alt: 'Aperçu signature',
+                                        className: 'max-h-16 max-w-xs object-contain'
+                                    })
+                                )
+                            )
+                        ),
+
+                        // Boutons d'action signature
+                        React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3' },
+                            React.createElement('button', {
+                                onClick: handleUploadSignature,
+                                disabled: !signatureFile || uploadingSignature,
+                                className: 'flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base',
+                                type: 'button'
+                            },
+                                uploadingSignature && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
+                                uploadingSignature ? 'Upload en cours...' : (hasSignature ? 'Remplacer la signature' : 'Enregistrer la signature')
+                            ),
+                            hasSignature && React.createElement('button', {
+                                onClick: handleDeleteSignature,
+                                disabled: uploadingSignature,
+                                className: 'px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base',
+                                type: 'button',
+                                title: 'Supprimer la signature'
+                            },
+                                React.createElement('i', { className: 'fas fa-trash' }),
+                                'Supprimer'
                             )
                         )
                     ),
