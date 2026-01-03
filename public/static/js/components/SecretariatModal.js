@@ -836,14 +836,16 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 
 /* Bloc signature manuelle (à signer au stylo) */
 .manual-signature-block {
-  margin: 20pt 0 12pt 0;
+  margin: 24pt 0 16pt 0;
+  page-break-inside: avoid;
 }
 .signature-space {
-  height: 60pt; /* ~2cm d'espace pour signer */
+  height: 70pt; /* ~2.5cm d'espace pour signer */
 }
 .signature-line-manual {
   width: 200px;
-  border-bottom: 1px solid #333;
+  border-bottom: 2px solid #333;
+  margin-top: 4pt;
 }
 
 /* Bloc signature image (signature numérique) - aspect naturel */
@@ -881,9 +883,10 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
 }
 @media print {
   .print-footer { page-break-inside: avoid; margin-top: 30pt; }
-  .manual-signature-block { page-break-inside: avoid; }
-  .signature-space { height: 60pt !important; }
-  .signature-line-manual, .signature-line { border-bottom: 1px solid #333 !important; }
+  .manual-signature-block { page-break-inside: avoid; margin: 24pt 0 16pt 0; }
+  .signature-space { height: 70pt !important; min-height: 70pt !important; display: block; }
+  .signature-line-manual { width: 200px; border-bottom: 2px solid #333 !important; display: block; }
+  .signature-line { border-bottom: 2px solid #333 !important; }
   .signature-block img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 </style></head>
