@@ -2164,7 +2164,12 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 documentType as DocumentType,
                 env,  // Pass env for D1 direct access in data loaders
                 companyIdentity,
-                baseUrl
+                baseUrl,
+                {
+                    currentUserId: payload.userId,
+                    currentUserName: payload.name || 'Utilisateur',
+                    currentUserRole: payload.role
+                }
             );
             devLog(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
         } catch (brainError: any) {

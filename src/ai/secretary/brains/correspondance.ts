@@ -8,6 +8,39 @@
 import type { SecretaryContext, CorrespondanceData, BrainResult } from '../types';
 import { buildCompanyBlock, formatDateFrCA } from '../shared';
 
+/**
+ * Générer les instructions de signature basées sur le contexte utilisateur
+ * SÉCURITÉ: La signature manuscrite n'est disponible QUE pour l'utilisateur correspondant
+ */
+function buildSignatureInstructions(context: SecretaryContext): string {
+  const signatureContext = context.signatureContext;
+  
+  // Si pas de contexte de signature, instructions par défaut
+  if (!signatureContext || !signatureContext.currentUserId) {
+    return '';
+  }
+  
+  // Vérifier si l'utilisateur a une signature manuscrite autorisée
+  const userSignature = signatureContext.authorizedSignatures.get(signatureContext.currentUserId);
+  
+  if (userSignature) {
+    // L'utilisateur connecté A une signature manuscrite autorisée
+    return `
+
+🔒 **SIGNATURE MANUSCRITE DISPONIBLE**
+
+L'utilisateur connecté **${userSignature.userName}** dispose d'une signature manuscrite officielle.
+
+**UTILISATION:**
+- Si demande explicite ("ajoute ma signature", "avec ma signature") → inclure l'image de signature
+- Format: ![Signature](data:${userSignature.mimeType};base64,...) suivi du nom tapé
+- ❌ JAMAIS sans demande explicite
+- ❌ JAMAIS pour un autre utilisateur`;
+  }
+  
+  return '';
+}
+
 export function buildCorrespondanceBrain(
   context: SecretaryContext,
   data: CorrespondanceData
@@ -81,7 +114,8 @@ FORMULES DE POLITESSE:
 - Formel: "Veuillez agréer, [Titre], l'expression de mes sentiments distingués."
 - Standard: "Je vous prie d'agréer, [Civilité], mes salutations distinguées."
 - Remerciement: "En vous remerciant, veuillez agréer mes salutations distinguées."
-- Informel: "Cordialement,"`;
+- Informel: "Cordialement,"
+${buildSignatureInstructions(context)}`;
 
   return {
     systemPrompt,

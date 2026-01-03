@@ -8,8 +8,11 @@
  * recevant uniquement les données pertinentes pour sa tâche.
  */
 
-import type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult } from './types';
+import type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult, SignatureContext, SecretaryOptions } from './types';
 import { formatDateFrCA } from './shared';
+
+// Clé de stockage pour les signatures manuscrites autorisées
+const SIGNATURE_SETTINGS_PREFIX = 'director_signature_';
 
 // Cerveaux spécialisés
 import buildRapportsBrain from './brains/rapports';
@@ -28,16 +31,56 @@ import {
   loadCreatifData
 } from './data/loaders';
 
-export type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult };
+export type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult, SignatureContext, SecretaryOptions };
+
+/**
+ * Charger les signatures manuscrites autorisées depuis system_settings
+ * Format: director_signature_{userId} = JSON { base64, userName, mimeType }
+ */
+async function loadAuthorizedSignatures(env: any): Promise<Map<number, { base64: string; userName: string; mimeType: string }>> {
+  const signatures = new Map<number, { base64: string; userName: string; mimeType: string }>();
+  
+  try {
+    // Requête directe D1 pour récupérer toutes les signatures
+    const result = await env.DB.prepare(
+      `SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE ?`
+    ).bind(`${SIGNATURE_SETTINGS_PREFIX}%`).all();
+    
+    if (result?.results) {
+      for (const row of result.results as { setting_key: string; setting_value: string }[]) {
+        const userId = parseInt(row.setting_key.replace(SIGNATURE_SETTINGS_PREFIX, ''), 10);
+        if (!isNaN(userId)) {
+          try {
+            const data = JSON.parse(row.setting_value);
+            if (data.base64 && data.userName) {
+              signatures.set(userId, {
+                base64: data.base64,
+                userName: data.userName,
+                mimeType: data.mimeType || 'image/png'
+              });
+              console.log(`✍️ [Secretary] Loaded handwritten signature for user ID ${userId} (${data.userName})`);
+            }
+          } catch (e) {
+            console.warn(`⚠️ [Secretary] Invalid signature data for key: ${row.setting_key}`);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn(`⚠️ [Secretary] Could not load signatures:`, e);
+  }
+  
+  return signatures;
+}
 
 /**
  * Point d'entrée principal du Secrétariat IA
  * 
  * @param documentType - Type de document à générer
- * @param db - Instance de la base de données
+ * @param env - Cloudflare Workers env with env.DB for D1 access
  * @param companyIdentity - Identité de l'entreprise depuis le "Cerveau de l'IA"
  * @param baseUrl - URL de base de l'application
- * @param options - Options supplémentaires (machineId, employeeId, etc.)
+ * @param options - Options supplémentaires (machineId, employeeId, currentUserId, etc.)
  * @returns BrainResult avec le prompt système et les données contextuelles
  */
 export async function prepareSecretary(
@@ -45,13 +88,26 @@ export async function prepareSecretary(
   env: any,  // Cloudflare Workers env with env.DB for D1 access
   companyIdentity: CompanyIdentity,
   baseUrl: string = '',
-  options: {
-    machineId?: number;
-    employeeId?: number;
-  } = {}
+  options: SecretaryOptions = {}
 ): Promise<BrainResult> {
   
   console.log(`🧠 [Secretary] Activating brain for: ${documentType}`);
+  
+  // Charger les signatures manuscrites autorisées
+  const authorizedSignatures = await loadAuthorizedSignatures(env);
+  
+  // Créer le contexte de signature
+  const signatureContext: SignatureContext = {
+    currentUserId: options.currentUserId || null,
+    currentUserName: options.currentUserName || 'Utilisateur',
+    currentUserRole: options.currentUserRole || 'viewer',
+    authorizedSignatures
+  };
+  
+  // Log sécurisé (sans exposer les données de signature)
+  if (signatureContext.currentUserId && authorizedSignatures.has(signatureContext.currentUserId)) {
+    console.log(`✍️ [Secretary] User ${signatureContext.currentUserName} (ID: ${signatureContext.currentUserId}) has an authorized handwritten signature`);
+  }
   
   // Extraire le nom du directeur depuis hierarchy (ex: "Directeur des Opérations : Marc Bélanger")
   let directorName = 'La Direction';
@@ -75,6 +131,12 @@ export async function prepareSecretary(
     directorName,
     directorTitle
   };
+  
+  // Enrichir le contexte avec les infos de signature si disponibles
+  const contextWithSignature = {
+    ...context,
+    signatureContext
+  };
 
   // Router vers le cerveau approprié avec ses données
   switch (documentType) {
@@ -96,7 +158,7 @@ export async function prepareSecretary(
       console.log(`👥 [Secretary] Loading HR data...`);
       const data = await loadRHData(env, options.employeeId);
       console.log(`👥 [Secretary] Data loaded: ${data.employees.length} employees`);
-      return buildRHBrain(context, data);
+      return buildRHBrain(contextWithSignature, data);
     }
 
     case 'technique': {
@@ -108,8 +170,8 @@ export async function prepareSecretary(
 
     case 'correspondance': {
       console.log(`📧 [Secretary] Preparing correspondence brain...`);
-      // La correspondance n'a besoin que de l'identité entreprise
-      return buildCorrespondanceBrain(context, {});
+      // La correspondance utilise aussi le contexte de signature
+      return buildCorrespondanceBrain(contextWithSignature, {});
     }
 
     case 'creatif':

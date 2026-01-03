@@ -2012,4 +2012,186 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+// ============================================================================
+// GESTION DES SIGNATURES MANUSCRITES
+// ============================================================================
+
+/**
+ * POST /api/settings/signature - Enregistrer une signature manuscrite pour un utilisateur
+ * Accès: Admin uniquement
+ * 
+ * SÉCURITÉ: 
+ * - Seul un admin peut enregistrer une signature
+ * - La signature est liée à un userId spécifique
+ * - Elle ne peut être utilisée QUE par cet utilisateur
+ */
+settings.post('/signature', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    
+    const formData = await c.req.formData();
+    const file = formData.get('signature') as File;
+    const targetUserId = formData.get('userId')?.toString();
+    const targetUserName = formData.get('userName')?.toString();
+    
+    if (!file) {
+      return c.json({ error: 'Aucun fichier fourni' }, 400);
+    }
+    
+    if (!targetUserId || !targetUserName) {
+      return c.json({ error: 'userId et userName sont requis' }, 400);
+    }
+    
+    const userId = parseInt(targetUserId, 10);
+    if (isNaN(userId)) {
+      return c.json({ error: 'userId invalide' }, 400);
+    }
+    
+    // Vérifier que l'utilisateur existe
+    const targetUser = await c.env.DB.prepare(`
+      SELECT id, full_name FROM users WHERE id = ?
+    `).bind(userId).first() as any;
+    
+    if (!targetUser) {
+      return c.json({ error: 'Utilisateur non trouvé' }, 404);
+    }
+    
+    // Validation du type de fichier
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return c.json({ 
+        error: `Type de fichier non autorisé. Formats acceptés: ${allowedTypes.join(', ')}` 
+      }, 400);
+    }
+    
+    // Validation de la taille (max 100KB pour une signature)
+    const maxSize = 100 * 1024;
+    if (file.size > maxSize) {
+      return c.json({ 
+        error: `Fichier trop volumineux (max ${maxSize / 1024} KB)` 
+      }, 400);
+    }
+    
+    // Encoder en base64
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    
+    // Créer l'objet de données
+    const signatureData = JSON.stringify({
+      base64,
+      userName: targetUserName,
+      mimeType: file.type,
+      registeredAt: new Date().toISOString(),
+      registeredBy: user.email
+    });
+    
+    const settingKey = `director_signature_${userId}`;
+    
+    // Insérer ou mettre à jour
+    const existing = await c.env.DB.prepare(`
+      SELECT setting_key FROM system_settings WHERE setting_key = ?
+    `).bind(settingKey).first();
+    
+    if (existing) {
+      await c.env.DB.prepare(`
+        UPDATE system_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
+        WHERE setting_key = ?
+      `).bind(signatureData, settingKey).run();
+    } else {
+      await c.env.DB.prepare(`
+        INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)
+      `).bind(settingKey, signatureData).run();
+    }
+    
+    console.log(`✍️ Signature manuscrite enregistrée pour ${targetUserName} (ID: ${userId}) par ${user.email}`);
+    
+    return c.json({
+      message: `Signature manuscrite enregistrée pour ${targetUserName}`,
+      userId,
+      userName: targetUserName,
+      registeredAt: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Register signature error:', error);
+    return c.json({ error: 'Erreur lors de l\'enregistrement de la signature' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/settings/signature/:userId - Supprimer une signature manuscrite
+ * Accès: Admin uniquement
+ */
+settings.delete('/signature/:userId', authMiddleware, adminOnly, async (c) => {
+  try {
+    const user = c.get('user') as any;
+    const targetUserId = c.req.param('userId');
+    
+    const userId = parseInt(targetUserId, 10);
+    if (isNaN(userId)) {
+      return c.json({ error: 'userId invalide' }, 400);
+    }
+    
+    const settingKey = `director_signature_${userId}`;
+    
+    const existing = await c.env.DB.prepare(`
+      SELECT setting_value FROM system_settings WHERE setting_key = ?
+    `).bind(settingKey).first() as any;
+    
+    if (!existing) {
+      return c.json({ error: 'Signature non trouvée' }, 404);
+    }
+    
+    await c.env.DB.prepare(`
+      DELETE FROM system_settings WHERE setting_key = ?
+    `).bind(settingKey).run();
+    
+    console.log(`🗑️ Signature manuscrite supprimée pour userId ${userId} par ${user.email}`);
+    
+    return c.json({
+      message: 'Signature manuscrite supprimée',
+      userId
+    });
+    
+  } catch (error) {
+    console.error('Delete signature error:', error);
+    return c.json({ error: 'Erreur lors de la suppression de la signature' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/signatures - Lister les signatures manuscrites enregistrées
+ * Accès: Admin uniquement (ne retourne que les métadonnées, pas les images)
+ */
+settings.get('/signatures', authMiddleware, adminOnly, async (c) => {
+  try {
+    const result = await c.env.DB.prepare(`
+      SELECT setting_key, setting_value FROM system_settings 
+      WHERE setting_key LIKE 'director_signature_%'
+    `).all() as any;
+    
+    const signatures = (result.results || []).map((row: any) => {
+      try {
+        const data = JSON.parse(row.setting_value);
+        const userId = parseInt(row.setting_key.replace('director_signature_', ''), 10);
+        return {
+          userId,
+          userName: data.userName,
+          mimeType: data.mimeType,
+          registeredAt: data.registeredAt,
+          registeredBy: data.registeredBy
+        };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    
+    return c.json({ signatures });
+    
+  } catch (error) {
+    console.error('List signatures error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des signatures' }, 500);
+  }
+});
+
 export default settings;

@@ -30,6 +30,8 @@ export interface SecretaryContext {
   baseUrl: string;
   directorName: string;
   directorTitle: string;
+  /** Contexte de signature (optionnel, pour RH et correspondance) */
+  signatureContext?: SignatureContext;
 }
 
 // === DONNÉES SPÉCIFIQUES PAR TYPE ===
@@ -178,4 +180,39 @@ export interface BrainResult {
   tools: string[];  // Liste des outils recommandés
   maxTokens: number;
   temperature: number;
+}
+
+// === CONTEXTE DE SIGNATURE ===
+
+/**
+ * Contexte de signature manuscrite pour documents officiels
+ * SÉCURITÉ: La signature manuscrite ne peut être utilisée QUE par l'utilisateur correspondant
+ */
+export interface SignatureContext {
+  /** ID de l'utilisateur connecté qui fait la demande */
+  currentUserId: number | null;
+  /** Nom complet de l'utilisateur connecté */
+  currentUserName: string;
+  /** Rôle de l'utilisateur connecté */
+  currentUserRole: string;
+  /** Signatures manuscrites autorisées (clé = userId, valeur = base64 de l'image) */
+  authorizedSignatures: Map<number, {
+    base64: string;
+    userName: string;
+    mimeType: string;
+  }>;
+}
+
+/**
+ * Options étendues pour prepareSecretary
+ */
+export interface SecretaryOptions {
+  machineId?: number;
+  employeeId?: number;
+  /** ID de l'utilisateur qui fait la demande (pour signature) */
+  currentUserId?: number;
+  /** Nom de l'utilisateur qui fait la demande */
+  currentUserName?: string;
+  /** Rôle de l'utilisateur */
+  currentUserRole?: string;
 }

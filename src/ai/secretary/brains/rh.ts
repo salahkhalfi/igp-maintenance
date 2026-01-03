@@ -15,6 +15,78 @@ import type { SecretaryContext, RHData, BrainResult } from '../types';
 import { buildCompanyBlock, formatDateFrCA, QUALITY_RULES, LEGAL_FRAMEWORK_QC, ROLE_LABELS } from '../shared';
 
 /**
+ * Générer les instructions de signature basées sur le contexte utilisateur
+ * SÉCURITÉ: La signature manuscrite n'est disponible QUE pour l'utilisateur correspondant
+ */
+function buildSignatureInstructions(context: SecretaryContext): string {
+  const signatureContext = context.signatureContext;
+  
+  // Si pas de contexte de signature, instructions par défaut
+  if (!signatureContext || !signatureContext.currentUserId) {
+    return `
+# SIGNATURE DES DOCUMENTS
+
+Pour la signature, utilise le format standard:
+
+**${context.directorName}**
+${context.directorTitle}
+${context.company.name}`;
+  }
+  
+  // Vérifier si l'utilisateur a une signature manuscrite autorisée
+  const userSignature = signatureContext.authorizedSignatures.get(signatureContext.currentUserId);
+  
+  if (userSignature) {
+    // L'utilisateur connecté A une signature manuscrite autorisée
+    return `
+# SIGNATURE DES DOCUMENTS - SIGNATURE MANUSCRITE DISPONIBLE
+
+🔒 **SÉCURITÉ SIGNATURE MANUSCRITE**
+
+L'utilisateur connecté **${userSignature.userName}** (ID: ${signatureContext.currentUserId}) dispose d'une signature manuscrite officielle.
+
+**RÈGLE ABSOLUE - UTILISATION DE LA SIGNATURE MANUSCRITE:**
+- ✅ Si l'utilisateur demande explicitement "ajoute ma signature", "avec ma signature", "signe le document" → INCLURE la signature manuscrite
+- ✅ Pour les documents officiels (attestations, contrats, lettres formelles) si demandé
+- ❌ JAMAIS ajouter automatiquement sans demande explicite
+- ❌ JAMAIS utiliser cette signature pour un autre utilisateur
+
+**FORMAT AVEC SIGNATURE MANUSCRITE (si demandée):**
+\`\`\`
+[Espace pour signature manuscrite]
+![Signature](data:${userSignature.mimeType};base64,${userSignature.base64.substring(0, 50)}...)
+
+**${userSignature.userName}**
+${context.directorTitle}
+${context.company.name}
+\`\`\`
+
+**FORMAT SANS SIGNATURE MANUSCRITE (par défaut):**
+\`\`\`
+**${userSignature.userName}**
+${context.directorTitle}
+${context.company.name}
+\`\`\`
+
+⚠️ Cette signature manuscrite est un document légal. Ne l'utilise QUE sur demande explicite.`;
+  } else {
+    // L'utilisateur connecté n'a PAS de signature manuscrite
+    return `
+# SIGNATURE DES DOCUMENTS
+
+L'utilisateur connecté **${signatureContext.currentUserName}** n'a pas de signature manuscrite enregistrée.
+
+Pour la signature, utilise le format standard:
+
+**${context.directorName}**
+${context.directorTitle}
+${context.company.name}
+
+💡 Si l'utilisateur demande une signature manuscrite, informer qu'elle n'est pas disponible pour son compte.`;
+  }
+}
+
+/**
  * Générer le prompt système pour les documents RH
  */
 export function buildRHBrain(
@@ -161,7 +233,9 @@ Tes commentaires (optionnel)
 
 Tes instructions d'utilisation (optionnel)
 
-**RÈGLE ABSOLUE:** Entre les deux lignes "---", UNIQUEMENT le document officiel. AUCUNE note, AUCUN commentaire, AUCUNE instruction de l'IA.`;
+**RÈGLE ABSOLUE:** Entre les deux lignes "---", UNIQUEMENT le document officiel. AUCUNE note, AUCUN commentaire, AUCUNE instruction de l'IA.
+
+${buildSignatureInstructions(context)}`;
 
   const contextData = buildRHContext(data);
 
