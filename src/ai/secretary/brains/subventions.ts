@@ -141,17 +141,12 @@ Pour chaque membre clé:
 - Exportation, marchés internationaux
 - Collaboration, partenariats stratégiques
 
-# SIGNATURE DES DOCUMENTS
-⚠️ N'écris JAMAIS "Signature : ___" ou des underscores pour la signature.
-Le système gère les signatures automatiquement. Termine avec le nom et titre du signataire.
-
 # INTERDICTIONS ABSOLUES
 - ❌ Inventer des chiffres ou qualifications
 - ❌ Exagérer les retombées
 - ❌ Utiliser du jargon non défini
 - ❌ Copier des textes génériques
-- ❌ Oublier les critères d'admissibilité du programme
-- ❌ Mettre "Signature : ___" ou des underscores`;
+- ❌ Oublier les critères d'admissibilité du programme`;
 
   const contextData = buildSubventionsContext(data);
 

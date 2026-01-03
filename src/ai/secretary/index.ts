@@ -8,11 +8,8 @@
  * recevant uniquement les données pertinentes pour sa tâche.
  */
 
-import type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult, SignatureContext, SecretaryOptions } from './types';
+import type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult } from './types';
 import { formatDateFrCA } from './shared';
-
-// Clé de stockage pour les signatures manuscrites autorisées
-const SIGNATURE_SETTINGS_PREFIX = 'director_signature_';
 
 // Cerveaux spécialisés
 import buildRapportsBrain from './brains/rapports';
@@ -31,56 +28,16 @@ import {
   loadCreatifData
 } from './data/loaders';
 
-export type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult, SignatureContext, SecretaryOptions };
-
-/**
- * Charger les signatures manuscrites autorisées depuis system_settings
- * Format: director_signature_{userId} = JSON { base64, userName, mimeType }
- */
-async function loadAuthorizedSignatures(env: any): Promise<Map<number, { base64: string; userName: string; mimeType: string }>> {
-  const signatures = new Map<number, { base64: string; userName: string; mimeType: string }>();
-  
-  try {
-    // Requête directe D1 pour récupérer toutes les signatures
-    const result = await env.DB.prepare(
-      `SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE ?`
-    ).bind(`${SIGNATURE_SETTINGS_PREFIX}%`).all();
-    
-    if (result?.results) {
-      for (const row of result.results as { setting_key: string; setting_value: string }[]) {
-        const userId = parseInt(row.setting_key.replace(SIGNATURE_SETTINGS_PREFIX, ''), 10);
-        if (!isNaN(userId)) {
-          try {
-            const data = JSON.parse(row.setting_value);
-            if (data.base64 && data.userName) {
-              signatures.set(userId, {
-                base64: data.base64,
-                userName: data.userName,
-                mimeType: data.mimeType || 'image/png'
-              });
-              console.log(`✍️ [Secretary] Loaded handwritten signature for user ID ${userId} (${data.userName})`);
-            }
-          } catch (e) {
-            console.warn(`⚠️ [Secretary] Invalid signature data for key: ${row.setting_key}`);
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.warn(`⚠️ [Secretary] Could not load signatures:`, e);
-  }
-  
-  return signatures;
-}
+export type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult };
 
 /**
  * Point d'entrée principal du Secrétariat IA
  * 
  * @param documentType - Type de document à générer
- * @param env - Cloudflare Workers env with env.DB for D1 access
+ * @param db - Instance de la base de données
  * @param companyIdentity - Identité de l'entreprise depuis le "Cerveau de l'IA"
  * @param baseUrl - URL de base de l'application
- * @param options - Options supplémentaires (machineId, employeeId, currentUserId, etc.)
+ * @param options - Options supplémentaires (machineId, employeeId, etc.)
  * @returns BrainResult avec le prompt système et les données contextuelles
  */
 export async function prepareSecretary(
@@ -88,55 +45,13 @@ export async function prepareSecretary(
   env: any,  // Cloudflare Workers env with env.DB for D1 access
   companyIdentity: CompanyIdentity,
   baseUrl: string = '',
-  options: SecretaryOptions = {}
+  options: {
+    machineId?: number;
+    employeeId?: number;
+  } = {}
 ): Promise<BrainResult> {
   
   console.log(`🧠 [Secretary] Activating brain for: ${documentType}`);
-  
-  // Charger les signatures manuscrites autorisées (avec base64)
-  const authorizedSignaturesFull = await loadAuthorizedSignatures(env);
-  
-  // Créer une version LÉGÈRE sans base64 pour le prompt (évite de surcharger le contexte)
-  const authorizedSignaturesLight = new Map<number, { base64: string; userName: string; mimeType: string }>();
-  authorizedSignaturesFull.forEach((sig, id) => {
-    authorizedSignaturesLight.set(id, {
-      base64: '', // Ne pas inclure le base64 dans le prompt
-      userName: sig.userName,
-      mimeType: sig.mimeType
-    });
-  });
-  
-  // Créer le contexte de signature (version légère pour le prompt)
-  const signatureContext: SignatureContext = {
-    currentUserId: options.currentUserId || null,
-    currentUserName: options.currentUserName || 'Utilisateur',
-    currentUserRole: options.currentUserRole || 'viewer',
-    authorizedSignatures: authorizedSignaturesLight
-  };
-  
-  // Préparer les remplacements de signature pour le post-traitement
-  const signatureReplacements = new Map<string, string>();
-  
-  // IMPORTANT: Convertir en number pour assurer la correspondance avec les clés de la Map
-  const currentUserIdNum = options.currentUserId ? Number(options.currentUserId) : null;
-  
-  console.log(`✍️ [Secretary] Checking signature for userId: ${currentUserIdNum} (type: ${typeof currentUserIdNum})`);
-  console.log(`✍️ [Secretary] Available signatures: ${Array.from(authorizedSignaturesFull.keys()).join(', ')}`);
-  
-  if (currentUserIdNum && authorizedSignaturesFull.has(currentUserIdNum)) {
-    const sig = authorizedSignaturesFull.get(currentUserIdNum)!;
-    const marker = `[[SIGNATURE_MANUSCRITE_${currentUserIdNum}]]`;
-    const replacement = `![Signature de ${sig.userName}](data:${sig.mimeType};base64,${sig.base64})`;
-    signatureReplacements.set(marker, replacement);
-    console.log(`✍️ [Secretary] ✅ Prepared signature replacement for ${sig.userName} (marker: ${marker})`);
-  } else {
-    console.log(`✍️ [Secretary] ❌ No signature found for userId ${currentUserIdNum}`);
-  }
-  
-  // Log sécurisé (sans exposer les données de signature)
-  if (signatureContext.currentUserId && authorizedSignaturesFull.has(Number(signatureContext.currentUserId))) {
-    console.log(`✍️ [Secretary] User ${signatureContext.currentUserName} (ID: ${signatureContext.currentUserId}) has an authorized handwritten signature`);
-  }
   
   // Extraire le nom du directeur depuis hierarchy (ex: "Directeur des Opérations : Marc Bélanger")
   let directorName = 'La Direction';
@@ -160,58 +75,41 @@ export async function prepareSecretary(
     directorName,
     directorTitle
   };
-  
-  // Enrichir le contexte avec les infos de signature si disponibles
-  const contextWithSignature = {
-    ...context,
-    signatureContext
-  };
 
   // Router vers le cerveau approprié avec ses données
-  // IMPORTANT: Tous les types doivent attacher signatureReplacements au résultat
   switch (documentType) {
     case 'rapports': {
       console.log(`📊 [Secretary] Loading maintenance report data...`);
       const data = await loadRapportsData(env);
       console.log(`📊 [Secretary] Data loaded: ${data.statsThisMonth.total} tickets this month, ${data.technicianPerformance.length} technicians`);
-      const rapportsResult = buildRapportsBrain(context, data);
-      rapportsResult.signatureReplacements = signatureReplacements;
-      return rapportsResult;
+      return buildRapportsBrain(context, data);
     }
 
     case 'subventions': {
       console.log(`💰 [Secretary] Loading grants/subsidy data...`);
       const data = await loadSubventionsData(env);
       console.log(`💰 [Secretary] Data loaded: ${data.effectifTotal} employees, ${data.machinesTotal} machines`);
-      const subvResult = buildSubventionsBrain(context, data);
-      subvResult.signatureReplacements = signatureReplacements;
-      return subvResult;
+      return buildSubventionsBrain(context, data);
     }
 
     case 'rh': {
       console.log(`👥 [Secretary] Loading HR data...`);
       const data = await loadRHData(env, options.employeeId);
       console.log(`👥 [Secretary] Data loaded: ${data.employees.length} employees`);
-      const rhResult = buildRHBrain(contextWithSignature, data);
-      rhResult.signatureReplacements = signatureReplacements;
-      return rhResult;
+      return buildRHBrain(context, data);
     }
 
     case 'technique': {
       console.log(`🔧 [Secretary] Loading technical data...`);
       const data = await loadTechniqueData(env, options.machineId);
       console.log(`🔧 [Secretary] Data loaded: ${data.machines.length} machines`);
-      const techResult = buildTechniqueBrain(context, data);
-      techResult.signatureReplacements = signatureReplacements;
-      return techResult;
+      return buildTechniqueBrain(context, data);
     }
 
     case 'correspondance': {
       console.log(`📧 [Secretary] Preparing correspondence brain...`);
-      // La correspondance utilise aussi le contexte de signature
-      const corrResult = buildCorrespondanceBrain(contextWithSignature, {});
-      corrResult.signatureReplacements = signatureReplacements;
-      return corrResult;
+      // La correspondance n'a besoin que de l'identité entreprise
+      return buildCorrespondanceBrain(context, {});
     }
 
     case 'creatif':
@@ -219,9 +117,7 @@ export async function prepareSecretary(
       console.log(`✨ [Secretary] Loading creative data...`);
       const data = await loadCreatifData(env);
       console.log(`✨ [Secretary] Data loaded: ${data.teamSize} team members`);
-      const creatifResult = buildCreatifBrain(context, data);
-      creatifResult.signatureReplacements = signatureReplacements;
-      return creatifResult;
+      return buildCreatifBrain(context, data);
     }
   }
 }
@@ -294,11 +190,6 @@ export function detectDocumentType(instructions: string): DocumentType {
 
   // ===== RESSOURCES HUMAINES =====
   if (
-    lower.includes('attestation') ||
-    lower.includes('attestation de travail') ||
-    lower.includes('attestation d\'emploi') ||
-    lower.includes('certificat de travail') ||
-    lower.includes('lettre de recommandation') ||
     lower.includes('offre d\'emploi') ||
     lower.includes('offre emploi') ||
     lower.includes('poste à combler') ||

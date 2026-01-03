@@ -185,17 +185,12 @@ ${INDUSTRIAL_STANDARDS}
 - **Impératif**: Verbes à l'infinitif pour les actions
 - **Sécuritaire**: Toujours mentionner les risques
 
-# SIGNATURE DES DOCUMENTS
-⚠️ N'écris JAMAIS "Signature : ___" ou des underscores pour la signature.
-Le système gère les signatures automatiquement. Termine simplement avec le nom et titre.
-
 # INTERDICTIONS ABSOLUES
 - ❌ Omettre les mesures de sécurité
 - ❌ Utiliser des mesures approximatives
 - ❌ Sauter des étapes critiques
 - ❌ Ignorer les normes applicables
-- ❌ Rédiger des instructions ambiguës
-- ❌ Mettre "Signature : ___" ou des underscores`;
+- ❌ Rédiger des instructions ambiguës`;
 
   const contextData = buildTechniqueContext(data);
 

@@ -15,69 +15,6 @@ import type { SecretaryContext, RHData, BrainResult } from '../types';
 import { buildCompanyBlock, formatDateFrCA, QUALITY_RULES, LEGAL_FRAMEWORK_QC, ROLE_LABELS } from '../shared';
 
 /**
- * Générer les instructions de signature basées sur le contexte utilisateur
- * SÉCURITÉ: La signature manuscrite n'est disponible QUE pour l'utilisateur correspondant
- */
-function buildSignatureInstructions(context: SecretaryContext): string {
-  const signatureContext = context.signatureContext;
-  
-  // Si pas de contexte de signature, instructions par défaut
-  if (!signatureContext || !signatureContext.currentUserId) {
-    return `
-# SIGNATURE DES DOCUMENTS
-
-Pour la signature, utilise le format standard (texte uniquement, pas d'image):
-
-**${context.directorName}**
-${context.directorTitle}
-${context.company.name}
-
-⚠️ AUCUNE signature manuscrite (image) n'est disponible. Utilise UNIQUEMENT du texte.`;
-  }
-  
-  // Vérifier si l'utilisateur CONNECTÉ a une signature manuscrite autorisée
-  const userSignature = signatureContext.authorizedSignatures.get(signatureContext.currentUserId);
-  
-  // Lister les signatures existantes pour information (sans les données)
-  const existingSignatureNames: string[] = [];
-  signatureContext.authorizedSignatures.forEach((sig) => {
-    existingSignatureNames.push(sig.userName);
-  });
-  
-  // Instructions communes pour TOUS les cas
-  // L'IA doit TOUJOURS générer le document complet
-  // Le post-traitement gère l'insertion de signature ou les messages d'erreur
-  
-  const signerName = userSignature?.userName || context.directorName;
-  
-  return `
-# SIGNATURE DES DOCUMENTS
-
-**RÈGLE ABSOLUE:** Tu dois TOUJOURS générer le document demandé en entier.
-Ne refuse JAMAIS de générer un document à cause de la signature.
-Le système gère automatiquement les signatures après ta réponse.
-
-**Pour terminer un document officiel, utilise ce format:**
-
-Cordialement,
-
-**${signerName}**  
-${context.directorTitle}  
-${context.company.name}
-
-⚠️ **INTERDIT:**
-- N'écris JAMAIS "Signature : ___" ou des underscores
-- N'explique JAMAIS comment signer manuellement
-- Ne dis JAMAIS "je ne peux pas créer de signature"
-- Ne donne JAMAIS de conseils sur l'impression
-
-✅ **OBLIGATOIRE:**
-- Génère le document complet
-- Termine avec le nom et titre du signataire
-- Le système s'occupe du reste`;
-}
-
-/**
  * Générer le prompt système pour les documents RH
  */
 export function buildRHBrain(
@@ -224,9 +161,7 @@ Tes commentaires (optionnel)
 
 Tes instructions d'utilisation (optionnel)
 
-**RÈGLE ABSOLUE:** Entre les deux lignes "---", UNIQUEMENT le document officiel. AUCUNE note, AUCUN commentaire, AUCUNE instruction de l'IA.
-
-${buildSignatureInstructions(context)}`;
+**RÈGLE ABSOLUE:** Entre les deux lignes "---", UNIQUEMENT le document officiel. AUCUNE note, AUCUN commentaire, AUCUNE instruction de l'IA.`;
 
   const contextData = buildRHContext(data);
 
