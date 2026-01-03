@@ -359,12 +359,12 @@ const AppHeader = ({
                     ),
 
                     // Badge utilisateurs actifs (discret, visible pour admins/supervisors)
-                    (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && onlineUsers.today > 0 && React.createElement('div', {
+                    (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && onlineUsers.active > 0 && React.createElement('div', {
                         className: 'hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-xs font-medium',
                         title: `${onlineUsers.active} actif(s) dans l'heure, ${onlineUsers.today} connecté(s) aujourd'hui`
                     },
                         React.createElement('span', { className: 'w-2 h-2 bg-emerald-500 rounded-full animate-pulse' }),
-                        React.createElement('span', {}, onlineUsers.today + ' en ligne')
+                        React.createElement('span', {}, onlineUsers.active + ' en ligne')
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE

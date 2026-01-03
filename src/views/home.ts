@@ -28,7 +28,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <link rel="preload" href="/static/js/dist/App.min.js?v=d352264" as="script">
     <link rel="preload" href="/static/js/dist/LoginForm.min.js?v=d352264" as="script">
     <link rel="preload" href="/static/js/dist/KanbanBoard.min.js?v=f8eef98" as="script">
-    <link rel="preload" href="/static/js/dist/AppHeader.min.js?v=32f5121" as="script">
+    <link rel="preload" href="/static/js/dist/AppHeader.min.js?v=004d598" as="script">
     <meta name="theme-color" content="#003B73">
     
     <!-- SEO & Social Meta Tags -->
@@ -96,7 +96,7 @@ export function generateHomeHTML(baseUrl: string = '', appName: string = 'Gestio
     <!-- MISSING SCRIPTS RESTORED -->
     <script src="/static/js/hooks/useTickets.js"></script>
     <script src="/static/js/hooks/useMachines.js"></script>
-    <script src="/static/js/dist/AppHeader.min.js?v=32f5121"></script>
+    <script src="/static/js/dist/AppHeader.min.js?v=004d598"></script>
     <script src="/static/js/components/planning/PlanningNotes_v2.js?v=d352264.14.182"></script>
     <script src="/static/js/components/planning/PlanningModals_v3.js?v=1f84a8b"></script>
     <script src="/static/js/dist/ProductionPlanning_v3.min.js?v=8299d82"></script>
