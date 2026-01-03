@@ -152,7 +152,11 @@ const UserList = ({
                 )
             ),
             displayedUsers.map(user => {
-                const loginStatus = getLastLoginStatus(user.last_login);
+                // Si c'est l'utilisateur courant, il est forcément "En ligne"
+                const isCurrentUser = user.id === currentUser.id;
+                const loginStatus = isCurrentUser 
+                    ? { color: "text-green-600", status: "En ligne", time: "Connecté maintenant", dot: "bg-green-500" }
+                    : getLastLoginStatus(user.last_login);
                 const showLogin = canSeeLastLogin(user);
                 
                 return React.createElement('div', {
@@ -161,8 +165,11 @@ const UserList = ({
                 },
                     React.createElement('div', { className: 'flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3' },
                         React.createElement('div', { className: 'flex-1' },
-                            React.createElement('div', { className: 'flex items-center gap-3 mb-2' },
+                            React.createElement('div', { className: 'flex items-center gap-3 mb-2 flex-wrap' },
                                 React.createElement('h4', { className: 'font-bold text-lg' }, user.full_name),
+                                isCurrentUser ? React.createElement('span', {
+                                    className: 'px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-300'
+                                }, '● Vous') : null,
                                 React.createElement('span', {
                                     className: 'px-3 py-1 rounded-full text-xs font-semibold ' + getRoleBadgeClass(user)
                                 }, getRoleLabel(user))
