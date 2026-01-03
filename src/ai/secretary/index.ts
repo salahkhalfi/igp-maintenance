@@ -159,19 +159,24 @@ export async function prepareSecretary(
   };
 
   // Router vers le cerveau approprié avec ses données
+  // IMPORTANT: Tous les types doivent attacher signatureReplacements au résultat
   switch (documentType) {
     case 'rapports': {
       console.log(`📊 [Secretary] Loading maintenance report data...`);
       const data = await loadRapportsData(env);
       console.log(`📊 [Secretary] Data loaded: ${data.statsThisMonth.total} tickets this month, ${data.technicianPerformance.length} technicians`);
-      return buildRapportsBrain(context, data);
+      const rapportsResult = buildRapportsBrain(context, data);
+      rapportsResult.signatureReplacements = signatureReplacements;
+      return rapportsResult;
     }
 
     case 'subventions': {
       console.log(`💰 [Secretary] Loading grants/subsidy data...`);
       const data = await loadSubventionsData(env);
       console.log(`💰 [Secretary] Data loaded: ${data.effectifTotal} employees, ${data.machinesTotal} machines`);
-      return buildSubventionsBrain(context, data);
+      const subvResult = buildSubventionsBrain(context, data);
+      subvResult.signatureReplacements = signatureReplacements;
+      return subvResult;
     }
 
     case 'rh': {
@@ -187,7 +192,9 @@ export async function prepareSecretary(
       console.log(`🔧 [Secretary] Loading technical data...`);
       const data = await loadTechniqueData(env, options.machineId);
       console.log(`🔧 [Secretary] Data loaded: ${data.machines.length} machines`);
-      return buildTechniqueBrain(context, data);
+      const techResult = buildTechniqueBrain(context, data);
+      techResult.signatureReplacements = signatureReplacements;
+      return techResult;
     }
 
     case 'correspondance': {
@@ -203,7 +210,9 @@ export async function prepareSecretary(
       console.log(`✨ [Secretary] Loading creative data...`);
       const data = await loadCreatifData(env);
       console.log(`✨ [Secretary] Data loaded: ${data.teamSize} team members`);
-      return buildCreatifBrain(context, data);
+      const creatifResult = buildCreatifBrain(context, data);
+      creatifResult.signatureReplacements = signatureReplacements;
+      return creatifResult;
     }
   }
 }
@@ -276,6 +285,11 @@ export function detectDocumentType(instructions: string): DocumentType {
 
   // ===== RESSOURCES HUMAINES =====
   if (
+    lower.includes('attestation') ||
+    lower.includes('attestation de travail') ||
+    lower.includes('attestation d\'emploi') ||
+    lower.includes('certificat de travail') ||
+    lower.includes('lettre de recommandation') ||
     lower.includes('offre d\'emploi') ||
     lower.includes('offre emploi') ||
     lower.includes('poste à combler') ||
