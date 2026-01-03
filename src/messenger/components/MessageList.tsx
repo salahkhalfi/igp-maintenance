@@ -67,7 +67,12 @@ const processMarkdown = (content: string) => {
             let validUrl = url.trim();
             // Fix AI hallucination of absolute 'api' domain (handles any domain prefix for internal api routes)
             validUrl = validUrl.replace(/^https?:\/\/(?:www\.)?[\w.-]+\/api\//, '/api/');
-            return `<img src="${validUrl}" alt="${alt}" class="rounded-lg max-w-full h-auto my-2 shadow-md border border-gray-200 print:shadow-none print:border-0" data-signature="${alt.toLowerCase().includes('signature') ? 'true' : 'false'}" />`;
+            const isSignature = alt.toLowerCase().includes('signature');
+            if (isSignature) {
+                // Signature avec ligne en dessous pour aspect réaliste
+                return `<div class="signature-block inline-block"><img src="${validUrl}" alt="${alt}" class="max-h-20 w-auto" data-signature="true" /><div class="signature-line w-48 border-b border-gray-400 mt-1"></div></div>`;
+            }
+            return `<img src="${validUrl}" alt="${alt}" class="rounded-lg max-w-full h-auto my-2 shadow-md border border-gray-200" />`;
         })
         // Links [Text](URL)
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
@@ -320,19 +325,33 @@ body {
 .doc-content strong { font-weight: 700; }
 .doc-content a { color: #000; text-decoration: underline; }
 .doc-content img { max-width: 100%; height: auto; margin: 12pt 0; }
-.doc-content img[data-signature="true"] { 
-    border: none !important; 
-    box-shadow: none !important; 
-    margin: 8pt 0 !important;
-    max-height: 80px;
+
+/* Bloc signature avec ligne */
+.doc-content .signature-block {
+    display: inline-block;
+    margin: 16pt 0 8pt 0;
+}
+.doc-content .signature-block img {
+    display: block;
+    max-height: 70px;
+    width: auto;
+    margin: 0;
+    border: none !important;
+    box-shadow: none !important;
+}
+.doc-content .signature-line {
+    width: 180px;
+    border-bottom: 1px solid #333;
+    margin-top: 2pt;
 }
 
 @media print {
-    .doc-content img[data-signature="true"] { 
-        border: none !important; 
-        box-shadow: none !important;
+    .doc-content .signature-block img { 
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+    }
+    .doc-content .signature-line {
+        border-bottom: 1px solid #333 !important;
     }
     .letter-header, .print-header { page-break-inside: avoid; }
     .doc-content h2, .doc-content h3, .doc-content h4 { page-break-after: avoid; }
