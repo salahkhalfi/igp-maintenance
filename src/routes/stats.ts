@@ -129,12 +129,12 @@ stats.get('/online-users', async (c) => {
         AND id != 0
     `).first();
 
-    // Compter les utilisateurs connectés dans la dernière heure (probablement actifs)
+    // Compter les utilisateurs actifs dans les 5 dernières minutes
     const activeResult = await c.env.DB.prepare(`
       SELECT COUNT(*) as count
       FROM users
       WHERE last_login IS NOT NULL
-        AND datetime(last_login) > datetime('now', '-1 hour')
+        AND datetime(last_login) > datetime('now', '-5 minutes')
         AND deleted_at IS NULL
         AND id != 0
     `).first();
