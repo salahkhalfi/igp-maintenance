@@ -508,4 +508,127 @@ cron.post('/cleanup-push-tokens', async (c) => {
   }
 });
 
+// ============================================
+// POST /api/cron/cleanup-logs - Nettoyage des logs anciens
+// Politique de rétention:
+// - push_logs: 7 jours
+// - audit_logs: 90 jours  
+// - pending_notifications: 7 jours (les non-envoyées)
+// - chat_messages supprimés: 30 jours
+// ============================================
+cron.post('/cleanup-logs', async (c) => {
+  try {
+    const now = new Date();
+    console.log('🧹 CRON cleanup-logs démarré:', now.toISOString());
+
+    const results: Record<string, number> = {};
+
+    // 1. Nettoyer push_logs > 7 jours
+    const pushLogsResult = await c.env.DB.prepare(`
+      DELETE FROM push_logs 
+      WHERE datetime(created_at) < datetime('now', '-7 days')
+    `).run();
+    results.push_logs = pushLogsResult.meta?.changes || 0;
+
+    // 2. Nettoyer audit_logs > 90 jours
+    const auditLogsResult = await c.env.DB.prepare(`
+      DELETE FROM audit_logs 
+      WHERE datetime(created_at) < datetime('now', '-90 days')
+    `).run();
+    results.audit_logs = auditLogsResult.meta?.changes || 0;
+
+    // 3. Nettoyer pending_notifications > 7 jours (non envoyées)
+    const pendingResult = await c.env.DB.prepare(`
+      DELETE FROM pending_notifications 
+      WHERE datetime(created_at) < datetime('now', '-7 days')
+    `).run();
+    results.pending_notifications = pendingResult.meta?.changes || 0;
+
+    // 4. Nettoyer les messages chat soft-deleted > 30 jours
+    const chatMessagesResult = await c.env.DB.prepare(`
+      DELETE FROM chat_messages 
+      WHERE deleted_at IS NOT NULL 
+        AND datetime(deleted_at) < datetime('now', '-30 days')
+    `).run();
+    results.chat_messages_deleted = chatMessagesResult.meta?.changes || 0;
+
+    // 5. Nettoyer ticket_timeline > 180 jours (6 mois)
+    const timelineResult = await c.env.DB.prepare(`
+      DELETE FROM ticket_timeline 
+      WHERE datetime(created_at) < datetime('now', '-180 days')
+    `).run();
+    results.ticket_timeline = timelineResult.meta?.changes || 0;
+
+    const totalDeleted = Object.values(results).reduce((a, b) => a + b, 0);
+    
+    console.log(`🎉 CRON cleanup-logs terminé: ${totalDeleted} enregistrement(s) supprimé(s)`);
+    console.log('   Détails:', results);
+
+    return c.json({
+      success: true,
+      total_deleted: totalDeleted,
+      details: results,
+      retention_policy: {
+        push_logs: '7 jours',
+        audit_logs: '90 jours',
+        pending_notifications: '7 jours',
+        chat_messages_deleted: '30 jours',
+        ticket_timeline: '180 jours'
+      },
+      executed_at: now.toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ CRON: Erreur cleanup-logs:', error);
+    return c.json({ 
+      error: 'Erreur lors du nettoyage des logs', 
+      details: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, 500);
+  }
+});
+
+// ============================================
+// GET /api/cron/storage-stats - Statistiques de stockage
+// Utile pour monitorer l'utilisation avant les limites D1
+// ============================================
+cron.get('/storage-stats', async (c) => {
+  try {
+    const stats: Record<string, any> = {};
+
+    // Compter les enregistrements dans chaque table importante
+    const tables = [
+      'users', 'tickets', 'machines', 'chat_messages', 'chat_conversations',
+      'push_logs', 'audit_logs', 'pending_notifications', 'ticket_timeline',
+      'push_subscriptions', 'media'
+    ];
+
+    for (const table of tables) {
+      try {
+        const result = await c.env.DB.prepare(`SELECT COUNT(*) as count FROM ${table}`).first() as any;
+        stats[table] = result?.count || 0;
+      } catch {
+        stats[table] = 'N/A';
+      }
+    }
+
+    // Calculer la taille approximative (estimation)
+    const totalRows = Object.values(stats)
+      .filter(v => typeof v === 'number')
+      .reduce((a: number, b: any) => a + b, 0);
+
+    return c.json({
+      success: true,
+      tables: stats,
+      total_rows: totalRows,
+      estimated_size_mb: (totalRows * 0.5 / 1024).toFixed(2), // ~0.5KB par ligne en moyenne
+      d1_limit_mb: 500, // Limite gratuite D1
+      checked_at: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ CRON: Erreur storage-stats:', error);
+    return c.json({ error: 'Erreur lors du calcul des stats' }, 500);
+  }
+});
+
 export default cron;

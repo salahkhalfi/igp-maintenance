@@ -44,6 +44,9 @@ export default {
       // TÂCHE #3: Nettoyage des vieux messages et médias (Hygiène)
       await cleanupOldMessages(env);
 
+      // TÂCHE #4: Nettoyage des tables de logs (Limite D1)
+      await cleanupLogTables(env);
+
       console.log('✅ Cloudflare CRON terminé avec succès');
     } catch (error) {
       console.error('❌ Erreur Cloudflare CRON:', error);
@@ -452,5 +455,70 @@ async function checkOverdueTickets(env: Bindings): Promise<void> {
   } catch (error) {
     console.error('❌ CRON: Erreur check-overdue-tickets:', error);
     throw error;
+  }
+}
+
+/**
+ * Nettoyage des tables de logs pour respecter les limites D1
+ * Politique de rétention:
+ * - push_logs: 7 jours
+ * - audit_logs: 90 jours
+ * - pending_notifications: 7 jours
+ * - ticket_timeline: 180 jours (6 mois)
+ * - webhook_notifications: 30 jours
+ */
+async function cleanupLogTables(env: Bindings): Promise<void> {
+  console.log('🧹 CRON cleanup-log-tables démarré');
+
+  try {
+    const results: Record<string, number> = {};
+
+    // 1. Nettoyer push_logs > 7 jours
+    const pushLogsResult = await env.DB.prepare(`
+      DELETE FROM push_logs 
+      WHERE datetime(created_at) < datetime('now', '-7 days')
+    `).run();
+    results.push_logs = pushLogsResult.meta?.changes || 0;
+
+    // 2. Nettoyer audit_logs > 90 jours
+    const auditLogsResult = await env.DB.prepare(`
+      DELETE FROM audit_logs 
+      WHERE datetime(created_at) < datetime('now', '-90 days')
+    `).run();
+    results.audit_logs = auditLogsResult.meta?.changes || 0;
+
+    // 3. Nettoyer pending_notifications > 7 jours (non envoyées)
+    const pendingResult = await env.DB.prepare(`
+      DELETE FROM pending_notifications 
+      WHERE datetime(created_at) < datetime('now', '-7 days')
+    `).run();
+    results.pending_notifications = pendingResult.meta?.changes || 0;
+
+    // 4. Nettoyer ticket_timeline > 180 jours (6 mois)
+    const timelineResult = await env.DB.prepare(`
+      DELETE FROM ticket_timeline 
+      WHERE datetime(created_at) < datetime('now', '-180 days')
+    `).run();
+    results.ticket_timeline = timelineResult.meta?.changes || 0;
+
+    // 5. Nettoyer webhook_notifications > 30 jours
+    const webhookResult = await env.DB.prepare(`
+      DELETE FROM webhook_notifications 
+      WHERE datetime(sent_at) < datetime('now', '-30 days')
+    `).run();
+    results.webhook_notifications = webhookResult.meta?.changes || 0;
+
+    const totalDeleted = Object.values(results).reduce((a, b) => a + b, 0);
+
+    if (totalDeleted > 0) {
+      console.log(`✅ CRON cleanup-log-tables: ${totalDeleted} enregistrement(s) supprimé(s)`);
+      console.log('   Détails:', JSON.stringify(results));
+    } else {
+      console.log('ℹ️ CRON cleanup-log-tables: Aucun log à nettoyer');
+    }
+
+  } catch (error) {
+    console.error('❌ CRON: Erreur cleanup-log-tables:', error);
+    // Ne pas throw pour ne pas bloquer les autres tâches CRON
   }
 }
