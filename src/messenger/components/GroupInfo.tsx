@@ -11,6 +11,7 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(conversationName || '');
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [summoningUserId, setSummoningUserId] = useState<number | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -51,6 +52,33 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
             isActiveElsewhere, 
             activeGroup: participant.active_in_conversation || null 
         };
+    };
+
+    // Permission pour rappeler des participants (admin global, supervisor, ou admin du groupe)
+    const canSummon = isGlobalAdmin || currentUserRole === 'supervisor' || isGroupAdmin;
+
+    const handleSummonUser = async (userId: number, userName: string) => {
+        if (summoningUserId) return; // Éviter les doubles clics
+        
+        setSummoningUserId(userId);
+        try {
+            const response = await axios.post('/api/push/summon', {
+                targetUserId: userId,
+                conversationId,
+                conversationName: conversationName || 'Groupe'
+            });
+            
+            if (response.data.success) {
+                alert(`✅ ${userName} a été rappelé(e)`);
+            } else {
+                alert(response.data.message || 'Impossible de rappeler ce participant');
+            }
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.error || 'Erreur lors du rappel';
+            alert(`❌ ${errorMsg}`);
+        } finally {
+            setSummoningUserId(null);
+        }
     };
 
     const handleSaveInfo = async () => {
@@ -329,6 +357,21 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                                     </div>
 
                                     <div className="flex items-center gap-2 opacity-0 group-hover/member:opacity-100 transition-opacity">
+                                        {/* Bouton Rappeler - visible si l'utilisateur est actif ailleurs */}
+                                        {canSummon && p.user_id !== currentUserId && status.isActiveElsewhere && (
+                                            <button 
+                                                onClick={() => handleSummonUser(p.user_id, p.full_name)}
+                                                disabled={summoningUserId === p.user_id}
+                                                className="w-8 h-8 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-500 hover:text-white flex items-center justify-center transition-all disabled:opacity-50"
+                                                title="Rappeler dans cette conversation"
+                                            >
+                                                {summoningUserId === p.user_id 
+                                                    ? <i className="fas fa-spinner fa-spin text-xs"></i>
+                                                    : <i className="fas fa-bell text-xs"></i>
+                                                }
+                                            </button>
+                                        )}
+
                                         {/* Message Privé Button */}
                                         {p.user_id !== currentUserId && (
                                             <button 

@@ -607,6 +607,86 @@ push.post('/test-user/:userId', async (c) => {
 });
 
 /**
+ * 🔔 POST /api/push/summon - Rappeler un participant à une conversation
+ * Envoie une notification push pour demander à quelqu'un de rejoindre une conversation
+ * Accès: Admin, Supervisor, ou admin du groupe
+ */
+push.post('/summon', async (c) => {
+  try {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ error: 'Non authentifié' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { targetUserId, conversationId, conversationName } = body;
+
+    if (!targetUserId || !conversationId) {
+      return c.json({ error: 'targetUserId et conversationId requis' }, 400);
+    }
+
+    // Vérifier que l'utilisateur cible existe
+    const targetUser = await c.env.DB.prepare(`
+      SELECT id, email, first_name, full_name FROM users WHERE id = ? AND deleted_at IS NULL
+    `).bind(targetUserId).first() as any;
+
+    if (!targetUser) {
+      return c.json({ error: 'Utilisateur introuvable' }, 404);
+    }
+
+    // Vérifier les permissions (admin global, supervisor, ou admin du groupe)
+    const isGlobalAdmin = user.role === 'admin';
+    const isSupervisor = user.role === 'supervisor';
+    
+    let isGroupAdmin = false;
+    if (!isGlobalAdmin && !isSupervisor) {
+      const groupRole = await c.env.DB.prepare(`
+        SELECT role FROM chat_participants WHERE conversation_id = ? AND user_id = ?
+      `).bind(conversationId, user.userId).first() as any;
+      isGroupAdmin = groupRole?.role === 'admin';
+    }
+
+    if (!isGlobalAdmin && !isSupervisor && !isGroupAdmin) {
+      return c.json({ error: 'Permission refusée - Seuls les admins peuvent rappeler des participants' }, 403);
+    }
+
+    // Récupérer le nom de l'appelant
+    const callerName = user.first_name || user.email?.split('@')[0] || 'Un administrateur';
+    const groupName = conversationName || 'une conversation';
+
+    // Envoyer la notification
+    const result = await sendPushNotification(c.env, targetUserId, {
+      title: '📢 Votre présence est requise',
+      body: `${callerName} vous demande de rejoindre "${groupName}"`,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      data: { 
+        type: 'summon',
+        conversationId,
+        conversationName: groupName,
+        summonedBy: user.userId,
+        summonedByName: callerName,
+        url: `/messenger/?conversation=${conversationId}`
+      }
+    });
+
+    // Logger l'action
+    console.log(`[SUMMON] ${user.email} summoned ${targetUser.email} to conversation ${conversationId}`);
+
+    return c.json({
+      success: result.success,
+      message: result.success
+        ? `✅ ${targetUser.first_name || targetUser.full_name} a été rappelé(e)`
+        : `❌ Impossible de notifier ${targetUser.first_name || targetUser.full_name} - Notifications non activées`
+    });
+
+  } catch (error) {
+    console.error('[SUMMON] Error:', error);
+    return c.json({ error: 'Erreur lors du rappel' }, 500);
+  }
+});
+
+/**
  * 🔔 QUEUE: Traiter les notifications en attente pour un utilisateur
  * Appelée automatiquement quand l'utilisateur s'abonne aux push
  */
