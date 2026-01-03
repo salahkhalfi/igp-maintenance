@@ -427,7 +427,11 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<div class="table-wrapper"><table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
         };
         
-        // 0. BLOC SIGNATURE MANUELLE - AVANT tout autre traitement
+        // 0. NORMALISER les images markdown qui sont sur plusieurs lignes
+        // Ex: ![alt]\n(url) -> ![alt](url)
+        md = md.replace(/!\[([^\]]*)\]\s*\n\s*\(([^)]+)\)/g, '![$1]($2)');
+        
+        // 0b. BLOC SIGNATURE MANUELLE - AVANT tout autre traitement
         // Pattern: "Signature :" (avec ou sans bold) suivi d'une ligne de underscores
         md = md.replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, 
             '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>');
