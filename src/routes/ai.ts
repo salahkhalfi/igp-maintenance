@@ -2392,12 +2392,15 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         
         if (wantsUploadedSignature) {
             // L'utilisateur veut son image de signature uploadée
+            console.log(`✍️ [Secretary] User wants uploaded signature. hasSignatureFile=${hasSignatureFile}, replacements size=${brainResult.signatureReplacements?.size || 0}`);
+            
             if (hasSignatureFile) {
-                console.log(`✍️ [Secretary] User wants uploaded signature - inserting image...`);
+                console.log(`✍️ [Secretary] Signature file available - inserting image...`);
                 
                 const userSignature = brainResult.signatureReplacements!.entries().next().value;
                 if (userSignature) {
                     const [marker, signatureImg] = userSignature;
+                    console.log(`✍️ [Secretary] Signature marker: ${marker}, image length: ${signatureImg.length}`);
                     
                     // D'abord, nettoyer tous les underscores
                     aiResponse = cleanSignatureUnderscores(aiResponse);
@@ -2412,8 +2415,21 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                         aiResponse = result.text;
                         if (result.inserted) {
                             console.log(`✍️ [Secretary] Inserted signature image before name`);
+                        } else {
+                            // FALLBACK: Ajouter à la fin du document avant la dernière ligne
+                            console.log(`⚠️ [Secretary] Could not find name pattern - appending signature at end`);
+                            // Chercher "Cordialement" ou fin du document
+                            const lastParagraphs = aiResponse.split('\n\n');
+                            if (lastParagraphs.length > 1) {
+                                lastParagraphs.splice(-1, 0, signatureImg);
+                                aiResponse = lastParagraphs.join('\n\n');
+                            } else {
+                                aiResponse += `\n\n${signatureImg}`;
+                            }
                         }
                     }
+                } else {
+                    console.log(`❌ [Secretary] No userSignature entry found in replacements map`);
                 }
             } else {
                 // Veut sa signature mais n'en a pas uploadé

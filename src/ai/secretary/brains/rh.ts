@@ -44,55 +44,37 @@ ${context.company.name}
     existingSignatureNames.push(sig.userName);
   });
   
-  if (userSignature) {
-    // L'utilisateur connecté A une signature manuscrite uploadée
-    return `
-# 🖊️ SIGNATURE MANUSCRITE DISPONIBLE
+  // Instructions communes pour TOUS les cas
+  // L'IA doit TOUJOURS générer le document complet
+  // Le post-traitement gère l'insertion de signature ou les messages d'erreur
+  
+  const signerName = userSignature?.userName || context.directorName;
+  
+  return `
+# SIGNATURE DES DOCUMENTS
 
-Vous êtes **${userSignature.userName}** et votre signature manuscrite est enregistrée dans le système.
+**RÈGLE ABSOLUE:** Tu dois TOUJOURS générer le document demandé en entier.
+Ne refuse JAMAIS de générer un document à cause de la signature.
+Le système gère automatiquement les signatures après ta réponse.
 
-## DEUX OPTIONS DE SIGNATURE:
+**Pour terminer un document officiel, utilise ce format:**
 
-**1. "avec ma signature" / "ma signature manuscrite"**
-→ Votre image de signature sera insérée AUTOMATIQUEMENT par le système
-→ Terminez simplement avec votre nom et titre:
+Cordialement,
 
-**${userSignature.userName}**  
+**${signerName}**  
 ${context.directorTitle}  
 ${context.company.name}
 
-**2. "zone de signature" / "espace pour signer" / "à signer au crayon"**
-→ Le système ajoutera une ligne vide pour signer manuellement après impression
+⚠️ **INTERDIT:**
+- N'écris JAMAIS "Signature : ___" ou des underscores
+- N'explique JAMAIS comment signer manuellement
+- Ne dis JAMAIS "je ne peux pas créer de signature"
+- Ne donne JAMAIS de conseils sur l'impression
 
-⚠️ N'écris JAMAIS "Signature : ___" - le système gère tout automatiquement.
-⚠️ Ne mets JAMAIS de placeholder ou d'URL inventée.`;
-  } else {
-    // L'utilisateur connecté n'a PAS de signature manuscrite uploadée
-    const othersWithSignatures = existingSignatureNames.length > 0 
-      ? `\n\n⚠️ **SÉCURITÉ:** Des signatures existent pour: ${existingSignatureNames.join(', ')}. Vous ne pouvez PAS les utiliser.`
-      : '';
-    
-    return `
-# SIGNATURE DES DOCUMENTS
-
-Vous êtes connecté en tant que **${signatureContext.currentUserName}**.
-Vous n'avez PAS de signature manuscrite enregistrée.
-
-## OPTIONS DE SIGNATURE:
-
-**1. "avec ma signature"** → Le système affichera un message pour uploader sa signature
-**2. "zone de signature" / "espace pour signer"** → Une ligne vide sera ajoutée pour signer au crayon après impression
-
-**FORMAT DE SIGNATURE TEXTUELLE (par défaut):**
-
-**${context.directorName}**
-${context.directorTitle}
-${context.company.name}
-${othersWithSignatures}
-
-⚠️ N'écris JAMAIS "Signature : ___" ou des underscores - le système gère ça.
-❌ N'INVENTEZ JAMAIS une URL d'image pour une signature`;
-  }
+✅ **OBLIGATOIRE:**
+- Génère le document complet
+- Termine avec le nom et titre du signataire
+- Le système s'occupe du reste`;
 }
 
 /**
