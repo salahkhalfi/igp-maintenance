@@ -2332,8 +2332,64 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             }, 500);
         }
         
-        // ===== POST-PROCESS: REPLACE SIGNATURE MARKERS =====
-        if (brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0) {
+        // ===== POST-PROCESS: INSERT SIGNATURE IF REQUESTED =====
+        // Détecte si l'utilisateur a demandé sa signature dans les instructions
+        const signatureRequested = /\b(ma signature|avec signature|signe|ajoute.*signature|signature manuscrite)\b/i.test(instructions);
+        
+        if (signatureRequested && brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0) {
+            console.log(`✍️ [Secretary] Signature requested, attempting to insert...`);
+            
+            // Récupérer la signature de l'utilisateur connecté
+            const userSignature = brainResult.signatureReplacements.entries().next().value;
+            if (userSignature) {
+                const [marker, signatureImg] = userSignature;
+                
+                // Stratégie 1: Remplacer le marqueur si présent
+                if (aiResponse.includes(marker)) {
+                    aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), signatureImg);
+                    console.log(`✍️ [Secretary] Replaced marker: ${marker}`);
+                } else {
+                    // Stratégie 2: Insérer la signature automatiquement
+                    // Chercher des patterns communs de fin de document
+                    const signaturePatterns = [
+                        // Pattern: **Nom** suivi de titre (ex: **Marc Bélanger**\nDirecteur)
+                        /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n([A-ZÀ-Ü][a-zà-ü].*(?:Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur))/gi,
+                        // Pattern: Signature : ___ ou Signature:
+                        /(Signature\s*:\s*_{2,}|Signature\s*:\s*$)/gim,
+                        // Pattern: Nom seul en fin de document avec titre en dessous
+                        /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi
+                    ];
+                    
+                    let signatureInserted = false;
+                    
+                    // Essayer le pattern "Signature : ___"
+                    if (aiResponse.match(signaturePatterns[1])) {
+                        aiResponse = aiResponse.replace(signaturePatterns[1], `${signatureImg}\n\n`);
+                        signatureInserted = true;
+                        console.log(`✍️ [Secretary] Inserted signature replacing "Signature: ___"`);
+                    }
+                    
+                    // Essayer le pattern **Nom**\nTitre
+                    if (!signatureInserted && aiResponse.match(signaturePatterns[0])) {
+                        aiResponse = aiResponse.replace(signaturePatterns[0], `${signatureImg}\n\n$1\n$2`);
+                        signatureInserted = true;
+                        console.log(`✍️ [Secretary] Inserted signature before **Name**`);
+                    }
+                    
+                    // Essayer le pattern Nom\nTitre (sans bold)
+                    if (!signatureInserted && aiResponse.match(signaturePatterns[2])) {
+                        aiResponse = aiResponse.replace(signaturePatterns[2], `\n\n${signatureImg}\n\n$1\n$2`);
+                        signatureInserted = true;
+                        console.log(`✍️ [Secretary] Inserted signature before Name (no bold)`);
+                    }
+                    
+                    if (!signatureInserted) {
+                        console.log(`⚠️ [Secretary] Could not find suitable location for signature`);
+                    }
+                }
+            }
+        } else if (brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0) {
+            // Remplacer les marqueurs si présents même sans demande explicite
             brainResult.signatureReplacements.forEach((replacement, marker) => {
                 if (aiResponse.includes(marker)) {
                     aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), replacement);

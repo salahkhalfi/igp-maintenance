@@ -32,41 +32,23 @@ function buildSignatureInstructions(context: SecretaryContext): string {
   });
   
   if (userSignature) {
-    // L'utilisateur connecté A une signature manuscrite - IL PEUT L'UTILISER
-    // NOTE: On utilise un marqueur qui sera remplacé en post-traitement
+    // L'utilisateur connecté A une signature manuscrite
+    // Le serveur insère automatiquement la signature - l'IA doit juste formater correctement
     return `
 
-# 🖊️ SIGNATURE MANUSCRITE DISPONIBLE - INSTRUCTIONS CRITIQUES
+# 🖊️ SIGNATURE MANUSCRITE DISPONIBLE
 
 Vous êtes **${userSignature.userName}** et votre signature manuscrite est enregistrée.
 
-## RÈGLE ABSOLUE - QUAND L'UTILISATEUR DEMANDE SA SIGNATURE:
-Si l'utilisateur dit "ma signature", "avec signature", "signe", "ajoute ma signature" → tu DOIS utiliser le marqueur ci-dessous.
-
-## COMMENT INSÉRER LA SIGNATURE (OBLIGATOIRE SI DEMANDÉE):
-
-À la fin du document, écris EXACTEMENT ceci:
-
-[[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]]
+**Si l'utilisateur demande "ma signature" ou "avec signature":**
+- Ta signature manuscrite sera ajoutée AUTOMATIQUEMENT par le système
+- Termine simplement la lettre avec ton nom et titre:
 
 **${userSignature.userName}**  
 ${context.directorTitle}  
 ${context.company.name}
 
-## EXEMPLE CONCRET DE FIN DE LETTRE:
-
-Veuillez agréer mes salutations distinguées.
-
-[[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]]
-
-**${userSignature.userName}**  
-${context.directorTitle}  
-${context.company.name}
-
----
-
-⚠️ Le marqueur [[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]] sera automatiquement remplacé par l'IMAGE de ta signature.
-⚠️ N'écris PAS "Signature : ___" quand on te demande une signature - utilise le marqueur!`;
+⚠️ N'écris PAS "Signature : ___" - le système ajoute l'image automatiquement.`;
   }
   
   // L'utilisateur n'a PAS de signature manuscrite
