@@ -93,19 +93,39 @@ export async function prepareSecretary(
   
   console.log(`🧠 [Secretary] Activating brain for: ${documentType}`);
   
-  // Charger les signatures manuscrites autorisées
-  const authorizedSignatures = await loadAuthorizedSignatures(env);
+  // Charger les signatures manuscrites autorisées (avec base64)
+  const authorizedSignaturesFull = await loadAuthorizedSignatures(env);
   
-  // Créer le contexte de signature
+  // Créer une version LÉGÈRE sans base64 pour le prompt (évite de surcharger le contexte)
+  const authorizedSignaturesLight = new Map<number, { base64: string; userName: string; mimeType: string }>();
+  authorizedSignaturesFull.forEach((sig, id) => {
+    authorizedSignaturesLight.set(id, {
+      base64: '', // Ne pas inclure le base64 dans le prompt
+      userName: sig.userName,
+      mimeType: sig.mimeType
+    });
+  });
+  
+  // Créer le contexte de signature (version légère pour le prompt)
   const signatureContext: SignatureContext = {
     currentUserId: options.currentUserId || null,
     currentUserName: options.currentUserName || 'Utilisateur',
     currentUserRole: options.currentUserRole || 'viewer',
-    authorizedSignatures
+    authorizedSignatures: authorizedSignaturesLight
   };
   
+  // Préparer les remplacements de signature pour le post-traitement
+  const signatureReplacements = new Map<string, string>();
+  if (options.currentUserId && authorizedSignaturesFull.has(options.currentUserId)) {
+    const sig = authorizedSignaturesFull.get(options.currentUserId)!;
+    const marker = `[[SIGNATURE_MANUSCRITE_${options.currentUserId}]]`;
+    const replacement = `![Signature de ${sig.userName}](data:${sig.mimeType};base64,${sig.base64})`;
+    signatureReplacements.set(marker, replacement);
+    console.log(`✍️ [Secretary] Prepared signature replacement for marker: ${marker}`);
+  }
+  
   // Log sécurisé (sans exposer les données de signature)
-  if (signatureContext.currentUserId && authorizedSignatures.has(signatureContext.currentUserId)) {
+  if (signatureContext.currentUserId && authorizedSignaturesFull.has(signatureContext.currentUserId)) {
     console.log(`✍️ [Secretary] User ${signatureContext.currentUserName} (ID: ${signatureContext.currentUserId}) has an authorized handwritten signature`);
   }
   
@@ -158,7 +178,9 @@ export async function prepareSecretary(
       console.log(`👥 [Secretary] Loading HR data...`);
       const data = await loadRHData(env, options.employeeId);
       console.log(`👥 [Secretary] Data loaded: ${data.employees.length} employees`);
-      return buildRHBrain(contextWithSignature, data);
+      const rhResult = buildRHBrain(contextWithSignature, data);
+      rhResult.signatureReplacements = signatureReplacements;
+      return rhResult;
     }
 
     case 'technique': {
@@ -171,7 +193,9 @@ export async function prepareSecretary(
     case 'correspondance': {
       console.log(`📧 [Secretary] Preparing correspondence brain...`);
       // La correspondance utilise aussi le contexte de signature
-      return buildCorrespondanceBrain(contextWithSignature, {});
+      const corrResult = buildCorrespondanceBrain(contextWithSignature, {});
+      corrResult.signatureReplacements = signatureReplacements;
+      return corrResult;
     }
 
     case 'creatif':

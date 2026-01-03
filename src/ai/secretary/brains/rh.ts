@@ -46,6 +46,8 @@ ${context.company.name}
   
   if (userSignature) {
     // L'utilisateur connecté A une signature manuscrite autorisée - IL PEUT L'UTILISER
+    // NOTE: On ne met PAS le base64 dans le prompt (trop lourd ~30KB)
+    // On utilise un marqueur spécial que le système remplacera
     return `
 # SIGNATURE DES DOCUMENTS - VOTRE SIGNATURE MANUSCRITE EST DISPONIBLE
 
@@ -62,8 +64,9 @@ Vous êtes connecté en tant que **${userSignature.userName}** et vous disposez 
 - ❌ Si vous demandez la signature de quelqu'un d'autre (impossible)
 
 **FORMAT AVEC VOTRE SIGNATURE MANUSCRITE (si demandée):**
+Utilisez EXACTEMENT ce marqueur (il sera remplacé automatiquement par l'image):
 
-![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})
+[[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]]
 
 **${userSignature.userName}**
 ${context.directorTitle}

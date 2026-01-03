@@ -33,6 +33,7 @@ function buildSignatureInstructions(context: SecretaryContext): string {
   
   if (userSignature) {
     // L'utilisateur connecté A une signature manuscrite - IL PEUT L'UTILISER
+    // NOTE: On utilise un marqueur qui sera remplacé en post-traitement
     return `
 
 🔒 **VOTRE SIGNATURE MANUSCRITE EST DISPONIBLE**
@@ -40,7 +41,9 @@ function buildSignatureInstructions(context: SecretaryContext): string {
 Vous êtes **${userSignature.userName}** et vous pouvez utiliser votre signature manuscrite.
 
 **SI VOUS DEMANDEZ "avec ma signature" ou "ajoute ma signature":**
-![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})
+Utilisez EXACTEMENT ce marqueur (il sera remplacé automatiquement):
+
+[[SIGNATURE_MANUSCRITE_${signatureContext.currentUserId}]]
 
 **${userSignature.userName}**
 

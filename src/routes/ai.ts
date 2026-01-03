@@ -2332,6 +2332,16 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             }, 500);
         }
         
+        // ===== POST-PROCESS: REPLACE SIGNATURE MARKERS =====
+        if (brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0) {
+            brainResult.signatureReplacements.forEach((replacement, marker) => {
+                if (aiResponse.includes(marker)) {
+                    aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), replacement);
+                    console.log(`✍️ [Secretary] Replaced signature marker: ${marker}`);
+                }
+            });
+        }
+        
         // ===== EXTRACT TITLE =====
         let title = 'Document';
         

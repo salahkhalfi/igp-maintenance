@@ -180,6 +180,8 @@ export interface BrainResult {
   tools: string[];  // Liste des outils recommandés
   maxTokens: number;
   temperature: number;
+  /** Signatures à remplacer en post-traitement (marqueur -> base64) */
+  signatureReplacements?: Map<string, string>;
 }
 
 // === CONTEXTE DE SIGNATURE ===
