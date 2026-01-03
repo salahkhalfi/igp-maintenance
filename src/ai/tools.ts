@@ -190,13 +190,14 @@ export const TOOLS: ToolDefinition[] = [
         type: "function",
         function: {
             name: "get_user_details",
-            description: "Obtenir les détails d'un utilisateur par son ID (rôle, charge de travail, statut de connexion).",
+            description: "Obtenir les détails d'un utilisateur par son nom OU son ID (rôle, charge de travail, statut de connexion). Utiliser pour 'est-ce que X est connecté?', 'où est X?', 'que fait X?'.",
             parameters: {
                 type: "object",
                 properties: {
-                    user_id: { type: "number", description: "L'ID unique de l'utilisateur" }
+                    user_id: { type: "number", description: "L'ID unique de l'utilisateur (optionnel si name fourni)" },
+                    name: { type: "string", description: "Le nom ou prénom de l'utilisateur (ex: 'Salah', 'Brahim', 'Martin')" }
                 },
-                required: ["user_id"]
+                required: []
             }
         }
     },
@@ -1690,20 +1691,50 @@ export const ToolFunctions = {
         });
     },
 
-    async get_user_details(db: any, args: { user_id: number }) {
-        const user = await db.select({
-            id: users.id,
-            name: users.full_name,
-            role: users.role,
-            email: users.email,
-            last_seen: users.last_seen,
-            last_login: users.last_login
-        })
-        .from(users)
-        .where(eq(users.id, args.user_id))
-        .get();
+    async get_user_details(db: any, args: { user_id?: number, name?: string }) {
+        let user: any = null;
+        
+        // Chercher par ID si fourni
+        if (args.user_id) {
+            user = await db.select({
+                id: users.id,
+                name: users.full_name,
+                role: users.role,
+                email: users.email,
+                last_seen: users.last_seen,
+                last_login: users.last_login
+            })
+            .from(users)
+            .where(eq(users.id, args.user_id))
+            .get();
+        }
+        // Sinon chercher par nom
+        else if (args.name) {
+            const searchName = args.name.toLowerCase();
+            const allUsers = await db.select({
+                id: users.id,
+                name: users.full_name,
+                role: users.role,
+                email: users.email,
+                last_seen: users.last_seen,
+                last_login: users.last_login
+            })
+            .from(users)
+            .where(isNull(users.deleted_at))
+            .all();
+            
+            // Recherche flexible (prénom, nom, ou nom complet)
+            user = allUsers.find((u: any) => 
+                u.name.toLowerCase().includes(searchName) ||
+                u.email.toLowerCase().includes(searchName)
+            );
+        }
 
-        if (!user) return "Utilisateur introuvable.";
+        if (!user) {
+            return args.name 
+                ? `Aucun utilisateur trouvé avec le nom "${args.name}".`
+                : "Utilisateur introuvable. Veuillez fournir un nom ou un ID.";
+        }
         
         // Calculer le statut de connexion
         let loginStatus = "inconnu";
