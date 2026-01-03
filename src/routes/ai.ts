@@ -2351,40 +2351,40 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 } else {
                     // Stratégie 2: Insérer la signature automatiquement
                     // Chercher des patterns communs de fin de document
-                    const signaturePatterns = [
-                        // Pattern: **Nom** suivi de titre (ex: **Marc Bélanger**\nDirecteur)
-                        /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n([A-ZÀ-Ü][a-zà-ü].*(?:Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur))/gi,
-                        // Pattern: Signature : ___ ou Signature:
-                        /(Signature\s*:\s*_{2,}|Signature\s*:\s*$)/gim,
-                        // Pattern: Nom seul en fin de document avec titre en dessous
-                        /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi
-                    ];
-                    
                     let signatureInserted = false;
                     
-                    // Essayer le pattern "Signature : ___"
-                    if (aiResponse.match(signaturePatterns[1])) {
-                        aiResponse = aiResponse.replace(signaturePatterns[1], `${signatureImg}\n\n`);
+                    // Pattern 1: "Signature : ___" ou "Signature:" (avec ou sans underscores)
+                    const signatureLinePattern = /Signature\s*:\s*[_\-]+|Signature\s*:\s*$/gim;
+                    if (aiResponse.match(signatureLinePattern)) {
+                        aiResponse = aiResponse.replace(signatureLinePattern, signatureImg);
                         signatureInserted = true;
                         console.log(`✍️ [Secretary] Inserted signature replacing "Signature: ___"`);
                     }
                     
-                    // Essayer le pattern **Nom**\nTitre
-                    if (!signatureInserted && aiResponse.match(signaturePatterns[0])) {
-                        aiResponse = aiResponse.replace(signaturePatterns[0], `${signatureImg}\n\n$1\n$2`);
-                        signatureInserted = true;
-                        console.log(`✍️ [Secretary] Inserted signature before **Name**`);
+                    // Pattern 2: Insérer avant **Nom**\nTitre (ex: **Marc Bélanger**\nDirecteur)
+                    if (!signatureInserted) {
+                        const namePattern = /(\*\*(?:Marc Bélanger|[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+                        if (aiResponse.match(namePattern)) {
+                            aiResponse = aiResponse.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
+                            signatureInserted = true;
+                            console.log(`✍️ [Secretary] Inserted signature before **Name**`);
+                        }
                     }
                     
-                    // Essayer le pattern Nom\nTitre (sans bold)
-                    if (!signatureInserted && aiResponse.match(signaturePatterns[2])) {
-                        aiResponse = aiResponse.replace(signaturePatterns[2], `\n\n${signatureImg}\n\n$1\n$2`);
-                        signatureInserted = true;
-                        console.log(`✍️ [Secretary] Inserted signature before Name (no bold)`);
+                    // Pattern 3: Insérer avant Nom\nTitre (sans bold, ex: Marc Bélanger\nDirecteur)
+                    if (!signatureInserted) {
+                        const nameNoBoldPattern = /\n\n(Marc Bélanger|[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+                        if (aiResponse.match(nameNoBoldPattern)) {
+                            aiResponse = aiResponse.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
+                            signatureInserted = true;
+                            console.log(`✍️ [Secretary] Inserted signature before Name (no bold)`);
+                        }
                     }
                     
                     if (!signatureInserted) {
-                        console.log(`⚠️ [Secretary] Could not find suitable location for signature`);
+                        console.log(`⚠️ [Secretary] Could not find suitable location for signature in response`);
+                        // Debug: afficher un extrait de la réponse pour comprendre le format
+                        console.log(`⚠️ [Secretary] Response excerpt (last 500 chars):`, aiResponse.slice(-500));
                     }
                 }
             }
