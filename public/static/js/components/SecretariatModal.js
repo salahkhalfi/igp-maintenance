@@ -633,7 +633,7 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             display: block; 
         }
         
-        /* Bloc signature image */
+        /* Bloc signature image - aspect naturel */
         .doc-content .signature-block {
             display: inline-block;
             margin: 16pt 0 8pt 0;
@@ -645,11 +645,12 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             margin: 0;
             border: none !important;
             box-shadow: none !important;
+            background: transparent;
         }
         .doc-content .signature-line {
             width: 180px;
             border-bottom: 1px solid #333;
-            margin-top: 2pt;
+            margin-top: -2pt; /* Collé à l'image pour effet signature sur ligne */
         }
         
         /* Bloc signature manuelle */
@@ -826,7 +827,7 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   border-bottom: 1px solid #333;
 }
 
-/* Bloc signature image (signature numérique) */
+/* Bloc signature image (signature numérique) - aspect naturel */
 .signature-block {
   display: inline-block;
   margin: 16pt 0 8pt 0;
@@ -838,11 +839,12 @@ body { font-family: ${isLetter ? "'Times New Roman', Times, serif" : "'Georgia',
   margin: 0;
   border: none !important;
   box-shadow: none !important;
+  background: transparent;
 }
 .signature-line {
   width: 180px;
   border-bottom: 1px solid #333;
-  margin-top: 2pt;
+  margin-top: -2pt; /* Collé à l'image */
 }
 
 /* Footer - Avertissement confidentialité - EN FIN DE DOCUMENT (pas fixe) */
