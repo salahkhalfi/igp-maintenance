@@ -1588,7 +1588,7 @@ ${aiConfig.rules}
         // "avec ma signature" → image PNG uploadée
         // "à signer" → espace vide + ligne pour signature au crayon
         const wantsImageSignature = /(avec ma signature|ma signature|déjà signée?|document signé|signé)/i.test(message);
-        const wantsManualSignature = /à signer/i.test(message);
+        const wantsManualSignature = /(à signer|je vais signer|je signe)/i.test(message);
         
         // Patterns pour trouver où insérer la signature
         const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
@@ -2413,7 +2413,7 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         // "avec ma signature" → image PNG uploadée
         // "à signer" → espace vide + ligne pour signature au crayon
         const wantsImageSignature = /(avec ma signature|ma signature|déjà signée?|document signé|signé)/i.test(instructions);
-        const wantsManualSignature = /à signer/i.test(instructions);
+        const wantsManualSignature = /(à signer|je vais signer|je signe)/i.test(instructions);
         
         // Patterns pour trouver où insérer la signature
         const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
