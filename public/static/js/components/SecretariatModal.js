@@ -1,8 +1,35 @@
 /**
  * SecretariatModal - Secrétariat de Direction
  * Design Premium - Génération de documents professionnels
- * v2.3 - Mode Universel + Responsive fix
+ * v2.4 - Mode Universel + Extraction document propre
  */
+
+/**
+ * Extrait le document officiel entre les séparateurs ---
+ * Supprime les notes de l'IA avant et après le document
+ */
+const extractOfficialDocument = (content) => {
+    if (!content) return '';
+    
+    // Chercher le contenu entre les séparateurs ---
+    const parts = content.split(/^---\s*$/m);
+    
+    if (parts.length >= 3) {
+        // Structure: [notes avant] --- [DOCUMENT] --- [notes après]
+        // Prendre la partie du milieu (le document officiel)
+        return parts[1].trim();
+    } else if (parts.length === 2) {
+        // Structure: [notes avant] --- [DOCUMENT] ou [DOCUMENT] --- [notes après]
+        // Prendre la partie la plus longue (probablement le document)
+        const part0 = parts[0].trim();
+        const part1 = parts[1].trim();
+        return part1.length > part0.length ? part1 : part0;
+    }
+    
+    // Pas de séparateurs trouvés - retourner le contenu tel quel
+    return content.trim();
+};
+
 const SecretariatModal = ({ isOpen, onClose }) => {
     const [selectedCategory, setSelectedCategory] = React.useState('correspondance');
     const [selectedDocType, setSelectedDocType] = React.useState(null);
@@ -329,7 +356,12 @@ const SecretariatModal = ({ isOpen, onClose }) => {
                 timeout: 120000 // 120 secondes timeout
             });
             if (response.data.success !== false) {
-                setGeneratedDoc(response.data);
+                // Extraire le document propre (sans les notes de l'IA)
+                const cleanedDocument = extractOfficialDocument(response.data.document);
+                setGeneratedDoc({
+                    ...response.data,
+                    document: cleanedDocument
+                });
                 setViewMode('preview');
                 const totalTime = Math.floor((Date.now() - startTime) / 1000);
                 window.showToast && window.showToast(`✨ Document prêt en ${totalTime}s`, 'success');
