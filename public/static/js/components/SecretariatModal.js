@@ -632,6 +632,37 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             margin: 12pt 0; 
             display: block; 
         }
+        
+        /* Bloc signature image */
+        .doc-content .signature-block {
+            display: inline-block;
+            margin: 16pt 0 8pt 0;
+        }
+        .doc-content .signature-block img {
+            display: block;
+            max-height: 70px;
+            width: auto;
+            margin: 0;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .doc-content .signature-line {
+            width: 180px;
+            border-bottom: 1px solid #333;
+            margin-top: 2pt;
+        }
+        
+        /* Bloc signature manuelle */
+        .doc-content .manual-signature-block {
+            margin: 20pt 0 12pt 0;
+        }
+        .doc-content .signature-space {
+            height: 60pt;
+        }
+        .doc-content .signature-line-manual {
+            width: 200px;
+            border-bottom: 1px solid #333;
+        }
         .doc-content a { 
             color: #0066cc; 
             text-decoration: underline; 
