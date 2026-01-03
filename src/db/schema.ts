@@ -13,6 +13,7 @@ export const users = sqliteTable('users', {
   is_super_admin: integer('is_super_admin').default(0), // SaaS vendor flag
   can_create_admins: integer('can_create_admins').default(0), // Permission granted by superadmin
   last_login: text('last_login'), // Added in migration 0009
+  last_seen: text('last_seen'), // Added in migration - updated on chat activity
   avatar_key: text('avatar_key'), // Added in migration 0007
   ai_context: text('ai_context'), // Additional context for AI interactions (skills, preferences, certifications)
   deleted_at: text('deleted_at'), // Soft delete

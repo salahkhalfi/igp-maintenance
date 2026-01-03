@@ -67,14 +67,18 @@ const UserList = ({
         return ROLE_BADGE_COLORS[effectiveRole] || 'bg-gray-100 text-gray-800';
     }, [ROLE_BADGE_COLORS, getEffectiveRole]);
 
-    const getLastLoginStatus = React.useCallback((lastLogin) => {
-        if (!lastLogin) return { color: "text-gray-500", status: "Jamais connecté", time: "", dot: "bg-gray-400" };
+    // Calcule le statut d'activité basé sur last_seen (prioritaire) ou last_login
+    const getActivityStatus = React.useCallback((user) => {
+        // Utiliser last_seen si disponible (plus précis), sinon last_login
+        const lastActivity = user.last_seen || user.last_login;
+        
+        if (!lastActivity) return { color: "text-gray-500", status: "Jamais connecté", time: "", dot: "bg-gray-400" };
 
         const now = getNowEST();
-        const loginDate = new Date((lastLogin.includes('T') ? lastLogin : lastLogin.replace(' ', 'T')) + (lastLogin.includes('Z') ? '' : 'Z'));
-        const adjustedLoginDate = new Date(loginDate.getTime() + (tzOffset * 3600000));
+        const activityDate = new Date((lastActivity.includes('T') ? lastActivity : lastActivity.replace(' ', 'T')) + (lastActivity.includes('Z') ? '' : 'Z'));
+        const adjustedActivityDate = new Date(activityDate.getTime() + (tzOffset * 3600000));
         
-        const diffMs = now - adjustedLoginDate;
+        const diffMs = now - adjustedActivityDate;
         const diffMins = Math.floor(diffMs / 60000);
 
         if (diffMins < 5) return { color: "text-green-600", status: "En ligne", time: "Actif maintenant", dot: "bg-green-500" };
@@ -156,7 +160,7 @@ const UserList = ({
                 const isCurrentUser = user.id === currentUser.id;
                 const loginStatus = isCurrentUser 
                     ? { color: "text-green-600", status: "En ligne", time: "Connecté maintenant", dot: "bg-green-500" }
-                    : getLastLoginStatus(user.last_login);
+                    : getActivityStatus(user);
                 const showLogin = canSeeLastLogin(user);
                 
                 return React.createElement('div', {

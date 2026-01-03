@@ -65,7 +65,8 @@ usersRoute.get('/team', technicianSupervisorOrAdmin, async (c) => {
         ai_context: users.ai_context,
         created_at: users.created_at,
         updated_at: users.updated_at,
-        last_login: users.last_login
+        last_login: users.last_login,
+        last_seen: users.last_seen
       })
       .from(users)
       .where(whereCondition)
