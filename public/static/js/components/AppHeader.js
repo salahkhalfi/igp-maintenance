@@ -123,7 +123,12 @@ const AppHeader = ({
         const heartbeatAndFetch = async () => {
             try {
                 // Envoyer heartbeat pour signaler qu'on est actif
-                await axios.post(API_URL + '/stats/heartbeat');
+                const token = localStorage.getItem('auth_token');
+                if (token) {
+                    await axios.post(API_URL + '/stats/heartbeat', {}, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                }
                 // Récupérer le nombre d'utilisateurs en ligne
                 const response = await axios.get(API_URL + '/stats/online-users');
                 if (response.data) {
