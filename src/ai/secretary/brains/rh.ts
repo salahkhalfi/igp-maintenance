@@ -141,7 +141,27 @@ Fin de lettre:
 - ❌ Clauses illégales (non-concurrence abusive, etc.)
 - ❌ Informations personnelles non pertinentes
 - ❌ Langage vague ou ambigu
-- ❌ Menaces ou ton agressif`;
+- ❌ Menaces ou ton agressif
+
+# FORMAT DE RÉPONSE - DOCUMENT PRÊT À IMPRIMER
+
+**STRUCTURE OBLIGATOIRE:**
+
+Tes commentaires (optionnel)
+
+---
+
+[LE DOCUMENT COMMENCE ICI - EN-TÊTE ENTREPRISE]
+
+...contenu du document...
+
+[SIGNATURE]
+
+---
+
+Tes instructions d'utilisation (optionnel)
+
+**RÈGLE ABSOLUE:** Entre les deux lignes "---", UNIQUEMENT le document officiel. AUCUNE note, AUCUN commentaire, AUCUNE instruction de l'IA.`;
 
   const contextData = buildRHContext(data);
 

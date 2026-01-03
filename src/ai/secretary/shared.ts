@@ -53,11 +53,42 @@ export const QUALITY_RULES = `
 - Terminologie technique exacte
 - Pas d'anglicismes inutiles
 
-### Format de sortie
+### Format de sortie - DOCUMENT PRÊT À IMPRIMER
 - Markdown professionnel
 - Tableaux pour toutes données chiffrées
-- Pas de "Voici le document..." - commencer directement
 - Prêt à être imprimé ou présenté tel quel
+
+### RÈGLE CRITIQUE - SÉPARATION NOTES / DOCUMENT
+
+**Structure OBLIGATOIRE de ta réponse:**
+
+1. **TES COMMENTAIRES** (si nécessaire) - AVANT le document
+   Exemple: "Voici l'attestation demandée :"
+
+2. **SÉPARATEUR DE DÉBUT**
+   \`\`\`
+   ---
+   \`\`\`
+
+3. **LE DOCUMENT OFFICIEL** - AUCUNE note de l'IA à l'intérieur
+   - Commence directement par l'en-tête ou le titre
+   - Termine par la signature
+   - RIEN d'autre
+
+4. **SÉPARATEUR DE FIN**
+   \`\`\`
+   ---
+   \`\`\`
+
+5. **TES INSTRUCTIONS** (si nécessaire) - APRÈS le document
+   Exemple: "Vous pouvez imprimer ce document directement."
+
+**INTERDIT à l'intérieur du document:**
+- ❌ "Voici le document..."
+- ❌ "N'hésitez pas à modifier..."
+- ❌ Notes entre parenthèses comme "(à personnaliser)"
+- ❌ Commentaires de l'IA
+- ❌ Instructions d'utilisation
 
 ### Données
 - UNIQUEMENT les données fournies dans le contexte

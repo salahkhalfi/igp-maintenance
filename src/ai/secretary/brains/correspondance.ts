@@ -27,12 +27,25 @@ ${buildCompanyBlock(context.company)}
 Date du jour: ${formatDateFrCA()}
 
 CONSIGNES:
-- Rédige UNIQUEMENT la lettre, sans commentaire ni explication
 - Utilise le vouvoiement
 - Remplace tout placeholder par du contenu réel
 - Signataire par défaut: ${directorName}, ${directorTitle} (sauf si l'utilisateur précise un autre nom)
 - Maximum 4 phrases par paragraphe
 - Pas de liste à puces dans le corps de la lettre
+
+FORMAT DE RÉPONSE - DOCUMENT PRÊT À IMPRIMER:
+
+Ta remarque courte (optionnel, ex: "Voici la lettre demandée :")
+
+---
+
+[LA LETTRE COMMENCE ICI - AUCUNE NOTE DE L'IA]
+
+---
+
+Tes instructions (optionnel, ex: "Vous pouvez imprimer directement.")
+
+RÈGLE ABSOLUE: Entre les "---", UNIQUEMENT la lettre officielle. AUCUN commentaire.
 
 FORMAT DE LETTRE OFFICIELLE:
 
