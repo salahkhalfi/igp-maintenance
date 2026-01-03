@@ -115,6 +115,26 @@ const AppHeader = ({
     // Refresh state for visual feedback (UX improvement)
     const [refreshing, setRefreshing] = React.useState(false);
 
+    // État pour les utilisateurs actifs (badge discret)
+    const [onlineUsers, setOnlineUsers] = React.useState({ today: 0, active: 0 });
+
+    // Charger le nombre d'utilisateurs actifs au démarrage et toutes les 60 secondes
+    React.useEffect(() => {
+        const fetchOnlineUsers = async () => {
+            try {
+                const response = await axios.get(API_URL + '/stats/online-users');
+                if (response.data) {
+                    setOnlineUsers(response.data);
+                }
+            } catch (e) {
+                // Ignorer silencieusement les erreurs
+            }
+        };
+        fetchOnlineUsers();
+        const interval = setInterval(fetchOnlineUsers, 60000); // Rafraîchir toutes les 60 secondes
+        return () => clearInterval(interval);
+    }, []);
+
     React.useEffect(() => {
         try {
             fetch('/api/settings/messenger_app_name')
@@ -336,6 +356,15 @@ const AppHeader = ({
                             React.createElement('h1', { className: 'text-sm font-bold leading-none text-slate-800 tracking-tight truncate', title: headerTitle }, headerTitle),
                             React.createElement('p', { className: 'text-[10px] font-medium text-slate-500 mt-0.5 truncate' }, headerSubtitle)
                         )
+                    ),
+
+                    // Badge utilisateurs actifs (discret, visible pour admins/supervisors)
+                    (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && onlineUsers.today > 0 && React.createElement('div', {
+                        className: 'hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-xs font-medium',
+                        title: `${onlineUsers.active} actif(s) dans l'heure, ${onlineUsers.today} connecté(s) aujourd'hui`
+                    },
+                        React.createElement('span', { className: 'w-2 h-2 bg-emerald-500 rounded-full animate-pulse' }),
+                        React.createElement('span', {}, onlineUsers.today + ' en ligne')
                     ),
 
                     // RIGHT: USER & MOBILE TOGGLE

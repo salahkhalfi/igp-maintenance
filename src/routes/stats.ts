@@ -112,4 +112,50 @@ stats.get('/technicians-performance', async (c) => {
   }
 });
 
+// ========================================
+// STATS API - Online Users Count
+// ========================================
+stats.get('/online-users', async (c) => {
+  try {
+    // Pas besoin d'authentification - c'est une info publique
+    
+    // Compter les utilisateurs connectés aujourd'hui (dernières 24h)
+    const todayResult = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE last_login IS NOT NULL
+        AND datetime(last_login) > datetime('now', '-24 hours')
+        AND deleted_at IS NULL
+        AND id != 0
+    `).first();
+
+    // Compter les utilisateurs connectés dans la dernière heure (probablement actifs)
+    const activeResult = await c.env.DB.prepare(`
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE last_login IS NOT NULL
+        AND datetime(last_login) > datetime('now', '-1 hour')
+        AND deleted_at IS NULL
+        AND id != 0
+    `).first();
+
+    // Compter les appareils avec push actifs (bonne indication d'utilisateurs actifs)
+    const pushDevicesResult = await c.env.DB.prepare(`
+      SELECT COUNT(DISTINCT user_id) as count
+      FROM push_subscriptions
+      WHERE last_used IS NOT NULL
+        AND datetime(last_used) > datetime('now', '-24 hours')
+    `).first();
+
+    return c.json({
+      today: (todayResult as any)?.count || 0,
+      active: (activeResult as any)?.count || 0,
+      withPush: (pushDevicesResult as any)?.count || 0
+    });
+  } catch (error) {
+    console.error('[Online Users API] Error:', error);
+    return c.json({ error: 'Erreur serveur' }, 500);
+  }
+});
+
 export default stats;

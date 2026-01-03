@@ -73,6 +73,10 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
     const [rateLimitEnabled, setRateLimitEnabled] = React.useState(false);
     const [savingRateLimit, setSavingRateLimit] = React.useState(false);
 
+    // États pour la maintenance (nettoyage notifications orphelines)
+    const [cleaningNotifications, setCleaningNotifications] = React.useState(false);
+    const [cleanupResult, setCleanupResult] = React.useState(null);
+
     // États pour les Placeholders personnalisables (SaaS)
     const [placeholders, setPlaceholders] = React.useState({
         placeholder_machine_type: 'Ex: Équipement, Machine...',
@@ -371,6 +375,28 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
             alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
         } finally {
             setSaving(false);
+        }
+    };
+
+    // Fonction pour nettoyer les notifications orphelines
+    const handleCleanupOrphanNotifications = async () => {
+        if (!confirm('Voulez-vous nettoyer les notifications en attente pour des tickets supprimés ?')) {
+            return;
+        }
+        setCleaningNotifications(true);
+        setCleanupResult(null);
+        try {
+            const response = await axios.delete(API_URL + '/push/cleanup-orphan-notifications');
+            setCleanupResult(response.data);
+            if (response.data.cleaned > 0) {
+                alert(`Nettoyage terminé : ${response.data.cleaned} notification(s) orpheline(s) supprimée(s)`);
+            } else {
+                alert('Aucune notification orpheline trouvée.');
+            }
+        } catch (error) {
+            alert('Erreur: ' + (error.response?.data?.error || 'Erreur serveur'));
+        } finally {
+            setCleaningNotifications(false);
         }
     };
 
@@ -1253,6 +1279,49 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
                                         savingWebhookUrl && React.createElement('i', { className: 'fas fa-spinner fa-spin' }),
                                         savingWebhookUrl ? 'Enregistrement...' : 'Enregistrer'
                                     )
+                                )
+                            )
+                        )
+                    ),
+
+                    // Section Maintenance (ADMIN - nettoyage notifications orphelines)
+                    isClientAdmin && React.createElement('div', { className: 'border-t border-gray-300 pt-6 mt-6' },
+                        React.createElement('div', { className: 'bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4' },
+                            React.createElement('div', { className: 'flex items-start gap-3' },
+                                React.createElement('i', { className: 'fas fa-broom text-orange-600 text-xl mt-1' }),
+                                React.createElement('div', {},
+                                    React.createElement('h3', { className: 'font-bold text-orange-900 mb-2 flex items-center gap-2' },
+                                        "Maintenance",
+                                        React.createElement('span', { className: 'text-xs bg-blue-600 text-white px-2 py-1 rounded' }, 'ADMIN')
+                                    ),
+                                    React.createElement('p', { className: 'text-sm text-orange-800' },
+                                        "Outils de maintenance pour nettoyer les données obsolètes."
+                                    )
+                                )
+                            )
+                        ),
+
+                        // Bouton nettoyage notifications orphelines
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' },
+                                React.createElement('i', { className: 'fas fa-bell-slash mr-2' }),
+                                'Notifications orphelines'
+                            ),
+                            React.createElement('p', { className: 'text-sm text-gray-600 mb-3' },
+                                "Supprime les notifications en attente pour des tickets qui ont été supprimés."
+                            ),
+                            React.createElement('div', { className: 'flex items-center gap-4' },
+                                React.createElement('button', {
+                                    onClick: handleCleanupOrphanNotifications,
+                                    disabled: cleaningNotifications,
+                                    className: 'px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold transition-all flex items-center gap-2 text-sm disabled:opacity-50',
+                                    type: 'button'
+                                },
+                                    cleaningNotifications ? React.createElement('i', { className: 'fas fa-spinner fa-spin' }) : React.createElement('i', { className: 'fas fa-broom' }),
+                                    cleaningNotifications ? 'Nettoyage...' : 'Nettoyer'
+                                ),
+                                cleanupResult && React.createElement('span', { className: 'text-sm text-gray-600' },
+                                    `Dernier nettoyage : ${cleanupResult.cleaned} supprimée(s) sur ${cleanupResult.total_pending} en attente`
                                 )
                             )
                         )
