@@ -941,6 +941,7 @@ app.post('/chat', async (c) => {
         let userRole = 'unknown';
         let userName = 'Utilisateur inconnu';
         let userId: number | null = null;
+        let userEmail: string | null = null;
 
         if (token) {
             const payload = await verifyToken(token);
@@ -948,6 +949,7 @@ app.post('/chat', async (c) => {
                 userRole = payload.role;
                 userName = payload.full_name || payload.email;
                 userId = payload.userId;
+                userEmail = payload.email;
             }
         }
 
@@ -966,6 +968,31 @@ app.post('/chat', async (c) => {
         } 
 
         const aiConfig = await getAiConfig(db);
+        
+        // --- SIGNATURE MANUSCRITE: Charger si disponible ---
+        let userSignature: { base64: string; userName: string; mimeType: string } | null = null;
+        if (userEmail) {
+            try {
+                const signatureKey = `director_signature_${userEmail}`;
+                const sigResult = await c.env.DB.prepare(
+                    `SELECT setting_value FROM system_settings WHERE setting_key = ?`
+                ).bind(signatureKey).first();
+                
+                if (sigResult?.setting_value) {
+                    const sigData = JSON.parse(sigResult.setting_value as string);
+                    if (sigData.base64) {
+                        userSignature = {
+                            base64: sigData.base64,
+                            userName: sigData.userName || userName,
+                            mimeType: sigData.mimeType || 'image/png'
+                        };
+                        devLog(`✍️ [AI Chat] Signature loaded for ${userEmail}`);
+                    }
+                }
+            } catch (e) {
+                console.warn(`[AI Chat] Could not load signature for ${userEmail}:`, e);
+            }
+        }
         
         // --- DOCUMENT GENERATION: Détection d'intention ---
         // RESTRICTION: Mode document réservé aux admin et supervisor
@@ -1555,6 +1582,39 @@ ${aiConfig.rules}
             detectedDocType = docTypeMatch[1];
             // Retirer le marqueur du contenu visible
             finalReply = finalReply.replace(/<!-- DOCUMENT_TYPE:\w+ -->/g, '').trim();
+        }
+
+        // --- SIGNATURE MANUSCRITE: Insérer si demandée ---
+        const wantsSignature = /(ma signature|avec ma signature|signature manuscrite)/i.test(message);
+        
+        if (wantsSignature && userSignature) {
+            // L'utilisateur a demandé sa signature et en a une enregistrée
+            console.log(`✍️ [AI Chat] Inserting signature for ${userEmail}`);
+            const signatureImg = `![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})`;
+            
+            // Chercher où insérer la signature (avant le nom du signataire)
+            const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+            const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+            
+            if (finalReply.match(namePattern)) {
+                finalReply = finalReply.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
+                console.log(`✍️ [AI Chat] Signature inserted before bolded name`);
+            } else if (finalReply.match(nameNoBoldPattern)) {
+                finalReply = finalReply.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
+                console.log(`✍️ [AI Chat] Signature inserted before name`);
+            } else {
+                // Fallback: ajouter avant la fin du document
+                const lastParagraphs = finalReply.split('\n\n');
+                if (lastParagraphs.length > 1) {
+                    lastParagraphs.splice(-1, 0, signatureImg);
+                    finalReply = lastParagraphs.join('\n\n');
+                    console.log(`✍️ [AI Chat] Signature appended near end`);
+                }
+            }
+        } else if (wantsSignature && !userSignature) {
+            // L'utilisateur veut une signature mais n'en a pas
+            console.log(`⚠️ [AI Chat] User ${userEmail} requested signature but has none`);
+            finalReply += `\n\n---\n\n⚠️ **Note**: Vous avez demandé une signature manuscrite mais aucune n'est enregistrée. Allez dans **Paramètres Système** → **Signature Manuscrite** pour en ajouter une.`;
         }
 
         // Construire la réponse enrichie
