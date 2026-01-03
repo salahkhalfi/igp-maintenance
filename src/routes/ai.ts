@@ -1584,38 +1584,52 @@ ${aiConfig.rules}
             finalReply = finalReply.replace(/<!-- DOCUMENT_TYPE:\w+ -->/g, '').trim();
         }
 
-        // --- SIGNATURE MANUSCRITE: Insérer si demandée ---
-        const wantsSignature = /(ma signature|avec ma signature|signature manuscrite)/i.test(message);
+        // --- SIGNATURE: Insérer si demandée ---
+        // "avec ma signature" → image PNG uploadée
+        // "à signer" → espace vide + ligne pour signature au crayon
+        const wantsImageSignature = /(avec ma signature|ma signature)/i.test(message);
+        const wantsManualSignature = /à signer/i.test(message);
         
-        if (wantsSignature && userSignature) {
-            // L'utilisateur a demandé sa signature et en a une enregistrée
-            console.log(`✍️ [AI Chat] Inserting signature for ${userEmail}`);
-            // Utiliser une URL au lieu du base64 (évite les problèmes de markdown multi-lignes)
+        // Patterns pour trouver où insérer la signature
+        const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+        const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+        
+        if (wantsImageSignature && userSignature) {
+            // "avec ma signature" + signature uploadée → image PNG
+            console.log(`✍️ [AI Chat] Inserting image signature for ${userEmail}`);
             const signatureImg = `![Signature de ${userSignature.userName}](/api/settings/signature-image/${encodeURIComponent(userEmail)})`;
-            
-            // Chercher où insérer la signature (avant le nom du signataire)
-            const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
-            const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
             
             if (finalReply.match(namePattern)) {
                 finalReply = finalReply.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
-                console.log(`✍️ [AI Chat] Signature inserted before bolded name`);
             } else if (finalReply.match(nameNoBoldPattern)) {
                 finalReply = finalReply.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
-                console.log(`✍️ [AI Chat] Signature inserted before name`);
             } else {
-                // Fallback: ajouter avant la fin du document
                 const lastParagraphs = finalReply.split('\n\n');
                 if (lastParagraphs.length > 1) {
                     lastParagraphs.splice(-1, 0, signatureImg);
                     finalReply = lastParagraphs.join('\n\n');
-                    console.log(`✍️ [AI Chat] Signature appended near end`);
                 }
             }
-        } else if (wantsSignature && !userSignature) {
-            // L'utilisateur veut une signature mais n'en a pas
-            console.log(`⚠️ [AI Chat] User ${userEmail} requested signature but has none`);
-            finalReply += `\n\n---\n\n⚠️ **Note**: Vous avez demandé une signature manuscrite mais aucune n'est enregistrée. Allez dans **Paramètres Système** → **Signature Manuscrite** pour en ajouter une.`;
+        } else if (wantsImageSignature && !userSignature) {
+            // "avec ma signature" mais pas de signature uploadée
+            console.log(`⚠️ [AI Chat] User ${userEmail} requested image signature but has none`);
+            finalReply += `\n\n---\n\n⚠️ **Note**: Vous avez demandé votre signature mais aucune n'est enregistrée. Allez dans **Paramètres Système** → **Signature Manuscrite** pour en ajouter une.`;
+        } else if (wantsManualSignature) {
+            // "à signer" → espace vide + ligne pour signature au crayon
+            console.log(`✍️ [AI Chat] Inserting manual signature space`);
+            const manualSignature = `\nSignature :\n`;
+            
+            if (finalReply.match(namePattern)) {
+                finalReply = finalReply.replace(namePattern, `${manualSignature}\n$1\n$2`);
+            } else if (finalReply.match(nameNoBoldPattern)) {
+                finalReply = finalReply.replace(nameNoBoldPattern, `\n${manualSignature}\n$1\n$2`);
+            } else {
+                const lastParagraphs = finalReply.split('\n\n');
+                if (lastParagraphs.length > 1) {
+                    lastParagraphs.splice(-1, 0, manualSignature);
+                    finalReply = lastParagraphs.join('\n\n');
+                }
+            }
         }
 
         // Construire la réponse enrichie
@@ -2396,38 +2410,51 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         }
         
         // ===== POST-PROCESS: INSERT SIGNATURE IF REQUESTED =====
-        const wantsSignature = /(ma signature|avec ma signature|signature manuscrite)/i.test(instructions);
+        // "avec ma signature" → image PNG uploadée
+        // "à signer" → espace vide + ligne pour signature au crayon
+        const wantsImageSignature = /(avec ma signature|ma signature)/i.test(instructions);
+        const wantsManualSignature = /à signer/i.test(instructions);
         
-        if (wantsSignature && brainResult.userSignature) {
-            // L'utilisateur a demandé sa signature et en a une enregistrée
-            console.log(`✍️ [Secretary] Inserting signature for ${payload.email}`);
-            // Utiliser une URL au lieu du base64 (évite les problèmes de markdown multi-lignes)
+        // Patterns pour trouver où insérer la signature
+        const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+        const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+        
+        if (wantsImageSignature && brainResult.userSignature) {
+            // "avec ma signature" + signature uploadée → image PNG
+            console.log(`✍️ [Secretary] Inserting image signature for ${payload.email}`);
             const signatureImg = `![Signature de ${brainResult.userSignature.userName}](/api/settings/signature-image/${encodeURIComponent(payload.email)})`;
-            
-            // Chercher où insérer la signature (avant le nom du signataire)
-            // Pattern: **Nom**\nTitre ou Nom\nTitre
-            const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
-            const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
             
             if (aiResponse.match(namePattern)) {
                 aiResponse = aiResponse.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
-                console.log(`✍️ [Secretary] Signature inserted before bolded name`);
             } else if (aiResponse.match(nameNoBoldPattern)) {
                 aiResponse = aiResponse.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
-                console.log(`✍️ [Secretary] Signature inserted before name`);
             } else {
-                // Fallback: ajouter avant la fin du document
                 const lastParagraphs = aiResponse.split('\n\n');
                 if (lastParagraphs.length > 1) {
                     lastParagraphs.splice(-1, 0, signatureImg);
                     aiResponse = lastParagraphs.join('\n\n');
-                    console.log(`✍️ [Secretary] Signature appended near end`);
                 }
             }
-        } else if (wantsSignature && !brainResult.userSignature) {
-            // L'utilisateur veut une signature mais n'en a pas
-            console.log(`⚠️ [Secretary] User ${payload.email} requested signature but has none`);
-            aiResponse += `\n\n---\n\n⚠️ **Note**: Vous avez demandé une signature manuscrite mais aucune n'est enregistrée. Allez dans **Paramètres Système** → **Signature Manuscrite** pour en ajouter une.`;
+        } else if (wantsImageSignature && !brainResult.userSignature) {
+            // "avec ma signature" mais pas de signature uploadée
+            console.log(`⚠️ [Secretary] User ${payload.email} requested image signature but has none`);
+            aiResponse += `\n\n---\n\n⚠️ **Note**: Vous avez demandé votre signature mais aucune n'est enregistrée. Allez dans **Paramètres Système** → **Signature Manuscrite** pour en ajouter une.`;
+        } else if (wantsManualSignature) {
+            // "à signer" → espace vide + ligne pour signature au crayon
+            console.log(`✍️ [Secretary] Inserting manual signature space`);
+            const manualSignature = `\nSignature :\n`;
+            
+            if (aiResponse.match(namePattern)) {
+                aiResponse = aiResponse.replace(namePattern, `${manualSignature}\n$1\n$2`);
+            } else if (aiResponse.match(nameNoBoldPattern)) {
+                aiResponse = aiResponse.replace(nameNoBoldPattern, `\n${manualSignature}\n$1\n$2`);
+            } else {
+                const lastParagraphs = aiResponse.split('\n\n');
+                if (lastParagraphs.length > 1) {
+                    lastParagraphs.splice(-1, 0, manualSignature);
+                    aiResponse = lastParagraphs.join('\n\n');
+                }
+            }
         }
         
         // ===== EXTRACT TITLE =====
