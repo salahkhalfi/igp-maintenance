@@ -1311,10 +1311,10 @@ settings.get('/app_base_url', async (c) => {
 settings.get('/signature/:userId', authMiddleware, async (c) => {
   try {
     const requestedUserId = parseInt(c.req.param('userId'), 10);
-    const payload = c.get('jwtPayload') as any;
+    const user = c.get('user') as any;
     
     // Vérifier que l'utilisateur demande sa propre signature ou est admin
-    if (payload.userId !== requestedUserId && payload.role !== 'admin') {
+    if (user.userId !== requestedUserId && user.role !== 'admin') {
       return c.json({ error: 'Accès non autorisé' }, 403);
     }
     
