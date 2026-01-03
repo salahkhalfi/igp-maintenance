@@ -2333,96 +2333,111 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         }
         
         // ===== POST-PROCESS: SIGNATURE HANDLING =====
-        // Détecte si l'utilisateur a demandé sa signature dans les instructions
-        const signatureRequested = /\b(ma signature|avec signature|signe le|ajoute.*signature|signature manuscrite)\b/i.test(instructions);
+        // Deux types de demandes de signature:
+        // 1. "ma signature" / "avec ma signature" → Insérer l'image PNG uploadée
+        // 2. "zone de signature" / "espace pour signer" / "signer au crayon" → Laisser un espace vide pour signature manuelle
+        
+        const wantsUploadedSignature = /\b(ma signature|avec ma signature|signature manuscrite|utilise ma signature)\b/i.test(instructions);
+        const wantsSignatureSpace = /\b(zone de signature|espace pour signer|signer au crayon|signer à la main|pour signer|à signer)\b/i.test(instructions);
         const hasSignatureFile = brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0;
         
-        // Patterns améliorés pour supprimer les underscores
-        // 1. Pattern pour "Signature: ___" avec variantes (bold, manuscrite, du directeur)
+        // Patterns pour détecter/nettoyer les underscores de signature
         const signatureTextPattern = /\n*[-–—]*\n*\*{0,2}[Ss]ignature\*{0,2}\s*(manuscrite|du directeur)?\s*:?\**\s*\n*[_\-–—]*\n*/gi;
-        // 2. Pattern pour lignes avec juste des underscores (5+ caractères)
         const standaloneUnderscorePattern = /\n\n[_\-–—]{5,}\n*/g;
+        
+        // Zone de signature propre pour impression (ligne avec espace)
+        const cleanSignatureLine = `\n\n**Signature:**\n\n\n________________________\n\n`;
         
         // Fonction pour nettoyer les underscores de signature
         const cleanSignatureUnderscores = (text: string): string => {
             let cleaned = text.replace(signatureTextPattern, '\n\n');
             cleaned = cleaned.replace(standaloneUnderscorePattern, '\n\n');
-            // Nettoyer les sauts de ligne multiples
             cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
             return cleaned;
         };
         
-        if (signatureRequested) {
+        // Fonction pour insérer une signature (image ou zone vide) avant le nom du signataire
+        const insertSignatureBeforeName = (text: string, signatureContent: string): { text: string; inserted: boolean } => {
+            let inserted = false;
+            let result = text;
+            
+            // Stratégie 1: Avant **Nom**\nTitre
+            const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+            if (result.match(namePattern)) {
+                result = result.replace(namePattern, `${signatureContent}\n\n$1\n$2`);
+                inserted = true;
+            }
+            
+            // Stratégie 2: Avant Nom\nTitre (sans bold)
+            if (!inserted) {
+                const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+                if (result.match(nameNoBoldPattern)) {
+                    result = result.replace(nameNoBoldPattern, `\n\n${signatureContent}\n\n$1\n$2`);
+                    inserted = true;
+                }
+            }
+            
+            // Stratégie 3: Après "Cordialement" ou "Sincèrement"
+            if (!inserted) {
+                const closingPattern = /(Cordialement|Sincèrement|Respectueusement|Bien à vous),?\s*\n+([A-ZÀ-Ü])/gi;
+                if (result.match(closingPattern)) {
+                    result = result.replace(closingPattern, `$1,\n\n${signatureContent}\n\n$2`);
+                    inserted = true;
+                }
+            }
+            
+            return { text: result, inserted };
+        };
+        
+        if (wantsUploadedSignature) {
+            // L'utilisateur veut son image de signature uploadée
             if (hasSignatureFile) {
-                // L'utilisateur a une signature uploadée - l'insérer
-                console.log(`✍️ [Secretary] Signature requested and file available, inserting...`);
+                console.log(`✍️ [Secretary] User wants uploaded signature - inserting image...`);
                 
                 const userSignature = brainResult.signatureReplacements!.entries().next().value;
                 if (userSignature) {
                     const [marker, signatureImg] = userSignature;
-                    let signatureInserted = false;
                     
-                    // D'abord, nettoyer tous les underscores de signature
+                    // D'abord, nettoyer tous les underscores
                     aiResponse = cleanSignatureUnderscores(aiResponse);
                     
-                    // Stratégie 1: Remplacer le marqueur si présent
+                    // Remplacer le marqueur si présent
                     if (aiResponse.includes(marker)) {
                         aiResponse = aiResponse.replace(new RegExp(marker.replace(/[[\]]/g, '\\$&'), 'g'), signatureImg);
-                        signatureInserted = true;
-                        console.log(`✍️ [Secretary] Replaced marker: ${marker}`);
-                    }
-                    
-                    // Stratégie 2: Insérer avant **Nom**\nTitre
-                    if (!signatureInserted) {
-                        const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
-                        if (aiResponse.match(namePattern)) {
-                            aiResponse = aiResponse.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
-                            signatureInserted = true;
-                            console.log(`✍️ [Secretary] Inserted signature before **Name**`);
+                        console.log(`✍️ [Secretary] Replaced marker with signature image`);
+                    } else {
+                        // Sinon, insérer avant le nom
+                        const result = insertSignatureBeforeName(aiResponse, signatureImg);
+                        aiResponse = result.text;
+                        if (result.inserted) {
+                            console.log(`✍️ [Secretary] Inserted signature image before name`);
                         }
-                    }
-                    
-                    // Stratégie 3: Insérer avant Nom\nTitre (sans bold)
-                    if (!signatureInserted) {
-                        const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
-                        if (aiResponse.match(nameNoBoldPattern)) {
-                            aiResponse = aiResponse.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
-                            signatureInserted = true;
-                            console.log(`✍️ [Secretary] Inserted signature before Name`);
-                        }
-                    }
-                    
-                    // Stratégie 4: Insérer avant "Cordialement" ou "Sincèrement"
-                    if (!signatureInserted) {
-                        const closingPattern = /(Cordialement|Sincèrement|Respectueusement|Bien à vous),?\s*\n+([A-ZÀ-Ü])/gi;
-                        if (aiResponse.match(closingPattern)) {
-                            aiResponse = aiResponse.replace(closingPattern, `$1,\n\n${signatureImg}\n\n$2`);
-                            signatureInserted = true;
-                            console.log(`✍️ [Secretary] Inserted signature after closing`);
-                        }
-                    }
-                    
-                    if (!signatureInserted) {
-                        // Dernière tentative: ajouter à la fin avant le nom du directeur
-                        console.log(`⚠️ [Secretary] Could not find ideal location for signature`);
                     }
                 }
             } else {
-                // L'utilisateur demande une signature mais n'en a PAS uploadé
-                console.log(`⚠️ [Secretary] Signature requested but NO file uploaded`);
-                
-                // Supprimer tous les underscores de signature 
+                // Veut sa signature mais n'en a pas uploadé
+                console.log(`⚠️ [Secretary] User wants uploaded signature but has NONE - showing warning`);
                 aiResponse = cleanSignatureUnderscores(aiResponse);
-                
-                // Ajouter un avertissement à la fin du document
-                aiResponse += `\n\n---\n\n⚠️ **Note**: Vous avez demandé une signature manuscrite mais aucune n'est enregistrée dans le système. Pour ajouter votre signature, allez dans **Paramètres Système** → **Signature Manuscrite** et uploadez votre signature (PNG/GIF).`;
+                aiResponse += `\n\n---\n\n⚠️ **Note**: Vous avez demandé votre signature manuscrite mais aucune n'est enregistrée. Pour l'ajouter, allez dans **Paramètres Système** → **Signature Manuscrite** et uploadez votre signature (PNG/GIF).\n\nSi vous voulez simplement un espace pour signer à la main après impression, demandez plutôt "avec une zone de signature".`;
             }
-        } else {
-            // Pas de demande de signature explicite
-            // Supprimer quand même les underscores inutiles pour un document propre
+        } else if (wantsSignatureSpace) {
+            // L'utilisateur veut un espace vide pour signer au crayon après impression
+            console.log(`✍️ [Secretary] User wants signature SPACE for manual signing`);
             aiResponse = cleanSignatureUnderscores(aiResponse);
             
-            // Remplacer les marqueurs si présents (cas où l'IA les a mis quand même)
+            const result = insertSignatureBeforeName(aiResponse, cleanSignatureLine);
+            aiResponse = result.text;
+            if (result.inserted) {
+                console.log(`✍️ [Secretary] Inserted signature line for manual signing`);
+            } else {
+                // Fallback: ajouter à la fin
+                aiResponse += cleanSignatureLine;
+            }
+        } else {
+            // Pas de demande de signature explicite - nettoyer les underscores
+            aiResponse = cleanSignatureUnderscores(aiResponse);
+            
+            // Remplacer les marqueurs si l'IA en a mis
             if (hasSignatureFile) {
                 brainResult.signatureReplacements!.forEach((replacement, marker) => {
                     if (aiResponse.includes(marker)) {

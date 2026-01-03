@@ -32,41 +32,43 @@ function buildSignatureInstructions(context: SecretaryContext): string {
   });
   
   if (userSignature) {
-    // L'utilisateur connecté A une signature manuscrite
-    // Le serveur insère automatiquement la signature - l'IA doit juste formater correctement
+    // L'utilisateur connecté A une signature manuscrite uploadée
     return `
 
 # 🖊️ SIGNATURE MANUSCRITE DISPONIBLE
 
 Vous êtes **${userSignature.userName}** et votre signature manuscrite est enregistrée.
 
-**Si l'utilisateur demande "ma signature" ou "avec signature":**
-- Ta signature manuscrite sera ajoutée AUTOMATIQUEMENT par le système
-- Termine simplement la lettre avec ton nom et titre:
+## DEUX OPTIONS DE SIGNATURE:
+
+**1. "avec ma signature" / "ma signature manuscrite"**
+→ Votre image de signature sera insérée AUTOMATIQUEMENT
+→ Terminez simplement avec votre nom et titre:
 
 **${userSignature.userName}**  
 ${context.directorTitle}  
 ${context.company.name}
 
-⚠️ N'écris PAS "Signature : ___" - le système ajoute l'image automatiquement.`;
+**2. "zone de signature" / "espace pour signer" / "à signer au crayon"**
+→ Une ligne vide sera ajoutée pour signer manuellement après impression
+
+⚠️ N'écris JAMAIS "Signature : ___" - le système gère tout automatiquement.`;
   }
   
-  // L'utilisateur n'a PAS de signature manuscrite
+  // L'utilisateur n'a PAS de signature manuscrite uploadée
   const warning = existingSignatureNames.length > 0
-    ? `
-
-⚠️ **ATTENTION SÉCURITÉ:** Des signatures existent pour ${existingSignatureNames.join(', ')}, mais vous n'êtes PAS cette personne.
-Si on vous demande d'utiliser la signature de quelqu'un d'autre, REFUSEZ poliment:
-"Je ne peux pas utiliser la signature manuscrite d'une autre personne. Pour des raisons de sécurité, seul le propriétaire peut utiliser sa signature en étant connecté avec son compte."
-
-❌ N'UTILISEZ JAMAIS de placeholder d'image
-❌ N'INVENTEZ JAMAIS une URL pour une signature`
+    ? `\n\n⚠️ **SÉCURITÉ:** Des signatures existent pour ${existingSignatureNames.join(', ')}. Vous ne pouvez PAS les utiliser.`
     : '';
   
   return `
 
 Vous êtes connecté en tant que **${signatureContext.currentUserName}** (pas de signature manuscrite enregistrée).
-Utilisez uniquement une signature textuelle.${warning}`;
+
+## OPTIONS DE SIGNATURE:
+- **"avec ma signature"** → Message pour uploader sa signature
+- **"zone de signature"** → Ligne vide pour signer au crayon après impression
+
+⚠️ N'écris JAMAIS "Signature : ___" ou des underscores.${warning}`;
 }
 
 export function buildCorrespondanceBrain(

@@ -45,55 +45,53 @@ ${context.company.name}
   });
   
   if (userSignature) {
-    // L'utilisateur connecté A une signature manuscrite autorisée
-    // Le serveur insère automatiquement la signature - l'IA doit juste formater correctement
+    // L'utilisateur connecté A une signature manuscrite uploadée
     return `
 # 🖊️ SIGNATURE MANUSCRITE DISPONIBLE
 
 Vous êtes **${userSignature.userName}** et votre signature manuscrite est enregistrée dans le système.
 
-**Si l'utilisateur demande "ma signature" ou "avec signature":**
-- Ta signature manuscrite sera ajoutée AUTOMATIQUEMENT par le système
-- Termine simplement le document avec ton nom et titre au format standard:
+## DEUX OPTIONS DE SIGNATURE:
+
+**1. "avec ma signature" / "ma signature manuscrite"**
+→ Votre image de signature sera insérée AUTOMATIQUEMENT par le système
+→ Terminez simplement avec votre nom et titre:
 
 **${userSignature.userName}**  
 ${context.directorTitle}  
 ${context.company.name}
 
-⚠️ N'écris PAS "Signature : ___" - le système ajoute l'image automatiquement.
-⚠️ Ne mets JAMAIS de placeholder ou d'URL inventée pour la signature.`;
+**2. "zone de signature" / "espace pour signer" / "à signer au crayon"**
+→ Le système ajoutera une ligne vide pour signer manuellement après impression
+
+⚠️ N'écris JAMAIS "Signature : ___" - le système gère tout automatiquement.
+⚠️ Ne mets JAMAIS de placeholder ou d'URL inventée.`;
   } else {
-    // L'utilisateur connecté n'a PAS de signature manuscrite
-    // Mais d'autres personnes en ont peut-être
+    // L'utilisateur connecté n'a PAS de signature manuscrite uploadée
     const othersWithSignatures = existingSignatureNames.length > 0 
-      ? `\n\n⚠️ **IMPORTANT:** Des signatures manuscrites existent pour: ${existingSignatureNames.join(', ')}. 
-Cependant, vous n'êtes PAS ${existingSignatureNames.join(' ni ')}. 
-Vous ne pouvez PAS utiliser leur signature manuscrite - c'est une question de sécurité légale.
-Si quelqu'un demande "utilise la signature de ${existingSignatureNames[0]}", vous devez REFUSER poliment.`
+      ? `\n\n⚠️ **SÉCURITÉ:** Des signatures existent pour: ${existingSignatureNames.join(', ')}. Vous ne pouvez PAS les utiliser.`
       : '';
     
     return `
 # SIGNATURE DES DOCUMENTS
 
 Vous êtes connecté en tant que **${signatureContext.currentUserName}**.
-Vous n'avez PAS de signature manuscrite enregistrée dans le système.
+Vous n'avez PAS de signature manuscrite enregistrée.
 
-**FORMAT DE SIGNATURE À UTILISER (texte uniquement):**
+## OPTIONS DE SIGNATURE:
+
+**1. "avec ma signature"** → Le système affichera un message pour uploader sa signature
+**2. "zone de signature" / "espace pour signer"** → Une ligne vide sera ajoutée pour signer au crayon après impression
+
+**FORMAT DE SIGNATURE TEXTUELLE (par défaut):**
 
 **${context.directorName}**
 ${context.directorTitle}
 ${context.company.name}
 ${othersWithSignatures}
 
-**SI ON VOUS DEMANDE UNE SIGNATURE MANUSCRITE:**
-Répondez: "Je ne peux pas ajouter de signature manuscrite car vous n'en avez pas d'enregistrée dans le système. Le document sera signé avec votre nom en texte. Pour enregistrer votre signature manuscrite, contactez l'administrateur système."
-
-**SI ON VOUS DEMANDE LA SIGNATURE DE QUELQU'UN D'AUTRE:**
-Répondez: "Pour des raisons de sécurité, je ne peux pas utiliser la signature manuscrite d'une autre personne. Seul le propriétaire de la signature peut l'utiliser en étant connecté avec son propre compte."
-
-❌ N'UTILISEZ JAMAIS de placeholder d'image (comme via.placeholder.com)
-❌ N'INVENTEZ JAMAIS une URL d'image pour une signature
-✅ Utilisez UNIQUEMENT du texte pour la signature`;
+⚠️ N'écris JAMAIS "Signature : ___" ou des underscores - le système gère ça.
+❌ N'INVENTEZ JAMAIS une URL d'image pour une signature`;
   }
 }
 
