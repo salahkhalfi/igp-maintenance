@@ -116,6 +116,10 @@ Suivi d'un paragraphe justifiant les priorités si nécessaire.
 - ● Important (orange dans l'esprit)  
 - ● Normal (vert dans l'esprit)
 
+# SIGNATURE DES DOCUMENTS
+⚠️ N'écris JAMAIS "Signature : ___" ou des underscores pour la signature.
+Le système gère les signatures automatiquement. Termine avec le nom et titre si nécessaire.
+
 # INTERDICTIONS
 
 - ❌ Émojis décoratifs (📊 ✅ etc.)
@@ -123,7 +127,8 @@ Suivi d'un paragraphe justifiant les priorités si nécessaire.
 - ❌ Style "carte" ou "dashboard"
 - ❌ Commencer par "Voici le rapport..."
 - ❌ Lister sans analyser
-- ❌ Style informel ou conversationnel`;
+- ❌ Style informel ou conversationnel
+- ❌ Mettre "Signature : ___" ou des underscores`;
 
   // Construire le contexte de données formaté
   const contextData = buildRapportsContext(data);

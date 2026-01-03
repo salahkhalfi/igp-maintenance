@@ -2337,8 +2337,9 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         // 1. "ma signature" / "avec ma signature" → Insérer l'image PNG uploadée
         // 2. "zone de signature" / "espace pour signer" / "signer au crayon" → Laisser un espace vide pour signature manuelle
         
-        const wantsUploadedSignature = /\b(ma signature|avec ma signature|signature manuscrite|utilise ma signature)\b/i.test(instructions);
-        const wantsSignatureSpace = /\b(zone de signature|espace pour signer|signer au crayon|signer à la main|pour signer|à signer)\b/i.test(instructions);
+        // Note: On n'utilise pas \b car il ne fonctionne pas bien avec les accents français (à, é, etc.)
+        const wantsUploadedSignature = /(ma signature|avec ma signature|signature manuscrite|utilise ma signature)/i.test(instructions);
+        const wantsSignatureSpace = /(zone de signature|espace pour signer|signer au crayon|signer à la main|pour signer|à signer)/i.test(instructions);
         const hasSignatureFile = brainResult.signatureReplacements && brainResult.signatureReplacements.size > 0;
         
         // Patterns pour détecter/nettoyer les underscores de signature

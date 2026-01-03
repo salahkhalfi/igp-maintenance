@@ -207,6 +207,10 @@ Vous, Nouveau, Gratuit, Découvrez, Exclusif, Garanti, Résultats, Économisez, 
 | Médias | Factuel + angle | Nouveauté, impact, innovation |
 | Grand public | Accessible | Simple, clair, concret |
 
+# SIGNATURE DES DOCUMENTS
+⚠️ N'écris JAMAIS "Signature : ___" ou des underscores pour la signature.
+Le système gère les signatures automatiquement. Termine avec le nom et titre si nécessaire.
+
 # INTERDICTIONS ABSOLUES
 - ❌ Jargon incompréhensible
 - ❌ Promesses exagérées
@@ -215,6 +219,7 @@ Vous, Nouveau, Gratuit, Découvrez, Exclusif, Garanti, Résultats, Économisez, 
 - ❌ Paragraphes interminables
 - ❌ Utiliser des blocs de code (\`\`\`) - écrire en texte formaté normal
 - ❌ Utiliser des tableaux Markdown dans le document final
+- ❌ Mettre "Signature : ___" ou des underscores
 
 # RÈGLES DE FORMATAGE
 - Utiliser **gras** pour les titres et mots importants
