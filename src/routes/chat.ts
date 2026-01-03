@@ -395,6 +395,7 @@ app.get('/conversations/:id/messages', async (c) => {
 
     // Récupérer le statut de lecture ET les infos des participants
     // Updated Query: Support Guests + SuperAdmin displayed as "SUPPORT"
+    // Also includes: active_in_conversation (name of the conversation where user was last active)
     const participants = await c.env.DB.prepare(`
         SELECT 
             cp.user_id, 
@@ -402,12 +403,22 @@ app.get('/conversations/:id/messages', async (c) => {
             CASE WHEN u.is_super_admin = 1 THEN 'support' ELSE cp.role END as role, 
             COALESCE(u.full_name, g.full_name) as full_name, 
             COALESCE(u.last_seen, g.last_seen) as last_seen, 
-            u.avatar_key
+            u.avatar_key,
+            (
+                SELECT cc.name 
+                FROM chat_messages cm
+                JOIN chat_conversations cc ON cm.conversation_id = cc.id
+                WHERE cm.sender_id = cp.user_id 
+                  AND cm.conversation_id != ?
+                  AND datetime(cm.created_at) > datetime('now', '-5 minutes')
+                ORDER BY cm.created_at DESC
+                LIMIT 1
+            ) as active_in_conversation
         FROM chat_participants cp
         LEFT JOIN users u ON cp.user_id = u.id AND cp.user_id > 0
         LEFT JOIN chat_guests g ON ABS(cp.user_id) = g.id AND cp.user_id < 0
         WHERE cp.conversation_id = ?
-    `).bind(conversationId).all();
+    `).bind(conversationId, conversationId).all();
 
     // Récupérer les infos de la conversation
     const conversation = await c.env.DB.prepare(`

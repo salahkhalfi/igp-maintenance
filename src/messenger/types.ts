@@ -45,4 +45,7 @@ export interface Participant {
     full_name: string;
     role: string;
     last_read_at: string;
+    last_seen?: string | null;
+    avatar_key?: string | null;
+    active_in_conversation?: string | null; // Nom du groupe où l'utilisateur est actif
 }

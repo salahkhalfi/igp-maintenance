@@ -28,6 +28,31 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
     // Allow editing for: groups (by group admin or global admin) OR expert_ai (by global admin only)
     const canEdit = ((isGroupAdmin || isGlobalAdmin) && conversationType === 'group') || (isExpertAI && isGlobalAdmin);
 
+    // Fonction pour déterminer le statut de connexion d'un participant
+    const getOnlineStatus = (participant: Participant): { isOnline: boolean; isActiveElsewhere: boolean; activeGroup: string | null } => {
+        // L'utilisateur courant est toujours "en ligne"
+        if (participant.user_id === currentUserId) {
+            return { isOnline: true, isActiveElsewhere: false, activeGroup: null };
+        }
+        
+        if (!participant.last_seen) {
+            return { isOnline: false, isActiveElsewhere: false, activeGroup: null };
+        }
+        
+        const lastSeen = new Date(participant.last_seen.includes('T') ? participant.last_seen : participant.last_seen.replace(' ', 'T') + 'Z');
+        const now = new Date();
+        const diffMinutes = (now.getTime() - lastSeen.getTime()) / 60000;
+        
+        const isOnline = diffMinutes < 5;
+        const isActiveElsewhere = isOnline && !!participant.active_in_conversation;
+        
+        return { 
+            isOnline, 
+            isActiveElsewhere, 
+            activeGroup: participant.active_in_conversation || null 
+        };
+    };
+
     const handleSaveInfo = async () => {
         try {
             if (isExpertAI) {
@@ -268,18 +293,38 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                             Membres du groupe
                         </div>
                         
-                        {participants.map(p => (
+                        {participants.map(p => {
+                            const status = getOnlineStatus(p);
+                            return (
                             <div key={p.user_id} className="flex items-center justify-between p-3.5 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all group/member">
                                     <div className="flex items-center gap-4 overflow-hidden">
-                                        <div className={`w-10 h-10 rounded-xl ${getAvatarGradient(p.full_name)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md`}>
-                                            {getInitials(p.full_name)}
+                                        {/* Avatar avec badge de statut en ligne */}
+                                        <div className="relative flex-shrink-0">
+                                            <div className={`w-10 h-10 rounded-xl ${getAvatarGradient(p.full_name)} flex items-center justify-center text-white font-bold text-sm shadow-md`}>
+                                                {getInitials(p.full_name)}
+                                            </div>
+                                            {/* Badge vert si en ligne */}
+                                            {status.isOnline && (
+                                                <div 
+                                                    className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0c0c0c] ${status.isActiveElsewhere ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                                    title={status.isActiveElsewhere ? `Actif dans: ${status.activeGroup}` : 'En ligne'}
+                                                />
+                                            )}
                                         </div>
                                         <div className="min-w-0 cursor-pointer" onClick={() => p.user_id !== currentUserId && onPrivateChat(p.user_id)}>
                                             <div className="text-white font-bold truncate text-sm flex items-center gap-2">
                                                 {p.full_name}
                                                 {p.user_id === currentUserId && <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-gray-300 border border-white/5">Moi</span>}
                                             </div>
-                                            <div className="text-gray-500 text-xs font-medium mt-0.5 uppercase tracking-wide">{getRoleDisplayName(p.role)}</div>
+                                            <div className="text-gray-500 text-xs font-medium mt-0.5 uppercase tracking-wide flex items-center gap-2">
+                                                {getRoleDisplayName(p.role)}
+                                                {/* Afficher le groupe actif si l'utilisateur est actif ailleurs */}
+                                                {status.isActiveElsewhere && status.activeGroup && (
+                                                    <span className="text-amber-500 text-[10px] normal-case">
+                                                        • dans {status.activeGroup}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -309,7 +354,7 @@ const GroupInfo = ({ participants, conversationId, conversationName, conversatio
                                         )}
                                     </div>
                             </div>
-                        ))}
+                        );})}
                     </div>
                 </div>
                 
