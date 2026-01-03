@@ -304,6 +304,18 @@ export const TOOLS: ToolDefinition[] = [
     {
         type: "function",
         function: {
+            name: "get_online_users",
+            description: "Voir qui est connecté/en ligne en ce moment. Retourne la liste des utilisateurs actifs avec leur statut (en ligne, actif récemment, hors ligne). Utiliser quand on demande 'qui est connecté?', 'qui est en ligne?', 'qui est disponible?'.",
+            parameters: {
+                type: "object",
+                properties: {},
+                required: []
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
             name: "search_web",
             description: "Rechercher sur le web pour trouver documentation technique, manuels machines, procedures de depannage, codes erreur. UTILISER quand: (1) operateur demande comment faire quelque chose, (2) code erreur inconnu, (3) procedure de maintenance, (4) specifications techniques non trouvees en base. TOUJOURS inclure le fabricant/modele si connu.",
             parameters: {
@@ -1922,6 +1934,64 @@ export const ToolFunctions = {
                 role: u.role,
                 login_status: getLoginStatus(u.last_seen, u.last_login)
             }))
+        });
+    },
+
+    async get_online_users(db: any) {
+        // Récupérer tous les utilisateurs actifs
+        const allUsers = await db.select({
+            id: users.id,
+            full_name: users.full_name,
+            role: users.role,
+            last_seen: users.last_seen,
+            last_login: users.last_login
+        })
+        .from(users)
+        .where(isNull(users.deleted_at))
+        .all();
+        
+        const now = Date.now();
+        
+        // Catégoriser les utilisateurs par statut
+        const online: any[] = [];      // < 5 min
+        const recent: any[] = [];      // 5-60 min
+        const today: any[] = [];       // 1-24h
+        const offline: any[] = [];     // > 24h ou jamais
+        
+        allUsers.forEach((u: any) => {
+            const checkTime = u.last_seen || u.last_login;
+            if (!checkTime) {
+                offline.push({ id: u.id, name: u.full_name, role: u.role, status: "jamais connecté" });
+                return;
+            }
+            
+            const diffMinutes = Math.floor((now - new Date(checkTime).getTime()) / 60000);
+            
+            if (diffMinutes < 5) {
+                online.push({ id: u.id, name: u.full_name, role: u.role, status: "en ligne" });
+            } else if (diffMinutes < 60) {
+                recent.push({ id: u.id, name: u.full_name, role: u.role, status: `actif il y a ${diffMinutes} min` });
+            } else if (diffMinutes < 1440) {
+                const hours = Math.floor(diffMinutes / 60);
+                today.push({ id: u.id, name: u.full_name, role: u.role, status: `actif il y a ${hours}h` });
+            } else {
+                const days = Math.floor(diffMinutes / 1440);
+                offline.push({ id: u.id, name: u.full_name, role: u.role, status: `hors ligne depuis ${days} jour(s)` });
+            }
+        });
+        
+        return JSON.stringify({
+            summary: {
+                en_ligne: online.length,
+                actifs_recemment: recent.length,
+                actifs_aujourdhui: today.length,
+                hors_ligne: offline.length,
+                total: allUsers.length
+            },
+            en_ligne: online,
+            actifs_recemment: recent,
+            actifs_aujourdhui: today,
+            hors_ligne: offline
         });
     },
 
