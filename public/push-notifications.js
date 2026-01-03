@@ -222,12 +222,12 @@ async function isPushSubscribed() {
       });
       return result && result.isSubscribed;
     } catch (error) {
-      // Ignorer l'erreur "Auth token missing" silencieusement
-      if (error.message === 'Auth token missing') {
-        return false;
+      // Ignorer silencieusement les erreurs non-critiques
+      // (auth manquant, erreur serveur, etc.)
+      // L'utilisateur sera simplement considéré comme "non abonné"
+      if (error.message !== 'Auth token missing') {
+        console.warn('[IS_SUBSCRIBED] Backend verification failed (non-critical):', error.message || error);
       }
-      
-      console.error('[IS_SUBSCRIBED] Backend verification failed:', error);
       return false;
     }
     
