@@ -427,13 +427,12 @@ const SecretariatModal = ({ isOpen, onClose }) => {
             return `<div class="table-wrapper"><table ${tableStyle}><thead><tr>${headerHtml}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
         };
         
-        // 0. NORMALISER les images markdown - supprimer les retours à la ligne
-        // Pattern: ![alt] peut être suivi de \n avant (url)
-        md = md.replace(/!\[([^\]]*)\]\s*\n\s*\(([^)]+)\)/g, '![$1]($2)');
-        // Base64 sur plusieurs lignes: nettoyer les espaces/retours dans l'URL
-        md = md.replace(/!\[([^\]]*)\]\((data:image\/[^;]+;base64,[\s\S]*?)\)/g, (match, alt, dataUrl) => {
-            const cleanUrl = dataUrl.replace(/\s+/g, '');
-            return '![' + alt + '](' + cleanUrl + ')';
+        // 0. NORMALISER les images markdown - supprimer TOUS les retours à la ligne
+        // Cas 1: retour entre ] et (
+        md = md.replace(/!\[([^\]]*)\][\s\n]+\(([^)]+)\)/g, '![$1]($2)');
+        // Cas 2: retour DANS l'URL (API ou base64)
+        md = md.replace(/!\[([^\]]*)\]\(([^)]*[\s\n][^)]*)\)/g, (match, alt, url) => {
+            return '![' + alt + '](' + url.replace(/[\s\n]+/g, '') + ')';
         });
         
         // 0b. BLOC SIGNATURE MANUELLE - AVANT tout autre traitement
