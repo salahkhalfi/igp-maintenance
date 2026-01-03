@@ -159,15 +159,53 @@ const fetchLogoAsArrayBuffer = async (logoUrl: string): Promise<{ data: ArrayBuf
 };
 
 // --- CLEAN LETTER CONTENT: Replace first company block with logo ---
+/**
+ * Extract official document content between --- separators
+ * AI responses now use format: "AI comment\n---\nDOCUMENT\n---\nAI instructions"
+ * This function extracts ONLY the document part for printing
+ */
+const extractOfficialDocument = (content: string): string => {
+    // Pattern: content between two --- separators
+    const separatorPattern = /^---\s*\n([\s\S]*?)\n---\s*$/m;
+    
+    // Try to find content between --- markers
+    const lines = content.split('\n');
+    const separatorIndices: number[] = [];
+    
+    lines.forEach((line, index) => {
+        if (line.trim() === '---') {
+            separatorIndices.push(index);
+        }
+    });
+    
+    // If we have at least 2 separators, extract content between first two
+    if (separatorIndices.length >= 2) {
+        const startIdx = separatorIndices[0] + 1;
+        const endIdx = separatorIndices[1];
+        const documentLines = lines.slice(startIdx, endIdx);
+        return documentLines.join('\n').trim();
+    }
+    
+    // If only one separator at the start, take everything after it
+    if (separatorIndices.length === 1 && separatorIndices[0] < 3) {
+        const documentLines = lines.slice(separatorIndices[0] + 1);
+        return documentLines.join('\n').trim();
+    }
+    
+    // No separators found - return original content
+    return content;
+};
+
 const cleanLetterForPrint = (content: string, companyName: string): string => {
+    // First, extract official document if separators exist
+    let cleaned = extractOfficialDocument(content);
+    
     // Pattern to match the company header block at the start of a letter
     // Example: "**Les Produits Verriers International Inc.**\n9150 Bd Maurice-Duplessis,\nMontréal, QC H1E 7C2"
     const companyBlockPattern = /^\*\*[^*]+\*\*\s*\n[^\n]*\n[^\n]*(?:QC|Québec|Quebec)[^\n]*\n?/i;
     
     // Also match without bold: "Les Produits Verriers International Inc.\n9150..."
     const companyBlockNoBold = /^[A-Z][^\n]{5,50}(?:Inc\.|Ltée|Ltd|Corp)\.?\s*\n[^\n]*\n[^\n]*(?:QC|Québec|Quebec)[^\n]*\n?/i;
-    
-    let cleaned = content;
     
     // Try to remove company header block (will be replaced by logo)
     if (companyBlockPattern.test(cleaned)) {
@@ -184,11 +222,14 @@ const cleanLetterForPrint = (content: string, companyName: string): string => {
 
 // --- PRINT FUNCTION FOR AI RESPONSES ---
 const printAIResponse = async (content: string) => {
-    const isLetter = isLetterContent(content);
     const { companyName, companyAddress, companyPhone, companyEmail, logoUrl } = await fetchCompanyConfig();
     
-    // For letters: clean the content to remove company header (logo replaces it)
-    const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
+    // First, extract official document (between --- separators) to remove AI notes
+    const documentContent = extractOfficialDocument(content);
+    const isLetter = isLetterContent(documentContent);
+    
+    // For letters: also clean the content to remove company header (logo replaces it)
+    const cleanedContent = isLetter ? cleanLetterForPrint(documentContent, companyName) : documentContent;
     const html = processMarkdown(cleanedContent);
     
     const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -319,10 +360,13 @@ body {
 // --- EXPORT DOCX FOR AI RESPONSES ---
 const exportDocx = async (content: string) => {
     const { companyName, companyAddress, companyPhone, companyEmail, logoUrl } = await fetchCompanyConfig();
-    const isLetter = isLetterContent(content);
     
-    // For letters: clean the content to remove company header
-    const cleanedContent = isLetter ? cleanLetterForPrint(content, companyName) : content;
+    // First, extract official document (between --- separators) to remove AI notes
+    const documentContent = extractOfficialDocument(content);
+    const isLetter = isLetterContent(documentContent);
+    
+    // For letters: also clean the content to remove company header
+    const cleanedContent = isLetter ? cleanLetterForPrint(documentContent, companyName) : documentContent;
     
     // Fetch logo for DOCX embedding
     const logoData = await fetchLogoAsArrayBuffer(logoUrl);
