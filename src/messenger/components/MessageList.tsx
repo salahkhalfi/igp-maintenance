@@ -91,6 +91,8 @@ const processMarkdown = (content: string) => {
         })
         // Blockquotes (> text)
         .replace(/^>\s+(.*)$/gm, '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-2">$1</blockquote>')
+        // Manual signature block: "Signature :" followed by underscores line - add space for handwriting
+        .replace(/(\*\*Signature\s*:\*\*|Signature\s*:)\s*\n_+/gi, '<div class="manual-signature-block"><strong>Signature :</strong><div class="signature-space"></div><div class="signature-line-manual"></div></div>')
         // Fix: Remove newlines immediately after headers and list items to prevent double spacing (gap reduction)
         .replace(/(<\/h[2-4]>|<\/li>)\n/g, '$1')
         // Newlines to BR
@@ -373,13 +375,32 @@ body {
     margin-top: 2pt;
 }
 
+/* Bloc signature manuelle (à signer au stylo) */
+.doc-content .manual-signature-block {
+    margin: 20pt 0 12pt 0;
+}
+.doc-content .signature-space {
+    height: 60pt; /* ~2cm d'espace pour signer */
+}
+.doc-content .signature-line-manual {
+    width: 200px;
+    border-bottom: 1px solid #333;
+}
+
 @media print {
     .doc-content .signature-block img { 
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-    .doc-content .signature-line {
+    .doc-content .signature-line,
+    .doc-content .signature-line-manual {
         border-bottom: 1px solid #333 !important;
+    }
+    .doc-content .manual-signature-block {
+        page-break-inside: avoid;
+    }
+    .doc-content .signature-space {
+        height: 60pt !important;
     }
     .letter-header, .print-header { page-break-inside: avoid; }
     .doc-content h2, .doc-content h3, .doc-content h4 { page-break-after: avoid; }
