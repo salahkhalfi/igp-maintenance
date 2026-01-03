@@ -226,6 +226,62 @@ Stockés dans `system_settings` (clé/valeur) :
 
 ---
 
+## Maintenance quotidienne
+
+### Commande rapide
+```bash
+npm run status    # Diagnostic complet en 3 secondes
+```
+
+Affiche :
+- Version actuelle
+- État du build
+- Taille de la base locale
+- Nombre de backups disponibles
+- État Git (branche, fichiers modifiés)
+- Sécurité (rate limiting actif ?)
+- Documentation (CLAUDE.md présent ?)
+- Nettoyage automatique (CRON configuré ?)
+
+### Backups
+
+```bash
+npm run db:backup        # Sauvegarder la base locale
+npm run db:list-backups  # Voir les backups disponibles
+npm run db:restore       # Restaurer (avec confirmation)
+./scripts/backup-db-remote.sh  # Sauvegarder la production
+```
+
+**Politique de rétention** :
+- Backups locaux : 10 fichiers conservés
+- Backups distants : 5 fichiers conservés
+
+### Nettoyage automatique (CRON)
+
+Le nettoyage s'exécute automatiquement chaque jour à 02:00 UTC :
+
+| Table | Rétention |
+|-------|-----------|
+| `push_logs` | 7 jours |
+| `pending_notifications` | 7 jours |
+| `webhook_notifications` | 30 jours |
+| `audit_logs` | 90 jours |
+| `ticket_timeline` | 180 jours |
+| `chat_messages` (médias) | 30 jours |
+| `chat_messages` (texte) | 365 jours |
+
+### Monitoring
+
+```bash
+# Statistiques d'utilisation DB (en production)
+curl https://app.igpglass.ca/api/cron/storage-stats
+
+# Forcer le nettoyage manuellement
+curl -X POST https://app.igpglass.ca/api/cron/cleanup-logs
+```
+
+---
+
 ## Contact
 
 Pour toute question sur le projet, contacter l'auteur : salah [at] khalfi [dot] com
