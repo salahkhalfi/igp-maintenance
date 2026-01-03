@@ -168,12 +168,11 @@ const fetchLogoAsArrayBuffer = async (logoUrl: string): Promise<{ data: ArrayBuf
  * Extract official document content between --- separators
  * AI responses now use format: "AI comment\n---\nDOCUMENT\n---\nAI instructions"
  * This function extracts ONLY the document part for printing
+ * 
+ * IMPORTANT: If --- appears INSIDE the document (visual separator before signature),
+ * we should NOT cut the content. Only cut if first --- is at the very beginning (AI intro).
  */
 const extractOfficialDocument = (content: string): string => {
-    // Pattern: content between two --- separators
-    const separatorPattern = /^---\s*\n([\s\S]*?)\n---\s*$/m;
-    
-    // Try to find content between --- markers
     const lines = content.split('\n');
     const separatorIndices: number[] = [];
     
@@ -183,22 +182,51 @@ const extractOfficialDocument = (content: string): string => {
         }
     });
     
-    // If we have at least 2 separators, extract content between first two
+    // No separators - return as is
+    if (separatorIndices.length === 0) {
+        return content;
+    }
+    
+    // Check if first separator is at the beginning (AI intro before document)
+    // If first --- is after line 5, it's probably part of the document content
+    const firstSepIdx = separatorIndices[0];
+    const hasAIIntro = firstSepIdx <= 5;
+    
+    if (!hasAIIntro) {
+        // --- is inside the document (visual separator), keep everything but remove trailing ---
+        // Remove only the very last --- if it's at the end (AI outro)
+        const lastSepIdx = separatorIndices[separatorIndices.length - 1];
+        if (lastSepIdx >= lines.length - 3) {
+            // Last --- is near the end, probably AI outro - remove it
+            const documentLines = lines.slice(0, lastSepIdx);
+            return documentLines.join('\n').trim();
+        }
+        // All --- are inside document, keep as is
+        return content;
+    }
+    
+    // First --- is at beginning = AI intro exists
+    // Extract content after first --- 
     if (separatorIndices.length >= 2) {
-        const startIdx = separatorIndices[0] + 1;
-        const endIdx = separatorIndices[1];
-        const documentLines = lines.slice(startIdx, endIdx);
+        // Check if second --- is near the end (AI outro) or inside document
+        const secondSepIdx = separatorIndices[1];
+        const thirdSepIdx = separatorIndices.length > 2 ? separatorIndices[2] : -1;
+        
+        // If there's a third ---, the second is probably inside the document
+        // Take from first+1 to last-1
+        if (thirdSepIdx > 0 && thirdSepIdx >= lines.length - 3) {
+            const documentLines = lines.slice(firstSepIdx + 1, thirdSepIdx);
+            return documentLines.join('\n').trim();
+        }
+        
+        // Only 2 separators: first=intro, second=outro
+        const documentLines = lines.slice(firstSepIdx + 1, secondSepIdx);
         return documentLines.join('\n').trim();
     }
     
-    // If only one separator at the start, take everything after it
-    if (separatorIndices.length === 1 && separatorIndices[0] < 3) {
-        const documentLines = lines.slice(separatorIndices[0] + 1);
-        return documentLines.join('\n').trim();
-    }
-    
-    // No separators found - return original content
-    return content;
+    // Only one separator at start - take everything after
+    const documentLines = lines.slice(firstSepIdx + 1);
+    return documentLines.join('\n').trim();
 };
 
 const cleanLetterForPrint = (content: string, companyName: string): string => {
