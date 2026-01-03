@@ -1590,7 +1590,8 @@ ${aiConfig.rules}
         if (wantsSignature && userSignature) {
             // L'utilisateur a demandé sa signature et en a une enregistrée
             console.log(`✍️ [AI Chat] Inserting signature for ${userEmail}`);
-            const signatureImg = `![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})`;
+            // Utiliser une URL au lieu du base64 (évite les problèmes de markdown multi-lignes)
+            const signatureImg = `![Signature de ${userSignature.userName}](/api/settings/signature-image/${encodeURIComponent(userEmail)})`;
             
             // Chercher où insérer la signature (avant le nom du signataire)
             const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
@@ -2400,7 +2401,8 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
         if (wantsSignature && brainResult.userSignature) {
             // L'utilisateur a demandé sa signature et en a une enregistrée
             console.log(`✍️ [Secretary] Inserting signature for ${payload.email}`);
-            const signatureImg = `![Signature de ${brainResult.userSignature.userName}](data:${brainResult.userSignature.mimeType};base64,${brainResult.userSignature.base64})`;
+            // Utiliser une URL au lieu du base64 (évite les problèmes de markdown multi-lignes)
+            const signatureImg = `![Signature de ${brainResult.userSignature.userName}](/api/settings/signature-image/${encodeURIComponent(payload.email)})`;
             
             // Chercher où insérer la signature (avant le nom du signataire)
             // Pattern: **Nom**\nTitre ou Nom\nTitre

@@ -1396,6 +1396,52 @@ settings.post('/my-signature', authMiddleware, async (c) => {
 });
 
 /**
+ * GET /api/settings/signature-image/:email - Servir l'image de signature
+ * Retourne l'image PNG/GIF directement (pas de JSON)
+ */
+settings.get('/signature-image/:email', async (c) => {
+  try {
+    const email = c.req.param('email');
+    if (!email) {
+      return c.text('Email requis', 400);
+    }
+    
+    const settingKey = `${SIGNATURE_KEY_PREFIX}${email}`;
+    const result = await c.env.DB.prepare(
+      `SELECT setting_value FROM system_settings WHERE setting_key = ?`
+    ).bind(settingKey).first();
+    
+    if (!result?.setting_value) {
+      return c.text('Signature non trouvée', 404);
+    }
+    
+    const data = JSON.parse(result.setting_value as string);
+    if (!data.base64) {
+      return c.text('Signature invalide', 404);
+    }
+    
+    // Convertir base64 en binaire
+    const binaryString = atob(data.base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    const mimeType = data.mimeType || 'image/png';
+    
+    return new Response(bytes, {
+      headers: {
+        'Content-Type': mimeType,
+        'Cache-Control': 'public, max-age=86400' // Cache 24h
+      }
+    });
+  } catch (error) {
+    console.error('Get signature image error:', error);
+    return c.text('Erreur serveur', 500);
+  }
+});
+
+/**
  * DELETE /api/settings/my-signature - Supprimer sa signature
  */
 settings.delete('/my-signature', authMiddleware, async (c) => {
