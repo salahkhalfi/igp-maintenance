@@ -2164,9 +2164,16 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
                 documentType as DocumentType,
                 env,  // Pass env for D1 direct access in data loaders
                 companyIdentity,
-                baseUrl
+                baseUrl,
+                {
+                    currentUserEmail: payload.email,
+                    currentUserName: payload.name || payload.email
+                }
             );
             devLog(`🧠 [Secretary] Brain ready: ${brainResult.systemPrompt.length} chars prompt, ${brainResult.contextData.length} chars data`);
+            if (brainResult.userSignature) {
+                devLog(`✍️ [Secretary] User signature available for ${payload.email}`);
+            }
         } catch (brainError: any) {
             console.error(`❌ [Secretary] Brain preparation failed:`, brainError.message, brainError.stack);
             return c.json({ 
@@ -2325,6 +2332,40 @@ Réponds UNIQUEMENT par un seul mot parmi: rapports, subventions, rh, technique,
             return c.json({ 
                 error: `Impossible de générer le document après ${turns} tentatives.` 
             }, 500);
+        }
+        
+        // ===== POST-PROCESS: INSERT SIGNATURE IF REQUESTED =====
+        const wantsSignature = /(ma signature|avec ma signature|signature manuscrite)/i.test(instructions);
+        
+        if (wantsSignature && brainResult.userSignature) {
+            // L'utilisateur a demandé sa signature et en a une enregistrée
+            console.log(`✍️ [Secretary] Inserting signature for ${payload.email}`);
+            const signatureImg = `![Signature de ${brainResult.userSignature.userName}](data:${brainResult.userSignature.mimeType};base64,${brainResult.userSignature.base64})`;
+            
+            // Chercher où insérer la signature (avant le nom du signataire)
+            // Pattern: **Nom**\nTitre ou Nom\nTitre
+            const namePattern = /(\*\*[A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+\*\*)\s*\n(Directeur|Direction|Président|Responsable|Coordonnateur|Superviseur)/gi;
+            const nameNoBoldPattern = /\n\n([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][a-zà-ü]+)\n(Directeur|Direction|Président|Responsable)/gi;
+            
+            if (aiResponse.match(namePattern)) {
+                aiResponse = aiResponse.replace(namePattern, `${signatureImg}\n\n$1\n$2`);
+                console.log(`✍️ [Secretary] Signature inserted before bolded name`);
+            } else if (aiResponse.match(nameNoBoldPattern)) {
+                aiResponse = aiResponse.replace(nameNoBoldPattern, `\n\n${signatureImg}\n\n$1\n$2`);
+                console.log(`✍️ [Secretary] Signature inserted before name`);
+            } else {
+                // Fallback: ajouter avant la fin du document
+                const lastParagraphs = aiResponse.split('\n\n');
+                if (lastParagraphs.length > 1) {
+                    lastParagraphs.splice(-1, 0, signatureImg);
+                    aiResponse = lastParagraphs.join('\n\n');
+                    console.log(`✍️ [Secretary] Signature appended near end`);
+                }
+            }
+        } else if (wantsSignature && !brainResult.userSignature) {
+            // L'utilisateur veut une signature mais n'en a pas
+            console.log(`⚠️ [Secretary] User ${payload.email} requested signature but has none`);
+            aiResponse += `\n\n---\n\n⚠️ **Note**: Vous avez demandé une signature manuscrite mais aucune n'est enregistrée. Allez dans **Paramètres Système** → **Signature Manuscrite** pour en ajouter une.`;
         }
         
         // ===== EXTRACT TITLE =====

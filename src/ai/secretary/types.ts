@@ -182,6 +182,12 @@ export interface BrainResult {
   temperature: number;
   /** Signatures à remplacer en post-traitement (marqueur -> base64) */
   signatureReplacements?: Map<string, string>;
+  /** Signature de l'utilisateur connecté (si disponible) */
+  userSignature?: {
+    base64: string;
+    userName: string;
+    mimeType: string;
+  } | null;
 }
 
 // === CONTEXTE DE SIGNATURE ===

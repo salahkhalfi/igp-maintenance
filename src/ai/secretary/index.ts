@@ -37,7 +37,7 @@ export type { DocumentType, SecretaryContext, CompanyIdentity, BrainResult };
  * @param db - Instance de la base de données
  * @param companyIdentity - Identité de l'entreprise depuis le "Cerveau de l'IA"
  * @param baseUrl - URL de base de l'application
- * @param options - Options supplémentaires (machineId, employeeId, etc.)
+ * @param options - Options supplémentaires (machineId, employeeId, currentUserEmail, etc.)
  * @returns BrainResult avec le prompt système et les données contextuelles
  */
 export async function prepareSecretary(
@@ -48,10 +48,37 @@ export async function prepareSecretary(
   options: {
     machineId?: number;
     employeeId?: number;
+    currentUserEmail?: string;
+    currentUserName?: string;
   } = {}
 ): Promise<BrainResult> {
   
   console.log(`🧠 [Secretary] Activating brain for: ${documentType}`);
+  
+  // Charger la signature de l'utilisateur connecté (par courriel)
+  let userSignature: { base64: string; userName: string; mimeType: string } | null = null;
+  if (options.currentUserEmail) {
+    try {
+      const signatureKey = `director_signature_${options.currentUserEmail}`;
+      const result = await env.DB.prepare(
+        `SELECT setting_value FROM system_settings WHERE setting_key = ?`
+      ).bind(signatureKey).first();
+      
+      if (result?.setting_value) {
+        const data = JSON.parse(result.setting_value as string);
+        if (data.base64) {
+          userSignature = {
+            base64: data.base64,
+            userName: data.userName || options.currentUserName || 'Signature',
+            mimeType: data.mimeType || 'image/png'
+          };
+          console.log(`✍️ [Secretary] Signature loaded for ${options.currentUserEmail}`);
+        }
+      }
+    } catch (e) {
+      console.warn(`⚠️ [Secretary] Could not load signature for ${options.currentUserEmail}:`, e);
+    }
+  }
   
   // Extraire le nom du directeur depuis hierarchy (ex: "Directeur des Opérations : Marc Bélanger")
   let directorName = 'La Direction';
@@ -76,40 +103,54 @@ export async function prepareSecretary(
     directorTitle
   };
 
+  // Préparer le remplacement de signature si disponible
+  const signatureReplacements = new Map<string, string>();
+  if (userSignature) {
+    const marker = `[[SIGNATURE_MANUSCRITE]]`;
+    const replacement = `![Signature de ${userSignature.userName}](data:${userSignature.mimeType};base64,${userSignature.base64})`;
+    signatureReplacements.set(marker, replacement);
+  }
+
   // Router vers le cerveau approprié avec ses données
+  let brainResult: BrainResult;
+  
   switch (documentType) {
     case 'rapports': {
       console.log(`📊 [Secretary] Loading maintenance report data...`);
       const data = await loadRapportsData(env);
       console.log(`📊 [Secretary] Data loaded: ${data.statsThisMonth.total} tickets this month, ${data.technicianPerformance.length} technicians`);
-      return buildRapportsBrain(context, data);
+      brainResult = buildRapportsBrain(context, data);
+      break;
     }
 
     case 'subventions': {
       console.log(`💰 [Secretary] Loading grants/subsidy data...`);
       const data = await loadSubventionsData(env);
       console.log(`💰 [Secretary] Data loaded: ${data.effectifTotal} employees, ${data.machinesTotal} machines`);
-      return buildSubventionsBrain(context, data);
+      brainResult = buildSubventionsBrain(context, data);
+      break;
     }
 
     case 'rh': {
       console.log(`👥 [Secretary] Loading HR data...`);
       const data = await loadRHData(env, options.employeeId);
       console.log(`👥 [Secretary] Data loaded: ${data.employees.length} employees`);
-      return buildRHBrain(context, data);
+      brainResult = buildRHBrain(context, data);
+      break;
     }
 
     case 'technique': {
       console.log(`🔧 [Secretary] Loading technical data...`);
       const data = await loadTechniqueData(env, options.machineId);
       console.log(`🔧 [Secretary] Data loaded: ${data.machines.length} machines`);
-      return buildTechniqueBrain(context, data);
+      brainResult = buildTechniqueBrain(context, data);
+      break;
     }
 
     case 'correspondance': {
       console.log(`📧 [Secretary] Preparing correspondence brain...`);
-      // La correspondance n'a besoin que de l'identité entreprise
-      return buildCorrespondanceBrain(context, {});
+      brainResult = buildCorrespondanceBrain(context, {});
+      break;
     }
 
     case 'creatif':
@@ -117,9 +158,16 @@ export async function prepareSecretary(
       console.log(`✨ [Secretary] Loading creative data...`);
       const data = await loadCreatifData(env);
       console.log(`✨ [Secretary] Data loaded: ${data.teamSize} team members`);
-      return buildCreatifBrain(context, data);
+      brainResult = buildCreatifBrain(context, data);
+      break;
     }
   }
+  
+  // Attacher les remplacements de signature au résultat
+  brainResult.signatureReplacements = signatureReplacements;
+  brainResult.userSignature = userSignature;
+  
+  return brainResult;
 }
 
 /**

@@ -505,12 +505,12 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
     // ===== FONCTIONS SIGNATURE MANUSCRITE =====
     
-    // Charger la signature existante
+    // Charger la signature existante (utilise le courriel via le token JWT)
     const loadSignature = async () => {
-        if (!currentUser?.id) return;
+        if (!currentUser) return;
         try {
-            const response = await axios.get(API_URL + '/settings/signature/' + currentUser.id);
-            if (response.data && response.data.base64) {
+            const response = await axios.get(API_URL + '/settings/my-signature');
+            if (response.data && response.data.exists && response.data.base64) {
                 setCurrentSignatureUrl('data:' + (response.data.mimeType || 'image/png') + ';base64,' + response.data.base64);
                 setHasSignature(true);
             } else {
@@ -552,7 +552,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         reader.readAsDataURL(file);
     };
 
-    // Uploader la signature
+    // Uploader la signature (le backend utilise le courriel du token JWT)
     const handleUploadSignature = async () => {
         if (!signatureFile) {
             alert('Veuillez sélectionner un fichier');
@@ -563,10 +563,8 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         try {
             const formData = new FormData();
             formData.append('signature', signatureFile);
-            formData.append('userId', currentUser.id);
-            formData.append('userName', currentUser.fullName || currentUser.email);
 
-            await axios.post(API_URL + '/settings/signature', formData, {
+            await axios.post(API_URL + '/settings/my-signature', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -584,7 +582,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
         }
     };
 
-    // Supprimer la signature
+    // Supprimer la signature (le backend utilise le courriel du token JWT)
     const handleDeleteSignature = async () => {
         if (!confirm('Voulez-vous vraiment supprimer votre signature manuscrite?')) {
             return;
@@ -592,7 +590,7 @@ const SystemSettingsModal = ({ show, onClose, currentUser }) => {
 
         setUploadingSignature(true);
         try {
-            await axios.delete(API_URL + '/settings/signature/' + currentUser.id);
+            await axios.delete(API_URL + '/settings/my-signature');
 
             setSignatureFile(null);
             setSignaturePreview(null);
