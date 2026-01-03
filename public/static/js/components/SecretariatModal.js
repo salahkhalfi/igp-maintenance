@@ -391,6 +391,21 @@ const SecretariatModal = ({ isOpen, onClose }) => {
         
         // Pour les lettres: convertir les lignes vides en blocs espacés
         if (isLetter) {
+            // D'abord normaliser les images markdown
+            md = md.replace(/!\[([^\]]*)\][\s\n]+\(([^)]+)\)/g, '![$1]($2)');
+            md = md.replace(/!\[([^\]]*)\]\(([^)]*[\s\n][^)]*)\)/g, (match, alt, url) => {
+                return '![' + alt + '](' + url.replace(/[\s\n]+/g, '') + ')';
+            });
+            
+            // Traiter les images de signature AVANT de séparer en blocs
+            md = md.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+                const isSignature = alt.toLowerCase().includes('signature');
+                if (isSignature) {
+                    return '<div class="signature-block"><img src="' + url + '" alt="' + alt + '" style="max-height:70px;width:auto;border:none;box-shadow:none;margin:0;"><div class="signature-line"></div></div>';
+                }
+                return '<img src="' + url + '" alt="' + alt + '" style="max-width:100%;height:auto;margin:10pt 0;">';
+            });
+            
             // Séparer par double saut de ligne (paragraphes/sections)
             const blocks = md.split(/\n\n+/);
             return blocks.map(block => {
