@@ -1283,6 +1283,179 @@ settings.post('/trigger-cleanup', authMiddleware, adminOnly, async (c) => {
   }
 });
 
+// ============================================================
+// SIGNATURE MANUSCRITE - Routes pour les administrateurs
+// Stockage par EMAIL de l'utilisateur (plus fiable que l'ID)
+// IMPORTANT: Ces routes doivent être AVANT /:key pour éviter capture
+// ============================================================
+
+const SIGNATURE_KEY_PREFIX = 'director_signature_';
+
+/**
+ * GET /api/settings/my-signature - Récupérer sa propre signature
+ * L'utilisateur connecté récupère sa signature (par son email)
+ */
+settings.get('/my-signature', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    if (!user?.email) {
+      return c.json({ error: 'Utilisateur non identifié' }, 401);
+    }
+    
+    const settingKey = `${SIGNATURE_KEY_PREFIX}${user.email}`;
+    const result = await c.env.DB.prepare(
+      `SELECT setting_value FROM system_settings WHERE setting_key = ?`
+    ).bind(settingKey).first();
+    
+    if (!result) {
+      return c.json({ exists: false, message: 'Aucune signature enregistrée' });
+    }
+    
+    const data = JSON.parse(result.setting_value as string);
+    return c.json({ 
+      exists: true,
+      base64: data.base64,
+      mimeType: data.mimeType || 'image/png',
+      userName: data.userName,
+      registeredAt: data.registeredAt
+    });
+  } catch (error) {
+    console.error('Get my signature error:', error);
+    return c.json({ error: 'Erreur lors de la récupération de la signature' }, 500);
+  }
+});
+
+/**
+ * POST /api/settings/my-signature - Enregistrer/mettre à jour sa signature
+ * L'utilisateur connecté enregistre sa propre signature
+ */
+settings.post('/my-signature', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    if (!user?.email) {
+      return c.json({ error: 'Utilisateur non identifié' }, 401);
+    }
+    
+    // Vérifier que l'utilisateur a le droit (admin, director, supervisor)
+    const allowedRoles = ['admin', 'director', 'supervisor'];
+    if (!allowedRoles.includes(user.role)) {
+      return c.json({ error: 'Seuls les administrateurs peuvent enregistrer une signature' }, 403);
+    }
+    
+    const formData = await c.req.formData();
+    const file = formData.get('signature') as File;
+    
+    if (!file) {
+      return c.json({ error: 'Fichier signature requis' }, 400);
+    }
+    
+    // Validation du type MIME
+    const allowedTypes = ['image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return c.json({ error: 'Format invalide. Utilisez PNG, GIF ou JPG.' }, 400);
+    }
+    
+    // Validation de la taille (max 100KB)
+    if (file.size > 100 * 1024) {
+      return c.json({ error: 'Fichier trop volumineux (max 100 KB)' }, 400);
+    }
+    
+    // Convertir en base64
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    
+    // Préparer les données
+    const signatureData = JSON.stringify({
+      base64: base64,
+      userName: user.name || user.email,
+      userEmail: user.email,
+      mimeType: file.type,
+      registeredAt: new Date().toISOString()
+    });
+    
+    const settingKey = `${SIGNATURE_KEY_PREFIX}${user.email}`;
+    
+    // Upsert dans system_settings
+    await c.env.DB.prepare(`
+      INSERT INTO system_settings (setting_key, setting_value) 
+      VALUES (?, ?)
+      ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value
+    `).bind(settingKey, signatureData).run();
+    
+    console.log(`✍️ Signature enregistrée pour ${user.email}`);
+    
+    return c.json({ 
+      success: true, 
+      message: 'Signature enregistrée avec succès',
+      userName: user.name || user.email
+    });
+  } catch (error) {
+    console.error('Register signature error:', error);
+    return c.json({ error: 'Erreur lors de l\'enregistrement de la signature' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/settings/my-signature - Supprimer sa signature
+ */
+settings.delete('/my-signature', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    if (!user?.email) {
+      return c.json({ error: 'Utilisateur non identifié' }, 401);
+    }
+    
+    const settingKey = `${SIGNATURE_KEY_PREFIX}${user.email}`;
+    
+    await c.env.DB.prepare(
+      `DELETE FROM system_settings WHERE setting_key = ?`
+    ).bind(settingKey).run();
+    
+    console.log(`✍️ Signature supprimée pour ${user.email}`);
+    
+    return c.json({ success: true, message: 'Signature supprimée' });
+  } catch (error) {
+    console.error('Delete signature error:', error);
+    return c.json({ error: 'Erreur lors de la suppression' }, 500);
+  }
+});
+
+/**
+ * GET /api/settings/all-signatures - Lister toutes les signatures (admin only)
+ */
+settings.get('/all-signatures', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    if (user?.role !== 'admin') {
+      return c.json({ error: 'Accès réservé aux administrateurs' }, 403);
+    }
+    
+    const result = await c.env.DB.prepare(
+      `SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE ?`
+    ).bind(`${SIGNATURE_KEY_PREFIX}%`).all();
+    
+    const signatures = (result.results || []).map((row: any) => {
+      try {
+        const data = JSON.parse(row.setting_value);
+        const email = row.setting_key.replace(SIGNATURE_KEY_PREFIX, '');
+        return {
+          email,
+          userName: data.userName,
+          mimeType: data.mimeType,
+          registeredAt: data.registeredAt
+        };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+    
+    return c.json({ signatures });
+  } catch (error) {
+    console.error('List signatures error:', error);
+    return c.json({ error: 'Erreur lors de la récupération des signatures' }, 500);
+  }
+});
+
 // ============================================================================
 // ROUTES GÉNÉRIQUES (DOIVENT ÊTRE DÉCLARÉES APRÈS LES ROUTES SPÉCIFIQUES)
 // ============================================================================
@@ -2009,179 +2182,6 @@ settings.post('/import/machines', authMiddleware, adminOnly, async (c) => {
   } catch (error) {
     console.error('Import machines error:', error);
     return c.json({ error: 'Erreur lors de l\'import des machines' }, 500);
-  }
-});
-
-// ============================================================
-// SIGNATURE MANUSCRITE - Routes pour les administrateurs
-// Stockage par EMAIL de l'utilisateur (plus fiable que l'ID)
-// ============================================================
-
-const SIGNATURE_KEY_PREFIX = 'director_signature_';
-
-/**
- * GET /api/settings/signature - Récupérer sa propre signature
- * L'utilisateur connecté récupère sa signature (par son email)
- */
-settings.get('/my-signature', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user');
-    if (!user?.email) {
-      return c.json({ error: 'Utilisateur non identifié' }, 401);
-    }
-    
-    const settingKey = `${SIGNATURE_KEY_PREFIX}${user.email}`;
-    const result = await c.env.DB.prepare(
-      `SELECT setting_value FROM system_settings WHERE setting_key = ?`
-    ).bind(settingKey).first();
-    
-    if (!result) {
-      return c.json({ exists: false, message: 'Aucune signature enregistrée' });
-    }
-    
-    const data = JSON.parse(result.setting_value as string);
-    return c.json({ 
-      exists: true,
-      base64: data.base64,
-      mimeType: data.mimeType || 'image/png',
-      userName: data.userName,
-      registeredAt: data.registeredAt
-    });
-  } catch (error) {
-    console.error('Get my signature error:', error);
-    return c.json({ error: 'Erreur lors de la récupération de la signature' }, 500);
-  }
-});
-
-/**
- * POST /api/settings/signature - Enregistrer/mettre à jour sa signature
- * L'utilisateur connecté enregistre sa propre signature
- */
-settings.post('/my-signature', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user');
-    if (!user?.email) {
-      return c.json({ error: 'Utilisateur non identifié' }, 401);
-    }
-    
-    // Vérifier que l'utilisateur a le droit (admin, director, supervisor)
-    const allowedRoles = ['admin', 'director', 'supervisor'];
-    if (!allowedRoles.includes(user.role)) {
-      return c.json({ error: 'Seuls les administrateurs peuvent enregistrer une signature' }, 403);
-    }
-    
-    const formData = await c.req.formData();
-    const file = formData.get('signature') as File;
-    
-    if (!file) {
-      return c.json({ error: 'Fichier signature requis' }, 400);
-    }
-    
-    // Validation du type MIME
-    const allowedTypes = ['image/png', 'image/gif', 'image/jpeg', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return c.json({ error: 'Format invalide. Utilisez PNG, GIF ou JPG.' }, 400);
-    }
-    
-    // Validation de la taille (max 100KB)
-    if (file.size > 100 * 1024) {
-      return c.json({ error: 'Fichier trop volumineux (max 100 KB)' }, 400);
-    }
-    
-    // Convertir en base64
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    
-    // Préparer les données
-    const signatureData = JSON.stringify({
-      base64: base64,
-      userName: user.name || user.email,
-      userEmail: user.email,
-      mimeType: file.type,
-      registeredAt: new Date().toISOString()
-    });
-    
-    const settingKey = `${SIGNATURE_KEY_PREFIX}${user.email}`;
-    
-    // Upsert dans system_settings
-    await c.env.DB.prepare(`
-      INSERT INTO system_settings (setting_key, setting_value) 
-      VALUES (?, ?)
-      ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value
-    `).bind(settingKey, signatureData).run();
-    
-    console.log(`✍️ Signature enregistrée pour ${user.email}`);
-    
-    return c.json({ 
-      success: true, 
-      message: 'Signature enregistrée avec succès',
-      userName: user.name || user.email
-    });
-  } catch (error) {
-    console.error('Register signature error:', error);
-    return c.json({ error: 'Erreur lors de l\'enregistrement de la signature' }, 500);
-  }
-});
-
-/**
- * DELETE /api/settings/signature - Supprimer sa signature
- */
-settings.delete('/my-signature', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user');
-    if (!user?.email) {
-      return c.json({ error: 'Utilisateur non identifié' }, 401);
-    }
-    
-    const settingKey = `${SIGNATURE_KEY_PREFIX}${user.email}`;
-    
-    await c.env.DB.prepare(
-      `DELETE FROM system_settings WHERE setting_key = ?`
-    ).bind(settingKey).run();
-    
-    console.log(`✍️ Signature supprimée pour ${user.email}`);
-    
-    return c.json({ success: true, message: 'Signature supprimée' });
-  } catch (error) {
-    console.error('Delete signature error:', error);
-    return c.json({ error: 'Erreur lors de la suppression' }, 500);
-  }
-});
-
-/**
- * GET /api/settings/signatures - Lister toutes les signatures (admin only)
- */
-settings.get('/all-signatures', authMiddleware, async (c) => {
-  try {
-    const user = c.get('user');
-    if (user?.role !== 'admin') {
-      return c.json({ error: 'Accès réservé aux administrateurs' }, 403);
-    }
-    
-    const result = await c.env.DB.prepare(
-      `SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE ?`
-    ).bind(`${SIGNATURE_KEY_PREFIX}%`).all();
-    
-    const signatures = (result.results || []).map((row: any) => {
-      try {
-        const data = JSON.parse(row.setting_value);
-        const email = row.setting_key.replace(SIGNATURE_KEY_PREFIX, '');
-        return {
-          email,
-          userName: data.userName,
-          mimeType: data.mimeType,
-          registeredAt: data.registeredAt
-          // Note: on ne renvoie pas le base64 pour la liste
-        };
-      } catch {
-        return null;
-      }
-    }).filter(Boolean);
-    
-    return c.json({ signatures });
-  } catch (error) {
-    console.error('List signatures error:', error);
-    return c.json({ error: 'Erreur lors de la récupération des signatures' }, 500);
   }
 });
 
