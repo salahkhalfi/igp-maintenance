@@ -52,13 +52,22 @@ else
     echo -e "║  🗄️  DB locale       $(check_mark fail) ${YELLOW}Non initialisée${NC}"
 fi
 
-# 4. Backups - Compter les backups disponibles
+# 4. Backups - Compter les backups et vérifier l'âge
 BACKUP_COUNT=$(ls -1 .wrangler/backups/maintenance-db_*.tar.gz 2>/dev/null | wc -l || echo "0")
 if [ "$BACKUP_COUNT" -gt 0 ]; then
-    LAST_BACKUP=$(ls -t .wrangler/backups/maintenance-db_*.tar.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null || echo "?")
-    # Extraire la date du nom du fichier
-    BACKUP_DATE=$(echo "$LAST_BACKUP" | grep -oP '\d{8}_\d{6}' | head -1 || echo "?")
-    echo -e "║  💾 Backups         $(check_mark ok) ${GREEN}$BACKUP_COUNT disponible(s)${NC}"
+    LAST_BACKUP_FILE=$(ls -t .wrangler/backups/maintenance-db_*.tar.gz 2>/dev/null | head -1)
+    # Calculer l'âge du dernier backup en jours
+    LAST_BACKUP_TIME=$(stat -c %Y "$LAST_BACKUP_FILE" 2>/dev/null || stat -f %m "$LAST_BACKUP_FILE" 2>/dev/null || echo "0")
+    NOW=$(date +%s)
+    AGE_DAYS=$(( (NOW - LAST_BACKUP_TIME) / 86400 ))
+    
+    if [ "$AGE_DAYS" -gt 7 ]; then
+        echo -e "║  💾 Backups         $(check_mark fail) ${YELLOW}$BACKUP_COUNT dispo - Dernier: ${RED}il y a ${AGE_DAYS}j${YELLOW} ⚠️${NC}"
+    elif [ "$AGE_DAYS" -gt 3 ]; then
+        echo -e "║  💾 Backups         $(check_mark ok) ${GREEN}$BACKUP_COUNT dispo${NC} ${YELLOW}(il y a ${AGE_DAYS}j)${NC}"
+    else
+        echo -e "║  💾 Backups         $(check_mark ok) ${GREEN}$BACKUP_COUNT dispo (il y a ${AGE_DAYS}j)${NC}"
+    fi
 else
     echo -e "║  💾 Backups         $(check_mark fail) ${YELLOW}Aucun - npm run db:backup${NC}"
 fi
